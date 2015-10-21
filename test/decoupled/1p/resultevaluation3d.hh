@@ -86,8 +86,6 @@ public:
         typedef typename Entity::Geometry Geometry;
         typedef typename Grid::LevelGridView GV;
         typedef typename GV::IndexSet IS;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename GV::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,Dune::MCMGElementLayout> EM;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FM;
         typedef typename Grid::ctype ct;
@@ -104,12 +102,8 @@ public:
 
         uMean = 0;
         double domainVolume = 0;
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        for (const auto& element : Dune::elements(gridview))
         {
-            // get entity
-            const Entity& element = *it;
-
             // get volume
             double volume = element.geometry().volume();
 
@@ -161,11 +155,8 @@ public:
         double numeratorFlux = 0;
         double denominatorFlux = 0;
         bool exactOutput = true;
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        for (const auto& element : Dune::elements(gridview))
         {
-            // get entity
-            const Entity& element = *it;
-
             // element geometry
             const Geometry& geometry = element.geometry();
 
@@ -214,20 +205,19 @@ public:
             int i = -1;
             Dune::FieldVector<ct,2*dim> fluxVector;
             Dune::FieldVector<ct,dim> exactGradient;
-            IntersectionIterator endis = gridview.iend(element);
-            for (IntersectionIterator is = gridview.ibegin(element); is!=endis; ++is)
+            for (const auto& intersection : Dune::intersections(gridview, element))
             {
                 // local number of facet
-                i = is->indexInInside();
+                i = intersection.indexInInside();
 
                 // global number of face
                 int faceIndex = facemapper.template map<1>(element, i);
 
-                Dune::FieldVector<double,dim> faceGlobal = is->geometry().center();
-                double faceVol = is->geometry().volume();
+                Dune::FieldVector<double,dim> faceGlobal = intersection.geometry().center();
+                double faceVol = intersection.geometry().volume();
 
                 // get normal vector
-                Dune::FieldVector<double,dim> unitOuterNormal = is->centerUnitOuterNormal();
+                Dune::FieldVector<double,dim> unitOuterNormal = intersection.centerUnitOuterNormal();
 
                 // get the approximate solution on the face
                 double approximateFace = (*solution.pressTrace)[faceIndex];
@@ -260,7 +250,7 @@ public:
                 fluxVector[i] = approximateFlux;
 
                 //if (is.boundary()) {
-                if (!is->neighbor()) {
+                if (!intersection.neighbor()) {
                     if (fabs(faceGlobal[2]) < 1e-6) {
                         fluz0 += approximateFlux;
                         exactfluz0 += exactFlux;
@@ -427,8 +417,6 @@ public:
         enum {dim=Grid::dimension};
         typedef typename Grid::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
-        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
@@ -472,11 +460,8 @@ public:
         double numeratorFluxIn = 0;
         double denominatorFluxIn = 0;
         bool exactOutput = true;
-        ElementIterator endEIt = gridView.template end<0>();
-        for (ElementIterator eIt = gridView.template begin<0>(); eIt != endEIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView))
         {
-            const Element& element = *eIt;
-
             // element geometry
             const Geometry& geometry = element.geometry();
 
@@ -505,11 +490,9 @@ public:
 
             // calculate the relative error for inner cells
             bool bndCell = false;
-            IntersectionIterator beginis = gridView.ibegin(element);
-            IntersectionIterator endis = gridView.iend(element);
-            for (IntersectionIterator is = beginis; is!=endis; ++is)
+            for (const auto& intersection : Dune::intersections(gridView, element))
             {
-                if (is->boundary())
+                if (intersection.boundary())
                 {
                     bndCell = true;
                     break;
@@ -545,21 +528,21 @@ public:
             int isIdx = -1;
             Dune::FieldVector<Scalar,2*dim> fluxVector;
             Dune::FieldVector<Scalar,dim> exactGradient;
-            for (IntersectionIterator is = beginis; is!=endis; ++is)
+            for (const auto& intersection : Dune::intersections(gridView, element))
             {
                 // local number of facet
-                int fIdx = is->indexInInside();
+                int fIdx = intersection.indexInInside();
 
                 if (consecutiveNumbering)
                     isIdx++;
                 else
                     isIdx = fIdx;
 
-                Dune::FieldVector<double,dim> faceGlobal = is->geometry().center();
-                double faceVol = is->geometry().volume();
+                Dune::FieldVector<double,dim> faceGlobal = intersection.geometry().center();
+                double faceVol = intersection.geometry().volume();
 
                 // get normal vector
-                Dune::FieldVector<double,dim> unitOuterNormal = is->centerUnitOuterNormal();
+                Dune::FieldVector<double,dim> unitOuterNormal = intersection.centerUnitOuterNormal();
 
                 // get the exact gradient
                 exactGradient = problem.exactGrad(faceGlobal);
@@ -594,7 +577,7 @@ public:
                 approximateFlux *= faceVol;
                 fluxVector[fIdx] = approximateFlux;
 
-                if (!is->neighbor()) {
+                if (!intersection.neighbor()) {
                     if (fabs(faceGlobal[2]) < 1e-6) {
                         fluz0 += approximateFlux;
                         exactfluz0 += exactFlux;
@@ -661,14 +644,14 @@ public:
             denominatorGrad += volume*(exactGradient*exactGradient);
 
             // calculate the maximum of the diagonal length of all elements on leaf grid
-            for (int i = 0; i < eIt->geometry().corners(); ++i)
+            for (int i = 0; i < element.geometry().corners(); ++i)
             {
-                Dune::FieldVector<Scalar,dim> corner1 = eIt->geometry().corner(i);
+                Dune::FieldVector<Scalar,dim> corner1 = element.geometry().corner(i);
 
-                for (int j = 0; j < eIt->geometry().corners(); ++j)
+                for (int j = 0; j < element.geometry().corners(); ++j)
                 {
                     // get all corners of current element and compare the distances between them
-                    Dune::FieldVector<Scalar,dim> corner2 = eIt->geometry().corner(j);
+                    Dune::FieldVector<Scalar,dim> corner2 = element.geometry().corner(j);
 
                     // distance vector between corners
                     Dune::FieldVector<Scalar,dim> distVec = corner1 - corner2;
@@ -715,8 +698,6 @@ public:
         enum {dim=Grid::dimension, maxIntersections = 12};
         typedef typename Grid::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
-        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
         typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;
@@ -733,11 +714,8 @@ public:
         Scalar maxFlux = -1;
         Scalar numerator = 0;
         Scalar denominator = 0;
-        ElementIterator endEIt = gridView.template end<0>();
-        for (ElementIterator eIt = gridView.template begin<0>(); eIt != endEIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView))
         {
-            const Element& element = *eIt;
-
             // element geometry
             const Geometry& geometry = element.geometry();
 
@@ -772,11 +750,10 @@ public:
 
             int i = -1;
             Dune::FieldVector<Scalar,dim> exactGradient;
-            IntersectionIterator endis = gridView.iend(element);
-            for (IntersectionIterator is = gridView.ibegin(element); is!=endis; ++is)
+            for (const auto& intersection : Dune::intersections(gridView, element))
             {
                 // get geometry type of face
-                Dune::GeometryType gtf = is->geometryInInside().type();
+                Dune::GeometryType gtf = intersection.geometryInInside().type();
 
                 // local number of facet
                 i++;
@@ -785,10 +762,10 @@ public:
                 const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = ReferenceFaces::general(gtf).position(0,0);
 
                 // center of face in global coordinates
-                Dune::FieldVector<Scalar,dim> faceGlobal = is->geometry().global(faceLocalNm1);
+                Dune::FieldVector<Scalar,dim> faceGlobal = intersection.geometry().global(faceLocalNm1);
 
                 // get normal vector
-                Dune::FieldVector<Scalar,dim> unitOuterNormal = is->unitOuterNormal(faceLocalNm1);
+                Dune::FieldVector<Scalar,dim> unitOuterNormal = intersection.unitOuterNormal(faceLocalNm1);
 
                 if (switchNormals)
                     unitOuterNormal *= -1.0;

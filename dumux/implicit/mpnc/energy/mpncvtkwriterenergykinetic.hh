@@ -25,7 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_ENERGY_KINETIC_HH
 #define DUMUX_MPNC_VTK_WRITER_ENERGY_KINETIC_HH
 
-#include <dune/common/version.hh>
 #include <dumux/implicit/mpnc/mpncvtkwritermodule.hh>
 #include <dumux/implicit/mpnc/energy/mpnclocalresidualenergykinetic.hh>
 #include "mpncvtkwriterenergy.hh"
@@ -133,11 +132,7 @@ public:
     {
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,4)
             const unsigned int vIdxGlobal = this->problem_.vertexMapper().subIndex(element, localVertexIdx, dim);
-#else
-            const unsigned int vIdxGlobal = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
-#endif
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
@@ -379,11 +374,7 @@ public:
     {
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             const unsigned int vIdxGlobal = this->problem_.vertexMapper().subIndex(element, localVertexIdx, dim);
-#else
-            const unsigned int vIdxGlobal = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
-#endif
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
         	qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));

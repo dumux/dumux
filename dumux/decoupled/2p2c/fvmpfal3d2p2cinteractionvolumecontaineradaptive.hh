@@ -68,11 +68,8 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry ElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename Intersection::Geometry IntersectionGeometry;
@@ -408,8 +405,8 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     }
 
     Dune::dgrave << " Could not find "<< interactionVolume.getHangingNodeType() <<" case  configuration for I = "
-            << problem_.variables().index(*isIt->inside()) << " localIdx " << mapI << " , "
-            << problem_.variables().index(*isIt->outside()) << " localIdx " << mapJ << std::endl;
+            << problem_.variables().index(isIt->inside()) << " localIdx " << mapI << " , "
+            << problem_.variables().index(isIt->outside()) << " localIdx " << mapJ << std::endl;
 
     return -1;
 }
@@ -555,8 +552,8 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     }
 
     Dune::dgrave << " Could not find "<< interactionVolume.getHangingNodeType() <<" case  configuration for I = "
-            << problem_.variables().index(*isIt->inside()) << " localIdx " << mapI << " and "
-            << problem_.variables().index(*isIt->outside()) << " localIdx " << mapJ << std::endl;
+            << problem_.variables().index(isIt->inside()) << " localIdx " << mapI << " and "
+            << problem_.variables().index(isIt->outside()) << " localIdx " << mapJ << std::endl;
     return -1;
 }
 

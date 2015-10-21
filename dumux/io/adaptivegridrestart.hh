@@ -23,12 +23,9 @@
 #ifndef DUMUX_ADAPTIVEGRIDRESTART_HH
 #define DUMUX_ADAPTIVEGRIDRESTART_HH
 
-#include <dune/common/deprecated.hh>
+#include <dune/common/version.hh>
 
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/2d/alugrid.hh>
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
 #if HAVE_ALBERTA
@@ -36,7 +33,9 @@
 #endif
 
 #include <dune/grid/common/backuprestore.hh>
+#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
 #include <dune/grid/utility/grapedataioformattypes.hh>
+#endif
 
 #include <dumux/common/basicproperties.hh>
 
@@ -54,7 +53,7 @@ struct GridRestartCheck
 };
 
 // the specializations for grid managers that support restart
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
 struct GridRestartCheck<Dune::ALUGrid<dim, dimworld, elType, refinementType> >
 {
@@ -86,7 +85,7 @@ public:
     static void serializeGrid(Problem& problem)
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "Adaptive restart functionality currently only works for ALUGrid / dune-alugrid.");
+                   "Adaptive restart functionality currently only works for dune-ALUGrid.");
     }
 
     /*!
@@ -96,7 +95,7 @@ public:
     static void restartGrid(Problem& problem)
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "Adaptive restart functionality currently only works for ALUGrid / dune-alugrid.");
+                   "Adaptive restart functionality currently only works for dune-ALUGrid.");
     }
 };
 
@@ -118,7 +117,11 @@ public:
         Dune::BackupRestoreFacility<Grid>::backup(problem.grid(), gridName);
 #else
         double time = problem.timeManager().time();
-        problem.grid().template writeGrid<Dune::xdr>(gridName, time);
+        problem.grid().template writeGrid
+#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
+        <Dune::xdr>
+#endif // Dune < 3.0
+        (gridName, time);
 #endif
     }
 
@@ -127,13 +130,7 @@ public:
      */
     template<class Problem>
     static void restartGrid(Problem& problem)
-    {
-#if HAVE_ALUGRID
-        std::string gridName = restartGridFileName_(problem);
-        double time = problem.timeManager().time();
-        problem.grid().template readGrid<Dune::xdr>(gridName, time);
-#endif
-    }
+    {}
 
 private:
     //! \brief Return the restart file name.

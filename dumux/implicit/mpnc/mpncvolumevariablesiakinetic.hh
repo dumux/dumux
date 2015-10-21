@@ -29,7 +29,6 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_IA_KINETIC_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_IA_KINETIC_HH
 
-#include <dune/common/version.hh>
 #include <dumux/common/dimensionlessnumbers.hh>
 #include "mpncvolumevariablesia.hh"
 #include "mpncpropertieskinetic.hh"
@@ -210,11 +209,8 @@ public:
 
         // setting the dimensionless numbers.
         // obtaining the respective quantities.
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         const unsigned int globalVertexIdx = problem.vertexMapper().subIndex(element, scvIdx, dim);
-#else
-        const unsigned int globalVertexIdx = problem.vertexMapper().map(element, scvIdx, dim);
-#endif
+
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             const Scalar darcyMagVelocity     = problem.model().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
             const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);
@@ -385,11 +381,8 @@ public:
 
         // setting the dimensionless numbers.
         // obtaining the respective quantities.
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         const unsigned int globalVertexIdx = problem.vertexMapper().subIndex(element, scvIdx, dim);
-#else
-        const unsigned int globalVertexIdx = problem.vertexMapper().map(element, scvIdx, dim);
-#endif
+
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             const Scalar darcyMagVelocity     = problem.model().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
             const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);

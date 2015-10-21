@@ -38,14 +38,17 @@ class FVMPFAOInteractionVolume
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     enum
     {
         dim = GridView::dimension
     };
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename Grid::template Codim<0>::EntitySeed ElementSeed;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -99,12 +102,12 @@ public:
 
     //! Store an element of the interaction volume
     /*!
-     *  \param pointer The Dune::EntityPointer to the element
+     *  \param element The element
      *  \param subVolumeIdx The local element index in the interaction volume
      */
-    void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
+    void setSubVolumeElement(const Element& element, int subVolumeIdx)
     {
-        elements_[subVolumeIdx].push_back(pointer);
+        elements_[subVolumeIdx].push_back(element.seed());
     }
 
     //! Store the \f$ dF \f$ for the transmissiblity calculation
@@ -248,11 +251,11 @@ public:
     /*!
      * \param subVolumeIdx The local element index in the interaction volume
      *
-     * \return Dune::EntityPointer to the interaction volume sub-element.
+     * \return The interaction volume sub-element.
      */
-    ElementPointer& getSubVolumeElement(int subVolumeIdx)
+    Element getSubVolumeElement(int subVolumeIdx)
     {
-        return elements_[subVolumeIdx][0];
+        return GridCreator::grid().entity(elements_[subVolumeIdx][0]);
     }
 
     //! Get boundary condtion types for a flux face
@@ -446,7 +449,7 @@ private:
     std::vector<int> faceType_;
     Dune::FieldVector<IndexVector, 2*dim> indexOnElement_;
     Dune::FieldVector<IndexVector, 2*dim> faceIndexOnSubVolume_;
-    std::vector<std::vector<ElementPointer> > elements_;
+    std::vector<std::vector<ElementSeed> > elements_;
     BCVector neumannValues_;
     BCVector dirichletValues_;
 };

@@ -25,7 +25,6 @@
 #ifndef DUMUX_EL2P_ASSEMBLER_HH
 #define DUMUX_EL2P_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
 #include "el2pproperties.hh"
 #include "el2plocaloperator.hh"
 
@@ -75,7 +74,6 @@ class El2PAssembler
 
     enum{dim = GridView::dimension};
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
 
@@ -307,9 +305,6 @@ public:
         if (!enablePartialReassemble)
             return;
 
-        ElementIterator eIt = gridView_().template begin<0>();
-        ElementIterator eEndIt = gridView_().template end<0>();
-
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
         nextReassembleTolerance_ = 0;
@@ -325,13 +320,13 @@ public:
         };
 
         // Mark all red elements
-        for (; eIt != eEndIt; ++eIt) {
+        for (const auto& element : Dune::elements(gridView_())) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
-            int numVertices = eIt->template count<dim>();
+            int numVertices = element.template count<dim>();
             for (int i=0; i < numVertices; ++i) {
-                int globalI = vertexMapper_().map(*eIt, i, dim);
+                int globalI = vertexMapper_().map(element, i, dim);
                 if (vertexColor_[globalI] == Red) {
                     isRed = true;
                     break;
@@ -340,7 +335,7 @@ public:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-            int eIdxGlobal = elementMapper_().map(*eIt);
+            int eIdxGlobal = elementMapper_().map(element);
             if (isRed)
                 elementColor_[eIdxGlobal] = Red;
             else
@@ -348,16 +343,15 @@ public:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        eIt = gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().map(*eIt);
+        for (const auto& element : Dune::elements(gridView_())) {
+            int eIdx = this->elementMapper_().map(element);
             if (elementColor_[eIdx] != Red)
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVertices = eIt->template count<dim>();
+            int numVertices = element.template count<dim>();
             for (int i=0; i < numVertices; ++i) {
-                int globalI = vertexMapper_().map(*eIt, i, dim);
+                int globalI = vertexMapper_().map(element, i, dim);
                 // if a vertex is already red, don't recolor it to
                 // yellow!
                 if (vertexColor_[globalI] != Red)
@@ -366,9 +360,8 @@ public:
         }
 
         // Mark yellow elements
-        eIt = gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().map(*eIt);
+        for (const auto& element : Dune::elements(gridView_())) {
+            int eIdx = this->elementMapper_().map(element);
             if (elementColor_[eIdx] == Red) {
                 continue; // element is red already!
             }
@@ -376,9 +369,9 @@ public:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVertices = eIt->template count<dim>();
+            int numVertices = element.template count<dim>();
             for (int i=0; i < numVertices; ++i) {
-                int globalI = vertexMapper_().map(*eIt, i, dim);
+                int globalI = vertexMapper_().map(element, i, dim);
                 if (vertexColor_[globalI] == Orange) {
                     isYellow = true;
                     break;
@@ -391,16 +384,15 @@ public:
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        eIt = gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().map(*eIt);
+        for (const auto& element : Dune::elements(gridView_())) {
+            int eIdx = this->elementMapper_().map(element);
             if (elementColor_[eIdx] != Green)
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVertices = eIt->template count<dim>();
+            int numVertices = element.template count<dim>();
             for (int i=0; i < numVertices; ++i) {
-                int globalI = vertexMapper_().map(*eIt, i, dim);
+                int globalI = vertexMapper_().map(element, i, dim);
                 // if a vertex is orange, recolor it to yellow!
                 if (vertexColor_[globalI] == Orange)
                     vertexColor_[globalI] = Yellow;
@@ -434,11 +426,8 @@ public:
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdxGlobal = vertexMapper_().subIndex(element, vIdx, dim);
-#else
-        int vIdxGlobal = vertexMapper_().map(element, vIdx, dim);
-#endif
+
         return vertexColor_[vIdxGlobal];
     }
 

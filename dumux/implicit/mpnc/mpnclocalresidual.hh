@@ -61,7 +61,6 @@ protected:
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -277,6 +276,7 @@ public:
      * 		\param isIt
      * 		\param bcTypes
      */
+    template <class IntersectionIterator>
     void evalDirichletSegment_(const IntersectionIterator &isIt,
                                const BoundaryTypes &bcTypes)
     {

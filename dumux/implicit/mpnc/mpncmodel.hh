@@ -114,7 +114,6 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef Dumux::MPNCVtkWriter<TypeTag> MPNCVtkWriter;
@@ -180,10 +179,8 @@ public:
     {
         phaseStorage = 0;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            this->localResidual().addPhaseStorage(phaseStorage, *eIt, phaseIdx);
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            this->localResidual().addPhaseStorage(phaseStorage, element, phaseIdx);
         }
 
         if (this->gridView_().comm().size() > 1)

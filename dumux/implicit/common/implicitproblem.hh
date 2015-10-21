@@ -73,7 +73,6 @@ private:
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GridView::Grid::ctype CoordScalar;
@@ -106,12 +105,10 @@ public:
         , newtonCtl_(asImp_())
     {
         // calculate the bounding box of the local partition of the grid view
-        VertexIterator vIt = gridView.template begin<dim>();
-        const VertexIterator vEndIt = gridView.template end<dim>();
-        for (; vIt!=vEndIt; ++vIt) {
+        for (const auto& vertex : Dune::vertices(gridView)) {
             for (int i=0; i<dimWorld; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().corner(0)[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().corner(0)[i]);
+                bBoxMin_[i] = std::min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
+                bBoxMax_[i] = std::max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
             }
         }
 

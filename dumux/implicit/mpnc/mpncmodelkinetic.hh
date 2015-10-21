@@ -23,7 +23,6 @@
 #ifndef DUMUX_MPNC_MODEL_KINETIC_HH
 #define DUMUX_MPNC_MODEL_KINETIC_HH
 
-#include <dune/common/version.hh>
 // equilibrium model
 #include <dumux/implicit/mpnc/mpncmodel.hh>
 
@@ -52,7 +51,6 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -134,45 +132,35 @@ public:
         }
 
         // loop all elements
-        ElementIterator eIt     = this->gridView_().template begin<0>();
-        ElementIterator eEndIt  = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt){
+        for (const auto& element : Dune::elements(this->gridView_())){
             //obtaining the elementVolumeVariables needed for the Fluxvariables
             FVElementGeometry fvGeometry;
             ElementVolumeVariables elemVolVars;
             ElementBoundaryTypes elemBcTypes;
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element);
 
-            this->setHints(*eIt, elemVolVars);
+            this->setHints(element, elemVolVars);
             elemVolVars.update(this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                false);
 
-            this->updateCurHints(*eIt, elemVolVars);
+            this->updateCurHints(element, elemVolVars);
             for (int fIdx = 0; fIdx < fvGeometry.numScvf; ++ fIdx) {
                 int i = fvGeometry.subContVolFace[fIdx].i;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int I = this->vertexMapper().subIndex(*eIt, i, dim);
-#else
-                int I = this->vertexMapper().map(*eIt, i, dim);
-#endif
+                int I = this->vertexMapper().subIndex(element, i, dim);
 
                 int j = fvGeometry.subContVolFace[fIdx].j;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int J = this->vertexMapper().subIndex(*eIt, j, dim);
-#else
-                int J = this->vertexMapper().map(*eIt, j, dim);
-#endif
+                int J = this->vertexMapper().subIndex(element, j, dim);
 
                 const Scalar scvfArea     = fvGeometry.subContVolFace[fIdx].normal.two_norm();
                 boxSurface_[I]      += scvfArea;
                 boxSurface_[J]      += scvfArea;
 
                 FluxVariables fluxVars(this->problem_(),
-                            *eIt,
+                            element,
                             fvGeometry,
                             fIdx,
                             elemVolVars);
@@ -205,15 +193,14 @@ public:
 //    void checkPlausibility() const
 //    {
 //        // Looping over all elements of the domain
-//        ElementIterator eEndIt = this->problem_().gridView().template end<0>();
-//        for (ElementIterator eIt = this->problem_().gridView().template begin<0>() ; eIt not_eq eEndIt; ++eIt)
+//        for (const auto& element : Dune::elements(this->gridView_()))
 //        {
 //            ElementVolumeVariables elemVolVars;
 //            FVElementGeometry fvGeometry;
 //
 //            // updating the volume variables
-//            fvGeometry.update(this->problem_().gridView(), *eIt);
-//            elemVolVars.update(this->problem_(), *eIt, fvGeometry, false);
+//            fvGeometry.update(this->problem_().gridView(), element);
+//            elemVolVars.update(this->problem_(), element, fvGeometry, false);
 //
 //            std::stringstream  message ;
 //            // number of scv
@@ -284,7 +271,7 @@ public:
 //                }
 //
 //				// velocity Check
-//                const unsigned int globalVertexIdx = this->problem_().vertexMapper().map(*eIt, scvIdx, dim);
+//                const unsigned int globalVertexIdx = this->problem_().vertexMapper().map(element, scvIdx, dim);
 //				for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
 //					const Scalar eps = 1e-6 ;
 //					const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);

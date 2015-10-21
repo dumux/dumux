@@ -91,8 +91,6 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -120,16 +118,14 @@ public:
             // evaluate boundary conditions for the intersections of
             // the current element
             const BoundaryTypes &bcTypes = this->bcTypes_(idx);
-            IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-            const IntersectionIterator &endIt = this->gridView_().iend(this->element_());
-            for (; isIt != endIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
             {
                 // handle only intersections on the boundary
-                if (!isIt->boundary())
+                if (!intersection.boundary())
                     continue;
 
                 // assemble the boundary for all vertices of the current face
-                const int fIdx = isIt->indexInInside();
+                const int fIdx = intersection.indexInInside();
                 const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
@@ -175,13 +171,13 @@ public:
                     }
 
                     // evaluate fluxes at a single boundary segment
-                    asImp_()->evalNeumannSegment_(isIt, idx, boundaryFaceIdx, boundaryVars);
-                    asImp_()->evalOutflowSegment_(isIt, idx, boundaryFaceIdx, boundaryVars);
+                    asImp_()->evalNeumannSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
+                    asImp_()->evalOutflowSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
 
                     //for the corner points, the boundary flux across the vertical non-coupling boundary faces
                     //has to be calculated to fulfill the mass balance
                     //convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
-                    if(!GridView::Grid::multiDomainIntersection(*isIt).neighbor()
+                    if(!GridView::Grid::multiDomainIntersection(intersection).neighbor()
                            && this->boundaryHasMortarCoupling_(this->bcTypes_(idx)))
                     {
                        const GlobalPosition& globalPos = this->fvGeometry_().subContVol[idx].global;
@@ -214,8 +210,8 @@ public:
                     // Beavers-Joseph condition at the coupling boundary/interface
                     if(boundaryHasCoupling_(bcTypes) || boundaryHasMortarCoupling_(bcTypes))
                     {
-                        evalBeaversJoseph_(isIt, idx, boundaryFaceIdx, boundaryVars);
-                        asImp_()->evalCouplingVertex_(isIt, idx, boundaryFaceIdx, boundaryVars);
+                        evalBeaversJoseph_(&intersection, idx, boundaryFaceIdx, boundaryVars);
+                        asImp_()->evalCouplingVertex_(&intersection, idx, boundaryFaceIdx, boundaryVars);
                     }
 
                     // count the number of outer faces to determine, if we are on
@@ -261,6 +257,7 @@ protected:
      * \brief Evaluate one part of the Dirichlet-like coupling conditions for a single
      *        sub-control volume face; rest is done in the local coupling operator
      */
+    template <class IntersectionIterator>
     void evalCouplingVertex_(const IntersectionIterator &isIt,
                              const int scvIdx,
                              const int boundaryFaceIdx,
@@ -304,6 +301,7 @@ protected:
         }
     }
 
+    template <class IntersectionIterator>
     void evalBeaversJoseph_(const IntersectionIterator &isIt,
                             const int scvIdx,
                             const int boundaryFaceIdx,
@@ -344,7 +342,7 @@ protected:
             //set NEUMANN flux (set equal to pressure in problem)
 //             PrimaryVariables priVars(0.0);
 //             this->problem_().neumann(priVars, this->element_(), this->fvGeometry_(),
-//                             *isIt, scvIdx, boundaryFaceIdx);
+//                             intersection, scvIdx, boundaryFaceIdx);
 //             for (int dimIdx=0; dimIdx < dim; ++dimIdx)
 //                 this->residual_[scvIdx][dimIdx] += priVars[dimIdx]*
 //                                                    boundaryFaceArea;

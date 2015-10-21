@@ -25,8 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_ENERGY_HH
 #define DUMUX_MPNC_VTK_WRITER_ENERGY_HH
 
-#include <dune/common/version.hh>
-
 #include "../mpncvtkwritermodule.hh"
 
 namespace Dumux
@@ -98,11 +96,7 @@ public:
                         const ElementBoundaryTypes &elemBcTypes)
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             const unsigned int dofIdxGlobal = this->problem_.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-#else
-            const unsigned int dofIdxGlobal = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
-#endif
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (temperatureOutput_)

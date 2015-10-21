@@ -75,7 +75,6 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      };
 
      typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
      enum {
          dim = GridView::dimension,
          dimWorld = GridView::dimensionworld
@@ -108,15 +107,13 @@ public:
 
              FVElementGeometry fvGeometry;
              static VolumeVariables volVars;
-             ElementIterator eIt = this->gridView_().template begin<0> ();
-             const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-             for (; eIt != eEndIt; ++eIt)
+             for (const auto& element : Dune::elements(this->gridView_()))
              {
 
-                 fvGeometry.update(this->gridView_(), *eIt);
+                 fvGeometry.update(this->gridView_(), element);
                  for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                  {
-                     int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                     int dofIdxGlobal = this->dofMapper().map(element, scvIdx, dofCodim);
 
                      if (ParentType::staticDat_[dofIdxGlobal].visited)
                          continue;
@@ -124,11 +121,11 @@ public:
                      ParentType::staticDat_[dofIdxGlobal].visited = true;
                      volVars.update(curGlobalSol[dofIdxGlobal],
                              this->problem_(),
-                             *eIt,
+                             element,
                              fvGeometry,
                              scvIdx,
                              false);
-                     const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
+                     const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
                      if (primaryVarSwitch_(curGlobalSol,
                              volVars,
                              dofIdxGlobal,

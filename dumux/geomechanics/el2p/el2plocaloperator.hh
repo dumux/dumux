@@ -62,7 +62,6 @@ class El2PLocalOperator
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename Dune::PDELab::IntersectionGeometry<Intersection>::ctype DT;
 
@@ -129,11 +128,8 @@ public:
         typedef typename PressSatLFS::template Child<1>::Type SatLFS;
         const SatLFS& satLFS = pressSatLFS.template child<1>();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         unsigned int numScv = eg.entity().subEntities(dim);
-#else
-        unsigned int numScv = eg.entity().template count<dim>();
-#endif
+
         for (size_type i = 0; i < (numEq-dim) * numScv; i++)
         {
             // retrieve the local residual value for vertex=i%Vertices and equation i/numScv (here 0 or 1)
@@ -370,41 +366,39 @@ public:
         }
         // include boundary conditions
         // iterate over element intersections of codim dim-1
-        IntersectionIterator isIt = model_.problem().gridView().ibegin(eg.entity());
-        const IntersectionIterator &isEndIt = model_.problem().gridView().iend(eg.entity());
-        for (; isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(model_.problem().gridView(), eg.entity()))
         {
             // handle only faces on the boundary
-            if (!isIt->boundary())
+            if (!intersection.boundary())
                 continue;
 
             // select quadrature rule for intersection faces (dim-1)
-            Dune::GeometryType gtface = isIt->geometryInInside().type();
+            Dune::GeometryType gtface = intersection.geometryInInside().type();
             const Dune::QuadratureRule<DF,dim-1>& rule = Dune::QuadratureRules<DF,dim-1>::rule(gtface,qorder);
 
             // get face index of this intersection
-            int fIdx = isIt->indexInInside();
+            int fIdx = intersection.indexInInside();
             // get dimension of face
-            const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::dimension;
+            const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::mydimension;
 
             // get reference element for intersection geometry (reference element for face if dim = 3)
             const Dune::ReferenceElement<DT,dimIs>& refElement = Dune::ReferenceElements<DT,dimIs>::general(geomType);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
             const Dune::ReferenceElement<DT,dimIs-1> &face_refElement =
-                Dune::ReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
+                Dune::ReferenceElements<DT,dimIs-1>::general(intersection.geometryInInside().type());
 
             // Treat Neumann boundary conditions
             // loop over quadrature points and integrate normal stress changes (traction changes)
             for (typename Dune::QuadratureRule<DF,dim-1>::const_iterator it=rule.begin(); it!=rule.end(); ++it)
             {
                 // position of quadrature point in local coordinates of element
-                DimVector local = isIt->geometryInInside().global(it->position());
+                DimVector local = intersection.geometryInInside().global(it->position());
 
                 GlobalPosition globalPos = geometry.global(local);
 
                 // evaluate boundary condition type
                 BoundaryTypes boundaryTypes;
-                model_.problem().boundaryTypes(boundaryTypes, globalPos);
+                model_.problem().boundaryTypesAtPos(boundaryTypes, globalPos);
 
                 // skip rest if we are on Dirichlet boundary
                 if (!boundaryTypes.hasNeumann())
@@ -416,10 +410,10 @@ public:
 
                 // evaluate stress boundary condition. The stress change is assumed to be in normal direction (i.e. traction)
                 PrimaryVariables traction;
-                model_.problem().neumann(traction, globalPos);
+                model_.problem().neumannAtPos(traction, globalPos);
 
                 // get quadrature rule weight for intersection
-                const RF qWeight = it->weight() * isIt->geometry().integrationElement(it->position());
+                const RF qWeight = it->weight() * intersection.geometry().integrationElement(it->position());
 
                 for(unsigned int coordDir=0; coordDir<dim; ++coordDir){
                     const DisplacementScalarLFS& uLFS = displacementLFS.child(coordDir);
@@ -463,20 +457,20 @@ public:
                                         refElement.subEntity(fIdx,1,j,codim))
                         {
                             // get local coordinate for this degree of freedom
-//                             this doesn't work: DimVector local = isIt->geometryInInside().global(face_refElement.position(j,codim-1));
+//                             this doesn't work: DimVector local = intersection.geometryInInside().global(face_refElement.position(j,codim-1));
                             DimVector local = refElement.template geometry<1>(fIdx).global(face_refElement.position(j, codim-1));
 
                             GlobalPosition globalPos = geometry.global(local);
 
                             // evaluate boundary condition type
                             BoundaryTypes boundaryTypes;
-                            model_.problem().boundaryTypes(boundaryTypes, globalPos);
+                            model_.problem().boundaryTypesAtPos(boundaryTypes, globalPos);
 
                             if (boundaryTypes.isDirichlet(Indices::u(coordDir)))
                             {
                                 // set value of dirichlet BC
                                 PrimaryVariables dirichletValues;
-                                model_.problem().dirichlet(dirichletValues, globalPos);
+                                model_.problem().dirichletAtPos(dirichletValues, globalPos);
                                 // retrieve residual value which has already been calculated for the given vertex before it
                                 // was clear that we are on a Dirichlet boundary
                                 Scalar tmpResVal = r.container().base()[(numEq-dim)*dispSize + coordDir*dispSize + i];
@@ -535,11 +529,7 @@ public:
         typedef Dune::PDELab::LocalVector<R> LocalResidualVector;
         typedef Dune::PDELab::WeightedVectorAccumulationView<LocalResidualVector> ResidualView;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         unsigned int numScv = eg.entity().subEntities(dim);
-#else
-        unsigned int numScv = eg.entity().template count<dim>();
-#endif
 
         // loop over all degrees of freedom of the current element
         for (size_type j = 0; j < numScv*numEq; j++)

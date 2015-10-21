@@ -53,14 +53,6 @@ public:
         gnuplot_.setInteraction(interaction);
     }
 
-    DUNE_DEPRECATED_MSG("plotdeff() has changed signature")
-    void plotdeff(Scalar porosity,
-                  Scalar lowerSat,
-                  Scalar upperSat,
-                  std::string plotName,
-                  bool interaction)
-    { }
-
     /*!
      * \brief Plot the effective diffusion factor-saturation curve
      *

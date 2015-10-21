@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/common/exceptions.hh>
 #include <dumux/implicit/common/implicitassembler.hh>
 #include <dumux/parallel/vertexhandles.hh>
@@ -45,9 +43,7 @@ class BoxAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum{ dim = GridView::dimension };
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
 public:
     BoxAssembler(): ParentType() {}
@@ -82,9 +78,6 @@ private:
         if (!this->enablePartialReassemble_())
             return;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
@@ -99,22 +92,16 @@ private:
         }
 
         // Mark all red elements
-        for (; eIt != eEndIt; ++eIt) {
+        for (const auto& element : Dune::elements(this->gridView_())) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numVertices = eIt->subEntities(dim);
-#else
-            int numVertices = eIt->template count<dim>();
-#endif
+            int numVertices = element.subEntities(dim);
+
             for (int i=0; i < numVertices; ++i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
-#else
-                int globalI = this->vertexMapper_().map(*eIt, i, dim);
-#endif
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
+
                 if (this->vertexColor_[globalI] == ParentType::Red) {
                     isRed = true;
                     break;
@@ -123,11 +110,8 @@ private:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int eIdxGlobal = this->elementMapper_().index(*eIt);
-#else
-            int eIdxGlobal = this->elementMapper_().map(*eIt);
-#endif
+            int eIdxGlobal = this->elementMapper_().index(element);
+
             if (isRed)
                 this->elementColor_[eIdxGlobal] = ParentType::Red;
             else
@@ -135,28 +119,18 @@ private:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int eIdx = this->elementMapper_().index(*eIt);
-#else
-            int eIdx = this->elementMapper_().map(*eIt);
-#endif
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
+
             if (this->elementColor_[eIdx] != ParentType::Red)
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numVertices = eIt->subEntities(dim);
-#else
-            int numVertices = eIt->template count<dim>();
-#endif
+            int numVertices = element.subEntities(dim);
+
             for (int i = 0; i < numVertices; ++i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
-#else
-                int globalI = this->vertexMapper_().map(*eIt, i, dim);
-#endif
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
+
                 // if a vertex is already red, don't recolor it to
                 // yellow!
                 if (this->vertexColor_[globalI] != ParentType::Red) {
@@ -176,13 +150,9 @@ private:
                                 Dune::ForwardCommunication);
 
         // Mark yellow elements
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int eIdx = this->elementMapper_().index(*eIt);
-#else
-            int eIdx = this->elementMapper_().map(*eIt);
-#endif
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
+
             if (this->elementColor_[eIdx] == ParentType::Red) {
                 continue; // element is red already!
             }
@@ -190,17 +160,11 @@ private:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numVertices = eIt->subEntities(dim);
-#else
-            int numVertices = eIt->template count<dim>();
-#endif
+            int numVertices = element.subEntities(dim);
+
             for (int i = 0; i < numVertices; ++i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
-#else
-                int globalI = this->vertexMapper_().map(*eIt, i, dim);
-#endif
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
+
                 if (this->vertexColor_[globalI] == ParentType::Orange) {
                     isYellow = true;
                     break;
@@ -213,28 +177,18 @@ private:
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int eIdx = this->elementMapper_().index(*eIt);
-#else
-            int eIdx = this->elementMapper_().map(*eIt);
-#endif
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
+
             if (this->elementColor_[eIdx] != ParentType::Green)
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numVertices = eIt->subEntities(dim);
-#else
-            int numVertices = eIt->template count<dim>();
-#endif
+            int numVertices = element.subEntities(dim);
+
             for (int i = 0; i < numVertices; ++i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
-#else
-                int globalI = this->vertexMapper_().map(*eIt, i, dim);
-#endif
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
+
                 // if a vertex is orange, recolor it to yellow!
                 if (this->vertexColor_[globalI] == ParentType::Orange)
                     this->vertexColor_[globalI] = ParentType::Yellow;
@@ -277,15 +231,8 @@ private:
         // each vertex
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numVerticesGlobal);
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &element = *eIt;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        for (const auto& element : Dune::elements(this->gridView_())) {
             int numVerticesLocal = element.subEntities(dim);
-#else
-            int numVerticesLocal = element.template count<dim>();
-#endif
 
             // if the element is not in the interior or the process
             // border, all dofs just contain main-diagonal entries
@@ -293,11 +240,8 @@ private:
                 element.partitionType() != Dune::BorderEntity)
             {
                 for (int i = 0; i < numVerticesLocal; ++i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
-#else
-                    int globalI = this->vertexMapper_().map(*eIt, i, dim);
-#endif
+                    int globalI = this->vertexMapper_().subIndex(element, i, dim);
+
                     neighbors[globalI].insert(globalI);
                 }
             }
@@ -305,17 +249,11 @@ private:
             {
                 // loop over all element vertices
                 for (int i = 0; i < numVerticesLocal - 1; ++i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
-#else
-                    int globalI = this->vertexMapper_().map(*eIt, i, dim);
-#endif
+                    int globalI = this->vertexMapper_().subIndex(element, i, dim);
+
                     for (int j = i + 1; j < numVerticesLocal; ++j) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                        int globalJ = this->vertexMapper_().subIndex(*eIt, j, dim);
-#else
-                        int globalJ = this->vertexMapper_().map(*eIt, j, dim);
-#endif
+                        int globalJ = this->vertexMapper_().subIndex(element, j, dim);
+
                         // make sure that vertex j is in the neighbor set
                         // of vertex i and vice-versa
                         neighbors[globalI].insert(globalJ);
@@ -353,11 +291,8 @@ private:
     void assembleElement_(const Element &element)
     {
         if (this->enablePartialReassemble_()) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int eIdxGlobal = this->model_().elementMapper().index(element);
-#else
-            int eIdxGlobal = this->model_().elementMapper().map(element);
-#endif
+
             if (this->elementColor_[eIdxGlobal] == ParentType::Green) {
                 ++this->greenElems_;
 
@@ -368,17 +303,11 @@ private:
 
         this->model_().localJacobian().assemble(element);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVerticesLocal = element.subEntities(dim);
-#else
-        int numVerticesLocal = element.template count<dim>();
-#endif
+
         for (int i=0; i < numVerticesLocal; ++ i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int globI = this->vertexMapper_().subIndex(element, i, dim);
-#else
-            int globI = this->vertexMapper_().map(element, i, dim);
-#endif
+
 
             // update the right hand side
             this->residual_[globI] += this->model_().localJacobian().residual(i);
@@ -401,11 +330,8 @@ private:
 
                 // update the jacobian matrix
                 for (int j = 0; j < numVerticesLocal; ++ j) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int globJ = this->vertexMapper_().subIndex(element, j, dim);
-#else
-                    int globJ = this->vertexMapper_().map(element, j, dim);
-#endif
+
                     (*this->matrix_)[globI][globJ] +=
                         this->model_().localJacobian().mat(i,j);
                 }
@@ -419,17 +345,11 @@ private:
     {
         this->model_().localResidual().eval(element);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVerticesLocal = element.subEntities(dim);
-#else
-        int numVerticesLocal = element.template count<dim>();
-#endif
+
         for (int i = 0; i < numVerticesLocal; ++ i) {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int globI = this->vertexMapper_().subIndex(element, i, dim);
-#else
-            int globI = this->vertexMapper_().map(element, i, dim);
-#endif
+
 
             // update the right hand side
             this->residual_[globI] += this->model_().localResidual().residual(i);
@@ -441,27 +361,21 @@ private:
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVerticesLocal = element.subEntities(dim);
-#else
-        int numVerticesLocal = element.template count<dim>();
-#endif
-        for (int i=0; i < numVerticesLocal; ++i) {
-            const VertexPointer vp = element.template subEntity<dim>(i);
 
-            if (vp->partitionType() == Dune::InteriorEntity ||
-                vp->partitionType() == Dune::BorderEntity)
+        for (int i=0; i < numVerticesLocal; ++i) {
+            auto vertex = element.template subEntity<dim>(i);
+
+            if (vertex.partitionType() == Dune::InteriorEntity ||
+                vertex.partitionType() == Dune::BorderEntity)
             {
                 // do not change the non-ghost vertices
                 continue;
             }
 
             // set main diagonal entries for the vertex
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int vIdx = this->vertexMapper_().index(*vp);
-#else
-            int vIdx = this->vertexMapper_().map(*vp);
-#endif
+            int vIdx = this->vertexMapper_().index(vertex);
+
             typedef typename JacobianMatrix::block_type BlockType;
             BlockType &J = (*this->matrix_)[vIdx][vIdx];
             for (int j = 0; j < BlockType::rows; ++j)

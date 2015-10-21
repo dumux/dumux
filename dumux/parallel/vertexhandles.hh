@@ -25,7 +25,6 @@
 #ifndef DUMUX_VERTEX_HANDLES_HH
 #define DUMUX_VERTEX_HANDLES_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 
@@ -70,22 +69,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdx = mapper_.index(e);
-#else
-        int vIdx = mapper_.map(e);
-#endif
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdx = mapper_.index(e);
-#else
-        int vIdx = mapper_.map(e);
-#endif
 
         FieldType tmp;
         buff.read(tmp);
@@ -136,22 +127,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdx = mapper_.index(e);
-#else
-        int vIdx = mapper_.map(e);
-#endif
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdx = mapper_.index(e);
-#else
-        int vIdx = mapper_.map(e);
-#endif
 
         FieldType tmp;
         buff.read(tmp);
@@ -203,23 +186,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdx = mapper_.index(e);
-#else
-        int vIdx = mapper_.map(e);
-#endif
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdx = mapper_.index(e);
-#else
-        int vIdx = mapper_.map(e);
-#endif
-
         FieldType tmp;
         buff.read(tmp);
         container_[vIdx] = std::min(container_[vIdx], tmp);

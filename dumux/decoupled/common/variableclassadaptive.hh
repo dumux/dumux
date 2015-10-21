@@ -54,8 +54,6 @@ private:
 
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LevelGridView LevelGridView;
-    typedef typename LevelGridView::template Codim<0>::Iterator LevelIterator;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
 
 private:
@@ -96,31 +94,30 @@ public:
             //get grid view on level grid
             LevelGridView levelView = grid_.levelGridView(level);
 
-            for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
+            for (const auto& element : Dune::elements(levelView))
             {
                 //get your map entry
-                AdaptedValues &adaptedValues = adaptationMap_[*eIt];
+                AdaptedValues &adaptedValues = adaptationMap_[element];
 
                 // put your value in the map
-                if (eIt->isLeaf())
+                if (element.isLeaf())
                 {
                     // get index
-                    int indexI = this->index(*eIt);
+                    int indexI = this->index(element);
 
                     CellData& cellData = this->cellData(indexI);
 
-                    cellData.storeAdaptionValues(adaptedValues, *eIt);
+                    cellData.storeAdaptionValues(adaptedValues, element);
 
                     adaptedValues.count = 1;
                 }
                 //Average in father
-                if (eIt->level() > 0)
+                if (element.level() > 0)
                 {
-                    ElementPointer epFather = eIt->father();
-                    AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
+                    auto father = element.father();
+                    AdaptedValues& adaptedValuesFather = adaptationMap_[father];
                     adaptedValuesFather.count += 1;
-                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather,
-                                                    *epFather);
+                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather, father);
                 }
             }
         }
@@ -147,48 +144,46 @@ public:
         {
             LevelGridView levelView = grid_.levelGridView(level);
 
-            for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
+            for (const auto& element : Dune::elements(levelView))
             {
                 // only treat non-ghosts, ghost data is communicated afterwards
-                if (eIt->partitionType() == Dune::GhostEntity)
+                if (element.partitionType() == Dune::GhostEntity)
                     continue;
 
-                if (!eIt->isNew())
+                if (!element.isNew())
                 {
                     //entry is in map, write in leaf
-                    if (eIt->isLeaf())
+                    if (element.isLeaf())
                     {
-                        AdaptedValues &adaptedValues = adaptationMap_[*eIt];
-                        int newIdxI = this->index(*eIt);
+                        AdaptedValues &adaptedValues = adaptationMap_[element];
+                        int newIdxI = this->index(element);
 
                         CellData& cellData = this->cellData(newIdxI);
 
-                        cellData.setAdaptionValues(adaptedValues, *eIt);
+                        cellData.setAdaptionValues(adaptedValues, element);
                     }
                 }
                 else
                 {
                     // value is not in map, interpolate from father element
-                    if (eIt->level() > 0)
+                    if (element.level() > 0)
                     {
-                        ElementPointer epFather = eIt->father();
-
-                        // create new entry: reconstruct from adaptationMap_[*father] to a new
-                        // adaptationMap_[*son]
-                        CellData::reconstructAdaptionValues(adaptationMap_, *epFather, *eIt, problem);
+                        // create new entry: reconstruct from adaptationMap_[father] to a new
+                        // adaptationMap_[son]
+                        CellData::reconstructAdaptionValues(adaptationMap_, element.father(), element, problem);
 
                         // access new son
-                        AdaptedValues& adaptedValues = adaptationMap_[*eIt];
+                        AdaptedValues& adaptedValues = adaptationMap_[element];
                         adaptedValues.count = 1;
 
                         // if we are on leaf, store reconstructed values of son in CellData object
-                        if (eIt->isLeaf())
+                        if (element.isLeaf())
                         {
                             // acess new CellData object
-                            int newIdxI = this->index(*eIt);
+                            int newIdxI = this->index(element);
                             CellData& cellData = this->cellData(newIdxI);
 
-                            cellData.setAdaptionValues(adaptedValues, *eIt);
+                            cellData.setAdaptionValues(adaptedValues, element);
                         }
                     }
                 }

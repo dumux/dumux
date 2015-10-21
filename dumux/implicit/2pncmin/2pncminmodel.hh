@@ -146,8 +146,6 @@ class TwoPNCMinModel: public TwoPNCModel<TypeTag>
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::ctype CoordScalar;
@@ -239,30 +237,25 @@ public:
         VolumeVariables volVars;
         ElementVolumeVariables elemVolVars;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator elemEndIt = this->gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            int idx = this->problem_().elementMapper().map(*elemIt);
+            int idx = this->problem_().elementMapper().index(element);
             (*rank)[idx] = this->gridView_().comm().rank();
-            fvGeometry.update(this->gridView_(), *elemIt);
+            fvGeometry.update(this->gridView_(), element);
 
             elemVolVars.update(this->problem_(),
-                    *elemIt,
+                    element,
                     fvGeometry,
                     false /* oldSol? */);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numVerts = elemIt->subEntities(dim);
-#else
-            int numVerts = elemIt->template count<dim> ();
-#endif
+            int numVerts = element.subEntities(dim);
+
             for (int i = 0; i < numVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                int globalIdx = this->vertexMapper().subIndex(element, i, dim);
                 volVars.update(sol[globalIdx],
                                this->problem_(),
-                               *elemIt,
+                               element,
                                fvGeometry,
                                i,
                                false);
@@ -298,7 +291,7 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     (*molarity[compIdx])[globalIdx] = (volVars.fluidState().molarity(wPhaseIdx, compIdx));
 
-                Tensor K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(*elemIt, fvGeometry, i));
+                Tensor K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, i));
 
                 for (int j = 0; j<dim; ++j)
                     (*Perm[j])[globalIdx] = K[j][j] * volVars.permeabilityFactor();
@@ -306,8 +299,8 @@ public:
 
             // velocity output
             if(velocityOutput.enableOutput()){
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *elemIt, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *elemIt, nPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
             }
         }  // loop over element
 
@@ -387,14 +380,12 @@ public:
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
-        ElementIterator it = this->gridView_().template begin<0> ();
-        const ElementIterator &endit = this->gridView_().template end<0> ();
-        for (; it != endit; ++it)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            fvGeometry.update(this->gridView_(), *it);
+            fvGeometry.update(this->gridView_(), element);
             for (int i = 0; i < fvGeometry.numScv; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*it, i, dim);
+                int globalIdx = this->vertexMapper().subIndex(element, i, dim);
 
                 if (this->staticDat_[globalIdx].visited)
                     continue;
@@ -402,11 +393,11 @@ public:
                 this->staticDat_[globalIdx].visited = true;
                 volVars.update(curGlobalSol[globalIdx],
                                this->problem_(),
-                               *it,
+                               element,
                                fvGeometry,
                                i,
                                false);
-                const GlobalPosition &global = it->geometry().corner(i);
+                const GlobalPosition &global = element.geometry().corner(i);
                 if (primaryVarSwitch_(curGlobalSol,
                                       volVars,
                                       globalIdx,

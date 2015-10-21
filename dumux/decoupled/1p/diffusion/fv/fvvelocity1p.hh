@@ -47,23 +47,20 @@ template<class TypeTag>
 class FVVelocity1P
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
-     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
     enum
     {
@@ -86,9 +83,9 @@ public:
     FVVelocity1P(Problem& problem)
     : problem_(problem), gravity_(problem.gravity())
       {
-        ElementIterator element = problem_.gridView().template begin<0> ();
-        Scalar temperature = problem_.temperature(*element);
-        Scalar referencePress = problem_.referencePressure(*element);
+        const auto element = *problem_.gridView().template begin<0>();
+        Scalar temperature = problem_.temperature(element);
+        Scalar referencePress = problem_.referencePressure(element);
 
         density_ = Fluid::density(temperature, referencePress);
         viscosity_ = Fluid::viscosity(temperature, referencePress);
@@ -115,15 +112,14 @@ public:
                 problem_.gridView().size(0)));
 
         // compute update vector
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // cell index
-            int eIdxGlobal = problem_.variables().index(*eIt);
+            int eIdxGlobal = problem_.variables().index(element);
 
             CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-            const typename Element::Geometry& geometry = eIt->geometry();
+            const typename Element::Geometry& geometry = element.geometry();
             // get corresponding reference element
             typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::ReferenceElement< Scalar , dim > & refElement =
@@ -133,16 +129,12 @@ public:
             std::vector<Scalar> flux(numberOfFaces,0);
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator
-            isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator
-                    isIt = problem_.gridView().ibegin(*eIt); isIt
-                    !=isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
-                int isIndex = isIt->indexInInside();
+                int isIndex = intersection.indexInInside();
 
-                flux[isIndex] = isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
+                flux[isIndex] = intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
             }
 
             // calculate velocity on reference element as the Raviart-Thomas-0
@@ -205,16 +197,16 @@ private:
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
+    auto elementI = intersection.inside();
+    auto elementJ = intersection.outside();
 
-    int eIdxGlobalJ = problem_.variables().index(*elementJ);
+    int eIdxGlobalJ = problem_.variables().index(elementJ);
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
-    const GlobalPosition& globalPosJ = elementJ->geometry().center();
+    const GlobalPosition& globalPosI = elementI.geometry().center();
+    const GlobalPosition& globalPosJ = elementJ.geometry().center();
 
     //get face index
     int isIndexI = intersection.indexInInside();
@@ -232,8 +224,8 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
 
-    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
-            problem_.spatialParams().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(elementI),
+            problem_.spatialParams().intrinsicPermeability(elementJ));
 
     Dune::FieldVector < Scalar, dim > permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -277,7 +269,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {
-    ElementPointer element = intersection.inside();
+    auto element = intersection.inside();
 
     //get face index
     int isIndex = intersection.indexInInside();
@@ -295,7 +287,7 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         problem_.dirichlet(boundValues, intersection);
 
         // get global coordinates of cell centers
-        const GlobalPosition& globalPosI = element->geometry().center();
+        const GlobalPosition& globalPosI = element.geometry().center();
 
         // center of face in global coordinates
         const GlobalPosition& globalPosJ = intersection.geometry().center();
@@ -310,7 +302,7 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         // compute vectorized permeabilities
         DimMatrix meanPermeability(0);
 
-        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*element));
+        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(element));
 
         //multiply with normal vector at the boundary
         Dune::FieldVector < Scalar, dim > permeability(0);

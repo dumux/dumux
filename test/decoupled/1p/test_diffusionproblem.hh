@@ -24,7 +24,6 @@
 #ifndef DUMUX_TEST_2P_PROBLEM_HH
 #define DUMUX_TEST_2P_PROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/components/unit.hh>
@@ -174,7 +173,6 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -221,15 +219,9 @@ public:
     {
         ScalarSolution *exactPressure = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
 
-        ElementIterator eIt = this->gridView().template begin<0>();
-        ElementIterator eEndIt = this->gridView().template end<0>();
-        for(;eIt != eEndIt; ++eIt)
+        for(const auto& element : Dune::elements(this->gridView()))
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            (*exactPressure)[this->elementMapper().index(*eIt)][0] = exact(eIt->geometry().center());
-#else
-            (*exactPressure)[this->elementMapper().map(*eIt)][0] = exact(eIt->geometry().center());
-#endif
+            (*exactPressure)[this->elementMapper().index(element)][0] = exact(element.geometry().center());
         }
 
         this->resultWriter().attachCellData(*exactPressure, "exact pressure");

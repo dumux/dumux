@@ -80,10 +80,6 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;
@@ -157,12 +153,9 @@ void FvMpfaL2dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
                                                                                          CellData& cellData4,
                                                                                          InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
 {
-    ElementPointer & elementPointer1 = interactionVolume.getSubVolumeElement(0);
-    ElementPointer & elementPointer2 = interactionVolume.getSubVolumeElement(1);
-
     // cell index
-    int globalIdx1 = problem_.variables().index(*elementPointer1);
-    int globalIdx2 = problem_.variables().index(*elementPointer2);
+    int globalIdx1 = problem_.variables().index(interactionVolume.getSubVolumeElement(0));
+    int globalIdx2 = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
 
     // get pressure values
     Dune::FieldVector < Scalar, 2 * dim > potW(0);

@@ -76,8 +76,6 @@ public:
         enum {dim=Grid::dimension};
         typedef typename Grid::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
-        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 
         uMin = 1e100;
@@ -100,11 +98,8 @@ public:
         double denominatorGrad = 0;
         double numeratorFlux = 0;
         double denominatorFlux = 0;
-        ElementIterator endEIt = gridView.template end<0>();
-        for (ElementIterator eIt = gridView.template begin<0>(); eIt != endEIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView))
         {
-            const Element& element = *eIt;
-
             // element geometry
             const Geometry& geometry = element.geometry();
             Dune::GeometryType geomType = geometry.type();
@@ -136,22 +131,21 @@ public:
             int isIdx = -1;
             Dune::FieldVector<Scalar,2*dim> fluxVector;
             Dune::FieldVector<Scalar,dim> exactGradient;
-            IntersectionIterator endis = gridView.iend(element);
-            for (IntersectionIterator is = gridView.ibegin(element); is!=endis; ++is)
+            for (const auto& intersection : Dune::intersections(gridView, element))
             {
                 // local number of facet
-                int fIdx = is->indexInInside();
+                int fIdx = intersection.indexInInside();
 
                 if (consecutiveNumbering)
                     isIdx++;
                 else
                     isIdx = fIdx;
 
-                Dune::FieldVector<double,dim> faceGlobal = is->geometry().center();
-                double faceVol = is->geometry().volume();
+                Dune::FieldVector<double,dim> faceGlobal = intersection.geometry().center();
+                double faceVol = intersection.geometry().volume();
 
                 // get normal vector
-                Dune::FieldVector<double,dim> unitOuterNormal = is->centerUnitOuterNormal();
+                Dune::FieldVector<double,dim> unitOuterNormal = intersection.centerUnitOuterNormal();
 
                 // get the exact gradient
                 exactGradient = problem.exactGrad(faceGlobal);
@@ -180,7 +174,7 @@ public:
                 approximateFlux *= faceVol;
                 fluxVector[fIdx] = approximateFlux;
 
-                if (!is->neighbor()) {
+                if (!intersection.neighbor()) {
                     if (fabs(faceGlobal[1]) < 1e-6) {
                         fluy0 += approximateFlux;
                         exactfluy0 += exactFlux;

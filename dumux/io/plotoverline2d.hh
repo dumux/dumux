@@ -29,7 +29,6 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/propertysystem.hh>
 
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
@@ -62,7 +61,6 @@ class PlotOverLine2D
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)               Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem)              Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView)             GridView;
-    typedef typename GridView::template Codim<0>::Iterator        ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry)    FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, DofMapper)            DofMapper;
@@ -89,25 +87,6 @@ class PlotOverLine2D
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    /*!
-     * \brief A function that writes results over a line (like paraview's plotOverline into a text file.)
-     *
-     *        The writer needs to be called in postTimeStep().
-     *
-     *        This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...)
-     *        over space (1D, over a line) into a text file,
-     *        so they can be read in by another program like matlab.
-     *        The file can be found by the extension: dat
-     */
-    DUNE_DEPRECATED_MSG("write() method has changed signature")
-    void write(const Problem & problem,
-               const GlobalPosition & pointOne,
-               const GlobalPosition & pointTwo,
-               const std::string appendOutputName = "")
-    {
-        write(problem, pointOne, pointTwo, true, appendOutputName);
-    }
-
     /*!
      * \brief A function that writes results over a line (like paraview's plotOverline into a text file.)
      *
@@ -159,12 +138,11 @@ public:
         }
 
         // Looping over all elements of the domain
-        ElementIterator eEndIt = problem.gridView().template end<0>();
-        for (ElementIterator eIt = problem.gridView().template begin<0>() ; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem.gridView()))
         {
             // updating the volume variables
-            fvGeometry.update(problem.gridView(), *eIt);
-            elemVolVars.update(problem, *eIt, fvGeometry, false);
+            fvGeometry.update(problem.gridView(), element);
+            elemVolVars.update(problem, element, fvGeometry, false);
 
             // number of scv
             const unsigned int numScv = fvGeometry.numScv;
@@ -172,11 +150,8 @@ public:
             for (unsigned int scvIdx=0; scvIdx < numScv; ++scvIdx)
             {
                 // find some global identification
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                const unsigned int vIdxGlobal = problem.vertexMapper().subIndex(*eIt, scvIdx, dim);
-#else
-                const unsigned int vIdxGlobal = problem.vertexMapper().map(*eIt, scvIdx, dim);
-#endif
+                const unsigned int vIdxGlobal = problem.vertexMapper().subIndex(element, scvIdx, dim);
+
                 // only write out if the vertex was not already visited
                 if (isVisited[vIdxGlobal])
                     continue;

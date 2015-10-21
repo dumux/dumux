@@ -30,10 +30,7 @@
 // dumux environment
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dune/grid/yaspgrid.hh>
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/2d/alugrid.hh>
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
 #if HAVE_UG
@@ -72,7 +69,7 @@ struct GridImp<Dune::YaspGrid<dim>, dim>
     static const int imp = GridTypes::yaspGrid;
 };
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 template<int dim>
 struct GridImp<Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>, dim>
 {

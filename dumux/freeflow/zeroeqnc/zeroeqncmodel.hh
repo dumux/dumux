@@ -93,9 +93,6 @@ class ZeroEqncModel : public ZeroEqModel<TypeTag>
            numComponents = Indices::numComponents };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -164,23 +161,21 @@ public:
         ElementBoundaryTypes elemBcTypes;
         VolumeVariables volVars;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            int idx = this->elementMapper().map(*eIt);
+            int idx = this->elementMapper().index(element);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element, fvGeometry);
 
-            int numLocalVerts = eIt->template count<dim>();
+            int numLocalVerts = element.template subEntities(dim);
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
+                int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                i,
                                false);
@@ -232,15 +227,13 @@ public:
         asImp_().writeFluxVarsHeader(fluxFile);
         fluxFile << std::endl;
 
-        eIt = this->gridView_().template begin<0>();
-        eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            fvGeometry.update(this->gridView_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                false);
 
@@ -252,13 +245,11 @@ public:
             Scalar sumYPlus = 0.0;
             Scalar sumEddyDiffusivity = 0.0;
 
-            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
-            IntersectionIterator isEndIt = this->gridView_().iend(*eIt);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(this->gridView_(), element))
             {
-                int fIdx = isIt->indexInInside();
+                int fIdx = intersection.indexInInside();
 
-                FluxVariables fluxVars(this->problem_(), *eIt, fvGeometry,
+                FluxVariables fluxVars(this->problem_(), element, fvGeometry,
                                        fIdx, elemVolVars, false);
 
                 asImp_().writeFluxVarsData(fluxFile, fluxVars);
@@ -273,7 +264,7 @@ public:
                 numFluxVars += 1;
             }
 
-            int eIdxGlobal = this->elementMapper().map(*eIt);
+            int eIdxGlobal = this->elementMapper().index(element);
             mut[eIdxGlobal] = sumDynamicEddyViscosity / numFluxVars;
             nut[eIdxGlobal] = sumKinematicEddyViscosity / numFluxVars;
             lmix[eIdxGlobal] = sumMixingLength / numFluxVars;

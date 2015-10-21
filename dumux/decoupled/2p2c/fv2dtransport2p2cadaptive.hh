@@ -82,8 +82,6 @@ class FV2dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -194,12 +192,10 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
 
     Dune::FieldVector<Scalar, 2> entries(0.), timestepFlux(0.);
     // compute update vector
-    ElementIterator eEndIt = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get cell infos
-        int globalIdxI = problem().variables().index(*eIt);
-//        const GlobalPosition globalPos = eIt->geometry().center();
+        int globalIdxI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         // some variables for time step calculation
@@ -219,24 +215,26 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
         }
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(element);
+        for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
-            int indexInInside = isIt->indexInInside();
+            const auto& intersection = *isIt;
+
+            int indexInInside = intersection.indexInInside();
 
             // handle interior face
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                if (enableMPFA && (isIt->outside()->level() != eIt->level()))
+                if (enableMPFA && (intersection.outside().level() != element.level()))
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
-                    this->getFlux(entries, timestepFlux, *isIt, cellDataI);
+                    this->getFlux(entries, timestepFlux, intersection, cellDataI);
             }
 
             //     Boundary Face
-            if (isIt->boundary())
+            if (intersection.boundary())
             {
-                this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+                this->getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
             }
 
             if (this->enableLocalTimeStepping())
@@ -273,13 +271,13 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
-        problem().source(q, *eIt);
+        problem().source(q, element);
         updateVec[wCompIdx][globalIdxI] += q[contiWEqIdx];
         updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-                        / problem().spatialParams().porosity(*eIt);
+                        / problem().spatialParams().porosity(element);
 
         //calculate time step
         if (this->enableLocalTimeStepping())
@@ -351,26 +349,26 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     fluxEntries = 0.;
     timestepFlux = 0.;
     // cell information
-    ElementPointer elementI= intersectionIterator->inside();
-    int globalIdxI = problem().variables().index(*elementI);
+    auto elementI = intersectionIterator->inside();
+    int globalIdxI = problem().variables().index(elementI);
 
     // get position
-    const GlobalPosition globalPos = elementI->geometry().center();
+    const GlobalPosition globalPos = elementI.geometry().center();
     const GlobalPosition& gravity_ = problem().gravity();
     // cell volume, assume linear map here
-    Scalar volume = elementI->geometry().volume();
+    Scalar volume = elementI.geometry().volume();
 
     // get values of cell I
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
-    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementI));
+    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
     PhaseVector SmobI(0.);
     SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementI).swr())
+                            - problem().spatialParams().materialLawParams(elementI).swr())
                             , 1e-2);
     SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementI).snr())
+                                - problem().spatialParams().materialLawParams(elementI).snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -380,12 +378,12 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     PhaseVector potential(0.);
 
     // access neighbor
-    ElementPointer neighborPointer = intersectionIterator->outside();
-    int globalIdxJ = problem().variables().index(*neighborPointer);
+    auto neighbor = intersectionIterator->outside();
+    int globalIdxJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
 
     // neighbor cell center in global coordinates
-    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -440,18 +438,18 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             // second half edge, if there is one
             if(halfedgesStored == 2)
             {
-                int AdditionalIdx = problem().variables().index(*(additionalIsIt->outside()));
+                int AdditionalIdx = problem().variables().index(additionalIsIt->outside());
                 CellData& cellDataAdditional = problem().variables().cellData(AdditionalIdx);
                 potential[wPhaseIdx] += (pressI-temp1*densityW_mean) * additionalT[2]
                                 +(pressJ-temp2*densityW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
-                                    -(additionalIsIt->outside()->geometry().center()*gravity_*densityW_mean)
+                                    -(additionalIsIt->outside().geometry().center()*gravity_*densityW_mean)
                                   ) * additionalT[1];
                 potential[nPhaseIdx] += (pressI+pcI-temp1*densityNW_mean) * additionalT[2]
                                 +(pressJ+pcJ-temp2*densityNW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
                                     + cellDataAdditional.capillaryPressure()
-                                    -(additionalIsIt->outside()->geometry().center()*gravity_*densityNW_mean)
+                                    -(additionalIsIt->outside().geometry().center()*gravity_*densityNW_mean)
                                   ) * additionalT[1];
             }
         }
@@ -466,19 +464,19 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             // second half edge, if there is one
             if(halfedgesStored == 2)
             {
-                int AdditionalIdx = problem().variables().index(*(additionalIsIt->outside()));
+                int AdditionalIdx = problem().variables().index(additionalIsIt->outside());
                 CellData& cellDataAdditional = problem().variables().cellData(AdditionalIdx);
 
                 potential[wPhaseIdx] += (pressI-pcI-temp1*densityW_mean) * additionalT[2]
                                 +(pressJ-pcJ-temp2*densityW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
                                    - cellDataAdditional.capillaryPressure()
-                                   -(additionalIsIt->outside()->geometry().center()*gravity_*densityW_mean)
+                                   -(additionalIsIt->outside().geometry().center()*gravity_*densityW_mean)
                                   ) * additionalT[1];
                 potential[nPhaseIdx] += (pressI-temp1*densityNW_mean) * additionalT[2]
                                 +(pressJ-temp2*densityNW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
-                                    -(additionalIsIt->outside()->geometry().center()*gravity_*densityNW_mean))
+                                    -(additionalIsIt->outside().geometry().center()*gravity_*densityNW_mean))
                                     * additionalT[1];
             }
         }
@@ -500,19 +498,19 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             if(potential[phaseIdx] > 0.)
             {
                 lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                if(elementI->level()>neighborPointer->level())
+                if(elementI.level()>neighbor.level())
                     cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, true);
             }
             else if(potential[phaseIdx] < 0.)
             {
                 lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
-                if(elementI->level()>neighborPointer->level())
+                if(elementI.level()>neighbor.level())
                     cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, false);
             }
             else
             {
                 doUpwinding[phaseIdx] = false;
-                if(elementI->level()>neighborPointer->level())
+                if(elementI.level()>neighbor.level())
                 cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, false);
                 else
                 cellDataJ.setUpwindCell(intersectionIterator->indexInOutside(), contiEqIdx, false);
@@ -522,7 +520,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
         {
             bool cellIwasUpwindCell;
             //get the information from smaller (higher level) cell, as its IS is unique
-            if(elementI->level()>neighborPointer->level())
+            if(elementI.level()>neighbor.level())
                 cellIwasUpwindCell = cellDataI.isUpwindCell(intersectionIterator->indexInInside(), contiEqIdx);
             else // reverse neighbors information gathered
                 cellIwasUpwindCell = !cellDataJ.isUpwindCell(intersectionIterator->indexInOutside(), contiEqIdx);

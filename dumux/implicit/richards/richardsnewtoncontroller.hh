@@ -23,8 +23,6 @@
 #ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 #define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 
-#include <dune/common/version.hh>
-
 #include "richardsproperties.hh"
 
 #include <dumux/nonlinear/newtoncontroller.hh>
@@ -54,7 +52,6 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     enum { pwIdx = Indices::pwIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum { dim = GridView::dimension };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -94,24 +91,18 @@ public:
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvGeometry;
             const GridView &gridView = this->problem_().gridView();
-            ElementIterator eIt = gridView.template begin<0>();
-            const ElementIterator eEndIt = gridView.template end<0>();
-            for (; eIt != eEndIt; ++eIt) {
-                fvGeometry.update(gridView, *eIt);
+            for (const auto& element : Dune::elements(gridView)) {
+                fvGeometry.update(gridView, element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int dofIdxGlobal = this->model_().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->model_().dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+                    int dofIdxGlobal = this->model_().dofMapper().subIndex(element, scvIdx, dofCodim);
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
-                    const MaterialLawParams &mp = spatialParams.materialLawParams(*eIt, fvGeometry, scvIdx);
+                    const MaterialLawParams &mp = spatialParams.materialLawParams(element, fvGeometry, scvIdx);
                     Scalar pcMin = MaterialLaw::pc(mp, 1.0);
                     Scalar pw = uLastIter[dofIdxGlobal][pwIdx];
-                    Scalar pn = std::max(this->problem_().referencePressure(*eIt, fvGeometry, scvIdx),
+                    Scalar pn = std::max(this->problem_().referencePressure(element, fvGeometry, scvIdx),
                                          pw + pcMin);
                     Scalar pcOld = pn - pw;
                     Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(mp, pcOld));

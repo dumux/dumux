@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <dune/common/version.hh>
-
 #include "boxproperties.hh"
 
 #include <dumux/common/valgrind.hh>
@@ -49,7 +47,6 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
 
     enum { dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
 public:
     /*!
@@ -82,11 +79,7 @@ public:
     void update(const Problem &problem,
                 const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVertices = element.subEntities(dim);
-#else
-        int numVertices = element.template count<dim>();
-#endif
 
         this->resize(numVertices);
 
@@ -98,8 +91,7 @@ public:
             (*this)[i].reset();
 
             if (problem.model().onBoundary(element, i)) {
-                const VertexPointer vptr = element.template subEntity<dim>(i);
-                problem.boundaryTypes((*this)[i], *vptr);
+                problem.boundaryTypes((*this)[i], element.template subEntity<dim>(i));
 
                 hasDirichlet_ = hasDirichlet_ || (*this)[i].hasDirichlet();
                 hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();

@@ -47,7 +47,6 @@ class MPNCVtkWriter
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
 public:
     MPNCVtkWriter(const Problem &problem)
@@ -76,36 +75,34 @@ public:
         ElementVolumeVariables elemVolVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator eIt = problem_.gridView().template begin<0>();
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-                fvGeometry.update(problem_.gridView(), *eIt);
-                elemBcTypes.update(problem_, *eIt);
-                this->problem_.model().setHints(*eIt, elemVolVars);
+                fvGeometry.update(problem_.gridView(), element);
+                elemBcTypes.update(problem_, element);
+                this->problem_.model().setHints(element, elemVolVars);
                 elemVolVars.update(problem_,
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    false);
-                this->problem_.model().updateCurHints(*eIt, elemVolVars);
+                this->problem_.model().updateCurHints(element, elemVolVars);
 
                 // tell the sub-writers to do what ever they need to with
                 // their internal buffers when a given element is seen.
-                commonWriter_.processElement(*eIt,
+                commonWriter_.processElement(element,
                                              fvGeometry,
                                              elemVolVars,
                                              elemBcTypes);
-                massWriter_.processElement(*eIt,
+                massWriter_.processElement(element,
                                            fvGeometry,
                                            elemVolVars,
                                            elemBcTypes);
-                energyWriter_.processElement(*eIt,
+                energyWriter_.processElement(element,
                                              fvGeometry,
                                              elemVolVars,
                                              elemBcTypes);
-                customWriter_.processElement(*eIt,
+                customWriter_.processElement(element,
                                              fvGeometry,
                                              elemVolVars,
                                              elemBcTypes);

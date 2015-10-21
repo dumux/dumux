@@ -260,7 +260,7 @@ protected:
         }
         else
         {
-            const Element & elementI = *fvGeometry.neighbors[i];
+            const Element & elementI = fvGeometry.neighbors[i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
@@ -271,7 +271,7 @@ protected:
                                                                    problem.spatialParams().solidThermalConductivity(elementI, fvGeometryI, 0),
                                                                    problem.spatialParams().porosity(elementI, fvGeometryI, 0));
 
-            const Element & elementJ = *fvGeometry.neighbors[j];
+            const Element & elementJ = fvGeometry.neighbors[j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 

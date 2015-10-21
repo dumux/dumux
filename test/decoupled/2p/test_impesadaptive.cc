@@ -24,7 +24,7 @@
  */
 #include "config.h"
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 
 #include "test_impesadaptiveproblem.hh"
 #include <dumux/common/start.hh>
@@ -68,4 +68,4 @@ int main()
     std::cerr << "You need to have dune-ALUGrid installed to run this test\n";
     return 77;
 }
-#endif // HAVE_ALUGRID
+#endif // HAVE_DUNE_ALUGRID

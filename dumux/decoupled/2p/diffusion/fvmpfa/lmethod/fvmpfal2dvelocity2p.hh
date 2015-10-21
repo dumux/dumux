@@ -83,10 +83,6 @@ template<class TypeTag> class FvMpfaL2dVelocity2p
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;
@@ -150,11 +146,11 @@ public:
     //!Initializes the velocity model
     void initialize()
     {
-        ElementIterator element = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -186,11 +182,10 @@ public:
                     = *(writer.template allocateManagedBuffer<Scalar,dim>(problem_.gridView().size(0)));
 
             // compute update vector
-            ElementIterator eEndIt = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+            for (const auto& element : Dune::elements(problem_.gridView()))
             {
                 // cell index
-                int eIdxGlobal = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(element);
 
                 CellData & cellData = problem_.variables().cellData(eIdxGlobal);
 
@@ -198,30 +193,29 @@ public:
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
 
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
-                    int isIndex = isIt->indexInInside();
+                    int isIndex = intersection.indexInInside();
 
-                    fluxW[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                    fluxNw[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                    fluxW[isIndex] += intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                    fluxNw[isIndex] += intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
                 }
 
                 DimVector refVelocity(0);
                 refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
                 refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
 
-                const DimVector& localPos = ReferenceElements::general(eIt->geometry().type()).position(0, 0);
+                const DimVector& localPos = ReferenceElements::general(element.geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const JacobianTransposed jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const JacobianTransposed jacobianT = element.geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= element.geometry().integrationElement(localPos);
 
                 velocityWetting[eIdxGlobal] = elementVelocity;
 
@@ -232,7 +226,7 @@ public:
                 // calculate the element velocity by the Piola transformation
                 elementVelocity = 0;
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= element.geometry().integrationElement(localPos);
 
                 velocityNonwetting[eIdxGlobal] = elementVelocity;
             }
@@ -284,21 +278,21 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
                                                                            CellData& cellData3, CellData& cellData4,
                                                                            InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
 {
-    ElementPointer & elementPointer1 = interactionVolume.getSubVolumeElement(0);
-    ElementPointer & elementPointer2 = interactionVolume.getSubVolumeElement(1);
-    ElementPointer & elementPointer3 = interactionVolume.getSubVolumeElement(2);
-    ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
+    auto element1 = interactionVolume.getSubVolumeElement(0);
+    auto element2 = interactionVolume.getSubVolumeElement(1);
+    auto element3 = interactionVolume.getSubVolumeElement(2);
+    auto element4 = interactionVolume.getSubVolumeElement(3);
 
-    int level1 = elementPointer1->level();
-    int level2 = elementPointer2->level();
-    int level3 = elementPointer3->level();
-    int level4 = elementPointer4->level();
+    int level1 = element1.level();
+    int level2 = element2.level();
+    int level3 = element3.level();
+    int level4 = element4.level();
 
     // cell index
-    int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-    int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-    int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
-    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+    int eIdxGlobal1 = problem_.variables().index(element1);
+    int eIdxGlobal2 = problem_.variables().index(element2);
+    int eIdxGlobal3 = problem_.variables().index(element3);
+    int eIdxGlobal4 = problem_.variables().index(element4);
 
     // get pressure values
     Dune::FieldVector < Scalar, 2 * dim > potW(0);
@@ -735,13 +729,13 @@ template<class TypeTag>
 void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
                                                                               CellData& cellData, int elemIdx)
 {
-        ElementPointer & elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
+        auto element = interactionVolume.getSubVolumeElement(elemIdx);
 
         // get global coordinate of cell centers
-        const GlobalPosition& globalPos = elementPointer->geometry().center();
+        const GlobalPosition& globalPos = element.geometry().center();
 
         //permeability vector at boundary
-        DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
+        DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(element));
 
         //get mobilities of the phases
         Dune::FieldVector < Scalar, numPhases > lambda(cellData.mobility(wPhaseIdx));
@@ -758,11 +752,11 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                     const ReferenceElement& referenceElement = ReferenceElements::general(
-                            elementPointer->geometry().type());
+                            element.geometry().type());
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
-                    const GlobalPosition& globalPosFace = elementPointer->geometry().global(localPos);
+                    const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 
                     DimVector distVec(globalPosFace - globalPos);
                     Scalar dist = distVec.two_norm();
@@ -792,7 +786,7 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                     }
 
                     Scalar pcBound = MaterialLaw::pc(
-                            problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                            problem_.spatialParams().materialLawParams(element), satWBound);
 
                     Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                             * (density_[nPhaseIdx] - density_[wPhaseIdx]);
@@ -802,10 +796,10 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                     Dune::FieldVector < Scalar, numPhases
                             > lambdaBound(
                                     MaterialLaw::krw(
-                                            problem_.spatialParams().materialLawParams(*elementPointer),
+                                            problem_.spatialParams().materialLawParams(element),
                                             satWBound));
                     lambdaBound[nPhaseIdx] = MaterialLaw::krn(
-                            problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                            problem_.spatialParams().materialLawParams(element), satWBound);
                     lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                     lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
@@ -868,11 +862,11 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                     const ReferenceElement& referenceElement = ReferenceElements::general(
-                            elementPointer->geometry().type());
+                            element.geometry().type());
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
-                    const GlobalPosition& globalPosFace = elementPointer->geometry().global(localPos);
+                    const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 
                     DimVector distVec(globalPosFace - globalPos);
                     Scalar dist = distVec.two_norm();

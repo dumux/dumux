@@ -24,8 +24,6 @@
 #ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
 #define DUMUX_MULTIDOMAIN_PROBLEM_HH
 
-#include <dune/common/deprecated.hh>
-
 #include "multidomainmodel.hh"
 #include "multidomainnewtoncontroller.hh"
 #include "multidomainpropertydefaults.hh"
@@ -79,18 +77,6 @@ private:
     typedef Dune::MultiDomainMCMGMapper<MultiDomainGridView, Dune::MCMGVertexLayout> VertexMapper;
 
 public:
-    /*!
-      * \brief Base class for the multi domain problem
-      *
-      * \param mdGrid The multi domain grid
-      * \param timeManager The TimeManager which is used by the simulation
-      */
-    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
-    MultiDomainProblem(MultiDomainGrid &mdGrid,
-                       TimeManager &timeManager)
-    : MultiDomainProblem(timeManager, GridCreator::grid().leafGridView())
-    {}
-
     /*!
      * \brief The problem for the coupling of Stokes and Darcy flow
      *
@@ -167,22 +153,6 @@ public:
      * \name Simulation control
      */
     // \{
-
-    /*!
-     * \brief Set the initial time step and the time where the simulation ends
-     *        and starts simulation
-     *
-     * \param dtInitial Initial time step
-     * \param tEnd Time, when simulation ends
-     */
-    DUNE_DEPRECATED_MSG("Is deprecated and will be removed without replacement.")
-    bool simulate(Scalar dtInitial, Scalar tEnd)
-    {
-        timeManager_.setEndTime(tEnd);
-        timeManager_.setTimeStepSize(dtInitial);
-        timeManager_.runSimulation(asImp_());
-        return true;
-    }
 
     /*!
      * \brief Called by the time manager before the time integration. Calls preTimeStep()

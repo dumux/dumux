@@ -27,8 +27,6 @@
 #ifndef DUMUX_3P_MODEL_HH
 #define DUMUX_3P_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "3pproperties.hh"
 
@@ -81,8 +79,6 @@ class ThreePModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         gPhaseIdx = Indices::gPhaseIdx,
     };
 
-
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -139,36 +135,27 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int eIdx = this->problem_().elementMapper().index(*eIt);
-#else
-                int eIdx = this->problem_().elementMapper().map(*eIt);
-#endif
+                int eIdx = this->problem_().elementMapper().index(element);
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
                 FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), *eIt);
+                fvGeometry.update(this->gridView_(), element);
 
 
                 ElementVolumeVariables elemVolVars;
                 elemVolVars.update(this->problem_(),
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    false /* oldSol? */);
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                         (*saturation[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].saturation(phaseIdx);
                         (*pressure[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].pressure(phaseIdx);
@@ -181,9 +168,9 @@ public:
                 }
 
                 // velocity output
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, gPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
             }
         }
 

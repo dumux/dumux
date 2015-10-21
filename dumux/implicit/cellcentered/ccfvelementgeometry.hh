@@ -24,7 +24,6 @@
 #ifndef DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 
@@ -56,11 +55,9 @@ class CCFVElementGeometry
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     struct SubControlVolume //! FV intersected with element
@@ -96,7 +93,7 @@ public:
     int numScv; //!< number of subcontrol volumes
     int numScvf; //!< number of inner-domain subcontrolvolume faces
     int numNeighbors; //!< number of neighboring elements including the element itself
-    std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
+    std::vector<Element> neighbors; //!< stores the neighboring elements
 
     void updateInner(const Element& element)
     {
@@ -118,8 +115,7 @@ public:
         numNeighbors = 1;
         neighbors.clear();
         neighbors.reserve(maxNE);
-        ElementPointer elementPointer(element);
-        neighbors.push_back(elementPointer);
+        neighbors.push_back(element);
     }
 
     void update(const GridView& gridView, const Element& element)
@@ -131,17 +127,15 @@ public:
         bool onBoundary = false;
 
         // fill neighbor information and control volume face data:
-        IntersectionIterator isEndIt = gridView.iend(element);
-        for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(gridView, element))
         {
-            const auto isGeometry = isIt->geometry();
+            const auto isGeometry = intersection.geometry();
 
             // neighbor information and inner cvf data:
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
                 numNeighbors++;
-                ElementPointer elementPointer(isIt->outside());
-                neighbors.push_back(elementPointer);
+                neighbors.push_back(intersection.outside());
 
                 int scvfIdx = numNeighbors - 2;
                 SubControlVolumeFace& scvFace = subContVolFace[scvfIdx];
@@ -151,13 +145,13 @@ public:
 
                 scvFace.ipGlobal = isGeometry.center();
                 scvFace.ipLocal =  geometry.local(scvFace.ipGlobal);
-                scvFace.normal = isIt->centerUnitOuterNormal();
+                scvFace.normal = intersection.centerUnitOuterNormal();
                 Scalar volume = isGeometry.volume();
                 scvFace.normal *= volume;
                 scvFace.area = volume;
 
                 GlobalPosition distVec = elementGlobal
-                                       - neighbors[scvfIdx+1]->geometry().center();
+                                       - neighbors[scvfIdx+1].geometry().center();
                 distVec /= distVec.two_norm2();
 
                 // gradients using a two-point flux approximation
@@ -172,19 +166,19 @@ public:
                 scvFace.fapIndices[0] = scvFace.i;
                 scvFace.fapIndices[1] = scvFace.j;
 
-                scvFace.fIdx = isIt->indexInInside();
+                scvFace.fIdx = intersection.indexInInside();
             }
 
             // boundary cvf data
-            if (isIt->boundary())
+            if (intersection.boundary())
             {
                 onBoundary = true;
-                int bfIdx = isIt->indexInInside();
+                int bfIdx = intersection.indexInInside();
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
 
                 bFace.ipGlobal = isGeometry.center();
                 bFace.ipLocal =  geometry.local(bFace.ipGlobal);
-                bFace.normal = isIt->centerUnitOuterNormal();
+                bFace.normal = intersection.centerUnitOuterNormal();
                 Scalar volume = isGeometry.volume();
                 bFace.normal *= volume;
                 bFace.area = volume;
@@ -214,17 +208,12 @@ public:
         // treat elements on the boundary
         if (onBoundary)
         {
-            ElementPointer elementPointer(element);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             for (int bfIdx = 0; bfIdx < element.subEntities(1); bfIdx++)
-#else
-            for (int bfIdx = 0; bfIdx < element.template count<1>(); bfIdx++)
-#endif
             {
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
                 bFace.j = numNeighbors + bfIdx;
                 bFace.fapIndices[1] = bFace.j;
-                neighbors.push_back(elementPointer);
+                neighbors.push_back(element);
             }
         }
     }

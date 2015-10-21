@@ -24,7 +24,6 @@
 #ifndef DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 #define DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 
-#include <dune/common/deprecated.hh>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
@@ -51,10 +50,10 @@ NEW_TYPE_TAG(TwoCZeroEqTwoPTwoCProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
 // Set the grid type
 #if HAVE_UG
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::UGGrid<2>);
-#elif HAVE_ALUGRID
+#elif HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #else
-#error Requires UG or ALUGrid.
+SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the global problem
@@ -121,23 +120,9 @@ class TwoCZeroEqTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     enum { dim = MDGridView::dimension };
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
-    typedef typename MDGrid::template Codim<0>::LeafIterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    /*!
-     * \brief The problem for the coupling of Stokes and Darcy flow
-     *
-     * \param mdGrid The multidomain grid
-     * \param timeManager The time manager
-     */
-    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
-    TwoCZeroEqTwoPTwoCProblem(MDGrid &mdGrid,
-                              TimeManager &timeManager)
-    : TwoCZeroEqTwoPTwoCProblem(timeManager, GridCreator::grid().leafGridView())
-    {}
-
     /*!
      * \brief The problem for the coupling of Stokes and Darcy flow
      *
@@ -184,22 +169,20 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eEndIt = mdGrid.template leafend<0>();
-        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
-             eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(mdGrid.leafGridView()))
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (eIt->partitionType() != Dune::InteriorEntity)
+            if (element.partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = eIt->geometry().center();
+            GlobalPosition globalPos = element.geometry().center();
 
             if (globalPos[1] > interfacePosY_)
-                mdGrid.addToSubDomain(zeroeq2c_,*eIt);
+                mdGrid.addToSubDomain(zeroeq2c_,element);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoC_,*eIt);
+                    mdGrid.addToSubDomain(twoPtwoC_,element);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();

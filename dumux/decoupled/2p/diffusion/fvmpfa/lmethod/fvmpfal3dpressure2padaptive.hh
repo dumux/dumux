@@ -141,11 +141,8 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
         };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::Grid Grid;
     typedef typename Element::Geometry Geometry;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -179,11 +176,11 @@ public:
      */
     void initialize(bool solveTwice = true)
     {
-        ElementIterator element = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -285,22 +282,20 @@ template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
 
-        int levelI = eIt->level();
+        int levelI = element.level();
 
         std::set<int> neighborIndices;
 
-        int numVertices = eIt->geometry().corners();
+        int numVertices = element.geometry().corners();
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
@@ -308,18 +303,18 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
             {
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
-                    const ElementPointer& neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int globalIdxJ = problem_.variables().index(*neighbor);
+                    auto neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
+                    int globalIdxJ = problem_.variables().index(neighbor);
 
                     neighborIndices.insert(globalIdxJ);
 
                     if (!interactionVolume.sameLevel())
                     {
-                        if (neighbor->level() == levelI + 2)
+                        if (neighbor.level() == levelI + 2)
                         {
                             for (int vIdx = 0; vIdx < numVertices; vIdx++)
                             {
-                                int globalVertIdxJ = problem_.variables().vertexMapper().map(*neighbor, vIdx, dim);
+                                int globalVertIdxJ = problem_.variables().vertexMapper().subIndex(neighbor, vIdx, dim);
 
                                 if (globalVertIdxJ != vIdxGlobal)
                                 {
@@ -336,9 +331,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
                                         {
                                             if (interactionVolumeJ.hasSubVolumeElement(subVolumeIdxJ))
                                             {
-                                                const ElementPointer& neighborJ =
-                                                    interactionVolumeJ.getSubVolumeElement(subVolumeIdxJ);
-                                                int globalIdxJJ = problem_.variables().index(*neighborJ);
+                                                int globalIdxJJ = problem_.variables().index(interactionVolumeJ.getSubVolumeElement(subVolumeIdxJ));
 
                                                 neighborIndicesJ.insert(globalIdxJJ);
 
@@ -363,7 +356,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
         }
 
         this->A_.setrowsize(globalIdxI, neighborIndices.size());
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     return;
 }
@@ -372,39 +365,37 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 {
-    // determine matrix row sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
 
-        int levelI = eIt->level();
+        int levelI = element.level();
 
         // add diagonal index
         this->A_.addindex(globalIdxI, globalIdxI);
 
-        int numVertices = eIt->geometry().corners();
+        int numVertices = element.geometry().corners();
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
             {
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
-                    ElementPointer neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int globalIdxJ = problem_.variables().index(*neighbor);
+                    auto neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
+                    int globalIdxJ = problem_.variables().index(neighbor);
 
                     this->A_.addindex(globalIdxI, globalIdxJ);
 
                     if (interactionVolume.isHangingNodeVolume() && interactionVolume.getHangingNodeType() ==
                         InteractionVolume::sixSmallCells && !interactionVolume.sameLevel())
                     {
-                        if (neighbor->level() == levelI-2)
+                        if (neighbor.level() == levelI-2)
                         {
                             this->A_.addindex(globalIdxJ, globalIdxI);
                         }
@@ -412,7 +403,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
                 }
             }
         }
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     return;
 }
@@ -426,16 +417,15 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
 #if HAVE_MPI
-        if (vIt->partitionType() != Dune::InteriorEntity && vIt->partitionType() != Dune::BorderEntity)
+        if (vertex.partitionType() != Dune::InteriorEntity && vertex.partitionType() != Dune::BorderEntity)
         {
             continue;
         }
 #endif
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
@@ -466,44 +456,44 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(InteractionVolume& interactionVolume)
 {
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
-    ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
-    ElementPointer& elementPointer5 = interactionVolume.getSubVolumeElement(4);
-    ElementPointer& elementPointer6 = interactionVolume.getSubVolumeElement(5);
-    ElementPointer& elementPointer7 = interactionVolume.getSubVolumeElement(6);
-    ElementPointer& elementPointer8 = interactionVolume.getSubVolumeElement(7);
+    auto element1 = interactionVolume.getSubVolumeElement(0);
+    auto element2 = interactionVolume.getSubVolumeElement(1);
+    auto element3 = interactionVolume.getSubVolumeElement(2);
+    auto element4 = interactionVolume.getSubVolumeElement(3);
+    auto element5 = interactionVolume.getSubVolumeElement(4);
+    auto element6 = interactionVolume.getSubVolumeElement(5);
+    auto element7 = interactionVolume.getSubVolumeElement(6);
+    auto element8 = interactionVolume.getSubVolumeElement(7);
 
     // get global coordinate of cell centers
-    const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-    const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-    const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
-    const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
-    const GlobalPosition& globalPos5 = elementPointer5->geometry().center();
-    const GlobalPosition& globalPos6 = elementPointer6->geometry().center();
-    const GlobalPosition& globalPos7 = elementPointer7->geometry().center();
-    const GlobalPosition& globalPos8 = elementPointer8->geometry().center();
+    const GlobalPosition& globalPos1 = element1.geometry().center();
+    const GlobalPosition& globalPos2 = element2.geometry().center();
+    const GlobalPosition& globalPos3 = element3.geometry().center();
+    const GlobalPosition& globalPos4 = element4.geometry().center();
+    const GlobalPosition& globalPos5 = element5.geometry().center();
+    const GlobalPosition& globalPos6 = element6.geometry().center();
+    const GlobalPosition& globalPos7 = element7.geometry().center();
+    const GlobalPosition& globalPos8 = element8.geometry().center();
 
     // cell volumes
-    Scalar volume1 = elementPointer1->geometry().volume();
-    Scalar volume2 = elementPointer2->geometry().volume();
-    Scalar volume3 = elementPointer3->geometry().volume();
-    Scalar volume4 = elementPointer4->geometry().volume();
-    Scalar volume5 = elementPointer5->geometry().volume();
-    Scalar volume6 = elementPointer6->geometry().volume();
-    Scalar volume7 DUNE_UNUSED = elementPointer7->geometry().volume();
-    Scalar volume8 DUNE_UNUSED = elementPointer8->geometry().volume();
+    Scalar volume1 = element1.geometry().volume();
+    Scalar volume2 = element2.geometry().volume();
+    Scalar volume3 = element3.geometry().volume();
+    Scalar volume4 = element4.geometry().volume();
+    Scalar volume5 = element5.geometry().volume();
+    Scalar volume6 = element6.geometry().volume();
+    Scalar volume7 DUNE_UNUSED = element7.geometry().volume();
+    Scalar volume8 DUNE_UNUSED = element8.geometry().volume();
 
     // cell index
-    int globalIdx1 = problem_.variables().index(*elementPointer1);
-    int globalIdx2 = problem_.variables().index(*elementPointer2);
-    int globalIdx3 = problem_.variables().index(*elementPointer3);
-    int globalIdx4 = problem_.variables().index(*elementPointer4);
-    int globalIdx5 = problem_.variables().index(*elementPointer5);
-    int globalIdx6 = problem_.variables().index(*elementPointer6);
-    int globalIdx7 = problem_.variables().index(*elementPointer7);
-    int globalIdx8 = problem_.variables().index(*elementPointer8);
+    int globalIdx1 = problem_.variables().index(element1);
+    int globalIdx2 = problem_.variables().index(element2);
+    int globalIdx3 = problem_.variables().index(element3);
+    int globalIdx4 = problem_.variables().index(element4);
+    int globalIdx5 = problem_.variables().index(element5);
+    int globalIdx6 = problem_.variables().index(element6);
+    int globalIdx7 = problem_.variables().index(element7);
+    int globalIdx8 = problem_.variables().index(element8);
 
     //get the cell Data
     CellData& cellData1 = problem_.variables().cellData(globalIdx1);
@@ -645,10 +635,10 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
     {
         // evaluate right hand side
         PrimaryVariables source(0.0);
-        problem_.source(source, *elementPointer1);
+        problem_.source(source, element1);
         this->f_[globalIdx1] += volume1 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer2);
+        problem_.source(source, element2);
         this->f_[globalIdx2] += volume2 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
@@ -660,16 +650,16 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
     {
         // evaluate right hand side
         PrimaryVariables source(0.0);
-        problem_.source(source, *elementPointer1);
+        problem_.source(source, element1);
         this->f_[globalIdx1] += volume1 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer2);
+        problem_.source(source, element2);
         this->f_[globalIdx2] += volume2 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer3);
+        problem_.source(source, element3);
         this->f_[globalIdx3] += volume3 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer4);
+        problem_.source(source, element4);
         this->f_[globalIdx4] += volume4 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
@@ -682,22 +672,22 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
     {
         // evaluate right hand side
         PrimaryVariables source(0.0);
-        problem_.source(source, *elementPointer1);
+        problem_.source(source, element1);
         this->f_[globalIdx1] += volume1 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer2);
+        problem_.source(source, element2);
         this->f_[globalIdx2] += volume2 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer3);
+        problem_.source(source, element3);
         this->f_[globalIdx3] += volume3 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer4);
+        problem_.source(source, element4);
         this->f_[globalIdx4] += volume4 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer4);
+        problem_.source(source, element4);
         this->f_[globalIdx5] += volume5 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-        problem_.source(source, *elementPointer6);
+        problem_.source(source, element6);
         this->f_[globalIdx6] += volume6 / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 

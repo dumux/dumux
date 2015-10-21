@@ -23,8 +23,6 @@
 #ifndef DUMUX_IMPLICIT_ASSEMBLER_HH
 #define DUMUX_IMPLICIT_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
-
 #include "implicitproperties.hh"
 
 namespace Dumux {
@@ -50,7 +48,6 @@ class ImplicitAssembler
 
     enum{ dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
@@ -334,11 +331,7 @@ public:
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdxGlobal = vertexMapper_().subIndex(element, vIdx, dim);
-#else
-        int vIdxGlobal = vertexMapper_().map(element, vIdx, dim);
-#endif
         return vertexColor_[vIdxGlobal];
     }
 
@@ -364,11 +357,7 @@ public:
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int eIdxGlobal = elementMapper_().index(element);
-#else
-        int eIdxGlobal = elementMapper_().map(element);
-#endif
         return elementColor_[eIdxGlobal];
     }
 
@@ -494,17 +483,14 @@ protected:
         greenElems_ = 0;
 
         // reassemble the elements...
-        ElementIterator eIt = gridView_().template begin<0>();
-        ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &elem = *eIt;
-            if (elem.partitionType() == Dune::GhostEntity)
+        for (const auto& element : Dune::elements(gridView_())) {
+            if (element.partitionType() == Dune::GhostEntity)
             {
-                asImp_().assembleGhostElement_(elem);
+                asImp_().assembleGhostElement_(element);
             }
             else
             {
-                asImp_().assembleElement_(elem);
+                asImp_().assembleElement_(element);
             }
         }
     }

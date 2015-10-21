@@ -23,7 +23,6 @@
 #ifndef DUMUX_IMPLICIT_MODEL_HH
 #define DUMUX_IMPLICIT_MODEL_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 #include <dune/istl/bvector.hh>
 
@@ -68,8 +67,6 @@ class ImplicitModel
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
@@ -137,20 +134,12 @@ public:
         if (!isBox || !enableHints_)
             return;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int n = element.subEntities(dim);
-#else
-        int n = element.template count<dim>();
-#endif
         prevVolVars.resize(n);
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = vertexMapper().map(element, i, dim);
-#endif
 
             if (!hintsUsable_[vIdxGlobal]) {
                 curVolVars[i].setHint(NULL);
@@ -169,19 +158,11 @@ public:
         if (!isBox || !enableHints_)
             return;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int n = element.subEntities(dim);
-#else
-        int n = element.template count<dim>();
-#endif
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = vertexMapper().map(element, i, dim);
-#endif
 
             if (!hintsUsable_[vIdxGlobal])
                 curVolVars[i].setHint(NULL);
@@ -206,11 +187,7 @@ public:
 
         for (unsigned int i = 0; i < elemVolVars.size(); ++i)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = vertexMapper().map(element, i, dim);
-#endif
             curHints_[vIdxGlobal] = elemVolVars[i];
             if (!hintsUsable_[vIdxGlobal])
                 prevHints_[vIdxGlobal] = elemVolVars[i];
@@ -246,31 +223,20 @@ public:
     {
         residual = 0;
 
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            localResidual().eval(*eIt);
+        for (const auto& element : Dune::elements(gridView_())) {
+            localResidual().eval(element);
 
             if (isBox)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                for (int i = 0; i < eIt->subEntities(dim); ++i)
+                for (int i = 0; i < element.subEntities(dim); ++i)
                 {
-                    int globalI = vertexMapper().subIndex(*eIt, i, dim);
-#else
-                for (int i = 0; i < eIt->template count<dim>(); ++i) {
-                    int globalI = vertexMapper().map(*eIt, i, dim);
-#endif
+                    int globalI = vertexMapper().subIndex(element, i, dim);
                     residual[globalI] += localResidual().residual(i);
                 }
             }
             else
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int globalI = elementMapper().index(*eIt);
-#else
-                int globalI = elementMapper().map(*eIt);
-#endif
+                int globalI = elementMapper().index(element);
                 residual[globalI] = localResidual().residual(0);
             }
         }
@@ -302,21 +268,15 @@ public:
     {
         storage = 0;
 
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-                localResidual().evalStorage(*eIt);
+                localResidual().evalStorage(element);
 
                 if (isBox)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    for (int i = 0; i < eIt->subEntities(dim); ++i)
-#else
-                    for (int i = 0; i < eIt->template count<dim>(); ++i)
-#endif
+                    for (int i = 0; i < element.subEntities(dim); ++i)
                     {
                         storage += localResidual().storageTerm()[i];
                     }
@@ -615,11 +575,7 @@ public:
     void serializeEntity(std::ostream &outstream,
                          const Entity &entity)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = dofMapper().index(entity);
-#else
-        int dofIdxGlobal = dofMapper().map(entity);
-#endif
 
         // write phase state
         if (!outstream.good()) {
@@ -647,11 +603,7 @@ public:
     void deserializeEntity(std::istream &instream,
                            const Entity &entity)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = dofMapper().index(entity);
-#else
-        int dofIdxGlobal = dofMapper().map(entity);
-#endif
 
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             if (!instream.good())
@@ -861,11 +813,7 @@ public:
     bool onBoundary(const Element &element, const int vIdx) const
     {
         if (isBox)
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             return onBoundary(vertexMapper().subIndex(element, vIdx, dim));
-#else
-            return onBoundary(vertexMapper().map(element, vIdx, dim));
-#endif
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for cell-centered model");
@@ -882,11 +830,7 @@ public:
     bool onBoundary(const Element &element) const
     {
         if (!isBox)
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             return onBoundary(elementMapper().index(element));
-#else
-            return onBoundary(elementMapper().map(element));
-#endif
 
         else
             DUNE_THROW(Dune::InvalidStateException,
@@ -958,28 +902,22 @@ protected:
         //
         // TODO: the initial condition needs to be unique for
         // each vertex. we should think about the API...
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator &eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
+        for (const auto& element : Dune::elements(gridView_())) {
             // deal with the current element
-            fvGeometry.update(gridView_(), *eIt);
+            fvGeometry.update(gridView_(), element);
 
             // loop over all element vertices, i.e. sub control volumes
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
                 // get the global index of the degree of freedom
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int dofIdxGlobal = dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                int dofIdxGlobal = dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+                int dofIdxGlobal = dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
                 PrimaryVariables initPriVars;
                 Valgrind::SetUndefined(initPriVars);
                 problem_().initial(initPriVars,
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    scvIdx);
                 Valgrind::CheckDefined(initPriVars);
@@ -1033,21 +971,17 @@ protected:
         boundaryIndices_.resize(numDofs());
         std::fill(boundaryIndices_.begin(), boundaryIndices_.end(), false);
 
-        ElementIterator eIt = gridView_().template begin<0>();
-        ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            Dune::GeometryType geomType = eIt->geometry().type();
+        for (const auto& element : Dune::elements(gridView_())) {
+            Dune::GeometryType geomType = element.geometry().type();
             const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-            IntersectionIterator isIt = gridView_().ibegin(*eIt);
-            IntersectionIterator isEndIt = gridView_().iend(*eIt);
-            for (; isIt != isEndIt; ++isIt) {
-                if (isIt->boundary()) {
+            for (const auto& intersection : Dune::intersections(gridView_(), element)) {
+                if (intersection.boundary()) {
                     if (isBox)
                     {
                         // add all vertices on the intersection to the set of
                         // boundary vertices
-                        int fIdx = isIt->indexInInside();
+                        int fIdx = intersection.indexInInside();
                         int numFaceVerts = refElement.size(fIdx, 1, dim);
                         for (int faceVertexIdx = 0;
                              faceVertexIdx < numFaceVerts;
@@ -1057,21 +991,13 @@ protected:
                                                             1,
                                                             faceVertexIdx,
                                                             dim);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                            int vIdxGlobal = vertexMapper().subIndex(*eIt, vIdx, dim);
-#else
-                            int vIdxGlobal = vertexMapper().map(*eIt, vIdx, dim);
-#endif
+                            int vIdxGlobal = vertexMapper().subIndex(element, vIdx, dim);
                             boundaryIndices_[vIdxGlobal] = true;
                         }
                     }
                     else
                     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                        int eIdxGlobal = elementMapper().index(*eIt);
-#else
-                        int eIdxGlobal = elementMapper().map(*eIt);
-#endif
+                        int eIdxGlobal = elementMapper().index(element);
                         boundaryIndices_[eIdxGlobal] = true;
                     }
                 }

@@ -27,7 +27,6 @@
 #include <string>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
@@ -75,11 +74,7 @@ public:
         int idx;
         if (codim_ == 0) {
             // cells. map element to the index
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             idx = mapper_.index(element);
-#else
-            idx = mapper_.map(element);
-#endif
         }
         else if (codim_ == dim) {
             // find vertex which is closest to xi in local
@@ -87,11 +82,8 @@ public:
             double min=1e100;
             int imin=-1;
             Dune::GeometryType geomType = element.type();
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int n = element.subEntities(dim);
-#else
-            int n = element.template count<dim>();
-#endif
+
             for (int i=0; i < n; ++i)
             {
                 Dune::FieldVector<ctype,dim> local =
@@ -105,11 +97,7 @@ public:
             }
 
             // map vertex to an index
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             idx = mapper_.subIndex(element, imin, codim_);
-#else
-            idx = mapper_.map(element, imin, codim_);
-#endif
         }
         else
             DUNE_THROW(Dune::InvalidStateException,

@@ -55,9 +55,6 @@ template<class TypeTag> class FVPressure
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     // the typenames used for the stiffness matrix and solution vector
@@ -129,13 +126,12 @@ protected:
     //result in better convergence of the linear solver!
     void initializePressure()
     {
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             PrimaryVariables initValues;
-            problem_.initial(initValues, *eIt);
+            problem_.initial(initValues, element);
 
-            int eIdxGlobal = problem_.variables().index(*eIt);
+            int eIdxGlobal = problem_.variables().index(element);
 
             pressure_[eIdxGlobal] = initValues[pressEqIdx];
         }
@@ -344,20 +340,18 @@ template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // initialize row size
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
         {
-            if (isIt->neighbor())
+            if (intersection.neighbor())
                 rowSize++;
         }
         A_.setrowsize(eIdxGlobalI, rowSize);
@@ -369,23 +363,20 @@ template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrixIndices()
 {
     // determine position of matrix entries
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // add diagonal index
         A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
-            if (isIt->neighbor())
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            if (intersection.neighbor())
             {
                 // access neighbor
-                ElementPointer outside = isIt->outside();
-                int eIdxGlobalJ = problem_.variables().index(*outside);
+                int eIdxGlobalJ = problem_.variables().index(intersection.outside());
 
                 // add off diagonal index
                 A_.addindex(eIdxGlobalI, eIdxGlobalJ);
@@ -411,14 +402,13 @@ void FVPressure<TypeTag>::assemble(bool first)
     A_ = 0;
     f_ = 0;
 
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // get the global index of the cell
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // assemble interior element contributions
-        if (eIt->partitionType() == Dune::InteriorEntity)
+        if (element.partitionType() == Dune::InteriorEntity)
         {
             // get the cell data
             CellData& cellDataI = problem_.variables().cellData(eIdxGlobalI);
@@ -426,35 +416,34 @@ void FVPressure<TypeTag>::assemble(bool first)
             EntryType entries(0.);
 
             /*****  source term ***********/
-            asImp_().getSource(entries, *eIt, cellDataI, first);
+            asImp_().getSource(entries, element, cellDataI, first);
             f_[eIdxGlobalI] += entries[rhs];
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
                 /************* handle interior face *****************/
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    ElementPointer elementNeighbor = isIt->outside();
+                    auto elementNeighbor = intersection.outside();
 
-                    int eIdxGlobalJ = problem_.variables().index(*elementNeighbor);
+                    int eIdxGlobalJ = problem_.variables().index(elementNeighbor);
 
                     // check for hanging nodes
                     // take a hanging node never from the element with smaller level!
-                    bool haveSameLevel = (eIt->level() == elementNeighbor->level());
+                    bool haveSameLevel = (element.level() == elementNeighbor.level());
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
-                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         continue;
 
                     //check for hanging nodes
                     entries = 0;
-                    asImp_().getFlux(entries, *isIt, cellDataI, first);
+                    asImp_().getFlux(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     f_[eIdxGlobalI] -= entries[rhs];
@@ -467,7 +456,7 @@ void FVPressure<TypeTag>::assemble(bool first)
 
                     // The second condition is needed to not spoil the ghost element entries
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
-                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        && elementNeighbor.partitionType() == Dune::InteriorEntity)
                     {
                         f_[eIdxGlobalJ] += entries[rhs];
                         A_[eIdxGlobalJ][eIdxGlobalJ] += entries[matrix];
@@ -480,7 +469,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                 else
                 {
                     entries = 0;
-                    asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+                    asImp_().getFluxOnBoundary(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     f_[eIdxGlobalI] += entries[rhs];
@@ -492,7 +481,7 @@ void FVPressure<TypeTag>::assemble(bool first)
 
             /*****  storage term ***********/
             entries = 0;
-            asImp_().getStorage(entries, *eIt, cellDataI, first);
+            asImp_().getStorage(entries, element, cellDataI, first);
             f_[eIdxGlobalI] += entries[rhs];
     //         set diagonal entry
             A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];

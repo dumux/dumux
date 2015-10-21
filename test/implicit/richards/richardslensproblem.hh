@@ -123,7 +123,6 @@ class RichardsLensProblem : public RichardsProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);

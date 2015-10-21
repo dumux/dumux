@@ -27,8 +27,6 @@
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
 #define DUMUX_ONEP_TWOC_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "1p2cproperties.hh"
 
@@ -83,7 +81,6 @@ class OnePTwoCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { phaseIdx = Indices::phaseIdx };
@@ -132,35 +129,27 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int eIdx = this->problem_().model().elementMapper().index(*eIt);
-#else
-                int eIdx = this->problem_().model().elementMapper().map(*eIt);
-#endif
+                int eIdx = this->problem_().model().elementMapper().index(element);
+
                 rank[eIdx] = this->gridView_().comm().rank();
 
                 FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), *eIt);
+                fvGeometry.update(this->gridView_(), element);
 
                 ElementVolumeVariables elemVolVars;
                 elemVolVars.update(this->problem_(),
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    false /* oldSol? */);
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+
                     pressure[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
                     delp[dofIdxGlobal] = elemVolVars[scvIdx].pressure() - 1e5;
                     moleFraction0[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
@@ -172,7 +161,7 @@ public:
                 }
 
                 // velocity output
-                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *eIt, phaseIdx);
+                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
             }
         }
 

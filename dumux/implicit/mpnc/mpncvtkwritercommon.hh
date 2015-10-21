@@ -25,7 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_COMMON_HH
 #define DUMUX_MPNC_VTK_WRITER_COMMON_HH
 
-#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "mpncvtkwritermodule.hh"
 
@@ -132,11 +131,7 @@ public:
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int dofIdxGlobal = this->problem_.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-#else
-            int dofIdxGlobal = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
-#endif
 
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 

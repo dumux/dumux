@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_EL1P2C_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_EL1P2C_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/box/boxelementvolumevariables.hh>
 
@@ -102,11 +100,8 @@ public:
     {
         // we assert that the i-th shape function is
         // associated to the i-th vert of the element.
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numScv = element.subEntities(dim);
-#else
-        int numScv = element.template count<dim>();
-#endif
+
         // number of faces which contribute to the porosity value in the sub-control volume
         std::vector<double>  numContributingFaces;
         numContributingFaces.resize(numScv);

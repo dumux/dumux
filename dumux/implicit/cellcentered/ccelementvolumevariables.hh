@@ -23,8 +23,6 @@
 #ifndef DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
-
 #include "ccproperties.hh"
 
 namespace Dumux
@@ -47,7 +45,6 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     /*!
@@ -79,15 +76,10 @@ public:
 
         for (int i = 0; i < numNeighbors; i++)
         {
-            const Element& neighbor = *(fvGeometry.neighbors[i]);
+            const Element& neighbor = fvGeometry.neighbors[i];
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             const PrimaryVariables &solI
                     = globalSol[problem.elementMapper().index(neighbor)];
-#else
-            const PrimaryVariables &solI
-                    = globalSol[problem.elementMapper().map(neighbor)];
-#endif
 
             FVElementGeometry neighborFVGeom;
             neighborFVGeom.updateInner(neighbor);
@@ -110,29 +102,23 @@ public:
                 || elemBCTypes.hasNeumann()
                 || elemBCTypes.hasOutflow())
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 this->resize(numNeighbors + element.subEntities(1));
-#else
-                this->resize(numNeighbors + element.template count<1>());
-#endif
 
                 // add volume variables for the boundary faces
-                IntersectionIterator isIt = problem.gridView().ibegin(element);
-                IntersectionIterator isEndIt = problem.gridView().iend(element);
-                for (; isIt != isEndIt; ++isIt) {
-                    if (!isIt->boundary())
+                for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+                    if (!intersection.boundary())
                         continue;
 
                     BoundaryTypes bcTypes;
-                    problem.boundaryTypes(bcTypes, *isIt);
+                    problem.boundaryTypes(bcTypes, intersection);
 
-                    int fIdx = isIt->indexInInside();
+                    int fIdx = intersection.indexInInside();
                     int indexInVariables = numNeighbors + fIdx;
 
                     if (bcTypes.hasDirichlet())
                     {
                         PrimaryVariables dirichletValues;
-                        problem.dirichlet(dirichletValues, *isIt);
+                        problem.dirichlet(dirichletValues, intersection);
 
                         (*this)[indexInVariables].update(dirichletValues,
                                                          problem,

@@ -89,11 +89,9 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef std::vector<Scalar> PermeabilityType;
     typedef std::vector<MaterialLawParams> MaterialLawParamsVector;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
 

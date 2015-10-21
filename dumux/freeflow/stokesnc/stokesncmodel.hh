@@ -24,8 +24,6 @@
 #ifndef DUMUX_STOKESNC_MODEL_HH
 #define DUMUX_STOKESNC_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/freeflow/stokes/stokesmodel.hh>
 
 #include "stokesnclocalresidual.hh"
@@ -89,8 +87,6 @@ class StokesncModel : public StokesModel<TypeTag>
 			numComponents = Indices::numComponents
 	};
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
@@ -136,35 +132,24 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int idx = this->elementMapper().index(*eIt);
-#else
-            int idx = this->elementMapper().map(*eIt);
-#endif
+            int idx = this->elementMapper().index(element);
+
             rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element, fvGeometry);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numLocalVerts = eIt->subEntities(dim);
-#else
-            int numLocalVerts = eIt->template count<dim>();
-#endif
+            int numLocalVerts = element.subEntities(dim);
+
             for (int i = 0; i < numLocalVerts; ++i)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int vIdxGlobal = this->vertexMapper().subIndex(*eIt, i, dim);
-#else
-                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
-#endif
+                int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
+
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                i,
                                false);

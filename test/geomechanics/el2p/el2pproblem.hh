@@ -24,7 +24,6 @@
 #ifndef DUMUX_EL2P_TESTPROBLEM_HH
 #define DUMUX_EL2P_TESTPROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
@@ -43,11 +42,11 @@ class El2P_TestProblem;
 
 
 // initial conditions for momentum balance equation
-template<class GridView, class Scalar, int dim>
+template<class TypeTag, int dim>
 class InitialDisplacement;
 
 // initial conditions for mass balance equations
-template<class GridView, class Scalar>
+template<class TypeTag>
 class InitialPressSat;
 
 namespace Properties {
@@ -57,6 +56,7 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
 // Set the grid type
 SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::YaspGrid<3>);
+
 
 SET_PROP(El2P_TestProblem, PressureFEM)
 {
@@ -101,7 +101,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
 public:
-    typedef Dumux::InitialDisplacement<GridView, Scalar, dim> type;
+    typedef Dumux::InitialDisplacement<TypeTag, dim> type;
 };
 
 // Set the initial pressure and saturation function
@@ -111,7 +111,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 public:
-    typedef Dumux::InitialPressSat<GridView, Scalar> type;
+    typedef Dumux::InitialPressSat<TypeTag> type;
 };
 
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-5);
@@ -181,12 +181,12 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -197,6 +197,7 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::BlockVector<GlobalPosition> InitialStressField;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalFEMSpace) LocalFEMSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, CO2Table) CO2Table;
     typedef Dumux::CO2<Scalar, CO2Table> CO2;
@@ -210,21 +211,19 @@ public:
      * \param tInitEnd End of initialization period
      */
     El2P_TestProblem(TimeManager &timeManager,
-                    const GridView &gridView,
-                    const Scalar tInitEnd)
+                    const GridView &gridView)
         : ParentType(timeManager, gridView),
-        gridView_(gridView),
-        vertexMapper_(gridView)
+        gridView_(gridView)
     {
         std::cout << "El2P_TestProblem: Initializing the fluid system for the el2p model\n";
 
         // initialize the tables of the fluid system
-        FluidSystem::init(/*Tmin=*/273,
-                          /*Tmax=*/400,
-                          /*nT=*/120,
-                          /*pmin=*/1e5,
-                          /*pmax=*/1e8,
-                          /*np=*/200);
+//         FluidSystem::init(/*Tmin=*/273,
+//                           /*Tmax=*/400,
+//                           /*nT=*/120,
+//                           /*pmin=*/1e5,
+//                           /*pmax=*/1e8,
+//                           /*np=*/200);
 
         // resize the pressure field vector with the number of vertices
         pInit_.resize(gridView.size(dim));
@@ -240,10 +239,31 @@ public:
         // (usually the coupling is switched off for the initialization run)
         coupled_ = false;
         // set initial episode length equal to length of initialization period
+        Scalar tInitEnd = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd);
         this->timeManager().startNextEpisode(tInitEnd);
         // transfer the episode index to spatial parameters
         // (during intialization episode hydraulic different parameters might be applied)
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+
+        depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
+        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+
+        dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
+    }
+
+    void init()
+    {
+        if (this->timeManager().time() < 1e-8)
+        {
+            // set the initial approximated hydrostatic pressure distribution
+            // based on an averaged brine density
+            // or based on a pressure polynomial
+            this->initializePressure();
+            // output is written
+            this->setOutput(true);
+        }
+
+        ParentType::init();
     }
 
     // note: pInit is < 0 (just due to geomechanics sign convention applied here)
@@ -253,18 +273,13 @@ public:
     // calculates the real hydrostatic pressure distribution based on the real
     // density distribution. The calculated pressure field is than applied for
     // initialization of the actual model run and for the pressure Dirichlet boundary values.
+
     void initializePressure()
     {
-        VertexIterator vIt = gridView_.template begin<dim>();
-        VertexIterator vEndIt = gridView_.template end<dim>();
-        for(; vIt != vEndIt; ++vIt)
+        for(const auto& vertex : Dune::vertices(gridView_))
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-            int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
-            GlobalPosition globalPos = (*vIt).geometry().corner(0);
+            int vIdxGlobal = this->vertexMapper().index(vertex);
+            GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
             pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[2]) * brineDensity_ * 9.81);
@@ -301,16 +316,9 @@ public:
 
         this->setInitializationRun(initializationRun_);
         std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
-        VertexIterator vIt = gridView_.template begin<dim>();
-        VertexIterator vEndIt = gridView_.template end<dim>();
-        for(; vIt != vEndIt; ++vIt)
+        for(const auto& vertex : Dune::vertices(gridView_))
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-            int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
-            //
+            int vIdxGlobal = this->vertexMapper().index(vertex);
             pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
         }
     }
@@ -399,17 +407,9 @@ public:
         std::vector<ShapeValue> shapeVal;
         localFiniteElement.localBasis().evaluateFunction(localPos, shapeVal);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         for (int i = 0; i < element.subEntities(dim); i++)
-#else
-        for (int i = 0; i < element.template count<dim>(); i++)
-#endif
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = this->vertexMapper().map(element, i, dim);
-#endif
             pValue += pInit_[vIdxGlobal] * shapeVal[i];
         }
 
@@ -430,20 +430,14 @@ public:
     // at episode/simulation end
     bool shouldWriteOutput()
     {
-        if(output_ == false)
-            return false;
-        else
-            return true;
+        return output_;
     }
 
     // returns true if the current solution should be written to
     // disk (i.e. as a drs file)
     bool shouldWriteRestartFile() const
     {
-        if(output_ == false)
-            return false;
-        else
-            return true;
+        return output_;
     }
 
     // \}
@@ -458,28 +452,12 @@ public:
      *        used for which equation on a given boundary control volume.
      *
      * \param values The boundary types for the conservation equations
-     * \param vertex The vertex on the boundary for which the
-     *               conditions needs to be specified
-     *
-     * This function calls boundaryTypes with the global position as argument
-     */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
-    {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
-        boundaryTypes(values, globalPos);
-    }
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
-     *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The center of the finite volume which ought to be set.
      *
      *               This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
      *               If it is renamed to boundaryTypesAtPos it should be adjusted there as well.
      */
-    void boundaryTypes(BoundaryTypes &values, const GlobalPosition& globalPos) const
+    void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) const
     {
         values.setAllNeumann();
 
@@ -532,12 +510,8 @@ public:
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
-        dirichlet(values, globalPos);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        dirichletAtPos(values, globalPos);
         values[0] = -pInit_[this->vertexMapper().index(vertex)];
-#else
-        values[0] = -pInit_[this->vertexMapper().map(vertex)];
-#endif
     }
 
     /*!
@@ -550,7 +524,7 @@ public:
      * This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
      * If it is renamed to dirichletAtPos it should be adjusted there as well.
      */
-    void dirichlet(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0.0;
     }
@@ -571,20 +545,6 @@ public:
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
-    void neumann(PrimaryVariables &values,
-            const Element &element,
-            const FVElementGeometry &fvGeometry,
-            const Intersection &intersection,
-            int scvIdx,
-            int boundaryFaceIdx) const
-    {
-        const GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
-
-        neumann(values, globalPos);
-    }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -598,7 +558,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0;
     }
@@ -696,17 +656,28 @@ public:
     void episodeEnd()
     {
         this->timeManager().startNextEpisode(episodeLength_);
+        // At the end of the initializationRun
+        if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
+        {
+            this->timeManager().setTimeStepSize(dt_);
+
+            this->setCoupled(true);
+            // pressure field resulting from the initialization period is applied for the initial
+            // and the Dirichlet boundary conditions
+            this->setPressure();
+            // output is written
+            this->setOutput(true);
+        }
     }
 
 private:
     static constexpr Scalar eps_ = 3e-6;
-    static constexpr Scalar depthBOR_ = 2000;
+    Scalar depthBOR_;
     static constexpr Scalar brineDensity_ = 1059;
-    static constexpr Scalar episodeLength_ = 1e5;
+    Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
 
     std::vector<Scalar> pInit_;
     GridView gridView_;
-    VertexMapper vertexMapper_;
     Scalar dt_;
 public:
     bool initializationRun_, coupled_, output_;
@@ -730,15 +701,17 @@ public:
  *    changed during initialization of the pressure field are set to zero again.
  *
  */
-template<typename GridView, typename Scalar, int dim>
+template<class TypeTag, int dim>
 class InitialDisplacement :
 public Dune::PDELab::AnalyticGridFunctionBase<
-    Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,dim>,
-    InitialDisplacement<GridView,Scalar,dim> >
+    Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),dim>,
+    InitialDisplacement<TypeTag,dim> >
 {
 public:
-    typedef Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,dim> Traits;
-    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialDisplacement<GridView,Scalar,dim> > BaseT;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),dim> Traits;
+    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialDisplacement<TypeTag,dim> > BaseT;
 
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
@@ -777,30 +750,30 @@ public:
  *    calculated during initialization
  *
  */
-template<typename GridView, typename Scalar>
+template<class TypeTag>
 class InitialPressSat :
 public Dune::PDELab::AnalyticGridFunctionBase<
-    Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,2>,
-    InitialPressSat<GridView,Scalar> >
+    Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),2>,
+    InitialPressSat<TypeTag> >
 {
 public:
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,2> Traits;
-    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialPressSat<GridView,Scalar> > BaseT;
+    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialPressSat<TypeTag>> BaseT;
 
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
         // indices of the primary variables
-            pressureIdx = 0,
-            saturationIdx = 1
+            pressureIdx = Indices::pwIdx,
+            saturationIdx = Indices::snIdx,
     };
 
     typedef typename Dune::MultipleCodimMultipleGeomTypeMapper<GridView,
                         Dune::MCMGVertexLayout> VertexMapper;
-
-    typedef typename GridView::template Codim<GridView::dimension>::Iterator
-                        VertexIterator;
 
     /*!
      * \brief The constructor
@@ -827,23 +800,15 @@ public:
     inline void evaluateGlobal(const DomainType & position, RangeType & values) const
     {
             bool valueSet;
-            VertexIterator vIt =
-                            gridView_.template begin<GridView::dimension> ();
-            VertexIterator vEndIt =
-                            gridView_.template end<GridView::dimension> ();
             valueSet = false;
 
             // loop over all vertices
-            for (; vIt != vEndIt; ++vIt)
+            for (const auto& vertex : Dune::vertices(gridView_))
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 // get global index of current vertex
-                int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-                int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
+                int vIdxGlobal = vertexMapper_.index(vertex);
                 Dune::FieldVector<double, 3> globalPos =
-                                (*vIt).geometry().corner(0);
+                                (vertex).geometry().corner(0);
 
                 // compare coordinates of current vertex with position coordinates
                 if (globalPos[0] >= position[0] - eps_ && globalPos[0] <= position[0] + eps_
@@ -880,24 +845,16 @@ public:
         void setPressure(std::vector<Scalar> pInit)
         {
             std::cout << "InitialPressSat: setPressure function called" << std::endl;
-            VertexIterator vIt =
-                            gridView_.template begin<GridView::dimension> ();
-            VertexIterator vEndIt =
-                            gridView_.template end<GridView::dimension> ();
-            for (; vIt != vEndIt; ++vIt)
+            for (const auto& vertex : Dune::vertices(gridView_))
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-                int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
+                int vIdxGlobal = vertexMapper_.index(vertex);
                 pInit_[vIdxGlobal] = -pInit[vIdxGlobal];
             }
         }
 
 private:
     static constexpr Scalar eps_ = 3e-6;
-    static constexpr Scalar depthBOR_ = 2000;
+    Scalar depthBOR_;
     std::vector<Scalar> pInit_;
     GridView gridView_;
     VertexMapper vertexMapper_;

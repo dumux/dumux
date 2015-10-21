@@ -24,8 +24,6 @@
  * \brief Base class for all models which use the Stokes box model.
  */
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitmodel.hh>
 
 #include "stokeslocalresidual.hh"
@@ -76,7 +74,6 @@ class StokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -107,16 +104,14 @@ public:
         ElementVolumeVariables elemVolVars;
 
         // Loop over elements
-        ElementIterator eIt = this->problem_.gridView().template begin<0>();
-        ElementIterator eEndIt = this->problem_.gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->problem_.gridView()))
         {
-            if (eIt->partitionType() != Dune::InteriorEntity)
+            if (element.partitionType() != Dune::InteriorEntity)
                 continue;
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemVolVars.update(this->problem_(), *eIt, fvGeometry);
-            this->localResidual().evalFluxes(*eIt, elemVolVars);
+            fvGeometry.update(this->gridView_(), element);
+            elemVolVars.update(this->problem_(), element, fvGeometry);
+            this->localResidual().evalFluxes(element, elemVolVars);
 
             bool hasLeft = false;
             bool hasRight = false;
@@ -163,35 +158,24 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int eIdx = this->elementMapper().index(*eIt);
-#else
-            int eIdx = this->elementMapper().map(*eIt);
-#endif
+            int eIdx = this->elementMapper().index(element);
+
             rank[eIdx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int numLocalVerts = eIt->subEntities(dim);
-#else
-            int numLocalVerts = eIt->template count<dim>();
-#endif
+            int numLocalVerts = element.subEntities(dim);
+
             for (int i = 0; i < numLocalVerts; ++i)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int vIdxGlobal = this->vertexMapper().subIndex(*eIt, i, dim);
-#else
-                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
-#endif
+                int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
+
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                i,
                                false);

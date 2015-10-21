@@ -87,24 +87,21 @@ private:
         // each vertex
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numVertices);
-        auto eIt = this->problem().gridView().template begin<0>();
-        const auto& eEndIt = this->problem().gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const auto& element = *eIt;
+        for (const auto& element : Dune::elements(this->problem().gridView())) {
 
             // loop over all element vertices
             int n = element.template count<dim>();
             for (int i = 0; i < n - 1; ++i) {
-                int globalI = this->problem().vertexMapper().map(*eIt, i, dim);
+                int globalI = this->problem().vertexMapper().subIndex(element, i, dim);
                 for (int j = i + 1; j < n; ++j) {
-                    int globalJ = this->problem().vertexMapper().map(*eIt, j, dim);
+                    int globalJ = this->problem().vertexMapper().subIndex(element, j, dim);
                     // make sure that vertex j is in the neighbor set
                     // of vertex i and vice-versa
                     neighbors[globalI].insert(globalJ);
                     neighbors[globalJ].insert(globalI);
                 }
             }
-        };
+        }
 
         // make vertices neighbors to themselfs
         for (int i = 0; i < numVertices; ++i)

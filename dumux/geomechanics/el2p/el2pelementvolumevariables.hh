@@ -23,7 +23,6 @@
 #ifndef DUMUX_BOX_EL2P_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_EL2P_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 
 #include <dumux/implicit/box/boxelementvolumevariables.hh>
@@ -124,11 +123,7 @@ public:
         const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();
         typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numScv = element.subEntities(dim);
-#else
-        int numScv = element.template count<dim>();
-#endif
         this->resize(numScv);
 
         for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
@@ -187,11 +182,7 @@ public:
                 const FVElementGeometry &fvGeometry,
                 bool isOldSol)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numScv = element.subEntities(dim);
-#else
-        int numScv = element.template count<dim>();
-#endif
 
         // retrieve the current or the previous solution vector and write the values into globalSol
         const SolutionVector &globalSol =

@@ -25,8 +25,6 @@
  *
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
-#include <dune/common/version.hh>
-
 // dumux environment
 #include <dumux/decoupled/common/mimetic/mimeticproperties.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator2padaptive.hh>
@@ -101,10 +99,7 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;
@@ -177,11 +172,11 @@ public:
 
     void initialize(bool solveTwice = true)
     {
-        ElementIterator element = problem_.gridView().template begin<0> ();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -258,11 +253,9 @@ public:
         }
 
 
-            ElementIterator eItBegin = problem_.gridView().template begin<0>();
-            ElementIterator eEndIt = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+            for (const auto& element : Dune::elements(problem_.gridView()))
             {
-                int eIdxGlobal = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(element);
                 CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 if (pressureType == pw)
@@ -292,7 +285,7 @@ public:
                     (*pressureSecond)[eIdxGlobal] = cellData.pressure(wPhaseIdx);
                 }
 
-                const typename Element::Geometry& geometry = eIt->geometry();
+                const typename Element::Geometry& geometry = element.geometry();
                 // get corresponding reference element
                 typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
                 const Dune::ReferenceElement< Scalar , dim > & refElement =
@@ -303,15 +296,14 @@ public:
                 std::vector<Scalar> fluxNw(numberOfFaces,0);
 
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
-                    int isIndex = isIt->indexInInside();
+                    int isIndex = intersection.indexInInside();
 
-                    fluxW[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                    fluxNw[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                    fluxW[isIndex] += intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                    fluxNw[isIndex] += intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
                 }
 
                 // calculate velocity on reference element as the Raviart-Thomas-0
@@ -419,28 +411,20 @@ public:
     //! Function needed for restart option.
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numFaces = element.subEntities(1);
-#else
-        int numFaces = element.template count<1>();
-#endif
         for (int i=0; i < numFaces; i++)
         {
-            int isIdxGlobal = A_.intersectionMapper().map(element, i);
+            int isIdxGlobal = A_.intersectionMapper().subIndex(element, i);
             outstream << pressTrace_[isIdxGlobal][0];
         }
     }
 
     void deserializeEntity(std::istream &instream, const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numFaces = element.subEntities(1);
-#else
-        int numFaces = element.template count<1>();
-#endif
         for (int i=0; i < numFaces; i++)
         {
-            int isIdxGlobal = A_.intersectionMapper().map(element, i);
+            int isIdxGlobal = A_.intersectionMapper().subIndex(element, i);
             instream >> pressTrace_[isIdxGlobal][0];
         }
     }
@@ -513,19 +497,18 @@ template<class TypeTag>
 void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
-        int eIdxGlobal = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(element);
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosity_[nPhaseIdx];
 
         // initialize mobilities

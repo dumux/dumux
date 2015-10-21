@@ -46,7 +46,6 @@ class TestOnePSpatialParams: public FVSpatialParamsOneP<TypeTag>
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
@@ -68,11 +67,9 @@ public:
         delta_ = delta;
         permeability_.resize(gridView_.size(0));
 
-        ElementIterator eIt = gridView_.template begin<0>();
-        ElementIterator eEndIt = gridView_.template end<0>();
-        for(;eIt != eEndIt; ++eIt)
+        for(const auto& element : Dune::elements(gridView_))
         {
-            setPermeability_(permeability_[indexSet_.index(*eIt)], eIt->geometry().center());
+            setPermeability_(permeability_[indexSet_.index(element)], element.geometry().center());
         }
 
     }

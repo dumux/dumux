@@ -71,7 +71,6 @@ private:
     };
 
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
 
@@ -98,12 +97,10 @@ public:
           outputTimeInterval_(0)
     {
         // calculate the bounding box of the grid view
-        VertexIterator vIt = gridView.template begin<dim>();
-        const VertexIterator vEndIt = gridView.template end<dim>();
-        for (; vIt!=vEndIt; ++vIt) {
+        for (const auto& vertex : Dune::vertices(gridView)) {
             for (int i=0; i<dim; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().center()[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
+                bBoxMin_[i] = std::min(bBoxMin_[i], vertex.geometry().center()[i]);
+                bBoxMax_[i] = std::max(bBoxMax_[i], vertex.geometry().center()[i]);
             }
         }
 
@@ -126,12 +123,10 @@ public:
           outputTimeInterval_(0)
     {
         // calculate the bounding box of the grid view
-        VertexIterator vIt = gridView.template begin<dim>();
-        const VertexIterator vEndIt = gridView.template end<dim>();
-        for (; vIt!=vEndIt; ++vIt) {
+        for (const auto& vertex : Dune::vertices(gridView)) {
             for (int i=0; i<dim; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().center()[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
+                bBoxMin_[i] = std::min(bBoxMin_[i], vertex.geometry().center()[i]);
+                bBoxMax_[i] = std::max(bBoxMax_[i], vertex.geometry().center()[i]);
             }
         }
 

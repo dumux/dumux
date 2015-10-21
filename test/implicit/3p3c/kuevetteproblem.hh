@@ -27,7 +27,6 @@
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
 #include <dune/common/float_cmp.hh>
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
@@ -133,7 +132,6 @@ class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
@@ -301,20 +299,14 @@ public:
 
         FVElementGeometry fvGeometry;
 
-        ElementIterator eIt = this->gridView().template begin<0>();
-        ElementIterator eEndIt = this->gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView()))
         {
-            fvGeometry.update(this->gridView(), *eIt);
+            fvGeometry.update(this->gridView(), element);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int dofIdxGlobal = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
-                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx);
+                int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx);
             }
         }
 

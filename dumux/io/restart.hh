@@ -138,13 +138,9 @@ public:
         std::string cookie = oss.str();
         serializeSectionBegin(cookie);
 
-        // write element data
-        typedef typename GridView::template Codim<codim>::Iterator Iterator;
-
-        Iterator it = gridView.template begin<codim>();
-        const Iterator &endIt = gridView.template end<codim>();
-        for (; it != endIt; ++it) {
-            serializer.serializeEntity(outStream_, *it);
+        // write entity data
+        for (const auto& entity : Dune::entities(gridView, Dune::Codim<codim>())) {
+            serializer.serializeEntity(outStream_, entity);
             outStream_ << "\n";
         }
 
@@ -256,10 +252,7 @@ public:
         std::string curLine;
 
         // read entity data
-        typedef typename GridView::template Codim<codim>::Iterator Iterator;
-        Iterator it = gridView.template begin<codim>();
-        const Iterator &endIt = gridView.template end<codim>();
-        for (; it != endIt; ++it) {
+        for (const auto& entity : Dune::entities(gridView, Dune::Codim<codim>())) {
             if (!inStream_.good()) {
                 DUNE_THROW(Dune::IOError,
                            "Restart file is corrupted");
@@ -267,7 +260,7 @@ public:
 
             std::getline(inStream_, curLine);
             std::istringstream curLineStream(curLine);
-            deserializer.deserializeEntity(curLineStream, *it);
+            deserializer.deserializeEntity(curLineStream, entity);
         }
 
         deserializeSectionEnd();

@@ -86,7 +86,6 @@ class CC2PCornerPointProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -314,15 +313,13 @@ public:
         ScalarField *permX = this->resultWriter().allocateManagedBuffer(numElements);
         ScalarField *permZ = this->resultWriter().allocateManagedBuffer(numElements);
 
-        ElementIterator eIt = this->gridView().template begin<0>();
-        ElementIterator eEndIt = this->gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView()))
         {
             FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView(), *eIt);
-            int eIdx = this->elementMapper().map(*eIt);
+            fvGeometry.update(this->gridView(), element);
+            int eIdx = this->elementMapper().map(element);
 
-            const DimWorldMatrix K = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, /*element data*/ 0);
+            const DimWorldMatrix K = this->spatialParams().intrinsicPermeability(element, fvGeometry, /*element data*/ 0);
             // transfer output to mD = 9.86923e-16 m^2
             (*permX)[eIdx] = K[0][0]/9.86923e-16;
             (*permZ)[eIdx] = K[2][2]/9.86923e-16;

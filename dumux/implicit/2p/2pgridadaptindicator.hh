@@ -19,8 +19,6 @@
 #ifndef DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
 #define DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
 
-#include <dune/common/version.hh>
-
 #include "2pproperties.hh"
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 //#include <dumux/linear/vectorexchange.hh>
@@ -42,11 +40,8 @@ class TwoPImplicitGridAdaptIndicator
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -93,19 +88,13 @@ public:
         Scalar globalMax = -1e100;
         Scalar globalMin = 1e100;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf-elements
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
-                ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        	int globalIdxI = problem_.elementMapper().index(*eIt);
-#else
-        	int globalIdxI = problem_.elementMapper().map(*eIt);
-#endif
+            int globalIdxI = problem_.elementMapper().index(element);
 
         	Scalar satI = 0.0;
 
@@ -114,7 +103,7 @@ public:
         	else
         	{
                 const LocalFiniteElementCache feCache;
-                const auto geometryI = eIt->geometry();
+                const auto geometryI = element.geometry();
             	Dune::GeometryType geomType = geometryI.type();
 
             	GlobalPosition centerI = geometryI.local(geometryI.center());
@@ -124,11 +113,7 @@ public:
 
                 for (int i = 0; i < shapeVal.size(); ++i)
                   {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                     int dofIdxGlobal = problem_.model().dofMapper().subIndex(*eIt, i, dofCodim);
-#else
-                     int dofIdxGlobal = problem_.model().dofMapper().map(*eIt, i, dofCodim);
-#endif
+                     int dofIdxGlobal = problem_.model().dofMapper().subIndex(element, i, dofCodim);
                       satI += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                   }
         	}
@@ -137,23 +122,17 @@ public:
             globalMax = std::max(satI, globalMax);
 
             // calculate refinement indicator in all cells
-            IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
-                const typename IntersectionIterator::Intersection &intersection = *isIt;
                 // Only consider internal intersections
                 if (intersection.neighbor())
                 {
                     // Access neighbor
-                    ElementPointer outside = intersection.outside();
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int globalIdxJ = problem_.elementMapper().index(*outside);
-#else
-                    int globalIdxJ = problem_.elementMapper().map(*outside);
-#endif
+                    auto outside = intersection.outside();
+                    int globalIdxJ = problem_.elementMapper().index(outside);
 
                     // Visit intersection only once
-                    if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
+                    if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                     	Scalar satJ = 0.0;
 
@@ -162,7 +141,7 @@ public:
                     	else
                     	{
                             const LocalFiniteElementCache feCache;
-                            const auto geometryJ = outside->geometry();
+                            const auto geometryJ = outside.geometry();
                         	Dune::GeometryType geomType = geometryJ.type();
 
                         	GlobalPosition centerJ = geometryJ.local(geometryJ.center());
@@ -172,11 +151,8 @@ public:
 
                             for (int i = 0; i < shapeVal.size(); ++i)
                               {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                                  int dofIdxGlobal = problem_.model().dofMapper().subIndex(*outside, i, dofCodim);
-#else
-                                  int dofIdxGlobal = problem_.model().dofMapper().map(*outside, i, dofCodim);
-#endif
+                                  int dofIdxGlobal = problem_.model().dofMapper().subIndex(outside, i, dofCodim);
+
                                   satJ += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                               }
                     	}
@@ -218,11 +194,7 @@ public:
      */
     bool refine(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return (indicatorVector_[problem_.elementMapper().index(element)] > refineBound_);
-#else
-        return (indicatorVector_[problem_.elementMapper().map(element)] > refineBound_);
-#endif
     }
 
     /*! \brief Indicator function for marking of grid cells for coarsening
@@ -233,11 +205,7 @@ public:
      */
     bool coarsen(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return (indicatorVector_[problem_.elementMapper().index(element)] < coarsenBound_);
-#else
-        return (indicatorVector_[problem_.elementMapper().map(element)] < coarsenBound_);
-#endif
     }
 
     /*! \brief Initializes the adaptation indicator class*/

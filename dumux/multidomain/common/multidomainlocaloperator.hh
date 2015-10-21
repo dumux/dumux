@@ -47,7 +47,6 @@ class MultiDomainLocalOperator
 
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename Grid::Traits::template Codim<0>::EntityPointer EntityPointer;
 
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
@@ -84,8 +83,7 @@ public:
     {
         typedef typename LFSU::Traits::SizeType size_type;
 
-        const EntityPointer elementPtr = model_.gridView().grid().subDomainEntityPointer(eg.entity());
-        model_.localResidual().eval(*elementPtr);
+        model_.localResidual().eval(model_.gridView().grid().subDomainEntityPointer(eg.entity()));
 
         int numVertices = x.size()/numEq;
         for (size_type comp = 0; comp < r.size(); comp++)
@@ -118,8 +116,7 @@ public:
         typedef typename LFSU::Traits::SizeType size_typeU;
         typedef typename LFSV::Traits::SizeType size_typeV;
 
-        const EntityPointer elementPtr = model_.gridView().grid().subDomainEntityPointer(eg.entity());
-        model_.localJacobian().assemble(*elementPtr);
+        model_.localJacobian().assemble(model_.gridView().grid().subDomainEntityPointer(eg.entity()));
 
         int numVertices = x.size()/numEq;
         for (size_typeV j=0; j<lfsv.size(); j++) {

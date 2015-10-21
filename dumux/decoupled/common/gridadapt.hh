@@ -49,10 +49,7 @@ class GridAdapt
 
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LeafGridView LeafGridView;
-    typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
-    typedef typename GridView::IntersectionIterator LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
@@ -213,25 +210,24 @@ public:
         CoarsenMarkerType coarsenMarker;
         const typename Grid::Traits::LocalIdSet& idSet(problem_.grid().localIdSet());
 
-        for (LeafIterator eIt = problem_.gridView().template begin<0>();
-             eIt!=problem_.gridView().template end<0>(); ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // only mark non-ghost elements
-            if (eIt->partitionType() == Dune::GhostEntity)
+            if (element.partitionType() == Dune::GhostEntity)
                 continue;
 
             // refine?
-            if (indicator.refine(*eIt) && eIt->level() < levelMax_)
+            if (indicator.refine(element) && element.level() < levelMax_)
             {
-                problem_.grid().mark( 1,  *eIt);
+                problem_.grid().mark( 1,  element);
                 ++marked_;
 
                 // this also refines the neighbor elements
-                checkNeighborsRefine_(*eIt);
+                checkNeighborsRefine_(element);
             }
-            if (indicator.coarsen(*eIt) && eIt->hasFather())
+            if (indicator.coarsen(element) && element.hasFather())
             {
-                int idx = idSet.id(*(eIt->father()));
+                int idx = idSet.id(element.father());
                 typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {
@@ -244,32 +240,30 @@ public:
             }
         }
         // coarsen
-        for (LeafIterator eIt = problem_.gridView().template begin<0>();
-             eIt!=problem_.gridView().template end<0>(); ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // only mark non-ghost elements
-            if (eIt->partitionType() == Dune::GhostEntity)
+            if (element.partitionType() == Dune::GhostEntity)
                 continue;
 
-            if (indicator.coarsen(*eIt) && eIt->level() > levelMin_)
+            if (indicator.coarsen(element) && element.level() > levelMin_)
             {
-                int idx = idSet.id(*(eIt->father()));
+                int idx = idSet.id(element.father());
                 typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {
-                    if (problem_.grid().getMark(*eIt) == 0
-                        && it->second == eIt->geometry().corners())
+                    if (problem_.grid().getMark(element) == 0
+                        && it->second == element.geometry().corners())
                     {
                         // check if coarsening is possible
                         bool coarsenPossible = true;
-                        LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
-                        for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
+                        for(const auto& intersection : Dune::intersections(problem_.gridView(), element))
                         {
-                            if(is->neighbor())
+                            if(intersection.neighbor())
                             {
-                                ElementPointer outside = is->outside();
-                                if ((problem_.grid().getMark(*outside) > 0)
-                                    || outside->level() > eIt->level())
+                                auto outside = intersection.outside();
+                                if ((problem_.grid().getMark(outside) > 0)
+                                    || outside.level() > element.level())
                                 {
                                     coarsenPossible = false;
                                 }
@@ -278,7 +272,7 @@ public:
 
                         if(coarsenPossible)
                         {
-                            problem_.grid().mark( -1, *eIt );
+                            problem_.grid().mark( -1, element );
                             ++coarsened_;
                         }
                     }
@@ -362,26 +356,25 @@ private:
     bool checkNeighborsRefine_(const Element &entity, int level = 1)
     {
         // this also refines the neighbor elements
-        LeafIntersectionIterator isend = problem_.gridView().iend(entity);
-        for(LeafIntersectionIterator is = problem_.gridView().ibegin(entity); is != isend; ++is)
+        for(const auto& intersection : Dune::intersections(problem_.gridView(), entity))
         {
-            if(!is->neighbor())
+            if(!intersection.neighbor())
                 continue;
 
-            ElementPointer outside = is->outside();
+            auto outside = intersection.outside();
 
             // only mark non-ghost elements
-            if (outside->partitionType() == Dune::GhostEntity)
+            if (outside.partitionType() == Dune::GhostEntity)
                 continue;
 
-            if ((outside->level() < levelMax_)
-                && (outside->level() < entity.level()))
+            if ((outside.level() < levelMax_)
+                && (outside.level() < entity.level()))
             {
-                problem_.grid().mark(1, *outside);
+                problem_.grid().mark(1, outside);
                 ++marked_;
 
                 if(level != levelMax_)
-                    checkNeighborsRefine_(*outside, ++level);
+                    checkNeighborsRefine_(outside, ++level);
             }
         }
         return true;
@@ -407,26 +400,21 @@ private:
         {
             // run through all cells
             done=true;
-            for (LeafIterator eIt = leafGridView.template begin<0>();
-                 eIt!=leafGridView.template end<0>(); ++eIt)
+            for (const auto& element : Dune::elements(problem_.gridView()))
             {
                 // only mark non-ghost elements
-                if (eIt->partitionType() == Dune::GhostEntity)
+                if (element.partitionType() == Dune::GhostEntity)
                     continue;
 
                 // run through all neighbor-cells (intersections)
-                LeafIntersectionIterator isItend = leafGridView.iend(*eIt);
-                for (LeafIntersectionIterator isIt = leafGridView.ibegin(*eIt); isIt!= isItend; ++isIt)
+                for (const auto& intersection : Dune::intersections(leafGridView, element))
                 {
-                    const typename LeafIntersectionIterator::Intersection intersection = *isIt;
                     if(!intersection.neighbor())
                         continue;
 
-                    ElementPointer outside =intersection.outside();
-                    if (eIt.level()+maxLevelDelta<outside.level())
+                    if (element.level() + maxLevelDelta < intersection.outside().level())
                     {
-                        ElementPointer entity =eIt;
-                        problem_.grid().mark( 1, *entity );
+                        problem_.grid().mark( 1, element );
                         done=false;
                     }
                 }

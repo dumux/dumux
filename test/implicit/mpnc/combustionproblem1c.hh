@@ -219,7 +219,6 @@ class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> 
 	typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 	typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 	typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-	typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 	typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
 	typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 

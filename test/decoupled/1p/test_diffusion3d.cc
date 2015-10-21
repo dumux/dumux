@@ -25,7 +25,7 @@
 #include "config.h"
 #include <iostream>
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG
+#if HAVE_DUNE_ALUGRID || HAVE_UG
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -231,4 +231,4 @@ int main()
     std::cerr << "You need to have dune-ALUGrid or UG installed to run this test\n";
     return 77;
 }
-#endif // HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG
+#endif // HAVE_DUNE_ALUGRID || HAVE_UG

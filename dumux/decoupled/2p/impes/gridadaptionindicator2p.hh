@@ -19,8 +19,6 @@
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2P_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2P_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include <dumux/linear/vectorexchange.hh>
@@ -42,11 +40,8 @@ class GridAdaptionIndicator2P
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
@@ -82,15 +77,13 @@ public:
         Scalar globalMax = -1e100;
         Scalar globalMin = 1e100;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf-elements
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
-                ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
-            int globalIdxI = problem_.variables().index(*eIt);
+            int globalIdxI = problem_.variables().index(element);
 
             Scalar satI = 0.0;
             switch (saturationType_)
@@ -107,19 +100,17 @@ public:
             globalMax = std::max(satI, globalMax);
 
             // calculate refinement indicator in all cells
-            IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
-                const typename IntersectionIterator::Intersection &intersection = *isIt;
                 // Only consider internal intersections
                 if (intersection.neighbor())
                 {
                     // Access neighbor
-                    ElementPointer outside = intersection.outside();
-                    int globalIdxJ = problem_.variables().index(*outside);
+                    auto outside = intersection.outside();
+                    int globalIdxJ = problem_.variables().index(outside);
 
                     // Visit intersection only once
-                    if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
+                    if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                         Scalar satJ = 0.;
                         switch (saturationType_)
@@ -167,11 +158,7 @@ public:
      */
     bool refine(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return (indicatorVector_[problem_.elementMapper().index(element)] > refineBound_);
-#else
-        return (indicatorVector_[problem_.elementMapper().map(element)] > refineBound_);
-#endif
     }
 
     /*! \brief Indicator function for marking of grid cells for coarsening
@@ -182,11 +169,7 @@ public:
      */
     bool coarsen(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return (indicatorVector_[problem_.elementMapper().index(element)] < coarsenBound_);
-#else
-        return (indicatorVector_[problem_.elementMapper().map(element)] < coarsenBound_);
-#endif
     }
 
     /*! \brief Initializes the adaption indicator class*/

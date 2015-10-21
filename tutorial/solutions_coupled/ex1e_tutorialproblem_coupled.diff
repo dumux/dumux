@@ -51,6 +51,6 @@ Index: tutorialproblem_coupled.hh
          , eps_(3e-6)
      {
 +      GET_PROP_TYPE(TypeTag, FluidSystem)::init();
- #if !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
-       std::cout << "If you want to use simplices instead of cubes, install and use ALUGrid or UGGrid." << std::endl;
- #endif // !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
+ #if !(HAVE_DUNE_ALUGRID || HAVE_UG)
+       std::cout << "If you want to use simplices instead of cubes, install and use dune-ALUGrid or UGGrid." << std::endl;
+ #endif // !(HAVE_DUNE_ALUGRID || HAVE_UG)
