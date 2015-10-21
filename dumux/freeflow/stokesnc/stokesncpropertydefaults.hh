@@ -60,7 +60,11 @@ SET_PROP(BoxStokesnc, NumEq)
 
     static const int dim = Grid::dimension;
 public:
+#if SALINIZATION
+    static constexpr int value = FluidSystem::numMajorComponents + dim;
+#else
     static constexpr int value = FluidSystem::numComponents + dim;
+#endif
 };
 
 //! Use the Stokes nc local residual function for the Stokes model

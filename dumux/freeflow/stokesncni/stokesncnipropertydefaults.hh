@@ -51,7 +51,12 @@ SET_PROP(BoxStokesncni, NumEq) //!< set the number of equations
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     static const int dim = Grid::dimension;
  public:
+//! for salinization applications only major components exist in the free-flow subdomain
+#if SALINIZATION
+    static constexpr int value = dim + FluidSystem::numMajorComponents +/*energyequation*/1;
+#else
     static constexpr int value = dim + FluidSystem::numComponents +/*energyequation*/1;
+#endif
 };
 
 //! Use the stokesncni local jacobian operator for the compositional stokes model

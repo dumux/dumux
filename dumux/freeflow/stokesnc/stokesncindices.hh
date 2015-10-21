@@ -54,8 +54,13 @@ public:
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
     // Number of Components
-    //! Number of components in employed fluidsystem
+    //! for salinization applications only major components exist in the free-flow subdomain
+#if SALINIZATION
+    static const int numComponents = FluidSystem::numMajorComponents;
+#else
+//! Number of components in employed fluidsystem
     static const int numComponents = FluidSystem::numComponents;
+#endif
 
     // Component indices
     //! The index of the main component of the considered phase

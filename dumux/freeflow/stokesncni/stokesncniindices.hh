@@ -44,7 +44,12 @@ struct StokesncniCommonIndices : public StokesncCommonIndices<TypeTag, PVOffset>
 public:
     // number of dimensions
     static const int dim = StokesCommonIndices<TypeTag>::dim;
+//! for salinization applications only major components exist in the free-flow subdomain
+#if SALINIZATION
+    static const int energyEqIdx = PVOffset + dim + FluidSystem::numMajorComponents; //!< The index for the energy balance equation
+#else
     static const int energyEqIdx = PVOffset + dim + FluidSystem::numComponents; //!< The index for the energy balance equation
+#endif
     static const int temperatureIdx = energyEqIdx; //!< The index for temperature in primary variable vectors
 };
 // \}
