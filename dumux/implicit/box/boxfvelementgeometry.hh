@@ -79,6 +79,18 @@ public:
         fvGeometry.subContVol[0].volume = 0.5*fvGeometry.elementVolume;
         fvGeometry.subContVol[1].volume = 0.5*fvGeometry.elementVolume;
     }
+
+    template<class SCVGeometry, class GlobalPosition>
+    static void computeGeometries(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
+    {
+        std::vector<GlobalPosition> corners = {{edgeCoord[0], fvGeometry.elementGlobal}};
+        fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 1), corners));
+        corners = {{fvGeometry.elementGlobal, edgeCoord[1]}};
+        fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 1), corners));
+    }
 };
 
 template <typename BoxFVElementGeometry>
@@ -151,22 +163,40 @@ public:
         }
     }
 
-    template<class AffineGeometry, class GlobalPosition>
+    template<class SCVGeometry, class GlobalPosition>
     static void computeGeometries(BoxFVElementGeometry &fvGeometry,
                                    int numVertices,
                                    GlobalPosition *edgeCoord,
                                    GlobalPosition *faceCoord)
     {
-        switch (numVertices) {
-        case 4: // quadrilateral
-            std::array<GlobalPosition, 4> corners = {{fvGeometry.subContVol[0].global, edgeCoord[2], fvGeometry.elementGlobal, edgeCoord[0]}};
-            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
-            corners = {{fvGeometry.subContVol[1].global, edgeCoord[1], fvGeometry.elementGlobal, edgeCoord[2]}};
-            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
-            corners = {{fvGeometry.subContVol[2].global, edgeCoord[0], fvGeometry.elementGlobal, edgeCoord[3]}};
-            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
-            corners = {{fvGeometry.subContVol[3].global, edgeCoord[3], fvGeometry.elementGlobal, edgeCoord[1]}};
-            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+        switch (numVertices)
+        {
+        case 3: // element is triangle
+            {
+            std::vector<GlobalPosition> corners = {{fvGeometry.subContVol[0].global, edgeCoord[0], edgeCoord[1], fvGeometry.elementGlobal}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{edgeCoord[0], fvGeometry.subContVol[1].global, fvGeometry.elementGlobal, edgeCoord[2]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{edgeCoord[1], fvGeometry.elementGlobal, fvGeometry.subContVol[2].global, edgeCoord[2]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            break;
+            }
+        case 4: // element is quadrilateral
+            {
+            std::vector<GlobalPosition> corners = {{fvGeometry.subContVol[0].global, edgeCoord[2], edgeCoord[0], fvGeometry.elementGlobal}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{edgeCoord[2], fvGeometry.subContVol[1].global, fvGeometry.elementGlobal, edgeCoord[1]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{edgeCoord[0], fvGeometry.elementGlobal, fvGeometry.subContVol[2].global, edgeCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{fvGeometry.elementGlobal, edgeCoord[1], edgeCoord[3], fvGeometry.subContVol[3].global}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            break;
+            }
+        default:
+            DUNE_THROW(Dune::NotImplemented,
+                       "_BoxFVElemGeomHelper::computeGeometries dim = "
+                       << dim << ", numVertices = " << numVertices);
         }
     }
 };
@@ -365,6 +395,105 @@ public:
         default:
             DUNE_THROW(Dune::NotImplemented,
                        "_BoxFVElemGeomHelper::fillSubContVolData dim = "
+                       << dim << ", numVertices = " << numVertices);
+        }
+    }
+
+    template<class SCVGeometry, class GlobalPosition>
+    static void computeGeometries(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
+    {
+        switch (numVertices)
+        {
+        case 4: // element is tetrahedron
+            {
+            Dune::GeometryType type; type.makeHexahedron();
+
+            std::vector<GlobalPosition>
+            corners = {{fvGeometry.subContVol[0].global, edgeCoord[0],
+                        edgeCoord[1], faceCoord[0],
+                        edgeCoord[3], faceCoord[1],
+                        faceCoord[2], fvGeometry.elementGlobal}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[0], fvGeometry.subContVol[1].global,
+                        faceCoord[0], edgeCoord[2],
+                        faceCoord[1], edgeCoord[4],
+                        fvGeometry.elementGlobal, faceCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[1], faceCoord[0],
+                        fvGeometry.subContVol[2].global, edgeCoord[2],
+                        faceCoord[2], fvGeometry.elementGlobal,
+                        edgeCoord[5], faceCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[3], faceCoord[1],
+                        faceCoord[2], fvGeometry.elementGlobal,
+                        fvGeometry.subContVol[3].global, edgeCoord[4],
+                        edgeCoord[5], faceCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+            break;
+            }
+        case 8: // element is hexahedron
+            {
+            Dune::GeometryType type; type.makeHexahedron();
+
+            std::vector<GlobalPosition>
+            corners = {{fvGeometry.subContVol[0].global, edgeCoord[6],
+                        edgeCoord[4], faceCoord[4],
+                        edgeCoord[0], faceCoord[2],
+                        faceCoord[0], fvGeometry.elementGlobal}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[6], fvGeometry.subContVol[1].global,
+                        faceCoord[4], edgeCoord[5],
+                        faceCoord[2], edgeCoord[1],
+                        fvGeometry.elementGlobal, faceCoord[1]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[4], faceCoord[4],
+                        fvGeometry.subContVol[2].global, edgeCoord[7],
+                        faceCoord[0], fvGeometry.elementGlobal,
+                        edgeCoord[2], faceCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{faceCoord[4], edgeCoord[5],
+                        edgeCoord[7], fvGeometry.subContVol[3].global,
+                        fvGeometry.elementGlobal, faceCoord[1],
+                        faceCoord[3], edgeCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[0], faceCoord[2],
+                        faceCoord[0], fvGeometry.elementGlobal,
+                        fvGeometry.subContVol[4].global, edgeCoord[10],
+                        edgeCoord[8], faceCoord[5]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{faceCoord[2], edgeCoord[1],
+                        fvGeometry.elementGlobal, faceCoord[1],
+                        edgeCoord[10], fvGeometry.subContVol[5].global,
+                        faceCoord[5], edgeCoord[9]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{faceCoord[0], fvGeometry.elementGlobal,
+                        edgeCoord[2], faceCoord[3],
+                        edgeCoord[8], faceCoord[5],
+                        fvGeometry.subContVol[6].global, edgeCoord[11]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{fvGeometry.elementGlobal,faceCoord[1],
+                        faceCoord[3], edgeCoord[3],
+                        faceCoord[5], edgeCoord[9],
+                        edgeCoord[11], fvGeometry.subContVol[7].global}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+            break;
+            }
+        default:
+            DUNE_THROW(Dune::NotImplemented,
+                       "_BoxFVElemGeomHelper::computeGeometries dim = "
                        << dim << ", numVertices = " << numVertices);
         }
     }
