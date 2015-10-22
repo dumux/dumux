@@ -72,6 +72,18 @@ int main(int argc, char** argv)
                 std::cout<<"Used box 2p model\n";
                 return startReturn;
             }
+            else if (modelType == "CC")
+            {
+                typedef TTAG(CCGeneralLensProblem) ProblemTypeTag;
+                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
+                Dune::ParameterTree &rt = ParamTree::runTimeParams();
+                rt["ModelType"]=modelType;
+                ParamTree::tree()["Problem.OutputfileName"] = "generallens_cc";
+                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
+                std::cout<<"######################################################\n";
+                std::cout<<"Used cc 2p model\n";
+                return startReturn;
+            }
             else if (modelType == "Decoupled")
             {
                 typedef TTAG(DecoupledGeneralLensProblem) ProblemTypeTag;

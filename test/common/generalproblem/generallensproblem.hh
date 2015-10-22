@@ -104,6 +104,19 @@ SET_TYPE_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpati
 
 
 ///////////////////////////////////////////////////
+// CC model TypeTag
+//////////////////////////////////////////////////
+
+NEW_TYPE_TAG(CCGeneralLensProblem, INHERITS_FROM(CCTwoP, GeneralLensProblem));
+
+// Set the problem property
+SET_TYPE_PROP(CCGeneralLensProblem, ProblemBaseClass, Dumux::ImplicitPorousMediaProblem<TypeTag>);
+
+// Set the problem property
+SET_TYPE_PROP(CCGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpatialParams<TypeTag>);
+
+
+///////////////////////////////////////////////////
 // Deoupled model TypeTag
 //////////////////////////////////////////////////
 
