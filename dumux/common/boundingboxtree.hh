@@ -25,8 +25,10 @@
 #define DUMUX_BOUNDINGBOXTREE_HH
 
 #include <memory>
+#include <type_traits>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/exceptions.hh>
 
 namespace Dumux {
 
@@ -39,7 +41,274 @@ class BoundingBoxTreeHelper<3>
 {
     // An epsilon for floating point operations
     static constexpr double eps_ = 1.0e-7;
+    typedef Dune::FieldVector<double, 3> GlobalPosition;
+
 public:
+    // Check whether a point is inside a given geometry
+    template <class Geometry>
+    static typename std::enable_if<Geometry::mydimension == 3, bool>::type
+    pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
+    {
+        // get the geometry type
+        auto type = geometry.type();
+
+        // if it's a tetrahedron we can check directly
+        if (type.isTetrahedron())
+        {
+            return pointInTetrahedron(geometry.corner(0),
+                                      geometry.corner(1),
+                                      geometry.corner(2),
+                                      geometry.corner(3),
+                                      point);
+        }
+        // split hexahedrons into five tetrahedrons
+        else if (type.isHexahedron())
+        {
+            if (pointInTetrahedron(geometry.corner(0),
+                                   geometry.corner(1),
+                                   geometry.corner(3),
+                                   geometry.corner(5),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(0),
+                                   geometry.corner(5),
+                                   geometry.corner(6),
+                                   geometry.corner(4),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(5),
+                                   geometry.corner(3),
+                                   geometry.corner(6),
+                                   geometry.corner(7),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(0),
+                                   geometry.corner(3),
+                                   geometry.corner(2),
+                                   geometry.corner(6),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(5),
+                                   geometry.corner(3),
+                                   geometry.corner(0),
+                                   geometry.corner(6),
+                                   point))
+                return true;
+            return false;
+        }
+        // split pyramids into two tetrahedrons
+        else if (type.isPyramid())
+        {
+            if (pointInTetrahedron(geometry.corner(0),
+                                   geometry.corner(1),
+                                   geometry.corner(2),
+                                   geometry.corner(4),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(1),
+                                   geometry.corner(3),
+                                   geometry.corner(2),
+                                   geometry.corner(4),
+                                   point))
+                return true;
+            return false;
+        }
+        // split prisms into three tetrahedrons
+        else if (type.isPrism())
+        {
+            if (pointInTetrahedron(geometry.corner(0),
+                                   geometry.corner(1),
+                                   geometry.corner(2),
+                                   geometry.corner(4),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(3),
+                                   geometry.corner(0),
+                                   geometry.corner(2),
+                                   geometry.corner(4),
+                                   point))
+                return true;
+            if (pointInTetrahedron(geometry.corner(2),
+                                   geometry.corner(5),
+                                   geometry.corner(3),
+                                   geometry.corner(4),
+                                   point))
+                return true;
+            return false;
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                        "Intersection for point and geometry "
+                        << type << " in three-dimensional world.");
+    }
+
+    template <class Geometry>
+    static typename std::enable_if<Geometry::mydimension == 2, bool>::type
+    pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
+    {
+        // get the geometry type
+        auto type = geometry.type();
+
+        // if it's a triangle we can check directly
+        if (type.isTriangle())
+        {
+            return pointInTriangle(geometry.corner(0),
+                                   geometry.corner(1),
+                                   geometry.corner(2),
+                                   point);
+        }
+        // split quadrilaterals into two triangles
+        else if (type.isQuadrilateral())
+        {
+            if (pointInTriangle(geometry.corner(0),
+                                geometry.corner(1),
+                                geometry.corner(3),
+                                point))
+                return true;
+            if (pointInTriangle(geometry.corner(0),
+                                geometry.corner(3),
+                                geometry.corner(2),
+                                point))
+                return true;
+            return false;
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                        "Intersection for point and geometry "
+                        << type << " in three-dimensional world.");
+
+    }
+
+    template <class Geometry>
+    static typename std::enable_if<Geometry::mydimension == 1, bool>::type
+    pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
+    {
+        return pointInInterval(geometry.corner(0),
+                               geometry.corner(1),
+                               point);
+    }
+
+    //! find out if a point is inside a tetrahedron
+    static bool pointInTetrahedron(const GlobalPosition& p0, const GlobalPosition& p1,
+                                   const GlobalPosition& p2, const GlobalPosition& p3,
+                                   const GlobalPosition& point)
+    {
+        // Algorithm from http://www.blackpawn.com/texts/pointinpoly/
+        // See also "Real-Time Collision Detection" by Christer Ericson.
+        // See also implementation of those algorithms by Anders Logg in FEniCS
+
+        // put the tetrahedron points in an array
+        const GlobalPosition *p[4] = {&p0, &p1, &p2, &p3};
+
+        // iterate over all faces
+        for (unsigned int i = 0; i < 4; ++i)
+        {
+            // compute all the vectors from vertex (local index 0) to the other points
+            const GlobalPosition v1 = *p[(i + 1)%4] - *p[i];
+            const GlobalPosition v2 = *p[(i + 2)%4] - *p[i];
+            const GlobalPosition v3 = *p[(i + 3)%4] - *p[i];
+            const GlobalPosition v = point - *p[i];
+            // compute the normal to the facet (cross product)
+            const GlobalPosition n1 = {v1[1]*v2[2] - v1[2]*v2[1],
+                                       v1[2]*v2[0] - v1[0]*v2[2],
+                                       v1[0]*v2[1] - v1[1]*v2[0]};
+            // find out on which side of the plane v and v3 are
+            const double t1 = n1.dot(v);
+            const double t2 = n1.dot(v3);
+            // If the point is not exactly on the plane the
+            // points have to be on the same side
+            if (t1 != 0.0 && std::signbit(t1) != std::signbit(t2))
+                return false;
+        }
+        return true;
+    }
+
+    //! find out if a point is inside a triangle
+    static bool pointInTriangle(const GlobalPosition& p0, const GlobalPosition& p1,
+                                const GlobalPosition& p2, const GlobalPosition& point)
+    {
+        // Algorithm from http://www.blackpawn.com/texts/pointinpoly/
+        // See also "Real-Time Collision Detection" by Christer Ericson.
+        // See also implementation of those algorithms by Anders Logg in FEniCS
+
+        // compute the vectors of the edges and the vector point-p0
+        const GlobalPosition v1 = p0 - p2;
+        const GlobalPosition v2 = p1 - p0;
+        const GlobalPosition v3 = p2 - p1;
+        const GlobalPosition v = point - p0;
+
+        // compute the normal of the triangle
+        const GlobalPosition n = {v1[1]*v2[2] - v1[2]*v2[1],
+                                  v1[2]*v2[0] - v1[0]*v2[2],
+                                  v1[0]*v2[1] - v1[1]*v2[0]};
+
+        // first check if we are in the plane of the triangle
+        // if not we can return early
+        const double t = v.dot(n);
+        if (std::abs(t) > v1.two_norm()*eps_) // take |v1| as scale
+            return false;
+
+        // compute the normal to the triangle made of point and first edge
+        // the dot product of this normal and the triangle normal has to
+        // be positive because we defined the edges in the right orientation
+        const GlobalPosition n1 = {v[1]*v1[2] - v[2]*v1[1],
+                                   v[2]*v1[0] - v[0]*v1[2],
+                                   v[0]*v1[1] - v[1]*v1[0]};
+        const double t1 = n.dot(n1);
+        if (t1 < 0) return false;
+
+        const GlobalPosition n2 = {v[1]*v2[2] - v[2]*v2[1],
+                                   v[2]*v2[0] - v[0]*v2[2],
+                                   v[0]*v2[1] - v[1]*v2[0]};
+        const double t2 = n.dot(n2);
+        if (t2 < 0) return false;
+
+        const GlobalPosition n3 = {v[1]*v3[2] - v[2]*v3[1],
+                                   v[2]*v3[0] - v[0]*v3[2],
+                                   v[0]*v3[1] - v[1]*v3[0]};
+        const double t3 = n.dot(n3);
+        if (t3 < 0) return false;
+
+        return true;
+    }
+
+    //! find out if a point is inside an interval
+    static bool pointInInterval(const GlobalPosition& p0, const GlobalPosition& p1,
+                                const GlobalPosition& point)
+    {
+        // compute the vectors between p0 and the other points
+        const GlobalPosition v1 = p1 - p0;
+        const GlobalPosition v2 = point - p0;
+
+        // check if point and p0 are the same
+        const double v1norm = v1.two_norm();
+        const double v2norm = v2.two_norm();
+        if (v2norm < v1norm*eps_)
+            return true;
+
+        // if not check if p0 and p1 are the same
+        // then we know that point is not in the interval
+        if (v1norm < eps_)
+            return false;
+
+        // if the cross product is zero the points are on a line
+        const GlobalPosition n = {v1[1]*v2[2] - v1[2]*v2[1],
+                                  v1[2]*v2[0] - v1[0]*v2[2],
+                                  v1[0]*v2[1] - v1[1]*v2[0]};
+
+        // early return if the vector length is larger than zero
+        if (n.two_norm() > v1norm*eps_)
+            return false;
+
+        // we know the points are aligned
+        // if the dot product is positive and the length in range
+        // the point is in the interval
+        if (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_))
+            return true;
+
+        return false;
+    }
+
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point,
                                    double* boundingBoxCoordinates,
@@ -155,7 +424,109 @@ class BoundingBoxTreeHelper<2>
 {
     // An epsilon for floating point operations
     static constexpr double eps_ = 1.0e-7;
+    typedef Dune::FieldVector<double, 2> GlobalPosition;
+
 public:
+    // Check whether a point is inside a given geometry
+    template <class Geometry>
+    static typename std::enable_if<Geometry::mydimension == 2, bool>::type
+    pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
+    {
+        // get the geometry type
+        auto type = geometry.type();
+
+        // if it's a triangle we can check directly
+        if (type.isTriangle())
+        {
+            return pointInTriangle(geometry.corner(0),
+                                   geometry.corner(1),
+                                   geometry.corner(2),
+                                   point);
+        }
+        // split quadrilaterals into two triangles
+        else if (type.isQuadrilateral())
+        {
+            if (pointInTriangle(geometry.corner(0),
+                                geometry.corner(1),
+                                geometry.corner(3),
+                                point))
+                return true;
+            if (pointInTriangle(geometry.corner(0),
+                                geometry.corner(3),
+                                geometry.corner(2),
+                                point))
+                return true;
+            return false;
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                        "Intersection for point and geometry "
+                        << type << " in two-dimensional world.");
+    }
+
+    template <class Geometry>
+    static typename std::enable_if<Geometry::mydimension == 1, bool>::type
+    pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
+    {
+        return pointInInterval(geometry.corner(0),
+                               geometry.corner(1),
+                               point);
+    }
+
+    //! find out if a point is inside a triangle
+    static bool pointInTriangle(const GlobalPosition& p0, const GlobalPosition& p1,
+                                const GlobalPosition& p2, const GlobalPosition& point)
+    {
+        // Use barycentric coordinates
+        const double A = 0.5*(-p1[1]*p2[0] + p0[1]*(p2[0] - p1[0])
+                                           + p0[0]*(p1[1] - p2[1]) + p1[0]*p2[1]);
+        const double sign = std::copysign(1.0, A);
+        const double s = sign*(p0[1]*p2[0] + point[0]*(p2[1]-p0[1])
+                              -p0[0]*p2[1] + point[1]*(p0[0]-p2[0]));
+        const double t = sign*(p0[0]*p1[1] + point[0]*(p0[1]-p1[1])
+                              -p0[1]*p1[0] + point[1]*(p1[0]-p0[0]));
+        const double eps = (p0 - p1).two_norm()*eps_;
+
+        return (s > -eps
+                && t > -eps
+                && (s + t) < 2*A*sign + eps);
+    }
+
+    //! find out if a point is inside an interval
+    static bool pointInInterval(const GlobalPosition& p0, const GlobalPosition& p1,
+                                const GlobalPosition& point)
+    {
+        // compute the vectors between p0 and the other points
+        const GlobalPosition v1 = p1 - p0;
+        const GlobalPosition v2 = point - p0;
+
+        // check if point and p0 are the same
+        const double v1norm = v1.two_norm();
+        const double v2norm = v2.two_norm();
+        if (v2norm < v1norm*eps_)
+            return true;
+
+        // if not check if p0 and p1 are the same
+        // then we know that point is not in the interval
+        if (v1norm < eps_)
+            return false;
+
+        // if the cross product is zero the points are on a line
+        const double n = v1[0]*v2[1] - v1[1]*v2[0];
+
+        // early return if the cross product is larger than zero
+        if (n > v1norm*eps_)
+            return false;
+
+        // we know the points are aligned
+        // if the dot product is positive and the length in range
+        // the point is in the interval
+        if (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_))
+            return true;
+
+        return false;
+    }
+
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point,
                                    double* boundingBoxCoordinates,
@@ -247,9 +618,44 @@ class BoundingBoxTreeHelper<1>
 {
     // An epsilon for floating point operations
     static constexpr double eps_ = 1.0e-7;
+    typedef Dune::FieldVector<double, 1> GlobalPosition;
+
 public:
+    // Check whether a point is inside a given geometry
+    template <class Geometry>
+    static bool pointInGeometry(const Geometry& geometry,
+                                const GlobalPosition& point)
+    {
+        return pointInInterval(geometry.corner(0),
+                               geometry.corner(1),
+                               point);
+    }
+
+    //! find out if a point is inside an interval
+    static bool pointInInterval(const GlobalPosition& p0, const GlobalPosition& p1,
+                                const GlobalPosition& point)
+    {
+        const double v1 = point[0] - p0[0];
+        const double v2 = p1[0] - p0[0];
+        // the coordinates are the same
+        if (v1 < v2*eps_)
+            return true;
+        // the point doesn't coincide with p0
+        // so if p0 and p1 are equal it's not inside
+        if (v2 < eps_)
+            return false;
+
+        // the point is inside if the length is
+        // small than the interval length and the
+        // sign of v1 & v2 are the same
+        if (std::signbit(v1) == std::signbit(v2)
+            && std::abs(v1) < std::abs(v2)*(1 + eps_))
+            return true;
+        return false;
+    }
+
     // Check whether a point is in a bounding box
-    static bool pointInBoundingBox(const Dune::FieldVector<double, 1>& point,
+    static bool pointInBoundingBox(const GlobalPosition& point,
                                    double* boundingBoxCoordinates,
                                    unsigned int node)
     {
