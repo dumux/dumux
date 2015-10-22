@@ -236,13 +236,13 @@ public:
      */
     static Scalar criticalTemperature(int compIdx)
     {
-        static const Scalar Tcrit[] = {
+        static const Scalar TCrit[] = {
             H2O::criticalTemperature(),
             Air::criticalTemperature()
         };
 
         assert(0 <= compIdx && compIdx < numComponents);
-        return Tcrit[compIdx];
+        return TCrit[compIdx];
     }
 
     /*!
@@ -252,13 +252,29 @@ public:
      */
     static Scalar criticalPressure(int compIdx)
     {
-        static const Scalar pcrit[] = {
+        static const Scalar pCrit[] = {
             H2O::criticalPressure(),
             Air::criticalPressure()
         };
 
         assert(0 <= compIdx && compIdx < numComponents);
-        return pcrit[compIdx];
+        return pCrit[compIdx];
+    }
+
+    /*!
+     * \brief Vapor pressure of a component \f$\mathrm{[Pa]}\f$.
+     *
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState, int compIdx)
+    {
+        if (compIdx == H2OIdx)
+            return H2O::vaporPressure(fluidState.temperature());
+        else if (compIdx == AirIdx)
+            return Air::vaporPressure(fluidState.temperature());
+        else
+             DUNE_THROW(Dune::NotImplemented, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -407,8 +423,8 @@ public:
                 fluidState.pressure(nPhaseIdx);
 
             return
-                H2O::gasDensity(T, partialPressureH2O) +
-                Air::gasDensity(T, partialPressureAir);
+                H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
+                Air::gasDensity(T, fluidState.partialPressure(nPhaseIdx, AirIdx));
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

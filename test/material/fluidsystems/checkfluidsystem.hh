@@ -126,6 +126,13 @@ public:
         return BaseFluidState::temperature(phaseIdx);
     }
 
+    Scalar partialPressure(int phaseIdx, int compIdx) const
+    {
+        assert(allowComposition_);
+        assert(restrictPhaseIdx_ < 0 || restrictPhaseIdx_ == phaseIdx);
+        return BaseFluidState::partialPressure(phaseIdx, compIdx);
+    }
+
     Scalar pressure(int phaseIdx) const
     {
         if (!allowPressure_)

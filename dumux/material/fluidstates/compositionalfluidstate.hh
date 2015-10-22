@@ -159,6 +159,12 @@ public:
     { return pressure_[phaseIdx]; }
 
     /*!
+     * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
+     */
+    Scalar partialPressure(int phaseIdx, int compIdx) const
+    { return moleFraction(phaseIdx, compIdx) * pressure(phaseIdx); }
+
+    /*!
      * \brief The specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const
@@ -328,6 +334,27 @@ public:
                 sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
                 averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
             }
+        }
+    }
+
+    /*!
+     * \brief Set the relative humidity of a component in a phase \f$\mathrm{[-]}\f$
+     *        and update the average molar mass \f$\mathrm{[kg/mol]}\f$ according
+     *        to the current composition of the phase
+     */
+    template <class FluidState>
+    void setRelativeHumidity(FluidState &fs, int phaseIdx, int compIdx, Scalar value)
+    {
+        Valgrind::CheckDefined(value);
+
+        if (numComponents != 2)
+            DUNE_THROW(Dune::NotImplemented, "This currently only works for 2 components and for setting the mass fractions of the transported component.");
+        else
+        {
+            Scalar moleFraction = value * FluidSystem::vaporPressure(fs, compIdx)
+                                  / fs.pressure(phaseIdx);
+            fs.setMoleFraction(phaseIdx, compIdx, moleFraction);
+            fs.setMoleFraction(phaseIdx, 1-compIdx, 1-moleFraction);
         }
     }
 
