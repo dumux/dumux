@@ -107,7 +107,7 @@ public:
     Scalar partialPressure(int phaseIdx, int componentIdx) const
     {
         if(phaseIdx==nPhaseIdx)
-            return partialPressure(nCompIdx);
+            return partialPressure(componentIdx);
         else
             DUNE_THROW(Dune::NotImplemented, "Not implemented for non-gaseous phases!");
     }

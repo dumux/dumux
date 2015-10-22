@@ -414,14 +414,6 @@ public:
                     * fluidState.averageMolarMass(nPhaseIdx)
                     / std::max(1e-5, sumMoleFrac);
 
-            const Scalar partialPressureH2O =
-                fluidState.moleFraction(nPhaseIdx, H2OIdx)  *
-                fluidState.pressure(nPhaseIdx);
-
-            const Scalar partialPressureAir =
-                fluidState.moleFraction(nPhaseIdx, AirIdx)  *
-                fluidState.pressure(nPhaseIdx);
-
             return
                 H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
                 Air::gasDensity(T, fluidState.partialPressure(nPhaseIdx, AirIdx));
