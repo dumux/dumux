@@ -311,7 +311,7 @@ public:
 
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point,
-                                   double* boundingBoxCoordinates,
+                                   const double* boundingBoxCoordinates,
                                    unsigned int node)
     {
         const double* b = boundingBoxCoordinates + 6*node;
@@ -529,7 +529,7 @@ public:
 
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point,
-                                   double* boundingBoxCoordinates,
+                                   const double* boundingBoxCoordinates,
                                    unsigned int node)
     {
         const double* b = boundingBoxCoordinates + 4*node;
@@ -656,7 +656,7 @@ public:
 
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const GlobalPosition& point,
-                                   double* boundingBoxCoordinates,
+                                   const double* boundingBoxCoordinates,
                                    unsigned int node)
     {
         const double* b = boundingBoxCoordinates + 2*node;
@@ -793,7 +793,7 @@ public:
     }
 
     // Compute all intersections between entities and a point
-    std::vector<unsigned int> computeEntityCollisions(const Dune::FieldVector<double, dimworld>& point)
+    std::vector<unsigned int> computeEntityCollisions(const Dune::FieldVector<double, dimworld>& point) const
     {
         // Call the recursive find function to find candidates
         std::vector<unsigned int> entities;
@@ -875,7 +875,7 @@ private:
     // Compute collisions with point recursively
     void computeCollisions_(const Dune::FieldVector<double, dimworld>& point,
                             unsigned int node,
-                            std::vector<unsigned int>& entities)
+                            std::vector<unsigned int>& entities) const
     {
         // Get the bounding box for the current node
         const BoundingBox& bBox = getBoundingBox_(node);
