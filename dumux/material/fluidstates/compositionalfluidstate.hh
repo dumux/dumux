@@ -159,6 +159,15 @@ public:
     { return pressure_[phaseIdx]; }
 
     /*!
+     * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
+     */
+    Scalar partialPressure(int phaseIdx, int compIdx) const
+    {
+        assert(FluidSystem::isGas(phaseIdx));
+        return moleFraction(phaseIdx, compIdx) * pressure(phaseIdx);
+    }
+
+    /*!
      * \brief The specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const
@@ -305,7 +314,7 @@ public:
         Valgrind::SetDefined(massFraction_[phaseIdx][compIdx]);
 
         if (numComponents != 2)
-            DUNE_THROW(Dune::NotImplemented, "This currently only works for 2 components and for setting the mass fractions of the transported component.");
+            DUNE_THROW(Dune::NotImplemented, "This currently only works for 2 components.");
         else
         {
             // calculate average molar mass of the gas phase
@@ -329,6 +338,28 @@ public:
                 averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
             }
         }
+    }
+
+    /*!
+     * \brief Set the relative humidity of a component in a phase \f$\mathrm{[-]}\f$
+     *        and update the average molar mass \f$\mathrm{[kg/mol]}\f$ according
+     *        to the current composition of the phase
+     */
+    template <class FluidState>
+    void setRelativeHumidity(FluidState &fluidState, int phaseIdx, int compIdx, Scalar value)
+    {
+        Valgrind::CheckDefined(value);
+
+        // asserts for the assumption under which setting the relative humidity is possible
+        assert(phaseIdx == FluidSystem::nPhaseIdx);
+        assert(compIdx == FluidSystem::wCompIdx);
+        assert(numComponents == 2);
+        assert(FluidSystem::isGas(phaseIdx));
+
+        Scalar moleFraction = value * FluidSystem::vaporPressure(fluidState, FluidSystem::wCompIdx)
+                              / fluidState.pressure(phaseIdx);
+        fluidState.setMoleFraction(phaseIdx, FluidSystem::wCompIdx, moleFraction);
+        fluidState.setMoleFraction(phaseIdx, FluidSystem::nCompIdx, 1.0-moleFraction);
     }
 
     /*!

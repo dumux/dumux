@@ -100,7 +100,7 @@ public:
      *
      * To avoid numerical issues with code that assumes miscibility,
      * we return a fugacity of 0 for components which do not mix with
-     * the specified phase. (Actually it undefined, but for finite
+     * the specified phase. (Actually it is undefined, but for finite
      * fugacity coefficients, the only way to get components
      * completely out of a phase is 0 to feed it zero fugacity.)
      */
