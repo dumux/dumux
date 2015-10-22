@@ -122,32 +122,23 @@ public:
      * For an ideal gas, this means \f$ R*T*c \f$.
      * Unit: \f$\mathrm{[Pa] = [N/m^2]}\f$
      *
-     * \param componentIdx the index of the component
+     * \param compIdx the index of the component
      */
-    Scalar partialPressure(int componentIdx) const
+    Scalar partialPressure(int compIdx) const
     {
-        //! \bug non-wetting phase is not necessarily a gas phase
-        if(componentIdx==nCompIdx)
-            return pressure(nPhaseIdx)*moleFraction(nPhaseIdx, nCompIdx);
-        if(componentIdx == wCompIdx)
-            return pressure(nPhaseIdx)*moleFraction(nPhaseIdx, wCompIdx);
-        else
-            DUNE_THROW(Dune::NotImplemented, "component not found in fluidState!");
-        return 0.;
+        return partialPressure(nPhaseIdx, compIdx);
     }
 
     /*!
      * \brief Return the partial pressure of a component in a phase.
      *
      * \param phaseIdx the index of the phase
-     * \param componentIdx the index of the component
+     * \param compIdx the index of the component
      */
-    Scalar partialPressure(int phaseIdx, int componentIdx) const
+    Scalar partialPressure(int phaseIdx, int compIdx) const
     {
-        if(phaseIdx==nPhaseIdx)
-            return partialPressure(componentIdx);
-        else
-            DUNE_THROW(Dune::NotImplemented, "Not implemented for non-gaseous phases!");
+        assert(FluidSystem::isGas(phaseIdx));
+        return pressure(phaseIdx)*moleFraction(phaseIdx, compIdx);
     }
 
     /*!

@@ -160,21 +160,6 @@ public:
     { return pressure_[phaseIdx]; }
 
     /*!
-     * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
-     *
-     * To avoid numerical issues with code that assumes miscibility,
-     * we return a partial pressure of 0 for components which do not mix with
-     * the specified phase. Actually it is undefined.
-     */
-    Scalar partialPressure(int phaseIdx, int compIdx) const
-    {
-        if (phaseIdx == compIdx)
-            return pressure(phaseIdx);
-        else
-            return 0;
-    }
-
-    /*!
      * \brief The specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const

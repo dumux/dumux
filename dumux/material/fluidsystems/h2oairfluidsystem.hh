@@ -131,6 +131,17 @@ public:
     }
 
     /*!
+     * \brief Return whether a phase is gaseous
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static bool isGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        return phaseIdx == nPhaseIdx;
+    }
+
+    /*!
      * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal mixture.
      *
