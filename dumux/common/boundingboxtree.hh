@@ -887,11 +887,15 @@ private:
         // We know now it's inside. If the box is a leaf add it.
         else if (isLeaf_(bBox, node))
         {
+            // but add it only if the point is also inside the entity
             const unsigned int eIdx = bBox.child_1;
             auto geometry = (indexToElementMap_->entity(eIdx)).geometry();
-            const ReferenceElement &refElement = ReferenceElements::general(geometry.type());
-            if (refElement.checkInside(geometry.local(point)))
+            if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(geometry, point))
                 entities.push_back(eIdx);
+
+            // const ReferenceElement &refElement = ReferenceElements::general(geometry.type());
+            // if (refElement.checkInside(geometry.local(point)))
+            //     entities.push_back(eIdx);
         }
 
         // No leaf. Check both children.

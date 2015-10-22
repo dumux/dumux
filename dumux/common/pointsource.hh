@@ -25,7 +25,6 @@
 #ifndef DUMUX_POINTSOURCE_HH
 #define DUMUX_POINTSOURCE_HH
 
-#include <dune/geometry/referenceelements.hh>
 #include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux
@@ -79,7 +78,7 @@ private:
 
 /*!
  * \ingroup Common
- * \brief A helper class calculating an DOF index to point source map
+ * \brief A helper class calculating a DOF-index to point source map
  */
 template<class TypeTag>
 class PointSourceHelper
@@ -90,10 +89,7 @@ class PointSourceHelper
     typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
 
     static const int dim = GridView::dimension;
-
-    typedef typename GridView::Grid::ctype CoordScalar;
-    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
+    static const int dimworld = GridView::dimensionworld;
 
     typedef BoundingBoxTree<GridView> BoundingBoxTree;
 
@@ -119,17 +115,16 @@ public:
                 if(isBox)
                 {
                     // check in which subcontrolvolume(s) we are
-                    auto element = boundingBoxTree->entity(eIdx);
+                    const auto element = boundingBoxTree->entity(eIdx);
                     FVElementGeometry fvGeometry;
                     fvGeometry.update(problem.gridView(), element);
-                    auto globalPos = source.position();
+                    const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
                     std::vector<unsigned int> vertices;
                     for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                     {
                         auto geometry = fvGeometry.subContVolGeometries[scvIdx];
-                        const ReferenceElement &refElement = ReferenceElements::general(geometry.type());
-                        if (refElement.checkInside(geometry.local(globalPos)))
+                        if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(geometry, globalPos))
                             vertices.push_back(problem.model().dofMapper().subIndex(element, scvIdx, dofCodim));
                     }
                     for (unsigned int vIdx : vertices)
