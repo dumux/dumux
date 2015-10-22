@@ -24,8 +24,8 @@
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
-#include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -418,7 +418,7 @@ class BoxFVElementGeometry
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
-    typedef typename Dune::AffineGeometry<CoordScalar, dim, dimWorld> AffineGeometry;
+    typedef typename Dune::MultiLinearGeometry<CoordScalar, dim, dimWorld> BoxGeometry;
 
     typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
     typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
@@ -666,7 +666,7 @@ public:
     GlobalPosition elementGlobal; //!< global coordinate of element center
     Scalar elementVolume; //!< element volume
     SubControlVolume subContVol[maxNC]; //!< data of the sub control volumes
-    std::vector<AffineGeometry> subContVolGeometries; //!< geometries of the subcontrol volumes
+    std::vector<BoxGeometry> subContVolGeometries; //!< geometries of the subcontrol volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
     int numScv; //!< number of subcontrol volumes
@@ -724,7 +724,7 @@ public:
         // compiler optimizations...
         BoxFVElemGeomHelper::fillSubContVolData(*this, numScv, edgeCoordinates, faceCoordinates);
         subContVolGeometries.clear();
-        BoxFVElemGeomHelper::template computeGeometries<AffineGeometry>(*this, numScv, edgeCoordinates, faceCoordinates);
+        BoxFVElemGeomHelper::template computeGeometries<BoxGeometry>(*this, numScv, edgeCoordinates, faceCoordinates);
 
         // fill sub control volume face data:
         for (int scvfIdx = 0; scvfIdx < numScvf; scvfIdx++) { // begin loop over edges / sub control volume faces
