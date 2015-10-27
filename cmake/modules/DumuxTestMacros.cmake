@@ -37,9 +37,6 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
     add_executable(${dumux_test_executable} ${dumux_test_executable_source})
   endif()
 
-  # link all libraries to executable, add all flags
-  add_dumux_all_flags(${dumux_test_executable})
-
   # get optional arguments
   # cannot use ARGN directly with list() command, copy to a variable first
   set(dumux_test_args ${ARGN})
@@ -51,22 +48,3 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   # return code 77 should be interpreted as skipped test
   set_tests_properties(${dumux_test} PROPERTIES SKIP_RETURN_CODE 77)
 endmacro()
-
-###
-# adds flags for all third party libraries used in DuMuX to the given targets
-###
-function(add_dumux_all_flags)
-  cmake_parse_arguments(ADD_DUMUX_ALL_FLAGS "" "" "" ${ARGN})
-  foreach(_target ${ADD_DUMUX_ALL_FLAGS_UNPARSED_ARGUMENTS})
-    # add flags
-    add_dune_mpi_flags(${_target})
-    add_dune_alugrid_flags(${_target})
-    add_dune_parmetis_flags(${_target})
-    add_dune_ug_flags(${_target})
-    add_dune_umfpack_flags(${_target})
-    add_dune_superlu_flags(${_target})
-    # add Dune libraries
-    target_link_libraries(${_target} ${DUNE_LIBS})
-    target_link_libraries(${_target} ${ZLIB_LIBRARIES})
-  endforeach()
-endfunction()
