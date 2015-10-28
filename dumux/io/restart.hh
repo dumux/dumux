@@ -26,6 +26,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/grid/common/rangegenerators.hh>
 
 #include <list>
 #include <string>
