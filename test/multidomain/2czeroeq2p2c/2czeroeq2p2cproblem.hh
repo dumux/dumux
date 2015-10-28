@@ -53,7 +53,7 @@ SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::UGGrid<2>);
 #elif HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #else
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the global problem
