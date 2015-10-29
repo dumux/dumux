@@ -98,7 +98,7 @@ public:
         std::shared_ptr<HelperGrid> helperGrid = std::shared_ptr<HelperGrid> (
             Dune::StructuredGridFactory<HelperGrid>::createCubeGrid(lowerLeft, upperRight, numCellsDummy));
 
-        const auto& helperElement = *helperGrid->leafGridView().template begin<0>();
+        const auto& helperElement = helperGrid->leafGridView().template begin<0>();
         const auto& helperGeometry = helperElement.geometry();
 
         Dune::FieldVector<Scalar,dim> refinePointLocal(helperGeometry.local(refinePoint));

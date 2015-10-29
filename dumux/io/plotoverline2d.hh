@@ -31,6 +31,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/grid/common/rangegenerators.hh>
 
 #include <iostream>
 #include <fstream>

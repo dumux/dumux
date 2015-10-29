@@ -23,6 +23,7 @@
 
 #include<dune/common/deprecated.hh>
 #include<dune/grid/common/mcmgmapper.hh>
+#include<dune/grid/common/rangegenerators.hh>
 
 /*!
  * \file

@@ -3,6 +3,7 @@
 CORRECT_LOCATION_FOR_DUNE_MODULES="n"
 ENABLE_MPI="n"
 ENABLE_DEBUG="n"
+ENABLE_PARALLEL="n"
 CLEANUP="n"
 DOWNLOAD_ONLY="n"
 
@@ -51,6 +52,10 @@ installCornerpoint()
         return
     fi
 
+    # apply patch
+    echo "Applying patch for dune-cornerpoint"
+    cd $TOPDIR/dune-cornerpoint
+    patch -p1 < $TOPDIR/dumux/patches/dune-cornerpoint-2015.04.patch
     cd $TOPDIR
 }
 
@@ -131,10 +136,10 @@ installMultidomainGrid()
     fi
 
     # apply patch for dune versions newer than 2.3
-    cd dune-common
-    DUNE_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
-    if  [ "$DUNE_VERSION" == "releases/2.4" ] || [ "$DUNE_VERSION" == "master" ]; then
-        echo "Applying patch"
+    cd $TOPDIR/dune-common
+    DUNE_COMMON_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
+    if  [ "$DUNE_COMMON_VERSION" == "releases/2.4" ] || [ "$DUNE_COMMON_VERSION" == "master" ]; then
+        echo "Applying patch for dune-multidomaingrid"
         cd $TOPDIR/dune-multidomaingrid
         patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
     fi
@@ -168,6 +173,22 @@ installOPM()
         rm -rf opm-parser
         return
     fi
+
+    # apply patches
+    echo "Applying patch for opm-core"
+    cd $TOPDIR/opm-core
+    patch -p1 < $TOPDIR/dumux/patches/opm-core-2015.04.patch
+    echo "Applying patch for opm-parser"
+    cd $TOPDIR/opm-parser
+    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2015.04.patch
+
+    # show additional information
+    echo "In addition to applying the patches, it is necessary to set manually some"
+    echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
+    echo "  -Ddune-cornerpoint_PREFIX=/path/to/dune-cornerpoint \\"
+    echo "  -Dopm-core_PREFIX=/path/to/opm-core \\"
+    echo "  -Dopm-parser_PREFIX=/path/to/opm-parser \\"
+    echo "  -DHAVE_DUNE_CORNERPOINT=1 \\"
 
     cd $TOPDIR
 }
@@ -244,7 +265,15 @@ installUG()
         tar zxvf ug-$UG_VERSION.tar.gz
     fi
 
-    cd ug-$UG_VERSION
+    # Apply patch for the parallel use of UG
+    cd $TOPDIR/dune-grid
+    DUNE_GRID_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
+    if  [ "$DUNE_GRID_VERSION" == "releases/2.3.1" ] && [ "$ENABLE_PARALLEL" == "y" ]; then
+        echo "Applying patch for the parallel use of UG"
+        patch -p1 < $TOPDIR/dumux/patches/grid-2.3.1.patch
+    fi
+
+    cd $EXTDIR/ug-$UG_VERSION
     autoreconf -is
     OPTIM_FLAGS="-O3 -DNDEBUG -march=native -finline-functions -funroll-loops"
     # debug flags
@@ -265,6 +294,7 @@ installUG()
         CFLAGS="$CFLAGS" \
         CXXFLAGS="$CXXFLAGS" \
         $OPTS
+
     make
     make install
 
@@ -304,6 +334,7 @@ for TMP in "$@"; do
             DOWNLOAD_ONLY="y"
             ;;
         "--parallel")
+            ENABLE_PARALLEL="y"
             ENABLE_MPI="y"
             MPICC=$(which mpicc)
             MPICXX=$(which mpicxx)

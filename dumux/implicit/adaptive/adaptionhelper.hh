@@ -20,6 +20,7 @@
 #define DUMUX_ADAPTIONHELPER_HH
 
 #include <dune/grid/common/gridenums.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
