@@ -73,8 +73,7 @@ public:
         xLabel_(""), yLabel_(""),
         options_(""),
         datafileSeparator_(' '),
-        gnuplotPath_(GNUPLOT_EXECUTABLE),
-        terminalType_("wxt")
+        gnuplotPath_(GNUPLOT_EXECUTABLE)
     {
         if (persist)
             pipe_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
@@ -95,12 +94,13 @@ public:
      * \param title The name of the output file
      * \param plottingWindowNumber Change the number of the window in which the plot is shown
      */
-    void plot(const std::string &title, const unsigned int plottingWindowNumber = 0)
+    void plot(const std::string &title, const unsigned int plottingWindowNumber = 0, const std::string& terminalType = "x11")
     {
         // set correct terminal and general options
         std::string plot = "reset\n";
         plot += "set datafile separator \'" + convertToString(datafileSeparator_) + "\'\n";
-        plot += "set term wxt " + convertToString(plottingWindowNumber) + " \n";
+        if (plottingWindowNumber != 0)
+            plot += "set term " + terminalType + " " + convertToString(plottingWindowNumber) + " \n";
         if (xRangeMin_ < 1e100 || xRangeMax_ > -1e100)
         {
             plot += "set xrange [" + convertToString(xRangeMin_)
@@ -338,7 +338,6 @@ private:
     std::string options_;
     char datafileSeparator_;
     std::string gnuplotPath_;
-    std::string terminalType_;
 };
 } // end of namespace
 #endif // DUMUX_GNUPLOT_INTERFACE_HH
