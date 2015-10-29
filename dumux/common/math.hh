@@ -473,32 +473,31 @@ Scalar antoine(Scalar temperature,
 }
 
 /*!
- * \brief cross product of two vectors in three-dimensional Euclidean space
+ * \brief Cross product of two vectors in three-dimensional Euclidean space
  *
  * \param vec1 The first vector
  * \param vec2 The second vector
  */
-template <class Scalar, int dim>
-Dune::FieldVector<Scalar, dim> crossProduct(const Dune::FieldVector<Scalar, dim> &vec1,
-              const Dune::FieldVector<Scalar, dim> &vec2)
+template <class Scalar>
+Dune::FieldVector<Scalar, 3> crossProduct(const Dune::FieldVector<Scalar, 3> &vec1,
+                                          const Dune::FieldVector<Scalar, 3> &vec2)
 {
-    Dune::FieldVector<Scalar, dim> result(0);
-
-    if (dim == 3)
-    {
-        result[0] = vec1[1]*vec2[2]-vec1[2]*vec2[1];
-        result[1] = vec1[2]*vec2[0]-vec1[0]*vec2[2];
-        result[2] = vec1[0]*vec2[1]-vec1[1]*vec2[0];
-    }
-    else
-    {
-        DUNE_THROW(Dune::NotImplemented, "Cross product is so far only supported for three dimensions!");
-    }
-
-    return result;
+    return {vec1[1]*vec2[2]-vec1[2]*vec2[1],
+            vec1[2]*vec2[0]-vec1[0]*vec2[2],
+            vec1[0]*vec2[1]-vec1[1]*vec2[0]};
 }
 
-}
+/*!
+ * \brief Cross product of two vectors in two-dimensional Euclidean space retuning scalar
+ *
+ * \param vec1 The first vector
+ * \param vec2 The second vector
+ */
+template <class Scalar>
+Scalar crossProduct(const Dune::FieldVector<Scalar, 2> &vec1,
+                    const Dune::FieldVector<Scalar, 2> &vec2)
+{   return vec1[0]*vec2[1]-vec1[1]*vec2[0]; }
 
+} // end namespace Dumux
 
 #endif
