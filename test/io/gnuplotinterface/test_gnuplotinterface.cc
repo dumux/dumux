@@ -58,7 +58,7 @@ int main()
     gnuplot.setOption("set label 'arrow' at 1,15 center tc rgb 'dark-gray'");
     gnuplot.addDataSetToPlot(x, y, "dataSet_f(x)=x^2", "every 5 w lp ps 2");
     gnuplot.addFunctionToPlot("x**3", "function_f(x)=x^3");
-    gnuplot.addFileToPlot("0_dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat");
+    gnuplot.addFileToPlot("dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat");
     gnuplot.plot("plot");
     exit(0);
 }
