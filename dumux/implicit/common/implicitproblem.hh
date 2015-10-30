@@ -967,7 +967,11 @@ public:
             asImp_().solDependentPointSources(pointSources, element, fvGeometry, scvIdx, elemVolVars);
 
             // Add the contributions to the dof source values
-            Scalar volume = isBox ? model_.boxVolume(dofGlobalIdx) : element.geometry().volume();
+            // We divide by the volume. In the local residual this will be multiplied with the same
+            // factor again. That's because the user specifies absolute values in kg/s.
+            const Scalar volume = fvGeometry.subContVol[scvIdx].volume
+                                   * asImp_().boxExtrusionFactor(element, fvGeometry, scvIdx);
+
             for (auto&& pointSource : pointSources)
             {
                 pointSource /= volume;
