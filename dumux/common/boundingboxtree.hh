@@ -29,6 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
+#include <dumux/common/math.hh>
 
 namespace Dumux {
 
@@ -209,9 +210,7 @@ public:
             const GlobalPosition v3 = *p[(i + 3)%4] - *p[i];
             const GlobalPosition v = point - *p[i];
             // compute the normal to the facet (cross product)
-            const GlobalPosition n1 = {v1[1]*v2[2] - v1[2]*v2[1],
-                                       v1[2]*v2[0] - v1[0]*v2[2],
-                                       v1[0]*v2[1] - v1[1]*v2[0]};
+            const GlobalPosition n1 = Dumux::crossProduct(v1, v2);
             // find out on which side of the plane v and v3 are
             const double t1 = n1.dot(v);
             const double t2 = n1.dot(v3);
@@ -238,9 +237,7 @@ public:
         const GlobalPosition v = point - p0;
 
         // compute the normal of the triangle
-        const GlobalPosition n = {v1[1]*v2[2] - v1[2]*v2[1],
-                                  v1[2]*v2[0] - v1[0]*v2[2],
-                                  v1[0]*v2[1] - v1[1]*v2[0]};
+        const GlobalPosition n = Dumux::crossProduct(v1, v2);
 
         // first check if we are in the plane of the triangle
         // if not we can return early
@@ -251,21 +248,15 @@ public:
         // compute the normal to the triangle made of point and first edge
         // the dot product of this normal and the triangle normal has to
         // be positive because we defined the edges in the right orientation
-        const GlobalPosition n1 = {v[1]*v1[2] - v[2]*v1[1],
-                                   v[2]*v1[0] - v[0]*v1[2],
-                                   v[0]*v1[1] - v[1]*v1[0]};
+        const GlobalPosition n1 = Dumux::crossProduct(v, v1);
         const double t1 = n.dot(n1);
         if (t1 < 0) return false;
 
-        const GlobalPosition n2 = {v[1]*v2[2] - v[2]*v2[1],
-                                   v[2]*v2[0] - v[0]*v2[2],
-                                   v[0]*v2[1] - v[1]*v2[0]};
+        const GlobalPosition n2 = Dumux::crossProduct(v, v2);
         const double t2 = n.dot(n2);
         if (t2 < 0) return false;
 
-        const GlobalPosition n3 = {v[1]*v3[2] - v[2]*v3[1],
-                                   v[2]*v3[0] - v[0]*v3[2],
-                                   v[0]*v3[1] - v[1]*v3[0]};
+        const GlobalPosition n3 = Dumux::crossProduct(v, v3);
         const double t3 = n.dot(n3);
         if (t3 < 0) return false;
 
@@ -292,9 +283,7 @@ public:
             return false;
 
         // if the cross product is zero the points are on a line
-        const GlobalPosition n = {v1[1]*v2[2] - v1[2]*v2[1],
-                                  v1[2]*v2[0] - v1[0]*v2[2],
-                                  v1[0]*v2[1] - v1[1]*v2[0]};
+        const GlobalPosition n = Dumux::crossProduct(v1, v2);
 
         // early return if the vector length is larger than zero
         if (n.two_norm() > v1norm*eps_)
@@ -512,7 +501,7 @@ public:
             return false;
 
         // if the cross product is zero the points are on a line
-        const double n = v1[0]*v2[1] - v1[1]*v2[0];
+        const double n = Dumux::crossProduct(v1, v2);
 
         // early return if the cross product is larger than zero
         if (n > v1norm*eps_)
