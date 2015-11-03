@@ -24,8 +24,11 @@ EXTRA_PACKAGES        += amsmath,amssymb,units
 SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = NO
 
-# disable macro expansion (Otherwise, certain properties will not appear
-# in the documentation properly. This should be fixed at some time.)
-MACRO_EXPANSION = NO
+# the bibliography file used for the doxygen documentation
+CITE_BIB_FILES = @top_srcdir@/doc/handbook/dumux-handbook.bib
 
-CITE_BIB_FILES = @top_srcdir@/doc/handbook/dumux-handbook
+# enable macro expansion only for specified macros
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = "DUNE_DEPRECATED:=/** \deprecated */" \
+                         "DUNE_DEPRECATED_MSG(A):=/** \deprecated A */"
