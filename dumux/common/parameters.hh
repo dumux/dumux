@@ -267,24 +267,6 @@ public:
     static const ParamType &getRuntime(const char *groupOrParamName,
                                        const char *paramNameOrNil = 0)
     {
-#ifndef NDEBUG
-        // make sure that the parameter is used consistently. since
-        // this is potentially quite expensive, it is only done if
-        // debugging code is not explicitly turned off.
-        const char *paramName, *groupName;
-        static const std::string propertyName("");
-        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
-            groupName = groupOrParamName;
-            paramName = paramNameOrNil;
-        }
-        else {
-            groupName = "";
-            paramName = groupOrParamName;
-        }
-
-        check_(Dune::className<ParamType>(), propertyName, groupName, paramName);
-#endif
-
         return retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
     }
 
@@ -303,36 +285,6 @@ private:
         }
     };
 
-    static void check_(const std::string &paramTypeName,
-                       const std::string &propertyName,
-                       const char *groupName,
-                       const char *paramName)
-    {
-        typedef std::unordered_map<std::string, Blubb> StaticData;
-        static StaticData staticData;
-
-        typename StaticData::iterator it = staticData.find(paramName);
-        Blubb *b;
-        if (it == staticData.end())
-        {
-            Blubb a;
-            a.propertyName = propertyName;
-            a.paramTypeName = paramTypeName;
-            a.groupName = groupName;
-            staticData[paramName] = a;
-            b = &staticData[paramName];
-        }
-        else
-            b = &(it->second);
-
-        if (b->paramTypeName != paramTypeName && b->groupName == groupName) {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "GET_*_PARAM for parameter '" << paramName << "' in group '"
-                       << groupName << "' called with at least two different types ("
-                       << b->paramTypeName << " and " << paramTypeName << ")");
-        }
-    }
-
     template <class ParamType, class PropTag>
     static const ParamType &retrieve_(const char *propertyName,
                                       const char *groupOrParamName,
@@ -347,13 +299,6 @@ private:
             groupName = "";
             paramName = groupOrParamName;
         }
-
-#ifndef NDEBUG
-        // make sure that the parameter is used consistently. since
-        // this is potentially quite expensive, it is only done if
-        // debugging code is not explicitly turned off.
-        check_(Dune::className<ParamType>(), propertyName, groupName, paramName);
-#endif
 
         // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
         // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
