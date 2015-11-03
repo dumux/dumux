@@ -33,6 +33,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
+#include <dune/common/version.hh>
 
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
