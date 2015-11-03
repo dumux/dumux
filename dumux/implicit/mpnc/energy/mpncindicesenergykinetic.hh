@@ -30,7 +30,7 @@ namespace Dumux
 
 /*!
  * \brief The indices required for the energy equation. Specialization for the case of
- * 		  *3* energy balance equations.
+ *        *3* energy balance equations.
  */
 template <int PVOffset>
 struct MPNCEnergyIndices<PVOffset, /*enableEnergy=*/true, /*numEnergyEquations=*/3>
@@ -63,7 +63,7 @@ public:
 
 /*!
  * \brief The indices required for the energy equation. Specialization for the case of
- * 		  *2* energy balance equations.
+ *        *2* energy balance equations.
  */
 template <int PVOffset>
 struct MPNCEnergyIndices<PVOffset, /*enableEnergy=*/true, /*numEnergyEquations=*/2>

@@ -261,8 +261,8 @@ public:
             if (time > initializationTime_)
                 values.setDirichlet(pressureIdx);
             else 
-            	if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
-                	values.setDirichlet(pressureIdx);
+                if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
+                    values.setDirichlet(pressureIdx);
         }
     }
 
@@ -311,8 +311,8 @@ public:
         if (onLeftBoundary_(globalPos)
                 && globalPos[1] > bBoxMin_[1] && globalPos[1] < bBoxMax_[1])
         {
-        	// rho*v*X at inflow
-        	values[transportEqIdx] = -xVelocity * density * refMassfrac();
+            // rho*v*X at inflow
+            values[transportEqIdx] = -xVelocity * density * refMassfrac();
         }
     }
 
@@ -337,7 +337,7 @@ public:
      */
     Scalar permeability(const Element &element,
                         const FVElementGeometry &fvGeometry,
-                 		const int scvIdx) const
+                        const int scvIdx) const
     {
         return spatialParams_.intrinsicPermeability(element,
                                                     fvGeometry,

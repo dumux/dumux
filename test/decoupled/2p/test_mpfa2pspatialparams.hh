@@ -94,7 +94,7 @@ public:
     Scalar porosity(const Element& element) const
     {
 #if PROBLEM == 0
-    	return 0.2;
+        return 0.2;
 #elif PROBLEM == 1
         return 0.3;
 #else

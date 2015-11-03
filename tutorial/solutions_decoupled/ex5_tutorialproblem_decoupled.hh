@@ -242,17 +242,17 @@ public:
      */
     void dirichlet(PrimaryVariables &values, const Intersection& intersection) const /*@\label{tutorial-decoupled:dirichlet}@*/
     {
-		values[pwIdx] = 2e5;
-		values[swIdx] = 0.0;
+        values[pwIdx] = 2e5;
+        values[swIdx] = 0.0;
 
-    	const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-    	const Scalar time_end = this->timeManager().endTime();
-    	Scalar injection_begin = time_end/5.0;
-    	Scalar injection_end = 4.0/5.0*time_end;
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        const Scalar time_end = this->timeManager().endTime();
+        Scalar injection_begin = time_end/5.0;
+        Scalar injection_end = 4.0/5.0*time_end;
 
-    	if(injection_begin < time && time < injection_end){
-			values[swIdx] = sin(M_PI*(time-injection_begin)/(injection_end-injection_begin));
-    	}
+        if(injection_begin < time && time < injection_end){
+            values[swIdx] = sin(M_PI*(time-injection_begin)/(injection_end-injection_begin));
+        }
     }
     //! Value for neumann boundary condition \f$ [\frac{kg}{m^3 \cdot s}] \f$ at position globalPos.
     /*! In case of a neumann boundary condition, the flux of matter

@@ -47,8 +47,8 @@ private:
 
     enum
     {
-    	saturationIdx = Indices::saturationIdx,
-		pressureIdx = Indices::pressureIdx
+        saturationIdx = Indices::saturationIdx,
+        pressureIdx = Indices::pressureIdx
     };
     enum
     {
@@ -96,17 +96,17 @@ public:
             // index of the current leaf-elements
             int globalIdxI = problem_.elementMapper().index(element);
 
-        	Scalar satI = 0.0;
+            Scalar satI = 0.0;
 
-        	if(!isBox)
-        		satI = problem_.model().curSol()[globalIdxI][saturationIdx];
-        	else
-        	{
+            if(!isBox)
+                satI = problem_.model().curSol()[globalIdxI][saturationIdx];
+            else
+            {
                 const LocalFiniteElementCache feCache;
                 const auto geometryI = element.geometry();
-            	Dune::GeometryType geomType = geometryI.type();
+                Dune::GeometryType geomType = geometryI.type();
 
-            	GlobalPosition centerI = geometryI.local(geometryI.center());
+                GlobalPosition centerI = geometryI.local(geometryI.center());
                 const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
                 std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
                 localFiniteElement.localBasis().evaluateFunction(centerI, shapeVal);
@@ -116,7 +116,7 @@ public:
                      int dofIdxGlobal = problem_.model().dofMapper().subIndex(element, i, dofCodim);
                       satI += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                   }
-        	}
+            }
 
             globalMin = std::min(satI, globalMin);
             globalMax = std::max(satI, globalMax);
@@ -134,17 +134,17 @@ public:
                     // Visit intersection only once
                     if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
-                    	Scalar satJ = 0.0;
+                        Scalar satJ = 0.0;
 
-                    	if(!isBox)
-                    		satJ = problem_.model().curSol()[globalIdxJ][saturationIdx];
-                    	else
-                    	{
+                        if(!isBox)
+                            satJ = problem_.model().curSol()[globalIdxJ][saturationIdx];
+                        else
+                        {
                             const LocalFiniteElementCache feCache;
                             const auto geometryJ = outside.geometry();
-                        	Dune::GeometryType geomType = geometryJ.type();
+                            Dune::GeometryType geomType = geometryJ.type();
 
-                        	GlobalPosition centerJ = geometryJ.local(geometryJ.center());
+                            GlobalPosition centerJ = geometryJ.local(geometryJ.center());
                             const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
                             std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
                             localFiniteElement.localBasis().evaluateFunction(centerJ, shapeVal);
@@ -155,7 +155,7 @@ public:
 
                                   satJ += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                               }
-                    	}
+                        }
 
 
 

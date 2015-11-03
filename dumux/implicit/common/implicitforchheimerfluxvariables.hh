@@ -260,13 +260,13 @@ protected:
      * \param phaseIdx The index of the currently considered phase
      */
      void forchheimerResidual_(GlobalPosition & residual,
-    		 	 	 	 	 const Scalar forchCoeff,
-    		 	 	 	 	 const DimWorldMatrix & sqrtK,
-    		 	 	 	 	 const DimWorldMatrix & K,
-    		 	 	 	 	 const GlobalPosition & velocity,
-    		 	 	 	 	 const ElementVolumeVariables & elemVolVars,
-    		 	 	 	 	 const GlobalPosition & potentialGrad,
-    		 	 	 	 	 const unsigned int phaseIdx) const
+                             const Scalar forchCoeff,
+                             const DimWorldMatrix & sqrtK,
+                             const DimWorldMatrix & K,
+                             const GlobalPosition & velocity,
+                             const ElementVolumeVariables & elemVolVars,
+                             const GlobalPosition & potentialGrad,
+                             const unsigned int phaseIdx) const
      {
          const VolumeVariables upVolVars    = elemVolVars[this->upstreamIdx(phaseIdx)];
          const VolumeVariables downVolVars  = elemVolVars[this->downstreamIdx(phaseIdx)];
@@ -330,11 +330,11 @@ protected:
       * \param phaseIdx The index of the currently considered phase
       */
      void forchheimerDerivative_(DimWorldMatrix & derivative,
-    		 	 	 	 	 	 const Scalar forchCoeff,
-    		 	 	 	 	 	 const DimWorldMatrix & sqrtK,
-    		 	 	 	 	 	 const GlobalPosition & velocity,
-    		 	 	 	 	 	 const ElementVolumeVariables & elemVolVars,
-    		 	 	 	 	 	 const unsigned int phaseIdx) const
+                                 const Scalar forchCoeff,
+                                 const DimWorldMatrix & sqrtK,
+                                 const GlobalPosition & velocity,
+                                 const ElementVolumeVariables & elemVolVars,
+                                 const unsigned int phaseIdx) const
      {
          const VolumeVariables upVolVars    = elemVolVars[this->upstreamIdx(phaseIdx)];
          const VolumeVariables downVolVars  = elemVolVars[this->downstreamIdx(phaseIdx)];

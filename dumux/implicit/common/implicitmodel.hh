@@ -313,7 +313,7 @@ public:
 
     void adaptVariableSize()
     {
-    	uCur_.resize(numDofs());
+        uCur_.resize(numDofs());
     }
 
     /*!
@@ -456,9 +456,9 @@ public:
      */
     void updateBegin()
     {
-    	if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
-    	{
-    		uPrev_ = uCur_;
+        if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
+        {
+            uPrev_ = uCur_;
 
             updateBoundaryIndices_();
 
@@ -480,7 +480,7 @@ public:
                           false);
             }
 
-    	}
+        }
 
     }
 

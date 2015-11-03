@@ -37,7 +37,7 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-	class TwoPNCMinIndices: public TwoPNCIndices<TypeTag, PVOffset>
+    class TwoPNCMinIndices: public TwoPNCIndices<TypeTag, PVOffset>
 { 
 };
 

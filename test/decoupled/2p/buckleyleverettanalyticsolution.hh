@@ -96,7 +96,7 @@ private:
 
     void initializeAnalytic()
     {
-    	int size = problem_.gridView().size(0);
+        int size = problem_.gridView().size(0);
         analyticSolution_.resize(size);
         analyticSolution_ = 0;
         errorGlobal_.resize(size);
@@ -112,7 +112,7 @@ private:
      */
     void prepareAnalytic()
     {
-    	const auto& dummyElement = *problem_.gridView().template begin<0>();
+        const auto& dummyElement = *problem_.gridView().template begin<0>();
         const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(dummyElement));
 
         swr_ = materialLawParams.swr();
@@ -129,12 +129,12 @@ private:
 
         if (CheckMaterialLaw<Scalar, MaterialLaw>::isLinear() && viscosityW == viscosityNW)
         {
-        	std::pair<Scalar, Scalar> entry;
-        	entry.first = 1 - snr_;
+            std::pair<Scalar, Scalar> entry;
+            entry.first = 1 - snr_;
 
-        	entry.second = vTot_  / (porosity * (1 - swr_ - snr_));
+            entry.second = vTot_  / (porosity * (1 - swr_ - snr_));
 
-        	frontParams_.push_back(entry);
+            frontParams_.push_back(entry);
         }
         else
         {
@@ -152,7 +152,7 @@ private:
 
         while (tangentSlopeNew >= tangentSlopeOld && sw1 < (1.0 - snr_))
         {
-        	tangentSlopeOld = tangentSlopeNew;
+            tangentSlopeOld = tangentSlopeNew;
             sw1 += deltaS_;
             fw1 = MaterialLaw::krw(materialLawParams, sw1)/viscosityW;
             fw1 /= (fw1 + MaterialLaw::krn(materialLawParams, sw1)/viscosityNW);
@@ -167,23 +167,23 @@ private:
         fw2 /= (fw2 + MaterialLaw::krn(materialLawParams, sw2)/viscosityNW);
         while (sw1 <= (1.0 - snr_))
         {
-        	std::pair<Scalar, Scalar> entry;
-        	entry.first = sw1;
+            std::pair<Scalar, Scalar> entry;
+            entry.first = sw1;
 
-        	Scalar dfwdsw = (fw2 - fw0)/(sw2 - sw0);
+            Scalar dfwdsw = (fw2 - fw0)/(sw2 - sw0);
 
-        	entry.second = vTot_  / porosity * dfwdsw;
+            entry.second = vTot_  / porosity * dfwdsw;
 
-        	frontParams_.push_back(entry);
+            frontParams_.push_back(entry);
 
-        	sw0 = sw1;
-        	sw1 = sw2;
-        	fw0 = fw1;
-        	fw1 = fw2;
+            sw0 = sw1;
+            sw1 = sw2;
+            fw0 = fw1;
+            fw1 = fw2;
 
-        	sw2 += deltaS_;
-        	fw2 = MaterialLaw::krw(materialLawParams, sw2)/viscosityW;
-        	fw2 /= (fw2 + MaterialLaw::krn(materialLawParams, sw2)/viscosityNW);
+            sw2 += deltaS_;
+            fw2 = MaterialLaw::krw(materialLawParams, sw2)/viscosityW;
+            fw2 /= (fw2 + MaterialLaw::krn(materialLawParams, sw2)/viscosityNW);
         }
         }
 
@@ -217,12 +217,12 @@ private:
 
         if (globalVolume > 0.0 && errorNorm > 0.0)
         {
-        	errorNorm = std::sqrt(errorNorm)/globalVolume;
-        	errorGlobal_ = errorNorm;
+            errorNorm = std::sqrt(errorNorm)/globalVolume;
+            errorGlobal_ = errorNorm;
         }
         else
         {
-        	errorGlobal_ = 0;
+            errorGlobal_ = 0;
         }
 
         return;
@@ -230,11 +230,11 @@ private:
 
     void updateExSol()
     {
-    	Scalar time = problem_.timeManager().time() + problem_.timeManager().timeStepSize();
+        Scalar time = problem_.timeManager().time() + problem_.timeManager().timeStepSize();
 
         // position of the fluid front
 
-    	Scalar xMax =  frontParams_[0].second * time;
+        Scalar xMax =  frontParams_[0].second * time;
 
         // iterate over vertices and get analytic saturation solution
         for (const auto& element : Dune::elements(problem_.gridView()))
@@ -245,21 +245,21 @@ private:
             int index = problem_.variables().index(element);
 
             if (globalPos[0] > xMax)
-            	analyticSolution_[index] = swr_;
+                analyticSolution_[index] = swr_;
             else
             {
-            	int size = frontParams_.size();
-            	if (size == 1)
-            	{
-            		analyticSolution_[index] = frontParams_[0].first;
-            	}
-            	else
-            	{
+                int size = frontParams_.size();
+                if (size == 1)
+                {
+                    analyticSolution_[index] = frontParams_[0].first;
+                }
+                else
+                {
                     // find x_f next to global coordinate of the vertex
                     for (int i = 0; i < size-1; i++)
                     {
-                    	Scalar x = frontParams_[i].second * time;
-                    	Scalar xMinus = frontParams_[i+1].second * time;
+                        Scalar x = frontParams_[i].second * time;
+                        Scalar xMinus = frontParams_[i+1].second * time;
                         if (globalPos[0] <= x && globalPos[0] > xMinus)
                         {
                             analyticSolution_[index] = frontParams_[i].first
@@ -269,7 +269,7 @@ private:
                         }
                     }
 
-            	}
+                }
             }
         }
 
@@ -296,7 +296,7 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-    	int size = problem_.gridView().size(0);
+        int size = problem_.gridView().size(0);
         BlockVector *analyticSolution = writer.allocateManagedBuffer (size);
         BlockVector *errorGlobal = writer.allocateManagedBuffer (size);
         BlockVector *errorLocal = writer.allocateManagedBuffer (size);
@@ -319,7 +319,7 @@ public:
 
     void initialize(Scalar vTot)
     {
-    	vTot_ = vTot;
+        vTot_ = vTot;
         initializeAnalytic();
         prepareAnalytic();
     }

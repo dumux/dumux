@@ -85,7 +85,7 @@ class StokesTestProblem : public StokesProblem<TypeTag>
 
         // Number of equations and grid dimension
         dim = GridView::dimension,
-	dimWorld = GridView::dimensionworld,
+    dimWorld = GridView::dimensionworld,
 
         // copy some indices for convenience
         massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance

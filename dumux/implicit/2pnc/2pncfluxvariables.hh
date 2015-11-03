@@ -46,7 +46,7 @@ namespace Dumux
 template <class TypeTag>
 class TwoPNCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
-	typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -105,8 +105,8 @@ public:
             potentialGrad_[phaseIdx] = Scalar(0);
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-            	massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
-            	moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
+                massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
+                moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
             }
         }
         calculateGradients_(problem, element, elemVolVars);
@@ -269,7 +269,7 @@ protected:
             Scalar tauI =  1.0/(volVarsI.porosity() * volVarsI.porosity()) *
                             pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
 
-            Scalar tauJ =	1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
+            Scalar tauJ =   1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
                             pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
             // Diffusion coefficient in the porous medium
 

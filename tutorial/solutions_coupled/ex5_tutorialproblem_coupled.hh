@@ -142,7 +142,7 @@ public:
     //! as a VTK file
     bool shouldWriteOutput() const /*@\label{tutorial-coupled:output}@*/
     {
-    	const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
 
         return
             this->timeManager().timeStepIndex() > 0 &&
@@ -174,14 +174,14 @@ public:
         values[Indices::pwIdx] = 200.0e3; // 200 kPa = 2 bar
         values[Indices::snIdx] = 1.0; // 1 % oil saturation on left boundary
 
-    	const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-    	const Scalar time_end = this->timeManager().endTime();
-    	Scalar injection_begin = time_end/5.0;
-    	Scalar injection_end = 4.0/5.0*time_end;
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        const Scalar time_end = this->timeManager().endTime();
+        Scalar injection_begin = time_end/5.0;
+        Scalar injection_end = 4.0/5.0*time_end;
 
-    	if(injection_begin < time && time < injection_end){
-			values[Indices::snIdx] = 1.0 - sin(M_PI*(time-injection_begin)/(injection_end-injection_begin));
-    	}
+        if(injection_begin < time && time < injection_end){
+            values[Indices::snIdx] = 1.0 - sin(M_PI*(time-injection_begin)/(injection_end-injection_begin));
+        }
     }
 
     //! Evaluates the boundary conditions for a Neumann boundary

@@ -115,7 +115,7 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
             conti0EqIdx = Indices::conti0EqIdx,
             contiTotalMassIdx = conti0EqIdx + FluidSystem::AirIdx,
             precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
-            contiWEqIdx       =	conti0EqIdx + FluidSystem::H2OIdx,
+            contiWEqIdx       = conti0EqIdx + FluidSystem::H2OIdx,
 
             // Phase State
             wPhaseOnly = Indices::wPhaseOnly,
@@ -167,7 +167,7 @@ public:
         temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
         temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
         name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
-        freqMassOutput_ 	    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
+        freqMassOutput_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
         storageLastTimestep_    = Scalar(0);
         lastMassOutputTime_     = Scalar(0);
 
@@ -291,13 +291,13 @@ public:
      * influx.
      */
     void neumann(PrimaryVariables &values,
-				  const Element &element,
-				  const FVElementGeometry &fvGeometry,
-				  const Intersection &is,
-				  int scvIdx,
-				  int boundaryFaceIdx) const
+                  const Element &element,
+                  const FVElementGeometry &fvGeometry,
+                  const Intersection &is,
+                  int scvIdx,
+                  int boundaryFaceIdx) const
     {
-    	values = 0.0;
+        values = 0.0;
     }
 
     /*!
@@ -399,19 +399,19 @@ public:
 private:
 
     /*!
-	 * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
-	 *
-	 * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
-	 */
+     * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
+     *
+     * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
+     */
     static Scalar massTomoleFrac_(Scalar XlNaCl)
     {
-	   const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
-	   const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
+       const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
+       const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
 
-	   const Scalar X_NaCl = XlNaCl;
-	   /* XlNaCl: conversion from mass fraction to mol fraction */
-	   const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-	   return xlNaCl;
+       const Scalar X_NaCl = XlNaCl;
+       /* XlNaCl: conversion from mass fraction to mol fraction */
+       const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
+       return xlNaCl;
     }
 
     int nTemperature_;

@@ -91,7 +91,7 @@ public:
         values.setAllNeumann();
         int vIdxGlobal = problem_.vertexMapper().index(vertex);
 
-	const BoundaryTypes& bcTypes = vertexBC[vIdxGlobal];
+        const BoundaryTypes& bcTypes = vertexBC[vIdxGlobal];
 
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             if (bcTypes.isDirichlet(eqIdx))

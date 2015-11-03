@@ -173,17 +173,17 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, FluidSystem) FluidSystem;
 
     enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq) };
-	enum { // indices in the Stokes domain
+    enum { // indices in the Stokes domain
         momentumXIdx1 = Stokes2cIndices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx1 = Stokes2cIndices::momentumYIdx, //!< Index of the y-component of the momentum balance
         momentumZIdx1 = Stokes2cIndices::momentumZIdx, //!< Index of the z-component of the momentum balance
         lastMomentumIdx1 = Stokes2cIndices::lastMomentumIdx, //!< Index of the last component of the momentum balance
         massBalanceIdx1 = Stokes2cIndices::massBalanceIdx, //!< Index of the mass balance
         transportEqIdx1 = Stokes2cIndices::transportEqIdx, //!< Index of the transport equation
-	};
+    };
 
     enum { numEq2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumEq) };
-	enum { // indices in the Darcy domain
+    enum { // indices in the Darcy domain
         massBalanceIdx2 = TwoPTwoCIndices::pressureIdx,
         switchIdx2 = TwoPTwoCIndices::switchIdx,
         contiTotalMassIdx2 = TwoPTwoCIndices::contiNEqIdx,
@@ -195,7 +195,7 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
         wPhaseIdx2 = TwoPTwoCIndices::wPhaseIdx,
         nPhaseIdx2 = TwoPTwoCIndices::nPhaseIdx
     };
-	enum { phaseIdx = GET_PROP_VALUE(Stokes2cTypeTag, PhaseIdx) };
+    enum { phaseIdx = GET_PROP_VALUE(Stokes2cTypeTag, PhaseIdx) };
     enum { transportCompIdx1 = Stokes2cIndices::transportCompIdx };
 
 
@@ -420,12 +420,12 @@ public:
                 // compute summarized fluxes for output
                 if (shouldWriteVaporFlux())
                 {
-                	int boundaryFaceIdx =
-                    	fvGeometry1.boundaryFaceIndex(firstFaceIdx, nodeInFace);
+                    int boundaryFaceIdx =
+                        fvGeometry1.boundaryFaceIndex(firstFaceIdx, nodeInFace);
 
-                	const BoundaryVariables1 boundaryVars1(this->sdProblem1(),
-                                                       	   sdElement1,
-                                                       	   fvGeometry1,
+                    const BoundaryVariables1 boundaryVars1(this->sdProblem1(),
+                                                           sdElement1,
+                                                           fvGeometry1,
                                                            boundaryFaceIdx,
                                                            elemVolVarsCur1,
                                                            /*onBoundary=*/true);
@@ -433,7 +433,7 @@ public:
                     advectiveWaterVaporFlux += computeAdvectiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
                     diffusiveWaterVaporFlux += computeDiffusiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
                     totalWaterComponentFlux += firstVertexDefect[vertInElem1][transportEqIdx1];
-				}
+                }
             }
         } // end loop over element faces on interface
 
@@ -551,14 +551,14 @@ public:
                 }
                 if (shouldWriteVaporFlux())
                 {
-	                if (!existing) // add phase storage only once per vertex
-    	                sumWaterFluxInGasPhase +=
-        	                this->localResidual2().evalPhaseStorageDerivative(vertInElem2);
+                    if (!existing) // add phase storage only once per vertex
+                        sumWaterFluxInGasPhase +=
+                            this->localResidual2().evalPhaseStorageDerivative(vertInElem2);
 
-            	    totalWaterComponentFlux += secondVertexDefect[vertInElem2][contiWEqIdx2];
-                	sumWaterFluxInGasPhase +=
-                    	this->localResidual2().elementFluxes(vertInElem2);
-          		}
+                    totalWaterComponentFlux += secondVertexDefect[vertInElem2][contiWEqIdx2];
+                    sumWaterFluxInGasPhase +=
+                        this->localResidual2().elementFluxes(vertInElem2);
+                }
             }
         }
 

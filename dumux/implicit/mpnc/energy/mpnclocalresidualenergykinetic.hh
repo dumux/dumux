@@ -127,10 +127,10 @@ public:
         }
         else
             DUNE_THROW(Dune::NotImplemented,
-            		"wrong index");
+                    "wrong index");
 
         if (!std::isfinite(storage[energyEq0Idx+phaseIdx]))
-        	DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
+            DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
 
     }
     /*!
@@ -166,7 +166,7 @@ public:
                                   elemVolVars,
                                   energyEqIdx);
             if (!std::isfinite(flux[energyEq0Idx + energyEqIdx]))
-            	DUNE_THROW(NumericalProblem, "Calculated non-finite flux in phase " << energyEqIdx);
+                DUNE_THROW(NumericalProblem, "Calculated non-finite flux in phase " << energyEqIdx);
         }
     }
     /*!
@@ -215,9 +215,9 @@ public:
 
         const Scalar massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
         flux[energyEq0Idx + phaseIdx] += massFlux *
-        									(massUpwindWeight_ * transportedThingUp
-        											+
-        									(1.-massUpwindWeight_) * transportedThingDn ) ;
+                                            (massUpwindWeight_ * transportedThingUp
+                                                    +
+                                            (1.-massUpwindWeight_) * transportedThingDn ) ;
     }
     /*!
         * \brief The heat conduction in the phase
@@ -350,7 +350,7 @@ public:
 
 
             if (!std::isfinite(source[energyEq0Idx + phaseIdx]))
-            	DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "Tw="<< Tw << " Tn="<< Tn<< " Ts="<< Ts);
+                DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "Tw="<< Tw << " Tn="<< Tn<< " Ts="<< Ts);
         }// end phases
 
 #define MASS_ENERGY_TRANSPORT 1
@@ -468,7 +468,7 @@ public:
             * volVars.solidHeatCapacity();
 
         if (!std::isfinite(storage[energyEqSolidIdx]))
-        	DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
+            DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
     }
 
     /*! \brief Calculate the storage for all mass balance equations
@@ -494,10 +494,10 @@ public:
         }
         else
             DUNE_THROW(Dune::NotImplemented,
-            		"wrong index");
+                    "wrong index");
 
         if (!std::isfinite(storage[energyEq0Idx]))
-        	DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
+            DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
     }
 
     /*!\brief Evaluates the total flux of all conservation quantities
@@ -533,17 +533,17 @@ public:
                                   energyEqIdx);
 
             if (!std::isfinite(flux[energyEq0Idx + energyEqIdx]))
-            	DUNE_THROW(NumericalProblem, "Calculated non-finite flux in phase " << energyEqIdx);
+                DUNE_THROW(NumericalProblem, "Calculated non-finite flux in phase " << energyEqIdx);
         }
     }
 
     /*! \brief the advective Flux of the enthalpy
-	  *        \param flux The flux over the SCV (sub-control-volume) face for each component
-	  *        \param fluxVars The flux Variables
-	  *        \param elemVolVars The volume variables of the current element
-	  *        \param phaseIdx The local index of the phases
-	  *        \param molarComponentValuesMassTransport
-	  */
+      *        \param flux The flux over the SCV (sub-control-volume) face for each component
+      *        \param fluxVars The flux Variables
+      *        \param elemVolVars The volume variables of the current element
+      *        \param phaseIdx The local index of the phases
+      *        \param molarComponentValuesMassTransport
+      */
     static void computePhaseEnthalpyFlux(PrimaryVariables & flux,
                                          const FluxVariables & fluxVars,
                                          const ElementVolumeVariables & elemVolVars,
@@ -579,9 +579,9 @@ public:
 
         const Scalar massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
         flux[energyEq0Idx] += massFlux *
-        									(massUpwindWeight_ * transportedThingUp
-        											+
-        									(1.-massUpwindWeight_) * transportedThingDn ) ;
+                                            (massUpwindWeight_ * transportedThingUp
+                                                    +
+                                            (1.-massUpwindWeight_) * transportedThingDn ) ;
     }
 
     /*! \brief The heat conduction in the phase
@@ -629,7 +629,7 @@ public:
                                "wrong index");
     }
 
-	/*! \brief Calculate the source term of the equation
+    /*! \brief Calculate the source term of the equation
    *
    * \param source The source/sink in the sub-control volume for each component
    * \param volVars The volume variables
@@ -664,119 +664,119 @@ public:
    */
     static Scalar qsf(const VolumeVariables & volVars)
     {
-    	const FluidState & fs = volVars.fluidState() ;
-		const Scalar characteristicLength   = volVars.characteristicLength()  ;
+        const FluidState & fs = volVars.fluidState() ;
+        const Scalar characteristicLength   = volVars.characteristicLength()  ;
 
-		// Shi & Wang, Transport in porous media (2011)
-		const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
+        // Shi & Wang, Transport in porous media (2011)
+        const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
 
-		const Scalar TFluid 	= volVars.temperature(temperatureFluidIdx);
-		const Scalar TSolid 	= volVars.temperature(temperatureSolidIdx);
+        const Scalar TFluid     = volVars.temperature(temperatureFluidIdx);
+        const Scalar TSolid     = volVars.temperature(temperatureSolidIdx);
 
-		const Scalar satW 		= fs.saturation(wPhaseIdx) ;
-		const Scalar satN 		= fs.saturation(nPhaseIdx) ;
+        const Scalar satW       = fs.saturation(wPhaseIdx) ;
+        const Scalar satN       = fs.saturation(nPhaseIdx) ;
 
-		const Scalar eps = 1e-6 ;
-		Scalar solidToFluidEnergyExchange ;
+        const Scalar eps = 1e-6 ;
+        Scalar solidToFluidEnergyExchange ;
 
-		Scalar fluidConductivity ;
-		if (satW < 1.0 - eps)
-			fluidConductivity = volVars.thermalConductivity(nPhaseIdx) ;
-		else if (satW >= 1.0 - eps)
-			fluidConductivity = volVars.thermalConductivity(wPhaseIdx) ;
-		else
-			DUNE_THROW(Dune::NotImplemented,
-					   "wrong range");
+        Scalar fluidConductivity ;
+        if (satW < 1.0 - eps)
+            fluidConductivity = volVars.thermalConductivity(nPhaseIdx) ;
+        else if (satW >= 1.0 - eps)
+            fluidConductivity = volVars.thermalConductivity(wPhaseIdx) ;
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                       "wrong range");
 
-		const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
+        const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
 
-		solidToFluidEnergyExchange = factorEnergyTransfer * (TSolid - TFluid) / characteristicLength * as * fluidConductivity ;
+        solidToFluidEnergyExchange = factorEnergyTransfer * (TSolid - TFluid) / characteristicLength * as * fluidConductivity ;
 
-		const Scalar epsRegul = 1e-3 ;
+        const Scalar epsRegul = 1e-3 ;
 
-		if (satW < (0 + eps) )
-			solidToFluidEnergyExchange *=  volVars.nusseltNumber(nPhaseIdx) ;
+        if (satW < (0 + eps) )
+            solidToFluidEnergyExchange *=  volVars.nusseltNumber(nPhaseIdx) ;
 
-		else if ( (satW >= 0 + eps) and (satW < 1.0-eps) ){
-			solidToFluidEnergyExchange *=  (volVars.nusseltNumber(nPhaseIdx) * satN );
-			Scalar qBoil ;
+        else if ( (satW >= 0 + eps) and (satW < 1.0-eps) ){
+            solidToFluidEnergyExchange *=  (volVars.nusseltNumber(nPhaseIdx) * satN );
+            Scalar qBoil ;
 
-			if (satW<=epsRegul){// regularize
-				Spline sp(0.0, 						epsRegul, 							// x1, x2
-						  QBoilFunc(volVars, 0.0), 	QBoilFunc(volVars, epsRegul), 		// y1, y2
-						  0.0, 						dQBoil_dSw(volVars, epsRegul) ); 	// m1, m2
+            if (satW<=epsRegul){// regularize
+                Spline sp(0.0,                      epsRegul,                           // x1, x2
+                          QBoilFunc(volVars, 0.0),  QBoilFunc(volVars, epsRegul),       // y1, y2
+                          0.0,                      dQBoil_dSw(volVars, epsRegul) );    // m1, m2
 
-				qBoil = sp.eval(satW) ;
-			}
+                qBoil = sp.eval(satW) ;
+            }
 
-			else if (satW>= (1.0-epsRegul) ){// regularize
-				Spline sp(1.0-epsRegul, 									1.0, 	// x1, x2
-						  QBoilFunc(volVars, 1.0-epsRegul), 				0.0, 	// y1, y2
-						  dQBoil_dSw(volVars, 1.0-epsRegul),					0.0 ); 		// m1, m2
+            else if (satW>= (1.0-epsRegul) ){// regularize
+                Spline sp(1.0-epsRegul,                                     1.0,    // x1, x2
+                          QBoilFunc(volVars, 1.0-epsRegul),                 0.0,    // y1, y2
+                          dQBoil_dSw(volVars, 1.0-epsRegul),                    0.0 );      // m1, m2
 
-				qBoil = sp.eval(satW) ;
-			}
-			else
-				qBoil = QBoilFunc(volVars, satW)  ;
+                qBoil = sp.eval(satW) ;
+            }
+            else
+                qBoil = QBoilFunc(volVars, satW)  ;
 
-			solidToFluidEnergyExchange += qBoil;
-		}
-		else if (satW >= 1.0-eps)
-			solidToFluidEnergyExchange *=  volVars.nusseltNumber(wPhaseIdx) ;
-		else
-			DUNE_THROW(Dune::NotImplemented,
-					   "wrong range");
+            solidToFluidEnergyExchange += qBoil;
+        }
+        else if (satW >= 1.0-eps)
+            solidToFluidEnergyExchange *=  volVars.nusseltNumber(wPhaseIdx) ;
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                       "wrong range");
 
-		if (!std::isfinite(solidToFluidEnergyExchange))
-		            	DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "TFluid="<< TFluid << " TSolid="<< TSolid  );
+        if (!std::isfinite(solidToFluidEnergyExchange))
+                        DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "TFluid="<< TFluid << " TSolid="<< TSolid  );
 
-		return solidToFluidEnergyExchange ;
+        return solidToFluidEnergyExchange ;
     }
 
-	/*! \brief Calculate the energy transfer during boiling, i.e. latent heat
+    /*! \brief Calculate the energy transfer during boiling, i.e. latent heat
    *
    * \param volVars The volume variables
    * \param satW The wetting phase saturation. Not taken from volVars, because we regularize.
    */
     static Scalar QBoilFunc(const VolumeVariables & volVars,
-    						const  Scalar satW)
+                            const  Scalar satW)
     {
-    	// using saturation as input (instead of from volVars)
-    	// in order to make regularization (evaluation at different points) easyer
+        // using saturation as input (instead of from volVars)
+        // in order to make regularization (evaluation at different points) easyer
         const FluidState & fs = volVars.fluidState() ;
-	const Scalar g( 9.81 ) ;
-	const Scalar gamma(0.0589) ;
-        const Scalar TSolid 	= volVars.temperature(temperatureSolidIdx);
+    const Scalar g( 9.81 ) ;
+    const Scalar gamma(0.0589) ;
+        const Scalar TSolid     = volVars.temperature(temperatureSolidIdx);
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
 
-	const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
-	const Scalar mul = fs.viscosity(wPhaseIdx) ;
-    	const Scalar deltahv = fs.enthalpy(nPhaseIdx) - fs.enthalpy(wPhaseIdx);
-    	const Scalar deltaRho = fs.density(wPhaseIdx) - fs.density(nPhaseIdx) ;
-	const Scalar firstBracket = std::pow(g * deltaRho / gamma, 0.5);
-	const Scalar cp = FluidSystem::heatCapacity(fs, wPhaseIdx) ;
+    const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
+    const Scalar mul = fs.viscosity(wPhaseIdx) ;
+        const Scalar deltahv = fs.enthalpy(nPhaseIdx) - fs.enthalpy(wPhaseIdx);
+        const Scalar deltaRho = fs.density(wPhaseIdx) - fs.density(nPhaseIdx) ;
+    const Scalar firstBracket = std::pow(g * deltaRho / gamma, 0.5);
+    const Scalar cp = FluidSystem::heatCapacity(fs, wPhaseIdx) ;
     // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
     // If a different state is to be simulated, please use the actual fluid temperature instead.
-	const Scalar Tsat = FluidSystem::vaporTemperature(fs, nPhaseIdx ) ;
-	const Scalar deltaT = TSolid - Tsat ;
-	const Scalar secondBracket = std::pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
-	const Scalar Prl = volVars.prandtlNumber(wPhaseIdx) ;
-	const Scalar thirdBracket = std::pow( 1/Prl , (1.7/0.33) );
-	const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket ;
-    	return QBoil;
+    const Scalar Tsat = FluidSystem::vaporTemperature(fs, nPhaseIdx ) ;
+    const Scalar deltaT = TSolid - Tsat ;
+    const Scalar secondBracket = std::pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
+    const Scalar Prl = volVars.prandtlNumber(wPhaseIdx) ;
+    const Scalar thirdBracket = std::pow( 1/Prl , (1.7/0.33) );
+    const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket ;
+        return QBoil;
     }
 
-	/*! \brief Calculate the derivative of the energy transfer function during boiling. Needed for regularization.
+    /*! \brief Calculate the derivative of the energy transfer function during boiling. Needed for regularization.
    *
    * \param volVars The volume variables
    * \param satW The wetting phase saturation. Not taken from volVars, because we regularize.
    */
     static Scalar dQBoil_dSw(const VolumeVariables & volVars,
-    							const Scalar satW)
+                                const Scalar satW)
     {
-    	// on the fly derive w.r.t. Sw.
-    	// Only linearly depending on it (directly)
-    	return (QBoilFunc(volVars, satW) / satW ) ;
+        // on the fly derive w.r.t. Sw.
+        // Only linearly depending on it (directly)
+        return (QBoilFunc(volVars, satW) / satW ) ;
     }
 };
 

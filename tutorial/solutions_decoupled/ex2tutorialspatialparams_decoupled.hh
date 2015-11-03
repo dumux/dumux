@@ -90,10 +90,10 @@ public:
      */
     const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     {
-    	if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
+        if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
             return KLense_;
-    	else
-    		return K_;
+        else
+            return K_;
     }
 
     /**
@@ -107,9 +107,9 @@ public:
      */
     double porosityAtPos(const GlobalPosition& globalPos) const
     {
-    	if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
-    	return 0.15;
-    	else
+        if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
+        return 0.15;
+        else
         return 0.2;
     }
 
@@ -124,10 +124,10 @@ public:
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-    	if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
-    	return materialParamsLense_;
-    	else
-    	return materialParams_;
+        if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
+        return materialParamsLense_;
+        else
+        return materialParams_;
     }
 
     //! Constructor
@@ -137,19 +137,19 @@ public:
         for (int i = 0; i < dim; i++)
                 K_[i][i] = 1e-7;
         for (int i = 0; i < dim; i++)
-        	    KLense_[i][i] = 1e-9;
+                KLense_[i][i] = 1e-9;
 
 
-    	//set residual saturations
+        //set residual saturations
             materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
             materialParams_.setSnr(0.0);
-    	    materialParamsLense_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
+            materialParamsLense_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
             materialParamsLense_.setSnr(0.0);
 
             //parameters of Brooks & Corey Law
-    	    materialParams_.setPe(1000.0);
+            materialParams_.setPe(1000.0);
             materialParams_.setLambda(1.8);
-    	    materialParamsLense_.setPe(1500.0);
+            materialParamsLense_.setPe(1500.0);
             materialParamsLense_.setLambda(2.0);
     }
 

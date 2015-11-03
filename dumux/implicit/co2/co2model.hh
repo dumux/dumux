@@ -42,7 +42,7 @@ namespace Dumux
  *   case in the 2p2c model. Instead mole fractions are calculated in the FluidSystem with a given
  *   temperature, pressurem and salinity.
  *   The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
- * 	 problem file. Make sure that the according units are used in the problem setup. useMoles is set to false by default.
+ *   problem file. Make sure that the according units are used in the problem setup. useMoles is set to false by default.
  *
  */
 

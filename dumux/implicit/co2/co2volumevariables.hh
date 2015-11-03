@@ -232,23 +232,23 @@ public:
                 Scalar xwH2O = 1 - xwCO2;
                 ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
                 ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
-			}
+            }
 
-			//Get the phase densities from the FluidSystem and set them in the fluidState
+            //Get the phase densities from the FluidSystem and set them in the fluidState
 
-			Scalar rhoW = FluidSystem::density(ParentType::fluidState_, paramCache, wPhaseIdx);
-			Scalar rhoN = FluidSystem::density(ParentType::fluidState_, paramCache, nPhaseIdx);
+            Scalar rhoW = FluidSystem::density(ParentType::fluidState_, paramCache, wPhaseIdx);
+            Scalar rhoN = FluidSystem::density(ParentType::fluidState_, paramCache, nPhaseIdx);
 
-			ParentType::fluidState_.setDensity(wPhaseIdx, rhoW);
-			ParentType::fluidState_.setDensity(nPhaseIdx, rhoN);
+            ParentType::fluidState_.setDensity(wPhaseIdx, rhoW);
+            ParentType::fluidState_.setDensity(nPhaseIdx, rhoN);
 
-			//Get the phase viscosities from the FluidSystem and set them in the fluidState
+            //Get the phase viscosities from the FluidSystem and set them in the fluidState
 
-			Scalar muW = FluidSystem::viscosity(ParentType::fluidState_, paramCache, wPhaseIdx);
-			Scalar muN = FluidSystem::viscosity(ParentType::fluidState_, paramCache, nPhaseIdx);
+            Scalar muW = FluidSystem::viscosity(ParentType::fluidState_, paramCache, wPhaseIdx);
+            Scalar muN = FluidSystem::viscosity(ParentType::fluidState_, paramCache, nPhaseIdx);
 
-			ParentType::fluidState_.setViscosity(wPhaseIdx, muW);
-			ParentType::fluidState_.setViscosity(nPhaseIdx, muN);
+            ParentType::fluidState_.setViscosity(wPhaseIdx, muW);
+            ParentType::fluidState_.setViscosity(nPhaseIdx, muN);
           }
           else if (phasePresence == wPhaseOnly) {
                // only the wetting phase is present, i.e. wetting phase

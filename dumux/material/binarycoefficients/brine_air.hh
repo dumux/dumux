@@ -55,12 +55,12 @@ public:
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure) {
         //Diffusion coefficient of water in the Air phase
         const Scalar Theta=1.8;
-	    const Scalar Daw=2.13e-5;  /* reference value */
-	    const Scalar pg0=1.e5;     /* reference pressure */
-	    const Scalar T0=273.15;    /* reference temperature */
-	    Scalar Dgaw;
-	    Dgaw=Daw*(pg0/pressure)*pow((temperature/T0),Theta);
-	    return Dgaw;
+        const Scalar Daw=2.13e-5;  /* reference value */
+        const Scalar pg0=1.e5;     /* reference pressure */
+        const Scalar T0=273.15;    /* reference temperature */
+        Scalar Dgaw;
+        Dgaw=Daw*(pg0/pressure)*pow((temperature/T0),Theta);
+        return Dgaw;
     }
     ;
 
@@ -118,7 +118,7 @@ public:
                                        Scalar &xlAir, 
                                        Scalar &ygH2O,
                                      Scalar &xlNaCl) {
-    	DUNE_THROW(Dune::InvalidStateException, "Function: " << "calculateMoleFractions" << " is invalid.");
+        DUNE_THROW(Dune::InvalidStateException, "Function: " << "calculateMoleFractions" << " is invalid.");
 //        Scalar A = computeA_(temperature, pg);
 //
 //        /* XlNaCl: conversion from mass fraction to mol fraction */
@@ -140,7 +140,7 @@ public:
 //        // with the mutual solubility function
 //        if (knownPhaseIdx == lPhaseIdx) {
 ////            ygH2O = A * (1 - xlAir - xlNaCl);
-//        	DUNE_THROW(Dune::InvalidStateException, "phase index: " << "lPhaseIdx" << " is invalid.");
+//          DUNE_THROW(Dune::InvalidStateException, "phase index: " << "lPhaseIdx" << " is invalid.");
 //
 //        }
 //
@@ -150,7 +150,7 @@ public:
 //        if (knownPhaseIdx == gPhaseIdx) {
 //            //y_H2o = fluidstate.
 ////            xlAir = 1 - xlNaCl - ygH2O / A;
-//        	DUNE_THROW(Dune::InvalidStateException, "phase index: " << "gPhaseIdx" << " is invalid.");
+//          DUNE_THROW(Dune::InvalidStateException, "phase index: " << "gPhaseIdx" << " is invalid.");
 //        }
     }
 
@@ -227,7 +227,7 @@ private:
      */
     static Scalar massTomoleFrac_(Scalar XlNaCl) {
 
-    	DUNE_THROW(Dune::InvalidStateException, "Function: " << "massTomoleFrac_" << " is invalid.");
+        DUNE_THROW(Dune::InvalidStateException, "Function: " << "massTomoleFrac_" << " is invalid.");
 
 //        const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
 //        const Scalar Ms = 58.8e-3; /* molecular weight of NaCl  [kg/mol] */

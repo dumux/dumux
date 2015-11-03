@@ -78,7 +78,7 @@ private:
 
     void initializeAnalytic()
     {
-    	int size = problem_.gridView().size(0);
+        int size = problem_.gridView().size(0);
         analyticSolution_.resize(size);
         analyticSolution_=0;
         errorGlobal_.resize(size);
@@ -116,12 +116,12 @@ private:
 
         if (globalVolume > 0.0 && errorNorm > 0.0)
         {
-        	errorNorm = std::sqrt(errorNorm)/globalVolume;
-        	errorGlobal_ = errorNorm;
+            errorNorm = std::sqrt(errorNorm)/globalVolume;
+            errorGlobal_ = errorNorm;
         }
         else
         {
-        	errorGlobal_ = 0;
+            errorGlobal_ = 0;
         }
 
         return;
@@ -129,7 +129,7 @@ private:
 
     void prepareAnalytic()
     {
-    	const auto& dummyElement = *problem_.gridView().template begin<0>();
+        const auto& dummyElement = *problem_.gridView().template begin<0>();
         const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(dummyElement));
 
         swr_ = materialLawParams.swr();
@@ -358,7 +358,7 @@ public:
      template<class MultiWriter>
      void addOutputVtkFields(MultiWriter &writer)
      {
-    	 int size = problem_.gridView().size(0);
+         int size = problem_.gridView().size(0);
          BlockVector *analyticSolution = writer.allocateManagedBuffer (size);
          BlockVector *errorGlobal = writer.allocateManagedBuffer (size);
          BlockVector *errorLocal = writer.allocateManagedBuffer (size);

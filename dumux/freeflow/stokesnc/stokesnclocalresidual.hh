@@ -49,7 +49,7 @@ class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     //dimensions
-	enum {  dim = GridView::dimension };
+    enum {  dim = GridView::dimension };
     //number of equations
     enum {  numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     //number of components
@@ -63,25 +63,25 @@ class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
     //primary variable indices
     enum {  pressureIdx = Indices::pressureIdx };
     //phase employed
-    enum { 	phaseIdx = Indices::phaseIdx };
+    enum {  phaseIdx = Indices::phaseIdx };
     //component indices
     enum {  phaseCompIdx = Indices::phaseCompIdx,
             transportCompIdx = Indices::transportCompIdx };
 
-	typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-	typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
-	typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::Intersection Intersection;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-	static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
+    static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
 
-	//! property that defines whether mole or mass fractions are used
+    //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
@@ -108,7 +108,7 @@ public:
         // is required to compute the derivative of the storage term
         // using the implicit Euler method.
         const ElementVolumeVariables &elemVolVars = usePrevSol ?
-        			this->prevVolVars_() : this->curVolVars_();
+                    this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         if (useMoles)
@@ -155,12 +155,12 @@ public:
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
     {
-      	// call ParentType function
-		ParentType::computeAdvectiveFlux(flux,fluxVars);
+        // call ParentType function
+        ParentType::computeAdvectiveFlux(flux,fluxVars);
 
         // data attached to upstream and the downstream vertices
-		const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
-		const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
+        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
+        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
         Scalar tmp = fluxVars.normalVelocity();
 

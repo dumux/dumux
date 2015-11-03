@@ -57,12 +57,12 @@ class StokesncVolumeVariables : public StokesVolumeVariables<TypeTag>
     enum {  transportCompIdx = Indices::transportCompIdx,
             phaseCompIdx = Indices::phaseCompIdx };
     //number of components
-	enum {	numComponents = Indices::numComponents };
+    enum {  numComponents = Indices::numComponents };
     //employed phase index
-	enum {	phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
+    enum {  phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
     //primary variable indices
-	enum {	massOrMoleFracIdx = Indices::massOrMoleFracIdx };
-	//equation indices
+    enum {  massOrMoleFracIdx = Indices::massOrMoleFracIdx };
+    //equation indices
     enum {  conti0EqIdx = Indices::conti0EqIdx,
             massBalanceIdx = Indices::massBalanceIdx,
             transportEqIdx = Indices::transportEqIdx };
@@ -82,17 +82,17 @@ public:
                 const bool isOldSol)
     {
 
-		// Model is restricted to 2 components when using mass fractions
-		if (!useMoles && numComponents>2)
-		{
-			DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions!\
-			                                  To use mole fractions set property UseMoles true ...");
-		}
+        // Model is restricted to 2 components when using mass fractions
+        if (!useMoles && numComponents>2)
+        {
+            DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions!\
+                                              To use mole fractions set property UseMoles true ...");
+        }
 
-		// set the mole fractions first
+        // set the mole fractions first
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState(), isOldSol);
 
-		// update vertex data for the mass and momentum balance
+        // update vertex data for the mass and momentum balance
         ParentType::update(priVars,
                            problem,
                            element,
@@ -108,19 +108,19 @@ public:
 
         for (int compIdx=0; compIdx<numComponents; compIdx++)
         {
-			if (phaseCompIdx!=compIdx)
-			{
-				diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
+            if (phaseCompIdx!=compIdx)
+            {
+                diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
                                                              paramCache,
                                                              phaseIdx,
                                                              compIdx,
                                                              phaseCompIdx);
-			}
-			else
-				diffCoeff_[compIdx] = 0.0;
+            }
+            else
+                diffCoeff_[compIdx] = 0.0;
 
-			Valgrind::CheckDefined(diffCoeff_[compIdx]);
-		}
+            Valgrind::CheckDefined(diffCoeff_[compIdx]);
+        }
     };
 
     /*!
@@ -163,7 +163,7 @@ public:
 
     /*!
      * \brief Returns the mass fraction of a given component in the
-     * 		  given fluid phase within the control volume.
+     *        given fluid phase within the control volume.
      *
      * \param compIdx The component index
      */

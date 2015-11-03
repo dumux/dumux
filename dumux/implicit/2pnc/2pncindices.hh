@@ -53,10 +53,10 @@ struct TwoPNCFormulation//TODO: This might need to be change similar to 2p2c ind
 template <class TypeTag, int PVOffset = 0>
 class TwoPNCIndices
 {
-	typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-	// Phase indices
+    // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
     static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
     // present phases (-> 'pseudo' primary variable)

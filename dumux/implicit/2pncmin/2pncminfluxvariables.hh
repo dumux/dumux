@@ -108,8 +108,8 @@ public:
             this->potentialGrad_[phaseIdx] = Scalar(0);
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-            	this->massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
-            	this->moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
+                this->massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
+                this->moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
             }
         }
         this->calculateGradients_(problem, element, elemVolVars);

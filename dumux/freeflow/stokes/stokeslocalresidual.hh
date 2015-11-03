@@ -617,7 +617,7 @@ protected:
 
     /*!
      * \brief Interpolate the pressure at corner points of the grid, thus taking the degree of freedom there.
-     * 		  This is required due to stability reasons.
+     *        This is required due to stability reasons.
      */
     void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int scvIdx)
     {

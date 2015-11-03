@@ -127,12 +127,12 @@ public:
      */
     static const char *phaseName(int phaseIdx)
     {
-    	switch (phaseIdx) {
-		case wPhaseIdx: return "liquid";
-		case nPhaseIdx: return "gas";
-		case sPhaseIdx: return "NaCl";
-		};
-		DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        switch (phaseIdx) {
+        case wPhaseIdx: return "liquid";
+        case nPhaseIdx: return "gas";
+        case sPhaseIdx: return "NaCl";
+        };
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     /*!
@@ -165,8 +165,8 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // we assume Henry's and Rault's laws for the water phase and
-		// and no interaction between gas molecules of different
-		// components, so all phases are ideal mixtures!
+        // and no interaction between gas molecules of different
+        // components, so all phases are ideal mixtures!
 
         return true;
     }
@@ -182,12 +182,12 @@ public:
      */
     static bool isCompressible(int phaseIdx)
     {
-    	assert(0 <= phaseIdx && phaseIdx < numPhases);
-		// ideal gases are always compressible
-		if (phaseIdx == nPhaseIdx)
-			return true;
-		// the water component decides for the liquid phase...
-		return H2O::liquidIsCompressible();
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        // ideal gases are always compressible
+        if (phaseIdx == nPhaseIdx)
+            return true;
+        // the water component decides for the liquid phase...
+        return H2O::liquidIsCompressible();
     }
 
     /*!
@@ -223,13 +223,13 @@ public:
      */
     static const char *componentName(int compIdx)
     {
-    	switch (compIdx)
-		{
-		case H2OIdx: return H2O::name();
-		case AirIdx: return Air::name();
-		case NaClIdx:return "NaCl";
-		};
-		DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
+        switch (compIdx)
+        {
+        case H2OIdx: return H2O::name();
+        case AirIdx: return Air::name();
+        case NaClIdx:return "NaCl";
+        };
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -273,7 +273,7 @@ public:
      */
      static Scalar saltSpecificHeatCapacity(int phaseIdx)//Specific heat capacity per unit mole of solid salt phase (J/Kkg)
     {
-	return 36.79/molarMass(phaseIdx);
+    return 36.79/molarMass(phaseIdx);
     }
     /*!
      * \brief Return the molar density of the precipitate \f$\mathrm{[mol/m^3]}\f$.
@@ -282,7 +282,7 @@ public:
      */
     static Scalar precipitateMolarDensity(int phaseIdx)//Density of solid salt phase (mol/m3)
      {
-     	return precipitateDensity(phaseIdx)/molarMass(phaseIdx);
+        return precipitateDensity(phaseIdx)/molarMass(phaseIdx);
      }
 
     /****************************************
@@ -451,7 +451,7 @@ public:
         assert(p > 0);
 
         if (phaseIdx == gPhaseIdx)
-        	return 1.0;
+            return 1.0;
 
         else if (phaseIdx == lPhaseIdx)
         {
@@ -506,11 +506,11 @@ public:
             assert(compJIdx == AirIdx || compJIdx == NaClIdx);
             Scalar result = 0.0;
             if(compJIdx == AirIdx)
-            	result = Brine_Air::liquidDiffCoeff(temperature, pressure);
+                result = Brine_Air::liquidDiffCoeff(temperature, pressure);
             else if (compJIdx == NaClIdx)
-            	result = 0.12e-9; //http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.htm
+                result = 0.12e-9; //http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.htm
             else
-            	DUNE_THROW(Dune::NotImplemented, "Binary difussion coefficient : Incorrect compIdx");
+                DUNE_THROW(Dune::NotImplemented, "Binary difussion coefficient : Incorrect compIdx");
             Valgrind::CheckDefined(result);
             return result;
         }
@@ -685,7 +685,7 @@ private:
                               Scalar pg,
                               Scalar xgH2O)
     {
-    	Scalar pH2O = xgH2O*pg; //Dalton' Law
+        Scalar pH2O = xgH2O*pg; //Dalton' Law
         Scalar pAir = pg - pH2O;
         Scalar gasDensityAir = Air::gasDensity(T, pAir);
         Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
@@ -794,7 +794,7 @@ private:
 //     Scalar R = 8.314;//[j/K mol] universal gas constant
 //     Scalar pi = (R * T * std::log(1- x))/vw;
 //     if (x > 0.26) // here we have hard coaded the solubility limit for NaCl
-//   	pi = (R * T * std::log(0.74))/vw;
+//      pi = (R * T * std::log(0.74))/vw;
 //     p_s = p_0 * std::exp((pi*vw)/(R*T));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
 // #endif
       return p_s;

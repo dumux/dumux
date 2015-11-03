@@ -377,10 +377,10 @@ public:
             const unsigned int vIdxGlobal = this->problem_.vertexMapper().subIndex(element, localVertexIdx, dim);
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
-        	qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
-        	qsf_[vIdxGlobal] = LocalResidual::qsf(volVars);
+            qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
+            qsf_[vIdxGlobal] = LocalResidual::qsf(volVars);
 
-        	for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
                 internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
                 reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
@@ -470,10 +470,10 @@ private:
                                    EnergyEqVector & buffer,
                                    bool vertexCentered = true)
     {
-    	static const char *name[] = {
-    	            "fluid",
-    	            "solid"
-    	        };
+        static const char *name[] = {
+                    "fluid",
+                    "solid"
+                };
 
         for (int energyEqIdx = 0; energyEqIdx < numEnergyEqs; ++energyEqIdx) {
             std::ostringstream oss;

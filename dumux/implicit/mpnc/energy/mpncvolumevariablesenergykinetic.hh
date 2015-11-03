@@ -114,7 +114,7 @@ public:
 
         temperature_[sPhaseIdx] = priVars[temperature0Idx + sPhaseIdx];
 
-	  Valgrind::CheckDefined(temperature_);
+      Valgrind::CheckDefined(temperature_);
     }
 
     /*!
@@ -141,7 +141,7 @@ public:
 
         for(int phaseIdx =0; phaseIdx<numPhases; ++phaseIdx){
             fluidThermalConductivity_[phaseIdx] =
-	      FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
+          FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
         }
         Valgrind::CheckDefined(fluidThermalConductivity_);
 
@@ -319,7 +319,7 @@ public:
 
         fluidState.setTemperature(priVars[temperature0Idx]);
 
-	  Valgrind::CheckDefined(temperature_);
+      Valgrind::CheckDefined(temperature_);
     }
 
     /*!
@@ -346,7 +346,7 @@ public:
 
         for(int phaseIdx =0; phaseIdx<numPhases; ++phaseIdx){
             fluidThermalConductivity_[phaseIdx] =
-            		FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
+                    FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
         }
         Valgrind::CheckDefined(fluidThermalConductivity_);
 

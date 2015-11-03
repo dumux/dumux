@@ -162,7 +162,7 @@ public:
 
    salinity_= 0.0;
    moleFractionSalinity_ = 0.0;
-   for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)	//sum of the mass fraction of the components
+   for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
    {
        if(this->fluidState_.moleFraction(wPhaseIdx, compIdx)> 0)
        {
@@ -283,12 +283,12 @@ public:
             // can be used by the Miscible2pNcComposition constraint solver
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-            	fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
+                fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
             }
 
             Miscible2pNCComposition::solve(fluidState,
                                             paramCache,
-                                            wPhaseIdx,	//known phaseIdx
+                                            wPhaseIdx,  //known phaseIdx
                                             /*setViscosity=*/true,
                                             /*setInternalEnergy=*/false);
         }
@@ -317,7 +317,7 @@ public:
             Scalar sumMoleFracNotGas = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-            		sumMoleFracNotGas+=moleFrac[compIdx];
+                    sumMoleFracNotGas+=moleFrac[compIdx];
             }
             sumMoleFracNotGas += moleFrac[wCompIdx];
             moleFrac[nCompIdx] = 1 - sumMoleFracNotGas;
@@ -329,7 +329,7 @@ public:
             // Set fluid state mole fractions
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
             {
-            	fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
+                fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
             }
 
             // calculate the composition of the remaining phases (as
@@ -352,13 +352,13 @@ public:
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-            	moleFrac[compIdx] = priVars[compIdx];
+                moleFrac[compIdx] = priVars[compIdx];
             }
             moleFrac[nCompIdx] = priVars[switchIdx];
             Scalar sumMoleFracNotWater = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-            		sumMoleFracNotWater+=moleFrac[compIdx];
+                    sumMoleFracNotWater+=moleFrac[compIdx];
             }
             sumMoleFracNotWater += moleFrac[nCompIdx];
             moleFrac[wCompIdx] = 1 -sumMoleFracNotWater;
@@ -405,23 +405,23 @@ public:
     /*!
      * \brief Returns the inital permeability of the 
      * pure, precipitate-free porous medium
-     */    
+     */
     Scalar initialPermeability() const
     { return initialPermeability_;}
     
     /*!
      * \brief Returns the factor for the reduction of the initial permeability 
      * due precipitates in the porous medium
-     */ 	
+     */
     Scalar permeabilityFactor() const
     { return permeabilityFactor_; }
     
     /*!
      * \brief Returns the mole fraction of a component in the phase
-     * 
+     *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
-     */ 
+     */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
        return this->fluidState_.moleFraction(phaseIdx, compIdx);
@@ -432,7 +432,7 @@ public:
      */
     Scalar moleFracSalinity() const
     {
-    	return moleFractionSalinity_;
+        return moleFractionSalinity_;
     }
     
     /*!

@@ -150,10 +150,10 @@ public:
 
         lambdaEff_ = 0;
         calculateEffThermalConductivity_(problem,
-        								 element,
-        								 fvGeometry,
-        								 face,
-        								 elemVolVars);
+                                         element,
+                                         fvGeometry,
+                                         face,
+                                         elemVolVars);
     }
 
     /*!
@@ -172,13 +172,13 @@ public:
 
 protected:
     /*!
-	 * \brief Calculate the effective thermal conductivity of
-	 * 		  the porous medium plus residing phases \f$[W/mK]\f$.
-	 *		  This basically means to access the model for averaging
-	 *		  the individual conductivities, set by the property ThermalConductivityModel.
-	 *		  Except the adapted arguments, this is the same function
-	 *		  as used in the implicit TwoPTwoCNIFluxVariables.
-	 */
+     * \brief Calculate the effective thermal conductivity of
+     *        the porous medium plus residing phases \f$[W/mK]\f$.
+     *        This basically means to access the model for averaging
+     *        the individual conductivities, set by the property ThermalConductivityModel.
+     *        Except the adapted arguments, this is the same function
+     *        as used in the implicit TwoPTwoCNIFluxVariables.
+     */
     void calculateEffThermalConductivity_(const Problem &problem,
                                           const Element &element,
                                           const FVElementGeometry & fvGeometry,

@@ -81,11 +81,11 @@ class StokesncModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {  dim = GridView::dimension,
-			transportCompIdx = Indices::transportCompIdx,
-			phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx),
-			useMoles = GET_PROP_VALUE(TypeTag, UseMoles),
-			numComponents = Indices::numComponents
-	};
+            transportCompIdx = Indices::transportCompIdx,
+            phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx),
+            useMoles = GET_PROP_VALUE(TypeTag, UseMoles),
+            numComponents = Indices::numComponents
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
@@ -102,7 +102,7 @@ public:
                             MultiWriter &writer)
     {
 
-		typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
 
         const Scalar scale_ = GET_PROP_VALUE(TypeTag, Scaling);
@@ -111,17 +111,17 @@ public:
         unsigned numVertices = this->gridView_().size(dim);
         ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
-		ScalarField &T = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &T = *writer.allocateManagedBuffer(numVertices);
 
-		ScalarField *moleFraction[numComponents];
+        ScalarField *moleFraction[numComponents];
             for (int i = 0; i < numComponents; ++i)
                 moleFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
 
-		ScalarField *massFraction[numComponents];
-		for (int i = 0; i < numComponents; ++i)
-			massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
+        ScalarField *massFraction[numComponents];
+        for (int i = 0; i < numComponents; ++i)
+            massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
 
-		ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
 
@@ -156,23 +156,23 @@ public:
 
                 pN[vIdxGlobal] = volVars.pressure()*scale_;
                 delP[vIdxGlobal] = volVars.pressure()*scale_ - 1e5;
-				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
                         (*moleFraction[compIdx])[vIdxGlobal]= volVars.moleFraction(compIdx);
-						(*massFraction[compIdx])[vIdxGlobal]= volVars.massFraction(compIdx);
+                        (*massFraction[compIdx])[vIdxGlobal]= volVars.massFraction(compIdx);
                         Valgrind::CheckDefined((*moleFraction[compIdx])[vIdxGlobal]);
-						Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
-					}
+                        Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
+                    }
 
-				T   [vIdxGlobal] = volVars.temperature();
+                T   [vIdxGlobal] = volVars.temperature();
 
-				rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
+                rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
                 mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
                 velocity[vIdxGlobal] = volVars.velocity();
                 velocity[vIdxGlobal] *= 1/scale_;
             }
         }
-		writer.attachVertexData(T, "temperature");
+        writer.attachVertexData(T, "temperature");
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
 

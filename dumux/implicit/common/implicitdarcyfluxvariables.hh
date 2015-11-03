@@ -313,8 +313,8 @@ protected:
         }// loop all phases
     }
 
-    const FVElementGeometry &fvGeometry_;   	//!< Information about the geometry of discretization
-    const unsigned int faceIdx_;            	//!< The index of the sub control volume face
+    const FVElementGeometry &fvGeometry_;       //!< Information about the geometry of discretization
+    const unsigned int faceIdx_;                //!< The index of the sub control volume face
     const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
     unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
     Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)

@@ -66,7 +66,7 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    typedef Dune::FieldVector<Scalar, dim> 	DimVector;
+    typedef Dune::FieldVector<Scalar, dim>  DimVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

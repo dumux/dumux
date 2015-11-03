@@ -238,26 +238,26 @@ public:
 //                    }
 //                }
 //
-//				// interfacial area check (interfacial area between fluid as well as solid phases)
-//				for(int phaseIdxI=0; phaseIdxI<numPhases+1; phaseIdxI++){
-//					const Scalar eps = 1e-6 ;
-//					for (int phaseIdxII=0; phaseIdxII< numPhases+1; ++ phaseIdxII){
-//						if (phaseIdxI == phaseIdxII)
-//							continue;
-//						assert(numEnergyEqs == 3) ; // otherwise this ia call does not make sense
-//						const Scalar ia = elemVolVars[scvIdx].interfacialArea(phaseIdxI, phaseIdxII);
-//						if (not std::isfinite(ia) or ia < 0.-eps ) {
-//							message <<"\nUnphysical Value in interfacial area: \n";
-//							message << "\tia" <<FluidSystem::phaseName(phaseIdxI)
-//											 <<FluidSystem::phaseName(phaseIdxII)<<"="
-//									<< ia << "\n" ;
-//							message << "\t S[0]=" << fluidState.saturation(0);
-//							message << "\t S[1]=" << fluidState.saturation(1);
-//							message << "\t p[0]=" << fluidState.pressure(0);
-//							message << "\t p[1]=" << fluidState.pressure(1);
-//						}
-//					}
-//				}
+//              // interfacial area check (interfacial area between fluid as well as solid phases)
+//              for(int phaseIdxI=0; phaseIdxI<numPhases+1; phaseIdxI++){
+//                  const Scalar eps = 1e-6 ;
+//                  for (int phaseIdxII=0; phaseIdxII< numPhases+1; ++ phaseIdxII){
+//                      if (phaseIdxI == phaseIdxII)
+//                          continue;
+//                      assert(numEnergyEqs == 3) ; // otherwise this ia call does not make sense
+//                      const Scalar ia = elemVolVars[scvIdx].interfacialArea(phaseIdxI, phaseIdxII);
+//                      if (not std::isfinite(ia) or ia < 0.-eps ) {
+//                          message <<"\nUnphysical Value in interfacial area: \n";
+//                          message << "\tia" <<FluidSystem::phaseName(phaseIdxI)
+//                                           <<FluidSystem::phaseName(phaseIdxII)<<"="
+//                                  << ia << "\n" ;
+//                          message << "\t S[0]=" << fluidState.saturation(0);
+//                          message << "\t S[1]=" << fluidState.saturation(1);
+//                          message << "\t p[0]=" << fluidState.pressure(0);
+//                          message << "\t p[1]=" << fluidState.pressure(1);
+//                      }
+//                  }
+//              }
 //
 //                // General Check
 //                for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
@@ -270,17 +270,17 @@ public:
 //                    }
 //                }
 //
-//				// velocity Check
+//              // velocity Check
 //                const unsigned int globalVertexIdx = this->problem_().vertexMapper().map(element, scvIdx, dim);
-//				for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
-//					const Scalar eps = 1e-6 ;
-//					const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
-//					if (not std::isfinite(velocityTest) ){
-//						message <<"\nUnphysical Value in Velocity: \n";
-//						message << "\tv" <<"_"<<FluidSystem::phaseName(phaseIdx)<<"=" << std::scientific
-//						<< velocityTest << std::fixed << "\n";
-//					}
-//				}
+//              for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
+//                  const Scalar eps = 1e-6 ;
+//                  const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
+//                  if (not std::isfinite(velocityTest) ){
+//                      message <<"\nUnphysical Value in Velocity: \n";
+//                      message << "\tv" <<"_"<<FluidSystem::phaseName(phaseIdx)<<"=" << std::scientific
+//                      << velocityTest << std::fixed << "\n";
+//                  }
+//              }
 //
 //
 //                // Some check wrote into the error-message, add some additional information and throw

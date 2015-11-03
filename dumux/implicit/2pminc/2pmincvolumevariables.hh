@@ -97,7 +97,7 @@ public:
         const MaterialLawParams &materialParamsMatrix =
             problem.spatialParams().materialLawParamsMatrix(element, fvGeometry, scvIdx);
 
-		// relative permeabilities krw/krn for fractures (idx 0) and matrix elements (>= idx 1)
+        // relative permeabilities krw/krn for fractures (idx 0) and matrix elements (>= idx 1)
         for (int cIdx = 0; cIdx < numContinua; ++cIdx)
         {
             Scalar krw;

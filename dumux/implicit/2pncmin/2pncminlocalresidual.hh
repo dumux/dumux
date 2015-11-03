@@ -43,9 +43,9 @@ template<class TypeTag>
 class TwoPNCMinLocalResidual: public TwoPNCLocalResidual<TypeTag>
 {
 protected:
-	typedef TwoPNCLocalResidual<TypeTag> ParentType;
+    typedef TwoPNCLocalResidual<TypeTag> ParentType;
     typedef TwoPNCMinLocalResidual<TypeTag> ThisType; 
-	typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;

@@ -240,7 +240,7 @@ public:
 
         Scalar rhow = H2O::liquidDensity(temperature, pressure);
 
-        	Scalar	density =  rhow +
+            Scalar  density =  rhow +
             1000*salinity*(
                 0.668 +
                 0.44*salinity +

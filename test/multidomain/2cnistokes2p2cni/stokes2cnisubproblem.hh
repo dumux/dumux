@@ -42,7 +42,7 @@ class Stokes2cniSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(Stokes2cniSubProblem,
-	INHERITS_FROM(BoxStokesncni, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
+    INHERITS_FROM(BoxStokesncni, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cniSubProblem, Problem, Dumux::Stokes2cniSubProblem<TypeTag>);

@@ -188,7 +188,7 @@ Scalar temperatureAtPos(const GlobalPosition& globalPos) const
  */
 Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
-	return 1e6;
+    return 1e6;
 }
 
 /*!

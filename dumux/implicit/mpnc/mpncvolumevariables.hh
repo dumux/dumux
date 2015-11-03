@@ -103,12 +103,12 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      *
-     * 		\param priVars The primary Variables
-     * 		\param problem The Problem
-     * 		\param element The finite element
-     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * 		\param scvIdx The index of the sub-control volume
-     * 		\param isOldSol Specifies whether this is the previous solution or the current one
+     *      \param priVars The primary Variables
+     *      \param problem The Problem
+     *      \param element The finite element
+     *      \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     *      \param scvIdx The index of the sub-control volume
+     *      \param isOldSol Specifies whether this is the previous solution or the current one
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -315,7 +315,7 @@ public:
     /*!
      * \brief Returns the value of the NCP-function for a phase.
      *
-     * 		\param phaseIdx The local index of the phases
+     *      \param phaseIdx The local index of the phases
      */
     Scalar phaseNcp(const unsigned int phaseIdx) const
     {
