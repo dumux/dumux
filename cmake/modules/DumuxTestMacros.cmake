@@ -31,20 +31,33 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
     dune_symlink_to_source_files(FILES ${input_file}.input)
   endif()
 
+  # get optional arguments
+  # cannot use ARGN directly with list() command, copy to a variable first
+  set(dumux_test_args ${ARGN})
+  list(LENGTH dumux_test_args num_dumux_test_args)
+
   # add executable
   # check whether executable already exists
   if(NOT TARGET ${dumux_test_executable})
     add_executable(${dumux_test_executable} ${dumux_test_executable_source})
   endif()
 
-  # get optional arguments
-  # cannot use ARGN directly with list() command, copy to a variable first
-  set(dumux_test_args ${ARGN})
-  list(LENGTH dumux_test_args num_dumux_test_args)
-
   # add test
-  add_test(${dumux_test} ${dumux_test_args})
+  if(DUNE_COMMON_VERSION_MAJOR VERSION_GREATER 2.4)
+    dune_add_test(NAME ${dumux_test}
+                  TARGET ${dumux_test_executable}
+                  COMMAND ${dumux_test_args}
+                  SKIP_ON_77)
+    # tests always require the executable to run
+    set_tests_properties(${dumux_test} PROPERTIES REQUIRED_FILES ${dumux_test})
+  else()
 
-  # return code 77 should be interpreted as skipped test
-  set_tests_properties(${dumux_test} PROPERTIES SKIP_RETURN_CODE 77)
+    # add test
+    add_test(${dumux_test} ${dumux_test_args})
+
+    # return code 77 should be interpreted as skipped test
+    set_tests_properties(${dumux_test} PROPERTIES SKIP_RETURN_CODE 77)
+    # tests always require the executable to run
+    set_tests_properties(${dumux_test} PROPERTIES REQUIRED_FILES ${dumux_test_executable})
+  endif()
 endmacro()
