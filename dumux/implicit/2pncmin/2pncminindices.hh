@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \brief Defines the indices required for the two-phase n-component mineralization 
+ * \brief Defines the indices required for the two-phase n-component mineralization
  *        fully implicit model.
  */
 #ifndef DUMUX_2PNCMIN_INDICES_HH
@@ -37,8 +37,8 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-	class TwoPNCMinIndices: public TwoPNCIndices<TypeTag, PVOffset>
-{ 
+    class TwoPNCMinIndices: public TwoPNCIndices<TypeTag, PVOffset>
+{
 };
 
 // \}

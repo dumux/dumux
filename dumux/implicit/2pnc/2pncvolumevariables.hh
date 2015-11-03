@@ -264,7 +264,7 @@ public:
 
             Miscible2pNCComposition::solve(fluidState,
                         paramCache,
-                        wPhaseIdx,	//known phaseIdx
+                        wPhaseIdx,  //known phaseIdx
                         /*setViscosity=*/true,
                         /*setInternalEnergy=*/false);
         }

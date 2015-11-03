@@ -91,9 +91,9 @@ class CombustionSpatialParams : public ImplicitSpatialParams<TypeTag>
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
-    enum {numEnergyEquations  	= GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
+    enum {numEnergyEquations    = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {enableEnergy 			= GET_PROP_VALUE(TypeTag, EnableEnergy)};
+    enum {enableEnergy          = GET_PROP_VALUE(TypeTag, EnableEnergy)};
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -124,28 +124,28 @@ public:
                 // BEWARE! First the input values have to be set, then the material parameters can be set
 
                 // this is the parameter value from file part
-                porosity_                 		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.porosity);
+                porosity_                       = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.porosity);
 
-                intrinsicPermeabilityOutFlow_ 	= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.permeabilityOutFlow);
-                porosityOutFlow_ 				= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.porosityOutFlow);
+                intrinsicPermeabilityOutFlow_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.permeabilityOutFlow);
+                porosityOutFlow_                = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.porosityOutFlow);
                 solidThermalConductivityOutflow_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.soilThermalConductivityOutFlow);
 
-                solidDensity_                		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
-                solidThermalConductivity_    		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.thermalConductivity);
-                solidHeatCapacity_               		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
+                solidDensity_                       = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
+                solidThermalConductivity_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.thermalConductivity);
+                solidHeatCapacity_                      = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
 
-                interfacialTension_               	= GET_RUNTIME_PARAM(TypeTag, Scalar, Constants.interfacialTension);
+                interfacialTension_                 = GET_RUNTIME_PARAM(TypeTag, Scalar, Constants.interfacialTension);
 
                 Swr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Swr);
                 Snr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Snr);
 
-                characteristicLength_	= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
+                characteristicLength_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
                 intrinsicPermeability_  =  (std::pow(characteristicLength_,2.0)  * std::pow(porosity_,3.0)) / (150.0 * std::pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
 
                 factorEnergyTransfer_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorEnergyTransfer);
                 factorMassTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);
 
-                lengthPM_      			= GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.lengthPM);
+                lengthPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.lengthPM);
 
             // residual saturations
             materialParams_.setSwr(Swr_) ;
@@ -172,10 +172,10 @@ public:
                                  const unsigned int scvIdx) const
     {
         const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-    	if ( inOutFlow(globalPos) )
-    		return intrinsicPermeabilityOutFlow_ ;
-    	else
-    		return intrinsicPermeability_ ;
+        if ( inOutFlow(globalPos) )
+            return intrinsicPermeabilityOutFlow_ ;
+        else
+            return intrinsicPermeability_ ;
     }
 
     /*! \brief Return the porosity \f$[-]\f$ of the soil
@@ -190,10 +190,10 @@ public:
                     const unsigned int scvIdx) const
     {
         const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-    	if ( inOutFlow(globalPos) )
-    		return porosityOutFlow_ ;
-    	else
-    		return porosity_ ;
+        if ( inOutFlow(globalPos) )
+            return porosityOutFlow_ ;
+        else
+            return porosity_ ;
     }
 
     /*!
@@ -254,7 +254,7 @@ public:
      * \param globalPos The position in global coordinates.*/
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     {
-    	return factorEnergyTransfer_ ;
+        return factorEnergyTransfer_ ;
     }
 
 
@@ -274,7 +274,7 @@ public:
      * \param globalPos The position in global coordinates.*/
     const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
     {
-    	return factorMassTransfer_ ;
+        return factorMassTransfer_ ;
     }
 
 
@@ -306,10 +306,10 @@ public:
                                     const unsigned int scvIdx)const
     {
         const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-    	if ( inOutFlow(globalPos) )
-    		return solidThermalConductivityOutflow_ ;
-    	else
-    		return solidThermalConductivity_ ;
+        if ( inOutFlow(globalPos) )
+            return solidThermalConductivityOutflow_ ;
+        else
+            return solidThermalConductivity_ ;
     } // conductivity of solid  [W / (m K ) ]
 
     /*!
@@ -323,7 +323,7 @@ public:
      */
     Scalar lengthPM() const
     {
-    	return lengthPM_ ;
+        return lengthPM_ ;
     }
 
     /*!
@@ -331,7 +331,7 @@ public:
      */
     Scalar interfacialTension() const
     {
-    	return interfacialTension_ ;
+        return interfacialTension_ ;
     }
 
 private:

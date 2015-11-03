@@ -443,8 +443,8 @@ public:
                 (*mobilityNW)[i]  = cellData.mobility(nPhaseIdx);
                 if (compressibility_)
                 {
-                	(*mobilityW)[i] = (*mobilityW)[i]/cellData.density(wPhaseIdx);
-                	(*mobilityNW)[i] = (*mobilityNW)[i]/cellData.density(nPhaseIdx);
+                    (*mobilityW)[i] = (*mobilityW)[i]/cellData.density(wPhaseIdx);
+                    (*mobilityNW)[i] = (*mobilityNW)[i]/cellData.density(nPhaseIdx);
                 }
             }
             if (vtkOutputLevel_ > 1)

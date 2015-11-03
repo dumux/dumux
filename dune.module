@@ -3,3 +3,4 @@ Version: 2.9-git
 Maintainer: dumux@listserv.uni-stuttgart.de
 Depends: dune-grid (>= 2.4) dune-localfunctions (>= 2.4) dune-istl (>= 2.4)
 Suggests: dune-alugrid (>=2.4) dune-pdelab (>=2.0) dune-multidomain dune-cornerpoint
+Whitespace-Hook: Yes

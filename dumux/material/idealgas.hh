@@ -42,9 +42,9 @@ public:
     /*!
      * \brief The density of the gas in \f$\mathrm{[kg/m^3]}\f$, depending on
      *        pressure, temperature and average molar mass of the gas.
-     * \param avgMolarMass The average molar mass of the gas 
-     * \param temperature The temperature of the gas 
-     * \param pressure The pressure of the gas 
+     * \param avgMolarMass The average molar mass of the gas
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
      */
     static Scalar density(Scalar avgMolarMass,
                           Scalar temperature,
@@ -54,8 +54,8 @@ public:
     /*!
      * \brief The pressure of the gas in \f$\mathrm{[Pa]}\f$, depending on
      *        the molar density and temperature.
-     * \param temperature The temperature of the gas 
-     * \param rhoMolar The molar density of the gas  
+     * \param temperature The temperature of the gas
+     * \param rhoMolar The molar density of the gas
      */
     static Scalar pressure(Scalar temperature,
                            Scalar rhoMolar)
@@ -64,8 +64,8 @@ public:
     /*!
      * \brief The molar density of the gas \f$\mathrm{[mol/m^3]}\f$,
      *        depending on pressure and temperature.
-     * \param temperature The temperature of the gas 
-     * \param pressure The pressure of the gas 
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
      */
     static Scalar molarDensity(Scalar temperature,
                                 Scalar pressure)

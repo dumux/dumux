@@ -98,7 +98,7 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 public:
     DissolutionSpatialparams(const GridView &gridView)
         : ParentType(gridView),
-          K_(0)    
+          K_(0)
     {
         //set main diagonal entries of the permeability tensor to a value
         //setting to one value means: isotropic, homogeneous
@@ -136,11 +136,11 @@ public:
      *  could be defined, where globalPos is the vector including the global coordinates
      *  of the finite volume.
      */
-    const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element, 
+    const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element,
                                                                      const FVElementGeometry &fvGeometry,
                                                                      const int scvIdx) const
-    { 
-        return K_; 
+    {
+        return K_;
     }
 
     /*!
@@ -157,7 +157,7 @@ public:
      {
         return 1e-5;
      }
-     
+
     /*!
      * \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
      *

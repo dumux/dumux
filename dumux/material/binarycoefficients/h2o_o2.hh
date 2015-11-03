@@ -56,7 +56,7 @@ public:
 
         return henryIAPWS(E, F, G, H, temperature);
     };
-    
+
     /*!
      * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular water and nitrogen.
      *

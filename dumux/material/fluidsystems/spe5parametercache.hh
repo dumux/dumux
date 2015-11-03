@@ -102,7 +102,7 @@ public:
      * concentration changed between two update*() calls. If more than
      * one concentration changed, call updatePhaseComposition() of
      * updatePhase()!
- 
+
      * \param fs An arbitrary fluid state
      * \param compIdx The index of the component to consider
      * \param phaseIdx The index of the fluid phase to consider

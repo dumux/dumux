@@ -58,8 +58,8 @@ public:
 
         // Averages the face velocities of a vertex. Implemented in the model.
         // The velocities are stored in the model.
-    	if(velocityAveragingInModel)
-    		this->problem_().model().calcVelocityAverage();
+        if(velocityAveragingInModel)
+            this->problem_().model().calcVelocityAverage();
     }
 
     void newtonUpdate(SolutionVector &uCurrentIter,

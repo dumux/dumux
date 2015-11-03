@@ -71,7 +71,7 @@ public:
     typedef typename MaterialParams::Scalar Scalar;
 
     /*!
-     * \brief The interfacial area relation 
+     * \brief The interfacial area relation
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{{S}_w}\f$.
      * \param iaParams parameter container for the interfacial area
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$

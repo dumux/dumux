@@ -67,19 +67,19 @@ public:
     {  return Component::molarMass(); }
 
     /*!
-     * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component 
+     * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component
      */
     static Scalar criticalTemperature()
     {  return Component::criticalTemperature(); }
 
     /*!
-     * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component 
+     * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component
      */
     static Scalar criticalPressure()
     {  return Component::criticalPressure(); }
 
     /*!
-     * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point. 
+     * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
      */
     static Scalar tripleTemperature()
     {  return Component::tripleTemperature(); }

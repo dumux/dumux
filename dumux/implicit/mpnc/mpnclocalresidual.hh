@@ -230,10 +230,10 @@ public:
     /*!
      * \brief Evaluate the local residual.
      *
-     * 		\param element The finite element
-     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * 		\param prevElemVolVars The element volume variables of the previous timestep
-     * 		\param curElemVolVars The element volume variables of the current timestep
+     *      \param element The finite element
+     *      \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     *      \param prevElemVolVars The element volume variables of the previous timestep
+     *      \param curElemVolVars The element volume variables of the current timestep
      *      \param bcType The types of the boundary conditions for all vertices of the element
      */
     void eval(const Element &element,
@@ -273,8 +273,8 @@ public:
      * Sets the Dirichlet conditions in a strong sense, in contrast to
      * the general handling in CCLocalResidual.
      *
-     * 		\param isIt
-     * 		\param bcTypes
+     *      \param isIt
+     *      \param bcTypes
      */
     template <class IntersectionIterator>
     void evalDirichletSegment_(const IntersectionIterator &isIt,

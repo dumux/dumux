@@ -94,11 +94,11 @@ public:
         // only treat boundary if current solution is evaluated
         if (!oldSol)
         {
-            // check if element intersects with the boundary 
+            // check if element intersects with the boundary
             ElementBoundaryTypes elemBCTypes;
             elemBCTypes.update(problem, element);
-            if (elemBCTypes.hasDirichlet() 
-                || elemBCTypes.hasNeumann() 
+            if (elemBCTypes.hasDirichlet()
+                || elemBCTypes.hasNeumann()
                 || elemBCTypes.hasOutflow())
             {
                 const int numFaces = 6;
@@ -127,7 +127,7 @@ public:
                                                          /*scvIdx=*/0,
                                                          oldSol);
                     }
-                    else 
+                    else
                     {
                         (*this)[indexInVariables] = (*this)[0];
                     }

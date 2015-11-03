@@ -106,11 +106,11 @@ public:
 
         // copy to the primary variables
         for (int compIdx = 0; compIdx < numComponents; ++compIdx){
-        	storage[conti0EqIdx + phaseIdx*numComponents + compIdx]
-        	        += phaseComponentValues[compIdx];
+            storage[conti0EqIdx + phaseIdx*numComponents + compIdx]
+                    += phaseComponentValues[compIdx];
 
             if (!std::isfinite(storage[conti0EqIdx + phaseIdx*numComponents + compIdx]))
-            	DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
+                DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
         }
 
        Valgrind::CheckDefined(storage);
@@ -145,7 +145,7 @@ public:
                 Valgrind::CheckDefined(flux);
 
                 if (!std::isfinite(flux[conti0EqIdx + phaseIdx*numComponents + compIdx]))
-                	DUNE_THROW(NumericalProblem, "Calculated non-finite flux");
+                    DUNE_THROW(NumericalProblem, "Calculated non-finite flux");
             }
 
             // Right now I think that adding the two contributions individually into the flux is best for debugging and understanding.
@@ -276,7 +276,7 @@ public:
                         source[eqIdx] += componentIntoPhaseMassTransfer[phaseIdx][compIdx] ;
 
                         if (!std::isfinite(source[eqIdx]))
-                        	DUNE_THROW(NumericalProblem, "Calculated non-finite source");
+                            DUNE_THROW(NumericalProblem, "Calculated non-finite source");
             }
         }
         Valgrind::CheckDefined(source);

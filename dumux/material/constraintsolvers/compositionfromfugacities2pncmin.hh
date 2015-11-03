@@ -40,9 +40,9 @@ namespace Dumux {
 template <class Scalar, class FluidSystem>
 class compositionFromFugacities2pncmin
 {
-    enum { 
+    enum {
             numComponents = FluidSystem::numComponents,
-            numMajorComponents = FluidSystem::numMajorComponents 
+            numMajorComponents = FluidSystem::numMajorComponents
          };
 
     typedef typename FluidSystem::ParameterCache ParameterCache;
@@ -55,8 +55,8 @@ public:
      * \brief Guess an initial value for the composition of the phase.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
-     * \param phaseIdx The phase index     
-     * \param phasePresence The presence index of the reference phase 
+     * \param phaseIdx The phase index
+     * \param phasePresence The presence index of the reference phase
      * \param fugVec fugacity vector of the component
      */
     template <class FluidState>
@@ -70,7 +70,7 @@ public:
             return;
 
         // Pure component fugacities
-        for (int i = 0; i < numComponents; ++ i) 
+        for (int i = 0; i < numComponents; ++ i)
         {
             fluidState.setMoleFraction(phaseIdx,i, 1.0/numComponents);
         }
@@ -78,10 +78,10 @@ public:
 
     /*!
      * \brief Calculates the chemical equilibrium from the component
-     *        fugacities in a phase. This constraint solver is developed for drying scenarios where 
-     *        salt component is restricted to liquid phase and still for the sake for equilibrium 
-     *        calculation some residual salt must be considered in the gas phase. In such cases for 
-     *        existence of gas phase only, in the theoretical liquid phase, we set the mole fraction 
+     *        fugacities in a phase. This constraint solver is developed for drying scenarios where
+     *        salt component is restricted to liquid phase and still for the sake for equilibrium
+     *        calculation some residual salt must be considered in the gas phase. In such cases for
+     *        existence of gas phase only, in the theoretical liquid phase, we set the mole fraction
      *        of salt to  1e-10.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
@@ -100,7 +100,7 @@ public:
     {
         // use a much more efficient method in case the phase is an
         // ideal mixture
-        if (FluidSystem::isIdealMixture(phaseIdx)) 
+        if (FluidSystem::isIdealMixture(phaseIdx))
         {
             solveIdealMix_(fluidState, paramCache, phaseIdx, phasePresence, targetFug);
             return;
@@ -108,7 +108,7 @@ public:
         else
             DUNE_THROW(NumericalProblem, "This constraint solver is not tested for non-ideal mixtures: Please refer computefromfugacities.hh for details" );
     }
-    
+
 protected:
     // update the phase composition in case the phase is an ideal
     // mixture, i.e. the component's fugacity coefficients are
@@ -120,7 +120,7 @@ protected:
                                int phasePresence,
                                const ComponentVector &fugacities)
     {
-        for (int i = 0; i < numComponents; ++ i) 
+        for (int i = 0; i < numComponents; ++ i)
         {
             Scalar phi = FluidSystem::fugacityCoefficient(fluidState,
                                                           paramCache,

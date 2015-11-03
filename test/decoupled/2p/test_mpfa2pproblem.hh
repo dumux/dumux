@@ -208,7 +208,7 @@ ParentType(timeManager, gridView)
     int refinementFactor = 0;
     if (ParameterTree::tree().hasKey("Grid.RefinementFactor"))
     {
-    	refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
+        refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
     }
 
     this->grid().globalRefine(refinementFactor);
@@ -349,7 +349,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
 #elif  PROBLEM == 0
     if (globalPos[0] < eps_)
     {
-    	bcTypes.setAllDirichlet();
+        bcTypes.setAllDirichlet();
     }
     else if (globalPos[0] > this->bBoxMax()[0] - eps_)
     {
@@ -358,16 +358,16 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
     }
     else
     {
-    	bcTypes.setAllNeumann();
+        bcTypes.setAllNeumann();
     }
 #else
     if (globalPos[0] < eps_)
     {
-    	bcTypes.setAllDirichlet();
+        bcTypes.setAllDirichlet();
     }
     else
     {
-    	bcTypes.setAllNeumann();
+        bcTypes.setAllNeumann();
     }
 #endif
 }
@@ -414,7 +414,7 @@ void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) con
 #elif PROBLEM == 0
     if (globalPos[0] > this->bBoxMax()[0] - eps_)
     {
-    	values[nPhaseIdx] = 3e-3;
+        values[nPhaseIdx] = 3e-3;
     }
 #endif
 }

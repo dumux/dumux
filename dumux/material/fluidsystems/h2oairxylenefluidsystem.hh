@@ -223,8 +223,8 @@ public:
     /*!
      * \brief Given all mole fractions in a phase, return the phase
      *        density \f$\mathrm{[kg/m^3]}\f$.
-     * \param fluidState The fluid state 
-     * \param phaseIdx The index of the phase to consider 
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase to consider
      */
     using Base::density;
     template <class FluidState>
@@ -269,8 +269,8 @@ public:
 
     /*!
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
-     * \param fluidState The fluid state 
-     * \param phaseIdx The index of the phase to consider 
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase to consider
      */
     using Base::viscosity;
     template <class FluidState>
@@ -344,8 +344,8 @@ public:
     /*!
      * \brief Given all mole fractions, return the diffusion
      *        coefficent \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
-     * \param fluidState The fluid state 
-     * \param phaseIdx The index of the phase to consider 
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase to consider
      * \param compIdx The index of the component to consider
      */
     using Base::diffusionCoefficient;
@@ -413,8 +413,8 @@ public:
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
-     * \param fluidState The fluid state 
-     * \param phaseIdx The index of the phase to consider 
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase to consider
      * \param compIdx The index of the component to consider
      *
      * In this case, things are actually pretty simple. We have an ideal
@@ -469,8 +469,8 @@ public:
     /*!
      * \brief Given all mole fractions in a phase, return the specific
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
-     * \param fluidState The fluid state 
-     * \param phaseIdx The index of the phase to consider 
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase to consider
      */
     /*!
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
@@ -504,10 +504,10 @@ public:
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
-    
+
  /*!
      * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
     using Base::heatCapacity;
@@ -517,10 +517,10 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirXylene::heatCapacity()");
     }
-    
+
  /*!
      * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
     using Base::thermalConductivity;

@@ -175,7 +175,7 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, VelocityAveragingInModel, true);
  * \ingroup MpNcBoxproblems
  *
  * \brief Problem that simulates the coupled heat and mass transfer processes resulting form the evaporation of liquid water from
- *  	  a porous medium sub-domain into a gas filled "quasi-freeflow" sub-domain.
+ *        a porous medium sub-domain into a gas filled "quasi-freeflow" sub-domain.
  */
 template <class TypeTag>
 class EvaporationAtmosphereProblem
@@ -247,7 +247,7 @@ public:
      * \param gridView The grid view
      */
     EvaporationAtmosphereProblem(TimeManager &timeManager,
-    		const GridView &gridView)
+            const GridView &gridView)
         : ParentType(timeManager, gridView), gnuplot_(false)
     {
         this->timeManager().startNextEpisode(24.* 3600.);
@@ -403,7 +403,7 @@ public:
      */
     bool shouldWriteRestartFile() const
     {
-    	return this->timeManager().timeStepIndex() > 0 and
+        return this->timeManager().timeStepIndex() > 0 and
             (this->timeManager().timeStepIndex() % nRestart_  == 0);
     }
 
@@ -468,7 +468,7 @@ public:
     void dirichletAtPos(PrimaryVariables &priVars,
                         const GlobalPosition &globalPos) const
     {
-    	initial_(priVars, globalPos);
+        initial_(priVars, globalPos);
     }
 
     /*!
@@ -596,7 +596,7 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      *
-     * 		Positive values mean that mass is created, negative ones mean that it vanishes.
+     *      Positive values mean that mass is created, negative ones mean that it vanishes.
      */
     void source(PrimaryVariables & priVars,
                 const Element & element,
@@ -680,8 +680,8 @@ private:
 
         // temperature
         if(enableEnergy or numEnergyEquations)
-        	for (int energyEqIdx=0; energyEqIdx< numEnergyEqs; ++energyEqIdx)
-        		priVars[energyEq0Idx + energyEqIdx] = T;
+            for (int energyEqIdx=0; energyEqIdx< numEnergyEqs; ++energyEqIdx)
+                priVars[energyEq0Idx + energyEqIdx] = T;
 
         for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
              equilibriumFluidState.setPressure(phaseIdx, p[phaseIdx]);

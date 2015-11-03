@@ -4,7 +4,7 @@ project("dumux" C CXX)
 # general stuff
 cmake_minimum_required(VERSION 2.8.6)
 
-if(NOT (dune-common_DIR 
+if(NOT (dune-common_DIR
         OR dune-common_ROOT
         OR "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))
     string(REPLACE  ${CMAKE_PROJECT_NAME}

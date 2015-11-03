@@ -62,7 +62,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
    /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
@@ -112,7 +112,7 @@ public:
         }
     }
   /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
@@ -161,7 +161,7 @@ public:
         }
     }
     /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
@@ -209,7 +209,7 @@ public:
         }
     }
  /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
      * \param params Array of parameters
      * \param sn Non-wetting liquid saturation
      */

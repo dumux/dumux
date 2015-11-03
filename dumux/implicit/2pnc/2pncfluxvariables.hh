@@ -46,7 +46,7 @@ namespace Dumux
 template <class TypeTag>
 class TwoPNCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
-	typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -105,8 +105,8 @@ public:
             potentialGrad_[phaseIdx] = Scalar(0);
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-            	massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
-            	moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
+                massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
+                moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
             }
         }
         calculateGradients_(problem, element, elemVolVars);
@@ -269,7 +269,7 @@ protected:
             Scalar tauI =  1.0/(volVarsI.porosity() * volVarsI.porosity()) *
                             pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
 
-            Scalar tauJ =	1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
+            Scalar tauJ =   1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
                             pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
             // Diffusion coefficient in the porous medium
 
@@ -300,7 +300,7 @@ public:
      * mobility is not yet included here since this would require a
      * decision on the upwinding approach (which is done in the
      * model and/or local residual file).
-     * 
+     *
      *   \param phaseIdx The phase index
      */
     Scalar KmvpNormal(int phaseIdx) const
@@ -309,7 +309,7 @@ public:
     /*!
      * \brief Return the pressure potential multiplied with the
      *        intrinsic permeability as vector (for velocity output)
-     * 
+     *
      *   \param phaseIdx The phase index
      */
     DimVector Kmvp(int phaseIdx) const
@@ -318,7 +318,7 @@ public:
     /*!
      * \brief Return the local index of the upstream control volume
      *        for a given phase.
-     * 
+     *
      *   \param phaseIdx The phase index
      */
     int upstreamIdx(int phaseIdx) const
@@ -327,7 +327,7 @@ public:
     /*!
      * \brief Return the local index of the downstream control volume
      *        for a given phase.
-     * 
+     *
      *   \param phaseIdx The phase index
      */
     int downstreamIdx(int phaseIdx) const
@@ -335,7 +335,7 @@ public:
 
     /*!
      * \brief The binary diffusion coefficient for each fluid phase.
-     * 
+     *
      *   \param phaseIdx The phase index
      *   \param compIdx The component index
      */
@@ -345,7 +345,7 @@ public:
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
      *        point.
-     * 
+     *
      * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
@@ -354,7 +354,7 @@ public:
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
-     * 
+     *
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
@@ -362,7 +362,7 @@ public:
 
     /*!
      * \brief The concentration gradient of a component in a phase.
-     * 
+     *
      * \param phaseIdx The phase index
      * \param compIdx The component index
      */
@@ -371,7 +371,7 @@ public:
 
     /*!
      * \brief The molar concentration gradient of a component in a phase.
-     * 
+     *
      * \param phaseIdx The phase index
      * \param compIdx The component index
      */

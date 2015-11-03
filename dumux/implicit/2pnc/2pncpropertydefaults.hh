@@ -73,7 +73,7 @@ private:
 public:
     static const int value = FluidSystem::numComponents;
 };
-//! The major components belonging to the existing phases are mentioned here e.g., 2 for water and air being the major component in the liquid and gas phases in a 2 phase system 
+//! The major components belonging to the existing phases are mentioned here e.g., 2 for water and air being the major component in the liquid and gas phases in a 2 phase system
 SET_PROP(TwoPNC, NumMajorComponents)
 {
 private:

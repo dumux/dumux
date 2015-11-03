@@ -49,8 +49,8 @@ namespace Properties {
 
 /*!
  * \brief Set the property for the number of secondary components.
- * Secondary components are components calculated from 
- * primary components by equilibrium relations and 
+ * Secondary components are components calculated from
+ * primary components by equilibrium relations and
  * do not have mass balance equation on their own.
  * These components are important in the context of bio-mineralization applications.
  * We just forward the number from the fluid system
@@ -81,7 +81,7 @@ public:
 };
 
 /*!
- * \brief Set the property for the number of equations. 
+ * \brief Set the property for the number of equations.
  * For each component and each precipitated mineral/solid phase one equation has to
  * be solved.
  */

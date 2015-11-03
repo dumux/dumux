@@ -389,10 +389,10 @@ public:
             const Scalar density              = fluidState.density(phaseIdx);
             const Scalar kinematicViscosity   = dynamicViscosity / density;
             const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState,
-								                                          paramCache,
-								                                          phaseIdx);
+                                                                          paramCache,
+                                                                          phaseIdx);
             const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState,
-									                                       paramCache,
+                                                                           paramCache,
                                                                            phaseIdx);
 
             const Scalar porosity = problem.spatialParams().porosity(element,

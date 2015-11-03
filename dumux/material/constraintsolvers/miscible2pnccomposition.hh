@@ -109,7 +109,7 @@ public:
         Dune::FieldVector<Scalar, numComponents-numMajorComponents> xKnown(0.0);
         for (int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
         {
-        	xKnown[knownCompIdx] = fluidState.moleFraction(knownPhaseIdx, knownCompIdx + numMajorComponents);
+            xKnown[knownCompIdx] = fluidState.moleFraction(knownPhaseIdx, knownCompIdx + numMajorComponents);
         }
 
         // compute all fugacity coefficients
@@ -148,10 +148,10 @@ public:
         //Components, of which the molefractions are known, set to molefraction(knownCompIdx)=xKnown
         for(int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
         {
-        	int rowIdx = numComponents + numPhases + knownCompIdx;
-        	int colIdx = knownPhaseIdx*numComponents + knownCompIdx + numMajorComponents;
-        	M[rowIdx][colIdx] = 1.0;
-        	b[rowIdx] = xKnown[knownCompIdx];
+            int rowIdx = numComponents + numPhases + knownCompIdx;
+            int colIdx = knownPhaseIdx*numComponents + knownCompIdx + numMajorComponents;
+            M[rowIdx][colIdx] = 1.0;
+            b[rowIdx] = xKnown[knownCompIdx];
         }
 
         // assemble the equations expressing the fact that the
@@ -179,25 +179,25 @@ public:
         //prevents matrix meeting dune's singularity criteria
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-        	if (compIdx < numMajorComponents)
-        	{
-        		for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
-        		{
-        			//Multiply row of main component (Raoult's Law) with 10e-5 (order of magn. of pressure)
-        			M[compIdx][colIdx] *= 10e-5;
-        		}
-        	} else {
-        		for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
-        		{
-        			//Multiply row of sec. components (Henry's Law) with 10e-9 (order of magn. of Henry constant)
-        			M[compIdx][colIdx] *= 10e-9;
-        		}
-        	}
+            if (compIdx < numMajorComponents)
+            {
+                for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
+                {
+                    //Multiply row of main component (Raoult's Law) with 10e-5 (order of magn. of pressure)
+                    M[compIdx][colIdx] *= 10e-5;
+                }
+            } else {
+                for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
+                {
+                    //Multiply row of sec. components (Henry's Law) with 10e-9 (order of magn. of Henry constant)
+                    M[compIdx][colIdx] *= 10e-9;
+                }
+            }
         }
 
         // solve for all mole fractions
         M.solve(x, b);
-        
+
         // set all mole fractions and the the additional quantities in
         // the fluid state
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {

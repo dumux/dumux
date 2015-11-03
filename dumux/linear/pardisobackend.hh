@@ -384,7 +384,7 @@ public:
     {}
 
     /*! \brief Apply one step of the preconditioner to the system \f$ A(v)=d \f$.
-	 *
+     *
      * On entry \f$ v=0 \f$ and \f$ d=b-A(x) \f$ (although this might not be
      * computed in that way. On exit v contains the update, i.e
      * one step computes \f$ v = M^{-1} d \f$ where \f$ M \f$ is the
@@ -422,11 +422,11 @@ public:
     }
 
     /*! \brief Clean up.
-	 *
+     *
      * This method is called after the last apply call for the
      * linear system to be solved. Memory may be deallocated safely
      * here. x is the solution of the linear equation.
-	 *
+     *
      * \param b The right hand side of the equation.
     */
     virtual void post (Vector& b)

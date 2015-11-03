@@ -253,7 +253,7 @@ public:
             interfaceArea_[nC] = 0.0;
 //            transmissibility_[nC] = 0.0;
             distNestedContinua_[nC] =0.0;
-//        	volumetricFraction_[nC] =0.0;
+//          volumetricFraction_[nC] =0.0;
         }
 
         /*

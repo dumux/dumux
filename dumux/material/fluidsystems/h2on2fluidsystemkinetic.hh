@@ -254,13 +254,13 @@ public:
      *        phases was needed.
      *
      *        In the case of Henry, Raoult this would be
-     * 
-     *        ----- n-Comp w-Comp 
-     * 
+     *
+     *        ----- n-Comp w-Comp
+     *
      *        nPhase pn \f$\mathrm{x_n^n}\f$ pn \f$\mathrm{x_n^w}\f$
-     *      
+     *
      *        wPhase pv \f$\mathrm{w_w^w}\f$ H \f$\mathrm{x_w^n}\f$
-     *       
+     *
      *
      *        Plus additional relations for additional components.
      *

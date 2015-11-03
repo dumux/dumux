@@ -32,7 +32,7 @@
 
 namespace Dumux
 {
-    
+
 template <class TypeTag>
 class DissolutionProblem;
 
@@ -78,7 +78,7 @@ SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pgSl);
  * The injected water phase migrates downwards due to increase in density as the precipitated salt dissolves.
  *
  * The model uses mole fractions of dissolved components and volume fractions of precipitated salt as primary variables. Make sure that the according units are used in the problem setup.
- * 
+ *
  * This problem uses the \ref TwoPNCMinModel.
  *
  * To run the simulation execute the following line in shell:
@@ -115,7 +115,7 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
             conti0EqIdx = Indices::conti0EqIdx,
             contiTotalMassIdx = conti0EqIdx + FluidSystem::AirIdx,
             precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
-            contiWEqIdx       =	conti0EqIdx + FluidSystem::H2OIdx,
+            contiWEqIdx       = conti0EqIdx + FluidSystem::H2OIdx,
 
             // Phase State
             wPhaseOnly = Indices::wPhaseOnly,
@@ -141,11 +141,11 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    DissolutionProblem(TimeManager &timeManager, 
+    DissolutionProblem(TimeManager &timeManager,
                        const GridView &gridView)
         : ParentType(timeManager, GridCreator::grid().leafGridView())
     {
-    
+
         outerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterSalinity);
         temperature_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Temperature);
         reservoirPressure_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ReservoirPressure);
@@ -159,7 +159,7 @@ public:
         innerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerPressure);
         outerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterPressure);
         reservoirSaturation_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, reservoirSaturation);
-        
+
         nTemperature_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NTemperature);
         nPressure_              = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NPressure);
         pressureLow_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
@@ -167,7 +167,7 @@ public:
         temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
         temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
         name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
-        freqMassOutput_ 	    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
+        freqMassOutput_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
         storageLastTimestep_    = Scalar(0);
         lastMassOutputTime_     = Scalar(0);
 
@@ -291,13 +291,13 @@ public:
      * influx.
      */
     void neumann(PrimaryVariables &values,
-				  const Element &element,
-				  const FVElementGeometry &fvGeometry,
-				  const Intersection &is,
-				  int scvIdx,
-				  int boundaryFaceIdx) const
+                  const Element &element,
+                  const FVElementGeometry &fvGeometry,
+                  const Intersection &is,
+                  int scvIdx,
+                  int boundaryFaceIdx) const
     {
-    	values = 0.0;
+        values = 0.0;
     }
 
     /*!
@@ -354,7 +354,7 @@ public:
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
                                             * volVars.saturation(wPhaseIdx)
                                             * pow(std::abs(moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase), 1.0);
-                                            
+
         if (moleFracNaCl_lPhase < moleFracNaCl_Max_lPhase)
             precipSalt *= -1;
 
@@ -399,19 +399,19 @@ public:
 private:
 
     /*!
-	 * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
-	 *
-	 * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
-	 */
+     * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
+     *
+     * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
+     */
     static Scalar massTomoleFrac_(Scalar XlNaCl)
     {
-	   const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
-	   const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
+       const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
+       const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
 
-	   const Scalar X_NaCl = XlNaCl;
-	   /* XlNaCl: conversion from mass fraction to mol fraction */
-	   const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-	   return xlNaCl;
+       const Scalar X_NaCl = XlNaCl;
+       /* XlNaCl: conversion from mass fraction to mol fraction */
+       const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
+       return xlNaCl;
     }
 
     int nTemperature_;

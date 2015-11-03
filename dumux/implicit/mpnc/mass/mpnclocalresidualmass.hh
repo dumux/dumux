@@ -183,9 +183,9 @@ if (!std::isfinite(volumeFlux))
                         ((     massUpwindWeight)*up.fluidState().molarity(phaseIdx, compIdx)
                                 +
                         (  1. - massUpwindWeight)*dn.fluidState().molarity(phaseIdx, compIdx) );
-						if (!std::isfinite(flux[compIdx]))
-							DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.fluidState().saturation(phaseIdx)  ) ;
-			}
+                        if (!std::isfinite(flux[compIdx]))
+                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.fluidState().saturation(phaseIdx)  ) ;
+            }
         }
     }
 
@@ -371,10 +371,10 @@ public:
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars)
     {
-//    	static_assert(not enableKineticEnergy, // enableKinetic is disabled, in this specialization
-//    			"In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
-//    			"It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
-//    			"Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
+//      static_assert(not enableKineticEnergy, // enableKinetic is disabled, in this specialization
+//              "In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
+//              "It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
+//              "Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
 
 
         // mass transfer is not considered in this mass module

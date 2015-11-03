@@ -224,7 +224,7 @@ public:
             }
 
             if (!(refineAtSource_ || refineAtFluxBC_ || refineAtDirichletBC_))
-            	continue;
+                continue;
 
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
             FVElementGeometry fvGeometry;

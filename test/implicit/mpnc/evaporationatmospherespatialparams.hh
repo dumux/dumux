@@ -586,7 +586,7 @@ private:
     Scalar heightDomain_ ;
 
     AwnSurfaceParams    aWettingNonWettingSurfaceParams_;
-    AnsSurfaceParams 	aNonWettingSolidSurfaceParams_ ;
+    AnsSurfaceParams    aNonWettingSolidSurfaceParams_ ;
 
     AwnSurfaceParams    aWettingNonWettingSurfaceParamsFreeFlow_;
     AnsSurfaceParams    aNonWettingSolidSurfaceParamsFreeFlow_ ;

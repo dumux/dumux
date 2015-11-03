@@ -388,7 +388,7 @@ public:
     /*!
      * \brief Returns the equilibrium concentration of the dissolved component
      *        in a phase.
-     * \param fluidState An arbitrary fluid state 
+     * \param fluidState An arbitrary fluid state
      * \param paramCache Parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -467,7 +467,7 @@ public:
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIIdx Index of the component i
-     * \param compJIdx Index of the component j 
+     * \param compJIdx Index of the component j
      */
     using Base::binaryDiffusionCoefficient;
     template <class FluidState>

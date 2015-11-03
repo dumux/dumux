@@ -54,7 +54,7 @@ private:
 
     struct AdaptedValues
     {
-    	PrimaryVariables u;
+        PrimaryVariables u;
         int count;
         AdaptedValues()
         {
@@ -98,7 +98,7 @@ public:
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
     AdaptionHelper(const GridView& gridView) :
-    	gridView_(gridView), grid_(gridView.grid()), adaptionMap_(grid_, dofCodim)
+        gridView_(gridView), grid_(gridView.grid()), adaptionMap_(grid_, dofCodim)
     {}
 
 
@@ -125,46 +125,46 @@ public:
 
             if(!isBox)
             {
-				for (const auto& element : Dune::elements(levelView))
-				{
-					//get your map entry
-					AdaptedValues &adaptedValues = adaptionMap_[element];
+                for (const auto& element : Dune::elements(levelView))
+                {
+                    //get your map entry
+                    AdaptedValues &adaptedValues = adaptionMap_[element];
 
-					// put your value in the map
-					if (element.isLeaf())
-					{
-						// get index
-						int indexI = this->elementIndex(problem, element);
+                    // put your value in the map
+                    if (element.isLeaf())
+                    {
+                        // get index
+                        int indexI = this->elementIndex(problem, element);
 
-						storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
+                        storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
 
-						adaptedValues.count = 1;
-					}
-					//Average in father
-					if (element.level() > 0)
-					{
-						AdaptedValues& adaptedValuesFather = adaptionMap_[element.father()];
-						adaptedValuesFather.count += 1;
-						storeAdaptionValues(adaptedValues, adaptedValuesFather);
-					}
+                        adaptedValues.count = 1;
+                    }
+                    //Average in father
+                    if (element.level() > 0)
+                    {
+                        AdaptedValues& adaptedValuesFather = adaptionMap_[element.father()];
+                        adaptedValuesFather.count += 1;
+                        storeAdaptionValues(adaptedValues, adaptedValuesFather);
+                    }
 
-				}
-        	}
+                }
+            }
             else
             {
-				for (const auto& entity : Dune::entities(levelView, Dune::Codim<dofCodim>()))
-				{
-					//get your map entry
-					AdaptedValues &adaptedValues = adaptionMap_[entity];
+                for (const auto& entity : Dune::entities(levelView, Dune::Codim<dofCodim>()))
+                {
+                    //get your map entry
+                    AdaptedValues &adaptedValues = adaptionMap_[entity];
 
-					// put your value in the map
-					int indexI = this->dofIndex(problem, entity);
+                    // put your value in the map
+                    int indexI = this->dofIndex(problem, entity);
 
-					storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
+                    storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
 
-					adaptedValues.count = 1;
+                    adaptedValues.count = 1;
 
-				}
+                }
             }
         }
     }
@@ -201,27 +201,27 @@ public:
                     //entry is in map, write in leaf
                     if (element.isLeaf())
                     {
-                    	if(!isBox)
-                    	{
-							AdaptedValues &adaptedValues = adaptionMap_[element];
-							int newIdxI = this->elementIndex(problem, element);
+                        if(!isBox)
+                        {
+                            AdaptedValues &adaptedValues = adaptionMap_[element];
+                            int newIdxI = this->elementIndex(problem, element);
 
-							setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
-						}
-                    	else
-                    	{
+                            setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
+                        }
+                        else
+                        {
                             unsigned int numSubEntities = element.subEntities(dofCodim);
 
-                        	for(unsigned int i = 0; i < numSubEntities; i++)
-                        	{
+                            for(unsigned int i = 0; i < numSubEntities; i++)
+                            {
                                 auto subEntity = element.template subEntity <dofCodim>(i);
                                 AdaptedValues &adaptedValues = adaptionMap_[subEntity];
-    							int newIdxI = this->dofIndex(problem, subEntity);
+                                int newIdxI = this->dofIndex(problem, subEntity);
 
-    							setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
+                                setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 
-                        	}
-                    	}
+                            }
+                        }
                     }
                 }
                 else
@@ -233,59 +233,59 @@ public:
 
                         if(!isBox)
                         {
-							// create new entry: reconstruct from adaptionMap_[*father] to a new
-							// adaptionMap_[*son]
-							reconstructAdaptionValues(adaptionMap_, epFather, element, problem);
+                            // create new entry: reconstruct from adaptionMap_[*father] to a new
+                            // adaptionMap_[*son]
+                            reconstructAdaptionValues(adaptionMap_, epFather, element, problem);
 
-							// access new son
-							AdaptedValues& adaptedValues = adaptionMap_[element];
-							adaptedValues.count = 1;
+                            // access new son
+                            AdaptedValues& adaptedValues = adaptionMap_[element];
+                            adaptedValues.count = 1;
 
-							// if we are on leaf, store reconstructed values of son in CellData object
-							if (element.isLeaf())
-							{
-								// acess new CellData object
-								int newIdxI = this->elementIndex(problem, element);
+                            // if we are on leaf, store reconstructed values of son in CellData object
+                            if (element.isLeaf())
+                            {
+                                // acess new CellData object
+                                int newIdxI = this->elementIndex(problem, element);
 
-								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
-							}
+                                setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
+                            }
                         }
                         else
                         {
                             unsigned int numSubEntities= element.subEntities(dofCodim);
-                    		const auto geometryI = element.geometry();
+                            const auto geometryI = element.geometry();
 
-                        	for(unsigned int i = 0; i < numSubEntities; i++)
-                        	{
-                        		auto subEntity = element.template subEntity <dofCodim>(i);
-    							AdaptedValues &adaptedValues = adaptionMap_[subEntity];
+                            for(unsigned int i = 0; i < numSubEntities; i++)
+                            {
+                                auto subEntity = element.template subEntity <dofCodim>(i);
+                                AdaptedValues &adaptedValues = adaptionMap_[subEntity];
 
-    							if(adaptedValues.count == 0){
-									LocalPosition dofCenterPos = geometryI.local(subEntity.geometry().center());
-									const LocalFiniteElementCache feCache;
-									Dune::GeometryType geomType = epFather.geometry().type();
+                                if(adaptedValues.count == 0){
+                                    LocalPosition dofCenterPos = geometryI.local(subEntity.geometry().center());
+                                    const LocalFiniteElementCache feCache;
+                                    Dune::GeometryType geomType = epFather.geometry().type();
 
-									const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
-									std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
-									localFiniteElement.localBasis().evaluateFunction(dofCenterPos, shapeVal);
-									PrimaryVariables u(0);
-									for (int j = 0; j < shapeVal.size(); ++j)
-									{
-										AdaptedValues & adaptedValuesFather = adaptionMap_[epFather.template subEntity <dofCodim>(j)];
-										u.axpy(shapeVal[j], adaptedValuesFather.u);
-									}
+                                    const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+                                    std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+                                    localFiniteElement.localBasis().evaluateFunction(dofCenterPos, shapeVal);
+                                    PrimaryVariables u(0);
+                                    for (int j = 0; j < shapeVal.size(); ++j)
+                                    {
+                                        AdaptedValues & adaptedValuesFather = adaptionMap_[epFather.template subEntity <dofCodim>(j)];
+                                        u.axpy(shapeVal[j], adaptedValuesFather.u);
+                                    }
 
-									adaptedValues.u = u;
-									adaptedValues.count = 1;
-    							}
+                                    adaptedValues.u = u;
+                                    adaptedValues.count = 1;
+                                }
 
-    							if (element.isLeaf())
-    							{
-        							int newIdxI = this->dofIndex(problem, subEntity);
-    								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
-    							}
+                                if (element.isLeaf())
+                                {
+                                    int newIdxI = this->dofIndex(problem, subEntity);
+                                    setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
+                                }
 
-                        	}
+                            }
                         }
                     }
 
@@ -334,15 +334,15 @@ public:
     static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather)
     {
-    	if(!isBox)
-    	{
-			adaptedValuesFather.u += adaptedValues.u;
-			adaptedValuesFather.u /= adaptedValues.count;
-    	}
-    	else
-    	{
-    		adaptedValuesFather.u = adaptedValues.u;
-    	}
+        if(!isBox)
+        {
+            adaptedValuesFather.u += adaptedValues.u;
+            adaptedValuesFather.u /= adaptedValues.count;
+        }
+        else
+        {
+            adaptedValuesFather.u = adaptedValues.u;
+        }
     }
     //! Set adapted values in CellData
     /**
@@ -355,10 +355,10 @@ public:
      */
     static void setAdaptionValues(AdaptedValues& adaptedValues, PrimaryVariables& u)
     {
-    	PrimaryVariables uNew = adaptedValues.u;
-    	uNew /= adaptedValues.count;
+        PrimaryVariables uNew = adaptedValues.u;
+        uNew /= adaptedValues.count;
 
-    	u = uNew;
+        u = uNew;
     }
 
     //! Reconstructs sons entries from data of father cell
@@ -373,13 +373,13 @@ public:
      * \param problem The problem
      */
     static void reconstructAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap,
-    		const Element& father, const Element& son, const Problem& problem)
+            const Element& father, const Element& son, const Problem& problem)
     {
-		AdaptedValues& adaptedValues = adaptionMap[son];
-		AdaptedValues& adaptedValuesFather = adaptionMap[father];
+        AdaptedValues& adaptedValues = adaptionMap[son];
+        AdaptedValues& adaptedValuesFather = adaptionMap[father];
 
-		adaptedValues.u = adaptedValuesFather.u;
-		adaptedValues.u /= adaptedValuesFather.count;
+        adaptedValues.u = adaptedValuesFather.u;
+        adaptedValues.u /= adaptedValuesFather.count;
     }
 
     int dofIndex(const Problem& problem, const DofEntity& entity) const

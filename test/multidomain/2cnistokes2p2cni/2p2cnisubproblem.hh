@@ -44,7 +44,7 @@ class TwoPTwoCNISubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(TwoPTwoCNISubProblem,
-	INHERITS_FROM(BoxTwoPTwoCNI, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
+    INHERITS_FROM(BoxTwoPTwoCNI, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
 
 // Set the problem property
 SET_TYPE_PROP(TwoPTwoCNISubProblem, Problem, TwoPTwoCNISubProblem<TTAG(TwoPTwoCNISubProblem)>);
@@ -115,7 +115,7 @@ class TwoPTwoCNISubProblem : public ImplicitPorousMediaProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
     enum { // the indices of the primary variables
-		pNIdx = Indices::pressureIdx,
+        pNIdx = Indices::pressureIdx,
         sWIdx = Indices::switchIdx,
         temperatureIdx = Indices::temperatureIdx
     };
@@ -123,7 +123,7 @@ class TwoPTwoCNISubProblem : public ImplicitPorousMediaProblem<TypeTag>
         wCompIdx = Indices::wCompIdx,
         nCompIdx = Indices::nCompIdx
     };
-	enum { // the indices for the phase presence
+    enum { // the indices for the phase presence
         wPhaseOnly = Indices::wPhaseOnly,
         nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases
@@ -463,8 +463,8 @@ private:
 
     bool onBoundary_(const GlobalPosition &globalPos) const
     {
-    	return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
-    			|| onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
+        return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
+                || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
 
     static constexpr Scalar eps_ = 1e-8;

@@ -675,7 +675,7 @@ public:
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param componentIdx The index of the component to consider
-     * 
+     *
      */
     template <class FluidState>
     static Scalar componentEnthalpy(const FluidState &fluidState,

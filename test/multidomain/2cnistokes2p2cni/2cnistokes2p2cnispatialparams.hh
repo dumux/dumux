@@ -124,8 +124,8 @@ public:
      * \param scvIdx The local index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                 	   const FVElementGeometry &fvGeometry,
-                                 	   const int scvIdx) const
+                                       const FVElementGeometry &fvGeometry,
+                                       const int scvIdx) const
     {
         return permeability_;
     }
