@@ -260,7 +260,7 @@ public:
         {
             if (time > initializationTime_)
                 values.setDirichlet(pressureIdx);
-            else 
+            else
                 if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
                     values.setDirichlet(pressureIdx);
         }

@@ -20,7 +20,7 @@
  * \file
  *
  * \brief A fluid system with a liquid and a gaseous phase and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
- * 
+ *
  */
 #ifndef DUMUX_BRINE_AIR_SYSTEM_HH
 #define DUMUX_BRINE_AIR_SYSTEM_HH
@@ -45,9 +45,9 @@
 #include <dumux/common/basicproperties.hh>
 #endif
 
-namespace Dumux 
+namespace Dumux
 {
-namespace FluidSystems 
+namespace FluidSystems
 {
 /*!
  * \ingroup Fluidsystems
@@ -79,7 +79,7 @@ namespace FluidSystems
  * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
-template <class Scalar, 
+template <class Scalar,
           class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
           bool useComplexRelations=true>
 class BrineAir
@@ -89,7 +89,7 @@ class BrineAir
     typedef BaseFluidSystem <Scalar, ThisType> Base;
 
     typedef Dumux::IdealGas<Scalar> IdealGas;
-    
+
 public:
 
     typedef H2Otype H2O;
@@ -98,10 +98,10 @@ public:
     typedef Dumux::BinaryCoeff::Brine_Air<Scalar, Air> Brine_Air;
     typedef Dumux::BrineVarSalinity<Scalar, H2Otype> Brine;
     typedef Dumux::NaCl<Scalar> NaCl;
-     
+
     // the type of parameter cache objects. this fluid system does not
     typedef Dumux::NullParameterCache ParameterCache;
-    
+
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
@@ -421,7 +421,7 @@ public:
      * \param  fluidState The fluid state
      * \param phaseIdx Index of the phase
      * \param compIdx Index of the component
-     * 
+     *
      * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ of
      * component \f$\mathrm{\kappa}\f$ in phase \f$\mathrm{\alpha}\f$ is connected to
      * the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
@@ -555,7 +555,7 @@ public:
      */
     using Base::enthalpy;
     template <class FluidState>
-    static Scalar enthalpy(const FluidState &fluidState, 
+    static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
@@ -617,8 +617,8 @@ public:
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
-    
-    
+
+
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      *
@@ -798,7 +798,7 @@ private:
 //     p_s = p_0 * std::exp((pi*vw)/(R*T));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
 // #endif
       return p_s;
-    }   
+    }
 };
 
 } // end namespace

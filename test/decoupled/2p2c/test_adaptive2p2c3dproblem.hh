@@ -92,7 +92,7 @@ SET_INT_PROP(Adaptive2p2c3d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices
 /*!
  * \ingroup Adaptive2p2c
  * \ingroup IMPETtests
- * 
+ *
  * \brief test problem for the grid-adaptive sequential 2p2c model
  *
  * The domain is box shaped (2D). All sides are closed (Neumann 0 boundary)
@@ -149,7 +149,7 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
     GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
     this->setGrid(GridCreator::grid());
 
-    //Process parameter file 
+    //Process parameter file
     //Simulation Control
     const int outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
     this->setOutputInterval(outputInterval);

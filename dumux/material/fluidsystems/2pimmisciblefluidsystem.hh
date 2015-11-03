@@ -333,7 +333,7 @@ public:
      * \param fluidState The fluid state of the two-phase model
      * \param phaseIdx Index of the fluid phase
      * \param compIdx index of the component
-     * 
+     *
      * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *

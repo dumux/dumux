@@ -181,7 +181,7 @@ public:
      */
     void setSgr(Scalar input)
     { sgr_ = input; }
-     
+
     /*!
      * \brief Set the residual gas saturation.
      */

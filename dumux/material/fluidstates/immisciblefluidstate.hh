@@ -130,7 +130,7 @@ public:
 
     /*!
      * \brief The molar volume of a fluid phase \f$\mathrm{[m^3/mol]}\f$
-     * 
+     *
      */
     Scalar molarVolume(int phaseIdx) const
     { return 1/molarDensity(phaseIdx); }
@@ -189,7 +189,7 @@ public:
     { return temperature_; }
 
     /*!
-     * \brief The fugacity of a component 
+     * \brief The fugacity of a component
      *
      * This assumes chemical equilibrium.
      */

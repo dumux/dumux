@@ -439,7 +439,7 @@ private:
 
     Scalar runUpDistanceX_;
     Scalar initializationTime_;
-    std::ofstream outfile;    
+    std::ofstream outfile;
 };
 } //end namespace Dumux
 

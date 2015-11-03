@@ -39,7 +39,7 @@ namespace Dumux
 
 namespace Properties
 {
-// forward declaration of properties 
+// forward declaration of properties
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight);
 NEW_PROP_TAG(SpatialParams);
 NEW_PROP_TAG(NumPhases);
@@ -48,7 +48,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
 
 /*!
  * \ingroup ImplicitFluxVariables
- * \brief Evaluates the normal component of the Darcy velocity 
+ * \brief Evaluates the normal component of the Darcy velocity
  * on a (sub)control volume face.
  */
 template <class TypeTag>
@@ -58,7 +58,7 @@ class CpDarcyFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -131,7 +131,7 @@ public:
      */
     const unsigned int downstreamIdx(const unsigned phaseIdx) const
     { return downstreamIdx_[phaseIdx]; }
-    
+
     /*!
      * \brief Return the local index of the upstream control volume
      *        for a given phase.

@@ -92,7 +92,7 @@ SET_INT_PROP(Adaptive2p2c2d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices
 /*!
  * \ingroup Adaptive2p2c
  * \ingroup IMPETtests
- * 
+ *
  * \brief test problem for the grid-adaptive sequential 2p2c model
  *
  * The domain is box shaped (2D). All sides are closed (Neumann 0 boundary)

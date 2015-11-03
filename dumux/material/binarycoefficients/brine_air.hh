@@ -76,7 +76,7 @@ public:
         * Himmelblau by the temperature.
         * \param temperature The temperature \f$\mathrm{[K]}\f$
         * \param pressure The pressure \f$\mathrm{[Pa]}\f$
-        * 
+        *
         * See:
         *
         * R. Reid et al.: "The properties of Gases and Liquids", 4th edition,
@@ -112,10 +112,10 @@ public:
      * \param xlNaCl the xlNaCl
      */
     static void calculateMoleFractions(const Scalar temperature,
-                                       const Scalar pg, 
+                                       const Scalar pg,
                                        const Scalar XlNaCl,
                                        const int knownPhaseIdx,
-                                       Scalar &xlAir, 
+                                       Scalar &xlAir,
                                        Scalar &ygH2O,
                                      Scalar &xlNaCl) {
         DUNE_THROW(Dune::InvalidStateException, "Function: " << "calculateMoleFractions" << " is invalid.");

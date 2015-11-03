@@ -63,7 +63,7 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum 
+    enum
     {
         dim = GridView::dimension,
         dimWorld=GridView::dimensionworld,
@@ -107,7 +107,7 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 public:
-  
+
       //! The type of the object returned by the fluidState() method
       typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
     /*!
@@ -144,10 +144,10 @@ public:
        precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
        sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
     }
-    
+
 //         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
 //     {
-//         Chemistry chemistry; // the non static functions can not be called without abject 
+//         Chemistry chemistry; // the non static functions can not be called without abject
 //         saturationIdx_[sPhaseIdx] = chemistry.omega(sPhaseIdx);
 //     }
 // TODO/FIXME: The salt crust porosity is not clearly defined. However form literature review it is
@@ -312,7 +312,7 @@ public:
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
                 moleFrac[compIdx] = (priVars[compIdx]*fugCoeffL[compIdx]*fluidState.pressure(wPhaseIdx))
                 /(fugCoeffG[compIdx]*fluidState.pressure(nPhaseIdx));
-            
+
             moleFrac[wCompIdx] =  priVars[switchIdx];
             Scalar sumMoleFracNotGas = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
@@ -344,7 +344,7 @@ public:
 
             }
         else if (phasePresence == wPhaseOnly){
-        
+
         // only the liquid phase is present, i.e. liquid phase
         // composition is stored explicitly.
         // extract _mass_ fractions in the gas phase
@@ -387,35 +387,35 @@ public:
         }
     }
     /*!
-     * \brief Returns the volume fraction of the precipitate (solid phase) 
+     * \brief Returns the volume fraction of the precipitate (solid phase)
      * for the given phaseIdx
-     * 
+     *
      * \param phaseIdx the index of the solid phase
      */
     Scalar precipitateVolumeFraction(int phaseIdx) const
     { return precipitateVolumeFraction_[phaseIdx - numPhases]; }
-   
+
     /*!
-     * \brief Returns the inital porosity of the 
+     * \brief Returns the inital porosity of the
      * pure, precipitate-free porous medium
      */
     Scalar initialPorosity() const
     { return initialPorosity_;}
-    
+
     /*!
-     * \brief Returns the inital permeability of the 
+     * \brief Returns the inital permeability of the
      * pure, precipitate-free porous medium
      */
     Scalar initialPermeability() const
     { return initialPermeability_;}
-    
+
     /*!
-     * \brief Returns the factor for the reduction of the initial permeability 
+     * \brief Returns the factor for the reduction of the initial permeability
      * due precipitates in the porous medium
      */
     Scalar permeabilityFactor() const
     { return permeabilityFactor_; }
-    
+
     /*!
      * \brief Returns the mole fraction of a component in the phase
      *
@@ -426,7 +426,7 @@ public:
     {
        return this->fluidState_.moleFraction(phaseIdx, compIdx);
     }
-    
+
     /*!
      * \brief Returns the mole fraction of the salinity in the liquid phase
      */
@@ -434,7 +434,7 @@ public:
     {
         return moleFractionSalinity_;
     }
-    
+
     /*!
      * \brief Returns the salinity (mass fraction) in the liquid phase
      */
@@ -442,12 +442,12 @@ public:
     {
         return salinity_;
     }
-    
+
     /*!
-     * \brief Returns the density of the phase for all fluid and solid phases 
-     * 
+     * \brief Returns the density of the phase for all fluid and solid phases
+     *
      * \param phaseIdx the index of the fluid phase
-     */ 
+     */
     Scalar density(int phaseIdx) const
     {
         if (phaseIdx < numPhases)
@@ -472,13 +472,13 @@ public:
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
-    
+
     /*!
      * \brief Returns the molality of a component in the phase
-     * 
+     *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
-     */ 
+     */
      Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
     { return this->fluidState_.moleFraction(phaseIdx, compIdx)/FluidSystem::molarMass(compIdx);}
 
@@ -492,7 +492,7 @@ protected:
     {
         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
     }
-    
+
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,

@@ -101,7 +101,7 @@ public:
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
      * \param refPhaseIdx The phase index of the reference phase
-     * \param phasePresence The presence index of the reference phase 
+     * \param phasePresence The presence index of the reference phase
      * \param setViscosity Specify whether the dynamic viscosity of
      *                     each phase should also be set.
      * \param setEnthalpy Specify whether the specific

@@ -241,7 +241,7 @@ public:
          // add advective flux of current component in current
          // phase
             unsigned int eqIdx = conti0EqIdx + compIdx;
-            
+
          if (eqIdx != replaceCompEqIdx)
          {
             // upstream vertex
@@ -327,7 +327,7 @@ public:
                                         this->fvGeometry_(),
                                         scvIdx,
                                             this->curVolVars_());
-        
+
         Valgrind::CheckDefined(source);
     }
 
@@ -337,7 +337,7 @@ protected:
     void evalPhaseStorage_(int phaseIdx)
     {
         // evaluate the storage terms of a single phase
-        for (int i=0; i < this->fvGeometry_().numScv; i++) 
+        for (int i=0; i < this->fvGeometry_().numScv; i++)
         {
             PrimaryVariables &result = this->residual_[i];
             const ElementVolumeVariables &elemVolVars = this->curVolVars_();

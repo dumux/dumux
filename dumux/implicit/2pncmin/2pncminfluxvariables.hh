@@ -49,7 +49,7 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
 {
     typedef TwoPNCFluxVariables<TypeTag> ParentType;
     typedef TwoPNCMinFluxVariables<TypeTag> ThisType;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -100,7 +100,7 @@ public:
                      const int fIdx,
                      const ElementVolumeVariables &elemVolVars,
                      const bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) 
+    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             this->density_[phaseIdx] = Scalar(0);
@@ -117,7 +117,7 @@ public:
         this->calculateporousDiffCoeff_(problem, element, elemVolVars);
     };
 
-protected:    
+protected:
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
                               const ElementVolumeVariables &elemVolVars)

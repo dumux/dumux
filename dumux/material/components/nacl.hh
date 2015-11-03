@@ -46,24 +46,24 @@ public:
      * \brief A human readable name for the NaCl.
      */
     static const char *name()
-    { 
-        return "NaCl"; 
+    {
+        return "NaCl";
     }
 
     /*!
      * \brief The molar mass of NaCl in \f$\mathrm{[kg/mol]}\f$.
      */
     static Scalar molarMass()
-    { 
-        return 58.4428e-3 ; 
+    {
+        return 58.4428e-3 ;
     }
 
     /*!
      * \brief The diffusion Coefficient \f$\mathrm{[m^2/s]}\f$ of NaCl in water.
      */
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
-    { 
-        return 2e-9; 
+    {
+        return 2e-9;
     }
 
     /*!
@@ -78,4 +78,4 @@ public:
 } // end namespace
 
 #endif
- 
+

@@ -138,7 +138,7 @@ public:
     {
         if (nC == 0)
             return KFracture_;
-        
+
         return KMatrix_[nC];
     }
 
@@ -156,7 +156,7 @@ public:
     {
         if (nC == 0)
             return porosityFracture_;
-        
+
         return porosityMatrix_;
     }
 

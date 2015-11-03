@@ -339,7 +339,7 @@ public:
     /*!
      * \brief Calculates fluxes and coupling terms at the interface
      *        for the Stokes model.
-     * 
+     *
      * Flux output files are created and the summarized flux is
      * written to a file.
      */

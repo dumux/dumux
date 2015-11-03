@@ -125,7 +125,7 @@ public:
      * Equations given in:    - Palliser & McKibbin 1997
      *                         - Michaelides 1981
      *                         - Daubert & Danner 1989
-     * 
+     *
      */
     static const Scalar liquidEnthalpy(Scalar T,
                                        Scalar p, Scalar salinity)
@@ -314,7 +314,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      * \param salinity The mass fraction of salt
-     * 
+     *
      * Equation given in:    - Batzle & Wang (1992)
      *                         - cited by: Bachu & Adams (2002)
      *                           "Equations of State for basin geofluids"
@@ -330,7 +330,7 @@ public:
         Scalar A = (0.42*pow((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
         Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
         assert(mu_brine > 0.0);
-        return mu_brine/1000.0; 
+        return mu_brine/1000.0;
     }
 };
 } // end namespace

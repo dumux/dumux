@@ -74,11 +74,11 @@ public:
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      *
      * \param sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
-     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
-     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
-     * \param rhoSolid The density of the solid phase in \f$\mathrm{[kg/m^3]}\f$ 
+     * \param rhoSolid The density of the solid phase in \f$\mathrm{[kg/m^3]}\f$
      *
      * \return Effective thermal conductivity of the fluid phases
      */

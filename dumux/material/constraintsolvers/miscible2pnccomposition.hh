@@ -197,7 +197,7 @@ public:
 
         // solve for all mole fractions
         M.solve(x, b);
-        
+
         // set all mole fractions and the the additional quantities in
         // the fluid state
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {

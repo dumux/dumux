@@ -22,7 +22,7 @@
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on
  *        absolute saturations. It is valid for hydrophobic materials and is
- *        called with the non-wetting phase saturation and then calls the 
+ *        called with the non-wetting phase saturation and then calls the
  *        material law defined for the wetting phase saturation.
  */
 #ifndef DUMUX_PHIL_TO_PHOB_LAW_HH
@@ -53,15 +53,15 @@ namespace Dumux
  *        saturation from the model. Here, the wetting saturation is calculated from it: \f$\mathrm{S_w = 1 - S_n}\f$.
  *        Then the effective wetting saturations are calculated and handed to the material law.
  *
- *        The following definition shows the pc-Sw-relationship for the case in which the x-axis 
+ *        The following definition shows the pc-Sw-relationship for the case in which the x-axis
  *        is \f$\mathrm{S_w (=S_{water})}\f$ and the y-axis is \f$\mathrm{p_c = p_{non_wetting}-p_{wetting}}\f$.
  *        \image html pc_Sw_1.png
  *
  *        But DumuX actually uses the following curve, because \f$\mathrm{p_c = p_{non-water}-p_{water}}\f$ for the y-axis is used.
  *        \image html pc_Sw_2.png
  *
- *        This approach makes sure that in the "material laws" only effective wetting saturations are considered, 
- *        which makes sense, as these laws only deal with effective saturations. This also allows for changing 
+ *        This approach makes sure that in the "material laws" only effective wetting saturations are considered,
+ *        which makes sense, as these laws only deal with effective saturations. This also allows for changing
  *        the calculation of the effective saturations easily, as this is subject of discussion / may be problem specific.
  *
  *        Additionally, handing over effective saturations to the "material laws" in stead of them calculating effective
@@ -74,8 +74,8 @@ namespace Dumux
  *        - the definition of the material law in the spatial parameters is not really intuitive, but using it is:
  *          Hand in values, get back values, do not deal with conversion.
  *
- *        CAREFULL: here w and n still stand for wetting and non-wetting. In the hydrophobic model w stands for 
- *        water (non-wetting) and n for non-water (wetting). Hence, Swr is the wetting phase (gas) residual 
+ *        CAREFULL: here w and n still stand for wetting and non-wetting. In the hydrophobic model w stands for
+ *        water (non-wetting) and n for non-water (wetting). Hence, Swr is the wetting phase (gas) residual
  *        saturation and needs to be set accordingly in the spatial parameters.
  */
 
@@ -92,13 +92,13 @@ public:
      * \brief The capillary pressure-saturation curve.
      *
      *
-     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{\overline{S}_n}\f$. It is converted to the 
-     *                  effective saturation of the wetting phase and then handed over to the material law actually 
+     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{\overline{S}_n}\f$. It is converted to the
+     *                  effective saturation of the wetting phase and then handed over to the material law actually
      *                  used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, 
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$  calculated by specific constitutive relation 
+     * \return Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$  calculated by specific constitutive relation
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...)*-1 to account for hydrophobic material.
      *
      */
@@ -110,11 +110,11 @@ public:
     /*!
      * \brief The saturation-capillary pressure curve.
      *
-     * \param pc Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$ 
+     * \param pc Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, 
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     *\return Absolute wetting phase saturation calculated as inverse of 
+     *\return Absolute wetting phase saturation calculated as inverse of
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...) constitutive relation.
      *
      * \return The absolute saturation of the wetting phase \f$\mathrm{S_w}\f$
@@ -135,9 +135,9 @@ public:
      }\f$
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and 
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and
      *                  then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return          Partial derivative of \f$\mathrm{p_c}\f$ w.r.t. effective saturation according to EffLaw 
+     * \return          Partial derivative of \f$\mathrm{p_c}\f$ w.r.t. effective saturation according to EffLaw
      *                  e.g. Brooks & Corey, van Genuchten, linear... .
      */
     static Scalar dpc_dsw(const Params &params, Scalar sw)
@@ -156,7 +156,7 @@ public:
     }\f$
      *
      *
-     * \param pc Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$ 
+     * \param pc Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.

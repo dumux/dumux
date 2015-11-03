@@ -83,7 +83,7 @@ public:
 
     /*!
      * \brief Returns a reference to the input deck.
-     * 
+     *
      * The input deck can be used to read parameters like porosity/permeability.
      */
     static Opm::DeckConstPtr &deck()

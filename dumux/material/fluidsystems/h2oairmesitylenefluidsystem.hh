@@ -225,7 +225,7 @@ public:
     /*!
      * \brief Given all mole fractions in a phase, return the phase
      *        density \f$\mathrm{[kg/m^3]}\f$.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
     using Base::density;
@@ -271,8 +271,8 @@ public:
 
     /*!
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
-     * \param fluidState The fluid state 
-     * \param phaseIdx The index of the phase 
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase
      */
     using Base::viscosity;
     template <class FluidState>
@@ -343,7 +343,7 @@ public:
     /*!
      * \brief Given all mole fractions, return the diffusion
      *        coefficent in \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      * \param compIdx The index of the component
      */
@@ -418,7 +418,7 @@ public:
      * (fugacity equals the partial pressure of the component in the gas phase
      * respectively in the liquid phases it is the inverse of the
      * Henry coefficients scaled by pressure
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      * \param compIdx The index of the component
      */
@@ -468,7 +468,7 @@ public:
     /*!
      * \brief Given all mole fractions in a phase, return the specific
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
     /*!
@@ -505,7 +505,7 @@ public:
     }
  /*!
      * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
     using Base::heatCapacity;
@@ -515,10 +515,10 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::heatCapacity()");
     }
-    
+
  /*!
      * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
-     * \param fluidState The fluid state 
+     * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
     using Base::thermalConductivity;

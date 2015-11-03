@@ -44,7 +44,7 @@ class TwoPNCMinLocalResidual: public TwoPNCLocalResidual<TypeTag>
 {
 protected:
     typedef TwoPNCLocalResidual<TypeTag> ParentType;
-    typedef TwoPNCMinLocalResidual<TypeTag> ThisType; 
+    typedef TwoPNCMinLocalResidual<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -120,7 +120,7 @@ public:
   {
       //call parenttype function
       ParentType::computeStorage(storage, scvIdx, usePrevSol);
-      
+
       const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
       : this->curVolVars_();
     const VolumeVariables &volVars = elemVolVars[scvIdx];

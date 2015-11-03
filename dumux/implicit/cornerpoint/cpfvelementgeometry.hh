@@ -91,7 +91,7 @@ public:
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
     int numScv; //!< number of subcontrol volumes
-    int numScvf; //!< number of inner-domain subcontrolvolume faces 
+    int numScvf; //!< number of inner-domain subcontrolvolume faces
     int numNeighbors; //!< number of neighboring elements including the element itself
     std::vector<Element> neighbors; //!< stores the neighboring elements
 
@@ -111,7 +111,7 @@ public:
         subContVol[0].inner = true;
         subContVol[0].volume = elementVolume;
 
-        // initialize neighbors list with self: 
+        // initialize neighbors list with self:
         numNeighbors = 1;
         neighbors.clear();
         neighbors.reserve(maxNE);
