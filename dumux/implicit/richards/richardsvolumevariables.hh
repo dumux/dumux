@@ -67,8 +67,8 @@ class RichardsVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
-    //! The type returned by the fluidState() method
-    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
+
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update

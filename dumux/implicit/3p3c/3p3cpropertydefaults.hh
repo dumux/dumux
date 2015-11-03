@@ -87,6 +87,20 @@ SET_PROP(ThreePThreeC, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p3c model!");
 };
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(ThreePThreeC, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+};
+
 SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 2
 
 /*!

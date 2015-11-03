@@ -55,8 +55,8 @@ class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
-    //! Type of the fluid state
-    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
+
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update

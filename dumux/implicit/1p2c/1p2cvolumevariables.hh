@@ -72,8 +72,8 @@ class OnePTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
-    //! The type returned by the fluidState() method
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
+
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update

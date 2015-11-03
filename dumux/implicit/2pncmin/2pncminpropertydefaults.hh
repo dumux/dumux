@@ -94,6 +94,20 @@ public:
     static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
 };
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(TwoPNCMin, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+};
+
 //! Use the 2pncmin local residual operator
 SET_TYPE_PROP(TwoPNCMin,
               LocalResidual,

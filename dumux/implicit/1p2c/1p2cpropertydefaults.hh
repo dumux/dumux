@@ -69,6 +69,20 @@ SET_TYPE_PROP(OnePTwoC, VolumeVariables, typename GET_PROP_TYPE(TypeTag, Isother
 //! define the FluxVariables
 SET_TYPE_PROP(OnePTwoC, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(OnePTwoC, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+};
+
 //! set default upwind weight to 1.0, i.e. fully upwind
 SET_SCALAR_PROP(OnePTwoC, ImplicitMassUpwindWeight, 1.0);
 

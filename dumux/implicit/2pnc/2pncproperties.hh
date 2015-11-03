@@ -63,6 +63,7 @@ NEW_PROP_TAG(TwoPNCIndices); //!< Enumerations for the 2pncMin models
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
+NEW_PROP_TAG(FluidState); //!< Type of the fluid state of the 2pnc model
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(Chemistry); //!< The chemistry class with which solves equlibrium reactions
 

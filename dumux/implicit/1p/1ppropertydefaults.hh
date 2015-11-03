@@ -91,6 +91,20 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(OneP, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+};
+
 // disable velocity output by default
 SET_BOOL_PROP(OneP, VtkAddVelocity, false);
 

@@ -104,8 +104,8 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     enum { dofCodim = isBox ? dim : 0 };
 public:
 
-      //! The type of the object returned by the fluidState() method
-      typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+
     /*!
      * \copydoc ImplicitVolumeVariables::update
      * \param primaryVariables The primary Variables

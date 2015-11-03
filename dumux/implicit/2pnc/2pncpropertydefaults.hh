@@ -113,6 +113,20 @@ public:
     static const int value = FluidSystem::numComponents;
 };
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(TwoPNC, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+};
+
 //! Set the default formulation to pl-Sg: This can be over written in the problem.
 SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::plSg);
 
