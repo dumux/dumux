@@ -74,6 +74,7 @@ template <class TypeTag>
 class AMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP(TypeTag, AmgTraits) AmgTraits;
@@ -111,41 +112,18 @@ public:
         int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
-#if HAVE_MPI
-        Dune::SolverCategory::Category category = AmgTraits::isNonOverlapping?
-            Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
-
-        if(AmgTraits::isNonOverlapping && firstCall_)
-        {
-            phelper_.initGhostsAndOwners();
-        }
-
-        typename AmgTraits::Comm comm(problem_.gridView().comm(), category);
-
-        if(AmgTraits::isNonOverlapping)
-        {
-            // extend the matrix pattern such that it is usable for AMG
-            EntityExchanger<TypeTag> exchanger(problem_);
-            exchanger.getExtendedMatrix(A, phelper_);
-            exchanger.sumEntries(A);
-        }
-        phelper_.createIndexSetAndProjectForAMG(A, comm);
-
-        typename AmgTraits::LinearOperator fop(A, comm);
-        typename AmgTraits::ScalarProduct sp(comm);
-        int rank = comm.communicator().rank();
-
-        // Make rhs consistent
-        if(AmgTraits::isNonOverlapping)
-        {
-            phelper_.makeNonOverlappingConsistent(b);
-        }
+        int rank = 0;
+        std::shared_ptr<typename AmgTraits::Comm> comm;
+        std::shared_ptr<typename AmgTraits::LinearOperator> fop;
+        std::shared_ptr<typename AmgTraits::ScalarProduct> sp;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
+        static const int dofCodim = AmgTraits::dofCodim;
+        static const bool isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 #else
-        typename AmgTraits::Comm  comm;
-        typename AmgTraits::LinearOperator fop(A);
-        typename AmgTraits::ScalarProduct sp;
-        int rank=0;
+        static const bool isParallel = Dune::Capabilities::isParallel<Grid>::v;
 #endif
+        prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
+
         typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments
             SmootherArgs;
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,
@@ -160,15 +138,14 @@ public:
         smootherArgs.iterations = 1;
         smootherArgs.relaxationFactor = 1;
 
-        AMGType amg(fop, criterion, smootherArgs, comm);
-        Dune::BiCGSTABSolver<typename AmgTraits::VType> solver(fop, sp, amg, residReduction, maxIt,
-                                                                 rank==0?verbosity: 0);
-
+        AMGType amg(*fop, criterion, smootherArgs, *comm);
+        Dune::BiCGSTABSolver<typename AmgTraits::VType> solver(*fop, *sp, amg, residReduction, maxIt,
+                                                               rank == 0 ? verbosity : 0);
 
         solver.apply(x, b, result_);
         firstCall_ = false;
         return result_.converged;
-        }
+    }
 
     /*!
      * \brief The result containing the convergence history.
@@ -182,7 +159,35 @@ public:
     {
         return problem_;
     }
+
 private:
+
+    /*!
+     * \brief Prepare the linear algebra member variables.
+     *
+     * At compile time, correct constructor calls have to be chosen,
+     * depending on whether the setting is parallel or sequential.
+     * Since several template parameters are present, this cannot be solved
+     * by a full function template specialization. Instead, class template
+     * specialization has to be used.
+     * This adapts example 4 from http://www.gotw.ca/publications/mill17.htm.
+
+     * The function is called from the solve function. The call is
+     * forwarded to the corresponding function of a class template.
+     *
+     * \tparam isParallel decides if the setting is parallel or sequential
+     */
+    template<class Matrix, class Vector, bool isParallel>
+    void prepareLinearAlgebra_(Matrix& A, Vector& b, int& rank,
+                               std::shared_ptr<typename AmgTraits::Comm>& comm,
+                               std::shared_ptr<typename AmgTraits::LinearOperator>& fop,
+                               std::shared_ptr<typename AmgTraits::ScalarProduct>& sp)
+    {
+        LinearAlgebraPreparator<TypeTag, isParallel>
+          ::prepareLinearAlgebra(A, b, rank, comm, fop, sp,
+                                 problem_, phelper_, firstCall_);
+    }
+
     const Problem& problem_;
     ParallelISTLHelper<TypeTag> phelper_;
     Dune::InverseOperatorResult result_;

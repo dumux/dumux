@@ -975,6 +975,102 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
 
 }
 #endif // HAVE_MPI
+
+/*!
+ * \brief Prepare the linear algebra member variables.
+ *
+ * At compile time, correct constructor calls have to be chosen,
+ * depending on whether the setting is parallel or sequential.
+ * Since several template parameters are present, this cannot be solved
+ * by a full function template specialization. Instead, class template
+ * specialization has to be used.
+ * This adapts example 4 from http://www.gotw.ca/publications/mill17.htm.
+ *
+ * This class template implements the function for the sequential case.
+ *
+ * \tparam isParallel decides if the setting is parallel or sequential
+ */
+template<class TypeTag, bool isParallel>
+struct LinearAlgebraPreparator
+{
+    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParallelHelper = ParallelISTLHelper<TypeTag>;
+    using Comm = typename AmgTraits::Comm;
+    using LinearOperator = typename AmgTraits::LinearOperator;
+    using ScalarProduct = typename AmgTraits::ScalarProduct;
+
+    template<class Matrix, class Vector>
+    static void prepareLinearAlgebra(Matrix& A, Vector& b,
+                                     int& rank,
+                                     std::shared_ptr<Comm>& comm,
+                                     std::shared_ptr<LinearOperator>& fop,
+                                     std::shared_ptr<ScalarProduct>& sp,
+                                     const Problem& problem,
+                                     ParallelHelper& pHelper,
+                                     const bool firstCall)
+    {
+        comm = std::make_shared<Comm>();
+        fop = std::make_shared<LinearOperator>(A);
+        sp = std::make_shared<ScalarProduct>();
+    }
+};
+
+/*!
+ * \brief Specialization for the parallel case.
+ */
+template<class TypeTag>
+struct LinearAlgebraPreparator<TypeTag, true>
+{
+    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParallelHelper = ParallelISTLHelper<TypeTag>;
+    using Comm = typename AmgTraits::Comm;
+    using LinearOperator = typename AmgTraits::LinearOperator;
+    using ScalarProduct = typename AmgTraits::ScalarProduct;
+
+    template<class Matrix, class Vector>
+    static void prepareLinearAlgebra(Matrix& A, Vector& b,
+                                     int& rank,
+                                     std::shared_ptr<Comm>& comm,
+                                     std::shared_ptr<LinearOperator>& fop,
+                                     std::shared_ptr<ScalarProduct>& sp,
+                                     const Problem& problem,
+                                     ParallelHelper& pHelper,
+                                     const bool firstCall)
+    {
+        Dune::SolverCategory::Category category = AmgTraits::isNonOverlapping ?
+        Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
+
+        if(AmgTraits::isNonOverlapping && firstCall)
+        {
+            pHelper.initGhostsAndOwners();
+        }
+
+        comm = std::make_shared<Comm>(problem.gridView().comm(), category);
+
+        if(AmgTraits::isNonOverlapping)
+        {
+            // extend the matrix pattern such that it is usable for AMG
+            EntityExchanger<TypeTag> exchanger(problem);
+            exchanger.getExtendedMatrix(A, pHelper);
+            exchanger.sumEntries(A);
+        }
+        pHelper.createIndexSetAndProjectForAMG(A, *comm);
+
+        fop = std::make_shared<LinearOperator>(A, *comm);
+        sp = std::make_shared<ScalarProduct>(*comm);
+        rank = comm->communicator().rank();
+
+        // Make rhs consistent
+        if(AmgTraits::isNonOverlapping)
+        {
+            pHelper.makeNonOverlappingConsistent(b);
+        }
+    }
+};
+
+
 } // end namespace Dumux
 
 #endif // DUMUX_AMGPARALLELHELPERS_HH
