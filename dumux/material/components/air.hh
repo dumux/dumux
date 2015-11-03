@@ -107,24 +107,17 @@ public:
         return IdealGas::pressure(temperature, density/molarMass());
     }
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$AIR\f$ at a given pressure and temperature.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$AIR\f$ at a given pressure and temperature. Criticial specific
+     * volume calculated by \f$V_c = (R*T_c)/p_c\f$.
      *
-     *\param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * See:
+     * Reid et al. (1987, pp 396-397, 667) \cite reid1987 <BR>
+     * Poling et al. (2001, pp 9.7-9.8) \cite poling2001 <BR>
      *
-     * See: R. Reid, et al.: The Properties of Gases and Liquids,
-     * 4th edition, McGraw-Hill, 1987, pp 396-397, 667
-     * 5th edition, McGraw-Hill, 2001, pp 9.7-9.8
-     *
-     * accentric factor taken from:
-     * Journal of Energy Resources Technology, March 2005, Vol 127
-     * Formulation for the Thermodynamic Properties
-     * Georeg A. Abediyi
-     * University, Mississippi State
-     *
-     * V_c = (R*T_c)/p_c
+     * Accentric factor taken from: <BR>
+     * Adebiyi (2003) \cite adebiyi2003 
      *
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
@@ -168,14 +161,12 @@ public:
 
     /*!
      * \brief Specific enthalpy of air \f$\mathrm{[J/kg]}\f$
-     *        with 273.15 K as basis.
-     * See:
-     * W. Kays, M. Crawford, B. Weigand
-     * Convective heat and mass transfer, 4th edition (2005)
-     * p. 431ff
+     *        with 273.15 \f$ K \f$ as basis. <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     * Kays et al. (2005, 431ff) \cite kays2005 <BR>
      */
     static Scalar gasEnthalpy(Scalar temperature, Scalar pressure)
     {
@@ -188,7 +179,7 @@ public:
      * Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
      * Rearranging for internal energy yields: \f$u = h - pv\f$.
      * Exploiting the Ideal Gas assumption
-     * (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
+     * (\f$pv = R_{\textnormal{specific}} T\f$) gives: \f$u = h - R / M T \f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -210,12 +201,11 @@ public:
      *  This methods uses the formula for "zero-pressure" heat capacity that
      *  is only dependent on temperature, because the pressure dependence is rather small.
      *  This one should be accurate for a pressure of 1 atm.
-     *  Values taken from NASA Contractor Report 4755, Real-Gas Flow Properties for NASA
-     *  Langley Research Center Aerothermodynamic Facilities Complex Wind Tunnels
-     *  using data from
-     *  Hilsenrath et al 1955, "Tables of Thermal Properties of Gases"
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     *  Values taken from Hollis (1996) \cite hollis1996 <BR>
+     *  "Tables of Thermal Properties of Gases"
      */
     static const Scalar gasHeatCapacity(Scalar temperature,
                                         Scalar pressure)
@@ -244,11 +234,10 @@ public:
 
     /*!
      * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of air.
-     * Isobaric Properties for Nitrogen in: NIST Standard
-     * see http://webbook.nist.gov/chemistry/fluid/
-     * evaluated at p=.1 MPa, T=20°C
-     * Nitrogen: 0.025398
-     * Oxygen: 0.026105
+     * Isobaric Properties for Nitrogen in: NIST Standard \cite NIST <BR>
+     * evaluated at p=.1 MPa, T=20°C <BR>
+     * Nitrogen: 0.025398 <BR>
+     * Oxygen: 0.026105 <BR>
      * lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
      */
     static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)

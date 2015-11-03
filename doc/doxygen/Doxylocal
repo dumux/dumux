@@ -27,3 +27,5 @@ SERVER_BASED_SEARCH    = NO
 # disable macro expansion (Otherwise, certain properties will not appear
 # in the documentation properly. This should be fixed at some time.)
 MACRO_EXPANSION = NO
+
+CITE_BIB_FILES = @top_srcdir@/doc/handbook/dumux-handbook
