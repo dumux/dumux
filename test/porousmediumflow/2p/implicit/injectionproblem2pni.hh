@@ -40,7 +40,7 @@
 
 // use the same spatial parameters as the injection problem of the
 // 2p2c test program
-#include "../2p2c/injectionspatialparams.hh"
+#include "test/porousmediumflow/2p2c/implicit/injectionspatialparams.hh"
 
 #define ISOTHERMAL 0
 
