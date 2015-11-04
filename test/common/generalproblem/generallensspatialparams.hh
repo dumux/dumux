@@ -89,7 +89,7 @@ public:
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     GeneralLensSpatialParams(const GridView& gridView)
-        : ParentType(gridView)
+        : ParentType(gridView), eps_(3e-6)
     {
         lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
         lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
@@ -155,10 +155,10 @@ public:
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
-        for (int i = 0; i < dim; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
+        for (int i = 0; i < dim; ++i)
+            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i])
                 return false;
-        }
+
         return true;
     }
 
@@ -170,6 +170,8 @@ private:
 
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
+
+    const Scalar eps_;
 };
 
 } // end namespace

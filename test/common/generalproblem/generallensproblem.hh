@@ -412,7 +412,7 @@ private:
     {
         Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
         Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda + eps_ && lambda < 2.0/3.0 + eps_;
     }
 
     Scalar temperature_;
