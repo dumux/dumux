@@ -53,7 +53,7 @@ namespace Properties {
 // Properties values
 //////////////////////////////////////////////////////////////////
 //! Number of equations required by the model
-SET_INT_PROP(Richards, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq));
+SET_INT_PROP(Richards, NumEq, 1);
 //! Number of fluid phases considered
 SET_INT_PROP(Richards, NumPhases, 2);
 
@@ -61,18 +61,16 @@ SET_INT_PROP(Richards, NumPhases, 2);
 SET_BOOL_PROP(Richards, UseHead, false);
 
 //! The local residual operator
-SET_TYPE_PROP(Richards,
-              LocalResidual,
-              typename GET_PROP_TYPE(TypeTag, IsothermalLocalResidual));
+SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
 //! The global model used
-SET_TYPE_PROP(Richards, Model, typename GET_PROP_TYPE(TypeTag, IsothermalModel));
+SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
 
 //! The class for the volume averaged quantities
-SET_TYPE_PROP(Richards, VolumeVariables, typename GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables));
+SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //! The class for the quantities required for the flux calculation
-SET_TYPE_PROP(Richards, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
+SET_TYPE_PROP(Richards, FluxVariables, RichardsFluxVariables<TypeTag>);
 
 //! The class of the newton controller
 SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
@@ -84,7 +82,7 @@ SET_SCALAR_PROP(Richards, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(Richards, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
+SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
 
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
@@ -182,10 +180,10 @@ SET_BOOL_PROP(Richards, ProblemEnableGravity, true);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(Richards, SpatialParamsForchCoeff, 0.55);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(NonIsothermal, ThermalConductivityModel)
+SET_PROP(RichardsNI, ThermalConductivityModel)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -202,22 +200,22 @@ SET_BOOL_PROP(RichardsNI, NiOutputLevel, 0);
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-SET_TYPE_PROP(Richards, IsothermalModel, RichardsModel<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalModel, RichardsModel<TypeTag>);
 
 // set isothermal FluxVariables
-SET_TYPE_PROP(Richards, IsothermalFluxVariables, RichardsFluxVariables<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalFluxVariables, RichardsFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
-SET_TYPE_PROP(Richards, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(Richards, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_TYPE_PROP(Richards, IsothermalIndices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices<TypeTag>);
 
 //set isothermal NumEq
-SET_INT_PROP(Richards, IsothermalNumEq, 1);
+SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
 
 // \}
 }

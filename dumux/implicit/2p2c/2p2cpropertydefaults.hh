@@ -182,10 +182,10 @@ SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(TwoPTwoC, SpatialParamsForchCoeff, 0.55);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(NonIsothermal, ThermalConductivityModel)
+SET_PROP(TwoPTwoCNI, ThermalConductivityModel)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

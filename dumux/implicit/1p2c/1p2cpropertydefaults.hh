@@ -51,23 +51,23 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 
-SET_INT_PROP(OnePTwoC, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq)); //!< set the number of equations to 2
+SET_INT_PROP(OnePTwoC, NumEq, 2); //!< set the number of equations to 2
 SET_INT_PROP(OnePTwoC, NumPhases, 1); //!< The number of phases in the 1p2c model is 1
 SET_INT_PROP(OnePTwoC, NumComponents, 2); //!< The number of components in the 1p2c model is 2
 SET_SCALAR_PROP(OnePTwoC, Scaling, 1); //!< Scaling of the model is set to 1 by default
 SET_BOOL_PROP(OnePTwoC, UseMoles, true); //!< Define that mole fractions are used in the balance equations
 
 //! Use the 1p2c local residual function for the 1p2c model
-SET_TYPE_PROP(OnePTwoC, LocalResidual, typename GET_PROP_TYPE(TypeTag, IsothermalLocalResidual));
+SET_TYPE_PROP(OnePTwoC, LocalResidual, OnePTwoCLocalResidual<TypeTag>);
 
 //! define the model
-SET_TYPE_PROP(OnePTwoC, Model, typename GET_PROP_TYPE(TypeTag, IsothermalModel));
+SET_TYPE_PROP(OnePTwoC, Model, OnePTwoCModel<TypeTag>);
 
 //! define the VolumeVariables
-SET_TYPE_PROP(OnePTwoC, VolumeVariables, typename GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables));
+SET_TYPE_PROP(OnePTwoC, VolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
 
 //! define the FluxVariables
-SET_TYPE_PROP(OnePTwoC, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
+SET_TYPE_PROP(OnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -90,7 +90,7 @@ SET_SCALAR_PROP(OnePTwoC, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(OnePTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! Set the indices used by the 1p2c model
-SET_TYPE_PROP(OnePTwoC, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
+SET_TYPE_PROP(OnePTwoC, Indices, OnePTwoCIndices<TypeTag>);
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParamsOneP by default.
 SET_TYPE_PROP(OnePTwoC, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
@@ -117,10 +117,10 @@ SET_BOOL_PROP(OnePTwoC, ProblemEnableGravity, true);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(OnePTwoC, SpatialParamsForchCoeff, 0.55);
 
 //! average is used as default model to compute the effective thermal heat conductivity
-SET_PROP(NonIsothermal, ThermalConductivityModel)
+SET_PROP(OnePTwoCNI, ThermalConductivityModel)
 { private :
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
   public:
@@ -132,22 +132,22 @@ SET_PROP(NonIsothermal, ThermalConductivityModel)
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-SET_TYPE_PROP(OnePTwoC, IsothermalModel, OnePTwoCModel<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNI, IsothermalModel, OnePTwoCModel<TypeTag>);
 
 // set isothermal FluxVariables
-SET_TYPE_PROP(OnePTwoC, IsothermalFluxVariables, OnePTwoCFluxVariables<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNI, IsothermalFluxVariables, OnePTwoCFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
-SET_TYPE_PROP(OnePTwoC, IsothermalVolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNI, IsothermalVolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(OnePTwoC, IsothermalLocalResidual, OnePTwoCLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNI, IsothermalLocalResidual, OnePTwoCLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_TYPE_PROP(OnePTwoC, IsothermalIndices, OnePTwoCIndices<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNI, IsothermalIndices, OnePTwoCIndices<TypeTag>);
 
 //set isothermal NumEq
-SET_INT_PROP(OnePTwoC, IsothermalNumEq, 2);
+SET_INT_PROP(OnePTwoCNI, IsothermalNumEq, 2);
 
 
 }

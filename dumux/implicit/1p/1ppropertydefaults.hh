@@ -51,23 +51,23 @@ namespace Dumux
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
-SET_INT_PROP(OneP, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq)); //!< set the number of equations to 1
+SET_INT_PROP(OneP, NumEq, 1); //!< set the number of equations to 1
 SET_INT_PROP(OneP, NumPhases, 1); //!< The number of phases in the 1p model is 1
 
 //! The local residual function
-SET_TYPE_PROP(OneP, LocalResidual, typename GET_PROP_TYPE(TypeTag, IsothermalLocalResidual));
+SET_TYPE_PROP(OneP, LocalResidual, OnePLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(OneP, Model, typename GET_PROP_TYPE(TypeTag, IsothermalModel));
+SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(OneP, VolumeVariables, typename GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables));
+SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(OneP, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
+SET_TYPE_PROP(OneP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(OneP, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
+SET_TYPE_PROP(OneP, Indices, OnePIndices);
 
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParamsOneP by default.
@@ -116,10 +116,10 @@ SET_BOOL_PROP(OneP, ProblemEnableGravity, true);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(OneP, SpatialParamsForchCoeff, 0.55);
 
 //! average is used as default model to compute the effective thermal heat conductivity
-SET_PROP(NonIsothermal, ThermalConductivityModel)
+SET_PROP(OnePNI, ThermalConductivityModel)
 { private :
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
   public:
@@ -131,22 +131,22 @@ SET_PROP(NonIsothermal, ThermalConductivityModel)
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-SET_TYPE_PROP(OneP, IsothermalModel, OnePModel<TypeTag>);
+SET_TYPE_PROP(OnePNI, IsothermalModel, OnePModel<TypeTag>);
 
 //set isothermal FluxVariables
-SET_TYPE_PROP(OneP, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(OnePNI, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
-SET_TYPE_PROP(OneP, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
+SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(OneP, IsothermalLocalResidual, OnePLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, OnePLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_TYPE_PROP(OneP, IsothermalIndices, OnePIndices);
+SET_TYPE_PROP(OnePNI, IsothermalIndices, OnePIndices);
 
 //set isothermal NumEq
-SET_INT_PROP(OneP, IsothermalNumEq, 1);
+SET_INT_PROP(OnePNI, IsothermalNumEq, 1);
 
 // \}
 } // end namespace Properties
