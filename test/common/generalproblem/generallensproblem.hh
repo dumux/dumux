@@ -199,8 +199,7 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    GeneralLensProblem(TimeManager &timeManager,
-                       const GridView &gridView)
+    GeneralLensProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
         eps_ = 3e-6;
@@ -266,7 +265,7 @@ public:
     */
     Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {
-        return 1e5; // -> 10°C
+        return 1.0e5; // -> 1 bar
     }
 
     /*! \brief Returns the source term
@@ -378,7 +377,7 @@ public:
                       const GlobalPosition &globalPos) const
     {
         Scalar depth = this->bBoxMax()[1] - globalPos[1];
-        Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
+        Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1.0e5);
 
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
