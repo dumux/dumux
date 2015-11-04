@@ -27,9 +27,6 @@
 #define DUMUX_GENERALLENSPROBLEM_HH
 
 //common includes
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/io/cubegridcreator.hh>
-
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -65,9 +62,6 @@ NEW_PROP_TAG(ProblemBaseClass);
 
 // Set the grid type
 SET_TYPE_PROP(GeneralLensProblem, Grid, Dune::YaspGrid<2>);
-
-// set the GridCreator property
-SET_TYPE_PROP(GeneralLensProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
 SET_TYPE_PROP(GeneralLensProblem, Problem, Dumux::GeneralLensProblem<TypeTag>);

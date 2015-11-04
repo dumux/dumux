@@ -40,12 +40,10 @@ void usage(const char *progName, const std::string &errorMsg)
         errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
                 "\t-TEnd                          The end of the simulation. [s] \n"
                 "\t-DtInitial                     The initial timestep size. [s] \n"
-                "\t-Grid.NumberOfCellsX           Resolution in x-direction [-]\n"
-                "\t-Grid.NumberOfCellsY           Resolution in y-direction [-]\n"
-                "\t-Grid.UpperRightX              Dimension of the grid [m]\n"
-                "\t-Grid.UpperRightY              Dimension of the grid [m]\n";
+                "\t-Grid.Cells                    Number of cells in (x,y)-direction [-]\n"
+                "\t-Grid.UpperRight               Coordinates of upper right grid corner [m]\n";
         errorMessageOut += "\n\nThe Optional command line argument:\n"
-                "\t-ModelType                     Can be: box (2p box model), cc (2p cc model), decoupled (2p impes model),\n";
+                "\t-ModelType                     Can be: box (2p box model, default), cc (2p cc model), decoupled (2p impes model)\n";
         std::cout << errorMessageOut << "\n";
     }
 }

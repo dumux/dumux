@@ -3,11 +3,8 @@ DtInitial = 2e1 # [s]
 TEnd = 1e2 # [s]
 
 [Grid]
-NumberOfCellsX = 48 # [-] level 0 resolution in x-direction
-NumberOfCellsY = 32 # [-] level 0 resolution in y-direction
-
-UpperRightX = 6 # [m] dimension of the grid
-UpperRightY = 4 # [m] dimension of the grid
+UpperRight = 6 4 # upper right corner coordinates [m]
+Cells = 48 32    # number of cells in (x, y)-direction [-]
 
 [SpatialParams]
 LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner
