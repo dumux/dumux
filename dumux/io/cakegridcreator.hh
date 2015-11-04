@@ -44,11 +44,9 @@ class LinearSpacer
 {
 public:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    LinearSpacer(Scalar noOfPoints, Scalar length, Scalar offSet)
-    : noOfPoints_(noOfPoints), length_(length), offSet_(offSet)
-    {
-
-    }
+    LinearSpacer(Scalar offSet, Scalar length, Scalar noOfPoints)
+    : offSet_(offSet), length_(length), noOfPoints_(noOfPoints)
+    {}
 
     void createSpacing() const
     {
@@ -56,9 +54,9 @@ public:
     }
 
 private:
-    Scalar noOfPoints_;
-    Scalar length_;
     Scalar offSet_;
+    Scalar length_;
+    Scalar noOfPoints_;
 };
 
 template <class TypeTag>
@@ -66,12 +64,11 @@ class PowerLawSpacer
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    PowerLawSpacer(Scalar noOfPoints, Scalar length, Scalar offSet)
-    : noOfPoints_(noOfPoints), length_(length), offSet_(offSet)
+    PowerLawSpacer(Scalar offSet, Scalar length, Scalar noOfPoints)
+    : offSet_(offSet), length_(length), noOfPoints_(noOfPoints)
     {
         power_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PowerLawSpacer, Power);
     }
-
 
     void createSpacing() const
     {
@@ -80,9 +77,9 @@ public:
 
 private:
     Scalar power_;
-    Scalar noOfPoints_;
-    Scalar length_;
     Scalar offSet_;
+    Scalar length_;
+    Scalar noOfPoints_;
 };
 
 /*!
@@ -102,8 +99,16 @@ class CakeGridCreator
     typedef std::shared_ptr<Grid> GridPointer;
     typedef Dumux::LinearSpacer<TypeTag> SpacerDefault;
 
+    enum { dim = Grid::dimension,
+           dimWorld = Grid::dimensionworld
+         };
 
-    enum { dim = Grid::dimension };
+    enum
+    {
+            radiusIdx = 0,
+            angleIdx = 1,
+            zIdx = 2
+    };
 
 public:
     /*!
@@ -115,48 +120,43 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "The CakeGridCreator is not implemented for 1D and 2D.");
         }
-
-//        //Get the necessary parameters from the parameter file
-//        Scalar outerRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, OuterRadius);
-//        Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
-//        int noOfCellsR = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NoOfCellsR);
-//        Scalar angle = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Angle);
-//        int noOfSlice = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NoOfSlice);
-//        Scalar height = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Height);
-//        Scalar bOR = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, BOR);
-//        int noOfCellsHeight = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NoOfCellsHeight);
-
-
-//        SpacerRadius spacerR(noOfCellsR, outerRadius, wellRadius);
-//        SpacerDefault spacerAngle(noOfSlice, angle, 0.0);
-//        SpacerDefault spacerZ(noOfCellsHeight, height, bOR);
-
-
-
-//        Dune::shared_ptr<Grid> gridp(gf.createGrid());
         gridPtr() = CakeGridCreator<TypeTag, SpacerRadius>::createCakeGrid();
-//        gridPtr() = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
     }
 
     static std::shared_ptr<Grid> createCakeGrid()
     {
+        // The required parameters
+        typedef Dune::FieldVector<typename Grid::ctype, dimWorld> GlobalPosition;
+        const GlobalPosition polarCoorMin =
+                GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), PolarCoorMin);
+        const GlobalPosition polarCoorMax =
+                GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), PolarCoorMax);
+
+        // The optional parameters (they have a default)
+        typedef std::array<unsigned int, dim> CellArray;
+        CellArray cells;
+        std::fill(cells.begin(), cells.end(), 1);
+        try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
+        catch (Dumux::ParameterException &e) { }
+
+        SpacerRadius spacerR(polarCoorMin[radiusIdx], polarCoorMax[radiusIdx], cells[radiusIdx]);
+        SpacerDefault spacerAngle(polarCoorMin[angleIdx], polarCoorMax[angleIdx], cells[angleIdx]);
+        SpacerDefault spacerZ(polarCoorMin[zIdx], polarCoorMax[zIdx], cells[zIdx]);
         GridFactory gf;
         Dune::FieldVector<Scalar, dim> pos;
 
-        pos[0] = 0; pos[1] = 0; pos[2] = 0; gf.insertVertex(pos);
-        pos[0] = 1; pos[1] = 0; pos[2] = 0; gf.insertVertex(pos);
-        pos[0] = 0; pos[1] = 1; pos[2] = 0; gf.insertVertex(pos);
-        pos[0] = 1; pos[1] = 1; pos[2] = 0; gf.insertVertex(pos);
-        pos[0] = 0; pos[1] = 0; pos[2] = 1; gf.insertVertex(pos);
-        pos[0] = 1; pos[1] = 0; pos[2] = 1; gf.insertVertex(pos);
-        pos[0] = 0; pos[1] = 1; pos[2] = 1; gf.insertVertex(pos);
-        pos[0] = 1; pos[1] = 1; pos[2] = 1; gf.insertVertex(pos);
+        gf.insertVertex({0, 0, 0});
+        gf.insertVertex({1, 0, 0});
+        gf.insertVertex({0, 1, 0});
+        gf.insertVertex({1, 1, 0});
+        gf.insertVertex({0, 0, 1});
+        gf.insertVertex({1, 0, 1});
+        gf.insertVertex({0, 1, 1});
+        gf.insertVertex({1, 1, 1});
 
         Dune::GeometryType type;
         type.makeHexahedron();
-        std::vector<unsigned int> vid(8);
-        vid[0] = 0; vid[1] = 1; vid[2] = 2; vid[3] = 3;
-        vid[4] = 4; vid[5] = 5; vid[6] = 6; vid[7] = 7;
+        std::vector<unsigned int> vid({0, 1, 2, 3, 4, 5, 6, 7});
         gf.insertElement(type, vid);
         return std::shared_ptr<Grid>(gf.createGrid());
     }

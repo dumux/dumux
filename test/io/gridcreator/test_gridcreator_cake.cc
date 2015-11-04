@@ -48,7 +48,7 @@ SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::YaspGrid<3>);
 
 int main(int argc, char** argv)
 {
-#if HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID || HAVE_UG
     try {
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);

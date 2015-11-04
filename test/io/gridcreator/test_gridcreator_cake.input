@@ -1,14 +1,7 @@
 [Grid]
-OuterRadius = 1000
-WellRadius = 0.1
-NoOfCellsR = 10
-Angle = 360
-NoOfSlice = 4
-Height = 10
-BOR = 1000;
-NoOfCellsHeight = 10
+PolarCoorMin = 0.1 0.0 1000.0
+PolarCoorMax = 1000.0 360.0 1010.0
+Cells = 10 4 10
 
 [PowerLawSpacer]
 Power = 1
-
-
