@@ -539,7 +539,7 @@ public:
                                                                                scvIdx);
         // setting the dimensionless numbers.
         // obtaining the respective quantities.
-        int globalVertexIdx = problem.vertexMapper().map(element, scvIdx, dim);
+        int globalVertexIdx = problem.vertexMapper().subIndex(element, scvIdx, dim);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             const Scalar darcyMagVelocity     = problem.model().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
             const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);

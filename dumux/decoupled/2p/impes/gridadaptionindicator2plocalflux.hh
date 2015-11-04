@@ -563,7 +563,7 @@ public:
      */
     bool refine(const Element& element)
     {
-        int idx = problem_.elementMapper().map(element);
+        int idx = problem_.elementMapper().index(element);
         return (indicatorVector_[idx] > refineBound_);
     }
 
@@ -575,7 +575,7 @@ public:
      */
     bool coarsen(const Element& element)
     {
-        int idx = problem_.elementMapper().map(element);
+        int idx = problem_.elementMapper().index(element);
         return (indicatorVector_[idx] < coarsenBound_);
     }
 

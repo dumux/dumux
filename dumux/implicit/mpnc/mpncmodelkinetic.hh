@@ -271,7 +271,7 @@ public:
 //                }
 //
 //              // velocity Check
-//                const unsigned int globalVertexIdx = this->problem_().vertexMapper().map(element, scvIdx, dim);
+//                const unsigned int globalVertexIdx = this->problem_().vertexMapper().subIndex(element, scvIdx, dim);
 //              for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
 //                  const Scalar eps = 1e-6 ;
 //                  const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);

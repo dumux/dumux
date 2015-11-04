@@ -18,12 +18,12 @@
 #ifndef DUMUX_INTERSECTIONITERATOR_HH
 #define DUMUX_INTERSECTIONITERATOR_HH
 
-#include<vector>
-#include<unordered_map>
+#include <vector>
+#include <unordered_map>
 
-#include<dune/common/deprecated.hh>
-#include<dune/grid/common/mcmgmapper.hh>
-#include<dune/grid/common/rangegenerators.hh>
+#include <dune/common/deprecated.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/common/rangegenerators.hh>
 
 /*!
  * \file
@@ -165,12 +165,12 @@ public:
 
     int maplocal(const Element& element, int fIdx)
     {
-        return intersectionMapLocal_[map(element)][fIdx];
+        return intersectionMapLocal_[index(element)][fIdx];
     }
 
     int maplocal(const Element& element, int fIdx) const
     {
-        return (intersectionMapLocal_[map(element)].find(fIdx))->second;//use find() for const function!
+        return (intersectionMapLocal_[index(element)].find(fIdx))->second;//use find() for const function!
     }
 
     // return number intersections

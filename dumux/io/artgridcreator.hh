@@ -508,7 +508,7 @@ public:
       vertexMapper_(gridView)
     {}
 
-    /*!
+    /*! DOC ME!! and RENAME ME if you know what exactly I'm doing!
      *
      */
     void map()

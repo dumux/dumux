@@ -55,7 +55,7 @@ class ParallelISTLHelper
         {}
 
         template<class EntityType>
-        int map(const EntityType& e) const
+        int index(const EntityType& e) const
         {
             return problem_.model().dofMapper().index(e);
         }
@@ -98,7 +98,7 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
-            buff.write(container_[this->map(e)]);
+            buff.write(container_[this->index(e)]);
         }
 
         template<class MessageBuffer, class EntityType>
@@ -106,7 +106,7 @@ class ParallelISTLHelper
         {
             typename V::block_type block;
             buff.read(block);
-            container_[this->map(e)]+=block;
+            container_[this->index(e)]+=block;
         }
     private:
         V& container_;
@@ -151,7 +151,7 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
-            std::size_t& data= ranks_[this->map(e)];
+            std::size_t& data= ranks_[this->index(e)];
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
                 data = (1<<24);
             buff.write(data);
@@ -161,7 +161,7 @@ class ParallelISTLHelper
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
             std::size_t x;
-            std::size_t& data = ranks_[this->map(e)];
+            std::size_t& data = ranks_[this->index(e)];
             buff.read(x);
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
                 data= (1<<24);
@@ -210,7 +210,7 @@ class ParallelISTLHelper
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
 
-            std::size_t& data = ranks_[this->map(e)];
+            std::size_t& data = ranks_[this->index(e)];
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
                 data = (1<<24);
             buff.write(data);
@@ -220,7 +220,7 @@ class ParallelISTLHelper
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
             std::size_t x;
-            std::size_t& data = ranks_[this->map(e)];
+            std::size_t& data = ranks_[this->index(e)];
             buff.read(x);
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
                 data = x;
@@ -324,7 +324,7 @@ class ParallelISTLHelper
         {
             int x;
             buff.read(x);
-            int& data= shared_[this->map(e)];
+            int& data= shared_[this->index(e)];
             data = data || x;
         }
     private:
@@ -366,7 +366,7 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
-            buff.write(gindices_[this->map(e)]);
+            buff.write(gindices_[this->index(e)]);
         }
 
         template<class MessageBuffer, class EntityType>
@@ -374,7 +374,7 @@ class ParallelISTLHelper
         {
             DataType x;
             buff.read(x);
-            gindices_[this->map(e)] = std::min(gindices_[this->map(e)], x);
+            gindices_[this->index(e)] = std::min(gindices_[this->index(e)], x);
         }
     private:
         std::vector<GI>& gindices_;

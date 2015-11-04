@@ -119,7 +119,7 @@ public:
                 scvIdx,
                 isOldSol);
 
-        int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
+        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
 
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 

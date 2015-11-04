@@ -510,7 +510,7 @@ public:
     void serializeEntity(std::ostream &outstream,
                          const Entity &entity)
     {
-        int dofIdxGlobal = dofMapper().map(entity);
+        int dofIdxGlobal = dofMapper().index(entity);
 
         // write phase state
         if (!outstream.good()) {
@@ -538,7 +538,7 @@ public:
     void deserializeEntity(std::istream &instream,
                            const Entity &entity)
     {
-        int dofIdxGlobal = dofMapper().map(entity);
+        int dofIdxGlobal = dofMapper().index(entity);
 
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             if (!instream.good())
@@ -765,7 +765,7 @@ public:
     bool onBoundary(const Element &element) const
     {
         if (!isBox)
-            return onBoundary(elementMapper().map(element));
+            return onBoundary(elementMapper().index(element));
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for box model");
@@ -844,7 +844,7 @@ protected:
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
                 // get the global index of the degree of freedom
-                int dofIdxGlobal = dofMapper().map(element, scvIdx, dofCodim);
+                int dofIdxGlobal = dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.

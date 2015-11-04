@@ -88,7 +88,7 @@ public:
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
         buff.write(gridView_.comm().rank());
-        buff.write(map_.map(e));
+        buff.write(map_.index(e));
     }
 
     template<class MessageBufferImp, class EntityType>
@@ -96,7 +96,7 @@ public:
     {
         BorderIndex bIdx;
 
-        bIdx.localIdx = map_.map(e);
+        bIdx.localIdx = map_.index(e);
         buff.read(bIdx.peerRank);
         buff.read(bIdx.peerIdx);
         bIdx.borderDistance = 0;
