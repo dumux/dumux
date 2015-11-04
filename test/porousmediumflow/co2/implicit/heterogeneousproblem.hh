@@ -266,14 +266,14 @@ public:
 
          for (const auto& element : Dune::elements(this->gridView()))
          {
-             int eIdx = this->elementMapper().map(element);
+             int eIdx = this->elementMapper().index(element);
              (*rank)[eIdx] = this->gridView().comm().rank();
              fvGeometry.update(this->gridView(), element);
 
 
              for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
              {
-                 int dofIdxGlobal = this->model().dofMapper().map(element, scvIdx, dofCodim);
+                 int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
                  volVars.update(this->model().curSol()[dofIdxGlobal],
                                 *this,
                                 element,

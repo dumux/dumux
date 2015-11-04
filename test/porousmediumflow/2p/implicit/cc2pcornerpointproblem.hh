@@ -317,7 +317,7 @@ public:
         {
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView(), element);
-            int eIdx = this->elementMapper().map(element);
+            int eIdx = this->elementMapper().index(element);
 
             const DimWorldMatrix K = this->spatialParams().intrinsicPermeability(element, fvGeometry, /*element data*/ 0);
             // transfer output to mD = 9.86923e-16 m^2

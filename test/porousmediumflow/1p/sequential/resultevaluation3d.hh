@@ -86,8 +86,8 @@ public:
         typedef typename Entity::Geometry Geometry;
         typedef typename Grid::LevelGridView GV;
         typedef typename GV::IndexSet IS;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,Dune::MCMGElementLayout> EM;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FM;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,Dune::MCMGElementLayout> ElementMapper;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FaceMapper;
         typedef typename Grid::ctype ct;
 
         enum{dim = Grid::dimension};
@@ -96,8 +96,8 @@ public:
         typedef typename Dune::ReferenceElements<ct, dim> ReferenceElements;
         const GV& gridview(grid.levelGridView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
-        EM elementmapper(gridview);
-        FM facemapper(gridview);
+        ElementMapper elementMapper(gridview);
+        FaceMapper faceMapper(gridview);
         SolutionType& exactSol(grid.levelGridView(grid.maxLevel()));
 
         uMean = 0;
@@ -108,7 +108,7 @@ public:
             double volume = element.geometry().volume();
 
             // cell index
-            int indexi = elementmapper.map(element);
+            int indexi = elementMapper.index(element);
 
             // get approximate solution value
             uMean += volume*(problem.variables().cellData(indexi).globalPressure());
@@ -174,7 +174,7 @@ public:
             double exactValue = problem.exact(globalPos);
 
             // cell index
-            int indexi = elementmapper.map(element);
+            int indexi = elementMapper.index(element);
 
             // evaluate exact solution vector
             exactSol[indexi] = exactValue;
@@ -211,7 +211,7 @@ public:
                 i = intersection.indexInInside();
 
                 // global number of face
-                int faceIndex = facemapper.template map<1>(element, i);
+                int faceIndex = faceMapper.template map<1>(element, i);
 
                 Dune::FieldVector<double,dim> faceGlobal = intersection.geometry().center();
                 double faceVol = intersection.geometry().volume();
@@ -472,7 +472,6 @@ public:
 
             Scalar volume = geometry.volume();
 
-            //int eIdx = elementMapper.map(element);
             int eIdx = problem.variables().index(element);
 
             Scalar approxPressure = problem.variables().cellData(eIdx).globalPressure();
@@ -727,11 +726,10 @@ public:
             Scalar volume = geometry.integrationElement(local)
                     *ReferenceElements::general(geomType).volume();
 
-            int eIdx = elementMapper.map(element);
+            int eIdx = elementMapper.index(element);
 
             Scalar approxPressure = solution[eIdx];
             Scalar exactPressure = problem.exact(globalPos);
-            //std::cout << global << ": p =" << exactPressure << ", p_h = " << approxPressure << std::endl;
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
             denominator += volume*exactPressure*exactPressure;
 

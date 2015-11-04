@@ -187,7 +187,7 @@ public:
                         const ElementBoundaryTypes &elemBcTypes)
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx) {
-            int gobalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            int gobalIdx = this->problem_.model().dofMapper().subIndex(element, scvIdx, dofCodim);
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (temperatureOutput_) temperature_[gobalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
