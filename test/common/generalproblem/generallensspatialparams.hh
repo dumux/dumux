@@ -91,10 +91,8 @@ public:
     GeneralLensSpatialParams(const GridView& gridView)
         : ParentType(gridView), eps_(3e-6)
     {
-        lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
-        lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
-        lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightX);
-        lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightY);
+        lensLowerLeft_   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
+        lensUpperRight_  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -109,10 +107,12 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
+        // initialize with zero
+        lensK_ = 0.0; outerK_ = 0.0;
         for (int i=0; i < dim; i++)
         {
-        lensK_[i][i] = 9.05e-12;
-        outerK_[i][i] = 4.6e-10;
+            lensK_[i][i] = 9.05e-12;
+            outerK_[i][i] = 4.6e-10;
         }
     }
 
