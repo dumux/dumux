@@ -1,0 +1,14 @@
+[Grid]
+OuterRadius = 1000
+WellRadius = 0.1
+NoOfCellsR = 10
+Angle = 360
+NoOfSlice = 4
+Height = 10
+BOR = 1000;
+NoOfCellsHeight = 10
+
+[PowerLawSpacer]
+Power = 1
+
+
