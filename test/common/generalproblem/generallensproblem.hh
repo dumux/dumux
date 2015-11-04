@@ -249,8 +249,7 @@ public:
      */
     const std::string name() const
     {
-        try { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputfileName); }
-        catch (...) { return "test_generalproblem2p"; }
+        return "generallens_" + GET_RUNTIME_PARAM(TypeTag, std::string, ModelType);
     }
 
     /*!

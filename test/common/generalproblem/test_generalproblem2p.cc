@@ -45,7 +45,7 @@ void usage(const char *progName, const std::string &errorMsg)
                 "\t-Grid.UpperRightX              Dimension of the grid [m]\n"
                 "\t-Grid.UpperRightY              Dimension of the grid [m]\n";
         errorMessageOut += "\n\nThe Optional command line argument:\n"
-                "\t-ModelType                     Can be: Box (2p box model), Decoupled (2p impes model),\n";
+                "\t-ModelType                     Can be: box (2p box model), cc (2p cc model), decoupled (2p impes model),\n";
         std::cout << errorMessageOut << "\n";
     }
 }
@@ -54,76 +54,34 @@ int main(int argc, char** argv)
 {
     Dune::ParameterTree paramTree;
     std::string s(Dumux::readOptions_(argc, argv, paramTree));
-    if (s.empty())
+    if (s.empty()) // everything was read correctly
     {
-        if (paramTree.hasKey("ModelType"))
+        // default model type is box
+        const std::string modelType(paramTree.get<std::string>("ModelType", "box"));
+        if (modelType == "box")
         {
-            std::string modelType(paramTree.get<std::string>("ModelType"));
-
-            if (modelType == "Box")
-            {
-                typedef TTAG(BoxGeneralLensProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                ParamTree::tree()["Problem.OutputfileName"] = "generallens_box";
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used box 2p model\n";
-                return startReturn;
-            }
-            else if (modelType == "CC")
-            {
-                typedef TTAG(CCGeneralLensProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                ParamTree::tree()["Problem.OutputfileName"] = "generallens_cc";
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used cc 2p model\n";
-                return startReturn;
-            }
-            else if (modelType == "Decoupled")
-            {
-                typedef TTAG(DecoupledGeneralLensProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                ParamTree::tree()["Problem.OutputfileName"] = "generallens_decoupled";
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used decoupled 2p model\n";
-                return startReturn;
-            }
-            else
-            {
-                typedef TTAG(BoxGeneralLensProblem) ProblemTypeTag;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Unknwon model type "<<modelType<<" specified\n";
-                std::cout<<"Default to box model\n";
-                return startReturn;
-            }
+            typedef TTAG(BoxGeneralLensProblem) ProblemTypeTag;
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = "box";
+            return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+        }
+        else if (modelType == "cc")
+        {
+            typedef TTAG(CCGeneralLensProblem) ProblemTypeTag;
+            return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+        }
+        else if (modelType == "decoupled")
+        {
+            typedef TTAG(DecoupledGeneralLensProblem) ProblemTypeTag;
+            return Dumux::start<ProblemTypeTag>(argc, argv, usage);
         }
         else
         {
-            typedef TTAG(BoxGeneralLensProblem) ProblemTypeTag;
-            int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-            std::cout<<"######################################################\n";
-            std::cout<<"No model type specified\n";
-            std::cout<<"Default to box model\n";
-            return startReturn;
+            Dumux::ParameterException e("Unknown ModelType: " + modelType);
+            std::cerr << e << ". Abort!" << std::endl
+                      << "ModelType can be: box (2p box model), cc (2p cc model), decoupled (2p impes model)" << std::endl;
+            exit(1);
         }
     }
     else
-    {
-        typedef TTAG(BoxGeneralLensProblem) ProblemTypeTag;
-        int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-        std::cout<<"######################################################\n";
-        std::cout<<s<<" is not a valid model type specification!\n";
-        std::cout<<"Default to box model\n";
-        return startReturn;
-    }
+        DUNE_THROW(Dumux::ParameterException, "Unknown command line option " << s);
 }
-
