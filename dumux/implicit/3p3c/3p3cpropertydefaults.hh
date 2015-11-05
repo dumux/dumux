@@ -165,7 +165,7 @@ SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
 SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(NonIsothermal, ThermalConductivityModel)
+SET_PROP(ThreePThreeCNI, ThermalConductivityModel)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
