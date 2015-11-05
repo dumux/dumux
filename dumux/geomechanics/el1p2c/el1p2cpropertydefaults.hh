@@ -42,6 +42,7 @@
 #include "el1p2cvolumevariables.hh"
 #include "el1p2cindices.hh"
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 
 namespace Dumux
@@ -92,6 +93,14 @@ SET_TYPE_PROP(BoxElasticOnePTwoC, Indices, ElOnePTwoCIndices<TypeTag>);
 
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxElasticOnePTwoC, PhaseIdx, 0);
+
+SET_PROP(BoxElasticOnePTwoC, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+};
 
 //! set default upwind weights to 1.0, i.e. fully upwind
 SET_SCALAR_PROP(BoxElasticOnePTwoC, ImplicitMassUpwindWeight, 1.0);

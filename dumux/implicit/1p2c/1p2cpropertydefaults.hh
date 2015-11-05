@@ -40,6 +40,7 @@
 #include <dumux/material/spatialparams/implicitspatialparams1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 namespace Dumux
 {
