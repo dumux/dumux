@@ -22,34 +22,38 @@
  * \brief   Parameters that are necessary for the \em regularization of
  *          the Brooks-Corey capillary pressure model.
  */
-#ifndef DUMUX_REGULARIZED_BROOKS_COREY_PARAMS_HH
-#define DUMUX_REGULARIZED_BROOKS_COREY_PARAMS_HH
+#ifndef DUMUX_REGULARIZED_PARKERVANGEN_3P_PARAMS_HH
+#define DUMUX_REGULARIZED_PARKERVANGEN_3P_PARAMS_HH
 
-#include "brookscoreyparams.hh"
+#include "parkervangen3pparams.hh"
 
 namespace Dumux
 {
 /*!
  * \brief   Parameters that are necessary for the \em regularization of
- *          the Brooks-Corey capillary pressure model.
+ *          the Parker - van Genuchten capillary pressure model.
  *
  *        \ingroup fluidmatrixinteractionsparams
  */
 template <class ScalarT>
-class RegularizedBrooksCoreyParams : public Dumux::BrooksCoreyParams<ScalarT>
+class RegularizedParkerVanGen3PParams : public Dumux::ParkerVanGen3PParams<ScalarT>
 {
-    typedef Dumux::BrooksCoreyParams<ScalarT> BrooksCoreyParams;
+    typedef Dumux::ParkerVanGen3PParams<ScalarT> ParkerVanGen3PParams;
 
 public:
     typedef ScalarT Scalar;
 
-    RegularizedBrooksCoreyParams()
-        : BrooksCoreyParams()
+    RegularizedParkerVanGen3PParams()
+        : ParkerVanGen3PParams()
     {
     }
 
-    RegularizedBrooksCoreyParams(Scalar pe, Scalar lambda)
-        : BrooksCoreyParams(pe, lambda)
+    RegularizedParkerVanGen3PParams(Scalar vgAlpha, Scalar vgn, Scalar KdNAPL, Scalar rhoBulk,
+                         Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1.,
+                         Scalar betaGn = 1., Scalar betaGw = 1., bool regardSnr=false)
+        : ParkerVanGen3PParams(vgAlpha, vgn, KdNAPL, rhoBulk,
+                         residualSaturation, betaNw,
+                         betaGn , betaGw, regardSnr)
     {
     }
 
@@ -68,7 +72,7 @@ public:
         //
         // If you want to use a different regularization threshold,
         // overload this class and supply the new class as second
-        // template parameter for the RegularizedVanGenuchten law!
+        // template parameter for the regularized Parker - van Genuchten law!
         return 1e-2;
     }
 

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Implementation of van Genuchten's capillary pressure-saturation relation.
+ * \brief Implementation of van Genuchten's capillary pressure-saturation relation for three phases.
  *
  */
 #ifndef PARKERVANGEN_3P_HH
@@ -62,7 +62,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
    /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
+     * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
@@ -78,9 +78,9 @@ public:
 
     Scalar r,se,x,vgm;
     Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.01;
+    Scalar pcvgReg = 0.2;//0.01;
 
-    se   = (sw-params.swr())/(1.-params.sgr());
+    se   = (sw-params.swr())/(1.-params.swr/*sgr*/()); //TODO swr
 
     /* Snr  = 0.0;   test version   */
 
@@ -112,7 +112,7 @@ public:
         }
     }
   /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
+     * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
@@ -127,9 +127,9 @@ public:
 
     Scalar r,se,x,vgm;
     Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.01;
+    Scalar pcvgReg = 0.2/*0.01*/;
 
-    se   = (sw-params.swr())/(1.-params.snr());
+    se   = (sw-params.swr())/(1.-params.swr/*snr*/()); //swr
 
     /* Snr  = 0.0;   test version   */
 
@@ -161,7 +161,7 @@ public:
         }
     }
     /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
+     * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
@@ -175,7 +175,7 @@ public:
 
     Scalar r,se,x,vgm;
     Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.01;
+    Scalar pcvgReg = 0.2/*0.01*/;
 
     se   = (St-params.swrx())/(1.-params.swrx());
 
@@ -314,7 +314,7 @@ public:
     {
 
         Scalar swe = std::min((sw - params.swr()) / (1 - params.swr()), 1.);
-        Scalar ste = std::min((sw +  saturation - params.swr()) / (1 - params.swr()), 1.);
+        Scalar ste = std::min((sw +  saturation - params.swrx/*swr*/()) / (1 - params.swrx/*swr*/()), 1.);
 
         // regularization
         if(swe <= 0.0) swe = 0.;
@@ -358,18 +358,18 @@ public:
     {
 
         // se = (sw+sn - Sgr)/(1-Sgr)
-        Scalar se = std::min(((1-saturation) - params.sgr()) / (1 - params.sgr()), 1.);
+        Scalar se = std::min(((1-saturation) - params.swrx/*sgr*/()) / (1 - params.swrx/*sgr*/()), 1.);
 
 
         /* regularization */
         if(se > 1.0) return 0.0;
         if(se < 0.0) return 1.0;
         Scalar scalFact = 1.;
-        if (saturation<=0.1)
-        {
-          scalFact = (saturation - params.sgr())/(0.1 - params.sgr());
-          if (scalFact < 0.) scalFact = 0.;
-        }
+//         if (saturation<=0.1)
+//         {
+//           scalFact = (saturation - params.sgr())/(0.1 - params.sgr());
+//           if (scalFact < 0.) scalFact = 0.;
+//         }
 
         Scalar result = scalFact * std::pow(1 - se, 1.0/3.) * std::pow(1 - std::pow(se, 1/params.vgm()), 2*params.vgm());
 
