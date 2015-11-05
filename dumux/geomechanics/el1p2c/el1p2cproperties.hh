@@ -51,15 +51,6 @@ NEW_TYPE_TAG(BoxElasticOnePTwoC, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(PhaseIdx); //!< A phase index in to allow that a two-phase fluidsystem is used
-NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the 1p2c model
-NEW_PROP_TAG(FluidSystem ); //!<The fluid systems including the information about the phases
-NEW_PROP_TAG(SpatialParams); //!< The type of the soil properties object
-NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(ImplicitMassUpwindWeight);   //!< The default value of the upwind weight
 //! Returns whether the stabilization terms are included in the balance equations
 NEW_PROP_TAG(ImplicitWithStabilization);
 //! Returns whether the output should be written according to rock mechanics sign convention (compressive stresses > 0)

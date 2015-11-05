@@ -48,19 +48,6 @@ NEW_TYPE_TAG(BoxElasticTwoP, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the linear elasticity model
-NEW_PROP_TAG(SpatialParams); //!< The type of the soil properties object
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
-NEW_PROP_TAG(WettingPhase); //!< The wetting phase for two-phase models
-NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
-NEW_PROP_TAG(ImplicitMobilityUpwindWeight);   //!< The default value of the upwind parameter
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(FluidSystem); //!< The fluid systems including the information about the phases
-NEW_PROP_TAG(FluidState); //!< The phases state
 NEW_PROP_TAG(DisplacementGridFunctionSpace); //!< grid function space for the displacement
 NEW_PROP_TAG(PressureGridFunctionSpace); //!< grid function space for the pressure, saturation, ...
 NEW_PROP_TAG(GridOperatorSpace); //!< The grid operator space
