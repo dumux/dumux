@@ -36,7 +36,8 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase minc model with BOX discretization
-NEW_TYPE_TAG(BoxTwoPMinc, INHERITS_FROM(BoxTwoP));
+NEW_TYPE_TAG(TwoPMinc);
+NEW_TYPE_TAG(BoxTwoPMinc, INHERITS_FROM(BoxTwoP, TwoPMinc));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

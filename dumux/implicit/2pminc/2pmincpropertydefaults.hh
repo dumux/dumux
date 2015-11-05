@@ -44,29 +44,29 @@ namespace Properties
 // Property values
 //////////////////////////////////////////////////////////////////
 //! Use the 2pminc local jacobian operator for the 2pminc model
-SET_TYPE_PROP(BoxTwoPMinc,
+SET_TYPE_PROP(TwoPMinc,
               LocalResidual,
               TwoPMincLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPMinc, Model, TwoPMincModel<TypeTag>);
+SET_TYPE_PROP(TwoPMinc, Model, TwoPMincModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPMinc, VolumeVariables, TwoPMincVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPMinc, VolumeVariables, TwoPMincVolumeVariables<TypeTag>);
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPMinc, FluxVariables, TwoPMincFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPMinc, FluxVariables, TwoPMincFluxVariables<TypeTag>);
 
 //! The Indices property
-SET_TYPE_PROP(BoxTwoPMinc,
+SET_TYPE_PROP(TwoPMinc,
               Indices,
               TwoPMincIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
 
 //! Set the number of continua to 2
-SET_INT_PROP(BoxTwoPMinc, NumContinua, 2);
+SET_INT_PROP(TwoPMinc, NumContinua, 2);
 
 //! Set the default inteaction type to constant volume fractions
-SET_INT_PROP(BoxTwoPMinc, ProblemInteractingContinuaType, 0);
+SET_INT_PROP(TwoPMinc, ProblemInteractingContinuaType, 0);
 }
 }
 #endif
