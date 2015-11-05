@@ -2,6 +2,7 @@
 PolarCoorMin = 0.1 0.0 1000.0
 PolarCoorMax = 1000.0 360.0 1010.0
 Cells = 10 4 10
+UsePowerLawSpacerRadius = true
 
 [PowerLawSpacer]
-Power = 1
+Power = 2

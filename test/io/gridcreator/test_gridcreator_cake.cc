@@ -26,6 +26,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dumux/common/start.hh>
 #include <dumux/io/cakegridcreator.hh>
 #include <dumux/common/basicproperties.hh>
 
@@ -56,28 +57,23 @@ int main(int argc, char** argv)
         // Some typedefs
         typedef typename TTAG(GridCreatorCakeTest) TypeTag;
         typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef typename Dumux::LinearSpacer<TypeTag> LinearSpacer;
-        typedef typename Dumux::CakeGridCreator<TypeTag> GridCreatorLinear;
-        typedef typename Dumux::PowerLawSpacer<TypeTag> PowerLawSpacer;
-        typedef typename Dumux::CakeGridCreator<TypeTag, PowerLawSpacer> GridCreatorPowerLaw;
-        //    typedef typename Dumux::GridCreator<TypeTag> GridCreator;
+        typedef typename Dumux::CakeGridCreator<TypeTag> GridCreator;
 
         // Read the parameters from the input file
         typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+
+        //First read parameters from input file
         Dune::ParameterTreeParser::readINITree("test_gridcreator_cake.input", ParameterTree::tree());
+//        Dumux::Parameters::print<TypeTag>();
+        //Overwrite parameters from input file with command line specified parameters
+        std::string s = Dumux::readOptions_(argc, argv, ParameterTree::tree());
+//        Dumux::Parameters::print<TypeTag>();
 
 //      Make the grid
-        GridCreatorLinear::makeGrid();
-        GridCreatorPowerLaw::makeGrid();
-
+        GridCreator::makeGrid();
         // construct a vtk output writer and attach the boundaryMakers
-        Dune::VTKSequenceWriter<Grid::LeafGridView> vtkWriterLinear(GridCreatorLinear::grid().leafGridView(), "pieceofcake-linspace", ".", "");
-        //    vtkWriter.addVertexData(boundaryMarker, "boundaryMarker");
-        vtkWriterLinear.write(0);
-
-        Dune::VTKSequenceWriter<Grid::LeafGridView> vtkWriterPowerLaw(GridCreatorPowerLaw::grid().leafGridView(), "cake-powerspace", ".", "");
-        //    vtkWriter.addVertexData(boundaryMarker, "boundaryMarker");
-        vtkWriterPowerLaw.write(0);
+        Dune::VTKSequenceWriter<Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView(), "cake", ".", "");
+        vtkWriter.write(0);
 
         return 0;
     }
