@@ -43,15 +43,7 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   endif()
 
   # add test
-  if(DUNE_COMMON_VERSION_MAJOR VERSION_GREATER 2.4)
-    dune_add_test(NAME ${dumux_test}
-                  TARGET ${dumux_test_executable}
-                  COMMAND ${dumux_test_args}
-                  SKIP_ON_77)
-    # tests always require the executable to run
-    set_tests_properties(${dumux_test} PROPERTIES REQUIRED_FILES ${dumux_test})
-  else()
-
+  if(DUNE_COMMON_VERSION VERSION_LESS 3.0)
     # add test
     add_test(${dumux_test} ${dumux_test_args})
 
@@ -59,5 +51,12 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
     set_tests_properties(${dumux_test} PROPERTIES SKIP_RETURN_CODE 77)
     # tests always require the executable to run
     set_tests_properties(${dumux_test} PROPERTIES REQUIRED_FILES ${dumux_test_executable})
+  else()
+    dune_add_test(NAME ${dumux_test}
+                  TARGET ${dumux_test_executable}
+                  COMMAND ${dumux_test_args}
+                  SKIP_ON_77)
+    # tests always require the executable to run
+    set_tests_properties(${dumux_test} PROPERTIES REQUIRED_FILES ${dumux_test})
   endif()
 endmacro()
