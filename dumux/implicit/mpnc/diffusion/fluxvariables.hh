@@ -117,10 +117,10 @@ public:
         }
 
         // initialize the diffusion coefficients to zero
-        for (int i = 0; i < numComponents; ++i) {
-            porousDiffCoeffL_[i] = 0.0;
-            for (int j = 0; j < numComponents; ++j)
-                porousDiffCoeffG_[i][j] = 0.0;
+        for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
+            porousDiffCoeffL_[compIIdx] = 0.0;
+            for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+                porousDiffCoeffG_[compIIdx][compJIdx] = 0.0;
         }
 
         // calculate the diffusion coefficients at the integration
@@ -149,21 +149,21 @@ public:
 
             if (phaseIdx == wPhaseIdx) {
                 // Liquid phase diffusion coefficients in the porous medium
-                for (int i = 0; i < numComponents; ++i) {
+                for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
                     // -> arithmetic mean
-                    porousDiffCoeffL_[i]
-                        = 1./2*(red_i * elemVolVars[i].diffCoeff(wPhaseIdx, 0, i) +
-                                red_j * elemVolVars[j].diffCoeff(wPhaseIdx, 0, i));
+                    porousDiffCoeffL_[compIIdx]
+                        = 1./2*(red_i * elemVolVars[i].diffCoeff(wPhaseIdx, 0, compIIdx) +
+                                red_j * elemVolVars[j].diffCoeff(wPhaseIdx, 0, compIIdx));
                 }
             }
             else {
                 // Gas phase diffusion coefficients in the porous medium
-                for (int i = 0; i < numComponents; ++i) {
-                    for (int j = 0; j < numComponents; ++j) {
+                for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
+                    for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
                         // -> arithmetic mean
-                        porousDiffCoeffG_[i][j]
-                            = 1./2*(red_i * elemVolVars[i].diffCoeff(nPhaseIdx, i, j) +
-                                    red_j * elemVolVars[j].diffCoeff(nPhaseIdx, i, j));
+                        porousDiffCoeffG_[compIIdx][compJIdx]
+                            = 1./2*(red_i * elemVolVars[i].diffCoeff(nPhaseIdx, compIIdx, compJIdx) +
+                                    red_j * elemVolVars[j].diffCoeff(nPhaseIdx, compIIdx, compJIdx));
                     }
                 }
             }
