@@ -53,7 +53,7 @@ public:
         setSwr(residualSaturation[0]);
         setSnr(residualSaturation[1]);
         setSgr(residualSaturation[2]);
-        setSwrx(residualSaturation[3]);
+//         setSwrx(residualSaturation[3]);
         setKrRegardsSnr(regardSnr);
         setKdNAPL(KdNAPL);
         setBetaNw(betaNw);
@@ -126,7 +126,7 @@ public:
             return snr_;
             break;
         case 2:
-            return sgr_;
+            DUNE_THROW(Dune::NotImplemented, "sgr for three phases not required and therefore not implemented");
             break;
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -169,32 +169,40 @@ public:
     void setSnr(Scalar input)
     { snr_ = input; }
 
-    /*!
+     /*!
      * \brief Return the residual gas saturation.
      */
     Scalar sgr() const
-    { return sgr_; }
+    {
+        return sgr_;
+    }
 
-    /*!
+     /*!
      * \brief Set the residual gas saturation.
-     * \param input Set the resiudal gas saturation
+     * \param v Set the resiudal gas saturation
      */
     void setSgr(Scalar input)
-    { sgr_ = input; }
+    {
+         sgr_ = input;
+    }
 
-    /*!
-     * \brief Set the residual gas saturation.
+     /*!
+     * \brief Set the residual total liquid saturation.
      */
     Scalar swrx() const
-    { return swrx_; }
+    {
+         std::cerr << "swrx for three phases not implemented anymore. Equals swr" << std::endl;
+         return swr_;
+    }
 
-    /*!
-     * \brief Set the residual gas saturation.
-     * \param input Set the resiudal gas saturation
+     /*!
+     * \brief Set the residual total liquid saturation.
+     * \param v Set the resiudal gas saturation
      */
-    void setSwrx(Scalar input)
-    { swrx_ = input; }
-
+    void setSwrx(Scalar v)
+    {
+         std::cerr << "swrx for three phases not implemented anymore. Equals swr" << std::endl;
+    }
     /*!
      * \brief defines the scaling parameters of capillary pressure between the phases (=1 for Gas-Water)
      */
@@ -267,7 +275,6 @@ private:
     Scalar swr_;
     Scalar snr_;
     Scalar sgr_;
-    Scalar swrx_;     /* (sw+sn)_r */
 
     Scalar KdNAPL_;
     Scalar rhoBulk_;

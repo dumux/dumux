@@ -116,7 +116,7 @@ public:
     }
 
      /*!
-     * \brief The capillary pressure-saturation curve 
+     * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
      * \param sn Non-wetting liquid saturation
      */
@@ -139,7 +139,6 @@ public:
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
-//         return sweToSw_(params, EffLaw::sw(params, pc));
         return EffLaw::sw(params, pc);
     }
 
@@ -161,7 +160,6 @@ public:
     */
     static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
-//         return EffLaw::dpc_dsw(params, swToSwe(params, sw) )*dswe_dsw_(params);
         return EffLaw::dpc_dsw(params, pc);
     }
 
@@ -185,7 +183,6 @@ public:
      */
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-//         return EffLaw::dsw_dpc(params, pc)*dsw_dswe_(params);
         return EffLaw::dsw_dpc(params, pc);
     }
 
@@ -217,9 +214,10 @@ public:
      * \return          Relative permeability of the non-wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
-    static Scalar krn(const Params &params, Scalar sw, Scalar sn, Scalar sg) //TODO: sg??
+    static Scalar krn(const Params &params, Scalar sw, Scalar sn, Scalar sg)
     {
-        return EffLaw::krn(params, swToSwe(params, sw), snToSne(params, sn), sgToSge(params, sg));
+        Scalar st = sw+sn;
+        return EffLaw::krn(params, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st));
     }
 
      /*!
@@ -315,7 +313,7 @@ public:
      */
     static Scalar sgToSge(const Params &params, Scalar sg)
     {
-        //TODO
+        DUNE_THROW(Dune::NotImplemented, "sgTosge for three phases not implemented!");
     }
 
 //private:
@@ -330,19 +328,16 @@ public:
      */
     static Scalar sweToSw_(const Params &params, Scalar swe)
     {
-//         return swe*(1. - params.swr() - params.snr()) + params.swr();
          DUNE_THROW(Dune::NotImplemented, "sweTosw for three phases not implemented!");
     }
 
     static Scalar sneToSn_(const Params &params, Scalar sne)
     {
-//         return swe*(1. - params.swr() - params.snr()) + params.swr();
          DUNE_THROW(Dune::NotImplemented, "sneTosn for three phases not implemented!");
     }
 
     static Scalar sgeToSg_(const Params &params, Scalar sge)
     {
-//         return swe*(1. - params.swr() - params.snr()) + params.swr();
          DUNE_THROW(Dune::NotImplemented, "sgeTosg for three phases not implemented!");
     }
     /*!

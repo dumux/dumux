@@ -44,35 +44,65 @@ public:
 
     EffToAbsLawParams()
         : EffLawParams()
-    { swr_ = snr_ = 0; }
+    {}
 
     /*!
      * \brief Return the residual wetting saturation.
      */
     Scalar swr() const
-    { return swr_; }
+    { return EffLawParams::swr(); }
 
     /*!
      * \brief Set the residual wetting saturation.
      */
     void setSwr(Scalar v)
-    { swr_ = v; }
+    { EffLawParams::setSwr(v); }
 
     /*!
      * \brief Return the residual non-wetting saturation.
      */
     Scalar snr() const
-    { return snr_; }
+    { return EffLawParams::snr(); }
 
     /*!
      * \brief Set the residual non-wetting saturation.
      */
     void setSnr(Scalar v)
-    { snr_ = v; }
+    { EffLawParams::setSnr(v); }
 
-private:
-    Scalar swr_;
-    Scalar snr_;
+     /*!
+     * \brief Return the residual gas saturation.
+     */
+    Scalar sgr() const
+    {
+        return EffLawParams::sgr();
+    }
+
+    /*!
+     * \brief Set the residual gas saturation.
+     * \param v Set the resiudal gas saturation
+     */
+    void setSgr(Scalar v)
+    {
+         EffLawParams::setSgr(v);
+    }
+
+    /*!
+     * \brief Set the residual total liquid saturation.
+     */
+    Scalar swrx() const
+    {
+          return EffLawParams::swrx();
+    }
+
+    /*!
+     * \brief Set the residual total liquid saturation.
+     * \param v Set the resiudal gas saturation
+     */
+    void setSwrx(Scalar v)
+    {
+         EffLawParams::setSwrx(v);
+    }
 };
 
 }

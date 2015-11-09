@@ -96,7 +96,7 @@ public:
     {
         Scalar r,x,vgm;
         Scalar pc,pcPrime,seRegu;
-        Scalar pcvgReg = 0.2;//0.01; //TODO paramter
+        Scalar pcvgReg = params.thresholdSw();//0.2;//0.01; //TODO paramter
 
 
         /* regularization */
@@ -112,12 +112,12 @@ public:
         {
             /* value and derivative at regularization point */
             if (swe<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pc = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
             pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
+                      *(-1/vgm)/params.vgAlpha()/(1-params.swr())/params.vgn();
 
             /* evaluate tangential */
-            r        = (swe-seRegu)*pcPrime+pc;
+            r = (swe-seRegu)*pcPrime+pc;
             return(r/params.betaGw());
         }
     }
@@ -132,27 +132,27 @@ public:
 
     Scalar r,vgm;
     Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = /*0.2*/0.01;
+    Scalar pcvgReg = params.thresholdSw();///*0.2*/0.01;
 
     /* regularization */
     if (swe<0.0) swe=0.0;
     if (swe>1.0) swe=1.0;
     vgm = 1.-1./params.vgn();
 
-        if (swe>pcvgReg && swe<1-pcvgReg)
+        if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
         {
           return ParkerVanGen3P::pcnw(params, swe);
         }
         else
-        {//TODO: snr??
+        {
             /* value and derivative at regularization point */
             if (swe<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pc = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
             pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
+                      *(-1/vgm)/params.vgAlpha()/(1-params.swr())/params.vgn();
 
             /* evaluate tangential */
-            r        = (swe-seRegu)*pcPrime+pc;
+            r = (swe-seRegu)*pcPrime+pc;
             return(r/params.betaNw());
         }
     }
@@ -165,7 +165,7 @@ public:
     {
     Scalar r,vgm;
     Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = /*0.2*/0.01;
+    Scalar pcvgReg = params.thresholdSw();///*0.2*/0.01;
 
 
     /* regularization */
@@ -173,45 +173,31 @@ public:
     if (ste>1.0) ste=1.0;
     vgm = 1.-1./params.vgn();
 
-        if (ste>pcvgReg && ste<1-pcvgReg)
+        if (ste>pcvgReg && ste<1-pcvgReg) //use actual material law
         {
           return ParkerVanGen3P::pcgn(params, ste);
         }
         else
-        {//TODO: swrx
+        {
             /* value and derivative at regularization point */
             if (ste<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pc = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
             pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
+                      *(-1/vgm)/params.vgAlpha()/(1-params.swr())/params.vgn();
 
             /* evaluate tangential */
-            r        = (ste-seRegu)*pcPrime+pc;
+            r = (ste-seRegu)*pcPrime+pc;
             return(r/params.betaGn());
         }
     }
     /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
+     * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
-     * \param sn Non-wetting liquid saturation
+     * \param sne Non-wetting liquid saturation
      */
     static Scalar pcAlpha(const Params &params, Scalar sne)
     {
-        /* continuous transition to zero */
-        Scalar alpha;
-        //TODO: gehoert das hier hin??
-
-        /* regularization */
-        if (sne<=0.001) sne=0.0;
-        if (sne>=1.0) sne=1.0;
-
-        if (sne>params.snr()) alpha = 1.0;
-        else
-        {
-         if (params.snr()>=0.001) alpha = sne/params.snr();
-         else          alpha = 0.0;
-        }
-        return(alpha);
+        return ParkerVanGen3P::pcAlpha(params, sne);
     }
 
     /*!
@@ -263,10 +249,11 @@ public:
      */
     static Scalar krw(const Params &params,  Scalar swe)
     {
-        /* regularization */
+        //use regularization
         if(swe > 1.0) return 1.;
         if(swe < 0.0) return 0.;
 
+        //or use actual material law
         return ParkerVanGen3P::krw(params, swe);
     }
 
@@ -292,11 +279,12 @@ public:
         swe = std::min(swe, 1.);
         ste = std::min(ste, 1.);
 
-        // regularization
+        //use regularization
         if(swe <= 0.0) swe = 0.;
         if(ste <= 0.0) ste = 0.;
         if(ste - swe <= 0.0) return 0.;
 
+        //or use actual material law
         return ParkerVanGen3P::krn(params, swe, sne, ste);
     }
 
@@ -318,10 +306,11 @@ public:
     static Scalar krg(const Params &params, Scalar ste)
     {
 
-        /* regularization */
+        //use regularization
         if(ste > 1.0) return 0.0;
         if(ste < 0.0) return 1.0;
 
+        //or use actual material law
         return ParkerVanGen3P::krg(params, ste);
     }
 
@@ -332,8 +321,8 @@ public:
      * \param sn Non-wetting liquid saturation
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
-     */ //TODO: indices???
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste/*sg*/)
+     */
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
     {
         switch (phaseIdx)
         {

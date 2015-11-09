@@ -69,23 +69,15 @@ public:
      */
     static Scalar pcgw(const Params &params, Scalar swe)
     {
-    /*
-         sw = wetting phase saturation, or,
-              sum of wetting phase saturations
-         alpha : VanGenuchten-alpha
-    */
-    Scalar r,x,vgm;
+        Scalar r,x,vgm;
+        vgm = 1.-1./params.vgn();
 
-//     se   = (sw-params.swr())/(1.-params.swr/*sgr*/());
-
-      vgm = 1.-1./params.vgn();
-
-      r = std::pow(swe,-1/vgm);
-      x = r-1;
-      vgm = 1-vgm;
-      x = std::pow(x,vgm);
-      r = x/params.vgAlpha();
-      return(r);
+        r = std::pow(swe,-1/vgm);
+        x = r-1;
+        vgm = 1-vgm;
+        x = std::pow(x,vgm);
+        r = x/params.vgAlpha();
+        return (r/params.betaGw());
     }
 
   /*!
@@ -95,21 +87,15 @@ public:
      */
     static Scalar pcnw(const Params &params, Scalar swe)
     {
-    /*
-         sw = wetting phase saturation, or,
-              sum of wetting phase saturations
-         alpha : VanGenuchten-alpha */
+        Scalar r,x,vgm;
+        vgm = 1.-1./params.vgn();
 
-    Scalar r,x,vgm;
-//     se   = (sw-params.swr())/(1.-params.swr/*snr*/()); //swr
-    vgm = 1.-1./params.vgn();
-
-      r = std::pow(swe,-1/vgm);
-      x = r-1;
-      vgm = 1-vgm;
-      x = std::pow(x,vgm);
-      r = x/params.vgAlpha();
-      return(r);
+        r = std::pow(swe,-1/vgm);
+        x = r-1;
+        vgm = 1-vgm;
+        x = std::pow(x,vgm);
+        r = x/params.vgAlpha();
+        return (r/params.betaNw());
     }
 
     /*!
@@ -117,33 +103,28 @@ public:
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
-    static Scalar pcgn(const Params &params, Scalar ste/*St*/)
+    static Scalar pcgn(const Params &params, Scalar ste)
     {
-    /*
-         St = sum of wetting (liquid) phase saturations
-         alpha : VanGenuchten-alpha */
-    Scalar r,x,vgm;
-//     se   = (St-params.swrx())/(1.-params.swrx());
-      vgm = 1.-1./params.vgn();
+        Scalar r,x,vgm;
+        vgm = 1.-1./params.vgn();
 
-      r = std::pow(ste,-1/vgm);
-      x = r-1;
-      vgm = 1-vgm;
-      x = std::pow(x,vgm);
-      r = x/params.vgAlpha();
-      return(r);
+        r = std::pow(ste,-1/vgm);
+        x = r-1;
+        vgm = 1-vgm;
+        x = std::pow(x,vgm);
+        r = x/params.vgAlpha();
+        return (r/params.betaGn());
     }
- /*!
-     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
+
+     /*!
+     * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
-     * \param sn Non-wetting liquid saturation
+     * \param sne Non-wetting liquid saturation
      */
     static Scalar pcAlpha(const Params &params, Scalar sne)
     {
-        /* continuous transition to zero */
-        Scalar alpha/*,sne*/;
+        Scalar alpha;
 
-//         sne=sn;
         /* regularization */
         if (sne<=0.001) sne=0.0;
         if (sne>=1.0) sne=1.0;
@@ -204,12 +185,8 @@ public:
      * \param saturation wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krw(const Params &params,  Scalar swe/*, Scalar sn, Scalar sg*/)
+    static Scalar krw(const Params &params,  Scalar swe)
     {
-
-        //transformation to effective saturation
-//         Scalar se = (saturation - params.swr()) / (1-params.swr());
-
         Scalar r = 1. - std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
         return std::sqrt(swe)*r*r;
     }
@@ -231,12 +208,8 @@ public:
      * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste/*, Scalar saturation, Scalar sg*/)
+    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
     {
-
-//         Scalar swe = std::min((sw - params.swr()) / (1 - params.swr()), 1.);
-//         Scalar ste = std::min((sw +  saturation - params.swrx/*swr*/()) / (1 - params.swrx/*swr*/()), 1.);
-
         Scalar krn_;
         krn_ = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
         krn_ -= std::pow(1 - std::pow(ste, 1/params.vgm()), params.vgm());
@@ -245,11 +218,11 @@ public:
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((sne/*saturation*/ - params.snr()/ (1-params.swr())), 1.), 0.);
+            Scalar resIncluded = std::max(std::min((sne - params.snr()/ (1-params.swr())), 1.), 0.);
             krn_ *= std::sqrt(resIncluded );
         }
         else
-            krn_ *= std::sqrt(sne/*saturation*/ / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
+            krn_ *= std::sqrt(sne / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
 
         return krn_;
@@ -272,9 +245,6 @@ public:
      */
     static Scalar krg(const Params &params, Scalar ste)
     {
-
-        // se = (sw+sn - Sgr)/(1-Sgr)
-//         Scalar se = std::min(((1-saturation) - params.swrx/*sgr*/()) / (1 - params.swrx/*sgr*/()), 1.);
         Scalar scalFact = 1.;
 //         if (saturation<=0.1)
 //         {
@@ -294,19 +264,19 @@ public:
      * \param sn Non-wetting liquid saturation
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
-     */ //TODO: indices???
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste/*sg*/)
+     */
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
     {
         switch (phaseIdx)
         {
         case 0:
-            return krw(params, swe/*, sn, sg*/);
+            return krw(params, swe);
             break;
         case 1:
-            return krn(params, swe, sne, ste/*sg*/);
+            return krn(params, swe, sne, ste);
             break;
         case 2:
-            return krg(params, ste/*sw, sn, sg*/);
+            return krg(params, ste);
             break;
         }
         return 0;
