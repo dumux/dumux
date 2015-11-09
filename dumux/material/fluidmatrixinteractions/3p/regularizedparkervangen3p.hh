@@ -92,255 +92,273 @@ public:
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
      */
-    static Scalar pcgw(const Params &params, Scalar sw)
+    static Scalar pcgw(const Params &params, Scalar swe)
     {
-    /*
-         sw = wetting phase saturation, or,
-              sum of wetting phase saturations
-         alpha : VanGenuchten-alpha
-    */
+        Scalar r,x,vgm;
+        Scalar pc,pcPrime,seRegu;
+        Scalar pcvgReg = 0.2;//0.01; //TODO paramter
 
-    Scalar r,se,x,vgm;
-    Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.2;//0.01;
 
-    se   = (sw-params.swr())/(1.-params.sgr());
+        /* regularization */
+        if (swe<0.0) swe=0.0;
+        if (swe>1.0) swe=1.0;
+        vgm = 1.-1./params.vgn();
 
-    /* Snr  = 0.0;   test version   */
-
-    /* regularization */
-    if (se<0.0) se=0.0;
-    if (se>1.0) se=1.0;
-    vgm = 1.-1./params.vgn();
-
-        if (se>pcvgReg && se<1-pcvgReg)
+        if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
         {
-            r = std::pow(se,-1/vgm);
-            x = r-1;
-            vgm = 1-vgm;
-            x = std::pow(x,vgm);
-            r = x/params.vgAlpha();
-            return(r);
+            ParkerVanGen3P::pcgw(params, swe);
         }
-        else
+        else //use regularization
         {
             /* value and derivative at regularization point */
-            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
+            if (swe<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
             pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
             pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
                       *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
-            r        = (se-seRegu)*pcPrime+pc;
+            r        = (swe-seRegu)*pcPrime+pc;
             return(r/params.betaGw());
         }
     }
+
   /*!
-    
-    
-    
-    
-    
-    
-    
-      static Scalar pc(const Params &params, Scalar swe)
+     * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
+     * \param params Array of parameters
+     * \param sw wetting phase saturation or sum of wetting phase saturations
+     */
+    static Scalar pcnw(const Params &params, Scalar swe)
     {
-        const Scalar sThres = params.thresholdSw();
 
-        // make sure that the capilary pressure observes a
-        // derivative != 0 for 'illegal' saturations. This is
-        // required for example by newton solvers (if the
-        // derivative is calculated numerically) in order to get the
-        // saturation moving to the right direction if it
-        // temporarily is in an 'illegal' range.
-        if (swe <= sThres) {
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
-            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
-            return pcsweLow + m*(swe - sThres);
-        }
-        else if (swe > 1.0) {
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
-            return pcsweHigh + m*(swe - 1.0);
-        }
+    Scalar r,vgm;
+    Scalar pc,pcPrime,seRegu;
+    Scalar pcvgReg = /*0.2*/0.01;
 
-        // if the effective saturation is in an 'reasonable'
-        // range, we use the real Brooks-Corey law...
-        return BrooksCorey::pc(params, swe);
+    /* regularization */
+    if (swe<0.0) swe=0.0;
+    if (swe>1.0) swe=1.0;
+    vgm = 1.-1./params.vgn();
+
+        if (swe>pcvgReg && swe<1-pcvgReg)
+        {
+          return ParkerVanGen3P::pcnw(params, swe);
+        }
+        else
+        {//TODO: snr??
+            /* value and derivative at regularization point */
+            if (swe<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
+            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
+                      *(-1/vgm)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
+
+            /* evaluate tangential */
+            r        = (swe-seRegu)*pcPrime+pc;
+            return(r/params.betaNw());
+        }
     }
-    
-    
     /*!
-     * \brief   A regularized Brooks-Corey saturation-capillary pressure curve.
+     * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
+     * \param params Array of parameters
+     * \param St sum of wetting (liquid) phase saturations
+     */
+    static Scalar pcgn(const Params &params, Scalar ste)
+    {
+    Scalar r,vgm;
+    Scalar pc,pcPrime,seRegu;
+    Scalar pcvgReg = /*0.2*/0.01;
+
+
+    /* regularization */
+    if (ste<0.0) ste=0.0;
+    if (ste>1.0) ste=1.0;
+    vgm = 1.-1./params.vgn();
+
+        if (ste>pcvgReg && ste<1-pcvgReg)
+        {
+          return ParkerVanGen3P::pcgn(params, ste);
+        }
+        else
+        {//TODO: swrx
+            /* value and derivative at regularization point */
+            if (ste<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
+            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
+                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
+
+            /* evaluate tangential */
+            r        = (ste-seRegu)*pcPrime+pc;
+            return(r/params.betaGn());
+        }
+    }
+    /*!
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
+     * \param params Array of parameters
+     * \param sn Non-wetting liquid saturation
+     */
+    static Scalar pcAlpha(const Params &params, Scalar sne)
+    {
+        /* continuous transition to zero */
+        Scalar alpha;
+        //TODO: gehoert das hier hin??
+
+        /* regularization */
+        if (sne<=0.001) sne=0.0;
+        if (sne>=1.0) sne=1.0;
+
+        if (sne>params.snr()) alpha = 1.0;
+        else
+        {
+         if (params.snr()>=0.001) alpha = sne/params.snr();
+         else          alpha = 0.0;
+        }
+        return(alpha);
+    }
+
+    /*!
+     * \brief The saturation-capillary pressure curve.
+     * \param params Array of parameters
+     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      *
-     * regularized part:
-     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line (yes, there is a kink :-( ).
-     *
-     *  The according quantities are obtained by exploiting theorem of intersecting lines.
-     *
-     * For the non-regularized part:
-     *
-     * \copydetails BrooksCorey::sw()
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
-        const Scalar sThres = params.thresholdSw();
-
-        // calculate the saturation which corrosponds to the
-        // saturation in the non-regularized version of
-        // the Brooks-Corey law
-        Scalar swe = BrooksCorey::sw(params, pc);
-
-        // make sure that the capilary pressure observes a
-        // derivative != 0 for 'illegal' saturations. This is
-        // required for example by newton solvers (if the
-        // derivative calculated numerically) in order to get the
-        // saturation moving to the right direction if it
-        // temporarily is in an 'illegal' range.
-        if (swe <= sThres) {
-            // invert the low saturation regularization of pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
-            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
-            return sThres + (pc - pcsweLow)/m;
-        }
-        else if (swe > 1.0) {
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
-            return 1.0 + (pc - pcsweHigh)/m;
-        }
-
-        return BrooksCorey::sw(params, pc);
+        return ParkerVanGen3P::sw(params, pc);
     }
 
     /*!
-     * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
-     *        according to Brooks & Corey.
-     *
-     * regularized part:
-     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
-     *
-     * For the non-regularized part:
-     *
-     * \copydetails BrooksCorey::dpc_dsw()
-     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param sw Wetting liquid saturation
+    */
+    static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
-        const Scalar sThres = params.thresholdSw();
-
-        // derivative of the regualarization
-        if (swe <= sThres) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
-            return m;
-        }
-        else if (swe > 1.0) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            return m;
-        }
-
-        return BrooksCorey::dpc_dsw(params, swe);
+        return ParkerVanGen3P::dpc_dsw(params, sw);
     }
 
     /*!
-     * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
-     *        according to Brooks & Corey.
-     *
-     *  regularized part:
-     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
-     *
-     * For the non-regularized part:
-     *
-     * \copydetails BrooksCorey::dsw_dpc()
+     * \brief Returns the partial derivative of the effective
+     *        saturation to the capillary pressure.
+     * \param params Array of parameters
+     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-        const Scalar sThres = params.thresholdSw();
+        return ParkerVanGen3P::dsw_dpc(params, pc);
+    }
 
-        //instead of return value = inf, return a very large number
-        if (params.pe() == 0.0)
+    /*!
+     * \brief The relative permeability for the wetting phase of
+     *        the medium implied by van Genuchten's
+     *        parameterization.
+     *
+     * The permeability of water in a 3p system equals the standard 2p description.
+     * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
+     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
+     *
+     * \param sn Non-wetting liquid saturation
+     * \param sg Gas saturation
+     * \param saturation wetting liquid saturation
+     * \param params Array of parameters.
+     */
+    static Scalar krw(const Params &params,  Scalar swe)
+    {
+        /* regularization */
+        if(swe > 1.0) return 1.;
+        if(swe < 0.0) return 0.;
+
+        return ParkerVanGen3P::krw(params, swe);
+    }
+
+    /*!
+     * \brief The relative permeability for the non-wetting phase
+     *        after the Model of Parker et al. (1987).
+     *
+     * See model 7 in "Comparison of the Three-Phase Oil Relative Permeability Models"
+     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.
+     * or more comprehensive in
+     * "Estimation of primary drainage three-phase relative permeability for organic
+     * liquid transport in the vadose zone", Leonardo I. Oliveira, Avery H. Demond,
+     * Journal of Contaminant Hydrology 66 (2003), 261-285
+     *
+     *
+     * \param sw Wetting liquid saturation
+     * \param sg Gas saturation
+     * \param saturation Non-wetting liquid saturation
+     * \param params Array of parameters.
+     */
+    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
+    {
+        swe = std::min(swe, 1.);
+        ste = std::min(ste, 1.);
+
+        // regularization
+        if(swe <= 0.0) swe = 0.;
+        if(ste <= 0.0) ste = 0.;
+        if(ste - swe <= 0.0) return 0.;
+
+        return ParkerVanGen3P::krn(params, swe, sne, ste);
+    }
+
+
+    /*!
+     * \brief The relative permeability for the non-wetting phase
+     *        of the medium implied by van Genuchten's
+     *        parameterization.
+     *
+     * The permeability of gas in a 3p system equals the standard 2p description.
+     * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
+     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
+     *
+     * \param sw Wetting liquid saturation
+     * \param sn Non-wetting liquid saturation
+     * \param saturation Gas saturation
+     * \param params Array of parameters.
+     */
+    static Scalar krg(const Params &params, Scalar ste)
+    {
+
+        /* regularization */
+        if(ste > 1.0) return 0.0;
+        if(ste < 0.0) return 1.0;
+
+        return ParkerVanGen3P::krg(params, ste);
+    }
+
+    /*!
+     * \brief The relative permeability for a phase.
+     * \param sw Wetting liquid saturation
+     * \param sg Gas saturation
+     * \param sn Non-wetting liquid saturation
+     * \param params Array of parameters.
+     * \param phaseIdx indicator, The saturation of all phases.
+     */ //TODO: indices???
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste/*sg*/)
+    {
+        switch (phaseIdx)
         {
-            return 1e100;
+        case 0:
+            return krw(params, swe);
+            break;
+        case 1:
+            return krn(params, swe, sne, ste);
+            break;
+        case 2:
+            return krg(params, ste);
+            break;
         }
-
-        // calculate the saturation which corresponds to the
-        // saturation in the non-regularized version of the
-        // Brooks-Corey law
-        Scalar swe;
-        if (pc < 0)
-            swe = 1.5; // make sure we regularize below
-        else
-            swe = BrooksCorey::sw(params, pc);
-
-        // derivative of the regularization
-        if (swe <= sThres) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
-            return 1/m;
-        }
-        else if (swe > 1.0) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            return 1/m;
-        }
-        return 1.0/BrooksCorey::dpc_dsw(params, swe);
+        return 0;
     }
 
-    /*!
-     * \brief   Regularized version of the  relative permeability
-     *          for the wetting phase of
-     *          the medium implied by the Brooks-Corey
-     *          parameterization.
-     *
-     *  regularized part:
-     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
-     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
-     *    - between \f$\mathrm{ 0.95 \leq \overline{S}_w \leq 1}\f$:  use a spline as interpolation
-     *
-     *  For not-regularized part:
-        \copydetails BrooksCorey::krw()
-     */
-    static Scalar krw(const Params &params, Scalar swe)
-    {
-        if (swe <= 0.0)
-            return 0.0;
-        else if (swe >= 1.0)
-            return 1.0;
+   /*!
+    * \brief the basis for calculating adsorbed NAPL in storage term
+    * \param params Array of parameters
+    */
+   static Scalar bulkDensTimesAdsorpCoeff (const Params &params)
+   {
+      return ParkerVanGen3P::bulkDensTimesAdsorpCoeff(params);
+   }
 
-        return BrooksCorey::krw(params, swe);
-    }
-
-    /*!
-     * \brief   Regularized version of the  relative permeability
-     *          for the non-wetting phase of
-     *          the medium implied by the Brooks-Corey
-     *          parameterization.
-     *
-     * regularized part:
-     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
-     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
-     *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
-     *
-         \copydetails BrooksCorey::krn()
-     *
-     */
-    static Scalar krn(const Params &params, Scalar swe)
-    {
-        if (swe >= 1.0)
-            return 0.0;
-        else if (swe <= 0.0)
-            return 1.0;
-
-        return BrooksCorey::krn(params, swe);
-    }
 };
 }
 

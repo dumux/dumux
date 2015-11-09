@@ -67,158 +67,83 @@ public:
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
      */
-    static Scalar pcgw(const Params &params, Scalar sw)
+    static Scalar pcgw(const Params &params, Scalar swe)
     {
     /*
          sw = wetting phase saturation, or,
               sum of wetting phase saturations
          alpha : VanGenuchten-alpha
-    this function is just copied from MUFTE/pml/constrel3p3cni.c
-    that is why variable names do not yet fulfill Dumux rules, TODO Change */
+    */
+    Scalar r,x,vgm;
 
-    Scalar r,se,x,vgm;
-    Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.2;//0.01;
+//     se   = (sw-params.swr())/(1.-params.swr/*sgr*/());
 
-    se   = (sw-params.swr())/(1.-params.swr/*sgr*/()); //TODO swr
+      vgm = 1.-1./params.vgn();
 
-    /* Snr  = 0.0;   test version   */
-
-    /* regularization */
-    if (se<0.0) se=0.0;
-    if (se>1.0) se=1.0;
-    vgm = 1.-1./params.vgn();
-
-        if (se>pcvgReg && se<1-pcvgReg)
-        {
-            r = std::pow(se,-1/vgm);
-            x = r-1;
-            vgm = 1-vgm;
-            x = std::pow(x,vgm);
-            r = x/params.vgAlpha();
-            return(r);
-        }
-        else
-        {
-            /* value and derivative at regularization point */
-            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
-
-            /* evaluate tangential */
-            r        = (se-seRegu)*pcPrime+pc;
-            return(r/params.betaGw());
-        }
+      r = std::pow(swe,-1/vgm);
+      x = r-1;
+      vgm = 1-vgm;
+      x = std::pow(x,vgm);
+      r = x/params.vgAlpha();
+      return(r);
     }
+
   /*!
      * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
-    static Scalar pcnw(const Params &params, Scalar sw)
+    static Scalar pcnw(const Params &params, Scalar swe)
     {
     /*
          sw = wetting phase saturation, or,
               sum of wetting phase saturations
-         alpha : VanGenuchten-alpha
-    this function is just copied from MUFTE/pml/constrel3p3cni.c
-    that is why variable names do not yet fulfill Dumux rules, TODO Change */
+         alpha : VanGenuchten-alpha */
 
-    Scalar r,se,x,vgm;
-    Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.2/*0.01*/;
-
-    se   = (sw-params.swr())/(1.-params.swr/*snr*/()); //swr
-
-    /* Snr  = 0.0;   test version   */
-
-    /* regularization */
-    if (se<0.0) se=0.0;
-    if (se>1.0) se=1.0;
+    Scalar r,x,vgm;
+//     se   = (sw-params.swr())/(1.-params.swr/*snr*/()); //swr
     vgm = 1.-1./params.vgn();
 
-        if (se>pcvgReg && se<1-pcvgReg)
-        {
-            r = std::pow(se,-1/vgm);
-            x = r-1;
-            vgm = 1-vgm;
-            x = std::pow(x,vgm);
-            r = x/params.vgAlpha();
-            return(r);
-        }
-        else
-        {
-            /* value and derivative at regularization point */
-            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
-
-            /* evaluate tangential */
-            r        = (se-seRegu)*pcPrime+pc;
-            return(r/params.betaNw());
-        }
+      r = std::pow(swe,-1/vgm);
+      x = r-1;
+      vgm = 1-vgm;
+      x = std::pow(x,vgm);
+      r = x/params.vgAlpha();
+      return(r);
     }
+
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
-    static Scalar pcgn(const Params &params, Scalar St)
+    static Scalar pcgn(const Params &params, Scalar ste/*St*/)
     {
     /*
          St = sum of wetting (liquid) phase saturations
-         alpha : VanGenuchten-alpha
-    this function is just copied from MUFTE/pml/constrel3p3cni.c
-    that is why variable names do not yet fulfill Dumux rules, TODO Change */
+         alpha : VanGenuchten-alpha */
+    Scalar r,x,vgm;
+//     se   = (St-params.swrx())/(1.-params.swrx());
+      vgm = 1.-1./params.vgn();
 
-    Scalar r,se,x,vgm;
-    Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = 0.2/*0.01*/;
-
-    se   = (St-params.swrx())/(1.-params.swrx());
-
-    /* Snr  = 0.0;   test version   */
-
-    /* regularization */
-    if (se<0.0) se=0.0;
-    if (se>1.0) se=1.0;
-    vgm = 1.-1./params.vgn();
-
-        if (se>pcvgReg && se<1-pcvgReg)
-        {
-            r = std::pow(se,-1/vgm);
-            x = r-1;
-            vgm = 1-vgm;
-            x = std::pow(x,vgm);
-            r = x/params.vgAlpha();
-            return(r);
-        }
-        else
-        {
-            /* value and derivative at regularization point */
-            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
-
-            /* evaluate tangential */
-            r        = (se-seRegu)*pcPrime+pc;
-            return(r/params.betaGn());
-        }
+      r = std::pow(ste,-1/vgm);
+      x = r-1;
+      vgm = 1-vgm;
+      x = std::pow(x,vgm);
+      r = x/params.vgAlpha();
+      return(r);
     }
  /*!
      * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c
      * \param params Array of parameters
      * \param sn Non-wetting liquid saturation
      */
-    static Scalar pcAlpha(const Params &params, Scalar sn)
+    static Scalar pcAlpha(const Params &params, Scalar sne)
     {
         /* continuous transition to zero */
-        Scalar alpha,sne;
+        Scalar alpha/*,sne*/;
 
-        sne=sn;
+//         sne=sn;
         /* regularization */
         if (sne<=0.001) sne=0.0;
         if (sne>=1.0) sne=1.0;
@@ -279,18 +204,14 @@ public:
      * \param saturation wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krw(const Params &params,  Scalar saturation, Scalar sn, Scalar sg)
+    static Scalar krw(const Params &params,  Scalar swe/*, Scalar sn, Scalar sg*/)
     {
 
         //transformation to effective saturation
-        Scalar se = (saturation - params.swr()) / (1-params.swr());
+//         Scalar se = (saturation - params.swr()) / (1-params.swr());
 
-        /* regularization */
-        if(se > 1.0) return 1.;
-        if(se < 0.0) return 0.;
-
-        Scalar r = 1. - std::pow(1 - std::pow(se, 1/params.vgm()), params.vgm());
-        return std::sqrt(se)*r*r;
+        Scalar r = 1. - std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
+        return std::sqrt(swe)*r*r;
     }
 
     /*!
@@ -310,16 +231,11 @@ public:
      * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krn(const Params &params, Scalar sw, Scalar saturation, Scalar sg)
+    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste/*, Scalar saturation, Scalar sg*/)
     {
 
-        Scalar swe = std::min((sw - params.swr()) / (1 - params.swr()), 1.);
-        Scalar ste = std::min((sw +  saturation - params.swrx/*swr*/()) / (1 - params.swrx/*swr*/()), 1.);
-
-        // regularization
-        if(swe <= 0.0) swe = 0.;
-        if(ste <= 0.0) ste = 0.;
-        if(ste - swe <= 0.0) return 0.;
+//         Scalar swe = std::min((sw - params.swr()) / (1 - params.swr()), 1.);
+//         Scalar ste = std::min((sw +  saturation - params.swrx/*swr*/()) / (1 - params.swrx/*swr*/()), 1.);
 
         Scalar krn_;
         krn_ = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
@@ -329,11 +245,11 @@ public:
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((saturation - params.snr()/ (1-params.swr())), 1.), 0.);
+            Scalar resIncluded = std::max(std::min((sne/*saturation*/ - params.snr()/ (1-params.swr())), 1.), 0.);
             krn_ *= std::sqrt(resIncluded );
         }
         else
-            krn_ *= std::sqrt(saturation / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
+            krn_ *= std::sqrt(sne/*saturation*/ / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
 
         return krn_;
@@ -354,16 +270,11 @@ public:
      * \param saturation Gas saturation
      * \param params Array of parameters.
      */
-    static Scalar krg(const Params &params, Scalar sw, Scalar sn, Scalar saturation)
+    static Scalar krg(const Params &params, Scalar ste)
     {
 
         // se = (sw+sn - Sgr)/(1-Sgr)
-        Scalar se = std::min(((1-saturation) - params.swrx/*sgr*/()) / (1 - params.swrx/*sgr*/()), 1.);
-
-
-        /* regularization */
-        if(se > 1.0) return 0.0;
-        if(se < 0.0) return 1.0;
+//         Scalar se = std::min(((1-saturation) - params.swrx/*sgr*/()) / (1 - params.swrx/*sgr*/()), 1.);
         Scalar scalFact = 1.;
 //         if (saturation<=0.1)
 //         {
@@ -371,7 +282,7 @@ public:
 //           if (scalFact < 0.) scalFact = 0.;
 //         }
 
-        Scalar result = scalFact * std::pow(1 - se, 1.0/3.) * std::pow(1 - std::pow(se, 1/params.vgm()), 2*params.vgm());
+        Scalar result = scalFact * std::pow(1 - ste, 1.0/3.) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
 
         return result;
     }
@@ -383,19 +294,19 @@ public:
      * \param sn Non-wetting liquid saturation
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
-     */
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar sw, const Scalar sn, const Scalar sg)
+     */ //TODO: indices???
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste/*sg*/)
     {
         switch (phaseIdx)
         {
         case 0:
-            return krw(params, sw, sn, sg);
+            return krw(params, swe/*, sn, sg*/);
             break;
         case 1:
-            return krn(params, sw, sn, sg);
+            return krn(params, swe, sne, ste/*sg*/);
             break;
         case 2:
-            return krg(params, sw, sn, sg);
+            return krg(params, ste/*sw, sn, sg*/);
             break;
         }
         return 0;

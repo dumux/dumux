@@ -110,13 +110,13 @@ public:
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
-    static Scalar pcgn(const Params &params, Scalar St)
+    static Scalar pcgn(const Params &params, Scalar st)
     {
-        return EffLaw::pcgn(params, swToSwe(params, sw));
+        return EffLaw::pcgn(params, stToSte(params, st));
     }
 
      /*!
-     * \brief The capillary pressure-saturation curve //TODO: was ist das?
+     * \brief The capillary pressure-saturation curve 
      * \param params Array of parameters
      * \param sn Non-wetting liquid saturation
      */
@@ -140,7 +140,7 @@ public:
     static Scalar sw(const Params &params, Scalar pc)
     {
 //         return sweToSw_(params, EffLaw::sw(params, pc));
-        return EffLaw::sw(params, pc));
+        return EffLaw::sw(params, pc);
     }
 
     /*!
@@ -162,7 +162,7 @@ public:
     static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
 //         return EffLaw::dpc_dsw(params, swToSwe(params, sw) )*dswe_dsw_(params);
-        return EffLaw::dpc_dsw(params, pc));
+        return EffLaw::dpc_dsw(params, pc);
     }
 
     /*!
@@ -201,9 +201,9 @@ public:
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      *
      */
-    static Scalar krw(const Params &params, Scalar sw, Scalar sn, Scalar sg) //TODO: sn und sg???
+    static Scalar krw(const Params &params, Scalar sw, Scalar sn, Scalar sg)
     {
-        return EffLaw::krw(params, swToSwe(params, sw), snToSne(params, sn), sgToSge(params, sg));
+        return EffLaw::krw(params, swToSwe(params, sw));
     }
 
     /*!
@@ -233,9 +233,10 @@ public:
      * \return          Relative permeability of the non-wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
-    static Scalar krg(const Params &params, Scalar sw, Scalar sn, Scalar sg) //TODO: sg??
+    static Scalar krg(const Params &params, Scalar sw, Scalar sn, Scalar sg)
     {
-        return EffLaw::krg(params, swToSwe(params, sw), snToSne(params, sn), sgToSge(params, sg));
+        Scalar st = sw+sn;
+        return EffLaw::krg(params, stToSte(params, st));
     }
 
      /*!
@@ -248,7 +249,8 @@ public:
      */
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar sw, const Scalar sn, const Scalar sg)
     {
-        return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), snToSne(params, sn), sgToSge(params, sg));
+      Scalar st = sw+sn;
+      return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st)/*sgToSge(params, sg)*/);
     }
 
     /*!
@@ -271,8 +273,7 @@ public:
      */
     static Scalar swToSwe(const Params &params, Scalar sw)
     {
-//         return (sw - params.swr())/(1. - params.swr() - params.snr());
-        //TODO
+       return (sw-params.swr())/(1.-params.swr());
     }
 
     /*!
@@ -286,8 +287,21 @@ public:
      */
     static Scalar snToSne(const Params &params, Scalar sn)
     {
-//         return (sn - params.snr())/(1. - params.swr() - params.snr());
-        //TODO
+        return sn; // sne equals sn
+    }
+
+    /*!
+     * \brief Convert an absolute total liquid saturation to an effective one.
+     *
+     * \param st Absolute saturation of the total liquid phase (sw+sn) \f$\mathrm{[{S}_n]}\f$.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
+     * \return Effective saturation of the non-wetting phase.
+     */
+    static Scalar stToSte(const Params &params, Scalar st)
+    {
+        return (st-params.swr()) / (1-params.swr());
     }
 
      /*!
