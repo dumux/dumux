@@ -664,7 +664,7 @@ private:
     {
         // Check for refinement type
         std::string refType = "Local";
-        try { refType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), RefinementType);
+        try { refType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), RefinementType);
               if (refType != "Local" && refType != "Copy")
                    DUNE_THROW(Dune::IOError, "OneGrid only supports 'Local' or 'Copy' as refinment type. Not '"<< refType<<"'!");
         }
@@ -775,7 +775,7 @@ private:
     {
         // Check for refinement type
         std::string refType = "Local";
-        try { refType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), RefinementType);
+        try { refType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), RefinementType);
               if (refType != "Local" && refType != "Copy")
                    DUNE_THROW(Dune::IOError, "UGGrid only supports 'Local' or 'Copy' as refinment type. Not '"<< refType<<"'!");
         }
@@ -789,7 +789,7 @@ private:
 
         // Check for closure type
         std::string closureType = "Green";
-        try { closureType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), RefinementType);
+        try { closureType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), ClosureType);
               if (closureType != "None" && closureType != "Green")
                    DUNE_THROW(Dune::IOError, "UGGrid only supports 'Green' or 'None' as closure type. Not '"<< closureType<<"'!");
         }
