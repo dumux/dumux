@@ -94,31 +94,26 @@ public:
      */
     static Scalar pcgw(const Params &params, Scalar swe)
     {
-        Scalar r,x,vgm;
-        Scalar pc,pcPrime,seRegu;
-        Scalar pcvgReg = params.thresholdSw();//0.2;//0.01; //TODO paramter
-
+        const Scalar pcvgReg = params.thresholdSw();
 
         /* regularization */
         if (swe<0.0) swe=0.0;
         if (swe>1.0) swe=1.0;
-        vgm = 1.-1./params.vgn();
 
         if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
         {
-            ParkerVanGen3P::pcgw(params, swe);
+            return ParkerVanGen3P::pcgw(params, swe);
         }
         else //use regularization
         {
-            /* value and derivative at regularization point */
-            if (swe<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.swr())/params.vgn();
+            const Scalar seRegu = (swe<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
 
-            /* evaluate tangential */
-            r = (swe-seRegu)*pcPrime+pc;
-            return(r/params.betaGw());
+            // value and derivative at regularization point
+            const Scalar pc = ParkerVanGen3P::pcgw(params, seRegu);
+            const Scalar slope = ParkerVanGen3P::dpcgw_dsw(params, seRegu);
+
+            //evaluate tangential
+            return (swe-seRegu)*slope+pc;
         }
     }
 
@@ -129,31 +124,26 @@ public:
      */
     static Scalar pcnw(const Params &params, Scalar swe)
     {
+        const Scalar pcvgReg = params.thresholdSw();
 
-    Scalar r,vgm;
-    Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = params.thresholdSw();///*0.2*/0.01;
-
-    /* regularization */
-    if (swe<0.0) swe=0.0;
-    if (swe>1.0) swe=1.0;
-    vgm = 1.-1./params.vgn();
+        /* regularization */
+        if (swe<0.0) swe=0.0;
+        if (swe>1.0) swe=1.0;
 
         if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
         {
           return ParkerVanGen3P::pcnw(params, swe);
         }
-        else
+        else //use regularization
         {
-            /* value and derivative at regularization point */
-            if (swe<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.swr())/params.vgn();
+            const Scalar seRegu = (swe<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
 
-            /* evaluate tangential */
-            r = (swe-seRegu)*pcPrime+pc;
-            return(r/params.betaNw());
+            // value and derivative at regularization point
+           const Scalar pc = ParkerVanGen3P::pcnw(params, seRegu);
+           const Scalar slope = ParkerVanGen3P::dpcnw_dsw(params, seRegu);
+
+            //evaluate tangential
+            return (swe-seRegu)*slope + pc;
         }
     }
     /*!
@@ -163,33 +153,30 @@ public:
      */
     static Scalar pcgn(const Params &params, Scalar ste)
     {
-    Scalar r,vgm;
-    Scalar pc,pcPrime,seRegu;
-    Scalar pcvgReg = params.thresholdSw();///*0.2*/0.01;
+        const Scalar pcvgReg = params.thresholdSw();
 
+        /* regularization */
+        if (ste<0.0) ste=0.0;
+        if (ste>1.0) ste=1.0;
 
-    /* regularization */
-    if (ste<0.0) ste=0.0;
-    if (ste>1.0) ste=1.0;
-    vgm = 1.-1./params.vgn();
 
         if (ste>pcvgReg && ste<1-pcvgReg) //use actual material law
         {
           return ParkerVanGen3P::pcgn(params, ste);
         }
-        else
+        else //use regularization
         {
-            /* value and derivative at regularization point */
-            if (ste<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
-            pc = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
-                      *(-1/vgm)/params.vgAlpha()/(1-params.swr())/params.vgn();
+            const Scalar seRegu = (ste<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
 
-            /* evaluate tangential */
-            r = (ste-seRegu)*pcPrime+pc;
-            return(r/params.betaGn());
+            // value and derivative at regularization point
+            const Scalar pc = ParkerVanGen3P::pcgn(params, seRegu);
+            const Scalar slope = ParkerVanGen3P::dpcgn_dst(params, seRegu);
+
+            //evaluate tangential
+           return (ste-seRegu)*slope + pc;
         }
     }
+
     /*!
      * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
@@ -247,11 +234,11 @@ public:
      * \param saturation wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krw(const Params &params,  Scalar swe)
+    static Scalar krw(const Params &params,  const Scalar swe)
     {
         //use regularization
-        if(swe > 1.0) return 1.;
-        if(swe < 0.0) return 0.;
+        if(swe > 1.0) return 1.0;
+        if(swe < 0.0) return 0.0;
 
         //or use actual material law
         return ParkerVanGen3P::krw(params, swe);
@@ -276,13 +263,13 @@ public:
      */
     static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
     {
-        swe = std::min(swe, 1.);
-        ste = std::min(ste, 1.);
+        swe = std::min(swe, 1.0);
+        ste = std::min(ste, 1.0);
 
         //use regularization
-        if(swe <= 0.0) swe = 0.;
-        if(ste <= 0.0) ste = 0.;
-        if(ste - swe <= 0.0) return 0.;
+        if(swe <= 0.0) swe = 0.0;
+        if(ste <= 0.0) ste = 0.0;
+        if(ste - swe <= 0.0) return 0.0;
 
         //or use actual material law
         return ParkerVanGen3P::krn(params, swe, sne, ste);
@@ -303,9 +290,8 @@ public:
      * \param saturation Gas saturation
      * \param params Array of parameters.
      */
-    static Scalar krg(const Params &params, Scalar ste)
+    static Scalar krg(const Params &params, const Scalar ste)
     {
-
         //use regularization
         if(ste > 1.0) return 0.0;
         if(ste < 0.0) return 1.0;
@@ -328,15 +314,13 @@ public:
         {
         case 0:
             return krw(params, swe);
-            break;
         case 1:
             return krn(params, swe, sne, ste);
-            break;
         case 2:
             return krg(params, ste);
-            break;
         }
-        return 0;
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Invalid phase index ");
     }
 
    /*!

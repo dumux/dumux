@@ -57,7 +57,7 @@ public:
      * \param sw wetting phase saturation
      *
      */
-    static Scalar pc(const Params &params, Scalar sw)
+    static Scalar pc(const Params &params, const Scalar sw)
     {
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
@@ -67,17 +67,9 @@ public:
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
      */
-    static Scalar pcgw(const Params &params, Scalar swe)
+    static Scalar pcgw(const Params &params, const Scalar swe)
     {
-        Scalar r,x,vgm;
-        vgm = 1.-1./params.vgn();
-
-        r = std::pow(swe,-1/vgm);
-        x = r-1;
-        vgm = 1-vgm;
-        x = std::pow(x,vgm);
-        r = x/params.vgAlpha();
-        return (r/params.betaGw());
+        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGw();
     }
 
   /*!
@@ -85,17 +77,9 @@ public:
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
-    static Scalar pcnw(const Params &params, Scalar swe)
+    static Scalar pcnw(const Params &params, const Scalar swe)
     {
-        Scalar r,x,vgm;
-        vgm = 1.-1./params.vgn();
-
-        r = std::pow(swe,-1/vgm);
-        x = r-1;
-        vgm = 1-vgm;
-        x = std::pow(x,vgm);
-        r = x/params.vgAlpha();
-        return (r/params.betaNw());
+        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaNw();
     }
 
     /*!
@@ -103,17 +87,9 @@ public:
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
-    static Scalar pcgn(const Params &params, Scalar ste)
+    static Scalar pcgn(const Params &params, const Scalar ste)
     {
-        Scalar r,x,vgm;
-        vgm = 1.-1./params.vgn();
-
-        r = std::pow(ste,-1/vgm);
-        x = r-1;
-        vgm = 1-vgm;
-        x = std::pow(x,vgm);
-        r = x/params.vgAlpha();
-        return (r/params.betaGn());
+        return std::pow(std::pow(ste, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGn();
     }
 
      /*!
@@ -129,13 +105,16 @@ public:
         if (sne<=0.001) sne=0.0;
         if (sne>=1.0) sne=1.0;
 
-        if (sne>params.snr()) alpha = 1.0;
+        if (sne>params.snr())
+            alpha = 1.0;
         else
         {
-         if (params.snr()>=0.001) alpha = sne/params.snr();
-         else          alpha = 0.0;
+            if (params.snr()>=0.001)
+                alpha = sne/params.snr();
+            else
+                alpha = 0.0;
         }
-        return(alpha);
+        return alpha;
     }
 
     /*!
@@ -144,7 +123,7 @@ public:
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      *
      */
-    static Scalar sw(const Params &params, Scalar pc)
+    static Scalar sw(const Params &params, const Scalar pc)
     {
         DUNE_THROW(Dune::NotImplemented, "sw(pc) for three phases not implemented! Do it yourself!");
     }
@@ -155,10 +134,50 @@ public:
      * \param params Array of parameters
      * \param sw Wetting liquid saturation
     */
-    static Scalar dpc_dsw(const Params &params, Scalar sw)
+    static Scalar dpc_dsw(const Params &params, const Scalar sw)
     {
         DUNE_THROW(Dune::NotImplemented, "dpc/dsw for three phases not implemented! Do it yourself!");
     }
+
+     /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param sw Wetting liquid saturation
+    */
+    static Scalar dpcgw_dsw(const Params &params, const Scalar seRegu)
+    {
+        const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
+        return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
+            * powSeRegu/seRegu/params.vgm()/params.betaGw();
+    }
+
+     /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param sw Wetting liquid saturation
+    */
+    static Scalar dpcnw_dsw(const Params &params, const Scalar seRegu)
+    {
+        const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
+        return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
+            * powSeRegu/seRegu/params.vgm()/params.betaNw();
+    }
+
+         /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param sw Wetting liquid saturation
+    */
+    static Scalar dpcgn_dst(const Params &params, const Scalar seRegu)
+    {
+        const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
+        return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
+            * powSeRegu/seRegu/params.vgm()/params.betaGn();
+    }
+
 
     /*!
      * \brief Returns the partial derivative of the effective
@@ -166,7 +185,7 @@ public:
      * \param params Array of parameters
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dsw_dpc(const Params &params, const Scalar pc)
     {
         DUNE_THROW(Dune::NotImplemented, "dsw/dpc for three phases not implemented! Do it yourself!");
     }
@@ -185,9 +204,9 @@ public:
      * \param saturation wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krw(const Params &params,  Scalar swe)
+    static Scalar krw(const Params &params,  const Scalar swe)
     {
-        Scalar r = 1. - std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
+        const Scalar r = 1.0 - std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
         return std::sqrt(swe)*r*r;
     }
 
@@ -208,24 +227,24 @@ public:
      * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
+    static Scalar krn(const Params &params, const Scalar swe, const Scalar sne, const Scalar ste)
     {
-        Scalar krn_;
-        krn_ = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
-        krn_ -= std::pow(1 - std::pow(ste, 1/params.vgm()), params.vgm());
-        krn_ *= krn_;
+        Scalar krn;
+        krn = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
+        krn -= std::pow(1 - std::pow(ste, 1/params.vgm()), params.vgm());
+        krn *= krn;
 
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((sne - params.snr()/ (1-params.swr())), 1.), 0.);
-            krn_ *= std::sqrt(resIncluded );
+            Scalar resIncluded = std::max(std::min((sne - params.snr()/ (1-params.swr())), 1.0), 0.0);
+            krn *= std::sqrt(resIncluded );
         }
         else
-            krn_ *= std::sqrt(sne / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
+            krn *= std::sqrt(sne / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
 
-        return krn_;
+        return krn;
     }
 
 
@@ -243,16 +262,16 @@ public:
      * \param saturation Gas saturation
      * \param params Array of parameters.
      */
-    static Scalar krg(const Params &params, Scalar ste)
+    static Scalar krg(const Params &params, const Scalar ste)
     {
-        Scalar scalFact = 1.;
+        Scalar scalFact = 1.0;
 //         if (saturation<=0.1)
 //         {
 //           scalFact = (saturation - params.sgr())/(0.1 - params.sgr());
 //           if (scalFact < 0.) scalFact = 0.;
 //         }
 
-        Scalar result = scalFact * std::pow(1 - ste, 1.0/3.) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
+        Scalar result = scalFact * std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
 
         return result;
     }
@@ -271,15 +290,13 @@ public:
         {
         case 0:
             return krw(params, swe);
-            break;
         case 1:
             return krn(params, swe, sne, ste);
-            break;
         case 2:
             return krg(params, ste);
-            break;
         }
-        return 0;
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Invalid phase index ");
     }
 
    /*!

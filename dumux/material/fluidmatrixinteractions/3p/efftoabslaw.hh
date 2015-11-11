@@ -79,7 +79,7 @@ public:
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...)
      *
      */
-    static Scalar pc(const Params &params, Scalar sw)
+    static Scalar pc(const Params &params, const Scalar sw)
     {
         return EffLaw::pc(params, swToSwe(params, sw));
     }
@@ -90,7 +90,7 @@ public:
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
      */
-    static Scalar pcgw(const Params &params, Scalar sw)
+    static Scalar pcgw(const Params &params, const Scalar sw)
     {
          return EffLaw::pcgw(params, swToSwe(params, sw));
     }
@@ -100,7 +100,7 @@ public:
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
-    static Scalar pcnw(const Params &params, Scalar sw)
+    static Scalar pcnw(const Params &params, const Scalar sw)
     {
         return EffLaw::pcnw(params, swToSwe(params, sw));
     }
@@ -110,7 +110,7 @@ public:
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
-    static Scalar pcgn(const Params &params, Scalar st)
+    static Scalar pcgn(const Params &params, const Scalar st)
     {
         return EffLaw::pcgn(params, stToSte(params, st));
     }
@@ -120,7 +120,7 @@ public:
      * \param params Array of parameters
      * \param sn Non-wetting liquid saturation
      */
-    static Scalar pcAlpha(const Params &params, Scalar sn)
+    static Scalar pcAlpha(const Params &params, const Scalar sn)
     {
         return EffLaw::pcAlpha(params, sn);
     }
@@ -137,7 +137,7 @@ public:
      *
      * \return The absolute saturation of the wetting phase \f$\mathrm{[S_w]}\f$
      */
-    static Scalar sw(const Params &params, Scalar pc)
+    static Scalar sw(const Params &params, const Scalar pc)
     {
         return EffLaw::sw(params, pc);
     }
@@ -158,7 +158,7 @@ public:
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to
                         EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
     */
-    static Scalar dpc_dsw(const Params &params, Scalar sw)
+    static Scalar dpc_dsw(const Params &params, const Scalar sw)
     {
         return EffLaw::dpc_dsw(params, pc);
     }
@@ -181,7 +181,7 @@ public:
      * \return Partial derivative of effective saturation w.r.t. \f$\mathrm{[p_c]}\f$ according to
                         EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dsw_dpc(const Params &params, const Scalar pc)
     {
         return EffLaw::dsw_dpc(params, pc);
     }
@@ -198,7 +198,7 @@ public:
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      *
      */
-    static Scalar krw(const Params &params, Scalar sw, Scalar sn, Scalar sg)
+    static Scalar krw(const Params &params, Scalar sw, const Scalar sn)
     {
         return EffLaw::krw(params, swToSwe(params, sw));
     }
@@ -214,9 +214,9 @@ public:
      * \return          Relative permeability of the non-wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
-    static Scalar krn(const Params &params, Scalar sw, Scalar sn, Scalar sg)
+    static Scalar krn(const Params &params, const Scalar sw, const Scalar sn)
     {
-        Scalar st = sw+sn;
+        const Scalar st = sw+sn;
         return EffLaw::krn(params, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st));
     }
 
@@ -231,9 +231,9 @@ public:
      * \return          Relative permeability of the non-wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
-    static Scalar krg(const Params &params, Scalar sw, Scalar sn, Scalar sg)
+    static Scalar krg(const Params &params, const Scalar sw, const Scalar sn)
     {
-        Scalar st = sw+sn;
+        const Scalar st = sw+sn;
         return EffLaw::krg(params, stToSte(params, st));
     }
 
@@ -247,8 +247,8 @@ public:
      */
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar sw, const Scalar sn, const Scalar sg)
     {
-      Scalar st = sw+sn;
-      return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st)/*sgToSge(params, sg)*/);
+      const Scalar st = sw+sn;
+      return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st));
     }
 
     /*!
@@ -269,7 +269,7 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Effective saturation of the wetting phase.
      */
-    static Scalar swToSwe(const Params &params, Scalar sw)
+    static Scalar swToSwe(const Params &params, const Scalar sw)
     {
        return (sw-params.swr())/(1.-params.swr());
     }
@@ -283,7 +283,7 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Effective saturation of the non-wetting phase.
      */
-    static Scalar snToSne(const Params &params, Scalar sn)
+    static Scalar snToSne(const Params &params, const Scalar sn)
     {
         return sn; // sne equals sn
     }
@@ -297,7 +297,7 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Effective saturation of the non-wetting phase.
      */
-    static Scalar stToSte(const Params &params, Scalar st)
+    static Scalar stToSte(const Params &params, const Scalar st)
     {
         return (st-params.swr()) / (1-params.swr());
     }

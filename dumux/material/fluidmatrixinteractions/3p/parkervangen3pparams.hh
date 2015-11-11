@@ -42,18 +42,17 @@ public:
     typedef ScalarT Scalar;
 
     ParkerVanGen3PParams()
-    {betaGw_ = betaNw_ = betaGn_ = 1.;}
+    {betaGw_ = betaNw_ = betaGn_ = 1.0;}
 
     ParkerVanGen3PParams(Scalar vgAlpha, Scalar vgn, Scalar KdNAPL, Scalar rhoBulk,
-                         Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1.,
-                         Scalar betaGn = 1., Scalar betaGw = 1., bool regardSnr=false)
+                         Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1.0,
+                         Scalar betaGn = 1.0, Scalar betaGw = 1.0, bool regardSnr=false)
     {
         setVgAlpha(vgAlpha);
         setVgn(vgn);
         setSwr(residualSaturation[0]);
         setSnr(residualSaturation[1]);
         setSgr(residualSaturation[2]);
-//         setSwrx(residualSaturation[3]);
         setKrRegardsSnr(regardSnr);
         setKdNAPL(KdNAPL);
         setBetaNw(betaNw);
@@ -121,13 +120,10 @@ public:
         {
         case 0:
             return swr_;
-            break;
         case 1:
             return snr_;
-            break;
         case 2:
             DUNE_THROW(Dune::NotImplemented, "sgr for three phases not required and therefore not implemented");
-            break;
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

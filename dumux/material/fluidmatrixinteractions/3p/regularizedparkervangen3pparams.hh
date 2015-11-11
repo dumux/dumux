@@ -45,8 +45,7 @@ public:
 
     RegularizedParkerVanGen3PParams()
         : ParkerVanGen3PParams()
-    {
-    }
+    { thresholdSw_ = 1e-2; }
 
     RegularizedParkerVanGen3PParams(Scalar vgAlpha, Scalar vgn, Scalar KdNAPL, Scalar rhoBulk,
                          Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1.,
@@ -54,8 +53,7 @@ public:
         : ParkerVanGen3PParams(vgAlpha, vgn, KdNAPL, rhoBulk,
                          residualSaturation, betaNw,
                          betaGn , betaGw, regardSnr)
-    {
-    }
+    { thresholdSw_ = 1e-2; }
 
     /*!
      * \brief Threshold saturation below which the capillary pressure
@@ -73,8 +71,18 @@ public:
         // If you want to use a different regularization threshold,
         // overload this class and supply the new class as second
         // template parameter for the regularized Parker - van Genuchten law!
-        return 1e-2;
+        return thresholdSw_;
     }
+
+    /*!
+     * \brief Set the saturation threshold value
+     * \param input The saturation threshold value
+     */
+    void setThresholdSw(const Scalar input)
+    { thresholdSw_ = input; }
+
+private:
+    Scalar thresholdSw_;
 
 };
 } // namespace Dumux
