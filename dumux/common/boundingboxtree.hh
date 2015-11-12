@@ -216,7 +216,8 @@ public:
             const double t2 = n1.dot(v3);
             // If the point is not exactly on the plane the
             // points have to be on the same side
-            if (t1 != 0.0 && std::signbit(t1) != std::signbit(t2))
+            const double eps = eps_ * v.two_norm();
+            if (t1 < eps && t1 > -eps && std::signbit(t1) != std::signbit(t2))
                 return false;
         }
         return true;
