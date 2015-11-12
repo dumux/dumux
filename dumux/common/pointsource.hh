@@ -101,7 +101,7 @@ public:
     static void computePointSourceMap(const Problem& problem,
                                       const std::shared_ptr<BoundingBoxTree>& boundingBoxTree,
                                       std::vector<PointSource>& sources,
-                                      std::map<unsigned int, std::vector<PointSource> >& pointSourceMap)
+                                      std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
     {
         for (auto&& source : sources)
         {
@@ -120,31 +120,34 @@ public:
                     fvGeometry.update(problem.gridView(), element);
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
-                    std::vector<unsigned int> vertices;
+                    std::vector<unsigned int> scvs;
                     for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                     {
                         auto geometry = fvGeometry.subContVolGeometries[scvIdx];
                         if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(geometry, globalPos))
-                            vertices.push_back(problem.model().dofMapper().subIndex(element, scvIdx, dofCodim));
+                            scvs.push_back(scvIdx);
                     }
-                    for (unsigned int vIdx : vertices)
+                    // for all scvs that where tested positiv add the point sources
+                    // to the element/scv to point source map
+                    for (unsigned int scvIdx : scvs)
                     {
-                        // add the pointsource to the DOF map
-                        if (pointSourceMap.count(vIdx))
-                            pointSourceMap.at(vIdx).push_back(source);
+                        const auto key = std::make_pair(eIdx, scvIdx);
+                        if (pointSourceMap.count(key))
+                            pointSourceMap.at(key).push_back(source);
                         else
-                            pointSourceMap.insert({vIdx, {source}});
-                        // split equally on the number of vertices
-                        pointSourceMap.at(vIdx).back() /= vertices.size();
+                            pointSourceMap.insert({key, {source}});
+                        // split equally on the number of matched scvs
+                        pointSourceMap.at(key).back() /= scvs.size();
                     }
                 }
                 else
                 {
                     // add the pointsource to the DOF map
-                    if (pointSourceMap.count(eIdx))
-                        pointSourceMap.at(eIdx).push_back(source);
+                    const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
+                    if (pointSourceMap.count(key))
+                        pointSourceMap.at(key).push_back(source);
                     else
-                        pointSourceMap.insert({eIdx, {source}});
+                        pointSourceMap.insert({key, {source}});
                 }
             }
         }

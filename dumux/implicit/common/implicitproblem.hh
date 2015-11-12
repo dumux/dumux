@@ -951,20 +951,20 @@ public:
     }
 
     /*!
-     * \brief Adds contribution of point sources for a specific DOF
+     * \brief Adds contribution of point sources for a specific sub control volume
      *        to the values.
      */
-    void dofSources(PrimaryVariables &values,
-                    const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx,
-                    const ElementVolumeVariables &elemVolVars) const
+    void scvPointSources(PrimaryVariables &values,
+                         const Element &element,
+                         const FVElementGeometry &fvGeometry,
+                         const int scvIdx,
+                         const ElementVolumeVariables &elemVolVars) const
     {
-        unsigned int dofGlobalIdx = model_.dofMapper().subIndex(element, scvIdx, dofCodim);
-        if (pointSourceMap_.count(dofGlobalIdx))
+        auto key = std::make_pair(this->elementMapper().index(element), scvIdx);
+        if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
-            auto pointSources = pointSourceMap_.at(dofGlobalIdx);
+            auto pointSources = pointSourceMap_.at(key);
             asImp_().solDependentPointSources(pointSources, element, fvGeometry, scvIdx, elemVolVars);
 
             // Add the contributions to the dof source values
@@ -1059,7 +1059,7 @@ private:
     std::shared_ptr<GridAdaptModel> gridAdapt_;
 
     std::shared_ptr<BoundingBoxTree> boundingBoxTree_;
-    std::map<unsigned int, std::vector<PointSource> > pointSourceMap_;
+    std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> > pointSourceMap_;
 };
 } // namespace Dumux
 
