@@ -813,7 +813,7 @@ public:
     bool onBoundary(const Element &element, const int vIdx) const
     {
         if (isBox)
-            return onBoundary(vertexMapper().subIndex(element, vIdx, dim));
+            return asImp_().onBoundary(vertexMapper().subIndex(element, vIdx, dim));
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for cell-centered model");
@@ -830,7 +830,7 @@ public:
     bool onBoundary(const Element &element) const
     {
         if (!isBox)
-            return onBoundary(elementMapper().index(element));
+            return asImp_().onBoundary(elementMapper().index(element));
 
         else
             DUNE_THROW(Dune::InvalidStateException,
