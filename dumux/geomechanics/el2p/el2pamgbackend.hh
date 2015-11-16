@@ -30,10 +30,28 @@
 namespace Dumux {
 
 /*!
- * \brief Wraps the AMG backend such that it can be used for the el2p model.
+ * \brief Base class for the ElTwoP AMGBackend.
+ */
+template <class TypeTag, bool isParallel>
+class El2PAMGBackendBase : public AMGBackend<TypeTag>
+{
+    typedef AMGBackend<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+
+public:
+    /*!
+     * \copydoc AMGBackend::AMGBackend()
+     */
+    El2PAMGBackendBase(const Problem& problem)
+    : ParentType(problem)
+    {}
+};
+
+/*!
+ * \brief Specialization for the parallel setting.
  */
 template <class TypeTag>
-class El2PAMGBackend : public AMGBackend<TypeTag>
+class El2PAMGBackendBase<TypeTag, true> : public AMGBackend<TypeTag>
 {
     typedef AMGBackend<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -50,12 +68,10 @@ public:
     /*!
      * \copydoc AMGBackend::AMGBackend()
      */
-    El2PAMGBackend(const Problem& problem)
+    El2PAMGBackendBase(const Problem& problem)
     : ParentType(problem)
     {
-#if HAVE_MPI
         createBlockMatrixAndVectors_();
-#endif
     }
 
     /*!
@@ -64,14 +80,10 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-#if HAVE_MPI
         flatToBlocked_(A, x, b);
         int converged = ParentType::solve(*aBlocked_, *xBlocked_, *bBlocked_);
         blockedToFlat_(x, b);
         return converged;
-#else
-        return ParentType::solve(A, x, b);
-#endif
     }
 
 private:
@@ -192,6 +204,42 @@ private:
     std::shared_ptr<BlockMatrix> aBlocked_;
     std::shared_ptr<BlockVector> xBlocked_;
     std::shared_ptr<BlockVector> bBlocked_;
+};
+
+/*!
+ * \brief Wraps the AMG backend such that it can be used for the el2p model.
+ */
+template <class TypeTag>
+class El2PAMGBackend : public El2PAMGBackendBase
+<
+    TypeTag,
+#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
+    Dune::Capabilities::canCommunicate<typename GET_PROP_TYPE(TypeTag, Grid),
+                                       typename GET_PROP_TYPE(TypeTag, Grid)::dimension>::v
+#else
+    Dune::Capabilities::isParallel<typename GET_PROP_TYPE(TypeTag, Grid)>::v
+#endif
+>
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    enum { dofCodim = Grid::dimension };
+    enum {
+#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
+        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+#else
+        isParallel = Dune::Capabilities::isParallel<Grid>::v
+#endif
+    };
+    typedef El2PAMGBackendBase<TypeTag, isParallel> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+
+public:
+    /*!
+     * \copydoc AMGBackend::AMGBackend()
+     */
+    El2PAMGBackend(const Problem& problem)
+    : ParentType(problem)
+    {}
 };
 
 } // namespace Dumux
