@@ -533,24 +533,8 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * This is the method for the case where the Neumann condition is
-     * potentially solution dependent and requires some box method
-     * specific things.
-     *
      * \param values The neumann values for the conservation equations in units of
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
      * \param globalPos The position of the integration point of the boundary segment.
      *
      * This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
@@ -768,8 +752,10 @@ public:
 
     enum {
         // indices of the primary variables
-            pressureIdx = Indices::pwIdx,
-            saturationIdx = Indices::snIdx,
+        pressureIdx = Indices::pwIdx,
+        saturationIdx = Indices::snIdx,
+
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename Dune::MultipleCodimMultipleGeomTypeMapper<GridView,
@@ -807,7 +793,7 @@ public:
             {
                 // get global index of current vertex
                 int vIdxGlobal = vertexMapper_.index(vertex);
-                Dune::FieldVector<double, 3> globalPos =
+                Dune::FieldVector<double, dimWorld> globalPos =
                                 (vertex).geometry().corner(0);
 
                 // compare coordinates of current vertex with position coordinates

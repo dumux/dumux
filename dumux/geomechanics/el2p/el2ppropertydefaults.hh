@@ -58,6 +58,7 @@
 #include <dumux/implicit/box/boxpropertydefaults.hh>
 #include <dumux/implicit/2p/2ppropertydefaults.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
 
 namespace Dumux
 {
@@ -68,7 +69,15 @@ namespace Dumux
 
 namespace Properties
 {
-SET_INT_PROP(BoxElasticTwoP, NumEq, 5); //!< set the number of equations to 5
+SET_PROP(BoxElasticTwoP, NumEq) //!< set the number of equations to dim + 2
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    static const int dim = Grid::dimension;
+public:
+    static const int value = dim + 2;
+};
+
 SET_INT_PROP(BoxElasticTwoP, NumPhases, 2); //!< The number of fluid phases in the elastic 2p model is 2
 
 //! Use the elastic local jacobian operator for the two-phase linear-elastic model
@@ -366,36 +375,49 @@ public:
     typedef Dune::FieldVector<Scalar, numEq> type;
 };
 
-//! the AMG backend will use the BCRS matrix directly
+template <class TypeTag, class MType, class VType, bool isParallel>
+class ElasticTwoPSolverTraits
+: public NonoverlappingSolverTraits<MType, VType, isParallel>
+{
+public:
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+};
+
+template <class TypeTag, class MType, class VType>
+class ElasticTwoPSolverTraits<TypeTag, MType, VType, true>
+: public NonoverlappingSolverTraits<MType, VType, true>
+{
+public:
+    typedef MType JacobianMatrix;
+};
+
+//! define the traits for the AMGBackend
 SET_PROP(BoxElasticTwoP, AmgTraits)
 {
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum { dofCodim = Grid::dimension,
+           isNonOverlapping = true };
     enum {
-        dofCodim = GridView::dimension,
-        isNonOverlapping = true
-    };
-#if HAVE_MPI
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
+        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
 #else
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    enum { numEq = JacobianMatrix::block_type::rows};
+        isParallel = Dune::Capabilities::isParallel<Grid>::v
 #endif
+    };
+
+    static const int numEq = isParallel ? GET_PROP_VALUE(TypeTag, NumEq)
+            : GET_PROP_TYPE(TypeTag, JacobianMatrix)::block_type::rows;
+
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
-#if HAVE_MPI
-    typedef MType JacobianMatrix;
-    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
-    typedef Dune::NonoverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
-    typedef Dune::NonoverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
-    typedef Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
-#else
-    typedef Dune::Amg::SequentialInformation Comm;
-    typedef Dune::MatrixAdapter<MType,VType,VType> LinearOperator;
-    typedef Dune::SeqScalarProduct<VType> ScalarProduct;
-    typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
-#endif
+    typedef ElasticTwoPSolverTraits<TypeTag, MType, VType, isParallel> SolverTraits;
+    typedef typename SolverTraits::Comm Comm;
+    typedef typename SolverTraits::LinearOperator LinearOperator;
+    typedef typename SolverTraits::ScalarProduct ScalarProduct;
+    typedef typename SolverTraits::Smoother Smoother;
+    typedef typename SolverTraits::JacobianMatrix JacobianMatrix;
 };
 
 //! The local jacobian operator
