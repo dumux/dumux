@@ -700,8 +700,8 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 
             Scalar lambda = cellDataI.mobility(wPhaseIdx)+cellDataI.mobility(nPhaseIdx);
             entries[matrix] += lambda * faceArea * fabs(permeability * unitOuterNormal) / (dist);
-            Scalar pressBC = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-            entries[rhs] += lambda * faceArea * pressBC * fabs(permeability * unitOuterNormal) / (dist);
+            Scalar pressBoundary = primaryVariablesOnBoundary[Indices::pressureEqIdx];
+            entries[rhs] += lambda * faceArea * pressBoundary * fabs(permeability * unitOuterNormal) / (dist);
             Scalar rightentry = (fractionalWI * cellDataI.density(wPhaseIdx)
                                  + fractionalNWI * cellDataI.density(nPhaseIdx))
                                  * lambda * faceArea * fabs(unitOuterNormal * permeability)

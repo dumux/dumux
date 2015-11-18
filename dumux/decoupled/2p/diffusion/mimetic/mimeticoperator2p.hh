@@ -99,11 +99,11 @@ public:
         Dune::FieldVector<Scalar, 2 * dim> pressTrace(0);
         Dune::FieldVector<Scalar, 2 * dim> gravPotTrace(0);
 
-        const auto element = *this->gridView_.template begin<0>();
+        const auto firstElement = *this->gridView_.template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem.referencePressure(element));
-        fluidState.setPressure(nPhaseIdx, problem.referencePressure(element));
-        fluidState.setTemperature(problem.temperature(element));
+        fluidState.setPressure(wPhaseIdx, problem.referencePressure(firstElement));
+        fluidState.setPressure(nPhaseIdx, problem.referencePressure(firstElement));
+        fluidState.setTemperature(problem.temperature(firstElement));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         Scalar densityDiff = FluidSystem::density(fluidState, nPhaseIdx) - FluidSystem::density(fluidState, wPhaseIdx);

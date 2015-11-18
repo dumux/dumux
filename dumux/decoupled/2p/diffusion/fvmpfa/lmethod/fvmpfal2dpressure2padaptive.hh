@@ -1226,7 +1226,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     // get outer normal vector scaled with half volume of face 'isIt23'
                     DimVector unitOuterNormal23(0);
 
-                    bool finished = false;
+                    finished = false;
 
                     for (const auto& intersection2
                          : Dune::intersections(problem_.gridView(), element2))
@@ -1256,7 +1256,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace23, 1, 0);
 
                                     problem_.boundaryTypes(bcType, intersection2);
-                                    PrimaryVariables boundValues(0.0);
+                                    boundValues = 0.0;
 
                                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 1);
                                     if (bcType.isNeumann(pressEqIdx))
@@ -1415,7 +1415,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 if (intersection14.boundary())
                 {
                     problem_.boundaryTypes(bcType, intersection14);
-                    PrimaryVariables boundValues(0.0);
+                    boundValues = 0.0;
 
                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 3);
                     if (bcType.isNeumann(pressEqIdx))
@@ -1488,7 +1488,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace34, 3, 1);
 
                                     problem_.boundaryTypes(bcType, intersection4);
-                                    PrimaryVariables boundValues(0.0);
+                                    boundValues = 0.0;
 
                                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 2);
                                     if (bcType.isNeumann(pressEqIdx))

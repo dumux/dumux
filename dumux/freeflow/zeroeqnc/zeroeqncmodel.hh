@@ -323,12 +323,12 @@ public:
         int wallIdx = this->getWallIdx(globalPos, posIdx);
         // mass fraction
         if (this->wall[wallIdx].maxMassFraction[posIdx] < fluxVars.massFraction(transportCompIdx))
-            for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
-                this->wall[wallIdx].maxMassFraction[posIdx] = fluxVars.massFraction(transportCompIdx);
+            for (int wIdx = 0; wIdx < walls; ++wIdx)
+                this->wall[wIdx].maxMassFraction[posIdx] = fluxVars.massFraction(transportCompIdx);
         // mole fraction
         if (this->wall[wallIdx].maxMoleFraction[posIdx] < fluxVars.moleFraction(transportCompIdx))
-            for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
-                this->wall[wallIdx].maxMoleFraction[posIdx] = fluxVars.moleFraction(transportCompIdx);
+            for (int wIdx = 0; wIdx < walls; ++wIdx)
+                this->wall[wIdx].maxMoleFraction[posIdx] = fluxVars.moleFraction(transportCompIdx);
     }
 
     //! \copydoc ZeroEqModel::doInterpolationFluxValues

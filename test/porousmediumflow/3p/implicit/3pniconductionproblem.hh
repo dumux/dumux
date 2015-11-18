@@ -179,8 +179,8 @@ public:
             FVElementGeometry fvGeometry;
             VolumeVariables volVars;
 
-            const auto element = *this->gridView().template begin<0>();
-            fvGeometry.update(this->gridView(), element);
+            const auto firstElement = *this->gridView().template begin<0>();
+            fvGeometry.update(this->gridView(), firstElement);
             PrimaryVariables initialPriVars(0);
             GlobalPosition globalPos(0);
             initial_(initialPriVars, globalPos);
@@ -188,19 +188,19 @@ public:
             //update the constant volume variables
             volVars.update(initialPriVars,
                            *this,
-                           element,
+                           firstElement,
                            fvGeometry,
                            0,
                            false);
 
-            Scalar porosity = this->spatialParams().porosity(element, fvGeometry, 0);
+            Scalar porosity = this->spatialParams().porosity(firstElement, fvGeometry, 0);
             Scalar densityW = volVars.density(swIdx);
             Scalar heatCapacityW = IapwsH2O::liquidHeatCapacity(initialPriVars[temperatureIdx], initialPriVars[pressureIdx]);
-            Scalar densityS = this->spatialParams().solidDensity(element, fvGeometry, 0);
-            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(element, fvGeometry, 0);
+            Scalar densityS = this->spatialParams().solidDensity(firstElement, fvGeometry, 0);
+            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(firstElement, fvGeometry, 0);
             Scalar storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
             Scalar effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                                                                                                         element, fvGeometry, 0);
+                                                                                                         firstElement, fvGeometry, 0);
             Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
 
 

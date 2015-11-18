@@ -345,8 +345,8 @@ public:
         int posIdx = this->getPosIdx(globalPos);
         int wallIdx = this->getWallIdx(globalPos, posIdx);
         if (this->wall[wallIdx].maxTemperature[posIdx] < fluxVars.temperature())
-            for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
-                this->wall[wallIdx].maxTemperature[posIdx] = fluxVars.temperature();
+            for (int wIdx = 0; wIdx < walls; ++wIdx)
+                this->wall[wIdx].maxTemperature[posIdx] = fluxVars.temperature();
     }
 
     //! \copydoc ZeroEqModel::doInterpolationFluxValues

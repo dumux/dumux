@@ -857,11 +857,11 @@ public:
                     JacobianInverseTransposed jacInvT =
                         geometry.jacobianInverseTransposed(bFace.ipLocal);
                     bFace.numFap = numScv;
-                    for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
+                    for (int scvIdx2 = 0; scvIdx2 < numScv; scvIdx2++)
                     {
-                        jacInvT.mv(localJac[scvIdx][0], bFace.grad[scvIdx]);
-                        bFace.shapeValue[scvIdx] = Scalar(shapeVal[scvIdx]);
-                        bFace.fapIndices[scvIdx] = scvIdx;
+                        jacInvT.mv(localJac[scvIdx2][0], bFace.grad[scvIdx2]);
+                        bFace.shapeValue[scvIdx2] = Scalar(shapeVal[scvIdx2]);
+                        bFace.fapIndices[scvIdx2] = scvIdx2;
                     }
                 }
             }

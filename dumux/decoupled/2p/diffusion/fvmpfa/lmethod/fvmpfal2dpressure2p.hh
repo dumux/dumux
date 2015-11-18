@@ -974,7 +974,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace23, 1, 0);
 
                                     problem_.boundaryTypes(bcType, intersection2);
-                                    PrimaryVariables boundValues(0.0);
+                                    boundValues = 0.0;
 
                                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 1);
                                     if (bcType.isNeumann(pressEqIdx))
@@ -1037,7 +1037,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                 if (intersection14.boundary())
                 {
                     problem_.boundaryTypes(bcType, intersection14);
-                    PrimaryVariables boundValues(0.0);
+                    boundValues = 0.0;
 
                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 3);
                     if (bcType.isNeumann(pressEqIdx))
@@ -1105,7 +1105,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace34, 3, 1);
 
                                     problem_.boundaryTypes(bcType, intersection4);
-                                    PrimaryVariables boundValues(0.0);
+                                    boundValues = 0.0;
 
                                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 2);
                                     if (bcType.isNeumann(pressEqIdx))

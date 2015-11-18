@@ -1076,7 +1076,6 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
                                      + rhoMean[nPhaseIdx] * lambda[nPhaseIdx] * dV[nPhaseIdx]) * gravityContributionAdditonal;
 
             // weithing accounts for the fraction of the subcontrol volume
-            Scalar weightingFactor = volume / perimeter;    // transforms flux through area A -> V * A/perimeter
             if(enableVolumeIntegral_) // switch off volume integral for mpfa case
             {
                 // correct for area integral
@@ -1095,19 +1094,19 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
             }
 
             // capillary pressure flux
-            Scalar pcGradient = cellDataI.capillaryPressure() * additionalT[0]
-                               + cellDataJ.capillaryPressure() * additionalT[1]
-                               + cellDataA3.capillaryPressure() * additionalT[2]
-                               + cellDataA4.capillaryPressure() * additionalT[3];
+            Scalar addPcGradient = cellDataI.capillaryPressure() * additionalT[0]
+                                 + cellDataJ.capillaryPressure() * additionalT[1]
+                                 + cellDataA3.capillaryPressure() * additionalT[2]
+                                 + cellDataA4.capillaryPressure() * additionalT[3];
 
             if (this->pressureType == pw)
-                pcGradient *= + lambda[nPhaseIdx] * dV[nPhaseIdx]
+                addPcGradient *= + lambda[nPhaseIdx] * dV[nPhaseIdx]
                                - enableVolumeIntegral_ * weightingFactor * lambda[nPhaseIdx] * gV[nPhaseIdx];
             else if (this->pressureType == pn)
-                pcGradient *= - lambda[wPhaseIdx] * dV[wPhaseIdx]
+                addPcGradient *= - lambda[wPhaseIdx] * dV[wPhaseIdx]
                                + enableVolumeIntegral_ * weightingFactor * lambda[wPhaseIdx] * gV[wPhaseIdx];
 
-            this->f_[eIdxGlobalI] += pcGradient;
+            this->f_[eIdxGlobalI] += addPcGradient;
         }
     }
 }
@@ -1743,14 +1742,14 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                     if(vSmall != outerCorner
                             && ((vertexOnInterface - vertexOnElement).two_norm()<1e-5))
                     {
-                        int vIdxGlobal = problem().variables().index(vSmall);
+                        int vIdxGlobal2 = problem().variables().index(vSmall);
                         // acess interactionVolume
-                        InteractionVolume& interactionVolume
-                            = interactionVolumesContainer_->interactionVolume(vIdxGlobal);
-                        if(interactionVolume.isBoundaryInteractionVolume())
+                        InteractionVolume& interactionVolume2
+                            = interactionVolumesContainer_->interactionVolume(vIdxGlobal2);
+                        if(interactionVolume2.isBoundaryInteractionVolume())
                             continue;
 
-                        int hangingNodeType = interactionVolume.getHangingNodeType();
+                        int hangingNodeType = interactionVolume2.getHangingNodeType();
                         // reset flux direction indicator
                         properFluxDirection = true;
 
@@ -1762,17 +1761,17 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                             {
                                 //TODO determine current localIdxLarge!!!!
                                 Dune::dgrave << " args, noHangingNode on additional interaction region";
-    //                            subVolumeFaceIdx = getMpfaCase8cells_(isIt, localIdxLarge, interactionVolume, properFluxDirection);
+    //                            subVolumeFaceIdx = getMpfaCase8cells_(isIt, localIdxLarge, interactionVolume2, properFluxDirection);
                             }
                             else if(hangingNodeType == InteractionVolume::sixSmallCells)
                                 subVolumeFaceIdx = interactionVolumesContainer_->getMpfaCase6cells(isIt,
-                                                                        interactionVolume, properFluxDirection);
+                                                                        interactionVolume2, properFluxDirection);
                             else
                                 subVolumeFaceIdx = interactionVolumesContainer_->getMpfaCase2or4cells(isIt,
-                                                                        interactionVolume, properFluxDirection);
+                                                                        interactionVolume2, properFluxDirection);
 
                             // b) calculate T, eIdxGlobal3+4
-                            caseL = this->transmissibilityAdapter_(isIt, interactionVolume, subVolumeFaceIdx,
+                            caseL = this->transmissibilityAdapter_(isIt, interactionVolume2, subVolumeFaceIdx,
                                                         properFluxDirection, additional2, additional3, additionalT);
 
                             // c) store it

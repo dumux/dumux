@@ -440,9 +440,9 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
                 if (size > 1)
                 {
-                    for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
                     {
-                        cellDataTemp[i] = problem_.variables().cellData(eIdxGlobal[i]);
+                        cellDataTemp[j] = problem_.variables().cellData(eIdxGlobal[j]);
                     }
                 }
             }

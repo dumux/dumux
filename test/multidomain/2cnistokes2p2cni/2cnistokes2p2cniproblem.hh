@@ -465,16 +465,16 @@ public:
                     << "TotalComponentMassFluxFF;"
                     << "TotalEnergyFluxFF"
                     << std::endl;
-            for (int interfaceVertIdx=0; interfaceVertIdx < numInterfaceVertices; interfaceVertIdx++)
+            for (int vIdxInterface=0; vIdxInterface < numInterfaceVertices; vIdxInterface++)
             {
-                if (outputVector[interfaceVertIdx].count > 2)
+                if (outputVector[vIdxInterface].count > 2)
                     std::cerr << "too often at one node!!";
 
-                if (outputVector[interfaceVertIdx].count==2)
-                    outfile << outputVector[interfaceVertIdx].xCoord << ";"
-                            << outputVector[interfaceVertIdx].residual[massBalanceIdx1] << ";" // total mass flux
-                            << outputVector[interfaceVertIdx].residual[transportEqIdx1] << ";" // total flux of component
-                            << outputVector[interfaceVertIdx].residual[energyEqIdx1] // total flux of heat
+                if (outputVector[vIdxInterface].count==2)
+                    outfile << outputVector[vIdxInterface].xCoord << ";"
+                            << outputVector[vIdxInterface].residual[massBalanceIdx1] << ";" // total mass flux
+                            << outputVector[vIdxInterface].residual[transportEqIdx1] << ";" // total flux of component
+                            << outputVector[vIdxInterface].residual[energyEqIdx1] // total flux of heat
                             << std::endl;
             }
             outfile.close();
@@ -592,16 +592,16 @@ public:
                     << "TotalEnergyFluxPM"
                     << std::endl;
 
-            for (int interfaceVertIdx=0; interfaceVertIdx < numInterfaceVertices; interfaceVertIdx++)
+            for (int vIdxInterface=0; vIdxInterface < numInterfaceVertices; vIdxInterface++)
             {
-                if (outputVector[interfaceVertIdx].count > 2)
+                if (outputVector[vIdxInterface].count > 2)
                     std::cerr << "too often at one node!!";
 
-                if (outputVector[interfaceVertIdx].count==2)
-                    outfile << outputVector[interfaceVertIdx].xCoord << ";"
-                            << outputVector[interfaceVertIdx].residual[contiTotalMassIdx2] << ";" // total mass flux
-                            << outputVector[interfaceVertIdx].residual[contiWEqIdx2] << ";" // total flux of component
-                            << outputVector[interfaceVertIdx].residual[energyEqIdx2] // total heat flux
+                if (outputVector[vIdxInterface].count==2)
+                    outfile << outputVector[vIdxInterface].xCoord << ";"
+                            << outputVector[vIdxInterface].residual[contiTotalMassIdx2] << ";" // total mass flux
+                            << outputVector[vIdxInterface].residual[contiWEqIdx2] << ";" // total flux of component
+                            << outputVector[vIdxInterface].residual[energyEqIdx2] // total heat flux
                             << std::endl;
             }
             outfile.close();

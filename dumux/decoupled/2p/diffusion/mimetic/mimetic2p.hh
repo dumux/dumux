@@ -471,25 +471,24 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
 
     Scalar gravPot = (problem_.bBoxMax() - centerGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
-    int i = -1;
     for (const auto& intersection : Dune::intersections(gridView_, element))
     {
         // local number of facet
-        i = intersection.indexInInside();
+        int fIdx = intersection.indexInInside();
 
         Dune::FieldVector<Scalar, dim> faceGlobal = intersection.geometry().center();
-        faceVol[i] = intersection.geometry().volume();
+        faceVol[fIdx] = intersection.geometry().volume();
 
         // get normal vector
         const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
-        N[i] = unitOuterNormal;
+        N[fIdx] = unitOuterNormal;
 
         for (int k = 0; k < dim; k++)
             // move origin to the center of gravity
-            R[i][k] = faceVol[i] * (faceGlobal[k] - centerGlobal[k]);
+            R[fIdx][k] = faceVol[fIdx] * (faceGlobal[k] - centerGlobal[k]);
 
-        gravPotFace[i] = (problem_.bBoxMax() - faceGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
+        gravPotFace[fIdx] = (problem_.bBoxMax() - faceGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
     }
 
     // proceed along the lines of Algorithm 1 from

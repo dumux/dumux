@@ -1037,7 +1037,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                                 DimVector normal = intersection.centerUnitOuterNormal();
                                 interactionVolume.setNormal(normal, 4, 2);
                                 interactionVolume.setNormal(normal, 5, 1);
-                                GlobalPosition globalPosFace(intersection.geometry().center());
+                                globalPosFace = intersection.geometry().center();
                                 interactionVolume.setFacePosition(globalPosFace, 5);
                                 interactionVolume.setFacePosition(globalPosFace, 7);
                                 int indexInOutside = intersection.indexInOutside();
@@ -1087,7 +1087,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                                 DimVector normal = intersection.centerUnitOuterNormal();
                                 interactionVolume.setNormal(normal, 4, 1);
                                 interactionVolume.setNormal(normal, 6, 2);
-                                GlobalPosition globalPosFace(intersection.geometry().center());
+                                globalPosFace = intersection.geometry().center();
                                 interactionVolume.setFacePosition(globalPosFace, 4);
                                 interactionVolume.setFacePosition(globalPosFace, 6);
                                 int indexInOutside = intersection.indexInOutside();

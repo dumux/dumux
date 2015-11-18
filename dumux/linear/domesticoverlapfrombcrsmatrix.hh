@@ -480,9 +480,9 @@ protected:
             peerRanksRecvBuff.receive(peerRank);
             for (int j = 0; j < numPeers; ++j) {
                 int seenBy = peerRanksRecvBuff[2*j + 0];
-                int borderDistance = peerRanksRecvBuff[2*j + 1];
+                int borderDistance2 = peerRanksRecvBuff[2*j + 1];
                 if (seenBy != myRank_) {
-                    domesticOverlapByIndex_[domesticIdx][seenBy] = borderDistance;
+                    domesticOverlapByIndex_[domesticIdx][seenBy] = borderDistance2;
                     domesticOverlapWithPeer_[seenBy].insert(domesticIdx);
                     peerSet_.insert(seenBy);
                 }
