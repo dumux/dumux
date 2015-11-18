@@ -282,7 +282,7 @@ public:
             GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[2]) * brineDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
         }
     }
 
@@ -341,7 +341,7 @@ public:
     {
       GlobalPosition stress;
       Scalar porosity, rockDensity, gravity;
-      gravity = -this->gravity()[2];
+      gravity = -this->gravity()[dimWorld-1];
       porosity = this->spatialParams().porosity(globalPos);
       rockDensity = this->spatialParams().rockDensity(globalPos);
 
@@ -381,7 +381,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         Scalar T;
-        T = 283.15 + (depthBOR_ - globalPos[2]) * 0.03;
+        T = 283.15 + (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
 
         return T;
     };
@@ -483,14 +483,14 @@ public:
         }
 
         // Lower boundary closed for brine and CO2 flux, uz is fixed.
-        if(globalPos[2] < eps_)
+        if(globalPos[dimWorld-1] < eps_)
         {
             values.setDirichlet(uzIdx);
         }
 
         // for the initialization run the pressure and saturation
         // values are only given at the top boundary.
-        if(globalPos[2] > this->bBoxMax()[2]-eps_)
+        if(globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1]-eps_)
         {
             values.setDirichlet(pressureIdx);
             values.setDirichlet(saturationIdx);
@@ -595,7 +595,7 @@ public:
         if(initializationRun_ == false){
         if(globalPos[0] > 490 && globalPos[0] < 510
                         && globalPos[1] > 490 && globalPos[1] < 510
-                        && globalPos[2] > 490 && globalPos[2] < 510)
+                        && globalPos[dimWorld-1] > 490 && globalPos[dimWorld-1] < 510)
         values[saturationIdx] = 1.e-5; // injection
         }
     }
@@ -799,8 +799,8 @@ public:
                 // compare coordinates of current vertex with position coordinates
                 if (globalPos[0] >= position[0] - eps_ && globalPos[0] <= position[0] + eps_
                                 && globalPos[1] >= position[1] - eps_ && globalPos[1]
-                                <= position[1] + eps_ && globalPos[2] >= position[2] - eps_
-                                && globalPos[2] <= position[2] + eps_)
+                                <= position[1] + eps_ && globalPos[dimWorld-1] >= position[dimWorld-1] - eps_
+                                && globalPos[dimWorld-1] <= position[dimWorld-1] + eps_)
                 {
                     // if coordinates are identical write the pressure value for this
                     // vertex (with index vIdxGlobal) into the values vector
