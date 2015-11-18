@@ -30,6 +30,15 @@
 
 #include <algorithm>
 
+#warning The Parker-VanGenchten 3P material law \
+         has been thoroughly revised. The conversion from \
+         absolute to effective saturations and regularization \
+         are now done in additional separate classes: \
+         <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh> and \
+         <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh> \
+         Make sure to use these classes in your spatialParams. \
+         This warning will be removed after the next release of DuMux.
+
 
 namespace Dumux
 {
@@ -264,16 +273,7 @@ public:
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
-        Scalar scalFact = 1.0;
-//         if (saturation<=0.1)
-//         {
-//           scalFact = (saturation - params.sgr())/(0.1 - params.sgr());
-//           if (scalFact < 0.) scalFact = 0.;
-//         }
-
-        Scalar result = scalFact * std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
-
-        return result;
+        return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
     }
 
     /*!
