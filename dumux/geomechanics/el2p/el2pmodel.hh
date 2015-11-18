@@ -225,19 +225,19 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
         // create the required scalar and vector fields
-        unsigned numScv = this->gridView_().size(dim);
+        unsigned numVertices = this->gridView_().size(dim);
         unsigned numElements = this->gridView_().size(0);
 
         // create the required fields for vertex data
-        ScalarField &pw = *writer.allocateManagedBuffer(numScv);
-        ScalarField &pn = *writer.allocateManagedBuffer(numScv);
-        ScalarField &pc = *writer.allocateManagedBuffer(numScv);
-        ScalarField &sw = *writer.allocateManagedBuffer(numScv);
-        ScalarField &sn = *writer.allocateManagedBuffer(numScv);
-        VectorField &displacement = *writer.template allocateManagedBuffer<Scalar, dim>(numScv);
-        ScalarField &rhoW = *writer.allocateManagedBuffer(numScv);
-        ScalarField &rhoN = *writer.allocateManagedBuffer(numScv);
-        ScalarField &Te = *writer.allocateManagedBuffer(numScv);
+        ScalarField &pw = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &pc = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &sw = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &sn = *writer.allocateManagedBuffer(numVertices);
+        VectorField &displacement = *writer.template allocateManagedBuffer<Scalar, dim>(numVertices);
+        ScalarField &rhoW = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &rhoN = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &Te = *writer.allocateManagedBuffer(numVertices);
 
         // create the required fields for element data
         // effective stresses

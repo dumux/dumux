@@ -98,11 +98,11 @@ public:
         Dune::DynamicVector<Scalar> pressTraceW(2*dim);
         Dune::DynamicVector<Scalar> pressTraceNw(2*dim);
 
-        const auto element = *problem.gridView().template begin<0>();
+        const auto firstElement = *problem.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem.referencePressure(element));
-        fluidState.setPressure(nPhaseIdx, problem.referencePressure(element));
-        fluidState.setTemperature(problem.temperature(element));
+        fluidState.setPressure(wPhaseIdx, problem.referencePressure(firstElement));
+        fluidState.setPressure(nPhaseIdx, problem.referencePressure(firstElement));
+        fluidState.setTemperature(problem.temperature(firstElement));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         Scalar densityDiff = FluidSystem::density(fluidState, nPhaseIdx) - FluidSystem::density(fluidState, wPhaseIdx);

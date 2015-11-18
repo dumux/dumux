@@ -374,7 +374,7 @@ public:
 
             // select quadrature rule for intersection faces (dim-1)
             Dune::GeometryType gtface = intersection.geometryInInside().type();
-            const Dune::QuadratureRule<DF,dim-1>& rule = Dune::QuadratureRules<DF,dim-1>::rule(gtface,qorder);
+            const Dune::QuadratureRule<DF,dim-1>& faceRule = Dune::QuadratureRules<DF,dim-1>::rule(gtface,qorder);
 
             // get face index of this intersection
             int fIdx = intersection.indexInInside();
@@ -389,7 +389,7 @@ public:
 
             // Treat Neumann boundary conditions
             // loop over quadrature points and integrate normal stress changes (traction changes)
-            for (typename Dune::QuadratureRule<DF,dim-1>::const_iterator it=rule.begin(); it!=rule.end(); ++it)
+            for (typename Dune::QuadratureRule<DF,dim-1>::const_iterator it=faceRule.begin(); it!=faceRule.end(); ++it)
             {
                 // position of quadrature point in local coordinates of element
                 DimVector local = intersection.geometryInInside().global(it->position());

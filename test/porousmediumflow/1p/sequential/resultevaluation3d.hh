@@ -300,8 +300,8 @@ public:
             }
             // cubes
             else if (geometry.type().isCube()){
-                for (int i = 0; i < dim; i++)
-                    refVelocity[i] = 0.5 * (fluxVector[2*i + 1] - fluxVector[2*i]);
+                for (int j = 0; j < dim; j++)
+                    refVelocity[j] = 0.5 * (fluxVector[2*j + 1] - fluxVector[2*j]);
             }
             // 3D prism and pyramids
             else {

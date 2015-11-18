@@ -293,33 +293,33 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 
         int numVertices = element.geometry().corners();
 
-        for (int vIdx = 0; vIdx < numVertices; vIdx++)
+        for (int vIdxI = 0; vIdxI < numVertices; vIdxI++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, vIdx, dim);
+            int vIdxIGlobal = problem_.variables().vertexMapper().subIndex(element, vIdxI, dim);
 
-            InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
+            InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxIGlobal);
 
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
             {
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
                     auto neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int globalIdxJ = problem_.variables().index(neighbor);
+                    int neighborIdx = problem_.variables().index(neighbor);
 
-                    neighborIndices.insert(globalIdxJ);
+                    neighborIndices.insert(neighborIdx);
 
                     if (!interactionVolume.sameLevel())
                     {
                         if (neighbor.level() == levelI + 2)
                         {
-                            for (int vIdx = 0; vIdx < numVertices; vIdx++)
+                            for (int vIdxJ = 0; vIdxJ < numVertices; vIdxJ++)
                             {
-                                int globalVertIdxJ = problem_.variables().vertexMapper().subIndex(neighbor, vIdx, dim);
+                                int vIdxJGlobal = problem_.variables().vertexMapper().subIndex(neighbor, vIdxJ, dim);
 
-                                if (globalVertIdxJ != vIdxGlobal)
+                                if (vIdxJGlobal != vIdxIGlobal)
                                 {
-                                    InteractionVolume& interactionVolumeJ = this->interactionVolumes_.interactionVolume(
-                                                                                                                        globalVertIdxJ);
+                                    InteractionVolume& interactionVolumeJ
+                                        = this->interactionVolumes_.interactionVolume(vIdxJGlobal);
 
                                     if (interactionVolumeJ.isHangingNodeVolume())
                                     {

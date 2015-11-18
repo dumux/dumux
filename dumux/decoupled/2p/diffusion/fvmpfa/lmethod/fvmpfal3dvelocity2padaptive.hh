@@ -2192,7 +2192,6 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
         }
 
-        int hangingNodeType = interactionVolume.getHangingNodeType();
         if (hangingNodeType == InteractionVolume::sixSmallCells)
         {
             vel12 *= flux[0] / (interactionVolumes_().getRealFluxFaceArea(interactionVolume, globalIdx1, 0, 0));

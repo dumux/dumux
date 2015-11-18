@@ -447,9 +447,6 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
     }
     else if (elementI.level() > elementJ.level() && dim == 3)
     {
-        auto elementI = intersection.inside();
-        auto elementJ = intersection.outside();
-
         int globalIdxJ = problem_.variables().index(elementJ);
 
         CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);

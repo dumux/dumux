@@ -168,20 +168,20 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // create the required scalar and vector fields
-        unsigned numScv = this->gridView_().size(dim);
+        unsigned numVertices = this->gridView_().size(dim);
         unsigned numElements = this->gridView_().size(0);
 
         // create the required fields for vertex data
-        ScalarField &pressure = *writer.allocateManagedBuffer(numScv);
-        ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numScv);
-        ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numScv);
-        ScalarField &massFraction0 = *writer.allocateManagedBuffer(numScv);
-        ScalarField &massFraction1 = *writer.allocateManagedBuffer(numScv);
-        VectorField &displacement = *writer.template allocateManagedBuffer<Scalar, dim>(numScv);
-        ScalarField &density = *writer.allocateManagedBuffer(numScv);
-        ScalarField &viscosity = *writer.allocateManagedBuffer(numScv);
-        ScalarField &porosity = *writer.allocateManagedBuffer(numScv);
-        ScalarField &Kx = *writer.allocateManagedBuffer(numScv);
+        ScalarField &pressure = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &massFraction0 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &massFraction1 = *writer.allocateManagedBuffer(numVertices);
+        VectorField &displacement = *writer.template allocateManagedBuffer<Scalar, dim>(numVertices);
+        ScalarField &density = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &viscosity = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &porosity = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &Kx = *writer.allocateManagedBuffer(numVertices);
 
         // create the required fields for element data
         // effective stresses
