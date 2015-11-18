@@ -498,14 +498,14 @@ public:
             // are defined to be positive and total stress is calculated by adding the pore pressure
             if(rockMechanicsSignConvention_){
                 totalStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    + deltaEffPressure[eIdx];
-                totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
-                totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
                 if (dim >= 2) {
+                    totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
                     totalStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
                     totalStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    + deltaEffPressure[eIdx];
-                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
                 }
                 if (dim >= 3) {
+                    totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
+                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
                     totalStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
                     totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
                     totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    + deltaEffPressure[eIdx];
@@ -513,14 +513,14 @@ public:
             }
             else{
                 totalStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    - deltaEffPressure[eIdx];
-                totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
-                totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
                 if (dim >= 2) {
+                    totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
                     totalStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
                     totalStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    - deltaEffPressure[eIdx];
-                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
                 }
                 if (dim >= 3) {
+                    totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
+                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
                     totalStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
                     totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
                     totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - deltaEffPressure[eIdx];

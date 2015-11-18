@@ -287,8 +287,10 @@ public:
                 pw += x(pressLFS,i) * q[i];
                 sn += x(satLFS,i) * q[i];
                 ux += x(displacementLFS.child(0),i) * q[i];
-                uy += x(displacementLFS.child(1),i) * q[i];
-                uz += x(displacementLFS.child(2),i) * q[i];
+                if (dim > 1)
+                    uy += x(displacementLFS.child(1),i) * q[i];
+                if (dim > 2)
+                    uz += x(displacementLFS.child(2),i) * q[i];
              }
              RT_P sw = 1.0 - sn;
              RT_P pn = pw + MaterialLaw::pc(materialParams, sw);
@@ -323,8 +325,10 @@ public:
              primVars[wPhaseIdx] = pw;
              primVars[nPhaseIdx] = sn;
              primVars[Indices::uxIdx] = ux;
-             primVars[Indices::uyIdx] = uy;
-             primVars[Indices::uzIdx] = uz;
+             if (dim > 1)
+                 primVars[Indices::uyIdx] = uy;
+             if (dim > 2)
+                 primVars[Indices::uzIdx] = uz;
 
              VolumeVariables volVars;
              // evaluate volume variables for this quadrature point
