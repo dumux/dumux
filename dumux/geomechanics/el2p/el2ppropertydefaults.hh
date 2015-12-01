@@ -399,13 +399,7 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { dofCodim = Grid::dimension,
            isNonOverlapping = true };
-    enum {
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-#else
-        isParallel = Dune::Capabilities::isParallel<Grid>::v
-#endif
-    };
+    enum { isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v };
 
     static const int numEq = isParallel ? GET_PROP_VALUE(TypeTag, NumEq)
             : GET_PROP_TYPE(TypeTag, JacobianMatrix)::block_type::rows;
