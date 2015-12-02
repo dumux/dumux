@@ -116,12 +116,8 @@ public:
         std::shared_ptr<typename AmgTraits::Comm> comm;
         std::shared_ptr<typename AmgTraits::LinearOperator> fop;
         std::shared_ptr<typename AmgTraits::ScalarProduct> sp;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
         static const int dofCodim = AmgTraits::dofCodim;
         static const bool isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
-#else
-        static const bool isParallel = Dune::Capabilities::isParallel<Grid>::v;
-#endif
         prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
 
         typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments

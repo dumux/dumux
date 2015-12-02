@@ -82,11 +82,7 @@ public:
         numEq = JacobianMatrix::block_type::rows,
         dofCodim = Grid::dimension,
         isNonOverlapping = true,
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-#else
-        isParallel = Dune::Capabilities::isParallel<Grid>::v
-#endif
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
@@ -128,11 +124,7 @@ public:
         numEq = JacobianMatrix::block_type::rows,
         dofCodim = 0,
         isNonOverlapping = false,
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-#else
-        isParallel = Dune::Capabilities::isParallel<Grid>::v
-#endif
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
@@ -154,11 +146,7 @@ public:
         numEq = JacobianMatrix::block_type::rows,
         dofCodim = 0,
         isNonOverlapping = false,
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-#else
-        isParallel = Dune::Capabilities::isParallel<Grid>::v
-#endif
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;

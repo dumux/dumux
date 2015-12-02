@@ -210,26 +210,14 @@ private:
  * \brief Wraps the AMG backend such that it can be used for the el2p model.
  */
 template <class TypeTag>
-class El2PAMGBackend : public El2PAMGBackendBase
-<
+class El2PAMGBackend : public El2PAMGBackendBase<
     TypeTag,
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
     Dune::Capabilities::canCommunicate<typename GET_PROP_TYPE(TypeTag, Grid),
-                                       typename GET_PROP_TYPE(TypeTag, Grid)::dimension>::v
-#else
-    Dune::Capabilities::isParallel<typename GET_PROP_TYPE(TypeTag, Grid)>::v
-#endif
->
+                                       GET_PROP_TYPE(TypeTag, Grid)::dimension>::v>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     enum { dofCodim = Grid::dimension };
-    enum {
-#if DUNE_VERSION_NEWER(DUNE_GRID, 3, 0)
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-#else
-        isParallel = Dune::Capabilities::isParallel<Grid>::v
-#endif
-    };
+    enum { isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v };
     typedef El2PAMGBackendBase<TypeTag, isParallel> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
