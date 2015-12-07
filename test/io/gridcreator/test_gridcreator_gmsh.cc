@@ -19,7 +19,7 @@
  *
  * \brief Test for gmsh interface of the grid creator
  */
-#include "config.h"
+#include <config.h>
 #include <iostream>
 #include <dune/common/parametertreeparser.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -37,7 +37,11 @@ class GridCreatorGmshTest;
 namespace Properties
 {
     NEW_TYPE_TAG(GridCreatorGmshTest, INHERITS_FROM(NumericModel));
+#if HAVE_UG
     SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::UGGrid<3>);
+#else
+    SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::YaspGrid<3>);
+#endif
     // Change the default "Grid" to customized "BifurcationGrid", merely for demonstration purposes.
     SET_STRING_PROP(GridCreatorGmshTest, GridParameterGroup, "BifurcationGrid");
 }
