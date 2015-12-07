@@ -324,7 +324,7 @@ public:
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
-            int numVertices = element.template count<dim>();
+            int numVertices = element.subEntities(dim);
             for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().subIndex(element, i, dim);
                 if (vertexColor_[globalI] == Red) {
@@ -349,7 +349,7 @@ public:
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVertices = element.template count<dim>();
+            int numVertices = element.subEntities(dim);
             for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().subIndex(element, i, dim);
                 // if a vertex is already red, don't recolor it to
@@ -369,7 +369,7 @@ public:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVertices = element.template count<dim>();
+            int numVertices = element.subEntities(dim);
             for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().subIndex(element, i, dim);
                 if (vertexColor_[globalI] == Orange) {
@@ -390,7 +390,7 @@ public:
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVertices = element.template count<dim>();
+            int numVertices = element.subEntities(dim);
             for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().subIndex(element, i, dim);
                 // if a vertex is orange, recolor it to yellow!
