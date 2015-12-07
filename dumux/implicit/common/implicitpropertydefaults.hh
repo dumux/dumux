@@ -39,7 +39,7 @@ namespace Dumux {
 
 // forward declarations
 template <class TypeTag> class NewtonController;
-template <class TypeTag> class BoxBiCGStabILU0Solver;
+template <class TypeTag> class ILU0BiCGSTABBackend;
 
 namespace Properties {
 //////////////////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ public:
 };
 
 //! use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
 // if the deflection of the newton method is large, we do not
 // need to solve the linear approximation accurately. Assuming

@@ -26,6 +26,8 @@
 #ifndef DUMUX_GLOBAL_INDICES_HH
 #define DUMUX_GLOBAL_INDICES_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <list>
 #include <set>
 #include <map>

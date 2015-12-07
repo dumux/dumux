@@ -25,6 +25,9 @@
 #ifndef DUMUX_BOXLINEARSOLVER_HH
 #define DUMUX_BOXLINEARSOLVER_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
+#include <dune/common/deprecated.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 
@@ -264,6 +267,7 @@ class BoxBiCGStabILU0Solver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use ILU0BiCGSTABBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -295,6 +299,7 @@ class BoxBiCGStabSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use SORBiCGSTABBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxBiCGStabSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -326,6 +331,7 @@ class BoxBiCGStabSSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use SSORBiCGSTABBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxBiCGStabSSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -357,6 +363,7 @@ class BoxBiCGStabJacSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use JacBiCGSTABBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxBiCGStabJacSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -388,6 +395,7 @@ class BoxBiCGStabGSSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use GSBiCGSTABBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxBiCGStabGSSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -419,6 +427,7 @@ class BoxCGILU0Solver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use ILUnCGBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxCGILU0Solver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -450,6 +459,7 @@ class BoxCGSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use SORCGBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxCGSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -481,6 +491,7 @@ class BoxCGSSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use SSORCGBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxCGSSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -512,6 +523,7 @@ class BoxCGJacSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use JacCGBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxCGJacSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
@@ -543,6 +555,7 @@ class BoxCGGSSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
+    DUNE_DEPRECATED_MSG("Use GSCGBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     BoxCGGSSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}

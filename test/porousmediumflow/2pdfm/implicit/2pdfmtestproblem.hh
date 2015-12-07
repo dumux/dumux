@@ -82,7 +82,7 @@ public:
 };
 
 // Linear solver settings
-SET_TYPE_PROP(TwoPDFMTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag>);
+SET_TYPE_PROP(TwoPDFMTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
 
 }
 

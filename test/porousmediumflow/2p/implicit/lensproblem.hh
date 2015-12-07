@@ -98,8 +98,8 @@ public:
 };
 
 // Linear solver settings
-SET_TYPE_PROP(LensCCProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-SET_TYPE_PROP(LensBoxProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(LensCCProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensBoxProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );

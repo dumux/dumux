@@ -25,6 +25,8 @@
 #ifndef DUMUX_ELEMENT_BORDER_LIST_FROM_GRID_HH
 #define DUMUX_ELEMENT_BORDER_LIST_FROM_GRID_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/common/fmatrix.hh>

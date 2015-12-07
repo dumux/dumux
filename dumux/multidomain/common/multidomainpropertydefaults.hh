@@ -231,7 +231,7 @@ public:
 };
 
 // set the type of the linear solver
-SET_TYPE_PROP(MultiDomain, LinearSolver, BoxBiCGStabILU0Solver<TypeTag>);
+SET_TYPE_PROP(MultiDomain, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 
 // set the minimum residual reduction of the linear solver
 SET_SCALAR_PROP(MultiDomain, LinearSolverResidualReduction, 1e-6);

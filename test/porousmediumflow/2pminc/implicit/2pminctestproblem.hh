@@ -109,7 +109,7 @@ SET_BOOL_PROP(TwoPMincTestProblem, NewtonWriteConvergence, false);
 SET_INT_PROP(TwoPMincTestProblem, ImplicitNumericDifferenceMethod, +1);
 
 // Linear solver settings
-SET_TYPE_PROP(TwoPMincTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(TwoPMincTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 SET_INT_PROP(TwoPMincTestProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(TwoPMincTestProblem, LinearSolverPreconditionerIterations, 1);
 SET_SCALAR_PROP(TwoPMincTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
