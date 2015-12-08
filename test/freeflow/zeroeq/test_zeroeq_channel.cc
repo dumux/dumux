@@ -21,7 +21,7 @@
  *
  * \brief Test for the isothermal ZeroEq box model.
  */
-#include "config.h"
+#include <config.h>
 #include "zeroeqchanneltestproblem.hh"
 #include <dumux/common/start.hh>
 

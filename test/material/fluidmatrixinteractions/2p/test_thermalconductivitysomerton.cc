@@ -21,7 +21,7 @@
  *
  * \brief Test for the Somerton thermal conductivity law
  */
-#include "config.h"
+#include <config.h>
 #include "thermalconductivitysomertonproblem.hh"
 #include <dumux/common/start.hh>
 

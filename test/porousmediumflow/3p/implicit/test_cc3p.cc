@@ -21,7 +21,7 @@
  *
  * \brief Test for the three-phase CC model
  */
-#include "config.h"
+#include <config.h>
 #include "infiltration3pproblem.hh"
 #include <dumux/common/start.hh>
 

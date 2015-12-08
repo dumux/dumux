@@ -22,7 +22,7 @@
  *
  * \brief Test for the MpNc CC model.
  */
-#include "config.h"
+#include <config.h>
 #include "obstacleproblem.hh"
 #include <dumux/common/start.hh>
 

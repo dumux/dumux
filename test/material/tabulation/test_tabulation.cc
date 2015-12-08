@@ -25,7 +25,7 @@
  * It either prints "success" or "error", it does not do anything
  * else.
  */
-#include "config.h"
+#include <config.h>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>

@@ -22,7 +22,7 @@
  * \ingroup IMPETtests
  * \brief test for the sequential 2p2c model
  */
-#include "config.h"
+#include <config.h>
 
 #include "test_dec2p2cproblem.hh"
 #include <dumux/common/start.hh>

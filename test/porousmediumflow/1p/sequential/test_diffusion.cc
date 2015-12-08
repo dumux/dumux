@@ -22,7 +22,7 @@
  * \ingroup IMPETtests
  * \brief test for diffusion models
  */
-#include "config.h"
+#include <config.h>
 #include <iostream>
 
 #include <dune/common/exceptions.hh>

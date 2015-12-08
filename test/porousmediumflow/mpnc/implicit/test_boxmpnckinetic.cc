@@ -21,7 +21,7 @@
  *
  * \brief Test for the kinetic modules of the mpnc box model.
  */
-#include "config.h"
+#include <config.h>
 
 #include <dumux/common/start.hh>
 #include "evaporationatmosphereproblem.hh"

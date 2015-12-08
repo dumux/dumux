@@ -21,7 +21,7 @@
  *
  * \brief Test for the non-isothermal three-phase three-component box model.
  */
-#include "config.h"
+#include <config.h>
 #include "kuevetteproblem.hh"
 #include <dumux/common/start.hh>
 

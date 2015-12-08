@@ -21,7 +21,7 @@
  *
  * \brief Test for the el2p cell centered model
  */
-#include "config.h"
+#include <config.h>
 
 #if HAVE_DUNE_PDELAB
 

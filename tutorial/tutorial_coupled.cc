@@ -21,7 +21,7 @@
  *
  * \brief Main file of the tutorial for a fully coupled twophase box model.
  */
-#include "config.h" /*@\label{tutorial-coupled:include-begin}@*/
+#include <config.h> /*@\label{tutorial-coupled:include-begin}@*/
 #include "tutorialproblem_coupled.hh"  /*@\label{tutorial-coupled:include-problem-header}@*/
 #include <dumux/common/start.hh> /*@\label{tutorial-coupled:include-end}@*/
 

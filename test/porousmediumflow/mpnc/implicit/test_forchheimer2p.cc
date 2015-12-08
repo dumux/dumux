@@ -22,7 +22,7 @@
  *
  * \brief Test for the Forchheimer flux calculation with two phases.
  */
-#include "config.h"
+#include <config.h>
 #include "forchheimer2pproblem.hh"
 #include <dumux/common/start.hh>
 

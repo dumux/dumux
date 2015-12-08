@@ -21,7 +21,7 @@
  *
  * \brief Test for the Millington and Quirk effective diffusivity model
  */
-#include "config.h"
+#include <config.h>
 #include "effectivediffusivitymillingtonquirkproblem.hh"
 #include <dumux/common/start.hh>
 

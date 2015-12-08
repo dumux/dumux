@@ -19,7 +19,7 @@
  * \brief Test for the isothermal Navier-Stokes box model; this test case is
  *        known as lid-driven cavity-flow in literature.
  */
-#include "config.h"
+#include <config.h>
 #include "navierstokestestproblem.hh"
 #include <dumux/common/start.hh>
 

@@ -22,7 +22,7 @@
  * \ingroup IMPETtests
  * \brief test for the multiphysics 2p2c model
  */
-#include "config.h"
+#include <config.h>
 
 #include <array>
 #include <iostream>

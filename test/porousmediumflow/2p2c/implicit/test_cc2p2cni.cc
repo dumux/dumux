@@ -21,7 +21,7 @@
  *
  * \brief Test for the non-isothermal two-phase two-component CC model.
  */
-#include "config.h"
+#include <config.h>
 #include "waterairproblem.hh"
 #include <dumux/common/start.hh>
 

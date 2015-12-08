@@ -22,7 +22,7 @@
  * \brief This test makes sure that the programming interface is
  *        observed by all fluid systems
  */
-#include "config.h"
+#include <config.h>
 
 // include the property system just to make sure that all fluid system
 // type tag adapter behave nicely together

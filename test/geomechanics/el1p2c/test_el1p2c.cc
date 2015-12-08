@@ -21,7 +21,7 @@
  *
  * \brief Test for the elasticity 1p2c model
  */
-#include "config.h"
+#include <config.h>
 
 #include "el1p2cproblem.hh"
 #include <dune/common/precision.hh>

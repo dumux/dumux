@@ -19,7 +19,7 @@
  *
  * \brief Test for the local thermal non-equilibrium module of the mpnc box model.
  */
-#include "config.h"
+#include <config.h>
 
 #include "combustionproblem1c.hh"
 

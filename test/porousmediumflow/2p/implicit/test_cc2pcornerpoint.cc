@@ -22,7 +22,7 @@
  * \brief Test for the fully-implicit two-phase cell-centered model that uses
  * a cornerpoint grid.
  */
-#include "config.h"
+#include <config.h>
 #include "cc2pcornerpointproblem.hh"
 #include <dumux/common/start.hh>
 #include <opm/core/io/eclipse/EclipseGridInspector.hpp>

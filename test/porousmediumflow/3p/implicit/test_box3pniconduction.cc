@@ -21,7 +21,7 @@
  *
  * \brief test for the 3pni box model
  */
-#include "config.h"
+#include <config.h>
 #include "3pniconductionproblem.hh"
 #include <dumux/common/start.hh>
 

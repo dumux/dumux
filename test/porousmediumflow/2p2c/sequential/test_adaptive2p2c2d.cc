@@ -21,7 +21,7 @@
  *
  * \brief Test for the adaptive 2p2c model in 2d
  */
-#include "config.h"
+#include <config.h>
 
 #include "test_adaptive2p2c2dproblem.hh"
 #include <dumux/common/start.hh>

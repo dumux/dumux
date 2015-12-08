@@ -22,7 +22,7 @@
  * \brief This is test for the SPE5 fluid system (which uses the
  *        Peng-Robinson EOS) and the NCP flash solver.
  */
-#include "config.h"
+#include <config.h>
 
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>

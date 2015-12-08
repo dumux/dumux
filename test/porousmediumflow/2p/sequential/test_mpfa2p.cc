@@ -21,7 +21,7 @@
  */
 #define PROBLEM 2 // 0 = Buckley-Leverett, 1 = McWhorter, 2 = 2D Lense problem
 
-#include "config.h"
+#include <config.h>
 
 #if HAVE_DUNE_ALUGRID
 

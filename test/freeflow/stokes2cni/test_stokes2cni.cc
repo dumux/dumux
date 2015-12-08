@@ -19,7 +19,7 @@
  *
  * \brief Test for the non-isothermal two-component Stokes box model.
  */
-#include "config.h"
+#include <config.h>
 #include "stokes2cnitestproblem.hh"
 #include <dumux/common/start.hh>
 

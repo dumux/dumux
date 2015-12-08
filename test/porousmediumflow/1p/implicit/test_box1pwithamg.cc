@@ -21,7 +21,7 @@
  *
  * \brief test for the one-phase box model
  */
-#include "config.h"
+#include <config.h>
 
 #include "1ptestproblem.hh"
 #include <dumux/common/start.hh>

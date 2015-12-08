@@ -21,7 +21,7 @@
  *
  * \brief Test for the two-phase CC model
  */
-#include "config.h"
+#include <config.h>
 #include "lensproblem.hh"
 #include <dumux/common/start.hh>
 

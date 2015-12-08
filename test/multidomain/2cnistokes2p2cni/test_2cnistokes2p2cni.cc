@@ -23,7 +23,7 @@
  *        non-isothermal two-phase two-component Darcy model
  */
 
-#include "config.h"
+#include <config.h>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
