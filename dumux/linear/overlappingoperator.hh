@@ -24,6 +24,8 @@
 #ifndef DUMUX_OVERLAPPING_OPERATOR_HH
 #define DUMUX_OVERLAPPING_OPERATOR_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <dune/istl/operators.hh>
 
 namespace Dumux {

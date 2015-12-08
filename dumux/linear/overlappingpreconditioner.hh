@@ -24,6 +24,8 @@
 #ifndef DUMUX_OVERLAPPING_PRECONDITIONER_HH
 #define DUMUX_OVERLAPPING_PRECONDITIONER_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <dumux/common/exceptions.hh>
 #include <dune/istl/preconditioners.hh>
 

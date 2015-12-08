@@ -24,6 +24,8 @@
 #ifndef DUMUX_BORDER_INDEX_HH
 #define DUMUX_BORDER_INDEX_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 namespace Dumux {
 
 /*!

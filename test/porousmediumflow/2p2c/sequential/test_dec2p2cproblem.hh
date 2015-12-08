@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
-#include <dumux/linear/impetbicgstabilu0solver.hh>
+
 namespace Dumux
 {
 
@@ -76,8 +76,6 @@ SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultC
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dumux::H2O<Scalar> H2O;
 };
-
-//SET_TYPE_PROP(TestDecTwoPTwoCProblem, LinearSolver, IMPETBiCGStabILU0Solver<TypeTag> );
 
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestDecTwoPTwoCProblem, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);

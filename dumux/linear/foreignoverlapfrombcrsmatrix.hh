@@ -28,6 +28,8 @@
 #ifndef DUMUX_FOREIGN_OVERLAP_FROM_BCRS_MATRIX_HH
 #define DUMUX_FOREIGN_OVERLAP_FROM_BCRS_MATRIX_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <list>
 #include <set>
 #include <map>

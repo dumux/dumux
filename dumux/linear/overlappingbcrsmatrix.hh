@@ -25,6 +25,8 @@
 #ifndef DUMUX_OVERLAPPING_BCRS_MATRIX_HH
 #define DUMUX_OVERLAPPING_BCRS_MATRIX_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <algorithm>
 #include <list>
 #include <set>

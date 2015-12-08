@@ -25,6 +25,8 @@
 #ifndef DUMUX_OVERLAPPING_BLOCK_VECTOR_HH
 #define DUMUX_OVERLAPPING_BLOCK_VECTOR_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include <iostream>
 #include <map>
 #include <memory>

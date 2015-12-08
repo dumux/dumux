@@ -29,7 +29,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
-#include <dumux/linear/boxlinearsolver.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include "newtonconvergencewriter.hh"
 

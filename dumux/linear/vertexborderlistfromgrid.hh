@@ -25,6 +25,8 @@
 #ifndef DUMUX_VERTEX_BORDER_LIST_FROM_GRID_HH
 #define DUMUX_VERTEX_BORDER_LIST_FROM_GRID_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9
+
 #include "borderindex.hh"
 
 #include <dune/grid/common/datahandleif.hh>

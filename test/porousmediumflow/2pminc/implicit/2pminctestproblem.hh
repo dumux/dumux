@@ -32,13 +32,11 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
+#include <dumux/implicit/2pminc/2pmincmodel.hh>
+#include <dumux/implicit/2pminc/2pmincvolumevariables.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-#include <dumux/implicit/2pminc/2pmincmodel.hh>
-#include <dumux/implicit/2pminc/2pmincvolumevariables.hh>
 #include <dumux/io/cubegridcreator.hh>
 
 #include "2pminctestspatialparams.hh"
@@ -109,7 +107,7 @@ SET_BOOL_PROP(TwoPMincTestProblem, NewtonWriteConvergence, false);
 SET_INT_PROP(TwoPMincTestProblem, ImplicitNumericDifferenceMethod, +1);
 
 // Linear solver settings
-SET_TYPE_PROP(TwoPMincTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(TwoPMincTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 SET_INT_PROP(TwoPMincTestProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(TwoPMincTestProblem, LinearSolverPreconditionerIterations, 1);
 SET_SCALAR_PROP(TwoPMincTestProblem, LinearSolverPreconditionerRelaxation, 1.0);

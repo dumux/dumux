@@ -81,6 +81,7 @@ class IMPETBiCGStabILU0Solver
     typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
 
 public:
+    DUNE_DEPRECATED_MSG("Use ILU0BiCGSTABBackend/AMGBackend from seqsolverbackend.hh/amgbackend.hh instead")
     IMPETBiCGStabILU0Solver(const Problem &problem, int overlapSize=1)
     : problem_(problem)
     , overlapSize_(overlapSize)

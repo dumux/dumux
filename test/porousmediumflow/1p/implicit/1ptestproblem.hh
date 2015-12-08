@@ -74,7 +74,7 @@ SET_TYPE_PROP(OnePTestProblem, Problem, Dumux::OnePTestProblem<TypeTag> );
 SET_TYPE_PROP(OnePTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeTag> );
 
 // Linear solver settings
-SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
 NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
 NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
