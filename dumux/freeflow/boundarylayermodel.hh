@@ -137,6 +137,11 @@ public:
             // application is bounded to specific roughness length
             assert (1e-6 < roughnessLength_ / distance_ && roughnessLength_ / distance_ < 1e-2);
             Scalar cf = std::pow(1.89 - 1.62 * std::log10(roughnessLength_ / distance_), -2.5);
+            // application is bounded to rough cases, indicated by the line in the chart in Truckenbrodt
+            // NOTE: disabling the assertion assumes that the cf of the hydrodynamically
+            //       rough region is a good approximation of the cf in the hydrodynamically
+            //       smooth case
+            assert (130.0e-3 * std::pow(reynoldsX, -0.1872) < cf);
             return yPlus_ * distance_ / (reynoldsX * std::sqrt(cf / 2.0));
         }
         // turbulent, rough: viscous sublayer thickness via friction coefficient
