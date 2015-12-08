@@ -247,6 +247,13 @@ public:
                 const Scalar distance = globalPos1[0] + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
                 const Scalar kinematicViscosity = cParams.elemVolVarsCur1[vertInElem2].kinematicViscosity();
                 BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel);
+                if (blModel == 1)
+                    boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
+                if (blModel >= 4)
+                    boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
+                if (blModel >= 5)
+                    boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
+
                 normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
 
                 Scalar diffusiveFlux =
