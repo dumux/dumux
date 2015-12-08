@@ -21,7 +21,7 @@
  *
  * \brief Test for the Johansen thermal conductivity law
  */
-#include "config.h"
+#include <config.h>
 #include "thermalconductivityjohansenproblem.hh"
 #include <dumux/common/start.hh>
 

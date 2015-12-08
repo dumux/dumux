@@ -21,7 +21,7 @@
  *
  * \brief tutorial for the sequential two-phase model
  */
-#include "config.h" /*@\label{tutorial-decoupled:include-begin}@*/
+#include <config.h> /*@\label{tutorial-decoupled:include-begin}@*/
 
 #include "tutorialproblem_decoupled.hh" /*@\label{tutorial-decoupled:include-problem-header}@*/
 #include <dumux/common/start.hh> /*@\label{tutorial-decoupled:include-end}@*/

@@ -21,7 +21,7 @@
  *
  * \brief test for the RichardsNI box model
  */
-#include "config.h"
+#include <config.h>
 #include "richardsniconductionproblem.hh"
 #include <dumux/common/start.hh>
 

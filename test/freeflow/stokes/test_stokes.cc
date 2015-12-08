@@ -19,7 +19,7 @@
  *
  * \brief Test for the isothermal Stokes box model.
  */
-#include "config.h"
+#include <config.h>
 #include "stokestestproblem.hh"
 #include <dumux/common/start.hh>
 

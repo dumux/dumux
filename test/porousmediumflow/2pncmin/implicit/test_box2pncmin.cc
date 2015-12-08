@@ -21,7 +21,7 @@
  *
  * \brief Test for the two-phase n-component isothermal box model.
  */
-#include "config.h"
+#include <config.h>
 #include "dissolutionproblem.hh"
 #include <dune/grid/io/file/dgfparser.hh>
 #include <iostream>

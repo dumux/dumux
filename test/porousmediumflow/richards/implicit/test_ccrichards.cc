@@ -21,7 +21,7 @@
  *
  * \brief Test for the Richards CC model.
  */
-#include "config.h"
+#include <config.h>
 #include "richardslensproblem.hh"
 #include <dumux/common/start.hh>
 

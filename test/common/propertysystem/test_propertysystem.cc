@@ -25,7 +25,7 @@
  * to (TypeTag, PropertyTag) tuples and finally we use them in the
  * main function and print some diagnostic messages.
  */
-#include "config.h"
+#include <config.h>
 
 #include <dumux/common/propertysystem.hh>
 

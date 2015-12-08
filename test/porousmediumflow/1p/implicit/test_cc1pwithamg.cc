@@ -21,7 +21,7 @@
  *
  * \brief test for the one-phase CC model
  */
-#include "config.h"
+#include <config.h>
 
 
 #include "1ptestproblem.hh"

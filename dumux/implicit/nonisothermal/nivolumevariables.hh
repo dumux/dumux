@@ -109,11 +109,7 @@ public:
 protected:
     // The methods below get called by the parent class. Since they
     // are protected, we are friends with our parent.
-#if __clang__ || (__GNUC__ == 4 && __GNUC_MINOR__ > 6)
     friend typename GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables);
-#else
-    friend class GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables);
-#endif
 
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,

@@ -21,7 +21,7 @@
  *
  * \brief Simple test for the gnuplot interface, which plots a parabola
  */
-#include "config.h"
+#include <config.h>
 #include <vector>
 #include <dumux/io/gnuplotinterface.hh>
 

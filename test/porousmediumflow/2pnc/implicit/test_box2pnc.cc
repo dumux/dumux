@@ -21,7 +21,7 @@
  *
  * \brief Test for the 2pnc box model used for water management in PEM fuel cells.
  */
-#include "config.h"
+#include <config.h>
 #include "fuelcellproblem.hh"
 #include <dumux/common/start.hh>
 

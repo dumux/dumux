@@ -102,7 +102,7 @@ private:
         for (const auto& element : Dune::elements(this->problem().gridView())) {
 
             // loop over all element vertices
-            int n = element.template count<dim>();
+            int n = element.subEntities(dim);
             for (int i = 0; i < n - 1; ++i) {
                 int globalI = this->problem().vertexMapper().subIndex(element, i, dim);
                 for (int j = i + 1; j < n; ++j) {

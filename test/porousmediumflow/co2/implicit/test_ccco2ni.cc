@@ -21,7 +21,7 @@
  *
  * \brief Test for the CO2 non-isothermal CC model.
  */
-#include "config.h"
+#include <config.h>
 #include "heterogeneousproblemni.hh"
 #include <dumux/common/start.hh>
 

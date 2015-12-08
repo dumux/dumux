@@ -22,7 +22,7 @@
  * \ingroup IMPETtests
  * \brief test for the sequential 2p model
  */
-#include "config.h"
+#include <config.h>
 
 #if HAVE_DUNE_ALUGRID
 

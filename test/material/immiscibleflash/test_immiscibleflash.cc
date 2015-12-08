@@ -26,7 +26,7 @@
  * composition of all phases given the total mass (or, as in this case
  * the total number of moles) in a given amount of pore space.
  */
-#include "config.h"
+#include <config.h>
 
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>

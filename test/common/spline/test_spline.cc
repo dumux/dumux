@@ -35,7 +35,7 @@ gnuplot> plot "spline.csv" using 1:2 w l ti "Curve", \
 
 
 */
-#include "config.h"
+#include <config.h>
 
 #include <dumux/common/spline.hh>
 

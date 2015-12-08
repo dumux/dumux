@@ -21,7 +21,7 @@
  *
  * \brief Test for the two-phase two-component box model.
  */
-#include "config.h"
+#include <config.h>
 #include "injectionproblem.hh"
 #include <dumux/common/start.hh>
 

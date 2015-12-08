@@ -21,7 +21,7 @@
  *
  * \brief Test for the isothermal compositional ZeroEq box model.
  */
-#include "config.h"
+#include <config.h>
 #include "zeroeq2ctestproblem.hh"
 #include <dumux/common/start.hh>
 

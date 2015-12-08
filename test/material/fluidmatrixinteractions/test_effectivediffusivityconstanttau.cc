@@ -21,7 +21,7 @@
  *
  * \brief Test for the constant tau effective diffusivity model
  */
-#include "config.h"
+#include <config.h>
 #include "effectivediffusivityconstanttauproblem.hh"
 #include <dumux/common/start.hh>
 

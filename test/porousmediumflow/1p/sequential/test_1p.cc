@@ -22,7 +22,7 @@
  * \ingroup IMPETtests
  * \brief test for the decoupled one-phase model.
  */
-#include "config.h"
+#include <config.h>
 
 #include "test_1pproblem.hh"
 #include <dumux/common/start.hh>

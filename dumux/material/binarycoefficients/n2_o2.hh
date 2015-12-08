@@ -50,7 +50,7 @@ public:
     static Scalar henry(Scalar temperature)
     {
         DUNE_THROW(Dune::NotImplemented, "henry coefficient for oxygen in liquid nitrogen");
-    };
+    }
 
     /*!
      * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
@@ -70,7 +70,7 @@ public:
         // molar masses [g/mol]
         const Scalar M[2] = { N2::molarMass()*1e3, O2::molarMass()*1e3 };
         return fullerMethod(M, SigmaNu, temperature, pressure);
-    };
+    }
 
     /*!
      * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
@@ -81,7 +81,7 @@ public:
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
         DUNE_THROW(Dune::NotImplemented, "diffusion coefficient for liquid oxygen and nitrogen");
-    };
+    }
 };
 
 }

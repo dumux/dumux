@@ -21,7 +21,7 @@
  *
  * \brief Test for the elastic model.
  */
-#include "config.h"
+#include <config.h>
 
 #include "elasticmatrixproblem.hh"
 

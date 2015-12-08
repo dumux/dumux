@@ -21,7 +21,7 @@
  *
  * \brief test for the 1p2cni CC model
  */
-#include "config.h"
+#include <config.h>
 #include "1p2cniconvectionproblem.hh"
 #include <dumux/common/start.hh>
 

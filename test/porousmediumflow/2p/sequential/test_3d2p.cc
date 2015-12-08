@@ -21,7 +21,7 @@
  */
 #define PROBLEM 2 // 0 = Buckley-Leverett, 1 = McWhorter, 2 = Nine-Spot
 
-#include "config.h"
+#include <config.h>
 
 #if HAVE_DUNE_ALUGRID
 

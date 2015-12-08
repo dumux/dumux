@@ -21,7 +21,7 @@
  *
  * \brief Test for the Richards CC analytical model.
  */
-#include "config.h"
+#include <config.h>
 #include "richardsanalyticalproblem.hh"
 #include <dumux/common/start.hh>
 

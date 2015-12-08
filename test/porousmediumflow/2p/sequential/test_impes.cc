@@ -22,7 +22,7 @@
  * \ingroup IMPETtests
  * \brief test for the sequential 2p model
  */
-#include "config.h"
+#include <config.h>
 
 #include "test_impesproblem.hh"
 #include <dumux/common/start.hh>

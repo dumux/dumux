@@ -21,7 +21,7 @@
  *
  * \brief Test for the CO2 CC model.
  */
-#include "config.h"
+#include <config.h>
 #include "heterogeneousproblem.hh"
 
 #include <dumux/common/start.hh>

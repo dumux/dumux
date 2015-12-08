@@ -131,7 +131,7 @@ public:
         case wPhaseIdx: return "liquid";
         case nPhaseIdx: return "gas";
         case sPhaseIdx: return "NaCl";
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
@@ -228,7 +228,7 @@ public:
         case H2OIdx: return H2O::name();
         case AirIdx: return Air::name();
         case NaClIdx:return "NaCl";
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
@@ -244,7 +244,7 @@ public:
         case H2OIdx: return H2O::molarMass();
         case AirIdx: return Air::molarMass();
         case NaClIdx:return 35.453e-3 + 22.9898e-3;
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
     /*!
@@ -475,7 +475,7 @@ public:
     {
         // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
-    };
+    }
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
@@ -532,7 +532,7 @@ public:
             Valgrind::CheckDefined(result);
             return result;
         }
-    };
+    }
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
@@ -581,7 +581,7 @@ public:
             Valgrind::CheckDefined(result);
             return result;
         }
-    };
+    }
 
     /*!
     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
@@ -784,7 +784,8 @@ private:
         /* Enthalpy of brine without Air */
         h_ls = (1-XlNaCl)*hw + XlNaCl*h_NaCl + XlNaCl*delta_h; /* kJ/kg */
         return (h_ls);
-    };
+    }
+
     static Scalar vaporPressure_(Scalar T, Scalar x)
     {
      Scalar p_0 = H2O::vaporPressure(T);//Saturation vapor pressure for pure water

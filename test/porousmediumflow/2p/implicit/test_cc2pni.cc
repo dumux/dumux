@@ -21,7 +21,7 @@
  *
  * \brief test for the 2pni CC model
  */
-#include "config.h"
+#include <config.h>
 
 #include "injectionproblem2pni.hh"
 #include <dumux/common/start.hh>

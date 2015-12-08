@@ -21,7 +21,7 @@
  *
  * \brief Test for the adaptive 2p2c model in 3d
  */
-#include "config.h"
+#include <config.h>
 
 #if HAVE_DUNE_ALUGRID
 

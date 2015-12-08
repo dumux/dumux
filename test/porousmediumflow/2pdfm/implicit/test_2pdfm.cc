@@ -20,7 +20,7 @@
  * \brief Test for the two-phase flow with discrete fracture-matrix (discrete
  *        fracture model) and box model scheme.
  */
-#include "config.h"
+#include <config.h>
 
 #include "2pdfmtestproblem.hh"
 #include <dumux/common/start.hh>
