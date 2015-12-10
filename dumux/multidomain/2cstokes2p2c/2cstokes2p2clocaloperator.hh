@@ -470,6 +470,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
                     boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
                 if (blModel_ >= 5)
                     boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
+                if (blModel_ == 7)
+                    boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
 
                 normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
 

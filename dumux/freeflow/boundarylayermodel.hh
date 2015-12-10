@@ -63,6 +63,7 @@ public:
         constThickness_ = 0.0; // dummy default
         roughnessLength_ = 0.0; // dummy default
         yPlus_ = 5.0; // end of viscous sublayer
+        hydraulicDiamater_ = 0.0; // dummy default
     }
 
     //! \brief Sets the constant boundary layer thickness \f$[m]\f$.
@@ -77,9 +78,9 @@ public:
     void setYPlus(Scalar yPlus)
     { yPlus_ = yPlus; }
 
-    //! \brief Returns the Reynolds number
-    const Scalar reynoldsNumber()
-    { return velocity_ * distance_ / kinematicViscosity_; }
+    //! \brief Sets the hydraulic diameter \f$[m]\f$.
+    void setHydraulicDiameter(Scalar hydraulicDiamater)
+    { hydraulicDiamater_ = hydraulicDiamater; }
 
     /*!
      * \brief Returns the momentum boundary layer thickness of the flow.
@@ -92,10 +93,12 @@ public:
      * 4 = viscous sublayer (smooth)<br>
      * 5 = viscous sublayer (rough)<br>
      * 6 = viscous sublayer (rough)<br>
+     * 7 = viscous sublayer (smooth, aerodynamically smooth, and aerodynamically rough)<br>
      */
     const Scalar viscousBoundaryLayerThickness()
     {
-        Scalar reynoldsX = reynoldsNumber();
+        Scalar reynoldsX = velocity_ * distance_ / kinematicViscosity_;
+        Scalar reynoldsD = velocity_ * hydraulicDiamater_ / kinematicViscosity_;
 
         // no boundary layer model
         if (boundaryLayerModel_ == 0)
@@ -127,7 +130,7 @@ public:
             Scalar cf = 0.37 * std::pow(std::log10(reynoldsX), -2.584);
             return yPlus_ * distance_ / (reynoldsX * std::sqrt(cf / 2.0));
         }
-        // turbulent, rough: viscous sublayer thickness via friction coefficient
+        // turbulent, fully rough: viscous sublayer thickness via friction coefficient
         // source: Truckenbrodt, E. Elementare Strömungsvorgänge dichteveränderlicher Fluide Fluidmechanik,
         //         Springer Berlin Heidelberg, 2008, doi: 10.1007/978-3-540-79024-2_1, p. 333
         else if (boundaryLayerModel_ == 5)
@@ -137,9 +140,14 @@ public:
             // application is bounded to specific roughness length
             assert (1e-6 < roughnessLength_ / distance_ && roughnessLength_ / distance_ < 1e-2);
             Scalar cf = std::pow(1.89 - 1.62 * std::log10(roughnessLength_ / distance_), -2.5);
+            // application is bounded to rough cases, indicated by the line in the chart in Truckenbrodt
+            // NOTE: disabling the assertion assumes that the cf of the hydrodynamically
+            //       rough region is a good approximation of the cf in the hydrodynamically
+            //       smooth case
+            assert (130.0e-3 * std::pow(reynoldsX, -0.1872) < cf);
             return yPlus_ * distance_ / (reynoldsX * std::sqrt(cf / 2.0));
         }
-        // turbulent, rough: viscous sublayer thickness via friction coefficient
+        // turbulent, fully rough: viscous sublayer thickness via friction coefficient
         // source: Truckenbrodt, E. Elementare Strömungsvorgänge dichteveränderlicher Fluide Fluidmechanik,
         //         Springer Berlin Heidelberg, 2008, doi: 10.1007/978-3-540-79024-2_1, p. 333
         else if (boundaryLayerModel_ == 6)
@@ -148,6 +156,28 @@ public:
             assert (roughnessLength_ > 1e-10);
             Scalar cf = 0.024 * std::pow(roughnessLength_ / distance_, 1.0/6.0);
             return yPlus_ * distance_ / (reynoldsX * std::sqrt(cf / 2.0));
+        }
+        // turbulent, smooth, aerodynamically smooth and aerodynamically rough
+        // estimation of the viscous sublayer thickness via friction factor
+        // derived for flow in pipes or ducts
+        // see: White, F. M. Fluid mechanics McGraw-Hill, 2011, 7th ed. (eq. 6.35)
+        // source: Colebrook, C. F. and White, C. M. (1937). "Experiments with Fluid Friction in Roughened Pipes"
+        //         Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences 161 (906): 367–381.
+        // explicit form: Haaland, SE (1983). "Simple and Explicit Formulas for the Friction Factor in Turbulent Flow".
+        //                Journal of Fluids Engineering (ASME) 105 (1): 89–90. doi:10.1115/1.3240948.
+        else if (boundaryLayerModel_ == 7)
+        {
+            // roughness length has to be positive
+            assert (roughnessLength_ > 1e-10);
+            // hydraulic diameter has to be positive
+            assert (hydraulicDiamater_ > 1e-10);
+            Scalar sqrtF = 1.0 / (-1.8 * std::log10(std::pow(roughnessLength_ / hydraulicDiamater_ / 3.7, 1.11)
+                                                    + 6.9 / reynoldsD));
+            Scalar viscousSublayer = yPlus_ * distance_
+                                     / (reynoldsX * std::sqrt(0.25 * sqrtF * sqrtF / 2.0));
+            // assert we are not in the fully rough case
+            assert (roughnessLength_ < viscousSublayer);
+            return viscousSublayer;
         }
         else
             DUNE_THROW(Dune::NotImplemented, "This boundary layer model is not implemented");
@@ -180,6 +210,7 @@ private:
     Scalar constThickness_;
     Scalar yPlus_;
     Scalar roughnessLength_;
+    Scalar hydraulicDiamater_;
 };
 
 } //end namespace
