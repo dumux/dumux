@@ -42,7 +42,7 @@ class compositionFromFugacities2pncmin
 {
     enum {
             numComponents = FluidSystem::numComponents,
-            numMajorComponents = FluidSystem::numMajorComponents
+            numMajorComponents = FluidSystem::numPhases
          };
 
     typedef typename FluidSystem::ParameterCache ParameterCache;
