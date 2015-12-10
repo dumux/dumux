@@ -114,39 +114,6 @@ public:
                     if (vIdx != idx)
                         continue;
 
-                    //for the corner points, the boundary flux across the vertical non-coupling boundary faces
-                    //has to be calculated to fulfill the mass balance
-                    //convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
-                    if(!GridView::Grid::multiDomainIntersection(intersection).neighbor()
-                            && this->boundaryHasMortarCoupling_(this->bcTypes_(idx)))//this->boundaryHasNeumann_(this->bcTypes_(idx)))
-                    {
-                        const DimVector& globalPos = this->fvGeometry_().subContVol[idx].global;
-                        //problem specific function, in problem orientation of interface is known
-                        if(this->problem_().isInterfaceCornerPoint(globalPos))
-                        {
-                            //check whether the second boundary node on the vertical edge is Neumann-Null
-                            const int numVertices = refElement.size(dim);
-                            bool evalBoundaryFlux = false;
-                            for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-                            {
-                                for(int i= 0; i < numVertices; i++)
-                                {
-                                    //if vertex is on boundary and not the coupling vertex: check whether an outflow condition is set
-                                    if(this->model_().onBoundary(this->element_(), i) && i!=vIdx)
-                                        if (!this->bcTypes_(i).isOutflow(equationIdx))
-                                            evalBoundaryFlux = true;
-                                }
-
-                                PrimaryVariables values(0.0);
-                                //calculate the actual boundary fluxes and add to residual
-                                this->asImp_()->computeFlux(values, boundaryFaceIdx, true /*on boundary*/);
-                                if(evalBoundaryFlux)
-                                    this->residual_[idx][equationIdx] += values[equationIdx];
-                            }
-
-                        }
-                    }
-
                     if (boundaryHasCoupling_(this->bcTypes_(idx)))
                         evalCouplingVertex_(idx);
                 }
@@ -316,6 +283,7 @@ public:
     /*!
      * \brief Check if one of the boundary conditions is Neumann.
      */
+    DUNE_DEPRECATED_MSG("boundaryHasNeumann_() is unused in dumux and therefore deprecated")
     bool boundaryHasNeumann_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
