@@ -47,8 +47,8 @@
 #include "multidomainnewtoncontroller.hh"
 #include "splitandmerge.hh"
 
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
 
 namespace Dumux
 {
@@ -215,7 +215,8 @@ public:
 };
 
 SET_PROP(MultiDomain, NumEq1)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) TypeTag1;
     enum {numEq = GET_PROP_VALUE(TypeTag1, NumEq)};
 public:
@@ -223,7 +224,8 @@ public:
 };
 
 SET_PROP(MultiDomain, NumEq2)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TypeTag2;
     enum {numEq = GET_PROP_VALUE(TypeTag2, NumEq)};
 public:

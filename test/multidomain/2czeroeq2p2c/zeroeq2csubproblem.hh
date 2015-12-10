@@ -342,15 +342,6 @@ public:
                 || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
 
-    /*!
-     * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
-     *        this should return true
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
     //! \brief Returns the velocity at the inflow.
     const Scalar refVelocity() const
     {

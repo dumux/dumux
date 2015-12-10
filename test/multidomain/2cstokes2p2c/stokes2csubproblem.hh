@@ -395,15 +395,6 @@ public:
     }
 
     /*!
-     * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
-     *        this should return true
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
-    /*!
      * \brief Returns the spatial parameters object.
      */
     SpatialParams &spatialParams()

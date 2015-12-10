@@ -107,14 +107,13 @@ public:
                 // loop over the single vertices on the current face
                 for (int faceVertexIdx = 0; faceVertexIdx < numFaceVertices; ++faceVertexIdx)
                 {
-                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
                     const int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
                     if (vIdx != idx)
                         continue;
 
-                    if (boundaryHasCoupling_(this->bcTypes_(idx)))
+                    if (this->bcTypes_(idx).hasCoupling())
                         evalCouplingVertex_(idx);
                 }
             }
@@ -261,6 +260,7 @@ public:
     /*!
      * \brief Check if one of the boundary conditions is coupling.
      */
+    DUNE_DEPRECATED_MSG("boundaryHasCoupling_() is unused in dumux and therefore deprecated")
     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -272,6 +272,7 @@ public:
     /*!
      * \brief Check if one of the boundary conditions is mortar coupling.
      */
+    DUNE_DEPRECATED_MSG("boundaryHasMortarCoupling_() is unused in dumux and therefore deprecated")
     bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

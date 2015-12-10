@@ -174,41 +174,8 @@ public:
                     asImp_()->evalNeumannSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
                     asImp_()->evalOutflowSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
 
-                    //for the corner points, the boundary flux across the vertical non-coupling boundary faces
-                    //has to be calculated to fulfill the mass balance
-                    //convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
-                    if(!GridView::Grid::multiDomainIntersection(intersection).neighbor()
-                           && this->boundaryHasMortarCoupling_(this->bcTypes_(idx)))
-                    {
-                       const GlobalPosition& globalPos = this->fvGeometry_().subContVol[idx].global;
-                       //problem specific function, in problem orientation of interface is known
-                       if(this->problem_().isInterfaceCornerPoint(globalPos))
-                       {
-                         PrimaryVariables priVars(0.0);
-//                         DimVector faceCoord = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
-//                         std::cout<<faceCoord<<std::endl;
-
-                         const int numVertices = refElement.size(dim);
-                         bool evalBoundaryFlux = false;
-                         for(int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-                         {
-                             for(int i= 0; i < numVertices; i++)
-                             {
-                                 //if vertex is on boundary and not the coupling vertex: check whether an outflow condition is set
-                                 if(this->model_().onBoundary(this->element_(), i) && i!=idx)
-                                     if (!this->bcTypes_(i).isOutflow(equationIdx))
-                                         evalBoundaryFlux = true;
-                             }
-
-                             //calculate the actual boundary fluxes and add to residual (only for momentum and transport equation, mass balance already has outflow)
-                             asImp_()->computeFlux(priVars, boundaryFaceIdx, true/*on boundary*/);
-                             if(evalBoundaryFlux)
-                             this->residual_[idx][equationIdx] += priVars[equationIdx];
-                         }
-                       }
-                    }
                     // Beavers-Joseph condition at the coupling boundary/interface
-                    if(boundaryHasCoupling_(bcTypes) || boundaryHasMortarCoupling_(bcTypes))
+                    if(boundaryHasCoupling_(bcTypes) || bcTypes.hasCouplingMortar())
                     {
                         evalBeaversJoseph_(&intersection, idx, boundaryFaceIdx, boundaryVars);
                         asImp_()->evalCouplingVertex_(&intersection, idx, boundaryFaceIdx, boundaryVars);
@@ -276,7 +243,7 @@ protected:
 
         // add pressure correction - required for pressure coupling,
         // if p.n comes from the pm
-        if (bcTypes.isCouplingOutflow(momentumYIdx) || bcTypes.isMortarCoupling(momentumYIdx))
+        if (bcTypes.isCouplingOutflow(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
         {
             DimVector pressureCorrection(isIt->centerUnitOuterNormal());
             pressureCorrection *= volVars.pressure();
@@ -368,6 +335,7 @@ protected:
     }
 
     //! \brief Return true, if at least one equation on the boundary has a  coupling condition
+    DUNE_DEPRECATED_MSG("boundaryHasCoupling_() is unused in dumux and therefore deprecated")
     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -377,6 +345,7 @@ protected:
     }
 
     //! \brief Return true, if at least one equation on the boundary has a mortar coupling condition
+    DUNE_DEPRECATED_MSG("boundaryHasMortarCoupling_() is unused in dumux and therefore deprecated")
     bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

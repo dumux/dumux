@@ -33,6 +33,7 @@
 #include <dune/pdelab/constraints/conforming.hh>
 
 #include "subdomainproperties.hh"
+#include "multidomainboundarytypes.hh"
 #include "multidomainproperties.hh"
 #include "multidomainlocaloperator.hh"
 #include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
@@ -131,6 +132,10 @@ public:
     static type &unusedNewRunTimeParams()
     { return ParameterTree::unusedNewRunTimeParams(); }
 };
+
+//! Boundary types at a single degree of freedom
+SET_TYPE_PROP(SubDomain, BoundaryTypes,
+              MultidomainBoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
 } // namespace Properties
 } // namespace Dumux
