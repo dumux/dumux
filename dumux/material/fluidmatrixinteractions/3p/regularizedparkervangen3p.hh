@@ -19,66 +19,102 @@
 /*!
  * \file
  *
- * \brief Implementation of van Genuchten's capillary pressure-saturation relation for three phases.
- *
+ * \brief Implementation of a regularized version of van Genuchten's capillary
+ *        pressure-saturation relation for three phases.
  */
-#ifndef PARKERVANGEN_3P_HH
-#define PARKERVANGEN_3P_HH
+#ifndef REGULARIZED_PARKERVANGEN_3P_HH
+#define REGULARIZED_PARKERVANGEN_3P_HH
+
+#include "parkervangen3p.hh"
+#include "regularizedparkervangen3pparams.hh"
 
 
-#include "parkervangen3pparams.hh"
 
-#include <algorithm>
-
-#warning The Parker-VanGenchten 3P material law \
-         has been thoroughly revised. The conversion from \
-         absolute to effective saturations and regularization \
-         are now done in additional separate classes: \
-         <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh> and \
-         <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh> \
-         Make sure to use these classes in your spatialParams. \
-         This warning will be removed after the next release of DuMux.
-
+#include <dumux/common/spline.hh>
 
 namespace Dumux
 {
-/*!
- * \ingroup material
+/*!\ingroup fluidmatrixinteractionslaws
  *
- * \brief Implementation of van Genuchten's capillary pressure <->
- *        saturation relation. This class bundles the "raw" curves
+ * \brief Implementation of the regularized van Genuchten's
+ *        capillary pressure <-> saturation relation.
+ *        This class bundles the "raw" curves
  *        as static members and doesn't concern itself converting
  *        absolute to effective saturations and vince versa.
  *
- * \sa VanGenuchten, VanGenuchtenThreephase
+ *        In order to avoid very steep gradients the marginal values are "regularized".
+ *        This means that in stead of following the curve of the material law in these regions, some linear approximation is used.
+ *        Doing this is not worse than following the material law. E.g. for very low wetting phase values the material
+ *        laws predict infinite values for \f$\mathrm{p_c}\f$ which is completely unphysical. In case of very high wetting phase
+ *        saturations the difference between regularized and "pure" material law is not big.
+ *
+ *        Regularizing has the additional benefit of being numerically friendly: Newton's method does not like infinite gradients.
+ *
+ *        The implementation is accomplished as follows:
+ *        - check whether we are in the range of regularization
+ *         - yes: use the regularization
+ *         - no: forward to the standard material law.
+ *
+ *         For an example figure of the regularization: RegularizedVanGenuchten
+ *
+ * \see BrooksCorey
  */
-template <class ScalarT, class ParamsT = ParkerVanGen3PParams<ScalarT> >
-class ParkerVanGen3P
+template <class ScalarT, class ParamsT = RegularizedParkerVanGen3PParams<ScalarT> >
+class RegularizedParkerVanGen3P
 {
+    typedef Dumux::ParkerVanGen3P<ScalarT, ParamsT> ParkerVanGen3P;
 
 public:
     typedef ParamsT Params;
     typedef typename Params::Scalar Scalar;
 
     /*!
-     * \brief The capillary pressure-saturation curve.
-     * \param params Array of parameters
-     * \param sw wetting phase saturation
+     * \brief A regularized Parker- van Genuchten capillary pressure-saturation
+     *        curve.
      *
+     * regularized part:
+     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
+     *                       by a straight line (yes, there is a kink :-( ).
+     *
+     * For the non-regularized part:
+     *
+     * \copydetails ParkerVanGen3P::pc()
      */
-    static Scalar pc(const Params &params, const Scalar sw)
+    static Scalar pc(const Params &params, Scalar sw)
     {
-        DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
+        return ParkerVanGen3P::pc(params, sw);
     }
-   /*!
+
+     /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      *
      */
-    static Scalar pcgw(const Params &params, const Scalar swe)
+    static Scalar pcgw(const Params &params, Scalar swe)
     {
-        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGw();
+        const Scalar pcvgReg = params.thresholdSw();
+
+        /* regularization */
+        if (swe<0.0) swe=0.0;
+        if (swe>1.0) swe=1.0;
+
+        if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
+        {
+            return ParkerVanGen3P::pcgw(params, swe);
+        }
+        else //use regularization
+        {
+            const Scalar seRegu = (swe<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
+
+            // value and derivative at regularization point
+            const Scalar pc = ParkerVanGen3P::pcgw(params, seRegu);
+            const Scalar slope = ParkerVanGen3P::dpcgw_dsw(params, seRegu);
+
+            //evaluate tangential
+            return (swe-seRegu)*slope+pc;
+        }
     }
 
   /*!
@@ -86,44 +122,69 @@ public:
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
-    static Scalar pcnw(const Params &params, const Scalar swe)
+    static Scalar pcnw(const Params &params, Scalar swe)
     {
-        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaNw();
-    }
+        const Scalar pcvgReg = params.thresholdSw();
 
+        /* regularization */
+        if (swe<0.0) swe=0.0;
+        if (swe>1.0) swe=1.0;
+
+        if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
+        {
+          return ParkerVanGen3P::pcnw(params, swe);
+        }
+        else //use regularization
+        {
+            const Scalar seRegu = (swe<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
+
+            // value and derivative at regularization point
+           const Scalar pc = ParkerVanGen3P::pcnw(params, seRegu);
+           const Scalar slope = ParkerVanGen3P::dpcnw_dsw(params, seRegu);
+
+            //evaluate tangential
+            return (swe-seRegu)*slope + pc;
+        }
+    }
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
      * \param St sum of wetting (liquid) phase saturations
      */
-    static Scalar pcgn(const Params &params, const Scalar ste)
+    static Scalar pcgn(const Params &params, Scalar ste)
     {
-        return std::pow(std::pow(ste, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGn();
+        const Scalar pcvgReg = params.thresholdSw();
+
+        /* regularization */
+        if (ste<0.0) ste=0.0;
+        if (ste>1.0) ste=1.0;
+
+
+        if (ste>pcvgReg && ste<1-pcvgReg) //use actual material law
+        {
+          return ParkerVanGen3P::pcgn(params, ste);
+        }
+        else //use regularization
+        {
+            const Scalar seRegu = (ste<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
+
+            // value and derivative at regularization point
+            const Scalar pc = ParkerVanGen3P::pcgn(params, seRegu);
+            const Scalar slope = ParkerVanGen3P::dpcgn_dst(params, seRegu);
+
+            //evaluate tangential
+           return (ste-seRegu)*slope + pc;
+        }
     }
 
-     /*!
+    /*!
      * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
      * \param sne Non-wetting liquid saturation
      */
     static Scalar pcAlpha(const Params &params, Scalar sne)
     {
-        Scalar alpha;
-
-        /* regularization */
-        if (sne<=0.001) sne=0.0;
-        if (sne>=1.0) sne=1.0;
-
-        if (sne>params.snr())
-            alpha = 1.0;
-        else
-        {
-            if (params.snr()>=0.001)
-                alpha = sne/params.snr();
-            else
-                alpha = 0.0;
-        }
-        return alpha;
+        return ParkerVanGen3P::pcAlpha(params, sne);
     }
 
     /*!
@@ -132,9 +193,9 @@ public:
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      *
      */
-    static Scalar sw(const Params &params, const Scalar pc)
+    static Scalar sw(const Params &params, Scalar pc)
     {
-        DUNE_THROW(Dune::NotImplemented, "sw(pc) for three phases not implemented! Do it yourself!");
+        return ParkerVanGen3P::sw(params, pc);
     }
 
     /*!
@@ -143,50 +204,10 @@ public:
      * \param params Array of parameters
      * \param sw Wetting liquid saturation
     */
-    static Scalar dpc_dsw(const Params &params, const Scalar sw)
+    static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
-        DUNE_THROW(Dune::NotImplemented, "dpc/dsw for three phases not implemented! Do it yourself!");
+        return ParkerVanGen3P::dpc_dsw(params, sw);
     }
-
-     /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param sw Wetting liquid saturation
-    */
-    static Scalar dpcgw_dsw(const Params &params, const Scalar seRegu)
-    {
-        const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
-        return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
-            * powSeRegu/seRegu/params.vgm()/params.betaGw();
-    }
-
-     /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param sw Wetting liquid saturation
-    */
-    static Scalar dpcnw_dsw(const Params &params, const Scalar seRegu)
-    {
-        const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
-        return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
-            * powSeRegu/seRegu/params.vgm()/params.betaNw();
-    }
-
-         /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param sw Wetting liquid saturation
-    */
-    static Scalar dpcgn_dst(const Params &params, const Scalar seRegu)
-    {
-        const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
-        return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
-            * powSeRegu/seRegu/params.vgm()/params.betaGn();
-    }
-
 
     /*!
      * \brief Returns the partial derivative of the effective
@@ -194,9 +215,9 @@ public:
      * \param params Array of parameters
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dsw_dpc(const Params &params, const Scalar pc)
+    static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-        DUNE_THROW(Dune::NotImplemented, "dsw/dpc for three phases not implemented! Do it yourself!");
+        return ParkerVanGen3P::dsw_dpc(params, pc);
     }
 
     /*!
@@ -215,8 +236,12 @@ public:
      */
     static Scalar krw(const Params &params,  const Scalar swe)
     {
-        const Scalar r = 1.0 - std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
-        return std::sqrt(swe)*r*r;
+        //use regularization
+        if(swe > 1.0) return 1.0;
+        if(swe < 0.0) return 0.0;
+
+        //or use actual material law
+        return ParkerVanGen3P::krw(params, swe);
     }
 
     /*!
@@ -236,24 +261,18 @@ public:
      * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
      */
-    static Scalar krn(const Params &params, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
     {
-        Scalar krn;
-        krn = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
-        krn -= std::pow(1 - std::pow(ste, 1/params.vgm()), params.vgm());
-        krn *= krn;
+        swe = std::min(swe, 1.0);
+        ste = std::min(ste, 1.0);
 
-        if (params.krRegardsSnr())
-        {
-            // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((sne - params.snr()/ (1-params.swr())), 1.0), 0.0);
-            krn *= std::sqrt(resIncluded );
-        }
-        else
-            krn *= std::sqrt(sne / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
+        //use regularization
+        if(swe <= 0.0) swe = 0.0;
+        if(ste <= 0.0) ste = 0.0;
+        if(ste - swe <= 0.0) return 0.0;
 
-
-        return krn;
+        //or use actual material law
+        return ParkerVanGen3P::krn(params, swe, sne, ste);
     }
 
 
@@ -273,7 +292,12 @@ public:
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
-        return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
+        //use regularization
+        if(ste > 1.0) return 0.0;
+        if(ste < 0.0) return 1.0;
+
+        //or use actual material law
+        return ParkerVanGen3P::krg(params, ste);
     }
 
     /*!
@@ -305,8 +329,9 @@ public:
     */
    static Scalar bulkDensTimesAdsorpCoeff (const Params &params)
    {
-      return params.rhoBulk() * params.KdNAPL();
+      return ParkerVanGen3P::bulkDensTimesAdsorpCoeff(params);
    }
+
 };
 }
 

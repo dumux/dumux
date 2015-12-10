@@ -26,8 +26,9 @@
 
 #include <dumux/implicit/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/parkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/parkervangen3pparams.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
 namespace Dumux
 {
@@ -45,7 +46,17 @@ NEW_TYPE_TAG(ColumnSpatialParams);
 SET_TYPE_PROP(ColumnSpatialParams, SpatialParams, Dumux::ColumnSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_TYPE_PROP(ColumnSpatialParams, MaterialLaw, ParkerVanGen3P<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(ColumnSpatialParams, MaterialLaw)
+{
+ private:
+    // define the material law which is parameterized by effective
+    // saturations
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef RegularizedParkerVanGen3P<Scalar> EffectiveLaw;
+ public:
+    // define the material law parameterized by absolute saturations
+    typedef EffToAbsLaw<EffectiveLaw> type;
+};
 }
 
 /*!
@@ -115,11 +126,9 @@ public:
 
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
-        fineMaterialParams_.setSwrx(0.12);
         fineMaterialParams_.setSnr(0.10);
         fineMaterialParams_.setSgr(0.01);
         coarseMaterialParams_.setSwr(0.12);
-        coarseMaterialParams_.setSwrx(0.12);
         coarseMaterialParams_.setSnr(0.10);
         coarseMaterialParams_.setSgr(0.01);
 

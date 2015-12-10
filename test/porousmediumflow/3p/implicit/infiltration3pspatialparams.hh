@@ -27,9 +27,9 @@
 
 #include <dumux/implicit/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/parkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/parkervangen3pparams.hh>
-
+#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 namespace Dumux
 {
 
@@ -49,10 +49,13 @@ SET_TYPE_PROP(InfiltrationThreePSpatialParams, SpatialParams, Dumux::Infiltratio
 SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
 {
  private:
+    // define the material law which is parameterized by effective
+    // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef RegularizedParkerVanGen3P<Scalar> EffectiveLaw;
  public:
-    // define the material law
-    typedef ParkerVanGen3P<Scalar> type;
+    // define the material law parameterized by absolute saturations
+    typedef EffToAbsLaw<EffectiveLaw> type;
 };
 }
 
@@ -103,7 +106,6 @@ public:
 
         // residual saturations
         materialParams_.setSwr(0.12);
-        materialParams_.setSwrx(0.12);
         materialParams_.setSnr(0.07);
         materialParams_.setSgr(0.03);
 
