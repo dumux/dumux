@@ -241,7 +241,7 @@ public:
     /*!
      * \brief Set the Dirichlet-like conditions for the coupling
      *        and replace the existing residual
-     *        TODO move this function to evalBoundary_
+     *        TODO move this function to evalBoundary_ or to local operator
      *
      * \param scvIdx Sub control vertex index for the coupling condition
      */
@@ -250,11 +250,11 @@ public:
         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
         // set pressure as part of the momentum coupling
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(massBalanceIdx))
+        if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
             this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
         // set mass fraction TODO: add use of moles
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(contiWEqIdx))
+        if (this->bcTypes_(scvIdx).isCouplingDirichlet(contiWEqIdx))
             this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
     }
 

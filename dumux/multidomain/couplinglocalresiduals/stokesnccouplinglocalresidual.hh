@@ -234,7 +234,7 @@ protected:
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
         // set velocity normal to the interface
-        if (bcTypes.isCouplingInflow(momentumYIdx))
+        if (bcTypes.isCouplingNeumann(momentumYIdx))
             this->residual_[scvIdx][momentumYIdx] =
                     volVars.velocity() *
                     boundaryVars.face().normal /
@@ -315,7 +315,7 @@ protected:
 //                 this->residual_[scvIdx][dimIdx] += priVars[dimIdx]*
 //                                                    boundaryFaceArea;
         }
-        if (bcTypes.isCouplingInflow(momentumXIdx))
+        if (bcTypes.isCouplingNeumann(momentumXIdx))
         {
             assert(beaversJosephCoeff > 0);
             ///////////////////////////////////////////////////////////////////////////////////////////

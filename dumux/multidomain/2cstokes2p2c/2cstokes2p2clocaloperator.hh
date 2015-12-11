@@ -419,7 +419,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                         globalProblem_.localResidual1().residual(vertInElem1)[massBalanceIdx1]);
             }
         }
-        if (cParams.boundaryTypes2.isCouplingOutflow(massBalanceIdx2))
+        if (cParams.boundaryTypes2.isCouplingDirichlet(massBalanceIdx2))
         {
             couplingRes2.accumulate(lfsu_n.child(massBalanceIdx2), vertInElem2,
                                     globalProblem_.localResidual1().residual(vertInElem1)[momentumYIdx1]
@@ -549,7 +549,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 }
             }
         }
-        if (cParams.boundaryTypes2.isCouplingOutflow(contiWEqIdx2))
+        // TODO make this a static assert
+        if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
             std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
@@ -594,9 +595,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                     cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
                                     boundaryVars2.face().area);
         }
-        if (cParams.boundaryTypes1.isCouplingInflow(momentumYIdx1))
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
         {
-
+            // TODO revise comment and move upwards
             // v.n as Dirichlet condition for the Stokes domain
             // set residualStokes[momentumYIdx1] = vy in stokeslocalresidual.hh
             if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
@@ -607,6 +608,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
             }
             else
             {
+                // TODO revise comment and move upwards
                 // v.n as DIRICHLET condition for the Stokes domain (negative sign!)
                 couplingRes1.accumulate(lfsu_s.child(momentumYIdx1), vertInElem1,
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
@@ -627,7 +629,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
             couplingRes1.accumulate(lfsu_s.child(transportEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }
-        if (cParams.boundaryTypes1.isCouplingInflow(transportEqIdx1))
+        // TODO make this a static assert
+        if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
             std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
