@@ -175,7 +175,8 @@ public:
                     asImp_()->evalOutflowSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
 
                     // Beavers-Joseph condition at the coupling boundary/interface
-                    if(boundaryHasCoupling_(bcTypes) || bcTypes.hasCouplingMortar())
+                    if((bcTypes.hasCouplingInflow() || bcTypes.hasCouplingOutflow())
+                       || bcTypes.hasCouplingMortar())
                     {
                         evalBeaversJoseph_(&intersection, idx, boundaryFaceIdx, boundaryVars);
                         asImp_()->evalCouplingVertex_(&intersection, idx, boundaryFaceIdx, boundaryVars);
@@ -335,7 +336,7 @@ protected:
     }
 
     //! \brief Return true, if at least one equation on the boundary has a  coupling condition
-    DUNE_DEPRECATED_MSG("boundaryHasCoupling_() is unused in dumux and therefore deprecated")
+    DUNE_DEPRECATED_MSG("boundaryHasCoupling_() is deprecated")
     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -345,7 +346,7 @@ protected:
     }
 
     //! \brief Return true, if at least one equation on the boundary has a mortar coupling condition
-    DUNE_DEPRECATED_MSG("boundaryHasMortarCoupling_() is unused in dumux and therefore deprecated")
+    DUNE_DEPRECATED_MSG("boundaryHasMortarCoupling_() is deprecated")
     bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

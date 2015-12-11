@@ -323,8 +323,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \brief Update the volume variables of the element and extract the unknowns from dune-pdelab vectors
      *        and bring them into a form which fits to dumux.
      *
-     * \param lfsu_s local basis for the trial space of the Stokes domain
-     * \param lfsu_n local basis for the trial space of the Darcy domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain TODO rename s to 1
+     * \param lfsu_n local basis for the trial space of the Darcy domain TODO rename n to 2
      * \param unknowns1 the unknowns vector of the Stokes element (formatted according to PDELab)
      * \param unknowns2 the unknowns vector of the Darcy element (formatted according to PDELab)
      * \param sdElement1 the element in the Stokes domain
@@ -376,8 +376,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
     /*!
      * \brief Evaluation of the coupling from Stokes (1 or s) to Darcy (2 or n).
      *
-     * \param lfsu_s local basis for the trial space of the Stokes domain
-     * \param lfsu_n local basis for the trial space of the Darcy domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain TODO rename s to 1
+     * \param lfsu_n local basis for the trial space of the Darcy domain TODO rename n to 2
      * \param vertInElem1 local vertex index in element1
      * \param vertInElem2 local vertex index in element2
      * \param sdElement1 the element in the Stokes domain
@@ -403,7 +403,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
             cParams.elemVolVarsCur1[vertInElem1].density();
 
         //rho*v*n as NEUMANN condition for porous medium (set, if B&J defined as NEUMANN condition)
-        if (cParams.boundaryTypes2.isCouplingInflow(massBalanceIdx2))
+        if (cParams.boundaryTypes2.isCouplingNeumann(massBalanceIdx2))
         {
             static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
                           "This coupling condition is only implemented for mass fraction formulation.");
@@ -426,7 +426,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                     -cParams.elemVolVarsCur1[vertInElem1].pressure());
         }
 
-        if (cParams.boundaryTypes2.isCouplingInflow(contiWEqIdx2))
+        if (cParams.boundaryTypes2.isCouplingNeumann(contiWEqIdx2))
         {
             // only enter here, if a BOUNDARY LAYER MODEL is used for the computation of the diffusive fluxes
             if (blModel_)
@@ -556,8 +556,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
     /*!
      * \brief Evaluation of the coupling from Darcy (2 or n) to Stokes (1 or s).
      *
-     * \param lfsu_s local basis for the trial space of the Stokes domain
-     * \param lfsu_n local basis for the trial space of the Darcy domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain TODO rename s to 1
+     * \param lfsu_n local basis for the trial space of the Darcy domain TODO rename n to 2
      * \param vertInElem1 local vertex index in element1
      * \param vertInElem2 local vertex index in element2
      * \param sdElement1 the element in the Stokes domain
@@ -584,6 +584,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
             normalFlux2[phaseIdx] = -boundaryVars2.volumeFlux(phaseIdx)*
                 cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
 
+        // TODO revise comment
         //p*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
         if (cParams.boundaryTypes1.isCouplingOutflow(momentumYIdx1))
         {

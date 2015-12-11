@@ -241,6 +241,7 @@ public:
     /*!
      * \brief Set the Dirichlet-like conditions for the coupling
      *        and replace the existing residual
+     *        TODO move this function to evalBoundary_
      *
      * \param scvIdx Sub control vertex index for the coupling condition
      */
@@ -252,7 +253,7 @@ public:
         if (this->bcTypes_(scvIdx).isCouplingOutflow(massBalanceIdx))
             this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
-        // set mass fraction;
+        // set mass fraction TODO: add use of moles
         if (this->bcTypes_(scvIdx).isCouplingOutflow(contiWEqIdx))
             this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
     }
@@ -260,7 +261,7 @@ public:
     /*!
      * \brief Check if one of the boundary conditions is coupling.
      */
-    DUNE_DEPRECATED_MSG("boundaryHasCoupling_() is unused in dumux and therefore deprecated")
+    DUNE_DEPRECATED_MSG("boundaryHasCoupling_() is deprecated")
     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -272,7 +273,7 @@ public:
     /*!
      * \brief Check if one of the boundary conditions is mortar coupling.
      */
-    DUNE_DEPRECATED_MSG("boundaryHasMortarCoupling_() is unused in dumux and therefore deprecated")
+    DUNE_DEPRECATED_MSG("boundaryHasMortarCoupling_() is deprecated")
     bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
