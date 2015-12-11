@@ -15,8 +15,8 @@ RunUpDistanceX = 0.0 # [m] Horizontal position without coupling to PM
 NoDarcyX = 0.0 # [m] Horizontal position without PM below
 InterfacePosY = 0.25 # [m] Vertical position of coupling interface
 # Number of elements in x-, y-, z-direction
-NumberOfCellsX = 25
-NumberOfCellsY = 45
+NumberOfCellsX = 10
+NumberOfCellsY = 25
 # Grading and refinement of the mesh in y direction
 GradingFactorY = 1.1
 RefineTopY = false

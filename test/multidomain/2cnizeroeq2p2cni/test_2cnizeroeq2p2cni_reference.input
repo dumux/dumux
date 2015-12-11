@@ -1,25 +1,25 @@
 [TimeManager]
-DtInitial = 1e-4 # [s]
+DtInitial = 1e1 # [s]
 MaxTimeStepSize = 360 # [s]
-TEnd = 3600 # [s]
+TEnd = 1800 # [s]
 EpisodeLength = 14400 # [s] # 14400s = 4h
 
 [Grid]
 LowerLeftX = 0.0 # [m]
-UpperRightX = 0.75 # [m]
+UpperRightX = 0.35 # [m]
 LowerLeftY = 0.0 # [m]
-UpperRightY = 0.75 # [m]
+UpperRightY = 0.5 # [m]
 # Number of elements in x-, y-direction
-NumberOfCellsX = 15
-NumberOfCellsY = 15
+NumberOfCellsX = 7
+NumberOfCellsY = 12
 # Grading and refinement of the mesh
-GradingFactorY = 1.75
+GradingFactorY = 1.5
 RefineTopY = true
 # Position information
-NoDarcyX1 = 0.25 # [m] # Beginning of PM below
-NoDarcyX2 = 0.5 # [m] # End of PM below
-RunUpDistanceX1 = 0.251 # [m] # Beginning of without Coupling to PM (x-coordinate)
-RunUpDistanceX2 = 0.499 # [m] # End of without Coupling to PM (x-coordinate)
+NoDarcyX1 = 0.05 # [m] # Beginning of PM below
+NoDarcyX2 = 0.30 # [m] # End of PM below
+RunUpDistanceX1 = 0.051 # [m] # Beginning of without Coupling to PM (x-coordinate)
+RunUpDistanceX2 = 0.299 # [m] # End of without Coupling to PM (x-coordinate)
 InterfacePosY = 0.25 # [m] # Vertical position of coupling interface
 
 [Output]
@@ -27,8 +27,8 @@ NameFF = zeroeq2cni
 NamePM = 2p2cni
 # Frequency of restart file, flux and VTK output
 FreqRestart = 1000          # how often restart files are written out
-FreqOutput = 5              #  10   # frequency of VTK output
-FreqMassOutput = 1          #  20   # frequency of mass and evaporation rate output (Darcy)
+FreqOutput = 2              #  10   # frequency of VTK output
+FreqMassOutput = 2          #  20   # frequency of mass and evaporation rate output (Darcy)
 
 [FreeFlow]
 RefVelocity = 3.5 # [m/s]
