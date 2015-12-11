@@ -220,7 +220,7 @@ public:
                                    cParams,
                                    couplingRes1, couplingRes2);
 
-        if (cParams.boundaryTypes2.isCouplingInflow(energyEqIdx2))
+        if (cParams.boundaryTypes2.isCouplingNeumann(energyEqIdx2))
         {
             unsigned int blModel = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, BoundaryLayer, Model);
             // only enter here, if a boundary layer model  is used for the computation of the diffusive fluxes
@@ -342,7 +342,7 @@ public:
                                         globalProblem.localResidual1().residual(vertInElem1)[energyEqIdx1]);
             }
         }
-        if (cParams.boundaryTypes2.isCouplingOutflow(energyEqIdx2))
+        if (cParams.boundaryTypes2.isCouplingDirichlet(energyEqIdx2))
         {
             // set residualDarcy[energyEqIdx2] = T in 2p2cnilocalresidual.hh
             couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
@@ -378,13 +378,13 @@ public:
             normalMassFlux2[phaseIdx] = -boundaryVars2.volumeFlux(phaseIdx)*
                 cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
 
-        if (cParams.boundaryTypes1.isCouplingOutflow(energyEqIdx1))
+        if (cParams.boundaryTypes1.isCouplingDirichlet(energyEqIdx1))
         {
             // set residualStokes[energyIdx1] = T in stokes2cnilocalresidual.hh
             couplingRes1.accumulate(lfsu_s.child(energyEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].temperature());
         }
-        if (cParams.boundaryTypes1.isCouplingInflow(energyEqIdx1))
+        if (cParams.boundaryTypes1.isCouplingNeumann(energyEqIdx1))
         {
             if (globalProblem.sdProblem2().isCornerPoint(globalPos2))
             {

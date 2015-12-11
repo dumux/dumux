@@ -233,7 +233,7 @@ public:
             if (globalPos[0] > runUpDistanceX1_ - eps_
                 && globalPos[0] < runUpDistanceX2_ + eps_)
             {
-                values.setAllCouplingInflow();
+                values.setAllCouplingNeumann();
             }
             else
                 values.setAllNeumann();

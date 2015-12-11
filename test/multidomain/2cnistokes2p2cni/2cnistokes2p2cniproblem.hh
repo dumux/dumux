@@ -159,7 +159,6 @@ class TwoCNIStokesTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
     typedef typename MDGrid::SubDomainGrid SDGrid;
 
     typedef typename MDGrid::Traits::template Codim<0>::Entity MDElement;
-    typedef typename MDGrid::Traits::template Codim<0>::EntityPointer MDElementPointer;
     typedef typename Stokes2cniGridView::template Codim<0>::Entity SDElement1;
     typedef typename TwoPTwoCNIGridView::template Codim<0>::Entity SDElement2;
     typedef typename SDGrid::Traits::template Codim<0>::EntityPointer SDElementPointer;
@@ -384,10 +383,8 @@ public:
                  mdGrid.leafSubDomainInterfaceBegin(stokes2cni_, twoPtwoCNI_); ifIt != endIfIt; ++ifIt)
         {
             const int firstFaceIdx = ifIt->indexInFirstCell();
-            const MDElementPointer mdElementPointer1 = ifIt->firstCell(); // ATTENTION!!!
-            const MDElement& mdElement1 = *mdElementPointer1;     // Entity pointer has to be copied before.
-            const SDElementPointer sdElementPointer1 = this->sdElementPointer1(mdElement1);
-            const SDElement1& sdElement1 = *sdElementPointer1;
+            const MDElement& mdElement1 = ifIt->firstCell();
+            const SDElement1& sdElement1 = this->sdElementPointer1(mdElement1);
             fvGeometry1.update(this->sdGridView1(), sdElement1);
 
             const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement1 =
@@ -520,10 +517,8 @@ public:
                  mdGrid.leafSubDomainInterfaceBegin(stokes2cni_, twoPtwoCNI_); ifIt != endIfIt; ++ifIt)
         {
             const int secondFaceIdx = ifIt->indexInSecondCell();
-            const MDElementPointer mdElementPointer2 = ifIt->secondCell(); // ATTENTION!!!
-            const MDElement& mdElement2 = *mdElementPointer2;     // Entity pointer has to be copied before.
-            const SDElementPointer sdElementPointer2 = this->sdElementPointer2(mdElement2);
-            const SDElement2& sdElement2 = *sdElementPointer2;
+            const MDElement& mdElement2 = ifIt->secondCell();
+            const SDElement2& sdElement2 = this->sdElementPointer2(mdElement2);
             fvGeometry2.update(this->sdGridView2(), sdElement2);
 
             const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =

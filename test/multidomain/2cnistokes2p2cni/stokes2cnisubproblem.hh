@@ -272,7 +272,7 @@ public:
 
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
             {
-                values.setAllCouplingOutflow();
+                values.setAllCouplingDirichlet();
             }
         }
 

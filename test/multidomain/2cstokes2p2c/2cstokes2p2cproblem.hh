@@ -152,10 +152,8 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef typename MDGrid::LeafGridView MDGridView;
     enum { dim = MDGridView::dimension };
 
-    typedef typename MDGrid::Traits::template Codim<0>::EntityPointer MDElementPointer;
     typedef typename MDGrid::Traits::template Codim<0>::Entity MDElement;
     typedef typename MDGrid::SubDomainGrid SDGrid;
-    typedef typename SDGrid::template Codim<0>::EntityPointer SDElementPointer;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, GridView) Stokes2cGridView;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, GridView) TwoPTwoCGridView;

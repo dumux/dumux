@@ -40,27 +40,39 @@ public:
     { reset(); }
 
     /*!
-     * \brief Reset the boundary types.
+     * \brief Reset the boundary types for all equations.
      *
      * After this method no equations will be disabled and neither
      * Neumann nor Dirichlet conditions will be evaluated. This
-     * corrosponds to a Neumann zero boundary.
+     * corresponds to a Neumann zero boundary.
      */
     void reset()
     {
-        for (int i=0; i < numEq; ++i) {
-            boundaryInfo_[i].visited = 0;
-
-            boundaryInfo_[i].isDirichlet = 0;
-            boundaryInfo_[i].isNeumann = 0;
-            boundaryInfo_[i].isOutflow = 0;
-            boundaryInfo_[i].isCouplingInflow = 0;
-            boundaryInfo_[i].isCouplingOutflow = 0;
-            boundaryInfo_[i].isMortarCoupling = 0;
-
-            eq2pvIdx_[i] = i;
-            pv2eqIdx_[i] = i;
+        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
+        {
+            resetEq(eqIdx);
         }
+    }
+
+    /*!
+     * \brief Reset the boundary types for one equation.
+     */
+    void resetEq(int eqIdx)
+    {
+          boundaryInfo_[eqIdx].visited = 0;
+
+          boundaryInfo_[eqIdx].isDirichlet = 0;
+          boundaryInfo_[eqIdx].isNeumann = 0;
+          boundaryInfo_[eqIdx].isOutflow = 0;
+          boundaryInfo_[eqIdx].isCouplingInflow = 0;
+          boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+          boundaryInfo_[eqIdx].isMortarCoupling = 0;
+          boundaryInfo_[eqIdx].isCouplingDirichlet = 0;
+          boundaryInfo_[eqIdx].isCouplingNeumann = 0;
+          boundaryInfo_[eqIdx].isCouplingMortar = 0;
+
+          eq2pvIdx_[eqIdx] = eqIdx;
+          pv2eqIdx_[eqIdx] = eqIdx;
     }
 
     /*!
@@ -75,7 +87,7 @@ public:
     /*!
      * \brief Make sure the boundary conditions are well-posed.
      *
-     * If they are not, an assertation fails and the program aborts!
+     * If they are not, an assertion fails and the program aborts!
      * (if the NDEBUG macro is not defined)
      */
     void checkWellPosed() const
@@ -121,21 +133,46 @@ public:
     }
 
     /*!
+     * \brief Set all boundary conditions to Dirichlet-like coupling
+     */
+    void setAllCouplingDirichlet()
+    {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            setCouplingDirichlet(eqIdx);
+        }
+    }
+
+    /*!
+     * \brief Set all boundary conditions to Neumann-like coupling.
+     */
+    void setAllCouplingNeumann()
+    {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            setCouplingNeumann(eqIdx);
+        }
+    }
+    /*!
+     * \brief Set all boundary conditions to mortar coupling.
+     */
+    void setAllCouplingMortar()
+    {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            setCouplingDirichlet(eqIdx);
+        }
+    }
+
+    /*!
      * \brief Set all boundary conditions to coupling inflow.
      */
     DUNE_DEPRECATED_MSG("setAllCouplingInflow() is deprecated")
     void setAllCouplingInflow()
     {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            boundaryInfo_[eqIdx].visited = 1;
-            boundaryInfo_[eqIdx].isDirichlet = 0;
-            boundaryInfo_[eqIdx].isNeumann = 0;
-            boundaryInfo_[eqIdx].isOutflow = 0;
-            boundaryInfo_[eqIdx].isCouplingInflow = 1;
-            boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
-
-            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            setCouplingInflow(eqIdx);
         }
     }
 
@@ -145,16 +182,9 @@ public:
     DUNE_DEPRECATED_MSG("setAllCouplingOutflow() is deprecated")
     void setAllCouplingOutflow()
     {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            boundaryInfo_[eqIdx].visited = 1;
-            boundaryInfo_[eqIdx].isDirichlet = 0;
-            boundaryInfo_[eqIdx].isNeumann = 0;
-            boundaryInfo_[eqIdx].isOutflow = 0;
-            boundaryInfo_[eqIdx].isCouplingInflow = 0;
-            boundaryInfo_[eqIdx].isCouplingOutflow = 1;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
-
-            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            setCouplingOutflow(eqIdx);
         }
     }
 
@@ -164,16 +194,9 @@ public:
     DUNE_DEPRECATED_MSG("setAllMortarCoupling() is deprecated")
     void setAllMortarCoupling()
     {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            boundaryInfo_[eqIdx].visited = 1;
-            boundaryInfo_[eqIdx].isDirichlet = 0;
-            boundaryInfo_[eqIdx].isNeumann = 0;
-            boundaryInfo_[eqIdx].isOutflow = 0;
-            boundaryInfo_[eqIdx].isCouplingInflow = 0;
-            boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 1;
-
-            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            setCouplingMortar(eqIdx);
         }
     }
 
@@ -185,13 +208,9 @@ public:
      */
     void setNeumann(int eqIdx)
     {
+        resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 0;
         boundaryInfo_[eqIdx].isNeumann = 1;
-        boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 0;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -207,13 +226,9 @@ public:
      */
     void setDirichlet(int pvIdx, int eqIdx)
     {
+        resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = 1;
         boundaryInfo_[eqIdx].isDirichlet = 1;
-        boundaryInfo_[eqIdx].isNeumann = 0;
-        boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 0;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
@@ -231,13 +246,48 @@ public:
      */
     void setOutflow(int eqIdx)
     {
+        resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 0;
-        boundaryInfo_[eqIdx].isNeumann = 0;
         boundaryInfo_[eqIdx].isOutflow = 1;
-        boundaryInfo_[eqIdx].isCouplingInflow = 0;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
+
+        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        a Dirichlet-like coupling condition.
+     */
+    void setCouplingDirichlet(int eqIdx)
+    {
+        resetEq(eqIdx);
+        boundaryInfo_[eqIdx].visited = 1;
+        boundaryInfo_[eqIdx].isCouplingDirichlet = 1;
+
+        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        a Neumann-like coupling condition.
+     */
+    void setCouplingNeumann(int eqIdx)
+    {
+        resetEq(eqIdx);
+        boundaryInfo_[eqIdx].visited = 1;
+        boundaryInfo_[eqIdx].isCouplingNeumann = 1;
+
+        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        a mortar coupling condition.
+     */
+    void setCouplingMortar(int eqIdx)
+    {
+        resetEq(eqIdx);
+        boundaryInfo_[eqIdx].visited = 1;
+        boundaryInfo_[eqIdx].isCouplingMortar = 1;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -248,13 +298,9 @@ public:
     DUNE_DEPRECATED_MSG("setCouplingInflow() is deprecated")
     void setCouplingInflow(int eqIdx)
     {
+        resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 0;
-        boundaryInfo_[eqIdx].isNeumann = 0;
-        boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 1;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -265,13 +311,9 @@ public:
     DUNE_DEPRECATED_MSG("setCouplingOutflow() is deprecated")
     void setCouplingOutflow(int eqIdx)
     {
+        resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 0;
-        boundaryInfo_[eqIdx].isNeumann = 0;
-        boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 1;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -282,12 +324,8 @@ public:
     DUNE_DEPRECATED_MSG("setMortarCoupling() is deprecated")
     void setMortarCoupling(int eqIdx)
     {
+        resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 0;
-        boundaryInfo_[eqIdx].isNeumann = 0;
-        boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 0;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
         boundaryInfo_[eqIdx].isMortarCoupling = 1;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
@@ -443,16 +481,81 @@ public:
     }
 
     /*!
+     * \brief Returns true if an equation is used to specify an
+     *        Dirichlet coupling condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isCouplingDirichlet(unsigned eqIdx) const
+    { return boundaryInfo_[eqIdx].isCouplingDirichlet; }
+
+    /*!
+     * \brief Returns true if some equation is used to specify an
+     *        Dirichlet coupling condition.
+     */
+    bool hasCouplingDirichlet() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isCouplingDirichlet)
+                return true;
+        return false;
+    }
+
+    /*!
+     * \brief Returns true if an equation is used to specify an
+     *        Neumann coupling condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isCouplingNeumann(unsigned eqIdx) const
+    { return boundaryInfo_[eqIdx].isCouplingNeumann; }
+
+    /*!
+     * \brief Returns true if some equation is used to specify an
+     *        Neumann coupling condition.
+     */
+    bool hasCouplingNeumann() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isCouplingNeumann)
+                return true;
+        return false;
+    }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        Mortar coupling condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isCouplingMortar(unsigned eqIdx) const
+    {
+        return boundaryInfo_[eqIdx].isCouplingMortar;
+    }
+
+    /*!
+     * \brief Returns true if some equation is used to specify an
+     *        Mortar coupling condition.
+     */
+    bool hasCouplingMortar() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isCouplingMortar)
+                return true;
+        return false;
+    }
+
+    /*!
      * \brief Returns true if an equation is used to specify a
      *        coupling condition.
      *
      * \param eqIdx The index of the equation
-     *
-     * This only used for correcting the pressure in the Stokes equation.
      */
     bool isCoupling(unsigned eqIdx) const
     {
-        return false;
+        return boundaryInfo_[eqIdx].isCouplingDirichlet
+               || boundaryInfo_[eqIdx].isCouplingNeumann
+               || boundaryInfo_[eqIdx].isCouplingMortar;
     }
 
     /*!
@@ -461,6 +564,9 @@ public:
      */
     bool hasCoupling() const
     {
+        for (int i = 0; i < numEq; ++i)
+            if (isCoupling(i))
+                return true;
         return false;
     }
 
@@ -486,7 +592,7 @@ public:
     unsigned eqToDirichletIndex(unsigned eqIdx) const
     { return eq2pvIdx_[eqIdx]; }
 
-private:
+protected:
     // this is a bitfield structure!
     struct __attribute__((__packed__)) {
         unsigned char visited : 1;
@@ -496,6 +602,9 @@ private:
         unsigned char isCouplingInflow : 1;
         unsigned char isCouplingOutflow : 1;
         unsigned char isMortarCoupling : 1;
+        unsigned char isCouplingDirichlet : 1;
+        unsigned char isCouplingNeumann : 1;
+        unsigned char isCouplingMortar : 1;
     } boundaryInfo_[numEq];
 
     unsigned char eq2pvIdx_[numEq];

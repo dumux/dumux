@@ -109,14 +109,13 @@ public:
                 // loop over the single vertices on the current face
                 for (int faceVertexIdx = 0; faceVertexIdx < numFaceVertices; ++faceVertexIdx)
                 {
-                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
                     const int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
                     if (vIdx != idx)
                         continue;
 
-                    if (boundaryHasCoupling_(this->bcTypes_(idx)))
+                    if (this->bcTypes_(idx).hasCoupling())
                         evalCouplingVertex_(idx);
                 }
             }
@@ -248,6 +247,8 @@ public:
      * \brief Set the Dirichlet-like conditions for the coupling
      *        and replace the existing residual
      *
+     * TODO integrate this function into the evalBoundary_?
+     *
      * \param scvIdx Sub control vertex index for the coupling condition
      */
     void evalCouplingVertex_(const int scvIdx)
@@ -255,21 +256,22 @@ public:
         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
         // set pressure as part of the momentum coupling
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(massBalanceIdx))
+        if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
             this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
         // set mass fraction;
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(contiWEqIdx))
+        if (this->bcTypes_(scvIdx).isCouplingDirichlet(contiWEqIdx))
             this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
 
         // set temperature as part of the coupling
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(energyEqIdx))
+        if (this->bcTypes_(scvIdx).isCouplingDirichlet(energyEqIdx))
             this->residual_[scvIdx][energyEqIdx] = volVars.temperature();
     }
 
     /*!
      * \brief Check if one of the boundary conditions is coupling.
      */
+    DUNE_DEPRECATED_MSG("boundaryHasCoupling_ is deprecated")
     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

@@ -226,7 +226,7 @@ public:
         if (onUpperBoundary_(globalPos))
         {
             if (globalPos[0] > runUpDistanceX_ - eps_)
-                values.setAllCouplingInflow();
+                values.setAllCouplingNeumann();
             else
                 values.setAllNeumann();
         }

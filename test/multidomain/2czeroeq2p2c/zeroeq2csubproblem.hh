@@ -233,7 +233,7 @@ public:
             values.setNeumann(transportEqIdx);
 
             if (globalPos[0] > runUpDistanceX_-eps_)
-                values.setAllCouplingOutflow();
+                values.setAllCouplingDirichlet();
         }
         if (onLeftBoundary_(globalPos))
         {
