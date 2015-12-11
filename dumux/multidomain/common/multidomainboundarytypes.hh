@@ -60,6 +60,18 @@ public:
     }
 
     /*!
+     * \brief Returns true if the boundary types for a given equation
+     *        has been specified.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isSet(int eqIdx) const
+    {
+        return ParentType::boundaryInfo_[eqIdx].visited
+               || boundaryCouplingInfo_[eqIdx].visited;
+    }
+
+    /*!
      * \brief Set all boundary conditions to coupling Dirichlet.
      */
     void setAllCouplingDirichlet()
@@ -86,6 +98,7 @@ public:
      */
     void setCouplingDirichlet(int eqIdx)
     {
+        ParentType::reset();
         boundaryCouplingInfo_[eqIdx].visited = 1;
         boundaryCouplingInfo_[eqIdx].isCouplingDirichlet = 1;
         boundaryCouplingInfo_[eqIdx].isCouplingNeumann = 0;
@@ -98,6 +111,7 @@ public:
      */
     void setCouplingNeumann(int eqIdx)
     {
+        ParentType::reset();
         boundaryCouplingInfo_[eqIdx].visited = 1;
         boundaryCouplingInfo_[eqIdx].isCouplingDirichlet = 0;
         boundaryCouplingInfo_[eqIdx].isCouplingNeumann = 1;

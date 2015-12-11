@@ -70,7 +70,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isSet(int eqIdx) const
-    { return boundaryInfo_[eqIdx].visited; };
+    { return boundaryInfo_[eqIdx].visited; }
 
     /*!
      * \brief Make sure the boundary conditions are well-posed.
@@ -85,7 +85,7 @@ public:
             // if this fails, at least one condition is missing.
             assert(boundaryInfo_[i].visited);
 #endif
-    };
+    }
 
     /*!
      * \brief Set all boundary conditions to Neumann.

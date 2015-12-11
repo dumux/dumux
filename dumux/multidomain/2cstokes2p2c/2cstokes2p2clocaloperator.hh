@@ -586,7 +586,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
         // TODO revise comment
         //p*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
-        if (cParams.boundaryTypes1.isCouplingOutflow(momentumYIdx1))
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
         {
             //p*A*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
             //pressure correction in stokeslocalresidual.hh
@@ -616,7 +616,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
         //coupling residual is added to "real" residual
         //here each node is passed twice, hence only half of the dirichlet condition has to be set
-        if (cParams.boundaryTypes1.isCouplingOutflow(transportEqIdx1))
+        if (cParams.boundaryTypes1.isCouplingDirichlet(transportEqIdx1))
         {
             // set residualStokes[transportEqIdx1] = x in stokes2clocalresidual.hh
 

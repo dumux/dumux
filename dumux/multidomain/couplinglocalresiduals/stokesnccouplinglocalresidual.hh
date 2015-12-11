@@ -175,8 +175,7 @@ public:
                     asImp_()->evalOutflowSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
 
                     // Beavers-Joseph condition at the coupling boundary/interface
-                    if((bcTypes.hasCouplingInflow() || bcTypes.hasCouplingOutflow())
-                       || bcTypes.hasCouplingMortar())
+                    if(bcTypes.hasCoupling() || bcTypes.hasCouplingMortar())
                     {
                         evalBeaversJoseph_(&intersection, idx, boundaryFaceIdx, boundaryVars);
                         asImp_()->evalCouplingVertex_(&intersection, idx, boundaryFaceIdx, boundaryVars);
@@ -244,7 +243,7 @@ protected:
 
         // add pressure correction - required for pressure coupling,
         // if p.n comes from the pm
-        if (bcTypes.isCouplingOutflow(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
+        if (bcTypes.isCouplingDirichlet(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
         {
             DimVector pressureCorrection(isIt->centerUnitOuterNormal());
             pressureCorrection *= volVars.pressure();
@@ -257,7 +256,7 @@ protected:
         {
             int eqIdx = dim + compIdx;
             if (eqIdx != massBalanceIdx) {
-                if (bcTypes.isCouplingOutflow(eqIdx))
+                if (bcTypes.isCouplingDirichlet(eqIdx))
                 {
                     if(useMoles)
                         this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
@@ -286,9 +285,10 @@ protected:
         beaversJosephCoeff /= std::sqrt(Kxx);
         const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
 
+        // TODO revise comment
         // implementation as NEUMANN condition /////////////////////////////////////////////
         // (v.n)n
-        if (bcTypes.isCouplingOutflow(momentumXIdx))
+        if (bcTypes.isCouplingDirichlet(momentumXIdx))
         {
             const Scalar normalComp = boundaryVars.velocity()*elementUnitNormal;
             DimVector normalV = elementUnitNormal;
