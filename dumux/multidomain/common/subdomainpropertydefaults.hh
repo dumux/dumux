@@ -35,7 +35,7 @@
 #include "subdomainproperties.hh"
 #include "multidomainproperties.hh"
 #include "multidomainlocaloperator.hh"
-#include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
+#include "boxcouplinglocalresidual.hh"
 
 namespace Dumux
 {

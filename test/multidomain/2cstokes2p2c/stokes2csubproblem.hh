@@ -25,7 +25,7 @@
 #define DUMUX_STOKES2C_SUBPROBLEM_HH
 
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
-#include <dumux/multidomain/couplinglocalresiduals/stokesnccouplinglocalresidual.hh>
+#include <dumux/multidomain/2cstokes2p2c/stokesnccouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 
 #include "2cstokes2p2cspatialparams.hh"

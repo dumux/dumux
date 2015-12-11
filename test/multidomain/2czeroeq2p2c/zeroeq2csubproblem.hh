@@ -26,7 +26,7 @@
 
 #include <dumux/freeflow/zeroeqnc/zeroeqncmodel.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-#include <dumux/multidomain/couplinglocalresiduals/stokesnccouplinglocalresidual.hh>
+#include <dumux/multidomain/2cstokes2p2c/stokesnccouplinglocalresidual.hh>
 
 #include "2czeroeq2p2cspatialparameters.hh"
 

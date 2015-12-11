@@ -29,7 +29,7 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
+#include <dumux/multidomain/2cnistokes2p2cni/2p2cnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
