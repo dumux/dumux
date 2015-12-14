@@ -136,6 +136,9 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, Problem) Stokes2cSubProblem;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, Problem) TwoPTwoCSubProblem;
 
+    typedef typename GET_PROP_TYPE(Stokes2cTypeTag, PrimaryVariables) Stokes2cPrimaryVariables;
+    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, PrimaryVariables) TwoPTwoCPrimaryVariables;
+
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, ElementSolutionVector) ElementSolutionVector1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, ElementSolutionVector) ElementSolutionVector2;
 
@@ -508,8 +511,6 @@ public:
             // evaluate residual of the sub model without boundary conditions
             this->localResidual2().evalNoBoundary(sdElement2, fvGeometry2,
                                                   elemVolVarsPrev2, elemVolVarsCur2);
-            // evaluate the vapor fluxes within each phase
-            this->localResidual2().evalPhaseFluxes();
 
             for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
             {
@@ -546,12 +547,14 @@ public:
                 if (shouldWriteVaporFlux())
                 {
                     if (!existing) // add phase storage only once per vertex
-                        sumWaterFluxInGasPhase +=
-                            this->localResidual2().evalPhaseStorageDerivative(vertInElem2);
+                    {
+                        TwoPTwoCPrimaryVariables storage;
+                        this->localResidual2().evalStorageDerivative(storage, vertInElem2);
+                        sumWaterFluxInGasPhase += storage[wCompIdx2];
+                    }
 
                     totalWaterComponentFlux += secondVertexDefect[vertInElem2][contiWEqIdx2];
-                    sumWaterFluxInGasPhase +=
-                        this->localResidual2().elementFluxes(vertInElem2);
+                    sumWaterFluxInGasPhase += this->localResidual2().evalComponentFluxes(vertInElem2)[wCompIdx2];
                 }
             }
         }
@@ -593,7 +596,7 @@ public:
      *
      * The phaseIdx and transportCompIdx1 are predefined
      *
-     * \todo boundaryVars1 violates naming convention
+     * TODO: use the function from the local residual instead?
      *
      * \param elemVolVars1 All volume variables for the element
      * \param boundaryVars1 Flux variables
@@ -614,7 +617,7 @@ public:
      *
      * The transportCompIdx1 is predefined
      *
-     * \todo boundaryVars1 violates naming convention
+     * TODO: use the function from the local residual instead?
      *
      * \param elemVolVars1 All volume variables for the element
      * \param boundaryVars1 Flux variables

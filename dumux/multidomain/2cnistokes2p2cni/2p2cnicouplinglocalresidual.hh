@@ -54,7 +54,6 @@ class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
         temperatureIdx = Indices::temperatureIdx
     };
     enum {
-        wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
     enum {
@@ -82,6 +81,8 @@ class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
 public:
     /*!
      * \brief Implementation of the boundary evaluation
+     *
+     * This function implements Dirichlet-like coupling conditions
      */
     void evalBoundary_()
     {
@@ -91,11 +92,9 @@ public:
         typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
         const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
-        // evaluate Dirichlet-like coupling conditions
-        for (int idx = 0; idx < this->fvGeometry_().numScv; idx++)
+        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; scvIdx++)
         {
-            // evaluate boundary conditions for the intersections of
-            // the current element
+            // evaluate boundary conditions for the intersections of the current element
             for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
             {
                 // handle only intersections on the boundary
@@ -109,22 +108,54 @@ public:
                 // loop over the single vertices on the current face
                 for (int faceVertexIdx = 0; faceVertexIdx < numFaceVertices; ++faceVertexIdx)
                 {
-                    const int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
-                    if (vIdx != idx)
+                    if (refElement.subEntity(fIdx, 1, faceVertexIdx, dim) != scvIdx)
                         continue;
 
-                    if (this->bcTypes_(idx).hasCoupling())
-                        evalCouplingVertex_(idx);
+                    const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
+
+                    // set pressure as part of the momentum coupling TODO is it potential bug to use nPhaseIdx?
+                    if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
+                        this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
+
+                    // set mass fraction TODO: add use of moles, check the function arguments: nPhaseIdx, wCompIdx
+                    if (this->bcTypes_(scvIdx).isCouplingDirichlet(contiWEqIdx))
+                        this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
+
+                    // set temperature
+                    if (this->bcTypes_(scvIdx).isCouplingDirichlet(energyEqIdx))
+                        this->residual_[scvIdx][energyEqIdx] = volVars.temperature();
                 }
             }
         }
     }
 
     /*!
+     * \brief Evaluates the time derivative of the storage term
+     *
+     * \param storage The vector in which the result is written
+     * \param scvIdx The sub-control-volume index
+     */
+    void evalStorageDerivative(PrimaryVariables &storage, const int scvIdx) const
+    {
+        PrimaryVariables result;
+        this->computeStorage(result, scvIdx, false);
+        Valgrind::CheckDefined(result);
+        storage = result;
+        this->computeStorage(result, scvIdx, true);
+        Valgrind::CheckDefined(result);
+        storage -= result;
+
+        storage *= this->fvGeometry_().subContVol[scvIdx].volume
+                   / this->problem_().timeManager().timeStepSize()
+                   * this->curVolVars_(scvIdx).extrusionFactor();
+    }
+
+    /*!
      * \brief Evaluates the time derivative of the phase storage
      */
+    DUNE_DEPRECATED_MSG("evalPhaseStorageDerivative() is deprecated. Use evalStorageDerivative() instead.")
     Scalar evalPhaseStorageDerivative(const int scvIdx) const
     {
         Scalar result = computePhaseStorage(scvIdx, false);
@@ -134,8 +165,8 @@ public:
 
         result -= oldPhaseStorage;
         result *= this->fvGeometry_().subContVol[scvIdx].volume
-            / this->problem_().timeManager().timeStepSize()
-            * this->curVolVars_(scvIdx).extrusionFactor();
+                  / this->problem_().timeManager().timeStepSize()
+                  * this->curVolVars_(scvIdx).extrusionFactor();
         Valgrind::CheckDefined(result);
 
         return result;
@@ -144,6 +175,7 @@ public:
     /*!
      * \brief Compute storage term of all components within all phases
      */
+    DUNE_DEPRECATED_MSG("computePhaseStorage() is deprecated.")
     Scalar computePhaseStorage(const int scvIdx, bool usePrevSol) const
     {
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
@@ -160,9 +192,52 @@ public:
     }
 
     /*!
+     * \brief Compute the fluxes merely for the flux output.
+     *
+     * \param scvIdx The sub-control-volume index
+     */
+    PrimaryVariables evalComponentFluxes(const int scvIdx)
+    {
+        const unsigned int numScv = this->fvGeometry_().numScv;
+        PrimaryVariables fluxes[numScv];
+        for (int fIdx = 0; fIdx < numScv; fIdx++)
+            fluxes[fIdx] = 0.0;
+
+        // calculate the mass flux over the faces and subtract
+        // it from the local rates
+        for (int fIdx = 0; fIdx < numScv; fIdx++)
+        {
+            FluxVariables fluxVars(this->problem_(),
+                                   this->element_(),
+                                   this->fvGeometry_(),
+                                   fIdx,
+                                   this->curVolVars_());
+
+            int i = this->fvGeometry_().subContVolFace[fIdx].i;
+            int j = this->fvGeometry_().subContVolFace[fIdx].j;
+
+            PrimaryVariables flux(0.);
+            PrimaryVariables fluxTemp(0.);
+            this->computeAdvectiveFlux(fluxTemp, fluxVars);
+            flux += fluxTemp;
+            this->computeAdvectiveFlux(fluxTemp, fluxVars);
+            flux += fluxTemp;
+
+            const Scalar extrusionFactor = 0.5 * this->curVolVars_(i).extrusionFactor()
+                                           + 0.5 * this->curVolVars_(j).extrusionFactor();
+            flux *= extrusionFactor;
+
+            fluxes[i] += flux;
+            fluxes[j] -= flux;
+        }
+        return fluxes[scvIdx];
+    }
+
+    /*!
      * \brief Compute the fluxes within the different fluid phases. This is
      *        merely for the computation of flux output.
      */
+    DUNE_DEPRECATED_MSG("evalPhaseFluxes() has changed signature and has been renamed to evalComponentFluxes.")
     void evalPhaseFluxes()
     {
         elementFluxes_.resize(this->fvGeometry_().numScv);
@@ -199,6 +274,7 @@ public:
     /*!
      * \brief Returns the advective fluxes within the different phases.
      */
+    DUNE_DEPRECATED_MSG("computeAdvectivePhaseFlux() is deprecated.")
     Scalar computeAdvectivePhaseFlux(const FluxVariables &fluxVars) const
     {
         Scalar advectivePhaseFlux = 0.;
@@ -232,6 +308,7 @@ public:
     /*!
      * \brief Returns the diffusive fluxes within the different phases.
      */
+    DUNE_DEPRECATED_MSG("computeAdvectivePhaseFlux() is deprecated.")
     Scalar computeDiffusivePhaseFlux(const FluxVariables &fluxVars) const
     {
         // add diffusive flux of gas component in liquid phase
@@ -247,10 +324,9 @@ public:
      * \brief Set the Dirichlet-like conditions for the coupling
      *        and replace the existing residual
      *
-     * TODO integrate this function into the evalBoundary_?
-     *
      * \param scvIdx Sub control vertex index for the coupling condition
      */
+    DUNE_DEPRECATED_MSG("boundaryHasCoupling_ is deprecated. Its functionality is now included in evalBoundary_.")
     void evalCouplingVertex_(const int scvIdx)
     {
         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
@@ -296,6 +372,7 @@ public:
     /*!
      * \brief Returns the fluxes of the specified sub control volume
      */
+    DUNE_DEPRECATED_MSG("elementFluxes() is deprecated")
     Scalar elementFluxes(const int scvIdx)
     {
         return elementFluxes_[scvIdx];
