@@ -28,8 +28,6 @@ NamePM = 2p2cni_boundarylayer
 FreqRestart = 1000      # how often restart files are written out
 FreqOutput = 2          # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
-FreqFluxOutput = 1000   # frequency of detailed flux output
-FreqVaporFluxOutput = 2 # frequency of summarized flux output
 LiveEvaporationRates = false # plot evaporation rates using gnuplot interface
 
 [Stokes]

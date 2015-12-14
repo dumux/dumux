@@ -28,8 +28,6 @@ NamePM = 2p2c
 FreqRestart = 1000      # how often restart files are written out 
 FreqOutput = 10         # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
-FreqFluxOutput = 1000   # frequency of detailed flux output
-FreqVaporFluxOutput = 2 # frequency of summarized flux output
 
 [Stokes]
 StabilizationAlpha = -1.0
