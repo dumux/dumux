@@ -82,8 +82,6 @@ namespace Dumux
         };
 
         typedef typename GridView::ctype CoordScalar;
-        typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-        typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
 
         typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
         typedef Dune::FieldVector<Scalar, dim> DimVector;
@@ -102,23 +100,27 @@ namespace Dumux
          */
         void evalBoundary_()
         {
+            // TODO: call ParentType too!
             assert(this->residual_.size() == this->fvGeometry_().numScv);
+
+            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
             const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
             // loop over vertices of the element
-            for (int idx = 0; idx < this->fvGeometry_().numScv; idx++)
+            for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; scvIdx++)
             {
                 // consider only SCVs on the boundary
-                if (this->fvGeometry_().subContVol[idx].inner)
+                if (this->fvGeometry_().subContVol[scvIdx].inner)
                     continue;
 
                 // important at corners of the grid
                 DimVector momentumResidual(0.0);
                 DimVector averagedNormal(0.0);
                 int numberOfOuterFaces = 0;
-                // evaluate boundary conditions for the intersections of
-                // the current element
-                const BoundaryTypes &bcTypes = this->bcTypes_(idx);
+                const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+
+                // evaluate boundary conditions for the intersections of the current element
                 for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
                 {
                     // handle only intersections on the boundary
@@ -134,8 +136,7 @@ namespace Dumux
                     {
                         // only evaluate, if we consider the same face vertex as in the outer
                         // loop over the element vertices
-                        if (refElement.subEntity(fIdx, 1, faceVertexIdx, dim)
-                            != idx)
+                        if (refElement.subEntity(fIdx, 1, faceVertexIdx, dim) != scvIdx)
                             continue;
 
                         const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
@@ -145,6 +146,11 @@ namespace Dumux
                                                          boundaryFaceIdx,
                                                          this->curVolVars_(),
                                                          true);
+                        const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
+
+                        // evaluate fluxes at a single boundary segment
+                        asImp_()->evalNeumannSegment_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
+                        asImp_()->evalOutflowSegment_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
 
                         // the computed residual of the momentum equations is stored
                         // into momentumResidual for the replacement of the mass balance
@@ -163,7 +169,7 @@ namespace Dumux
                             for (int i=0; i < this->residual_.size(); i++)
                                 Valgrind::CheckDefined(this->residual_[i]);
                             for (int dimIdx=0; dimIdx < dim; ++dimIdx)
-                                momentumResidual[dimIdx] = this->residual_[idx][momentumXIdx+dimIdx];
+                                momentumResidual[dimIdx] = this->residual_[scvIdx][momentumXIdx+dimIdx];
 
                             //Sign is right!!!: boundary flux: -mu grad v n
                             //but to compensate outernormal -> residual - (-mu grad v n)
@@ -171,76 +177,78 @@ namespace Dumux
                             averagedNormal += boundaryFaceNormal;
                         }
 
-                        // evaluate fluxes at a single boundary segment
-                        asImp_()->evalNeumannSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
-                        asImp_()->evalOutflowSegment_(&intersection, idx, boundaryFaceIdx, boundaryVars);
-
-                        // TODO: check if this code is used
-                        //for the corner points, the boundary flux across the vertical non-coupling boundary faces
-                        //has to be calculated to fulfill the mass balance
-                        //convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
-                        if(!GridView::Grid::multiDomainIntersection(intersection).neighbor()
-                           && (bcTypes.hasCouplingMortar() || this->momentumBalanceHasNeumann_(this->bcTypes_(idx))))
-                        {
-                            const GlobalPosition& globalPos = this->fvGeometry_().subContVol[idx].global;
-                            //problem specific function, in problem orientation of interface is known
-                            if(this->problem_().isInterfaceCornerPoint(globalPos))
-                            {
-                                 PrimaryVariables priVars(0.0);
-                                //                         DimVector faceCoord = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
-                                //                         std::cout<<faceCoord<<std::endl;
-
-                                 const int numVertices = refElement.size(dim);
-                                 bool evalBoundaryFlux = false;
-                                 for(int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-                                 {
-                                     for(int i= 0; i < numVertices; i++)
-                                     {
-                                         //if vertex is on boundary and not the coupling vertex: check whether an outflow condition is set
-                                         if(this->model_().onBoundary(this->element_(), i) && i!=idx)
-                                             if (!this->bcTypes_(i).isOutflow(equationIdx))
-                                                 evalBoundaryFlux = true;
-                                     }
-
-                                     //calculate the actual boundary fluxes and add to residual (only for momentum and transport equation, mass balance already has outflow)
-                                     if(evalBoundaryFlux)
-                                     {
-                                         asImp_()->computeFlux(priVars, boundaryFaceIdx, true/*on boundary*/);
-                                         this->residual_[idx][equationIdx] += priVars[equationIdx];
-                                     }
-                                 }
-                            }
-                        }
+                        // TODO: move scope below to coupling localoperator
                         // Beavers-Joseph condition at the coupling boundary/interface
                         if(bcTypes.hasCoupling())
                         {
-                            evalBeaversJoseph_(&intersection, idx, boundaryFaceIdx, boundaryVars);
+                            evalBeaversJoseph_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
                         }
-                        if(bcTypes.hasCoupling() || bcTypes.hasCouplingMortar())
+
+                        // TODO: move scope below to coupling localoperator/ BUG (potentially): sollte das nicht dirichlet sein?
+                        // set velocity normal to the interface
+                        if (bcTypes.isCouplingNeumann(momentumYIdx))
                         {
-                            asImp_()->evalCouplingVertex_(&intersection, idx, boundaryFaceIdx, boundaryVars);
+                            std::cout << "This code is used"; // TODO potentially unused code
+                            this->residual_[scvIdx][momentumYIdx] = volVars.velocity()
+                                                                    * boundaryVars.face().normal
+                                                                    / boundaryVars.face().normal.two_norm();
+                            Valgrind::CheckDefined(this->residual_[scvIdx][momentumYIdx]);
+                        }
+
+                        // add pressure correction - required for pressure coupling,
+                        // if p.n comes from the pm
+                        if (bcTypes.isCouplingDirichlet(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
+                        {
+                            DimVector pressureCorrection(intersection.centerUnitOuterNormal());
+                            pressureCorrection *= volVars.pressure();
+                            this->residual_[scvIdx][momentumYIdx] += pressureCorrection[momentumYIdx]
+                                                                     * boundaryVars.face().area;
+                            Valgrind::CheckDefined(this->residual_[scvIdx][momentumYIdx]);
+                        }
+
+                        // set mole fraction for the transported components
+                        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+                        {
+                            int eqIdx =  dim + compIdx; // TODO: ist das so richtig
+                            if (eqIdx != massBalanceIdx)
+                            {
+                                if (bcTypes.isCouplingDirichlet(eqIdx))
+                                {
+                                    if(useMoles)
+                                        this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
+                                    else
+                                        this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
+                                    Valgrind::CheckDefined(this->residual_[scvIdx][compIdx]);
+                                }
+                            }
+                        }
+                        // set temperature
+                        if (bcTypes.isCouplingDirichlet(energyEqIdx))
+                        {
+                            this->residual_[scvIdx][energyEqIdx] = volVars.temperature();
+                            Valgrind::CheckDefined(this->residual_[scvIdx][energyEqIdx]);
                         }
                         // count the number of outer faces to determine, if we are on
                         // a corner point and if an interpolation should be done
                         numberOfOuterFaces++;
-                    } // end loop over face vertices
-                } // end loop over intersections
+                    }
+                }
 
                 // replace defect at the corner points of the grid
                 // by the interpolation of the primary variables
                 if(!bcTypes.isDirichlet(massBalanceIdx))
                 {
                     if (this->momentumBalanceDirichlet_(bcTypes))
-                        this->replaceMassbalanceResidual_(momentumResidual, averagedNormal, idx);
+                        this->replaceMassbalanceResidual_(momentumResidual, averagedNormal, scvIdx);
                     else // de-stabilize (remove alpha*grad p - alpha div f
                         // from computeFlux on the boundary)
-                        this->removeStabilizationAtBoundary_(idx);
+                        this->removeStabilizationAtBoundary_(scvIdx);
                 }
                 if (numberOfOuterFaces == 2)
-                    this->interpolateCornerPoints_(bcTypes, idx);
-            } // end loop over element vertices
+                    this->interpolateCornerPoints_(bcTypes, scvIdx);
+            }
 
-            // evaluate the dirichlet conditions of the element
+            // evaluate the Dirichlet conditions of the element
             if (this->bcTypes_().hasDirichlet())
                 asImp_()->evalDirichlet_();
         }
@@ -264,6 +272,7 @@ namespace Dumux
          *        sub-control volume face; rest is done in the local coupling operator
          */
         template <class IntersectionIterator>
+        DUNE_DEPRECATED_MSG("evalCouplingVertex_ is deprecated. Its functionality is now included in evalBoundary_.")
         void evalCouplingVertex_(const IntersectionIterator &isIt,
                                  const int scvIdx,
                                  const int boundaryFaceIdx,

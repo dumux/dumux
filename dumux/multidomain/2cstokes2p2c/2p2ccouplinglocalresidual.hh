@@ -79,9 +79,10 @@ class TwoPTwoCCouplingLocalResidual : public TwoPTwoCLocalResidual<TypeTag>
 
 public:
     /*!
-     * \brief Implementation of the boundary evaluation
+     * \brief Implementation of the boundary evaluation for the Darcy model
      *
-     * This function implements Dirichlet-like coupling conditions
+     * Evaluate one part of the Dirichlet-like coupling conditions for a single
+     * sub-control volume face; rest is done in the local coupling operator
      */
     void evalBoundary_()
     {
@@ -91,8 +92,13 @@ public:
         typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
         const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
+        // loop over vertices of the element
         for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; scvIdx++)
         {
+            // consider only SCVs on the boundary
+            if (this->fvGeometry_().subContVol[scvIdx].inner)
+                continue;
+
             // evaluate boundary conditions for the intersections of the current element
             for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
             {
@@ -318,7 +324,7 @@ public:
      *
      * \param scvIdx Sub control vertex index for the coupling condition
      */
-    DUNE_DEPRECATED_MSG("boundaryHasCoupling_ is deprecated. Its functionality is now included in evalBoundary_.")
+    DUNE_DEPRECATED_MSG("evalCouplingVertex_ is deprecated. Its functionality is now included in evalBoundary_.")
     void evalCouplingVertex_(const int scvIdx)
     {
         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
