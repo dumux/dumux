@@ -456,50 +456,11 @@ public:
 //                 globalProblem_.localResidual1().computeAdvectiveFlux(flux, boundaryVars1);
 //                 advectiveFlux = flux[transportEqIdx1];
 
-                if (massTransferModel_ == 0)
+                const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
+                // TODO: unify this behavior with the one in the non-isothermal LOP
+                if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
                 {
-                    couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                            -(advectiveFlux - diffusiveFlux));
-                }
-                // transition from the mass transfer coefficient concept to the coupling via
-                // the local residual; only diffusive fluxes are scaled!
-                else
-                {
-                    const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
-
-                    if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
-                    {
-                        const Scalar diffusiveFluxAtCorner =
-                            bfNormal1 *
-                            boundaryVars1.moleFractionGrad(transportCompIdx1) *
-                            (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
-                            boundaryVars1.molarDensity() *
-                            FluidSystem::molarMass(transportCompIdx1);
-
-                        couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                                -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
-                                                (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
-                    }
-                    else
-                    {
-                        couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                                -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
-                                                (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
-                    }
-                }
-            }
-            else
-            {
-                // compute fluxes explicitly at corner points - only quarter control volume
-                if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
-                {
-                    static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                                  "This coupling condition is only implemented for mass fraction formulation.");
-
-                    const Scalar advectiveFlux =
-                        normalMassFlux *
-                        cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-                    const Scalar diffusiveFlux =
+                    const Scalar diffusiveFluxAtCorner =
                         bfNormal1 *
                         boundaryVars1.moleFractionGrad(transportCompIdx1) *
                         (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
@@ -507,18 +468,42 @@ public:
                         FluidSystem::molarMass(transportCompIdx1);
 
                     couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                            -(advectiveFlux - diffusiveFlux));
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
+                                            (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
                 }
-                // coupling via the defect
                 else
                 {
-                    static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                                  "This coupling condition is only implemented or different formulations (mass/mole) in the subdomains.");
-
-                    // the component mass flux from the stokes domain
                     couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                            globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
+                                            (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
                 }
+            }
+            else if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+            {
+                static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is only implemented for mass fraction formulation.");
+
+                const Scalar advectiveFlux =
+                    normalMassFlux *
+                    cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+                const Scalar diffusiveFlux =
+                    bfNormal1 *
+                    boundaryVars1.moleFractionGrad(transportCompIdx1) *
+                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
+                    boundaryVars1.molarDensity() *
+                    FluidSystem::molarMass(transportCompIdx1);
+
+                couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
+                                        -(advectiveFlux - diffusiveFlux));
+            }
+            else
+            {
+                static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is only implemented or different formulations (mass/mole) in the subdomains.");
+
+                // the component mass flux from the stokes domain
+                couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
+                                        globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
             }
         }
         // TODO make this a static assert

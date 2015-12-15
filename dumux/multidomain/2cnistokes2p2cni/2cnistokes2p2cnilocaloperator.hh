@@ -254,6 +254,8 @@ public:
                                               * (boundaryVars1.thermalConductivity()
                                                  + boundaryVars1.thermalEddyConductivity());
 
+                // TODO: unify this behavior with the one in the isothermal LOP
+                // TODO: use mass transfer coefficient here?
                 couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
                                         -(convectiveFlux - diffusiveEnergyFlux - conductiveFlux));
             }
