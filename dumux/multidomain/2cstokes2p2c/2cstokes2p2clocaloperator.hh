@@ -173,6 +173,7 @@ public:
 
     // Stokes
     enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq) };
+    enum { numComponents1 = Stokes2cIndices::numComponents };
     enum { // equation indices
         momentumXIdx1 = Stokes2cIndices::momentumXIdx,         //!< Index of the x-component of the momentum balance
         momentumYIdx1 = Stokes2cIndices::momentumYIdx,         //!< Index of the y-component of the momentum balance
@@ -244,7 +245,6 @@ public:
      * \param lfsv2 local basis for the test space of the Darcy domain
      * \param couplingRes1 the coupling residual from the Stokes domain
      * \param couplingRes2 the coupling residual from the Darcy domain
-     *
      */
     template<typename IntersectionGeom, typename LFSU1, typename LFSU2,
              typename X, typename LFSV1, typename LFSV2,typename RES>
@@ -308,18 +308,12 @@ public:
                                                    cParams.elemVolVarsCur2,
                                                    /*onBoundary=*/true);
 
-            asImp_()->evalCoupling12(lfsu1, lfsu2, // local function spaces
-                                     vertInElem1, vertInElem2,
-                                     sdElement1, sdElement2,
-                                     boundaryVars1, boundaryVars2,
-                                     cParams,
-                                     couplingRes1, couplingRes2);
-            asImp_()->evalCoupling21(lfsu1, lfsu2, // local function spaces
-                                     vertInElem1, vertInElem2,
-                                     sdElement1, sdElement2,
-                                     boundaryVars1, boundaryVars2,
-                                     cParams,
-                                     couplingRes1, couplingRes2);
+            asImp_()->evalCoupling(lfsu1, lfsu2,
+                                   vertInElem1, vertInElem2,
+                                   sdElement1, sdElement2,
+                                   boundaryVars1, boundaryVars2,
+                                   cParams,
+                                   couplingRes1, couplingRes2);
         }
     }
 
@@ -334,7 +328,6 @@ public:
      * \param sdElement1 the element in the Stokes domain
      * \param sdElement2 the element in the Darcy domain
      * \param cParams a parameter container
-     *
      */
     template<typename LFSU1, typename LFSU2, typename X, typename CParams>
     void updateElemVolVars(const LFSU1& lfsu1, const LFSU2& lfsu2,
@@ -378,6 +371,256 @@ public:
     }
 
     /*!
+     * \brief Evaluation of the coupling between the Stokes (1) and Darcy (2).
+     *
+     * Dirichlet-like and Neumann-like conditions for the respective domain are evaluated.
+     *
+     * \param lfsu1 local basis for the trial space of the Stokes domain
+     * \param lfsu2 local basis for the trial space of the Darcy domain
+     * \param vertInElem1 local vertex index in element1
+     * \param vertInElem2 local vertex index in element2
+     * \param sdElement1 the element in the Stokes domain
+     * \param sdElement2 the element in the Darcy domain
+     * \param boundaryVars1 the boundary variables at the interface of the Stokes domain
+     * \param boundaryVars2 the boundary variables at the interface of the Darcy domain
+     * \param cParams a parameter container
+     * \param couplingRes1 the coupling residual from the Stokes domain
+     * \param couplingRes2 the coupling residual from the Darcy domain
+     */
+    template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
+    void evalCoupling(const LFSU1& lfsu1, const LFSU2& lfsu2,
+                      const int vertInElem1, const int vertInElem2,
+                      const SDElement1& sdElement1, const SDElement2& sdElement2,
+                      const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
+                      const CParams &cParams,
+                      RES1& couplingRes1, RES2& couplingRes2) const
+    {
+        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
+
+        const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
+        const Scalar normalMassFlux1 = boundaryVars1.normalVelocity()
+                                       * cParams.elemVolVarsCur1[vertInElem1].density();
+
+        // MASS Balance
+        // Neumann-like conditions
+        if (cParams.boundaryTypes2.isCouplingNeumann(massBalanceIdx2))
+        {
+            static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                          "This coupling condition is only implemented for mass fraction formulation.");
+
+            if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+            {
+                couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
+                                        -normalMassFlux1);
+            }
+            else
+            {
+                couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
+                                        globalProblem_.localResidual1().residual(vertInElem1)[massBalanceIdx1]);
+            }
+        }
+
+        // MASS Balance
+        // Dirichlet-like
+        if (cParams.boundaryTypes2.isCouplingDirichlet(massBalanceIdx2))
+        {
+            couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
+                                    globalProblem_.localResidual1().residual(vertInElem1)[momentumYIdx1]
+                                    -cParams.elemVolVarsCur1[vertInElem1].pressure());
+        }
+
+
+        // MOMENTUM_X Balance
+        SpatialParams spatialParams = globalProblem_.sdProblem1().spatialParams();
+        Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos1);
+        assert(beaversJosephCoeff > 0);
+        beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement1, cParams.fvGeometry1, vertInElem1));
+        // Neumann-like conditions
+
+        // TODO revise comment
+        // Implementation as Dirichlet-like condition
+        // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
+        {
+            // TODO: Is not implemented anymore because curPrimaryVars_ is protected
+            //       and it could be that this part of code has never been checked
+            std::cerr << "The boundary condition isCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore." << std::endl;
+            exit(1);
+
+            // GlobalPosition tangentialVelGrad(0);
+            // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            // tangentialVelGrad /= -beaversJosephCoeff; // was - before
+            // couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
+            // this->residual_[vertInElem1][momentumXIdx1] =
+            //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
+        }
+
+        // MOMENTUM_X Balance
+        // Dirichlet-like conditions
+
+        // TODO revise comment
+        // Implementation as Neumann-like condition: (v.n)n
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
+        {
+            const Scalar normalComp = boundaryVars1.velocity()*bfNormal1;
+            GlobalPosition normalV = bfNormal1;
+            normalV *= normalComp; // v*n*n
+
+            // v_tau = v - (v.n)n
+            const GlobalPosition tangentialV = boundaryVars1.velocity() - normalV;
+
+            for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+            {
+                couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
+                                        beaversJosephCoeff
+                                        * boundaryVars1.face().area
+                                        * tangentialV[dimIdx]
+                                        * (boundaryVars1.dynamicViscosity()
+                                          + boundaryVars1.dynamicEddyViscosity()));
+            }
+        }
+
+
+        // MOMENTUM_Y Balance
+        // Neumann-like conditions
+
+        // TODO revise comment
+        // v.n as Dirichlet-like condition for the Stokes domain
+        // set residualStokes[momentumYIdx1] = v_y in stokesnccouplinglocalresidual.hh
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
+        {
+            if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
+            {
+                Scalar sumNormalPhaseFluxes = 0.0;
+                for (int phaseIdx=0; phaseIdx<numPhases2; ++phaseIdx)
+                {
+                    sumNormalPhaseFluxes -= boundaryVars2.volumeFlux(phaseIdx)
+                                            * cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
+                }
+                couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                        -sumNormalPhaseFluxes
+                                        / cParams.elemVolVarsCur1[vertInElem1].density());
+            }
+            else
+            {
+                // TODO revise comment
+                // v.n as DIRICHLET condition for the Stokes domain (negative sign!)
+                couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                        globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
+                                        / cParams.elemVolVarsCur1[vertInElem1].density());
+            }
+        }
+
+        // MOMENTUM_Y Balance
+        // Dirichlet-like conditions
+
+        // TODO revise comments
+        //p*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
+        // p*A*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
+        {
+            // pressure correction is done in stokeslocalresidual.hh
+            couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                    cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
+                                    boundaryVars2.face().area);
+        }
+
+
+        // COMPONENT Balance
+        // Neumann-like conditions
+        if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
+        {
+            std::cerr << "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented";
+            std::cerr << "for the Stokes side for multicomponent systems." << std::endl;
+            exit(1);
+        }
+        if (cParams.boundaryTypes2.isCouplingNeumann(contiWEqIdx2))
+        {
+            // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
+            if (blModel_)
+            {
+                Scalar diffusiveFlux = bfNormal1.two_norm()
+                                       * evalBoundaryLayerConcentrationGradient<CParams>(cParams, vertInElem1)
+                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                         + boundaryVars1.eddyDiffusivity())
+                                       * boundaryVars1.molarDensity()
+                                       * FluidSystem::molarMass(transportCompIdx1);
+
+                Scalar advectiveFlux = normalMassFlux1
+                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+
+                const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
+                // TODO: unify this behavior with the one in the non-isothermal LOP
+                if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
+                {
+                    Scalar diffusiveFluxAtCorner = bfNormal1
+                                                   * boundaryVars1.moleFractionGrad(transportCompIdx1)
+                                                   * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                                      + boundaryVars1.eddyDiffusivity())
+                                                   * boundaryVars1.molarDensity()
+                                                   * FluidSystem::molarMass(transportCompIdx1);
+
+                    couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
+                                            (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
+                }
+                else
+                {
+                    couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
+                                            (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+                }
+            }
+            else if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+            {
+                static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is only implemented for mass fraction formulation.");
+
+                Scalar advectiveFlux = normalMassFlux1
+                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+                Scalar diffusiveFlux = bfNormal1
+                                       * boundaryVars1.moleFractionGrad(transportCompIdx1)
+                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                          + boundaryVars1.eddyDiffusivity())
+                                       * boundaryVars1.molarDensity()
+                                       * FluidSystem::molarMass(transportCompIdx1);
+
+                couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                        -(advectiveFlux - diffusiveFlux));
+            }
+            else
+            {
+                static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is not implemented for different formulations (mass/mole) in the subdomains.");
+
+                // the component mass flux from the stokes domain
+                couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                        globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+            }
+        }
+
+        // COMPONENT Balance
+        // Dirichlet-like conditions (coupling residual is added to "real" residual)
+        // TODO (stimmt der Kommentar): here each node is passed twice, hence only half of the dirichlet condition has to be set
+        if (cParams.boundaryTypes1.isCouplingDirichlet(transportEqIdx1))
+        {
+            // set residualStokes[transportEqIdx1] = x in stokesnccouplinglocalresidual.hh
+            static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
+                          "This coupling condition is only implemented for mass fraction formulation.");
+
+            couplingRes1.accumulate(lfsu1.child(transportEqIdx1), vertInElem1,
+                                    -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
+        }
+        if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
+        {
+            std::cerr << "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented";
+            std::cerr << "for the Darcy side for multicomponent systems." << std::endl;
+            exit(1);
+        }
+    }
+
+    /*!
      * \brief Evaluation of the coupling from Stokes (1) to Darcy (2).
      *
      * \param lfsu1 local basis for the trial space of the Stokes domain
@@ -393,6 +636,7 @@ public:
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
+    DUNE_DEPRECATED_MSG("evalCoupling21() is deprecated. Use evalCoupling() instead.")
     void evalCoupling12(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
@@ -446,7 +690,6 @@ public:
                 Scalar advectiveFlux = normalMassFlux * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
 
                 const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
-                // TODO: unify this behavior with the one in the non-isothermal LOP
                 if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
                 {
                     const Scalar diffusiveFluxAtCorner =
@@ -488,16 +731,18 @@ public:
             else
             {
                 static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                              "This coupling condition is only implemented or different formulations (mass/mole) in the subdomains.");
+                              "This coupling condition is not implemented dor different formulations (mass/mole) in the subdomains.");
 
                 // the component mass flux from the stokes domain
                 couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
                                         globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
             }
         }
-        // TODO make this a static assert
         if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
-            std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
+        {
+            std::cerr << "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented for the Darcy side." << std::endl;
+            exit(1);
+        }
     }
 
     /*!
@@ -516,6 +761,7 @@ public:
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
+    DUNE_DEPRECATED_MSG("evalCoupling21() is deprecated. Use evalCoupling() instead.")
     void evalCoupling21(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
@@ -531,7 +777,6 @@ public:
             normalFlux2[phaseIdx] = -boundaryVars2.volumeFlux(phaseIdx)*
                 cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
 
-        // TODO revise comment
         //p*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
         if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
         {
@@ -543,8 +788,7 @@ public:
         }
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
         {
-            // TODO revise comment and move upwards
-            // v.n as Dirichlet condition for the Stokes domain
+            // v.n as Dirichlet-like condition for the Stokes domain
             // set residualStokes[momentumYIdx1] = vy in stokeslocalresidual.hh
             if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
             {
@@ -554,7 +798,6 @@ public:
             }
             else
             {
-                // TODO revise comment and move upwards
                 // v.n as DIRICHLET condition for the Stokes domain (negative sign!)
                 couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
@@ -573,8 +816,7 @@ public:
         beaversJosephCoeff /= std::sqrt(Kxx);
         const GlobalPosition& elementUnitNormal = boundaryVars1.face().normal;
 
-        // TODO revise comment
-        // Implementation as Neumann condition: (v.n)n
+        // Implementation as Neumann-like condition: (v.n)n
         if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
         {
             const Scalar normalComp = boundaryVars1.velocity()*elementUnitNormal;
@@ -595,16 +837,15 @@ public:
                                           + boundaryVars1.dynamicEddyViscosity()));
             }
         }
-        // TODO revise comment
-        // Implementation as Dirichlet condition
+        // Implementation as Dirichlet-like condition
         // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
         {
-            GlobalPosition tangentialVelGrad(0);
-            boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
-            tangentialVelGrad /= -beaversJosephCoeff; // was - before
-            // TODO: 3 lines below not implemtented because curPrimaryVars_ is protected
-            // it could be that this part of code has never been checked
+            std::cerr << "The boundary conditionisCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore." << std::endl;
+            exit(1);
+            // GlobalPosition tangentialVelGrad(0);
+            // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            // tangentialVelGrad /= -beaversJosephCoeff; // was - before
             // couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
             // this->residual_[vertInElem1][momentumXIdx1] =
             //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
@@ -623,9 +864,11 @@ public:
             couplingRes1.accumulate(lfsu1.child(transportEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }
-        // TODO make this a static assert
         if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
-            std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
+        {
+            std::cerr << "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented for the Stokes side!" << std::endl;
+            exit(1);
+        }
     }
 
     /*!
@@ -642,9 +885,6 @@ public:
     template<typename CParams>
     BoundaryLayerModel<TypeTag> evalBoundaryLayerModel(CParams cParams, const int scvIdx1) const
     {
-        static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
-                      "Boundary layer and mass transfer models are only implemented for mass fraction formulation.");
-
         const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
         // current position + additional virtual runup distance
         const Scalar distance = cParams.fvGeometry1.subContVol[scvIdx1].global[0]
@@ -675,6 +915,8 @@ public:
     template<typename CParams>
     Scalar evalBoundaryLayerConcentrationGradient(CParams cParams, const int scvIdx1) const
     {
+        static_assert(numComponents1 == 2,
+                      "This coupling condition is only implemented for two components.");
         Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
         Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
         Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
