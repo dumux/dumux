@@ -177,13 +177,6 @@ public:
                         averagedNormal += boundaryFaceNormal;
                     }
 
-                    // TODO: move scope below to coupling localoperator
-                    // Beavers-Joseph condition at the coupling boundary/interface
-                    if(bcTypes.hasCoupling() || bcTypes.hasCouplingMortar())
-                    {
-                        evalBeaversJoseph_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
-                    }
-
                     // TODO: move scope below to coupling localoperator/ BUG (potentially): sollte das nicht dirichlet sein?
                     // set velocity normal to the interface
                     if (bcTypes.isCouplingNeumann(momentumYIdx))
@@ -312,6 +305,7 @@ protected:
     }
 
     template <class IntersectionIterator>
+    DUNE_DEPRECATED_MSG("evalBeaversJoseph_ is deprecated. Its functionality is now included in the LOP function evalCoupling21().")
     void evalBeaversJoseph_(const IntersectionIterator &isIt,
                             const int scvIdx,
                             const int boundaryFaceIdx,

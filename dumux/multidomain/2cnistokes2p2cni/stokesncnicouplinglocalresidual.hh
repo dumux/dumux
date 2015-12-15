@@ -81,7 +81,6 @@ protected:
     };
 
     typedef typename GridView::ctype CoordScalar;
-
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
@@ -177,13 +176,6 @@ public:
                         //but to compensate outernormal -> residual - (-mu grad v n)
                         momentumResidual += muGradVelNormal;
                         averagedNormal += boundaryFaceNormal;
-                    }
-
-                    // TODO: move scope below to coupling localoperator
-                    // Beavers-Joseph condition at the coupling boundary/interface
-                    if(bcTypes.hasCoupling())
-                    {
-                        evalBeaversJoseph_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
                     }
 
                     // TODO: move scope below to coupling localoperator/ BUG (potentially): sollte das nicht dirichlet sein?
@@ -330,6 +322,7 @@ protected:
     }
 
     template <class IntersectionIterator>
+    DUNE_DEPRECATED_MSG("evalBeaversJoseph_ is deprecated. Its functionality is now included in the LOP function evalCoupling21().")
     void evalBeaversJoseph_(const IntersectionIterator &isIt,
                             const int scvIdx,
                             const int boundaryFaceIdx,

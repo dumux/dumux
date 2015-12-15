@@ -173,7 +173,6 @@ public:
         refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
         refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
         refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
     }
 
     // functions have to be overwritten, otherwise they remain uninitialised
@@ -278,34 +277,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient at given position
-     *
-     * \param globalPos The global position
-     *
-     * \return Beavers-Joseph coefficient
-     */
-    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
-    {
-        return alphaBJ_;
-    }
-
-    /*!
-     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar permeability(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return spatialParams_.intrinsicPermeability(element,
-                                                    fvGeometry,
-                                                    scvIdx);
-    }
-
     // \}
 
     /*!
@@ -341,6 +312,14 @@ public:
                 || (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos))
                 || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
+
+    /*!
+     * \brief Returns the spatial parameters object.
+     */
+    SpatialParams &spatialParams()
+    { return spatialParams_; }
+    const SpatialParams &spatialParams() const
+    { return spatialParams_; }
 
     //! \brief Returns the velocity at the inflow.
     const Scalar refVelocity() const
@@ -426,7 +405,6 @@ private:
                 || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
 
-    // spatial parameters
     SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
@@ -438,7 +416,6 @@ private:
     Scalar refPressure_;
     Scalar refMassfrac_;
     Scalar refTemperature_;
-    Scalar alphaBJ_;
 };
 } //end namespace Dumux
 

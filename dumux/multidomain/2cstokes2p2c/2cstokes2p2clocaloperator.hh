@@ -139,7 +139,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) Stokes2cTypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TwoPTwoCTypeTag;
 
-    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(Stokes2cTypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, ElementVolumeVariables) ElementVolumeVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, ElementVolumeVariables) ElementVolumeVariables2;
@@ -165,7 +166,10 @@ class TwoCStokesTwoPTwoCLocalOperator :
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, Indices) Stokes2cIndices;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, Indices) TwoPTwoCIndices;
 
-    enum { dim = MDGrid::dimension };
+    enum {
+        dim = MDGrid::dimension,
+        dimWorld = MDGrid::dimensionworld
+    };
 
     // FREE FLOW
     enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq) };
@@ -199,6 +203,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
         nPhaseIdx2 = TwoPTwoCIndices::nPhaseIdx          //!< Index for the gas phase
     };
 
+    typedef typename MDGrid::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
@@ -231,6 +238,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
      *        Based on them, a coupling residual is calculated and added at the
      *        respective positions in the matrix.
      *
+     * TODO: rename _s _n parameters
      * \param intersectionGeometry the geometry of the intersection
      * \param lfsu_s local basis for the trial space of the Stokes domain
      * \param unknowns1 the unknowns vector of the Stokes element (formatted according to PDELab)
@@ -614,6 +622,54 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
                                         / cParams.elemVolVarsCur1[vertInElem1].density());
             }
+        }
+
+        SpatialParams spatialParams = globalProblem_.sdProblem1().spatialParams();
+        const GlobalPosition& globalPos = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos);
+        assert(beaversJosephCoeff > 0);
+
+        const Scalar Kxx = spatialParams.intrinsicPermeability(sdElement1, cParams.fvGeometry1,
+                                                               vertInElem1);
+
+        beaversJosephCoeff /= std::sqrt(Kxx);
+        const DimVector& elementUnitNormal = boundaryVars1.face().normal;
+
+        // TODO revise comment
+        // Implementation as Neumann condition: (v.n)n
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
+        {
+            const Scalar normalComp = boundaryVars1.velocity()*elementUnitNormal;
+            DimVector normalV = elementUnitNormal;
+            normalV *= normalComp; // v*n*n
+
+            // v_tau = v - (v.n)n
+            const DimVector tangentialV = boundaryVars1.velocity() - normalV;
+            const Scalar boundaryFaceArea = boundaryVars1.face().area;
+
+            for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+            {
+                couplingRes1.accumulate(lfsu_s.child(momentumXIdx1), vertInElem1,
+                                        beaversJosephCoeff
+                                        * boundaryFaceArea
+                                        * tangentialV[dimIdx]
+                                        * (boundaryVars1.dynamicViscosity()
+                                          + boundaryVars1.dynamicEddyViscosity()));
+            }
+        }
+        // TODO revise comment
+        // Implementation as Dirichlet condition
+        // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
+        {
+            DimVector tangentialVelGrad(0);
+            boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            tangentialVelGrad /= -beaversJosephCoeff; // was - before
+            // TODO: 3 lines below not implemtented because curPrimaryVars_ is protected
+            // it could be that this part of code has never been checked
+            // couplingRes1.accumulate(lfsu_s.child(momentumXIdx1), vertInElem1,
+            // this->residual_[vertInElem1][momentumXIdx1] =
+            //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
         }
 
         //coupling residual is added to "real" residual

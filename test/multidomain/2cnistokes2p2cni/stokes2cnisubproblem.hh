@@ -96,7 +96,6 @@ class Stokes2cniSubProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    // soil parameters for beavers & joseph
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     enum {
@@ -176,7 +175,6 @@ public:
         sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
         useDirichletBC_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, FreeFlow, UseDirichletBC);
 
-        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
         initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
     }
 
@@ -347,34 +345,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient at given position
-     *
-     * \param globalPos The global position
-     *
-     * \return Beavers-Joseph coefficient
-     */
-    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
-    {
-        return alphaBJ_;
-    }
-
-    /*!
-     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar permeability(const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const int scvIdx) const
-    {
-        return spatialParams_.intrinsicPermeability(element,
-                                                    fvGeometry,
-                                                    scvIdx);
-    }
-
     // \}
 
     /*!
@@ -519,7 +489,6 @@ private:
     const Scalar height_() const
     { return bBoxMax_[1] - bBoxMin_[1]; }
 
-    // spatial parameters
     SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
@@ -542,7 +511,6 @@ private:
     Scalar sinusTPeriod_;
 
     bool useDirichletBC_;
-    Scalar alphaBJ_;
 
     Scalar runUpDistanceX_;
     Scalar initializationTime_;

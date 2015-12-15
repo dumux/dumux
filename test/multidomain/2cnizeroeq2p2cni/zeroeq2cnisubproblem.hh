@@ -270,32 +270,6 @@ public:
         values = 0.;
     }
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient at given position
-     *
-     * \param globalPos The global position
-     */
-    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
-    {
-        return alphaBJ_;
-    }
-
-    /*!
-     * \brief Evaluate the intrinsic permeability at the corner of a given element
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     */
-    Scalar permeability(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return spatialParams_.intrinsicPermeability(element,
-                                                    fvGeometry,
-                                                    scvIdx);
-    }
-
     //! \copydoc Dumux::ImplicitProblem::sourceAtPos()
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
@@ -323,6 +297,14 @@ public:
                 || (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos))
                 || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
+
+    /*!
+     * \brief Returns the spatial parameters object.
+     */
+    SpatialParams &spatialParams()
+    { return spatialParams_; }
+    const SpatialParams &spatialParams() const
+    { return spatialParams_; }
 
     /*!
      * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
