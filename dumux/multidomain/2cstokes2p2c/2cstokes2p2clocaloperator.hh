@@ -132,7 +132,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
         public Dune::PDELab::MultiDomain::FullCouplingPattern,
         public Dune::PDELab::InstationaryLocalOperatorDefaultMethods<double>
 {
- public:
+public:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) GlobalProblem;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCouplingLocalOperator) Implementation;
 
@@ -153,6 +153,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, FVElementGeometry) FVElementGeometry1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, FVElementGeometry) FVElementGeometry2;
+
+//     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, PrimaryVariables) PrimaryVariables;
 
     // Multidomain Grid types
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
@@ -213,6 +215,11 @@ class TwoCStokesTwoPTwoCLocalOperator :
     typedef typename Stokes2cGridView::template Codim<dim>::EntityPointer VertexPointer1;
     typedef typename TwoPTwoCGridView::template Codim<dim>::EntityPointer VertexPointer2;
 
+    // multidomain flags
+    static const bool doAlphaCoupling = true;
+    static const bool doPatternCoupling = true;
+
+public:
     //! \brief The constructor
     TwoCStokesTwoPTwoCLocalOperator(GlobalProblem& globalProblem)
         : globalProblem_(globalProblem)
@@ -228,10 +235,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
         if (massTransferModel_ != 0)
             std::cout << "Using mass transfer model " << massTransferModel_ << std::endl;
     }
-
-    // multidomain flags
-    static const bool doAlphaCoupling = true;
-    static const bool doPatternCoupling = true;
 
     /*!
      * \brief Do the coupling. The unknowns are transferred from dune-multidomain.
@@ -436,72 +439,33 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
         if (cParams.boundaryTypes2.isCouplingNeumann(contiWEqIdx2))
         {
-            // only enter here, if a BOUNDARY LAYER MODEL is used for the computation of the diffusive fluxes
+            // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
             if (blModel_)
             {
-                static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
-                              "Boundary layer and mass transfer models are only implemented for mass fraction formulation.");
-
-                const Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-                const Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
-                const Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
-                const Scalar X2 = 1.0 - massFractionOut;
-                const Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
-                const Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
-
-                const Scalar advectiveFlux =
-                    normalMassFlux *
-                    cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-                Scalar normalMoleFracGrad =
-                    cParams.elemVolVarsCur1[vertInElem1].moleFraction(transportCompIdx1) -
-                    moleFractionOut;
-
-                const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
-                // current position + additional virtual runup distance
-                const Scalar distance = globalPos1[0] + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
-                const Scalar kinematicViscosity = cParams.elemVolVarsCur1[vertInElem2].kinematicViscosity();
-                BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel_);
-                if (blModel_ == 1)
-                    boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
-                if (blModel_ >= 4)
-                    boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
-                if (blModel_ >= 5)
-                    boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
-                if (blModel_ == 7)
-                    boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
-
-                normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
-
                 const Scalar diffusiveFlux =
-                    bfNormal1.two_norm() *
-                    normalMoleFracGrad *
-                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
-                    boundaryVars1.molarDensity() *
-                    FluidSystem::molarMass(transportCompIdx1);
+                    bfNormal1.two_norm()
+                    * evalBoundaryLayerConcentrationGradient<CParams>(cParams, vertInElem1)
+                    * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                       + boundaryVars1.eddyDiffusivity())
+                    * boundaryVars1.molarDensity()
+                    * FluidSystem::molarMass(transportCompIdx1);
+
+                Scalar advectiveFlux = normalMassFlux * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+// TODO: use or remove
+//                 PrimaryVariables flux(0.0);
+//                 globalProblem_.localResidual1().computeAdvectiveFlux(flux, boundaryVars1);
+//                 advectiveFlux = flux[transportEqIdx1];
 
                 if (massTransferModel_ == 0)
                 {
                     couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
                                             -(advectiveFlux - diffusiveFlux));
                 }
-                // transition from the mass transfer coefficient concept to the coupling via the local residual,
-                // when saturations become small; only diffusive fluxes are scaled!
+                // transition from the mass transfer coefficient concept to the coupling via
+                // the local residual; only diffusive fluxes are scaled!
                 else
                 {
-                    MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2),
-                                                    cParams.elemVolVarsCur2[vertInElem2].porosity(),
-                                                    boundaryLayerModel.massBoundaryLayerThickness(),
-                                                    massTransferModel_);
-                    if (massTransferModel_ == 1)
-                        massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
-                    if (massTransferModel_ == 2 || massTransferModel_ == 4)
-                        massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
-                    if (massTransferModel_ == 3)
-                        massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[vertInElem2].capillaryPressure());
-                    const Scalar massTransferCoeff = massTransferModel.massTransferCoefficient();
-
-                    if (massTransferCoeff > 1.0 || massTransferCoeff < 0.0)
-                        std::cout << "MTC out of bounds, should be in between 0.0 and 1.0! >>> " << massTransferCoeff << std::endl;
+                    const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
 
                     if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                     {
@@ -690,6 +654,110 @@ class TwoCStokesTwoPTwoCLocalOperator :
             std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
+    /*!
+     * \brief Returns a BoundaryLayerModel object
+     *
+     * This function is reused in Child LocalOperators and used for extracting
+     * the respective boundary layer thickness.<br>
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     */
+    template<typename CParams>
+    BoundaryLayerModel<TypeTag> evalBoundaryLayerModel(CParams cParams, const int scvIdx1) const
+    {
+        static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
+                      "Boundary layer and mass transfer models are only implemented for mass fraction formulation.");
+
+        const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
+        // current position + additional virtual runup distance
+        const Scalar distance = cParams.fvGeometry1.subContVol[scvIdx1].global[0]
+                                + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
+        const Scalar kinematicViscosity = cParams.elemVolVarsCur1[scvIdx1].kinematicViscosity();
+        BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel_);
+        if (blModel_ == 1)
+            boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
+        if (blModel_ >= 4)
+            boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
+        if (blModel_ >= 5)
+            boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
+        if (blModel_ == 7)
+            boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
+
+        return boundaryLayerModel;
+    }
+
+    /*!
+     * \brief Returns the concentration gradient through the boundary layer
+     *
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     */
+    template<typename CParams>
+    Scalar evalBoundaryLayerConcentrationGradient(CParams cParams, const int scvIdx1) const
+    {
+        Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
+        Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
+        Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
+        Scalar X2 = 1.0 - massFractionOut;
+        Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
+        Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
+
+// TODO: use or remove
+//         typedef typename GET_PROP_TYPE(Stokes2cTypeTag, FluidState) FluidState;
+//         FluidState fluidState;
+//         fluidState.setTemperature(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature));
+//         fluidState.setPressure(nPhaseIdx1, GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure));
+//         // setMassFraction() has only to be called 1-numComponents times
+//         fluidState.setMassFraction(nPhaseIdx1, transportCompIdx1, GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac));
+//         std::cout << "moleFraction " << moleFractionOut << " ";
+//                 moleFractionOut = fluidState.moleFraction(nPhaseIdx1, transportCompIdx1);
+//         std::cout << "moleFraction " << moleFractionOut << std::endl;
+
+        Scalar normalMoleFracGrad = cParams.elemVolVarsCur1[scvIdx1].moleFraction(transportCompIdx1)
+                                    - moleFractionOut;
+        return normalMoleFracGrad / evalBoundaryLayerModel<CParams>(cParams, scvIdx1).massBoundaryLayerThickness();
+    }
+
+    /*!
+     * \brief Returns the mass transfer coefficient
+     *
+     * This function is reused in Child LocalOperators.
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     * \param scvIdx1 The local index of the sub-control volume of the Darcy domain
+     */
+    template<typename CParams>
+    Scalar evalMassTransferCoefficient(CParams cParams, const int scvIdx1, const int scvIdx2) const
+    {
+        if (massTransferModel_ == 0)
+            return 1.0;
+
+        MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[scvIdx2].saturation(wPhaseIdx2),
+                                                     cParams.elemVolVarsCur2[scvIdx2].porosity(),
+                                                     evalBoundaryLayerModel<CParams>(cParams, scvIdx1).massBoundaryLayerThickness(),
+                                                     massTransferModel_);
+        if (massTransferModel_ == 1)
+            massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
+        if (massTransferModel_ == 2 || massTransferModel_ == 4)
+            massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
+        if (massTransferModel_ == 3)
+            massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[scvIdx2].capillaryPressure());
+
+        Scalar massTransferCoeff = massTransferModel.massTransferCoefficient();
+        // assert the massTransferCoeff is inside the validity range
+        assert(!(massTransferCoeff > 1.0 || massTransferCoeff < 0.0));
+        return massTransferCoeff;
+    }
+
  protected:
     GlobalProblem& globalProblem() const
     { return globalProblem_; }
@@ -698,6 +766,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
+
+    unsigned int blModel_;
+    unsigned int massTransferModel_;
 
  private:
     /*!
@@ -715,9 +786,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
         FVElementGeometry1 fvGeometry1;
         FVElementGeometry2 fvGeometry2;
     };
-
-    unsigned int blModel_;
-    unsigned int massTransferModel_;
 
     GlobalProblem& globalProblem_;
 };
