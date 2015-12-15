@@ -143,52 +143,54 @@ class TwoCNIStokesTwoPTwoCNILocalOperator :
         public TwoCStokesTwoPTwoCLocalOperator<TypeTag>
 {
 public:
+    typedef TwoCStokesTwoPTwoCLocalOperator<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) GlobalProblem;
 
-    // Get the TypeTags of the subproblems
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) Stokes2cniTypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TwoPTwoCNITypeTag;
+
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, FluxVariables) BoundaryVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, FluxVariables) BoundaryVariables2;
 
-    // Multidomain Grid and Subgrid types
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
+
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, GridView) Stokes2cniGridView;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, GridView) TwoPTwoCNIGridView;
-
     typedef typename Stokes2cniGridView::template Codim<0>::Entity SDElement1;
     typedef typename TwoPTwoCNIGridView::template Codim<0>::Entity SDElement2;
 
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, Indices) Stokes2cniIndices;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, Indices) TwoPTwoCNIIndices;
 
-    enum { dim = MDGrid::dimension };
     enum {
-        energyEqIdx1 = Stokes2cniIndices::energyEqIdx          //!< Index of the energy balance equation
+        dimWorld = MDGrid::dimensionworld
     };
-    enum {  numComponents = Stokes2cniIndices::numComponents };
-    enum { phaseCompIdx = Stokes2cniIndices::phaseCompIdx};
-    enum { // indices in the Darcy domain
-        numPhases2 = GET_PROP_VALUE(TwoPTwoCNITypeTag, NumPhases),
 
-        // equation index
-        energyEqIdx2 = TwoPTwoCNIIndices::energyEqIdx,      //!< Index of the energy balance equation
-
-        wPhaseIdx2 = TwoPTwoCNIIndices::wPhaseIdx,          //!< Index for the liquid phase
-        nPhaseIdx2 = TwoPTwoCNIIndices::nPhaseIdx           //!< Index for the gas phase
+    // Stokes
+    enum { numComponents2 = Stokes2cniIndices::numComponents };
+    enum { // equation indices
+        energyEqIdx1 = Stokes2cniIndices::energyEqIdx             //!< Index of the energy balance equation
     };
-    enum { nPhaseIdx1 = Stokes2cniIndices::phaseIdx };            //!< Index of the free-flow phase of the fluidsystem
-    enum { // indices of the components
+    enum { // component indices
         transportCompIdx1 = Stokes2cniIndices::transportCompIdx,  //!< Index of transported component
         phaseCompIdx1 = Stokes2cniIndices::phaseCompIdx           //!< Index of main component of the phase
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;       //!< A field vector with dim entries
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    // Darcy
+    enum { numPhases2 = GET_PROP_VALUE(TwoPTwoCNITypeTag, NumPhases) };
+    enum { // equation indices
+        energyEqIdx2 = TwoPTwoCNIIndices::energyEqIdx      //!< Index of the energy balance equation
+    };
+    enum { // phase indices
+        wPhaseIdx2 = TwoPTwoCNIIndices::wPhaseIdx,          //!< Index for the liquid phase
+        nPhaseIdx2 = TwoPTwoCNIIndices::nPhaseIdx           //!< Index for the gas phase
+    };
 
-    typedef TwoCStokesTwoPTwoCLocalOperator<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename MDGrid::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
     // multidomain flags
     static const bool doAlphaCoupling = true;
@@ -208,8 +210,8 @@ public:
                         const CParams &cParams,
                         RES1& couplingRes1, RES2& couplingRes2) const
     {
-        const DimVector& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
-        const DimVector& bfNormal1 = boundaryVars1.face().normal;
+        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
         const Scalar normalMassFlux1 = boundaryVars1.normalVelocity() *
             cParams.elemVolVarsCur1[vertInElem1].density();
         GlobalProblem& globalProblem = this->globalProblem();
@@ -233,7 +235,7 @@ public:
 
                 // enthalpy transported by diffusive fluxes
                 // multiply the diffusive flux with the mass transfer coefficient
-                static_assert(numComponents == 2,
+                static_assert(numComponents2 == 2,
                               "This coupling condition is only implemented for two components.");
                 Scalar diffusiveEnergyFlux = 0.0;
                 Scalar diffusiveFlux = bfNormal1.two_norm()
@@ -270,9 +272,9 @@ public:
                     (boundaryVars1.thermalConductivity() + boundaryVars1.thermalEddyConductivity());
                 Scalar sumDiffusiveFluxes = 0.0;
                 Scalar sumDiffusiveEnergyFlux = 0.0;
-                for (int compIdx=0; compIdx < numComponents; compIdx++)
+                for (int compIdx=0; compIdx < numComponents2; compIdx++)
                 {
-                    if (compIdx != phaseCompIdx)
+                    if (compIdx != phaseCompIdx1)
                     {
                         Scalar diffusiveFlux = boundaryVars1.moleFractionGrad(compIdx)
                                                * boundaryVars1.face().normal
@@ -284,8 +286,8 @@ public:
                                                   * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
                     }
                 }
-                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes * boundaryVars1.componentEnthalpy(phaseCompIdx)
-                                          * FluidSystem::molarMass(phaseCompIdx);
+                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes * boundaryVars1.componentEnthalpy(phaseCompIdx1)
+                                          * FluidSystem::molarMass(phaseCompIdx1);
                 couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
                                         -(convectiveFlux - sumDiffusiveEnergyFlux - conductiveFlux));
             }
@@ -323,8 +325,8 @@ public:
                                    cParams,
                                    couplingRes1, couplingRes2);
 
-        const DimVector& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
-        DimVector normalMassFlux2(0.);
+        const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
+        GlobalPosition normalMassFlux2(0.);
 
         // velocity*normal*area*rho
         // mass flux is needed for both (mass/mole) formulation, as the enthalpy is mass based
