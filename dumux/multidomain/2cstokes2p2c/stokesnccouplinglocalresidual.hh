@@ -42,9 +42,7 @@ namespace Dumux
 template<class TypeTag>
 class StokesncCouplingLocalResidual : public StokesncLocalResidual<TypeTag>
 {
-protected:
-
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+    typedef StokesncLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -101,8 +99,7 @@ public:
      */
     void evalBoundary_()
     {
-        // TODO: call ParentType too!
-        assert(this->residual_.size() == this->fvGeometry_().numScv);
+        ParentType::evalBoundary_();
 
         typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
         typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
@@ -115,10 +112,6 @@ public:
             if (this->fvGeometry_().subContVol[scvIdx].inner)
                 continue;
 
-            // important at corners of the grid
-            DimVector momentumResidual(0.0);
-            DimVector averagedNormal(0.0);
-            int numberOfOuterFaces = 0;
             const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
             // evaluate boundary conditions for the intersections of the current element
@@ -148,34 +141,6 @@ public:
                                                      this->curVolVars_(),
                                                      true);
                     const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
-
-                    // evaluate fluxes at a single boundary segment
-                    asImp_()->evalNeumannSegment_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
-                    asImp_()->evalOutflowSegment_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
-
-                    // the computed residual of the momentum equations is stored
-                    // into momentumResidual for the replacement of the mass balance
-                    // in case of Dirichlet conditions for the momentum balance;
-                    // the fluxes at the boundary are added in the second step
-                    if (this->momentumBalanceDirichlet_(bcTypes))
-                    {
-                        DimVector muGradVelNormal(0.);
-                        const DimVector &boundaryFaceNormal = boundaryVars.face().normal;
-
-                        boundaryVars.velocityGrad().umv(boundaryFaceNormal, muGradVelNormal);
-                        muGradVelNormal *= (boundaryVars.dynamicViscosity()
-                                            + boundaryVars.dynamicEddyViscosity());
-
-                        for (int i=0; i < this->residual_.size(); i++)
-                            Valgrind::CheckDefined(this->residual_[i]);
-                        for (int dimIdx=0; dimIdx < dim; ++dimIdx)
-                            momentumResidual[dimIdx] = this->residual_[scvIdx][momentumXIdx+dimIdx];
-
-                        //Sign is right!!!: boundary flux: -mu grad v n
-                        //but to compensate outernormal -> residual - (-mu grad v n)
-                        momentumResidual += muGradVelNormal;
-                        averagedNormal += boundaryFaceNormal;
-                    }
 
                     // TODO: move scope below to coupling localoperator/ BUG (potentially): sollte das nicht dirichlet sein?
                     // set velocity normal to the interface
@@ -214,28 +179,9 @@ public:
                             }
                         }
                     }
-
-                    numberOfOuterFaces++;
                 }
             }
-
-            if(!bcTypes.isDirichlet(massBalanceIdx))
-            {
-                if (this->momentumBalanceDirichlet_(bcTypes))
-                    this->replaceMassbalanceResidual_(momentumResidual, averagedNormal, scvIdx);
-                else // de-stabilize (remove alpha*grad p - alpha div f
-                    // from computeFlux on the boundary)
-                    this->removeStabilizationAtBoundary_(scvIdx);
-            }
-            // replace defect at the corner points of the grid
-            // by the interpolation of the primary variables
-            if (numberOfOuterFaces == 2)
-                this->interpolateCornerPoints_(bcTypes, scvIdx);
         }
-
-        // evaluate the Dirichlet conditions of the element
-        if (this->bcTypes_().hasDirichlet())
-            asImp_()->evalDirichlet_();
     }
 
     /*!
@@ -391,13 +337,6 @@ protected:
                 return true;
         return false;
     }
-
-private:
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
-
 };
 
 } // namespace Dumux
