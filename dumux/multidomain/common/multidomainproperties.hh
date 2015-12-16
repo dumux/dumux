@@ -86,10 +86,6 @@ NEW_PROP_TAG(MultiDomainGridFunctionSpace);
 //! Specifies the multidomain grid operator
 NEW_PROP_TAG(MultiDomainGridOperator);
 
-//! specifies whether the convergence rate and the global residual
-//! gets written out to disk for every Newton iteration
-NEW_PROP_TAG(NewtonWriteConvergence);
-
 //! Specifies the equality conditions
 NEW_PROP_TAG(MultiDomainCondition);
 
@@ -107,7 +103,6 @@ NEW_PROP_TAG(MultiDomainCoupling);
 
 //! Property tag for the multidomain constraints transformation
 NEW_PROP_TAG(MultiDomainConstraintsTrafo);
-NEW_PROP_TAG(ConstraintsTrafo);
 
 //! the routines that are used to split and merge solution vectors
 NEW_PROP_TAG(SplitAndMerge);

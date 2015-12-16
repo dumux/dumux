@@ -333,7 +333,7 @@ public:
         if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
             this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
-        // set mass fraction TODO: add use of moles
+        // set mass fraction
         if (this->bcTypes_(scvIdx).isCouplingDirichlet(contiWEqIdx))
             this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
     }

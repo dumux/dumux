@@ -144,11 +144,9 @@ public:
                     const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
 
-                    // TODO: move scope below to coupling localoperator/ BUG (potentially): sollte das nicht dirichlet sein?
                     // set velocity normal to the interface
                     if (bcTypes.isCouplingNeumann(momentumYIdx))
                     {
-                        std::cout << "This code is used"; // TODO potentially unused code
                         this->residual_[scvIdx][momentumYIdx] = volVars.velocity()
                                                                 * boundaryVars.face().normal
                                                                 / boundaryVars.face().normal.two_norm();
@@ -225,7 +223,6 @@ protected:
         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
-        // TODO revise comment
         // set velocity normal to the interface
         if (bcTypes.isCouplingNeumann(momentumYIdx))
         {
@@ -287,7 +284,6 @@ protected:
         assert(beaversJosephCoeff > 0.0);
         const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
 
-        // TODO revise comment
         // implementation as NEUMANN condition /////////////////////////////////////////////
         // (v.n)n
         if (bcTypes.isCouplingDirichlet(momentumXIdx))
@@ -319,7 +315,6 @@ protected:
         if (bcTypes.isCouplingNeumann(momentumXIdx))
         {
             assert(beaversJosephCoeff > 0);
-            // TODO revise comment and move upwards
             ///////////////////////////////////////////////////////////////////////////////////////////
             //IMPLEMENTATION AS DIRICHLET CONDITION
             //tangential componment: vx = sqrt K /alpha * (grad v n(unity))t

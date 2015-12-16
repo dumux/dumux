@@ -77,7 +77,7 @@ public:
 
         // the two sub models have already been initialized by the
         // sub-problems!
-        jacAsm_ = new JacobianAssembler();
+        jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem);
 
         uCur_ = std::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
@@ -95,38 +95,8 @@ public:
     }
 
     /*!
-     * \brief Compute the global residual for an arbitrary solution vector.
-     *
-     * \param u unused
-     * \param tmp unused
-     */
-    Scalar globalResidual(const SolutionVector &u, SolutionVector &tmp)
-    {
-        DUNE_THROW(Dune::NotImplemented, "");
-#if 0
-          SolutionVector tmpU(asImp_(), 0.0);
-        tmpU = uCur_;
-        uCur_ = u;
-        localJacobian_.evalGlobalResidual(tmp);
-
-        Scalar result = tmp.two_norm();
-        /*
-        Scalar result = 0;
-        for (int i = 0; i < (*tmp).size(); ++i) {
-            for (int j = 0; j < numEq; ++j)
-                result += std::abs((*tmp)[i][j]);
-        }
-        */
-        uCur_ = tmpU;
-        return result;
-#endif
-    }
-
-    /*!
      * \brief Reference to the current solution as a block vector.
      */
-    const SolutionVector &curSol() const
-    { return *uCur_; }
 
     /*!
      * \brief Reference to the current solution as a block vector.
@@ -134,16 +104,18 @@ public:
     SolutionVector &curSol()
     { return *uCur_; }
 
-    /*!
-     * \brief Reference to the previous solution as a block vector.
-     */
-    const SolutionVector &prevSol() const
-    { return *uPrev_; }
+    //! \brief \copydoc curSol()
+    const SolutionVector &curSol() const
+    { return *uCur_; }
 
     /*!
      * \brief Reference to the previous solution as a block vector.
      */
     SolutionVector &prevSol()
+    { return *uPrev_; }
+
+    //! \brief \copydoc prevSol()
+    const SolutionVector &prevSol() const
     { return *uPrev_; }
 
     /*!
@@ -152,6 +124,8 @@ public:
      */
     JacobianAssembler &jacobianAssembler()
     { return *jacAsm_; }
+
+    //! \brief \copydoc jacobianAssembler()
     const JacobianAssembler &jacobianAssembler() const
     { return *jacAsm_; }
 
@@ -160,9 +134,8 @@ public:
      */
     Problem &problem()
     { return *problem_; }
-    /*!
-     * \copydoc problem()
-     */
+
+    //! \brief \copydoc problem()
     const Problem &problem() const
     { return *problem_; }
 
@@ -171,9 +144,8 @@ public:
      */
     SubDomainProblem1 &sdProblem1()
     { return problem().sdProblem1(); }
-    /*!
-     * \copydoc sdProblem1()
-     */
+
+    //! \brief \copydoc sdProblem1()
     const SubDomainProblem1 &sdProblem1() const
     { return problem().sdProblem1(); }
 
@@ -182,9 +154,8 @@ public:
      */
     SubDomainProblem2 &sdProblem2()
     { return problem().sdProblem2(); }
-    /*!
-     * \copydoc sdProblem2()
-     */
+
+    //! \brief \copydoc sdProblem2()
     const SubDomainProblem2 &sdProblem2() const
     { return problem().sdProblem2(); }
 
@@ -193,9 +164,8 @@ public:
      */
     SubDomainModel1 &sdModel1()
     { return sdProblem1().model(); }
-    /*!
-     * \copydoc sdModel1()
-     */
+
+    //! \brief \copydoc sdModel1()
     const SubDomainModel1 &sdModel1() const
     { return sdProblem1().model(); }
 
@@ -204,9 +174,8 @@ public:
      */
     SubDomainModel2 &sdModel2()
     { return sdProblem2().model(); }
-    /*!
-     * \copydoc sdModel2()
-     */
+
+    //! \brief \copydoc sdModel2()
     const SubDomainModel2 &sdModel2() const
     { return sdProblem2().model(); }
 
@@ -337,8 +306,8 @@ public:
     //! \copydoc Dumux::ImplicitModel::resetJacobianAssembler()
     void resetJacobianAssembler()
     {
-        delete jacAsm_;
-        jacAsm_ = new JacobianAssembler(asImp_(), problem());
+        jacAsm_.template reset<JacobianAssembler>(0);
+        jacAsm_ = std::make_shared<JacobianAssembler>(asImp_(), problem());
     }
 
 
@@ -353,7 +322,7 @@ protected:
     Problem *problem_;
 
     // the jacobian assembler
-    JacobianAssembler *jacAsm_;
+    std::shared_ptr<JacobianAssembler> jacAsm_;
 
     // cur is the current solution, prev the solution of the previous
     // time step

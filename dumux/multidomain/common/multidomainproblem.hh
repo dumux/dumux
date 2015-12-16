@@ -76,6 +76,9 @@ private:
 
     typedef Dune::MultiDomainMCMGMapper<MultiDomainGridView, Dune::MCMGVertexLayout> VertexMapper;
 
+    // copying a problem is not a good idea
+    MultiDomainProblem(const MultiDomainProblem &);
+
 public:
     /*!
      * \brief The problem for the coupling of Stokes and Darcy flow
@@ -167,7 +170,6 @@ public:
     //! \copydoc Dumux::ImplicitProblem::timeIntegration()
     void timeIntegration()
     {
-        // TODO: should be called from the group Implicit
         const int maxFails =
                 GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxTimeStepDivisions);
         for (int i = 0; i < maxFails; ++i)

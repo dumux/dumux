@@ -53,7 +53,7 @@
 namespace Dumux
 {
 template <class TypeTag> class MultiDomainModel;
-template <class TypeTag> class MultiDomainJacobianAssembler;
+template <class TypeTag> class MultiDomainAssembler;
 template <class TypeTag> class MultiDomainNewtonController;
 
 namespace Properties
@@ -179,7 +179,6 @@ SET_INT_PROP(MultiDomain, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq))
 
 
 // Set property values for the coupled model
-//SET_BOOL_PROP(MultiDomain, DoEnrichedCoupling, false);
 SET_TYPE_PROP(MultiDomain, Model, MultiDomainModel<TypeTag>);
 
 SET_PROP(MultiDomain, SolutionVector)
@@ -189,6 +188,9 @@ SET_PROP(MultiDomain, SolutionVector)
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, numEq> > type;
 };
+
+// Specify the type of the multidomain assembler
+SET_TYPE_PROP(MultiDomain, JacobianAssembler, MultiDomainAssembler<TypeTag>);
 
 // use the plain newton method for the coupled problems by default
 SET_TYPE_PROP(MultiDomain, NewtonMethod, NewtonMethod<TypeTag>);
