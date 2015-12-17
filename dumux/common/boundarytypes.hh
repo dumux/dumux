@@ -64,9 +64,6 @@ public:
           boundaryInfo_[eqIdx].isDirichlet = 0;
           boundaryInfo_[eqIdx].isNeumann = 0;
           boundaryInfo_[eqIdx].isOutflow = 0;
-          boundaryInfo_[eqIdx].isCouplingInflow = 0;
-          boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-          boundaryInfo_[eqIdx].isMortarCoupling = 0;
           boundaryInfo_[eqIdx].isCouplingDirichlet = 0;
           boundaryInfo_[eqIdx].isCouplingNeumann = 0;
           boundaryInfo_[eqIdx].isCouplingMortar = 0;
@@ -167,31 +164,31 @@ public:
     /*!
      * \brief Set all boundary conditions to coupling inflow.
      */
-    DUNE_DEPRECATED_MSG("setAllCouplingInflow() is deprecated")
+    DUNE_DEPRECATED_MSG("setAllCouplingInflow() is deprecated. Use setAllCouplingNeumann() instead.")
     void setAllCouplingInflow()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
         {
-            setCouplingInflow(eqIdx);
+            setCouplingNeumann(eqIdx);
         }
     }
 
     /*!
      * \brief Set all boundary conditions to coupling outflow.
      */
-    DUNE_DEPRECATED_MSG("setAllCouplingOutflow() is deprecated")
+    DUNE_DEPRECATED_MSG("setAllCouplingOutflow() is deprecated. Use setAllCouplingDirichlet() instead.")
     void setAllCouplingOutflow()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
         {
-            setCouplingOutflow(eqIdx);
+            setCouplingDirichlet(eqIdx);
         }
     }
 
     /*!
      * \brief Set all boundary conditions to mortar coupling.
      */
-    DUNE_DEPRECATED_MSG("setAllMortarCoupling() is deprecated")
+    DUNE_DEPRECATED_MSG("setAllMortarCoupling() is deprecated. Use setAllCouplingMortar() instead.")
     void setAllMortarCoupling()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -295,40 +292,28 @@ public:
     /*!
      * \brief Set a boundary condition for a single equation to coupling inflow.
      */
-    DUNE_DEPRECATED_MSG("setCouplingInflow() is deprecated")
+    DUNE_DEPRECATED_MSG("setCouplingInflow() is deprecated. Use setCouplingNeumann() instead.")
     void setCouplingInflow(int eqIdx)
     {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isCouplingInflow = 1;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        setCouplingNeumann(eqIdx);
     }
 
     /*!
      * \brief Set a boundary condition for a single equation to coupling outflow.
      */
-    DUNE_DEPRECATED_MSG("setCouplingOutflow() is deprecated")
+    DUNE_DEPRECATED_MSG("setCouplingOutflow() is deprecated. Use setCouplingDirichlet() instead.")
     void setCouplingOutflow(int eqIdx)
     {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 1;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        setCouplingDirichlet(eqIdx);
     }
 
     /*!
      * \brief Set a boundary condition for a single equation to mortar coupling.
      */
-    DUNE_DEPRECATED_MSG("setMortarCoupling() is deprecated")
+    DUNE_DEPRECATED_MSG("setMortarCoupling() is deprecated. Use setCouplingMortar() instead.")
     void setMortarCoupling(int eqIdx)
     {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isMortarCoupling = 1;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        setCouplingMortar(eqIdx);
     }
 
     /*!
@@ -415,19 +400,19 @@ public:
      *
      * \param eqIdx The index of the equation
      */
-    DUNE_DEPRECATED_MSG("isCouplingInflow() is deprecated")
-    bool isCouplingInflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingInflow; }
+    DUNE_DEPRECATED_MSG("isCouplingInflow() is deprecated. Use isCouplingNeumann() instead.")
+    bool  flow(unsigned eqIdx) const
+    { return boundaryInfo_[eqIdx].isCouplingNeumann; }
 
     /*!
      * \brief Returns true if some equation is used to specify an
      *        inflow coupling condition.
      */
-    DUNE_DEPRECATED_MSG("hasCouplingInflow() is deprecated")
+    DUNE_DEPRECATED_MSG("hasCouplingInflow() is deprecated. Use hasCouplingNeumann() instead.")
     bool hasCouplingInflow() const
     {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingInflow)
+            if (boundaryInfo_[i].isCouplingNeumann)
                 return true;
         return false;
     }
@@ -438,19 +423,19 @@ public:
      *
      * \param eqIdx The index of the equation
      */
-    DUNE_DEPRECATED_MSG("isCouplingOutflow() is deprecated")
+    DUNE_DEPRECATED_MSG("isCouplingOutflow() is deprecated. Use isCouplingDirichlet() instead.")
     bool isCouplingOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingOutflow; }
+    { return boundaryInfo_[eqIdx].isCouplingDirichlet; }
 
     /*!
      * \brief Returns true if some equation is used to specify an
      *        outflow coupling condition.
      */
-    DUNE_DEPRECATED_MSG("hasCouplingOutflow() is deprecated")
+    DUNE_DEPRECATED_MSG("hasCouplingOutflow() is deprecated. Use hasCouplingDirichlet() instead.")
     bool hasCouplingOutflow() const
     {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingOutflow)
+            if (boundaryInfo_[i].isCouplingDirichlet)
                 return true;
         return false;
     }
@@ -461,21 +446,21 @@ public:
      *
      * \param eqIdx The index of the equation
      */
-    DUNE_DEPRECATED_MSG("isMortarCoupling() is deprecated")
+    DUNE_DEPRECATED_MSG("isMortarCoupling() is deprecated. Use isCouplingMortar() instead.")
     bool isMortarCoupling(unsigned eqIdx) const
     {
-        return boundaryInfo_[eqIdx].isMortarCoupling;
+        return boundaryInfo_[eqIdx].isCouplingMortar;
     }
 
     /*!
      * \brief Returns true if some equation is used to specify a
      *        mortar coupling condition.
      */
-    DUNE_DEPRECATED_MSG("hasMortarCoupling() is deprecated")
+    DUNE_DEPRECATED_MSG("hasMortarCoupling() is deprecated. Use hasCouplingMortar() instead.")
     bool hasMortarCoupling() const
     {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isMortarCoupling)
+            if (boundaryInfo_[i].isCouplingMortar)
                 return true;
         return false;
     }
@@ -599,9 +584,6 @@ protected:
         unsigned char isDirichlet : 1;
         unsigned char isNeumann : 1;
         unsigned char isOutflow : 1;
-        unsigned char isCouplingInflow : 1;
-        unsigned char isCouplingOutflow : 1;
-        unsigned char isMortarCoupling : 1;
         unsigned char isCouplingDirichlet : 1;
         unsigned char isCouplingNeumann : 1;
         unsigned char isCouplingMortar : 1;
