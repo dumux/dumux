@@ -31,14 +31,6 @@
 /* Define to 1 if dune-pdelab is patched to be usable by DuMuX */
 #cmakedefine DUNE_PDELAB_IS_PATCHED_FOR_DUMUX @DUNE_PDELAB_IS_PATCHED_FOR_DUMUX@
 
-/* Define to 1 if constexpr is supported */
-#cmakedefine HAVE_CONSTEXPR @HAVE_CONSTEXPR@
-
-/* Set 'constexpr' to 'const' if constexpr is not supported */
-#ifndef HAVE_CONSTEXPR
-#define constexpr const
-#endif
-
 /* Define to 1 if gnuplot was found */
 #cmakedefine HAVE_GNUPLOT 1
 
