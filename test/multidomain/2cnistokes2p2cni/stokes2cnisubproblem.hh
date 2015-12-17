@@ -173,6 +173,15 @@ public:
         initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
     }
 
+    // functions have to be overwritten, otherwise they remain uninitialized
+    //! \copydoc Dumux::ImplicitProblem::bBoxMin()
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    //! \copydoc Dumux::ImplicitProblem::bBoxMax()
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
     /*!
      * \name Problem parameters
      */
@@ -370,22 +379,6 @@ public:
     }
     // \}
 
-    /*!
-     * \brief Determines if globalPos is a corner of the grid
-     *
-     * \param globalPos The global position
-     */
-    bool isCornerPoint(const GlobalPosition &globalPos)
-    {
-        if ((onLeftBoundary_(globalPos) && onLowerBoundary_(globalPos)) ||
-            (onLeftBoundary_(globalPos) && onUpperBoundary_(globalPos)) ||
-            (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos)) ||
-            (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)))
-            return true;
-        else
-            return false;
-    }
-
     //! \brief Returns the reference velocity.
     const Scalar refVelocity() const
     { return refVelocity_ + variation_(sinusVAmplitude_, sinusVPeriod_); }
@@ -457,12 +450,6 @@ private:
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > bBoxMax_[1] - eps_; }
-
-    bool onBoundary_(const GlobalPosition &globalPos) const
-    {
-        return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
-                || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
-    }
 
     const Scalar height_() const
     { return bBoxMax_[1] - bBoxMin_[1]; }

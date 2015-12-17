@@ -681,6 +681,21 @@ public:
     { return bBoxMax_; }
 
     /*!
+     * \brief Determines if globalPos is a corner of the grid, this is needed for
+     *        the multidomain models.
+     *
+     * \param globalPos The global position
+     * \param eps The epsilon for comparing the locations
+     */
+    bool isCornerPoint(const GlobalPosition &globalPos, Scalar eps = 1e-8)
+    {
+      return ((globalPos[0] < asImp_().bBoxMin()[0] + eps && globalPos[1] < asImp_().bBoxMin()[1] + eps)
+              || (globalPos[0] < asImp_().bBoxMin()[0] + eps && globalPos[1] > asImp_().bBoxMax()[1] - eps)
+              || (globalPos[0] > asImp_().bBoxMax()[0] - eps && globalPos[1] < asImp_().bBoxMin()[1] + eps)
+              || (globalPos[0] > asImp_().bBoxMax()[0] - eps && globalPos[1] > asImp_().bBoxMax()[1] - eps));
+    }
+
+    /*!
      * \brief Returns the mapper for vertices to indices for constant grids.
      */
     const VertexMapper &vertexMapper() const
