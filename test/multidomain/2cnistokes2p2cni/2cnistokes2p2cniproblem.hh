@@ -48,7 +48,6 @@
 #include <dumux/linear/pardisobackend.hh>
 #endif // HAVE_PARDISO
 
-#include "2cnistokes2p2cnispatialparams.hh"
 #include "stokes2cnisubproblem.hh"
 #include "2p2cnisubproblem.hh"
 
@@ -90,7 +89,6 @@ SET_TYPE_PROP(Stokes2cniSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCNISubPro
 SET_TYPE_PROP(TwoPTwoCNISubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cniSubProblem));
 
 // Set the spatial parameters used for the problems
-SET_TYPE_PROP(Stokes2cniSubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 
 // Set the fluid system to use complex relations (last argument)

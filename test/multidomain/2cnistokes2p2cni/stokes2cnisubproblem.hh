@@ -28,8 +28,6 @@
 #include <dumux/multidomain/2cnistokes2p2cni/stokesncnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 
-#include "2cnistokes2p2cnispatialparams.hh"
-
 namespace Dumux
 {
 
@@ -42,7 +40,7 @@ class Stokes2cniSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(Stokes2cniSubProblem,
-    INHERITS_FROM(BoxStokesncni, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
+    INHERITS_FROM(BoxStokesncni, SubDomain));
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cniSubProblem, Problem, Dumux::Stokes2cniSubProblem<TypeTag>);
@@ -95,8 +93,6 @@ class Stokes2cniSubProblem : public StokesProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     enum {
         // Number of equations and grid dimension
@@ -151,8 +147,7 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     Stokes2cniSubProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-          spatialParams_(gridView)
+        : ParentType(timeManager, gridView)
     {
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
@@ -391,23 +386,6 @@ public:
             return false;
     }
 
-    /*!
-     * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
-     *        this should return true
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return spatialParams_; }
-    const SpatialParams &spatialParams() const
-    { return spatialParams_; }
-
     //! \brief Returns the reference velocity.
     const Scalar refVelocity() const
     { return refVelocity_ + variation_(sinusVAmplitude_, sinusVPeriod_); }
@@ -488,8 +466,6 @@ private:
 
     const Scalar height_() const
     { return bBoxMax_[1] - bBoxMin_[1]; }
-
-    SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
 

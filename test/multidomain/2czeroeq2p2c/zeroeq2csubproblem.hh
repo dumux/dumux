@@ -28,8 +28,6 @@
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/2cstokes2p2c/stokesnccouplinglocalresidual.hh>
 
-#include "2czeroeq2p2cspatialparameters.hh"
-
 namespace Dumux
 {
 
@@ -39,7 +37,7 @@ class ZeroEq2cSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(ZeroEq2cSubProblem,
-             INHERITS_FROM(BoxZeroEqnc, SubDomain, TwoCZeroEqTwoPTwoCSpatialParams));
+             INHERITS_FROM(BoxZeroEqnc, SubDomain));
 
 // Set the problem property
 SET_TYPE_PROP(ZeroEq2cSubProblem, Problem, Dumux::ZeroEq2cSubProblem<TypeTag>);
@@ -109,8 +107,6 @@ class ZeroEq2cSubProblem : public ZeroEqProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
@@ -160,8 +156,7 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     ZeroEq2cSubProblem(TimeManager &timeManager, const GridView gridView)
-        : ParentType(timeManager, gridView),
-          spatialParams_(gridView)
+        : ParentType(timeManager, gridView)
     {
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
@@ -313,14 +308,6 @@ public:
                 || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
 
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return spatialParams_; }
-    const SpatialParams &spatialParams() const
-    { return spatialParams_; }
-
     //! \brief Returns the velocity at the inflow.
     const Scalar refVelocity() const
     {
@@ -404,8 +391,6 @@ private:
         return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
                 || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
-
-    SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;

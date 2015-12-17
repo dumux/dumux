@@ -28,8 +28,6 @@
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/stokesncnicouplinglocalresidual.hh>
 
-#include "2cnizeroeq2p2cnispatialparameters.hh"
-
 namespace Dumux
 {
 
@@ -39,7 +37,7 @@ class ZeroEq2cniSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(ZeroEq2cniSubProblem,
-             INHERITS_FROM(BoxZeroEqncni, SubDomain, TwoCNIZeroEqTwoPTwoCNISpatialParams));
+             INHERITS_FROM(BoxZeroEqncni, SubDomain));
 
 // Set the problem property
 SET_TYPE_PROP(ZeroEq2cniSubProblem, Problem, Dumux::ZeroEq2cniSubProblem<TypeTag>);
@@ -108,8 +106,6 @@ class ZeroEq2cniSubProblem : public ZeroEqProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
@@ -159,8 +155,7 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     ZeroEq2cniSubProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-          spatialParams_(gridView)
+        : ParentType(timeManager, gridView)
     {
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
@@ -173,8 +168,6 @@ public:
         refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
         refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
         refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-
-        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
     }
 
     // functions have to be overwritten, otherwise they remain uninitialised
@@ -298,25 +291,6 @@ public:
                 || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
 
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return spatialParams_; }
-    const SpatialParams &spatialParams() const
-    { return spatialParams_; }
-
-    /*!
-     * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
-     *        this should return true
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    {
-        return false;
-    }
-
     //! \brief Returns the velocity at the inflow.
     const Scalar refVelocity() const
     {
@@ -388,8 +362,6 @@ private:
                 || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
 
-    SpatialParams spatialParams_;
-
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
@@ -398,8 +370,6 @@ private:
     Scalar refPressure_;
     Scalar refMassfrac_;
     Scalar refTemperature_;
-
-    Scalar alphaBJ_;
 
     Scalar runUpDistanceX1_;
     Scalar runUpDistanceX2_;

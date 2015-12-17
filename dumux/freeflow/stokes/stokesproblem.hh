@@ -108,6 +108,7 @@ public:
      *
      * \return (Scalar) permeability
      */
+    DUNE_DEPRECATED_MSG("permeability() is deprecated.")
     Scalar permeability(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const Intersection &intersection,

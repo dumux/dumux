@@ -140,7 +140,7 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TwoPTwoCTypeTag;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(Stokes2cTypeTag, SpatialParams) SpatialParams;
+    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, ElementVolumeVariables) ElementVolumeVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, ElementVolumeVariables) ElementVolumeVariables2;
@@ -432,10 +432,10 @@ public:
 
 
         // MOMENTUM_X Balance
-        SpatialParams spatialParams = globalProblem_.sdProblem1().spatialParams();
+        SpatialParams spatialParams = globalProblem_.sdProblem2().spatialParams();
         Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos1);
         assert(beaversJosephCoeff > 0);
-        beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement1, cParams.fvGeometry1, vertInElem1));
+        beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
         // Neumann-like conditions
 
         // TODO revise comment
@@ -805,7 +805,8 @@ public:
             }
         }
 
-        SpatialParams spatialParams = globalProblem_.sdProblem1().spatialParams();
+        typedef typename GET_PROP_TYPE(Stokes2cTypeTag, SpatialParams) SpatialParams1;
+        SpatialParams1 spatialParams = globalProblem_.sdProblem1().spatialParams();
         const GlobalPosition& globalPos = cParams.fvGeometry1.subContVol[vertInElem1].global;
         Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos);
         assert(beaversJosephCoeff > 0);

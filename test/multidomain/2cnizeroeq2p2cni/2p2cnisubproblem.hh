@@ -347,16 +347,6 @@ public:
                 || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
 
-    /*!
-     * \brief Returns whether the position is an interface corner point
-     *
-     * This function is required in case of mortar coupling otherwise it should return false
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
     // \}
 
 private:

@@ -28,8 +28,6 @@
 #include <dumux/multidomain/2cstokes2p2c/stokesnccouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 
-#include "2cstokes2p2cspatialparams.hh"
-
 namespace Dumux
 {
 
@@ -39,7 +37,7 @@ class Stokes2cSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(Stokes2cSubProblem,
-             INHERITS_FROM(BoxStokesnc, SubDomain, TwoCStokesTwoPTwoCSpatialParams));
+             INHERITS_FROM(BoxStokesnc, SubDomain));
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cSubProblem, Problem, Dumux::Stokes2cSubProblem<TypeTag>);
@@ -93,8 +91,6 @@ class Stokes2cSubProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
@@ -147,8 +143,7 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     Stokes2cSubProblem(TimeManager &timeManager, const GridView gridView)
-        : ParentType(timeManager, gridView),
-          spatialParams_(gridView)
+        : ParentType(timeManager, gridView)
     {
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
@@ -365,14 +360,6 @@ public:
             return false;
     }
 
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return spatialParams_; }
-    const SpatialParams &spatialParams() const
-    { return spatialParams_; }
-
     //! \brief Returns the reference velocity.
     const Scalar refVelocity() const
     { return refVelocity_ + variation_(sinusVAmplitude_, sinusVPeriod_); }
@@ -453,8 +440,6 @@ private:
     // the height of the free-flow domain
     const Scalar height_() const
     { return bBoxMax_[1] - bBoxMin_[1]; }
-
-    SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;
