@@ -388,7 +388,7 @@ private:
                   const GlobalPosition &globalPos) const
     {
         values[pressureIdx] = refPressure_
-                + 1000.*this->gravity()[1]*(globalPos[1]-bBoxMax_[1]);
+                              + 1000.*this->gravity()[1]*(globalPos[1]-bBoxMax_[1]);
         values[switchIdx] = initialSw_;
     }
 

@@ -427,10 +427,8 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        //TODO: call density from fluidsystem
         values[pNIdx] = refPressure_
-                + 1000.*this->gravity()[1]*(globalPos[1]-bBoxMax_[1]);
-
+                        + 1000.*this->gravity()[1]*(globalPos[1]-bBoxMax_[1]);
         values[sWIdx] = initialSw_;
         values[temperatureIdx] = refTemperature_;
     }

@@ -267,6 +267,8 @@ public:
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
+        // The source term of the mass balance has to be chosen as
+        // div (q_momentum) in the problem file
         values = 0.0;
     }
 

@@ -361,7 +361,7 @@ public:
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
-        // ATTENTION: The source term of the mass balance has to be chosen as
+        // The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
         values = Scalar(0);
     }

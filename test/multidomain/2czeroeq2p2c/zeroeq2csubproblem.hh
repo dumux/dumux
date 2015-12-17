@@ -283,6 +283,8 @@ public:
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
+        // The source term of the mass balance has to be chosen as
+        // div (q_momentum) in the problem file
         values = Scalar(0);
     }
 
@@ -328,7 +330,6 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-
         FluidState fluidState;
         updateFluidStateForBC_(fluidState);
         const Scalar density = FluidSystem::density(fluidState, phaseIdx);
