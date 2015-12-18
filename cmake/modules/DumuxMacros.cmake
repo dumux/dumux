@@ -1,5 +1,3 @@
-# checks
-include(CheckConstexpr)
 # additional macros
 include(AddInputFileLinks)
 include(DumuxTestMacros)
