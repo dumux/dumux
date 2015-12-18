@@ -792,7 +792,7 @@ public:
     }
 
     // Get an element from a global element index
-    Element entity(unsigned int eIdx)
+    Element entity(unsigned int eIdx) const
     { return indexToElementMap_->entity(eIdx); }
 
 private:
