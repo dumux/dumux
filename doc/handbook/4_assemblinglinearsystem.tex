@@ -38,7 +38,7 @@ Each column is the residual derived with respect to the $m$th entry of $\textbf{
 The Jacobian indicates the direction where the residual increases. By solving the
 linear system
 \begin{align*}
-  J_{\textbf{r}(\textbf{u}^i)} \cdot \textbf{x}^i = \textbf{u}^i
+  J_{\textbf{r}(\textbf{u}^i)} \cdot \textbf{x}^i = \textbf{r}(\textbf{u}^i)
 \end{align*}
 we calculate the direction of maximum growth $\textbf{x}^i$. We subtract it from
 our current solution to get a new, better solution
