@@ -118,9 +118,10 @@ public:
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param p pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equations given in:    - Palliser & McKibbin 1997
-     *                         - Michaelides 1981
-     *                         - Daubert & Danner 1989
+     * Equations given in:
+     *                         - Palliser & McKibbin (1998) \cite palliser1998model <BR>
+     *                         - Michaelides (1981) \cite michaelides1981thermodynamic <BR>
+     *                         - Daubert & Danner (1989) \cite daubert1989physical
      */
     static const Scalar liquidEnthalpy(Scalar T,
                                        Scalar p)
@@ -192,7 +193,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
      */
     static const Scalar liquidHeatCapacity(Scalar temperature,
                                         Scalar pressure)
@@ -211,7 +212,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
      */
     static const Scalar gasHeatCapacity(Scalar temperature,
                                         Scalar pressure)
@@ -269,8 +270,9 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equations given in:    - Batzle & Wang (1992)
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271
+     * Equations given in:
+     *                        - Batzle & Wang (1992) \cite batzle1992seismic <BR>
+     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002equations
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -295,13 +297,13 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true if the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()
     { return H2O::gasIsCompressible(); }
 
     /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
+     * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
     { return H2O::liquidIsCompressible(); }
@@ -324,7 +326,7 @@ public:
      */
     static Scalar liquidPressure(Scalar temperature, Scalar density)
     {
-        // We use the newton method for this. For the initial value we
+        // We use the Newton method for this. For the initial value we
         // assume the pressure to be 10% higher than the vapor
         // pressure
         Scalar pressure = 1.1*vaporPressure(temperature);
@@ -362,9 +364,10 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equation given in:    - Batzle & Wang (1992)
+     * Equation given in:
+     *                         - Batzle & Wang (1992) \cite batzle1992seismic <BR>
      *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids"
+     *                           "Equations of State for basin geofluids" \cite adams2002equations
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {

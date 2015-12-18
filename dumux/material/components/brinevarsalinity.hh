@@ -122,9 +122,10 @@ public:
      * \param p pressure of component in \f$\mathrm{[Pa]}\f$
      * \param salinity The mass fraction of salt
      *
-     * Equations given in:    - Palliser & McKibbin 1997
-     *                         - Michaelides 1981
-     *                         - Daubert & Danner 1989
+     * Equations given in:
+     *                         - Palliser & McKibbin (1998) \cite palliser1998model <BR>
+     *                         - Michaelides (1981) \cite michaelides1981thermodynamic <BR>
+     *                         - Daubert & Danner (1989) \cite daubert1989physical
      *
      */
     static const Scalar liquidEnthalpy(Scalar T,
@@ -229,8 +230,9 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      * \param salinity The mass fraction of salt
      *
-     * Equations given in:    - Batzle & Wang (1992)
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271
+     * Equations given in:
+     *                        - Batzle & Wang (1992) \cite batzle1992seismic <BR>
+     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002equations
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure, Scalar salinity)
     {
@@ -276,7 +278,7 @@ public:
     */
    static Scalar liquidPressure(Scalar temperature, Scalar density, Scalar salinity)
    {
-       // We use the newton method for this. For the initial value we
+       // We use the Newton method for this. For the initial value we
        // assume the pressure to be 10% higher than the vapor
        // pressure
        Scalar pressure = 1.1*vaporPressure(temperature);
@@ -315,9 +317,10 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      * \param salinity The mass fraction of salt
      *
-     * Equation given in:    - Batzle & Wang (1992)
+     * Equation given in:
+     *                         - Batzle & Wang (1992) \cite batzle1992seismic <BR>
      *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids"
+     *                           "Equations of State for basin geofluids" \cite adams2002equations
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure, Scalar salinity)
     {

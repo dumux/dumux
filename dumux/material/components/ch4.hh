@@ -135,8 +135,7 @@ public:
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * See: R. Reid, et al.: The Properties of Gases and Liquids, 4th
-     * edition, McGraw-Hill, 1987, pp 154, 657, 671
+     * See: R. Reid, et al. (1987, pp 154, 657, 671) \cite reid1987
      */
     static const Scalar gasEnthalpy(Scalar T,
                                     Scalar pressure)
@@ -193,8 +192,8 @@ public:
      * See:
      *
      * See: R. Reid, et al.: The Properties of Gases and Liquids,
-     * 4th edition, McGraw-Hill, 1987, pp 396-397, 670
-     * 5th edition, McGraw-Hill, 2001  pp 9.7-9.8 (omega and V_c taken from p. A.5)
+     * 4th edition (1987, pp 396-397, 670) \cite reid1987 <BR>
+     * 5th edition (2001, pp 9.7-9.8 (omega and V_c taken from p. A.5)) \cite poling2001
      *
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)

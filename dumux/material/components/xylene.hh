@@ -94,7 +94,7 @@ public:
 
     /*!
      * \brief The saturation vapor pressure in \f$\mathrm{[Pa]}\f$ of pure xylene
-     *        at a given temperature according to Antoine after Betz 1997 ->  Gmehling et al 1980
+     *        at a given temperature according to Antoine after Betz 1997 ->  Gmehling et al 1980 \cite gmehling1980vapor <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
@@ -115,7 +115,7 @@ public:
     /*!
      * \brief Specific heat cap of liquid xylene \f$\mathrm{[J/kg]}\f$.
      *
-     * source : Reid et al. (fourth edition): Missenard group contrib. method (chap 5-7, Table 5-11, s. example 5-8)
+     * source : Reid et al. (fourth edition): Missenard group contrib. method (chap 5-7, Table 5-11, s. example 5-8) \cite reid1987 <BR>
      *
      * \param temp temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -123,7 +123,7 @@ public:
     static Scalar liquidHeatCapacity(Scalar temp, Scalar pressure)
     {
         Scalar CH3,C6H5,H;
-        // after Reid et al. : Missenard group contrib. method (s. example 5-8)
+        // after Reid et al. : Missenard group contrib. method (s. example 5-8) \cite reid1987 <BR>
         // Xylene: C9H12  : 3* CH3 ; 1* C6H5 (phenyl-ring) ; -2* H (this was too much!)
         // linear interpolation between table values [J/(mol K)]
 
@@ -188,7 +188,7 @@ public:
     /*!
      * \brief Latent heat of vaporization for xylene \f$\mathrm{[J/kg]}\f$.
      *
-     * source : Reid et al. (fourth edition): Chen method (chap. 7-11, Delta H_v = Delta H_v (T) according to chap. 7-12)
+     * source : Reid et al. (fourth edition): Chen method (chap. 7-11, Delta H_v = Delta H_v (T) according to chap. 7-12) \cite reid1987
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -258,7 +258,7 @@ public:
      * \brief The molar liquid density of pure xylene at a given pressure and temperature
      * \f$\mathrm{[mol/m^3]}\f$.
      *
-     * source : Reid et al. (fourth edition): Modified Racket technique (chap. 3-11, eq. 3-11.9)
+     * source : Reid et al. (fourth edition): Modified Racket technique (chap. 3-11, eq. 3-11.9) \cite reid1987 <BR>
      *
      * \param temp temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -291,19 +291,19 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true if the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()
     { return true; }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
+     * \brief Returns true if the gas phase is assumed to be ideal
      */
     static bool gasIsIdeal()
     { return true; }
 
     /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
+     * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
     { return false; }

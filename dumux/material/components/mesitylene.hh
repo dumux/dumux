@@ -146,7 +146,7 @@ public:
     /*!
      * \brief Latent heat of vaporization for mesitylene \f$\mathrm{[J/kg]}\f$.
      *
-     * source : Reid et al. (fourth edition): Chen method (chap. 7-11, Delta H_v = Delta H_v (T) according to chap. 7-12)
+     * source : Reid et al. (1987, Chen method (chap. 7-11, Delta H_v = Delta H_v (T) according to chap. 7-12)) \cite reid1987
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -276,7 +276,7 @@ public:
     /*!
      * \brief Specific heat capacity of liquid mesitylene \f$\mathrm{[J/(kg*K)]}\f$.
      *
-     * source : Reid et al. (fourth edition): Missenard group contrib. method (chap 5-7, Table 5-11, s. example 5-8)
+     * source : Reid et al. (1987, Missenard group contrib. method (chap 5-7, Table 5-11, s. example 5-8)) \cite reid1987
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -322,7 +322,7 @@ protected:
      * \brief The molar density of pure mesitylene at a given pressure and temperature
      * \f$\mathrm{[mol/m^3]}\f$.
      *
-     * source : Reid et al. (fourth edition): Modified Racket technique (chap. 3-11, eq. 3-11.9)
+     * source : Reid et al. (1987, Modified Racket technique (chap. 3-11, eq. 3-11.9)) \cite reid1987
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */

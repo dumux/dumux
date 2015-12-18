@@ -92,11 +92,7 @@ public:
      *
      * Taken from:
      *
-     * R. Span, E.W. Lemmon, et al.: "A Reference Equation of State
-     * for the Thermodynamic Properties of Nitrogen for Temperatures
-     * from 63.151 to 1000 K and Pressures to 2200 MPa", Journal of
-     * Physical and Chemical Refefence Data, Vol. 29, No. 6,
-     * pp. 1361-1433
+     * R. Span, E.W. Lemmon, et al. (2000 ,pp. 1361-1433) \cite span2000reference
      */
     static Scalar vaporPressure(Scalar T)
     {
@@ -164,8 +160,7 @@ public:
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * See: R. Reid, et al.: The Properties of Gases and Liquids, 4th
-     * edition, McGraw-Hill, 1987, pp 154, 657, 665
+     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
     static const Scalar gasEnthalpy(Scalar T,
                                     Scalar pressure)
@@ -250,8 +245,8 @@ public:
      * See:
      *
      * See: R. Reid, et al.: The Properties of Gases and Liquids,
-     * 4th edition, McGraw-Hill, 1987, pp 396-397,
-     * 5th edition, McGraw-Hill, 2001  pp 9.7-9.8 (omega and V_c taken from p. A.19)
+     * 4th edition (1987, pp 396-397) \cite reid1987 <BR>
+     * 5th edition (2001, pp 9.7-9.8 (omega and V_c taken from p. A.19)) \cite poling2001
      *
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)

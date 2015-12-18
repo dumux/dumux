@@ -95,7 +95,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar vaporPressure(Scalar T)
     {
