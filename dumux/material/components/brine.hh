@@ -119,9 +119,9 @@ public:
      * \param p pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * Equations given in:
-     *                         - Palliser & McKibbin (1998) \cite palliser1998model <BR>
-     *                         - Michaelides (1981) \cite michaelides1981thermodynamic <BR>
-     *                         - Daubert & Danner (1989) \cite daubert1989physical
+     *                         - Palliser & McKibbin (1998) \cite palliser1998 <BR>
+     *                         - Michaelides (1981) \cite michaelides1981 <BR>
+     *                         - Daubert & Danner (1989) \cite daubert1989
      */
     static const Scalar liquidEnthalpy(Scalar T,
                                        Scalar p)
@@ -271,8 +271,8 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * Equations given in:
-     *                        - Batzle & Wang (1992) \cite batzle1992seismic <BR>
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002equations
+     *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
+     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -365,9 +365,9 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992seismic <BR>
+     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002equations
+     *                           "Equations of State for basin geofluids" \cite adams2002
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {

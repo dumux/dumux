@@ -92,7 +92,7 @@ public:
      *
      * Taken from:
      *
-     * R. Span, E.W. Lemmon, et al. (2000 ,pp. 1361-1433) \cite span2000reference
+     * R. Span, E.W. Lemmon, et al. (2000 ,pp. 1361-1433) \cite span2000
      */
     static Scalar vaporPressure(Scalar T)
     {

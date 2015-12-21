@@ -758,7 +758,7 @@ public:
      * See:
      *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
-     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008release
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -782,7 +782,7 @@ public:
      * See:
      *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
-     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008release
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {

@@ -120,7 +120,7 @@ public:
      *
      * See:
      *
-     * R. Span and W. Wagner (1996, pp. 1509-1596) \cite span1996new
+     * R. Span and W. Wagner (1996, pp. 1509-1596) \cite span1996
      */
 
     static Scalar vaporPressure(Scalar T)

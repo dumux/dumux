@@ -94,7 +94,7 @@ public:
 
     /*!
      * \brief The saturation vapor pressure in \f$\mathrm{[Pa]}\f$ of pure xylene
-     *        at a given temperature according to Antoine after Betz 1997 ->  Gmehling et al 1980 \cite gmehling1980vapor <BR>
+     *        at a given temperature according to Antoine after Betz 1997 ->  Gmehling et al 1980 \cite gmehling1980 <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */

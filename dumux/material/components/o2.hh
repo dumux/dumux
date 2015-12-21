@@ -92,7 +92,7 @@ public:
      *
      * Taken from:
      *
-     * R. Prydz (1972, pp. 1-4) \cite prydz1972improved
+     * R. Prydz (1972, pp. 1-4) \cite prydz1972
      */
     static Scalar vaporPressure(Scalar T)
     {
