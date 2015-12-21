@@ -91,7 +91,7 @@ class PointSourceHelper
     static const int dim = GridView::dimension;
     static const int dimworld = GridView::dimensionworld;
 
-    typedef BoundingBoxTree<GridView> BoundingBoxTree;
+    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };

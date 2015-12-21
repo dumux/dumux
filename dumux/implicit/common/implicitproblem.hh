@@ -86,7 +86,7 @@ private:
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
-    typedef BoundingBoxTree<GridView> BoundingBoxTree;
+    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
 
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
