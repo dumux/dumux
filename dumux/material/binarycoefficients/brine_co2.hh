@@ -47,8 +47,7 @@ public:
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of water in the CO2 phase.
      *
-     * According to "Diffusion of Water in Liquid and Supercritical Carbon
-     * Dioxide: An NMR Study", Bin Xu et al., 2002.
+     * According to B. Xu et al. (2002) \cite xu2003 <BR>
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -82,9 +81,9 @@ public:
      *        for a given temperature, pressure, CO2 density and brine
      *        salinity.
      *
-     *        Implemented according to "Spycher and Pruess 2005"
-     *        applying the activity coefficient expression of "Duan and Sun 2003"
-     *        and the correlations for pure water given in "Spycher, Pruess and Ennis-King 2003"
+     *        Implemented according to Spycher and Pruess (2005) \cite spycher2005 <BR>
+     *        applying the activity coefficient expression of Duan and Sun (2003) \cite duan2003 <BR>
+     *        and the correlations for pure water given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -137,7 +136,7 @@ public:
 
     /*!
      * \brief Returns the fugacity coefficient of the CO2 component in a water-CO2 mixture
-     * (given in Spycher, Pruess and Ennis-King (2003))
+     * (given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 )
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -163,7 +162,7 @@ public:
 
     /*!
      * \brief Returns the fugacity coefficient of the H2O component in a water-CO2 mixture
-     * (given in Spycher, Pruess and Ennis-King (2003))
+     * (given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 )
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -235,8 +234,8 @@ private:
 
     /*!
      * \brief Returns the activity coefficient of CO2 in brine for a
-     *           molal description. According to "Duan and Sun 2003"
-     *           given in "Spycher and Pruess 2005"
+     *           molal description. According to Duan and Sun (2003) \cite duan2003 <BR>
+     *           given in Spycher and Pruess (2005) \cite spycher2005 <BR>
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -255,7 +254,7 @@ private:
     /*!
      * \brief Returns the paramater A for the calculation of
      * them mutual solubility in the water-CO2 system.
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -275,7 +274,7 @@ private:
     /*!
      * \brief Returns the paramater B for the calculation of
      * the mutual solubility in the water-CO2 system.
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -295,7 +294,7 @@ private:
     /*!
      * \brief Returns the parameter lambda, which is needed for the
      * calculation of the CO2 activity coefficient in the brine-CO2 system.
-     * Given in Spycher and Pruess (2005)
+     * Given in Spycher and Pruess (2005) \cite spycher2005 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -314,7 +313,7 @@ private:
     /*!
      * \brief Returns the parameter xi, which is needed for the
      * calculation of the CO2 activity coefficient in the brine-CO2 system.
-     * Given in Spycher and Pruess (2005)
+     * Given in Spycher and Pruess (2005) \cite spycer2005 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -332,7 +331,7 @@ private:
     /*!
      * \brief Returns the equilibrium constant for CO2, which is needed for the
      * calculation of the mutual solubility in the water-CO2 system
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantCO2_(Scalar T) {
@@ -346,7 +345,7 @@ private:
     /*!
      * \brief Returns the equilibrium constant for H2O, which is needed for the
      * calculation of the mutual solubility in the water-CO2 system
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantH2O_(Scalar T) {

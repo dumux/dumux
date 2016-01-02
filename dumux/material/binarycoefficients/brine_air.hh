@@ -48,7 +48,7 @@ public:
     /*!
      * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of water in the Air phase.
      *
-     * According to "Diffusion of Water in Liquid and Supercritical Carbon Dioxide: An NMR Study",Bin Xu et al., 2002
+     * According to B. Xu et al. (2003) \cite xu2003 <BR>
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -79,12 +79,9 @@ public:
         *
         * See:
         *
-        * R. Reid et al.: "The properties of Gases and Liquids", 4th edition,
-        * pp. 599, McGraw-Hill, 1987
+        * R. Reid et al. (1987, pp. 599) \cite reid1987 <BR>
         *
-        * R. Ferrell, D. Himmelblau: "Diffusion Coeffients of Nitrogen and
-        * Oxygen in Water", Journal of Chemical Engineering and Data,
-        * Vol. 12, No. 1, pp. 111-115, 1967
+        * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
         */
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure) {
         //Diffusion coefficient of Air in the H2O phase
@@ -99,9 +96,9 @@ public:
      *        for a given temperature, pressure, Air density and brine
      *        XlNaCl.
      *
-     *        Implemented according to "Spycher and Pruess 2005"
-     *        applying the activity coefficient expression of "Duan and Sun 2003"
-     *        and the correlations for pure water given in "Spycher, Pruess and Ennis-King 2003"
+     *        Implemented according to Spycher and Pruess (2005) \cite spycher2005 <BR>
+     *        applying the activity coefficient expression of Duan and Sun (2003) \cite duan2003 <BR>
+     *        and the correlations for pure water given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -156,7 +153,7 @@ public:
 
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of the Air component in a water-Air mixture
-     * (given in Spycher, Pruess and Ennis-King (2003))
+     * (given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 )
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -182,7 +179,7 @@ public:
 
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of the H2O component in a water-Air mixture
-     * (given in Spycher, Pruess and Ennis-King (2003))
+     * (given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 )
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -256,8 +253,8 @@ private:
 
     /*!
      * \brief Returns the activity coefficient of Air in brine for a
-     *           molal description. According to "Duan and Sun 2003"
-     *           given in "Spycher and Pruess 2005"
+     *           molal description. According to Duan and Sun (2003) \cite duan2003 <BR>
+     *           given in Spycher and Pruess (2005) \cite spycher2005 <BR>
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -276,7 +273,7 @@ private:
     /*!
      * \brief Returns the paramater A for the calculation of
      * them mutual solubility in the water-Air system.
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -296,7 +293,7 @@ private:
     /*!
      * \brief Returns the paramater B for the calculation of
      * the mutual solubility in the water-Air system.
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
@@ -316,7 +313,7 @@ private:
     /*!
      * \brief Returns the parameter lambda, which is needed for the
      * calculation of the Air activity coefficient in the brine-Air system.
-     * Given in Spycher and Pruess (2005)
+     * Given in Spycher and Pruess (2005) \cite spycher2005 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -335,7 +332,7 @@ private:
     /*!
      * \brief Returns the parameter xi, which is needed for the
      * calculation of the Air activity coefficient in the brine-Air system.
-     * Given in Spycher and Pruess (2005)
+     * Given in Spycher and Pruess (2005) \cite spycher2005 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -353,7 +350,7 @@ private:
     /*!
      * \brief Returns the equilibrium constant for Air, which is needed for the
      * calculation of the mutual solubility in the water-Air system
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantAir_(Scalar T) {
@@ -367,7 +364,7 @@ private:
     /*!
      * \brief Returns the equilibrium constant for H2O, which is needed for the
      * calculation of the mutual solubility in the water-Air system
-     * Given in Spycher, Pruess and Ennis-King (2003)
+     * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantH2O_(Scalar T) {

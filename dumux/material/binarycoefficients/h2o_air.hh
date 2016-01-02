@@ -42,10 +42,8 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
      * Henry coefficient See:
-     * Stefan Finsterle, 1993
-     * Inverse Modellierung zur Bestimmung hydrogeologischer Parameter eines Zweiphasensystems
-     * page 29 Formula (2.9) (nach Tchobanoglous & Schroeder, 1985)
-     *
+     * Stefan Finsterle (1993, page 29 Formula (2.9)) \cite finsterle1993 <BR>
+     * (nach Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985 )
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
@@ -61,11 +59,10 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      * Vargaftik: Tables on the thermophysical properties of liquids and gases.
-     * John Wiley & Sons, New York, 1975.
-     *
+     * John Wiley & Sons, New York, 1975. \cite vargaftik1975 <BR>
      * Walker, Sabey, Hampton: Studies of heat transfer and water migration in soils.
      * Dep. of Agricultural and Chemical Engineering, Colorado State University,
-     * Fort Collins, 1981.
+     * Fort Collins, 1981. \cite walker1981
      */
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
@@ -97,12 +94,9 @@ public:
      *
      * See:
      *
-     * R. Reid et al.: "The properties of Gases and Liquids", 4th edition,
-     * pp. 599, McGraw-Hill, 1987
+     * R. Reid et al. (1987, pp. 599) \cite reid1987 <BR>
      *
-     * R. Ferrell, D. Himmelblau: "Diffusion Coefficients of Nitrogen and
-     * Oxygen in Water", Journal of Chemical Engineering and Data,
-     * Vol. 12, No. 1, pp. 111-115, 1967
+     * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)

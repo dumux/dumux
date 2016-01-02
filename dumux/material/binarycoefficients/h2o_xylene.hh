@@ -44,13 +44,13 @@ public:
      *
      * See:
      *
-     *  Sanders1999 Henry collection
+     *  Sander (1999) \cite sander1999
      */
 
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {
-        // after Sanders
+        // after Sander
         Scalar sanderH = 1.5e-1;    //[M/atm]
         //conversion to our Henry definition
         Scalar dumuxH = sanderH / 101.325; // has now [(mol/m^3)/Pa]

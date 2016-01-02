@@ -46,14 +46,14 @@ NEW_PROP_TAG(VolumeVariables);
 
 /*!
  * \brief
- * The type of electrochemistry models implemented here (Ochs [2008] or Acosta et al. [2006])
+ * The type of electrochemistry models implemented here (Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006 )
  */
 enum ElectroChemistryModel { Ochs, Acosta };
 
 /*!
  * \brief
  * This class calculates source terms and current densities for fuel cells
- * with the electrochemical models suggested by Ochs [2008] or Acosta et al. [2006]
+ * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006
  */
 template <class TypeTag, Dumux::ElectroChemistryModel electroChemistryModel>
 class ElectroChemistry
