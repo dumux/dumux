@@ -421,7 +421,6 @@ public:
             }
         }
 
-        // MASS Balance
         // Dirichlet-like
         if (cParams.boundaryTypes2.isCouplingDirichlet(massBalanceIdx2))
         {
@@ -445,8 +444,7 @@ public:
         {
             // TODO: Is not implemented anymore because curPrimaryVars_ is protected
             //       and it could be that this part of code has never been checked
-            std::cerr << "The boundary condition isCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore." << std::endl;
-            exit(1);
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore.");
 
             // GlobalPosition tangentialVelGrad(0);
             // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
@@ -531,9 +529,8 @@ public:
         // Neumann-like conditions
         if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
         {
-            std::cerr << "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented";
-            std::cerr << "for the Stokes side for multicomponent systems." << std::endl;
-            exit(1);
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented \
+                                              for the Stokes side for multicomponent systems.");
         }
         if (cParams.boundaryTypes2.isCouplingNeumann(contiWEqIdx2))
         {
@@ -600,23 +597,21 @@ public:
             }
         }
 
-        // COMPONENT Balance
-        // Dirichlet-like conditions (coupling residual is added to "real" residual)
-        // TODO (stimmt der Kommentar): here each node is passed twice, hence only half of the dirichlet condition has to be set
+        // Dirichlet-like conditions
         if (cParams.boundaryTypes1.isCouplingDirichlet(transportEqIdx1))
         {
-            // set residualStokes[transportEqIdx1] = x in stokesnccouplinglocalresidual.hh
             static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
                           "This coupling condition is only implemented for mass fraction formulation.");
 
+            // set residualStokes[transportEqIdx1] = x in stokesnccouplinglocalresidual.hh
+            // coupling residual is added to "real" residual
             couplingRes1.accumulate(lfsu1.child(transportEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }
         if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
         {
-            std::cerr << "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented";
-            std::cerr << "for the Darcy side for multicomponent systems." << std::endl;
-            exit(1);
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented \
+                                              for the Darcy side for multicomponent systems.");
         }
     }
 
@@ -740,8 +735,7 @@ public:
         }
         if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
         {
-            std::cerr << "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented for the Darcy side." << std::endl;
-            exit(1);
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented for the Darcy side.");
         }
     }
 
@@ -842,8 +836,7 @@ public:
         // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
         {
-            std::cerr << "The boundary conditionisCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore." << std::endl;
-            exit(1);
+            DUNE_THROW(Dune::NotImplemented, "The boundary conditionisCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore.");
             // GlobalPosition tangentialVelGrad(0);
             // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
             // tangentialVelGrad /= -beaversJosephCoeff; // was - before
@@ -867,8 +860,7 @@ public:
         }
         if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
         {
-            std::cerr << "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented for the Stokes side!" << std::endl;
-            exit(1);
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented for the Stokes side.");
         }
     }
 

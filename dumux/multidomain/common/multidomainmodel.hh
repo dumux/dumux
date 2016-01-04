@@ -97,10 +97,6 @@ public:
     /*!
      * \brief Reference to the current solution as a block vector.
      */
-
-    /*!
-     * \brief Reference to the current solution as a block vector.
-     */
     SolutionVector &curSol()
     { return *uCur_; }
 

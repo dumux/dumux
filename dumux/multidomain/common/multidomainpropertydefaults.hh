@@ -139,7 +139,6 @@ public:
 };
 
 // set trivial constraints transformation by default
-// TODO create a proper constraint transformation
 SET_PROP(MultiDomain, MultiDomainConstraintsTrafo)
 {
 private:
@@ -182,7 +181,8 @@ SET_INT_PROP(MultiDomain, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq))
 SET_TYPE_PROP(MultiDomain, Model, MultiDomainModel<TypeTag>);
 
 SET_PROP(MultiDomain, SolutionVector)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:

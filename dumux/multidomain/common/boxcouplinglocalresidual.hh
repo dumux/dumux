@@ -99,9 +99,9 @@ public:
                            fvGeometry,
                            true /* oldSol? */);
         volVarsCur.updatePDELab(this->problem_(),
-                          element,
-                          fvGeometry,
-                          elementSolVector);
+                                element,
+                                fvGeometry,
+                                elementSolVector);
         ElementBoundaryTypes bcTypes;
         bcTypes.update(this->problem_(), element, fvGeometry);
 
@@ -160,10 +160,10 @@ public:
      *                vertices of the element
      */
     void evalPDELab(const Element &element,
-              const FVElementGeometry &fvGeometry,
-              const ElementVolumeVariables &prevVolVars,
-              const ElementVolumeVariables &curVolVars,
-              const ElementBoundaryTypes &bcTypes)
+                    const FVElementGeometry &fvGeometry,
+                    const ElementVolumeVariables &prevVolVars,
+                    const ElementVolumeVariables &curVolVars,
+                    const ElementBoundaryTypes &bcTypes)
     {
         const int numVerts = fvGeometry.numScv;
 #if HAVE_VALGRIND

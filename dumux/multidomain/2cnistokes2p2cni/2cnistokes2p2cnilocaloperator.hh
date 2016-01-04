@@ -340,8 +340,6 @@ public:
             }
         }
 
-
-        // ENERGY Balance
         // Dirichlet-like conditions
         if (cParams.boundaryTypes1.isCouplingDirichlet(energyEqIdx1))
         {
