@@ -42,6 +42,7 @@ template<class TypeTag>
 class TwoPMincLocalResidual : public TwoPLocalResidual<TypeTag>
 {
 protected:
+    typedef typename Dumux::TwoPLocalResidual<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -155,12 +156,7 @@ public:
      */
     void computeSource(PrimaryVariables &q, int scvIdx)
     {
-        // retrieve the source term intrinsic to the problem
-        this->problem_().solDependentSource(q,
-                                            this->element_(),
-                                            this->fvGeometry_(),
-                                            scvIdx,
-                                            this->curVolVars_());
+        ParentType::computeSource(q, scvIdx);
         q += transferFlux(scvIdx);
     }
 

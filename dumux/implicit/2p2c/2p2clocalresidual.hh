@@ -408,24 +408,6 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         }
     }
 
-    /*!
-     * \brief Evaluates the source term
-     *
-     * \param source The source/sink in the sub-control volume
-     * \param scvIdx The index of the sub-control volume
-     *
-     * Be careful what you use, mole or mass fraction! Think of the units!
-     * If a total mass balance is used, the sum of both components has to be specified as source.
-     */
-    void computeSource(PrimaryVariables& source, const int scvIdx)
-    {
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
-    }
-
  protected:
     void evalPhaseStorage_(const int phaseIdx)
     {

@@ -165,11 +165,8 @@ public:
                        const unsigned int scvIdx)
      {
         Valgrind::SetUndefined(source);
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_() );
+        ParentType::computeSource(source, scvIdx);
+
         const VolumeVariables &volVars = this->curVolVars_(scvIdx);
 
         PrimaryVariables tmp(0);

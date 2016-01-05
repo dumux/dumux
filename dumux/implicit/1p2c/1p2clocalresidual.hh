@@ -251,21 +251,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Calculate the source term of the equation
-     *        \param source The source/sink in the SCV for each component
-     *        \param scvIdx The index of the vertex of the sub control volume
-     *
-     */
-    void computeSource(PrimaryVariables &source, const int scvIdx)
-    {
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
-    }
-
     Implementation *asImp_()
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const

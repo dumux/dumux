@@ -172,24 +172,6 @@ public:
         flux += 0.0;
     }
 
-    /*!
-     * \brief Calculate the source term of the equation
-     *
-     * \param q The source/sink in the SCV for each phase
-     * \param scvIdx The index of the SCV
-     *
-     */
-    void computeSource(PrimaryVariables &q, int scvIdx) const
-    {
-        // retrieve the source term intrinsic to the problem
-        this->problem_().solDependentSource(q,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
-    }
-
-
 protected:
     Implementation *asImp_()
     {
