@@ -24,10 +24,11 @@
 #include <config.h>
 
 #if HAVE_DUNE_PDELAB
+#include "el2pproblem.hh"
+#endif
 
 #include <dune/common/precision.hh>
 #include <dune/common/version.hh>
-#include "el2pproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -63,13 +64,13 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
+#if HAVE_DUNE_PDELAB
     typedef TTAG(El2P_TestProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
-}
-
 
 #else // HAVE_DUNE_PDELAB
-
 #warning You need to have dune-pdelab installed and patched to run this test.
-
+    std::cerr << "You need to have dune-pdelab installed and patched to run this test." << std::endl;
+    return 77;
 #endif // HAVE_DUNE_PDELAB
+}
