@@ -75,6 +75,33 @@ private:
     GlobalPosition pos_;
 };
 
+/*!
+ * \ingroup Common
+ * \brief A point source class with an identifier to attach data
+ */
+template<class TypeTag, typename IdType>
+class IdPointSource : public Dumux::PointSource<TypeTag>
+{
+    typedef typename Dumux::PointSource<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+
+    static const int dimworld = GridView::dimensionworld;
+    typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+
+public:
+    // Constructor
+    IdPointSource(GlobalPosition pos, PrimaryVariables values, IdType id)
+      :  ParentType(pos, values), id_(id) {}
+
+    //! return the sources identifier
+    IdType id() const
+    { return id_; }
+
+private:
+    IdType id_;
+};
 
 /*!
  * \ingroup Common
