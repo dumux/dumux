@@ -111,6 +111,7 @@ class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   ILUnBiCGSTABBackend(const Problem& problem)
@@ -119,7 +120,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqILUn<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqILUn<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -135,6 +136,7 @@ class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   SORBiCGSTABBackend(const Problem& problem)
@@ -143,7 +145,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqSOR<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqSOR<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -159,6 +161,7 @@ class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   SSORBiCGSTABBackend(const Problem& problem)
@@ -167,7 +170,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -183,6 +186,7 @@ class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   GSBiCGSTABBackend(const Problem& problem)
@@ -191,7 +195,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqGS<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqGS<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -207,6 +211,7 @@ class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   JacBiCGSTABBackend(const Problem& problem)
@@ -215,7 +220,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqJac<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqJac<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -231,6 +236,7 @@ class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   ILUnCGBackend(const Problem& problem)
@@ -239,7 +245,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqILUn<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqILUn<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -255,6 +261,7 @@ class SORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   SORCGBackend(const Problem& problem)
@@ -263,7 +270,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqSOR<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqSOR<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -279,6 +286,7 @@ class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   SSORCGBackend(const Problem& problem)
@@ -287,7 +295,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -303,6 +311,7 @@ class GSCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   GSCGBackend(const Problem& problem)
@@ -311,7 +320,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqGS<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqGS<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -327,6 +336,7 @@ class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   JacCGBackend(const Problem& problem)
@@ -335,7 +345,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqJac<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqJac<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -351,6 +361,7 @@ class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   SSORRestartedGMResBackend(const Problem& problem)
@@ -359,7 +370,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::RestartedGMResSolver<Vector> Solver;
     const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
 
@@ -441,6 +452,7 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef ILU0SolverBackend<TypeTag> ParentType;
+    enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
   public:
 
   ILU0BiCGSTABBackend(const Problem& problem)
@@ -449,7 +461,7 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-      typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::SeqILU0<Matrix, Vector, Vector, blockLevel> Preconditioner;
       typedef Dune::BiCGSTABSolver<Vector> Solver;
 
       return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -465,6 +477,7 @@ class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef ILU0SolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   ILU0CGBackend(const Problem& problem)
@@ -473,7 +486,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-      typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::SeqILU0<Matrix, Vector, Vector, blockLevel> Preconditioner;
       typedef Dune::CGSolver<Vector> Solver;
 
       return ParentType::template solve<Preconditioner, Solver>(A, x, b);
@@ -489,6 +502,7 @@ class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef ILU0SolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   ILU0RestartedGMResBackend(const Problem& problem)
@@ -497,7 +511,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-      typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::SeqILU0<Matrix, Vector, Vector, blockLevel> Preconditioner;
       typedef Dune::RestartedGMResSolver<Vector> Solver;
       const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
 
@@ -514,6 +528,7 @@ class ILUnRestartedGMResBackend : public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+  enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
   ILUnRestartedGMResBackend(const Problem& problem)
@@ -522,7 +537,7 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-      typedef Dune::SeqILUn<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::SeqILUn<Matrix, Vector, Vector, blockLevel> Preconditioner;
       typedef Dune::RestartedGMResSolver<Vector> Solver;
       const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
 

@@ -60,6 +60,11 @@ NEW_PROP_TAG(LinearSolverPreconditionerRelaxation);
 //! number of preconditioner iterations per solver iteration
 NEW_PROP_TAG(LinearSolverPreconditionerIterations);
 
+//! Block level depth for the preconditioner
+// Set this to more than one if the matrix to solve is nested multiple times
+// e.g. for Dune::MultiTypeBlockMatrix'es.
+NEW_PROP_TAG(LinearSolverPreconditionerBlockLevel);
+
 //! restart parameter for GMRes
 NEW_PROP_TAG(LinearSolverGMResRestart);
 
@@ -79,6 +84,9 @@ SET_SCALAR_PROP(LinearSolverTypeTag, LinearSolverPreconditionerRelaxation, 1.0);
 
 //! set the preconditioner iterations to 1 by default
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerIterations, 1);
+
+//! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
+SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerBlockLevel, 1);
 
 //! set the GMRes restart parameter to 10 by default
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverGMResRestart, 10);
