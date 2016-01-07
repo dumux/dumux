@@ -23,12 +23,11 @@
  */
 #include <config.h>
 
+#include <dune/common/precision.hh>
+#include <dune/common/version.hh>
 #if HAVE_DUNE_PDELAB
 #include "el2pproblem.hh"
 #endif
-
-#include <dune/common/precision.hh>
-#include <dune/common/version.hh>
 #include <dumux/common/start.hh>
 
 /*!
@@ -69,8 +68,8 @@ int main(int argc, char** argv)
     return Dumux::start<TypeTag>(argc, argv, usage);
 
 #else // HAVE_DUNE_PDELAB
-#warning You need to have dune-pdelab installed and patched to run this test.
-    std::cerr << "You need to have dune-pdelab installed and patched to run this test." << std::endl;
+#warning You need to have dune-pdelab to run this test.
+    std::cerr << "You need to have dune-pdelab to run this test." << std::endl;
     return 77;
 #endif // HAVE_DUNE_PDELAB
 }
