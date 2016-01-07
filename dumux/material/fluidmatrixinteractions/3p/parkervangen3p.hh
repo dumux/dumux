@@ -272,7 +272,7 @@ public:
      *
      * The permeability of water in a 3p system equals the standard 2p description.
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
-     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
+     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.) \cite delshad1989 <BR>
      *
      * \param sn Non-wetting liquid saturation
      * \param sg Gas saturation
@@ -298,11 +298,11 @@ public:
      *        after the Model of Parker et al. (1987).
      *
      * See model 7 in "Comparison of the Three-Phase Oil Relative Permeability Models"
-     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.
+     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83 \cite delshad1989 <BR>
      * or more comprehensive in
      * "Estimation of primary drainage three-phase relative permeability for organic
      * liquid transport in the vadose zone", Leonardo I. Oliveira, Avery H. Demond,
-     * Journal of Contaminant Hydrology 66 (2003), 261-285
+     * Journal of Contaminant Hydrology 66 (2003), 261-285 \cite oloiveira2003 <BR>
      *
      *
      * \param sw Wetting liquid saturation
@@ -347,7 +347,7 @@ public:
      *
      * The permeability of gas in a 3p system equals the standard 2p description.
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
-     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
+     * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.) \cite delshad1989 <BR>
      *
      * \param sw Wetting liquid saturation
      * \param sn Non-wetting liquid saturation

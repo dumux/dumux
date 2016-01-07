@@ -24,8 +24,7 @@
  *
  * See:
  *
- * R. Reid, et al.: The Properties of Gases and Liquids, 4th edition,
- * McGraw-Hill, 1987, pp. 43-44
+ * R. Reid, et al. (1987, pp. 43-44) \cite reid1987
  */
 #ifndef DUMUX_PENG_ROBINSON_PARAMS_HH
 #define DUMUX_PENG_ROBINSON_PARAMS_HH
@@ -39,8 +38,7 @@ namespace Dumux
  *
  * See:
  *
- * R. Reid, et al.: The Properties of Gases and Liquids, 4th edition,
- * McGraw-Hill, 1987, pp. 43-44
+ * R. Reid, et al. (1987, pp. 43-44) \cite reid1987
  */
 template <class Scalar>
 class PengRobinsonParams
@@ -52,6 +50,7 @@ public:
      */
     Scalar a() const
     { return a_; }
+
 
     /*!
      * \brief Returns the repulsive parameter 'b' of the Peng-Robinson

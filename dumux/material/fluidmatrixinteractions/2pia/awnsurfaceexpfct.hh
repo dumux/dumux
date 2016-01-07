@@ -39,7 +39,7 @@ namespace Dumux
  * \ingroup material
  *
  * \brief Implementation of the exponential function relating
- *             specific interfacial area to wetting phase saturation and capillary pressure as suggested by Nuske(2009) (Diploma thesis).
+ *             specific interfacial area to wetting phase saturation and capillary pressure as suggested by Nuske(2009) (Diploma thesis) \cite nuske2009 .
  */
 template <class ParamsT>
 class AwnSurfaceExpFct

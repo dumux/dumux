@@ -24,12 +24,9 @@
  *
  * See:
  *
- * D.-Y. Peng, D.B. Robinson: A new two-constant equation of state,
- * Industrial & Engineering Chemistry Fundamentals, 1976, 15 (1),
- * pp. 59–64
+ * D.-Y. Peng, D.B. Robinson (1976, pp. 59–64) \cite peng1976 <BR>
  *
- * R. Reid, et al.: The Properties of Gases and Liquids,
- * 4th edition, McGraw-Hill, 1987, pp. 42-44, 82
+ * R. Reid, et al. (1987, pp. 42-44, 82) \cite reid1987
  */
 #ifndef DUMUX_PENG_ROBINSON_HH
 #define DUMUX_PENG_ROBINSON_HH
@@ -51,12 +48,9 @@ namespace Dumux
  *
  * See:
  *
- * D.-Y. Peng, D.B. Robinson: A new two-constant equation of state,
- * Industrial & Engineering Chemistry Fundamentals, 1976, 15 (1),
- * pp. 59–64
+ * D.-Y. Peng, D.B. Robinson (1976, pp. 59–64) \cite peng1976 <BR>
  *
- * R. Reid, et al.: The Properties of Gases and Liquids,
- * 4th edition, McGraw-Hill, 1987, pp. 42-44, 82
+ * R. Reid, et al. (1987, pp. 42-44, 82) \cite reid1987
  */
 template <class Scalar>
 class PengRobinson
@@ -449,9 +443,7 @@ protected:
      *
      * See:
      *
-     * D. Ambrose, J. Walton: "Vapor Pressures up to Their Critical
-     * Temperatures of Normal Alkanes and 1-Alkanols", Pure
-     * Appl. Chem., 61, 1395-1403, 1989
+     * D. Ambrose, J. Walton (1989, pp. 1395-1403) \cite ambrose1989
      */
     template <class Params>
     static Scalar ambroseWalton_(const Params &params, Scalar T)

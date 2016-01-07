@@ -42,7 +42,7 @@ struct JohansenIndices
  *
  * \brief Relation for the saturation-dependent effective thermal conductivity
  *
- * The Johansen method (Johansen 1975) computes the thermal conductivity of dry and the
+ * The Johansen method (Johansen 1975 \cite johansen1977 ) computes the thermal conductivity of dry and the
  * wet soil material and uses a root function of the wetting saturation to compute the
  * effective thermal conductivity for a two-phase fluidsystem. The individual thermal
  * conductivities are calculated as geometric mean of the thermal conductivity of the porous
@@ -62,14 +62,14 @@ struct JohansenIndices
  \lambda_\text{dry} = \frac{0.135*\rho_s*\phi + 64.7}{\rho_s - 0.947 \rho_s*\phi}.
  }\f$
  *
- * Source: Phdthesis (Johansen1975) Johansen, O. Thermal conductivity of soils Norw. Univ. of Sci. Technol., Trondheim, Norway, 1975
+ * Source: Phdthesis (Johansen1975) Johansen, O. Thermal conductivity of soils Norw. Univ. of Sci. Technol., Trondheim, Norway, 1975 \cite johansen1977
  */
 template<class Scalar, class Indices = JohansenIndices>
 class ThermalConductivityJohansen
 {
 public:
     /*!
-     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975).
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -77,7 +77,7 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975)
+     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
      *
      * This formulation is semi-empirical and fitted to quartz sand.
      * This gives an interpolation of the effective thermal conductivities of a porous medium
@@ -86,7 +86,7 @@ public:
      * fluid conductivities and interpolated with the Kersten number.<br>
      * Johansen, O. 1975. Thermal conductivity of soils. Ph.D. diss. Norwegian Univ.
      *                    of Sci. and Technol., Trondheim. (Draft Transl. 637. 1977. U.S. Army
-     *                    Corps of Eng., Cold Regions Res. and Eng. Lab., Hanover, NH.)
+     *                    Corps of Eng., Cold Regions Res. and Eng. Lab., Hanover, NH.) \cite johansen1977
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
@@ -106,7 +106,7 @@ public:
     }
 
     /*!
-     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975).
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
      *
      * \param Sw The saturation of the wetting phase
      * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
@@ -115,7 +115,7 @@ public:
      * \param porosity The porosity
      * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$
      *
-     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975)
+     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977
      */
     static Scalar effectiveThermalConductivity(const Scalar Sw,
                                                const Scalar lambdaW,

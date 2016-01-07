@@ -168,10 +168,10 @@ public:
      * \brief Apply the Forchheimer coefficient for inertial forces
      *        calculation.
      *
-     *        Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
+     *        Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
      *        Actually the Forchheimer coefficient is also a function of the dimensions of the
      *        porous medium. Taking it as a constant is only a first approximation
-     *        (Nield, Bejan, Convection in porous media, 2006, p. 10)
+     *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
      *
      * \param element The current finite element
      * \param fvGeometry The current finite volume geometry of the element

@@ -67,7 +67,7 @@ class ThermalConductivitySomerton
 {
 public:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -75,13 +75,13 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * This gives an interpolation of the effective thermal conductivities of a porous medium
      * filled with the non-wetting phase and a porous medium filled with the wetting phase.
      * These two effective conductivities are computed as geometric mean of the solid and the
      * fluid conductivities and interpolated with the square root of the wetting saturation.
-     * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis.
+     * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis \cite ebigbo2005 .
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
@@ -100,7 +100,7 @@ public:
     }
 
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * \param sw The saturation of the wetting phase
      * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
@@ -109,7 +109,7 @@ public:
      * \param porosity The porosity
      * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$
      *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974
      */
     static Scalar effectiveThermalConductivity(const Scalar sw,
                                                const Scalar lambdaW,
