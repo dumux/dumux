@@ -24,6 +24,8 @@
 #ifndef DUMUX_2P2C_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_2P2C_COUPLING_LOCAL_RESIDUAL_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/implicit/2p2c/2p2clocalresidual.hh>
 #include <dumux/implicit/2p2c/2p2cproperties.hh>
 
@@ -194,6 +196,7 @@ public:
      *
      * \param scvIdx The sub-control-volume index
      */
+    DUNE_DEPRECATED_MSG("evalComponentFluxes() has been deprecated.")
     PrimaryVariables evalComponentFluxes(const int scvIdx)
     {
         const unsigned int numScv = this->fvGeometry_().numScv;
@@ -235,7 +238,7 @@ public:
      * \brief Compute the fluxes within the different fluid phases. This is
      *        merely for the computation of flux output.
      */
-    DUNE_DEPRECATED_MSG("evalPhaseFluxes() has changed signature and has been renamed to evalComponentFluxes.")
+    DUNE_DEPRECATED_MSG("evalPhaseFluxes() has been deprecated.")
     void evalPhaseFluxes()
     {
         elementFluxes_.resize(this->fvGeometry_().numScv);

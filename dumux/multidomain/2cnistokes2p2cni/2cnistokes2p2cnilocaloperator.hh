@@ -24,6 +24,8 @@
 #ifndef DUMUX_TWOCNISTOKES2P2CNILOCALOPERATOR_HH
 #define DUMUX_TWOCNISTOKES2P2CNILOCALOPERATOR_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
 
 namespace Dumux {

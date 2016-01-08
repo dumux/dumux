@@ -24,6 +24,8 @@
 #ifndef DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/implicit/box/boxlocalresidual.hh>
 
 namespace Dumux
@@ -39,7 +41,6 @@ template<class TypeTag>
 class BoxCouplingLocalResidual : public BoxLocalResidual<TypeTag>
 {
 private:
-
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -53,15 +54,11 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Grid::ctype CoordScalar;
 
-
     typedef typename GridView::template Codim<0>::Entity Element;
-
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
 
     // copying the local residual class is not a good idea
     BoxCouplingLocalResidual(const BoxCouplingLocalResidual &);
@@ -121,6 +118,7 @@ public:
      * \param volVarsPrev Volume variables of the previous time step
      * \param volVarsCur Volume variables of the current time step
      */
+    DUNE_DEPRECATED_MSG("evalNoBoundary() is deprecated.")
     void evalNoBoundary(const Element &element,
                         const FVElementGeometry fvGeometry,
                         ElementVolumeVariables& volVarsPrev,

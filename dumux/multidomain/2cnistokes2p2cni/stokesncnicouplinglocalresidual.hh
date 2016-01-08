@@ -26,6 +26,8 @@
 #ifndef DUMUX_STOKESNCNI_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_STOKESNCNI_COUPLING_LOCAL_RESIDUAL_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/freeflow/stokesncni/stokesncnilocalresidual.hh>
 #include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
 

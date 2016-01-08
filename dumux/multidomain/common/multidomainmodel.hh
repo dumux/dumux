@@ -25,6 +25,8 @@
 #ifndef DUMUX_MULTIDOMAIN_MODEL_HH
 #define DUMUX_MULTIDOMAIN_MODEL_HH
 
+#include <dune/common/deprecated.hh>
+
 #include "multidomainproperties.hh"
 #include "multidomainpropertydefaults.hh"
 #include "multidomainproblem.hh"
@@ -294,6 +296,7 @@ public:
     /*!
      * \brief Returns the number of global degrees of freedoms (DOFs)
      */
+    DUNE_DEPRECATED_MSG("numDofs() is deprecated.")
     size_t numDofs() const
     {
         return sdModel1().numDofs()*numEq1 + sdModel2().numDofs()*numEq2;

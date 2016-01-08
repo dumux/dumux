@@ -26,6 +26,8 @@
 
 #include <iostream>
 
+#include <dune/common/deprecated.hh>
+
 #include <dune/pdelab/multidomain/couplingutilities.hh>
 #include <dune/pdelab/localoperator/pattern.hh>
 #include <dune/pdelab/localoperator/idefault.hh>
@@ -631,7 +633,7 @@ public:
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-    DUNE_DEPRECATED_MSG("evalCoupling21() is deprecated. Use evalCoupling() instead.")
+    DUNE_DEPRECATED_MSG("evalCoupling12() is deprecated. Use evalCoupling() instead.")
     void evalCoupling12(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
