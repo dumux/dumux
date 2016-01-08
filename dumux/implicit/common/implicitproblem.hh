@@ -689,10 +689,13 @@ public:
      */
     bool isCornerPoint(const GlobalPosition &globalPos, Scalar eps = 1e-8)
     {
-      return ((globalPos[0] < asImp_().bBoxMin()[0] + eps && globalPos[1] < asImp_().bBoxMin()[1] + eps)
-              || (globalPos[0] < asImp_().bBoxMin()[0] + eps && globalPos[1] > asImp_().bBoxMax()[1] - eps)
-              || (globalPos[0] > asImp_().bBoxMax()[0] - eps && globalPos[1] < asImp_().bBoxMin()[1] + eps)
-              || (globalPos[0] > asImp_().bBoxMax()[0] - eps && globalPos[1] > asImp_().bBoxMax()[1] - eps));
+        for (unsigned int dimIdx = 0; dimIdx < dimWorld; dimIdx++)
+        {
+            if (!(globalPos[dimIdx] < asImp_().bBoxMin()[dimIdx] + eps
+                  || globalPos[dimIdx] > asImp_().bBoxMax()[dimIdx] - eps))
+            return false;
+        }
+        return true;
     }
 
     /*!
