@@ -538,7 +538,7 @@ public:
             if (blModel_)
             {
                 Scalar diffusiveFlux = bfNormal1.two_norm()
-                                       * evalBoundaryLayerConcentrationGradient<CParams>(cParams, vertInElem1)
+                                       * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                                        * (boundaryVars1.diffusionCoeff(transportCompIdx1)
                                          + boundaryVars1.eddyDiffusivity())
                                        * boundaryVars1.molarDensity()
@@ -547,7 +547,7 @@ public:
                 Scalar advectiveFlux = normalMassFlux1
                                        * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
 
-                const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
+                const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
                 // TODO: unify this behavior with the one in the non-isothermal LOP
                 if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
                 {
@@ -676,7 +676,7 @@ public:
             {
                 const Scalar diffusiveFlux =
                     bfNormal1.two_norm()
-                    * evalBoundaryLayerConcentrationGradient<CParams>(cParams, vertInElem1)
+                    * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                     * (boundaryVars1.diffusionCoeff(transportCompIdx1)
                        + boundaryVars1.eddyDiffusivity())
                     * boundaryVars1.molarDensity()
@@ -684,7 +684,8 @@ public:
 
                 Scalar advectiveFlux = normalMassFlux * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
 
-                const Scalar massTransferCoeff = evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
+                const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+
                 if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
                 {
                     const Scalar diffusiveFluxAtCorner =
@@ -878,12 +879,13 @@ public:
     template<typename CParams>
     BoundaryLayerModel<TypeTag> evalBoundaryLayerModel(CParams cParams, const int scvIdx1) const
     {
-        const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
         // current position + additional virtual runup distance
         const Scalar distance = cParams.fvGeometry1.subContVol[scvIdx1].global[0]
                                 + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
-        const Scalar kinematicViscosity = cParams.elemVolVarsCur1[scvIdx1].kinematicViscosity();
-        BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel_);
+        BoundaryLayerModel<TypeTag> boundaryLayerModel(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity),
+                                                       distance,
+                                                       cParams.elemVolVarsCur1[scvIdx1].kinematicViscosity(),
+                                                       blModel_);
         if (blModel_ == 1)
             boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
         if (blModel_ >= 4)
@@ -919,7 +921,7 @@ public:
 
         Scalar normalMoleFracGrad = cParams.elemVolVarsCur1[scvIdx1].moleFraction(transportCompIdx1)
                                     - moleFractionOut;
-        return normalMoleFracGrad / evalBoundaryLayerModel<CParams>(cParams, scvIdx1).massBoundaryLayerThickness();
+        return normalMoleFracGrad / evalBoundaryLayerModel(cParams, scvIdx1).massBoundaryLayerThickness();
     }
 
     /*!
@@ -936,12 +938,9 @@ public:
     template<typename CParams>
     Scalar evalMassTransferCoefficient(CParams cParams, const int scvIdx1, const int scvIdx2) const
     {
-        if (massTransferModel_ == 0)
-            return 1.0;
-
         MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[scvIdx2].saturation(wPhaseIdx2),
                                                      cParams.elemVolVarsCur2[scvIdx2].porosity(),
-                                                     evalBoundaryLayerModel<CParams>(cParams, scvIdx1).massBoundaryLayerThickness(),
+                                                     evalBoundaryLayerModel(cParams, scvIdx1).massBoundaryLayerThickness(),
                                                      massTransferModel_);
         if (massTransferModel_ == 1)
             massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
@@ -950,10 +949,7 @@ public:
         if (massTransferModel_ == 3)
             massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[scvIdx2].capillaryPressure());
 
-        Scalar massTransferCoeff = massTransferModel.massTransferCoefficient();
-        // assert the massTransferCoeff is inside the validity range
-        assert(!(massTransferCoeff > 1.0 || massTransferCoeff < 0.0));
-        return massTransferCoeff;
+        return massTransferModel.massTransferCoefficient();
     }
 
  protected:

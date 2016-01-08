@@ -276,11 +276,11 @@ public:
                     if (compIdx != phaseCompIdx1)
                     {
                         Scalar diffusiveFlux = bfNormal1.two_norm()
-                                               * ParentType::template evalBoundaryLayerConcentrationGradient<CParams>(cParams, vertInElem1)
+                                               * ParentType::evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                                                * (boundaryVars1.diffusionCoeff(compIdx)
                                                   + boundaryVars1.eddyDiffusivity())
                                                * boundaryVars1.molarDensity()
-                                               * ParentType::template evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
+                                               * ParentType::evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
                         sumDiffusiveFluxes += diffusiveFlux;
                         sumDiffusiveEnergyFlux += diffusiveFlux
                                                   * boundaryVars1.componentEnthalpy(compIdx)
@@ -395,11 +395,11 @@ public:
                               "This coupling condition is only implemented for two components.");
                 Scalar diffusiveEnergyFlux = 0.0;
                 Scalar diffusiveFlux = bfNormal1.two_norm()
-                                       * ParentType::template evalBoundaryLayerConcentrationGradient<CParams>(cParams, vertInElem1)
+                                       * ParentType::evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                                        * (boundaryVars1.diffusionCoeff(transportCompIdx1)
                                           + boundaryVars1.eddyDiffusivity())
                                        * boundaryVars1.molarDensity()
-                                       * ParentType::template evalMassTransferCoefficient<CParams>(cParams, vertInElem1, vertInElem2);
+                                       * ParentType::evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
 
                 diffusiveEnergyFlux += diffusiveFlux * FluidSystem::molarMass(transportCompIdx1)
                                        * boundaryVars1.componentEnthalpy(transportCompIdx1);
@@ -533,7 +533,7 @@ public:
         Scalar normalTemperatureGrad = cParams.elemVolVarsCur1[scvIdx].temperature()
                                        - temperatureOut;
         return normalTemperatureGrad
-               / ParentType::template evalBoundaryLayerModel(cParams, scvIdx).thermalBoundaryLayerThickness();
+               / ParentType::evalBoundaryLayerModel(cParams, scvIdx).thermalBoundaryLayerThickness();
     }
 };
 } // end namespace Dumux
