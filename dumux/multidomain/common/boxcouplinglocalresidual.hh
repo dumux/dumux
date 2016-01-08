@@ -82,6 +82,7 @@ public:
      * \param volVarsCur Volume variables of the current time step
      */
     template<typename ElemSolVectorType>
+    DUNE_DEPRECATED_MSG("evalPDELab() is deprecated.")
     void evalPDELab(const Element &element,
                     const FVElementGeometry& fvGeometry,
                     const ElemSolVectorType& elementSolVector,

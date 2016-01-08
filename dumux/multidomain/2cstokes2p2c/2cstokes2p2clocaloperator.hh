@@ -150,6 +150,9 @@ public:
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, FluxVariables) BoundaryVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, FluxVariables) BoundaryVariables2;
 
+    typedef typename GET_PROP_TYPE(Stokes2cTypeTag, ElementBoundaryTypes) ElementBoundaryTypes1;
+    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, ElementBoundaryTypes) ElementBoundaryTypes2;
+
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, BoundaryTypes) BoundaryTypes1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, BoundaryTypes) BoundaryTypes2;
 
@@ -363,13 +366,34 @@ public:
             Valgrind::CheckDefined(elementSol2[i]);
 #endif // HAVE_VALGRIND
 
+        cParams.elemVolVarsPrev1.update(globalProblem_.sdProblem1(),
+                                        sdElement1,
+                                        cParams.fvGeometry1,
+                                        true /* oldSol? */);
+        cParams.elemVolVarsCur1.updatePDELab(globalProblem_.sdProblem1(),
+                                             sdElement1,
+                                             cParams.fvGeometry1,
+                                             elementSol1);
+        cParams.elemVolVarsPrev2.update(globalProblem_.sdProblem2(),
+                                        sdElement2,
+                                        cParams.fvGeometry2,
+                                        true /* oldSol? */);
+        cParams.elemVolVarsCur2.updatePDELab(globalProblem_.sdProblem2(),
+                                             sdElement2,
+                                             cParams.fvGeometry2,
+                                             elementSol2);
 
-        // evaluate the local residual with the PDELab solution
-        globalProblem_.localResidual1().evalPDELab(sdElement1, cParams.fvGeometry1, elementSol1,
-                                                   cParams.elemVolVarsPrev1, cParams.elemVolVarsCur1);
-        globalProblem_.localResidual2().evalPDELab(sdElement2, cParams.fvGeometry2, elementSol2,
-                                                   cParams.elemVolVarsPrev2, cParams.elemVolVarsCur2);
+        ElementBoundaryTypes1 bcTypes1;
+        ElementBoundaryTypes2 bcTypes2;
+        bcTypes1.update(globalProblem_.sdProblem1(), sdElement1, cParams.fvGeometry1);
+        bcTypes2.update(globalProblem_.sdProblem2(), sdElement2, cParams.fvGeometry2);
 
+        globalProblem_.localResidual1().evalPDELab(sdElement1, cParams.fvGeometry1,
+                                                   cParams.elemVolVarsPrev1, cParams.elemVolVarsCur1,
+                                                   bcTypes1);
+        globalProblem_.localResidual2().evalPDELab(sdElement2, cParams.fvGeometry2,
+                                                   cParams.elemVolVarsPrev2, cParams.elemVolVarsCur2,
+                                                   bcTypes2);
     }
 
     /*!
