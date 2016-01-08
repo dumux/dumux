@@ -66,7 +66,8 @@ class StokesncCouplingLocalResidual : public StokesncLocalResidual<TypeTag>
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
         momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
         lastMomentumIdx = Indices::lastMomentumIdx, //!< Index of the last component of the momentum balance
-        transportEqIdx = Indices::transportEqIdx//!< Index of the transport equation
+        transportEqIdx = Indices::transportEqIdx, //!< Index of the transport equation
+        conti0EqIdx = Indices::conti0EqIdx
     };
     enum {
         //indices of phase and transported component
@@ -167,7 +168,7 @@ public:
                     // set mole or mass fraction for the transported components
                     for (int compIdx = 0; compIdx < numComponents; compIdx++)
                     {
-                        int eqIdx = dim + compIdx; // TODO: ist das so richtig
+                        int eqIdx = conti0EqIdx + compIdx;
                         if (eqIdx != massBalanceIdx)
                         {
                             if (bcTypes.isCouplingDirichlet(eqIdx))

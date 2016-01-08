@@ -51,6 +51,7 @@ class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
     enum { dim = GridView::dimension };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { useMoles = GET_PROP_VALUE(TypeTag, UseMoles) };
     enum {
         pressureIdx = Indices::pressureIdx,
         temperatureIdx = Indices::temperatureIdx
@@ -122,13 +123,22 @@ public:
 
                     const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
-                    // set pressure as part of the momentum coupling TODO is it potential bug to use nPhaseIdx?
+                    // set pressure as part of the momentum coupling
+                    static_assert(GET_PROP_VALUE(TypeTag, Formulation) == TwoPTwoCFormulation::pnsw,
+                                  "This coupling condition is only implemented for a pnsw formulation.");
                     if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
                         this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
-                    // set mass fraction TODO: add use of moles, check the function arguments: nPhaseIdx, wCompIdx
+                    // set mass/mole fraction for transported component
+                    static_assert(GET_PROP_VALUE(TypeTag, NumComponents) == 2,
+                                  "This coupling condition is only implemented for two components.");
                     if (this->bcTypes_(scvIdx).isCouplingDirichlet(contiWEqIdx))
-                        this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
+                    {
+                        if (useMoles)
+                            this->residual_[scvIdx][contiWEqIdx] = volVars.moleFraction(nPhaseIdx, wCompIdx);
+                        else
+                            this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
+                    }
 
                     // set temperature
                     if (this->bcTypes_(scvIdx).isCouplingDirichlet(energyEqIdx))

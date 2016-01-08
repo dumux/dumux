@@ -61,24 +61,13 @@ class StokesncniCouplingLocalResidual : public StokesncniLocalResidual<TypeTag>
     enum {
         //indices of the equations
         massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
-
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
         momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
         lastMomentumIdx = Indices::lastMomentumIdx, //!< Index of the last component of the momentum balance
-        transportEqIdx = Indices::transportEqIdx,//!< Index of the transport equation
-        energyEqIdx = Indices::energyEqIdx
-    };
-    enum {
-        //indices of phase and transported component
-        phaseIdx = Indices::phaseIdx,
-        transportCompIdx = Indices::transportCompIdx,
-        temperatureIdx = Indices::temperatureIdx
-    };
-    enum {
-        dimXIdx = Indices::dimXIdx, //!< Index for the first component of a vector
-        dimYIdx = Indices::dimYIdx, //!< Index for the second component of a vector
-        dimZIdx = Indices::dimZIdx //!< Index for the third component of a vector
+        transportEqIdx = Indices::transportEqIdx, //!< Index of the transport equation
+        energyEqIdx = Indices::energyEqIdx, //!< Index of the energy equation
+        conti0EqIdx = Indices::conti0EqIdx
     };
 
     typedef typename GridView::ctype CoordScalar;
@@ -169,7 +158,7 @@ public:
                     // set mole fraction for the transported components
                     for (int compIdx = 0; compIdx < numComponents; compIdx++)
                     {
-                        int eqIdx =  dim + compIdx; // TODO: ist das so richtig
+                        int eqIdx =  conti0EqIdx + compIdx;
                         if (eqIdx != massBalanceIdx)
                         {
                             if (bcTypes.isCouplingDirichlet(eqIdx))

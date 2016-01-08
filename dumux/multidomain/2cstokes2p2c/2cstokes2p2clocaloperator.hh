@@ -197,7 +197,7 @@ public:
     enum { numPhases2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumPhases) };
     enum { // equation indices
         contiWEqIdx2 = TwoPTwoCIndices::contiWEqIdx,     //!< Index of the continuity equation for water component
-        massBalanceIdx2 = TwoPTwoCIndices::contiNEqIdx   //!< Index of the total mass balance (if one comopnent balance is replaced)
+        massBalanceIdx2 = TwoPTwoCIndices::contiNEqIdx   //!< Index of the total mass balance (if one component balance is replaced)
     };
     enum { // component indices
         wCompIdx2 = TwoPTwoCIndices::wCompIdx,           //!< Index of the liquids main component

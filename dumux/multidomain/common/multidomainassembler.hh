@@ -129,8 +129,6 @@ public:
                                                                      *mdSubProblem1_, *mdSubProblem2_, *mdCoupling_);
 
         matrix_ = std::make_shared<JacobianMatrix>(*mdGridOperator_);
-        *matrix_ = 0;
-
         residual_ = std::make_shared<SolutionVector>(*mdGridFunctionSpace_);
     }
 
