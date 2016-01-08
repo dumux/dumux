@@ -5,7 +5,9 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
   -
 
 * IMPROVEMENTS and ENHANCEMENTS:
-  -
+  - The multidomain models have been restructured. This aims at a reduction in
+    duplicated code portions, more consistent procedure in the isothermal
+    and non.isothermal models, reduction of split functions.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - For the multidomain models, the notation of the boundary condition types

@@ -548,6 +548,9 @@ public:
             // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
             if (blModel_)
             {
+                Scalar advectiveFlux = normalMassFlux1
+                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+
                 Scalar diffusiveFlux = bfNormal1.two_norm()
                                        * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                                        * (boundaryVars1.diffusionCoeff(transportCompIdx1)
@@ -555,12 +558,9 @@ public:
                                        * boundaryVars1.molarDensity()
                                        * FluidSystem::molarMass(transportCompIdx1);
 
-                Scalar advectiveFlux = normalMassFlux1
-                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-
                 const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
-                // TODO: unify this behavior with the one in the non-isothermal LOP
-                if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
+
+                if (massTransferModel_ && globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                 {
                     Scalar diffusiveFluxAtCorner = bfNormal1
                                                    * boundaryVars1.moleFractionGrad(transportCompIdx1)
@@ -587,6 +587,7 @@ public:
 
                 Scalar advectiveFlux = normalMassFlux1
                                        * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+
                 Scalar diffusiveFlux = bfNormal1
                                        * boundaryVars1.moleFractionGrad(transportCompIdx1)
                                        * (boundaryVars1.diffusionCoeff(transportCompIdx1)

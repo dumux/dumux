@@ -220,7 +220,6 @@ public:
                                  cParams,
                                  couplingRes1, couplingRes2);
 
-        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
         const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
 
         // ENERGY Balance
@@ -250,9 +249,6 @@ public:
                                         this->globalProblem().localResidual2().residual(vertInElem2)[energyEqIdx2]);
             }
         }
-
-        // TODO: unify the behavior for cParams.boundaryTypes2.isCouplingNeumann()
-        //       with the different one in the isothermal LOP
         if (cParams.boundaryTypes2.isCouplingNeumann(energyEqIdx2))
         {
             const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
@@ -293,7 +289,6 @@ public:
                                           * boundaryVars1.componentEnthalpy(phaseCompIdx1)
                                           * FluidSystem::molarMass(phaseCompIdx1);
 
-                // TODO: use mass transfer coefficient here?
                 couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
                                         -(convectiveFlux - sumDiffusiveEnergyFlux - conductiveFlux));
             }
