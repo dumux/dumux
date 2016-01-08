@@ -147,7 +147,7 @@ public:
 
 
                     // set velocity normal to the interface
-                    if (bcTypes.isCouplingNeumann(momentumYIdx))
+                    if (bcTypes.isCouplingDirichlet(momentumYIdx))
                     {
                         this->residual_[scvIdx][momentumYIdx] = volVars.velocity()
                                                                 * boundaryVars.face().normal
@@ -157,7 +157,7 @@ public:
 
                     // add pressure correction - required for pressure coupling,
                     // if p.n comes from the pm
-                    if (bcTypes.isCouplingDirichlet(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
+                    if (bcTypes.isCouplingNeumann(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
                     {
                         DimVector pressureCorrection(intersection.centerUnitOuterNormal());
                         pressureCorrection *= volVars.pressure();

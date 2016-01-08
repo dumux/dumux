@@ -227,7 +227,11 @@ public:
             values.setNeumann(transportEqIdx);
 
             if (globalPos[0] > runUpDistanceX_-eps_)
+            {
                 values.setAllCouplingDirichlet();
+                values.setCouplingNeumann(momentumXIdx);
+                values.setCouplingNeumann(momentumYIdx);
+            }
         }
         if (onLeftBoundary_(globalPos))
         {

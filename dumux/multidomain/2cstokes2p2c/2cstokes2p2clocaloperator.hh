@@ -437,31 +437,9 @@ public:
         Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos1);
         assert(beaversJosephCoeff > 0);
         beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
+
         // Neumann-like conditions
-
-        // TODO revise comment
-        // Implementation as Dirichlet-like condition
-        // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
-        {
-            // TODO: Is not implemented anymore because curPrimaryVars_ is protected
-            //       and it could be that this part of code has never been checked
-            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore.");
-
-            // GlobalPosition tangentialVelGrad(0);
-            // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
-            // tangentialVelGrad /= -beaversJosephCoeff; // was - before
-            // couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
-            // this->residual_[vertInElem1][momentumXIdx1] =
-            //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
-        }
-
-        // MOMENTUM_X Balance
-        // Dirichlet-like conditions
-
-        // TODO revise comment
-        // Implementation as Neumann-like condition: (v.n)n
-        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
         {
             const Scalar normalComp = boundaryVars1.velocity()*bfNormal1;
             GlobalPosition normalV = bfNormal1;
@@ -470,6 +448,7 @@ public:
             // v_tau = v - (v.n)n
             const GlobalPosition tangentialV = boundaryVars1.velocity() - normalV;
 
+            // Implementation as Neumann-like condition: (v.n)n
             for (int dimIdx=0; dimIdx < dim; ++dimIdx)
             {
                 couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
@@ -481,15 +460,36 @@ public:
             }
         }
 
+        // Dirichlet-like conditions
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
+        {
+            // NOTE: This boundary condition is not implemented anymore because curPrimaryVars_ is protected
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore.");
+
+            // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
+            // GlobalPosition tangentialVelGrad(0);
+            // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            // tangentialVelGrad /= -beaversJosephCoeff; // was - before
+            // this->residual_[vertInElem1][momentumXIdx1] =
+            //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
+        }
+
 
         // MOMENTUM_Y Balance
         // Neumann-like conditions
-
-        // TODO revise comment
-        // v.n as Dirichlet-like condition for the Stokes domain
-        // set residualStokes[momentumYIdx1] = v_y in stokesnccouplinglocalresidual.hh
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
         {
+            // p*A*n as condition for free flow
+            // pressure correction is done in stokeslocalresidual.hh
+            couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                    cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
+                                    boundaryVars2.face().area);
+        }
+
+        // Dirichlet-like conditions
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
+        {
+            // v.n as Dirichlet-like condition for the Stokes domain
             if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
             {
                 Scalar sumNormalPhaseFluxes = 0.0;
@@ -504,26 +504,11 @@ public:
             }
             else
             {
-                // TODO revise comment
-                // v.n as DIRICHLET condition for the Stokes domain (negative sign!)
+                // set residualStokes[momentumYIdx1] = v_y in stokesnccouplinglocalresidual.hh
                 couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
                                         / cParams.elemVolVarsCur1[vertInElem1].density());
             }
-        }
-
-        // MOMENTUM_Y Balance
-        // Dirichlet-like conditions
-
-        // TODO revise comments
-        //p*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
-        // p*A*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
-        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
-        {
-            // pressure correction is done in stokeslocalresidual.hh
-            couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
-                                    cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
-                                    boundaryVars2.face().area);
         }
 
 

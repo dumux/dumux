@@ -217,6 +217,8 @@ public:
                 && globalPos[0] < runUpDistanceX2_ + eps_)
             {
                 values.setAllCouplingDirichlet();
+                values.setCouplingNeumann(momentumXIdx);
+                values.setCouplingNeumann(momentumYIdx);
             }
         }
 

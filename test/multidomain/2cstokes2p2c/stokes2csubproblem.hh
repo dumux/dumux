@@ -249,7 +249,11 @@ public:
             values.setNeumann(transportEqIdx);
 
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
+            {
                 values.setAllCouplingDirichlet();
+                values.setCouplingNeumann(momentumXIdx);
+                values.setCouplingNeumann(momentumYIdx);
+            }
         }
 
         // the mass balance has to be of type outflow
