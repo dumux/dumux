@@ -50,7 +50,7 @@ class SplineCommon_
 
 public:
     /*!
-     * \brief Return true iff the given x is in range [x1, xn].
+     * \brief Return true if the given x is in range [x1, xn].
      */
     bool applies(Scalar x) const
     {
@@ -442,6 +442,7 @@ protected:
     /*!
      * \brief Make the linear system of equations Mx = d which results
      *        in the moments of the natural spline.
+     * Stoer 2005: Numerische Mathematik 1, p. 111 \cite stoer2005
      */
     template <class Vector, class Matrix>
     void makeNaturalSystem_(Matrix &M, Vector &d)
@@ -449,8 +450,6 @@ protected:
         M = 0;
         d = 0;
 
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
-        // Springer, 2005, p. 111
         const int n = numSamples_() - 1;
 
         // second to next to last rows

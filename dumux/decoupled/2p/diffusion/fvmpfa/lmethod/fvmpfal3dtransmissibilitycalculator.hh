@@ -34,12 +34,8 @@ namespace Dumux
  *
  *  The transmissibilities are calculated using the MPFA L-method.
  *
- * [1] Aavatsmark et al. A new finite-volume approach to efficient discretization on challenging grids. SPE Journal 15, 2010.
- *
- * [2] M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
- *     approximation L-method in 3D: numerical convergence and application to two-phase
- *     flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
- *     editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ * Aavatsmark et al. 2010 \cite aavatsmark2010 <BR>
+ * Wolff et al. 2013 \cite wolff2013b <BR>
  *
  *  Various parameters can be defined via an input parameter file or the property system:
  *
@@ -623,12 +619,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityTPFA(
  *
  * For more details on L-shape type 1 see:
  *
- *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
- *
- *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
- * approximation L-method in 3D: numerical convergence and application to two-phase
- * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
- * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ * Wolff, 2013 \cite wolff2013a <BR>
+ * Wolff et al. 2013 \cite wolff2013b <BR>
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
@@ -1007,12 +999,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
  *
  * For more details on L-shape type 2 see:
  *
- *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
- *
- *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
- * approximation L-method in 3D: numerical convergence and application to two-phase
- * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
- * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ * Wolff, 2013 \cite wolff2013a <BR>
+ * Wolff et al. 2013 \cite wolff2013b <BR>
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
@@ -1404,12 +1392,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
  *
  * For more details on L-shape type 3 see:
  *
- *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
- *
- *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
- * approximation L-method in 3D: numerical convergence and application to two-phase
- * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
- * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ * Wolff, 2013 \cite wolff2013a <BR>
+ * Wolff et al. 2013 \cite wolff2013b <BR>
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
@@ -1802,12 +1786,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
  *
  * For more details on L-shape type 4 see:
  *
- *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
- *
- *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
- * approximation L-method in 3D: numerical convergence and application to two-phase
- * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
- * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ * Wolff, 2013 \cite wolff2013a <BR>
+ * Wolff et al. 2013 \cite wolff2013b <BR>
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
