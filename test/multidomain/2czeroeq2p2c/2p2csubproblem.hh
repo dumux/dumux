@@ -29,7 +29,7 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
-#include <dumux/multidomain/couplinglocalresiduals/2p2ccouplinglocalresidual.hh>
+#include <dumux/multidomain/2cstokes2p2c/2p2ccouplinglocalresidual.hh>
 
 #include "2czeroeq2p2cspatialparameters.hh"
 
@@ -174,6 +174,15 @@ public:
         outfile.close();
     }
 
+    // functions have to be overwritten, otherwise they remain uninitialized
+    //! \copydoc ImplicitProblem::bBoxMin()
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    //! \copydoc ImplicitProblem::bBoxMax()
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
     /*!
      * \name Problem parameters
      */
@@ -226,7 +235,7 @@ public:
         if (onUpperBoundary_(globalPos))
         {
             if (globalPos[0] > runUpDistanceX_ - eps_)
-                values.setAllCouplingInflow();
+                values.setAllCouplingNeumann();
             else
                 values.setAllNeumann();
         }
@@ -328,29 +337,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Determines if globalPos is a corner of the grid
-     *
-     * \param globalPos The global position
-     */
-    bool isCornerPoint(const GlobalPosition &globalPos)
-    {
-        return ((onLeftBoundary_(globalPos) && onLowerBoundary_(globalPos))
-                || (onLeftBoundary_(globalPos) && onUpperBoundary_(globalPos))
-                || (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos))
-                || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
-    }
-
-    /*!
-     * \brief Returns whether the position is an interface corner point
-     *
-     * This function is required in case of mortar coupling otherwise it should return false
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
 private:
     // Internal method for the initial condition (reused for the dirichlet conditions!)
     void initial_(PrimaryVariables &values,
@@ -372,12 +358,6 @@ private:
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > bBoxMax_[1] - eps_; }
-
-    bool onBoundary_(const GlobalPosition &globalPos) const
-    {
-        return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
-                || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
-    }
 
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;

@@ -1,6 +1,6 @@
 [TimeManager]
-DtInitial = 5e-1 # [s]
-MaxTimeStepSize = 240 # [s]
+DtInitial = 50 # [s]
+MaxTimeStepSize = 360 # [s]
 InitTime = 0 # [s] Initialization time without coupling
 TEnd= 3600 # [s]
 EpisodeLength = 43200 # [s]
@@ -15,21 +15,19 @@ RunUpDistanceX = 0.0 # [m] Horizontal position without coupling to PM
 NoDarcyX = 0.0 # [m] Horizontal position without PM below
 InterfacePosY = 0.25 # [m] Vertical position of coupling interface
 # Number of elements in x-, y-, z-direction
-NumberOfCellsX = 15
-NumberOfCellsY = 20
+NumberOfCellsX = 6
+NumberOfCellsY = 12
 # Grading and refinement of the mesh in y direction
-GradingFactorY = 1.1
-RefineTopY = false
+GradingFactorY = 1.5
+RefineTopY = true
 
 [Output]
 NameFF = stokes2cni
 NamePM = 2p2cni
 #Frequency of restart file, flux and VTK output
 FreqRestart = 1000      # how often restart files are written out
-FreqOutput = 10         # frequency of VTK output
+FreqOutput = 2          # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
-FreqFluxOutput = 1000   # frequency of detailed flux output
-FreqVaporFluxOutput = 2 # frequency of summarized flux output
 LiveEvaporationRates = false # plot evaporation rates using gnuplot interface
 
 [Stokes]

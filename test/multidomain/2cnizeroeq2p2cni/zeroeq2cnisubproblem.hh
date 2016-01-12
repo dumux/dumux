@@ -26,9 +26,7 @@
 
 #include <dumux/freeflow/zeroeqncni/zeroeqncnimodel.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-#include <dumux/multidomain/couplinglocalresiduals/stokesncnicouplinglocalresidual.hh>
-
-#include "2cnizeroeq2p2cnispatialparameters.hh"
+#include <dumux/multidomain/2cnistokes2p2cni/stokesncnicouplinglocalresidual.hh>
 
 namespace Dumux
 {
@@ -39,7 +37,7 @@ class ZeroEq2cniSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(ZeroEq2cniSubProblem,
-             INHERITS_FROM(BoxZeroEqncni, SubDomain, TwoCNIZeroEqTwoPTwoCNISpatialParams));
+             INHERITS_FROM(BoxZeroEqncni, SubDomain));
 
 // Set the problem property
 SET_TYPE_PROP(ZeroEq2cniSubProblem, Problem, Dumux::ZeroEq2cniSubProblem<TypeTag>);
@@ -108,8 +106,6 @@ class ZeroEq2cniSubProblem : public ZeroEqProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
@@ -159,8 +155,7 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     ZeroEq2cniSubProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-          spatialParams_(gridView)
+        : ParentType(timeManager, gridView)
     {
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
@@ -173,11 +168,9 @@ public:
         refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
         refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
         refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-
-        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
     }
 
-    // functions have to be overwritten, otherwise they remain uninitialised
+    // functions have to be overwritten, otherwise they remain uninitialized
     //! \copydoc Dumux::ImplicitProblem::bBoxMin()
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
@@ -223,7 +216,9 @@ public:
             if (globalPos[0] > runUpDistanceX1_ - eps_
                 && globalPos[0] < runUpDistanceX2_ + eps_)
             {
-                values.setAllCouplingOutflow();
+                values.setAllCouplingDirichlet();
+                values.setCouplingNeumann(momentumXIdx);
+                values.setCouplingNeumann(momentumYIdx);
             }
         }
 
@@ -270,36 +265,12 @@ public:
         values = 0.;
     }
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient at given position
-     *
-     * \param globalPos The global position
-     */
-    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
-    {
-        return alphaBJ_;
-    }
-
-    /*!
-     * \brief Evaluate the intrinsic permeability at the corner of a given element
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     */
-    Scalar permeability(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return spatialParams_.intrinsicPermeability(element,
-                                                    fvGeometry,
-                                                    scvIdx);
-    }
-
     //! \copydoc Dumux::ImplicitProblem::sourceAtPos()
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
+        // The source term of the mass balance has to be chosen as
+        // div (q_momentum) in the problem file
         values = 0.0;
     }
 
@@ -310,30 +281,6 @@ public:
     }
 
     // \}
-
-    /*!
-     * \brief Determine if we are on a corner of the grid
-     *
-     * \param globalPos The global position
-     */
-    bool isCornerPoint(const GlobalPosition &globalPos)
-    {
-        return ((onLeftBoundary_(globalPos) && onLowerBoundary_(globalPos))
-                || (onLeftBoundary_(globalPos) && onUpperBoundary_(globalPos))
-                || (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos))
-                || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
-    }
-
-    /*!
-     * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
-     *        this should return true
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    {
-        return false;
-    }
 
     //! \brief Returns the velocity at the inflow.
     const Scalar refVelocity() const
@@ -400,14 +347,6 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > bBoxMax_[1] - eps_; }
 
-    bool onBoundary_(const GlobalPosition &globalPos) const
-    {
-        return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
-                || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
-    }
-
-    SpatialParams spatialParams_;
-
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
@@ -416,8 +355,6 @@ private:
     Scalar refPressure_;
     Scalar refMassfrac_;
     Scalar refTemperature_;
-
-    Scalar alphaBJ_;
 
     Scalar runUpDistanceX1_;
     Scalar runUpDistanceX2_;

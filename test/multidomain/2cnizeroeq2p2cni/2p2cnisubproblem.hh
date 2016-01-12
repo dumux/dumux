@@ -30,7 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
-#include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
+#include <dumux/multidomain/2cnistokes2p2cni/2p2cnicouplinglocalresidual.hh>
 
 #include "2cnizeroeq2p2cnispatialparameters.hh"
 
@@ -194,6 +194,15 @@ public:
         outfile.close();
     }
 
+    // functions have to be overwritten, otherwise they remain uninitialized
+    //! \copydoc Dumux::ImplicitProblem::bBoxMin()
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    //! \copydoc Dumux::ImplicitProblem::bBoxMax()
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
     /*!
      * \name Problem parameters
      */
@@ -233,7 +242,7 @@ public:
             if (globalPos[0] > runUpDistanceX1_ - eps_
                 && globalPos[0] < runUpDistanceX2_ + eps_)
             {
-                values.setAllCouplingInflow();
+                values.setAllCouplingNeumann();
             }
             else
                 values.setAllNeumann();
@@ -334,29 +343,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Determine if we are on a corner of the grid
-     *
-     * \param globalPos The global position
-     */
-    bool isCornerPoint(const GlobalPosition &globalPos)
-    {
-        return ((onLeftBoundary_(globalPos) && onLowerBoundary_(globalPos))
-                || (onLeftBoundary_(globalPos) && onUpperBoundary_(globalPos))
-                || (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos))
-                || (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
-    }
-
-    /*!
-     * \brief Returns whether the position is an interface corner point
-     *
-     * This function is required in case of mortar coupling otherwise it should return false
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
     // \}
 
 private:
@@ -384,12 +370,6 @@ private:
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > bBoxMax_[1] - eps_; }
-
-    bool onBoundary_(const GlobalPosition &globalPos) const
-    {
-        return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
-                || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
-    }
 
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;

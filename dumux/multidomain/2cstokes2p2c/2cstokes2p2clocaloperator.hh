@@ -26,6 +26,8 @@
 
 #include <iostream>
 
+#include <dune/common/deprecated.hh>
+
 #include <dune/pdelab/multidomain/couplingutilities.hh>
 #include <dune/pdelab/localoperator/pattern.hh>
 #include <dune/pdelab/localoperator/idefault.hh>
@@ -132,20 +134,24 @@ class TwoCStokesTwoPTwoCLocalOperator :
         public Dune::PDELab::MultiDomain::FullCouplingPattern,
         public Dune::PDELab::InstationaryLocalOperatorDefaultMethods<double>
 {
- public:
+public:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) GlobalProblem;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCouplingLocalOperator) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) Stokes2cTypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TwoPTwoCTypeTag;
 
-    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, ElementVolumeVariables) ElementVolumeVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, ElementVolumeVariables) ElementVolumeVariables2;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, FluxVariables) BoundaryVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, FluxVariables) BoundaryVariables2;
+
+    typedef typename GET_PROP_TYPE(Stokes2cTypeTag, ElementBoundaryTypes) ElementBoundaryTypes1;
+    typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, ElementBoundaryTypes) ElementBoundaryTypes2;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, BoundaryTypes) BoundaryTypes1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, BoundaryTypes) BoundaryTypes2;
@@ -165,47 +171,55 @@ class TwoCStokesTwoPTwoCLocalOperator :
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, Indices) Stokes2cIndices;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, Indices) TwoPTwoCIndices;
 
-    enum { dim = MDGrid::dimension };
+    enum {
+        dim = MDGrid::dimension,
+        dimWorld = MDGrid::dimensionworld
+    };
 
-    // FREE FLOW
+    // Stokes
     enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq) };
-    enum { nPhaseIdx1 = Stokes2cIndices::phaseIdx };               //!< Index of the free-flow phase of the fluidsystem
-    enum { // equation indices in the Stokes domain
-        momentumXIdx1 = Stokes2cIndices::momentumXIdx,             //!< Index of the x-component of the momentum balance
-        momentumYIdx1 = Stokes2cIndices::momentumYIdx,             //!< Index of the y-component of the momentum balance
-        momentumZIdx1 = Stokes2cIndices::momentumZIdx,             //!< Index of the z-component of the momentum balance
-        lastMomentumIdx1 = Stokes2cIndices::lastMomentumIdx,     //!< Index of the last component of the momentum balance
-        massBalanceIdx1 = Stokes2cIndices::massBalanceIdx,         //!< Index of the mass balance
-        transportEqIdx1 = Stokes2cIndices::transportEqIdx         //!< Index of the transport equation
-    };
-    enum { // indices of the components
-        transportCompIdx1 = Stokes2cIndices::transportCompIdx,     //!< Index of transported component
-        phaseCompIdx1 = Stokes2cIndices::phaseCompIdx             //!< Index of main component of the phase
-    };
-
-    // POROUS MEDIUM
-    enum { numEq2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumEq) };
-    enum { numPhases2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumPhases) };
-    enum { // equation indices in the Darcy domain
-        contiWEqIdx2 = TwoPTwoCIndices::contiWEqIdx,    //!< Index of the continuity equation for water component
-        massBalanceIdx2 = TwoPTwoCIndices::contiNEqIdx  //!< Index of the total mass balance (if one comopnent balance is replaced)
+    enum { numComponents1 = Stokes2cIndices::numComponents };
+    enum { // equation indices
+        momentumXIdx1 = Stokes2cIndices::momentumXIdx,         //!< Index of the x-component of the momentum balance
+        momentumYIdx1 = Stokes2cIndices::momentumYIdx,         //!< Index of the y-component of the momentum balance
+        momentumZIdx1 = Stokes2cIndices::momentumZIdx,         //!< Index of the z-component of the momentum balance
+        lastMomentumIdx1 = Stokes2cIndices::lastMomentumIdx,   //!< Index of the last component of the momentum balance
+        massBalanceIdx1 = Stokes2cIndices::massBalanceIdx,     //!< Index of the mass balance
+        transportEqIdx1 = Stokes2cIndices::transportEqIdx      //!< Index of the transport equation
     };
     enum { // component indices
-        wCompIdx2 = TwoPTwoCIndices::wCompIdx,          //!< Index of the liquids main component
-        nCompIdx2 = TwoPTwoCIndices::nCompIdx           //!< Index of the main component of the gas
+        transportCompIdx1 = Stokes2cIndices::transportCompIdx, //!< Index of transported component
+        phaseCompIdx1 = Stokes2cIndices::phaseCompIdx    //!< Index of main component of the phase
+    };
+
+    // Darcy
+    enum { numEq2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumEq) };
+    enum { numPhases2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumPhases) };
+    enum { // equation indices
+        contiWEqIdx2 = TwoPTwoCIndices::contiWEqIdx,     //!< Index of the continuity equation for water component
+        massBalanceIdx2 = TwoPTwoCIndices::contiNEqIdx   //!< Index of the total mass balance (if one component balance is replaced)
+    };
+    enum { // component indices
+        wCompIdx2 = TwoPTwoCIndices::wCompIdx,           //!< Index of the liquids main component
+        nCompIdx2 = TwoPTwoCIndices::nCompIdx            //!< Index of the main component of the gas
     };
     enum { // phase indices
-        wPhaseIdx2 = TwoPTwoCIndices::wPhaseIdx,        //!< Index for the liquid phase
+        wPhaseIdx2 = TwoPTwoCIndices::wPhaseIdx,         //!< Index for the liquid phase
         nPhaseIdx2 = TwoPTwoCIndices::nPhaseIdx          //!< Index for the gas phase
     };
 
-    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef typename MDGrid::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
     typedef typename Stokes2cGridView::template Codim<dim>::EntityPointer VertexPointer1;
     typedef typename TwoPTwoCGridView::template Codim<dim>::EntityPointer VertexPointer2;
 
+    // multidomain flags
+    static const bool doAlphaCoupling = true;
+    static const bool doPatternCoupling = true;
+
+public:
     //! \brief The constructor
     TwoCStokesTwoPTwoCLocalOperator(GlobalProblem& globalProblem)
         : globalProblem_(globalProblem)
@@ -222,32 +236,27 @@ class TwoCStokesTwoPTwoCLocalOperator :
             std::cout << "Using mass transfer model " << massTransferModel_ << std::endl;
     }
 
-    // multidomain flags
-    static const bool doAlphaCoupling = true;
-    static const bool doPatternCoupling = true;
-
     /*!
      * \brief Do the coupling. The unknowns are transferred from dune-multidomain.
      *        Based on them, a coupling residual is calculated and added at the
      *        respective positions in the matrix.
      *
      * \param intersectionGeometry the geometry of the intersection
-     * \param lfsu_s local basis for the trial space of the Stokes domain
+     * \param lfsu1 local basis for the trial space of the Stokes domain
      * \param unknowns1 the unknowns vector of the Stokes element (formatted according to PDELab)
-     * \param lfsv_s local basis for the test space of the Stokes domain
-     * \param lfsu_n local basis for the trail space of the Darcy domain
+     * \param lfsv1 local basis for the test space of the Stokes domain
+     * \param lfsu2 local basis for the trail space of the Darcy domain
      * \param unknowns2 the unknowns vector of the Darcy element (formatted according to PDELab)
-     * \param lfsv_n local basis for the test space of the Darcy domain
+     * \param lfsv2 local basis for the test space of the Darcy domain
      * \param couplingRes1 the coupling residual from the Stokes domain
      * \param couplingRes2 the coupling residual from the Darcy domain
-     *
      */
     template<typename IntersectionGeom, typename LFSU1, typename LFSU2,
              typename X, typename LFSV1, typename LFSV2,typename RES>
-    void alpha_coupling (const IntersectionGeom& intersectionGeometry,
-                         const LFSU1& lfsu_s, const X& unknowns1, const LFSV1& lfsv_s,
-                         const LFSU2& lfsu_n, const X& unknowns2, const LFSV2& lfsv_n,
-                         RES& couplingRes1, RES& couplingRes2) const
+    void alpha_coupling(const IntersectionGeom& intersectionGeometry,
+                        const LFSU1& lfsu1, const X& unknowns1, const LFSV1& lfsv1,
+                        const LFSU2& lfsu2, const X& unknowns2, const LFSV2& lfsv2,
+                        RES& couplingRes1, RES& couplingRes2) const
     {
         const MDElement& mdElement1 = intersectionGeometry.inside();
         const MDElement& mdElement2 = intersectionGeometry.outside();
@@ -260,7 +269,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
         CParams cParams;
 
         // update fvElementGeometry and the element volume variables
-        updateElemVolVars(lfsu_s, lfsu_n,
+        updateElemVolVars(lfsu1, lfsu2,
                           unknowns1, unknowns2,
                           sdElement1, sdElement2,
                           cParams);
@@ -304,18 +313,12 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                                    cParams.elemVolVarsCur2,
                                                    /*onBoundary=*/true);
 
-            asImp_()->evalCoupling12(lfsu_s, lfsu_n, // local function spaces
-                                     vertInElem1, vertInElem2,
-                                     sdElement1, sdElement2,
-                                     boundaryVars1, boundaryVars2,
-                                     cParams,
-                                     couplingRes1, couplingRes2);
-            asImp_()->evalCoupling21(lfsu_s, lfsu_n, // local function spaces
-                                     vertInElem1, vertInElem2,
-                                     sdElement1, sdElement2,
-                                     boundaryVars1, boundaryVars2,
-                                     cParams,
-                                     couplingRes1, couplingRes2);
+            asImp_()->evalCoupling(lfsu1, lfsu2,
+                                   vertInElem1, vertInElem2,
+                                   sdElement1, sdElement2,
+                                   boundaryVars1, boundaryVars2,
+                                   cParams,
+                                   couplingRes1, couplingRes2);
         }
     }
 
@@ -323,20 +326,19 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \brief Update the volume variables of the element and extract the unknowns from dune-pdelab vectors
      *        and bring them into a form which fits to dumux.
      *
-     * \param lfsu_s local basis for the trial space of the Stokes domain
-     * \param lfsu_n local basis for the trial space of the Darcy domain
+     * \param lfsu1 local basis for the trial space of the Stokes domain
+     * \param lfsu2 local basis for the trial space of the Darcy domain
      * \param unknowns1 the unknowns vector of the Stokes element (formatted according to PDELab)
      * \param unknowns2 the unknowns vector of the Darcy element (formatted according to PDELab)
      * \param sdElement1 the element in the Stokes domain
      * \param sdElement2 the element in the Darcy domain
      * \param cParams a parameter container
-     *
      */
     template<typename LFSU1, typename LFSU2, typename X, typename CParams>
-    void updateElemVolVars (const LFSU1& lfsu_s, const LFSU2& lfsu_n,
-                            const X& unknowns1, const X& unknowns2,
-                            const SDElement1& sdElement1, const SDElement2& sdElement2,
-                            CParams &cParams) const
+    void updateElemVolVars(const LFSU1& lfsu1, const LFSU2& lfsu2,
+                           const X& unknowns1, const X& unknowns2,
+                           const SDElement1& sdElement1, const SDElement2& sdElement2,
+                           CParams &cParams) const
     {
         cParams.fvGeometry1.update(globalProblem_.sdGridView1(), sdElement1);
         cParams.fvGeometry2.update(globalProblem_.sdGridView2(), sdElement2);
@@ -344,7 +346,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
         const int numVertsOfElem1 = sdElement1.subEntities(dim);
         const int numVertsOfElem2 = sdElement2.subEntities(dim);
 
-        //bring the local unknowns x_s into a form that can be passed to elemVolVarsCur.update()
+        // bring the local unknowns x1 into a form that can be passed to elemVolVarsCur.update()
         Dune::BlockVector<Dune::FieldVector<Scalar,1>> elementSol1(0.);
         Dune::BlockVector<Dune::FieldVector<Scalar,1>> elementSol2(0.);
         elementSol1.resize(unknowns1.size());
@@ -353,9 +355,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
         for (int idx=0; idx<numVertsOfElem1; ++idx)
         {
             for (int eqIdx1=0; eqIdx1<numEq1; ++eqIdx1)
-                elementSol1[eqIdx1*numVertsOfElem1+idx] = unknowns1(lfsu_s.child(eqIdx1),idx);
+                elementSol1[eqIdx1*numVertsOfElem1+idx] = unknowns1(lfsu1.child(eqIdx1),idx);
             for (int eqIdx2=0; eqIdx2<numEq2; ++eqIdx2)
-                elementSol2[eqIdx2*numVertsOfElem2+idx] = unknowns2(lfsu_n.child(eqIdx2),idx);
+                elementSol2[eqIdx2*numVertsOfElem2+idx] = unknowns2(lfsu2.child(eqIdx2),idx);
         }
 #if HAVE_VALGRIND
         for (unsigned int i = 0; i < elementSol1.size(); i++)
@@ -364,20 +366,43 @@ class TwoCStokesTwoPTwoCLocalOperator :
             Valgrind::CheckDefined(elementSol2[i]);
 #endif // HAVE_VALGRIND
 
+        cParams.elemVolVarsPrev1.update(globalProblem_.sdProblem1(),
+                                        sdElement1,
+                                        cParams.fvGeometry1,
+                                        true /* oldSol? */);
+        cParams.elemVolVarsCur1.updatePDELab(globalProblem_.sdProblem1(),
+                                             sdElement1,
+                                             cParams.fvGeometry1,
+                                             elementSol1);
+        cParams.elemVolVarsPrev2.update(globalProblem_.sdProblem2(),
+                                        sdElement2,
+                                        cParams.fvGeometry2,
+                                        true /* oldSol? */);
+        cParams.elemVolVarsCur2.updatePDELab(globalProblem_.sdProblem2(),
+                                             sdElement2,
+                                             cParams.fvGeometry2,
+                                             elementSol2);
 
-        // evaluate the local residual with the PDELab solution
-        globalProblem_.localResidual1().evalPDELab(sdElement1, cParams.fvGeometry1, elementSol1,
-                                                   cParams.elemVolVarsPrev1, cParams.elemVolVarsCur1);
-        globalProblem_.localResidual2().evalPDELab(sdElement2, cParams.fvGeometry2, elementSol2,
-                                                   cParams.elemVolVarsPrev2, cParams.elemVolVarsCur2);
+        ElementBoundaryTypes1 bcTypes1;
+        ElementBoundaryTypes2 bcTypes2;
+        bcTypes1.update(globalProblem_.sdProblem1(), sdElement1, cParams.fvGeometry1);
+        bcTypes2.update(globalProblem_.sdProblem2(), sdElement2, cParams.fvGeometry2);
 
+        globalProblem_.localResidual1().evalPDELab(sdElement1, cParams.fvGeometry1,
+                                                   cParams.elemVolVarsPrev1, cParams.elemVolVarsCur1,
+                                                   bcTypes1);
+        globalProblem_.localResidual2().evalPDELab(sdElement2, cParams.fvGeometry2,
+                                                   cParams.elemVolVarsPrev2, cParams.elemVolVarsCur2,
+                                                   bcTypes2);
     }
 
     /*!
-     * \brief Evaluation of the coupling from Stokes (1 or s) to Darcy (2 or n).
+     * \brief Evaluation of the coupling between the Stokes (1) and Darcy (2).
      *
-     * \param lfsu_s local basis for the trial space of the Stokes domain
-     * \param lfsu_n local basis for the trial space of the Darcy domain
+     * Dirichlet-like and Neumann-like conditions for the respective domain are evaluated.
+     *
+     * \param lfsu1 local basis for the trial space of the Stokes domain
+     * \param lfsu2 local basis for the trial space of the Darcy domain
      * \param vertInElem1 local vertex index in element1
      * \param vertInElem2 local vertex index in element2
      * \param sdElement1 the element in the Stokes domain
@@ -389,175 +414,349 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-    void evalCoupling12(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+    void evalCoupling(const LFSU1& lfsu1, const LFSU2& lfsu2,
+                      const int vertInElem1, const int vertInElem2,
+                      const SDElement1& sdElement1, const SDElement2& sdElement2,
+                      const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
+                      const CParams &cParams,
+                      RES1& couplingRes1, RES2& couplingRes2) const
+    {
+        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
+
+        const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
+        const Scalar normalMassFlux1 = boundaryVars1.normalVelocity()
+                                       * cParams.elemVolVarsCur1[vertInElem1].density();
+
+        // MASS Balance
+        // Neumann-like conditions
+        if (cParams.boundaryTypes2.isCouplingNeumann(massBalanceIdx2))
+        {
+            static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                          "This coupling condition is only implemented for mass fraction formulation.");
+
+            if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+            {
+                couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
+                                        -normalMassFlux1);
+            }
+            else
+            {
+                couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
+                                        globalProblem_.localResidual1().residual(vertInElem1)[massBalanceIdx1]);
+            }
+        }
+
+        // Dirichlet-like
+        if (cParams.boundaryTypes2.isCouplingDirichlet(massBalanceIdx2))
+        {
+            couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
+                                    globalProblem_.localResidual1().residual(vertInElem1)[momentumYIdx1]
+                                    -cParams.elemVolVarsCur1[vertInElem1].pressure());
+        }
+
+
+        // MOMENTUM_X Balance
+        SpatialParams spatialParams = globalProblem_.sdProblem2().spatialParams();
+        Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos1);
+        assert(beaversJosephCoeff > 0);
+        beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
+
+        // Neumann-like conditions
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
+        {
+            const Scalar normalComp = boundaryVars1.velocity()*bfNormal1;
+            GlobalPosition normalV = bfNormal1;
+            normalV *= normalComp; // v*n*n
+
+            // v_tau = v - (v.n)n
+            const GlobalPosition tangentialV = boundaryVars1.velocity() - normalV;
+
+            // Implementation as Neumann-like condition: (v.n)n
+            for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+            {
+                couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
+                                        beaversJosephCoeff
+                                        * boundaryVars1.face().area
+                                        * tangentialV[dimIdx]
+                                        * (boundaryVars1.dynamicViscosity()
+                                          + boundaryVars1.dynamicEddyViscosity()));
+            }
+        }
+
+        // Dirichlet-like conditions
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
+        {
+            // NOTE: This boundary condition is not implemented anymore because curPrimaryVars_ is protected
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore.");
+
+            // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
+            // GlobalPosition tangentialVelGrad(0);
+            // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            // tangentialVelGrad /= -beaversJosephCoeff; // was - before
+            // this->residual_[vertInElem1][momentumXIdx1] =
+            //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
+        }
+
+
+        // MOMENTUM_Y Balance
+        // Neumann-like conditions
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
+        {
+            // p*A*n as condition for free flow
+            // pressure correction is done in stokeslocalresidual.hh
+            couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                    cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
+                                    boundaryVars2.face().area);
+        }
+
+        // Dirichlet-like conditions
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
+        {
+            // v.n as Dirichlet-like condition for the Stokes domain
+            if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
+            {
+                Scalar sumNormalPhaseFluxes = 0.0;
+                for (int phaseIdx=0; phaseIdx<numPhases2; ++phaseIdx)
+                {
+                    sumNormalPhaseFluxes -= boundaryVars2.volumeFlux(phaseIdx)
+                                            * cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
+                }
+                couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                        -sumNormalPhaseFluxes
+                                        / cParams.elemVolVarsCur1[vertInElem1].density());
+            }
+            else
+            {
+                // set residualStokes[momentumYIdx1] = v_y in stokesnccouplinglocalresidual.hh
+                couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
+                                        globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
+                                        / cParams.elemVolVarsCur1[vertInElem1].density());
+            }
+        }
+
+
+        // COMPONENT Balance
+        // Neumann-like conditions
+        if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented \
+                                              for the Stokes side for multicomponent systems.");
+        }
+        if (cParams.boundaryTypes2.isCouplingNeumann(contiWEqIdx2))
+        {
+            // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
+            if (blModel_)
+            {
+                Scalar advectiveFlux = normalMassFlux1
+                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+
+                Scalar diffusiveFlux = bfNormal1.two_norm()
+                                       * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                         + boundaryVars1.eddyDiffusivity())
+                                       * boundaryVars1.molarDensity()
+                                       * FluidSystem::molarMass(transportCompIdx1);
+
+                const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+
+                if (massTransferModel_ && globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+                {
+                    Scalar diffusiveFluxAtCorner = bfNormal1
+                                                   * boundaryVars1.moleFractionGrad(transportCompIdx1)
+                                                   * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                                      + boundaryVars1.eddyDiffusivity())
+                                                   * boundaryVars1.molarDensity()
+                                                   * FluidSystem::molarMass(transportCompIdx1);
+
+                    couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
+                                            (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
+                }
+                else
+                {
+                    couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
+                                            (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+                }
+            }
+            else if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+            {
+                static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is only implemented for mass fraction formulation.");
+
+                Scalar advectiveFlux = normalMassFlux1
+                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+
+                Scalar diffusiveFlux = bfNormal1
+                                       * boundaryVars1.moleFractionGrad(transportCompIdx1)
+                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                          + boundaryVars1.eddyDiffusivity())
+                                       * boundaryVars1.molarDensity()
+                                       * FluidSystem::molarMass(transportCompIdx1);
+
+                couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                        -(advectiveFlux - diffusiveFlux));
+            }
+            else
+            {
+                static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is not implemented for different formulations (mass/mole) in the subdomains.");
+
+                // the component mass flux from the stokes domain
+                couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                        globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+            }
+        }
+
+        // Dirichlet-like conditions
+        if (cParams.boundaryTypes1.isCouplingDirichlet(transportEqIdx1))
+        {
+            static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
+                          "This coupling condition is only implemented for mass fraction formulation.");
+
+            // set residualStokes[transportEqIdx1] = x in stokesnccouplinglocalresidual.hh
+            // coupling residual is added to "real" residual
+            couplingRes1.accumulate(lfsu1.child(transportEqIdx1), vertInElem1,
+                                    -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
+        }
+        if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented \
+                                              for the Darcy side for multicomponent systems.");
+        }
+    }
+
+    /*!
+     * \brief Evaluation of the coupling from Stokes (1) to Darcy (2).
+     *
+     * \param lfsu1 local basis for the trial space of the Stokes domain
+     * \param lfsu2 local basis for the trial space of the Darcy domain
+     * \param vertInElem1 local vertex index in element1
+     * \param vertInElem2 local vertex index in element2
+     * \param sdElement1 the element in the Stokes domain
+     * \param sdElement2 the element in the Darcy domain
+     * \param boundaryVars1 the boundary variables at the interface of the Stokes domain
+     * \param boundaryVars2 the boundary variables at the interface of the Darcy domain
+     * \param cParams a parameter container
+     * \param couplingRes1 the coupling residual from the Stokes domain
+     * \param couplingRes2 the coupling residual from the Darcy domain
+     */
+    template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
+    DUNE_DEPRECATED_MSG("evalCoupling12() is deprecated. Use evalCoupling() instead.")
+    void evalCoupling12(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
                         const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
                         const CParams &cParams,
                         RES1& couplingRes1, RES2& couplingRes2) const
     {
-        const DimVector& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
-        const DimVector& bfNormal1 = boundaryVars1.face().normal;
+        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
 
         const Scalar normalMassFlux = boundaryVars1.normalVelocity() *
             cParams.elemVolVarsCur1[vertInElem1].density();
 
         //rho*v*n as NEUMANN condition for porous medium (set, if B&J defined as NEUMANN condition)
-        if (cParams.boundaryTypes2.isCouplingInflow(massBalanceIdx2))
+        if (cParams.boundaryTypes2.isCouplingNeumann(massBalanceIdx2))
         {
             static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
                           "This coupling condition is only implemented for mass fraction formulation.");
 
             if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
             {
-                couplingRes2.accumulate(lfsu_n.child(massBalanceIdx2), vertInElem2,
+                couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
                                         -normalMassFlux);
             }
             else
             {
-                couplingRes2.accumulate(lfsu_n.child(massBalanceIdx2), vertInElem2,
+                couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
                                         globalProblem_.localResidual1().residual(vertInElem1)[massBalanceIdx1]);
             }
         }
-        if (cParams.boundaryTypes2.isCouplingOutflow(massBalanceIdx2))
+        if (cParams.boundaryTypes2.isCouplingDirichlet(massBalanceIdx2))
         {
-            couplingRes2.accumulate(lfsu_n.child(massBalanceIdx2), vertInElem2,
+            couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
                                     globalProblem_.localResidual1().residual(vertInElem1)[momentumYIdx1]
                                     -cParams.elemVolVarsCur1[vertInElem1].pressure());
         }
 
-        if (cParams.boundaryTypes2.isCouplingInflow(contiWEqIdx2))
+        if (cParams.boundaryTypes2.isCouplingNeumann(contiWEqIdx2))
         {
-            // only enter here, if a BOUNDARY LAYER MODEL is used for the computation of the diffusive fluxes
+            // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
             if (blModel_)
             {
-                static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
-                              "Boundary layer and mass transfer models are only implemented for mass fraction formulation.");
-
-                const Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-                const Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
-                const Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
-                const Scalar X2 = 1.0 - massFractionOut;
-                const Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
-                const Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
-
-                const Scalar advectiveFlux =
-                    normalMassFlux *
-                    cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-                Scalar normalMoleFracGrad =
-                    cParams.elemVolVarsCur1[vertInElem1].moleFraction(transportCompIdx1) -
-                    moleFractionOut;
-
-                const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
-                // current position + additional virtual runup distance
-                const Scalar distance = globalPos1[0] + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
-                const Scalar kinematicViscosity = cParams.elemVolVarsCur1[vertInElem2].kinematicViscosity();
-                BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel_);
-                if (blModel_ == 1)
-                    boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
-                if (blModel_ >= 4)
-                    boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
-                if (blModel_ >= 5)
-                    boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
-                if (blModel_ == 7)
-                    boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
-
-                normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
-
                 const Scalar diffusiveFlux =
-                    bfNormal1.two_norm() *
-                    normalMoleFracGrad *
-                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
-                    boundaryVars1.molarDensity() *
-                    FluidSystem::molarMass(transportCompIdx1);
+                    bfNormal1.two_norm()
+                    * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                    * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                       + boundaryVars1.eddyDiffusivity())
+                    * boundaryVars1.molarDensity()
+                    * FluidSystem::molarMass(transportCompIdx1);
 
-                if (massTransferModel_ == 0)
+                Scalar advectiveFlux = normalMassFlux * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+
+                const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+
+                if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
                 {
-                    couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                            -(advectiveFlux - diffusiveFlux));
-                }
-                // transition from the mass transfer coefficient concept to the coupling via the local residual,
-                // when saturations become small; only diffusive fluxes are scaled!
-                else
-                {
-                    MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2),
-                                                    cParams.elemVolVarsCur2[vertInElem2].porosity(),
-                                                    boundaryLayerModel.massBoundaryLayerThickness(),
-                                                    massTransferModel_);
-                    if (massTransferModel_ == 1)
-                        massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
-                    if (massTransferModel_ == 2 || massTransferModel_ == 4)
-                        massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
-                    if (massTransferModel_ == 3)
-                        massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[vertInElem2].capillaryPressure());
-                    const Scalar massTransferCoeff = massTransferModel.massTransferCoefficient();
-
-                    if (massTransferCoeff > 1.0 || massTransferCoeff < 0.0)
-                        std::cout << "MTC out of bounds, should be in between 0.0 and 1.0! >>> " << massTransferCoeff << std::endl;
-
-                    if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
-                    {
-                        const Scalar diffusiveFluxAtCorner =
-                            bfNormal1 *
-                            boundaryVars1.moleFractionGrad(transportCompIdx1) *
-                            (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
-                            boundaryVars1.molarDensity() *
-                            FluidSystem::molarMass(transportCompIdx1);
-
-                        couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                                -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
-                                                (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
-                    }
-                    else
-                    {
-                        couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                                -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
-                                                (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
-                    }
-                }
-            }
-            else
-            {
-                // compute fluxes explicitly at corner points - only quarter control volume
-                if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
-                {
-                    static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                                  "This coupling condition is only implemented for mass fraction formulation.");
-
-                    const Scalar advectiveFlux =
-                        normalMassFlux *
-                        cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-                    const Scalar diffusiveFlux =
+                    const Scalar diffusiveFluxAtCorner =
                         bfNormal1 *
                         boundaryVars1.moleFractionGrad(transportCompIdx1) *
                         (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
                         boundaryVars1.molarDensity() *
                         FluidSystem::molarMass(transportCompIdx1);
 
-                    couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                            -(advectiveFlux - diffusiveFlux));
+                    couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
+                                            (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
                 }
-                // coupling via the defect
                 else
                 {
-                    static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                                  "This coupling condition is only implemented or different formulations (mass/mole) in the subdomains.");
-
-                    // the component mass flux from the stokes domain
-                    couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                            globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+                    couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
+                                            (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
                 }
             }
+            else if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
+            {
+                static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is only implemented for mass fraction formulation.");
+
+                const Scalar advectiveFlux =
+                    normalMassFlux *
+                    cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
+                const Scalar diffusiveFlux =
+                    bfNormal1 *
+                    boundaryVars1.moleFractionGrad(transportCompIdx1) *
+                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
+                    boundaryVars1.molarDensity() *
+                    FluidSystem::molarMass(transportCompIdx1);
+
+                couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                        -(advectiveFlux - diffusiveFlux));
+            }
+            else
+            {
+                static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                              "This coupling condition is not implemented dor different formulations (mass/mole) in the subdomains.");
+
+                // the component mass flux from the stokes domain
+                couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
+                                        globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
+            }
         }
-        if (cParams.boundaryTypes2.isCouplingOutflow(contiWEqIdx2))
-            std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
+        if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingDirichlet(contiWEqIdx2) is not implemented for the Darcy side.");
+        }
     }
 
     /*!
-     * \brief Evaluation of the coupling from Darcy (2 or n) to Stokes (1 or s).
+     * \brief Evaluation of the coupling from Darcy (2) to Stokes (1).
      *
-     * \param lfsu_s local basis for the trial space of the Stokes domain
-     * \param lfsu_n local basis for the trial space of the Darcy domain
+     * \param lfsu1 local basis for the trial space of the Stokes domain
+     * \param lfsu2 local basis for the trial space of the Darcy domain
      * \param vertInElem1 local vertex index in element1
      * \param vertInElem2 local vertex index in element2
      * \param sdElement1 the element in the Stokes domain
@@ -569,15 +768,16 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-    void evalCoupling21(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+    DUNE_DEPRECATED_MSG("evalCoupling21() is deprecated. Use evalCoupling() instead.")
+    void evalCoupling21(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
                         const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
                         const CParams &cParams,
                         RES1& couplingRes1, RES2& couplingRes2) const
     {
-        const DimVector& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
-        DimVector normalFlux2(0.);
+        const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
+        GlobalPosition normalFlux2(0.);
 
         // velocity*normal*area*rho
         for (int phaseIdx=0; phaseIdx<numPhases2; ++phaseIdx)
@@ -585,37 +785,82 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
 
         //p*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
-        if (cParams.boundaryTypes1.isCouplingOutflow(momentumYIdx1))
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumYIdx1))
         {
             //p*A*n as NEUMANN condition for free flow (set, if B&J defined as NEUMANN condition)
             //pressure correction in stokeslocalresidual.hh
-            couplingRes1.accumulate(lfsu_s.child(momentumYIdx1), vertInElem1,
+            couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                     cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
                                     boundaryVars2.face().area);
         }
-        if (cParams.boundaryTypes1.isCouplingInflow(momentumYIdx1))
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
         {
-
-            // v.n as Dirichlet condition for the Stokes domain
+            // v.n as Dirichlet-like condition for the Stokes domain
             // set residualStokes[momentumYIdx1] = vy in stokeslocalresidual.hh
             if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
             {
-                couplingRes1.accumulate(lfsu_s.child(momentumYIdx1), vertInElem1,
+                couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                         -((normalFlux2[nPhaseIdx2] + normalFlux2[wPhaseIdx2])
                                           / cParams.elemVolVarsCur1[vertInElem1].density()));
             }
             else
             {
                 // v.n as DIRICHLET condition for the Stokes domain (negative sign!)
-                couplingRes1.accumulate(lfsu_s.child(momentumYIdx1), vertInElem1,
+                couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
                                         / cParams.elemVolVarsCur1[vertInElem1].density());
             }
         }
 
+        typedef typename GET_PROP_TYPE(Stokes2cTypeTag, SpatialParams) SpatialParams1;
+        SpatialParams1 spatialParams = globalProblem_.sdProblem1().spatialParams();
+        const GlobalPosition& globalPos = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos);
+        assert(beaversJosephCoeff > 0);
+
+        const Scalar Kxx = spatialParams.intrinsicPermeability(sdElement1, cParams.fvGeometry1,
+                                                               vertInElem1);
+
+        beaversJosephCoeff /= std::sqrt(Kxx);
+        const GlobalPosition& elementUnitNormal = boundaryVars1.face().normal;
+
+        // Implementation as Neumann-like condition: (v.n)n
+        if (cParams.boundaryTypes1.isCouplingDirichlet(momentumXIdx1))
+        {
+            const Scalar normalComp = boundaryVars1.velocity()*elementUnitNormal;
+            GlobalPosition normalV = elementUnitNormal;
+            normalV *= normalComp; // v*n*n
+
+            // v_tau = v - (v.n)n
+            const GlobalPosition tangentialV = boundaryVars1.velocity() - normalV;
+            const Scalar boundaryFaceArea = boundaryVars1.face().area;
+
+            for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+            {
+                couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
+                                        beaversJosephCoeff
+                                        * boundaryFaceArea
+                                        * tangentialV[dimIdx]
+                                        * (boundaryVars1.dynamicViscosity()
+                                          + boundaryVars1.dynamicEddyViscosity()));
+            }
+        }
+        // Implementation as Dirichlet-like condition
+        // tangential component: vx = sqrt K /alpha * (grad v n(unity))t
+        if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary conditionisCouplingNeumann(momentumXIdx1) on the Stokes side is not implemented anymore.");
+            // GlobalPosition tangentialVelGrad(0);
+            // boundaryVars1.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            // tangentialVelGrad /= -beaversJosephCoeff; // was - before
+            // couplingRes1.accumulate(lfsu1.child(momentumXIdx1), vertInElem1,
+            // this->residual_[vertInElem1][momentumXIdx1] =
+            //        tangentialVelGrad[momentumXIdx1] - globalProblem_.localResidual1().curPriVars_(vertInElem1)[momentumXIdx1]);
+        }
+
         //coupling residual is added to "real" residual
         //here each node is passed twice, hence only half of the dirichlet condition has to be set
-        if (cParams.boundaryTypes1.isCouplingOutflow(transportEqIdx1))
+        if (cParams.boundaryTypes1.isCouplingDirichlet(transportEqIdx1))
         {
             // set residualStokes[transportEqIdx1] = x in stokes2clocalresidual.hh
 
@@ -623,11 +868,100 @@ class TwoCStokesTwoPTwoCLocalOperator :
             static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
                           "This coupling condition is only implemented for mass fraction formulation.");
 
-            couplingRes1.accumulate(lfsu_s.child(transportEqIdx1), vertInElem1,
+            couplingRes1.accumulate(lfsu1.child(transportEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }
-        if (cParams.boundaryTypes1.isCouplingInflow(transportEqIdx1))
-            std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
+        if (cParams.boundaryTypes1.isCouplingNeumann(transportEqIdx1))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(transportEqIdx1) is not implemented for the Stokes side.");
+        }
+    }
+
+    /*!
+     * \brief Returns a BoundaryLayerModel object
+     *
+     * This function is reused in Child LocalOperators and used for extracting
+     * the respective boundary layer thickness.<br>
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     */
+    template<typename CParams>
+    BoundaryLayerModel<TypeTag> evalBoundaryLayerModel(CParams cParams, const int scvIdx1) const
+    {
+        // current position + additional virtual runup distance
+        const Scalar distance = cParams.fvGeometry1.subContVol[scvIdx1].global[0]
+                                + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
+        BoundaryLayerModel<TypeTag> boundaryLayerModel(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity),
+                                                       distance,
+                                                       cParams.elemVolVarsCur1[scvIdx1].kinematicViscosity(),
+                                                       blModel_);
+        if (blModel_ == 1)
+            boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
+        if (blModel_ >= 4)
+            boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
+        if (blModel_ >= 5)
+            boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
+        if (blModel_ == 7)
+            boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
+
+        return boundaryLayerModel;
+    }
+
+    /*!
+     * \brief Returns the concentration gradient through the boundary layer
+     *
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     */
+    template<typename CParams>
+    Scalar evalBoundaryLayerConcentrationGradient(CParams cParams, const int scvIdx1) const
+    {
+        static_assert(numComponents1 == 2,
+                      "This coupling condition is only implemented for two components.");
+        Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
+        Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
+        Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
+        Scalar X2 = 1.0 - massFractionOut;
+        Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
+        Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
+
+        Scalar normalMoleFracGrad = cParams.elemVolVarsCur1[scvIdx1].moleFraction(transportCompIdx1)
+                                    - moleFractionOut;
+        return normalMoleFracGrad / evalBoundaryLayerModel(cParams, scvIdx1).massBoundaryLayerThickness();
+    }
+
+    /*!
+     * \brief Returns the mass transfer coefficient
+     *
+     * This function is reused in Child LocalOperators.
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     * \param scvIdx1 The local index of the sub-control volume of the Darcy domain
+     */
+    template<typename CParams>
+    Scalar evalMassTransferCoefficient(CParams cParams, const int scvIdx1, const int scvIdx2) const
+    {
+        MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[scvIdx2].saturation(wPhaseIdx2),
+                                                     cParams.elemVolVarsCur2[scvIdx2].porosity(),
+                                                     evalBoundaryLayerModel(cParams, scvIdx1).massBoundaryLayerThickness(),
+                                                     massTransferModel_);
+        if (massTransferModel_ == 1)
+            massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
+        if (massTransferModel_ == 2 || massTransferModel_ == 4)
+            massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
+        if (massTransferModel_ == 3)
+            massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[scvIdx2].capillaryPressure());
+
+        return massTransferModel.massTransferCoefficient();
     }
 
  protected:
@@ -638,6 +972,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
+
+    unsigned int blModel_;
+    unsigned int massTransferModel_;
 
  private:
     /*!
@@ -655,9 +992,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
         FVElementGeometry1 fvGeometry1;
         FVElementGeometry2 fvGeometry2;
     };
-
-    unsigned int blModel_;
-    unsigned int massTransferModel_;
 
     GlobalProblem& globalProblem_;
 };

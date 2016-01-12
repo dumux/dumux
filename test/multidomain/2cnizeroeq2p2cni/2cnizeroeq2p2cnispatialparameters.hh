@@ -74,16 +74,15 @@ class TwoCNIZeroEqTwoPTwoCNISpatialParams : public ImplicitSpatialParams<TypeTag
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+
     typedef typename GridView::template Codim<0>::Entity Element;
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
+public:
     /*!
      * \brief Spatial parameters for the
      *        coupling of a non-isothermal two-component ZeroEq
@@ -97,6 +96,7 @@ public:
         permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Permeability);
         porosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Porosity);
         thermalConductivitySolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, ThermalConductivitySolid);
+        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
 
         spatialParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Swr));
         spatialParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Snr));
@@ -192,10 +192,24 @@ public:
         return thermalConductivitySolid_;
     }
 
+    /*!
+     * \brief Evaluate the Beavers-Joseph coefficient at given position
+     *
+     * \param globalPos The global position
+     *
+     * \return Beavers-Joseph coefficient
+     */
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
+    {
+        return alphaBJ_;
+    }
+
 private:
     Scalar permeability_;
     Scalar porosity_;
     Scalar thermalConductivitySolid_;
+    Scalar alphaBJ_;
+
     MaterialLawParams spatialParams_;
 };
 } // end namespace

@@ -87,28 +87,30 @@ public:
      */
     const Scalar massTransferCoefficient()
     {
+        Scalar massTransferCoeff = 1.0;
+
         // no mass transfer model
         if (massTransferModel_ == 0)
         {
-            // has to be empty for the multidomain models
+            massTransferCoeff = 1.0;
         }
         // exponential mass transfer law
         else if (massTransferModel_ == 1)
         {
             // use meaningful transfer coefficients
             assert (0 < massTransferCoeff_ && massTransferCoeff_ < 1.0);
-            return std::pow(saturation_, massTransferCoeff_);
+            massTransferCoeff = std::pow(saturation_, massTransferCoeff_);
         }
         // Schlünder model (Schlünder, CES 1988)
         else if (massTransferModel_ == 2)
         {
             // check if characteristic pore radius was set
             assert (charPoreRadius_ < 9e9);
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
-                                            * std::sqrt(M_PI/(4.*moistureContent_))
-                                            * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
+            massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
+                                     * std::sqrt(M_PI/(4.*moistureContent_))
+                                     * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
 
-            return 1./massTransferCoeff;
+            massTransferCoeff = 1./massTransferCoeff;
         }
         // Schlünder model (Schlünder, CES 1988) with variable char. pore diameter depending on Pc
         else if (massTransferModel_ == 3)
@@ -118,26 +120,28 @@ public:
             Scalar surfaceTension = 72.85e-3; // source: Wikipedia
             Scalar charPoreRadius = 2 * surfaceTension / capillaryPressure_;
 
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius / blThickness_
-                                            * std::sqrt(M_PI/(4.*moistureContent_))
-                                            * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
+            massTransferCoeff = 1. + 2./M_PI * charPoreRadius / blThickness_
+                                     * std::sqrt(M_PI/(4.*moistureContent_))
+                                     * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
 
-            return 1./massTransferCoeff;
+            massTransferCoeff = 1./massTransferCoeff;
         }
         // modified Schlünder model
         else if (massTransferModel_ == 4)
         {
             // check if characteristic pore radius was set
             assert (charPoreRadius_ < 9e9);
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
-                                            * (1./moistureContent_) * (1./moistureContent_ - 1.);
+            massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
+                                     * (1./moistureContent_) * (1./moistureContent_ - 1.);
 
-            return 1./massTransferCoeff;
+            massTransferCoeff = 1./massTransferCoeff;
         }
         else
             DUNE_THROW(Dune::NotImplemented, "This mass transfer model is not implemented");
 
-        return 1.0;
+        // assert the massTransferCoeff is inside the validity range
+        assert(!(massTransferCoeff > 1.0 || massTransferCoeff < 0.0));
+        return massTransferCoeff;
     }
 
 private:

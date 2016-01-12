@@ -24,6 +24,8 @@
 #ifndef DUMUX_TWOCNISTOKES2P2CNILOCALOPERATOR_HH
 #define DUMUX_TWOCNISTOKES2P2CNILOCALOPERATOR_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
 
 namespace Dumux {
@@ -143,166 +145,271 @@ class TwoCNIStokesTwoPTwoCNILocalOperator :
         public TwoCStokesTwoPTwoCLocalOperator<TypeTag>
 {
 public:
+    typedef TwoCStokesTwoPTwoCLocalOperator<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) GlobalProblem;
 
-    // Get the TypeTags of the subproblems
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) Stokes2cniTypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TwoPTwoCNITypeTag;
+
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, FluxVariables) BoundaryVariables1;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, FluxVariables) BoundaryVariables2;
 
-    // Multidomain Grid and Subgrid types
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
+
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, GridView) Stokes2cniGridView;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, GridView) TwoPTwoCNIGridView;
-
     typedef typename Stokes2cniGridView::template Codim<0>::Entity SDElement1;
     typedef typename TwoPTwoCNIGridView::template Codim<0>::Entity SDElement2;
 
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, Indices) Stokes2cniIndices;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, Indices) TwoPTwoCNIIndices;
 
-    enum { dim = MDGrid::dimension };
     enum {
-        energyEqIdx1 = Stokes2cniIndices::energyEqIdx          //!< Index of the energy balance equation
+        dimWorld = MDGrid::dimensionworld
     };
-    enum {  numComponents = Stokes2cniIndices::numComponents };
-    enum { phaseCompIdx = Stokes2cniIndices::phaseCompIdx};
-    enum { // indices in the Darcy domain
-        numPhases2 = GET_PROP_VALUE(TwoPTwoCNITypeTag, NumPhases),
 
-        // equation index
-        energyEqIdx2 = TwoPTwoCNIIndices::energyEqIdx,      //!< Index of the energy balance equation
-
-        wPhaseIdx2 = TwoPTwoCNIIndices::wPhaseIdx,          //!< Index for the liquid phase
-        nPhaseIdx2 = TwoPTwoCNIIndices::nPhaseIdx           //!< Index for the gas phase
+    // Stokes
+    enum { numComponents1 = Stokes2cniIndices::numComponents };
+    enum { // equation indices
+        energyEqIdx1 = Stokes2cniIndices::energyEqIdx             //!< Index of the energy balance equation
     };
-    enum { nPhaseIdx1 = Stokes2cniIndices::phaseIdx };            //!< Index of the free-flow phase of the fluidsystem
-    enum { // indices of the components
+    enum { // component indices
         transportCompIdx1 = Stokes2cniIndices::transportCompIdx,  //!< Index of transported component
         phaseCompIdx1 = Stokes2cniIndices::phaseCompIdx           //!< Index of main component of the phase
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;       //!< A field vector with dim entries
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    // Darcy
+    enum { numPhases2 = GET_PROP_VALUE(TwoPTwoCNITypeTag, NumPhases) };
+    enum { // equation indices
+        energyEqIdx2 = TwoPTwoCNIIndices::energyEqIdx      //!< Index of the energy balance equation
+    };
+    enum { // phase indices
+        wPhaseIdx2 = TwoPTwoCNIIndices::wPhaseIdx,          //!< Index for the liquid phase
+        nPhaseIdx2 = TwoPTwoCNIIndices::nPhaseIdx           //!< Index for the gas phase
+    };
 
-    typedef TwoCStokesTwoPTwoCLocalOperator<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename MDGrid::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+
+    // multidomain flags
+    static const bool doAlphaCoupling = true;
+    static const bool doPatternCoupling = true;
 
     TwoCNIStokesTwoPTwoCNILocalOperator(GlobalProblem& globalProblem)
         : ParentType(globalProblem)
     { }
 
-    static const bool doAlphaCoupling = true;
-    static const bool doPatternCoupling = true;
+public:
+    //! \copydoc Dumux::TwoCStokesTwoPTwoCLocalOperator::evalCoupling()
+    template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
+    void evalCoupling(const LFSU1& lfsu1, const LFSU2& lfsu2,
+                      const int vertInElem1, const int vertInElem2,
+                      const SDElement1& sdElement1, const SDElement2& sdElement2,
+                      const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
+                      const CParams &cParams,
+                      RES1& couplingRes1, RES2& couplingRes2) const
+    {
+        // evaluate coupling of mass and momentum balances
+        ParentType::evalCoupling(lfsu1, lfsu2,
+                                 vertInElem1, vertInElem2,
+                                 sdElement1, sdElement2,
+                                 boundaryVars1, boundaryVars2,
+                                 cParams,
+                                 couplingRes1, couplingRes2);
+
+        const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
+
+        // ENERGY Balance
+        // Neumann-like conditions
+        if (cParams.boundaryTypes1.isCouplingNeumann(energyEqIdx1))
+        {
+            if (this->globalProblem().sdProblem2().isCornerPoint(globalPos2))
+            {
+                // convective energy flux (enthalpy is mass based, mass flux also needed for useMoles)
+                Scalar convectiveFlux = 0.0;
+                for (int phaseIdx=0; phaseIdx<numPhases2; ++phaseIdx)
+                {
+                    convectiveFlux -= boundaryVars2.volumeFlux(phaseIdx)
+                                      * cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx)
+                                      * cParams.elemVolVarsCur2[vertInElem2].enthalpy(phaseIdx);
+                }
+
+                // conductive energy flux
+                Scalar conductiveFlux = boundaryVars2.normalMatrixHeatFlux();
+
+                couplingRes1.accumulate(lfsu1.child(energyEqIdx1), vertInElem1,
+                                        -(convectiveFlux - conductiveFlux));
+            }
+            else
+            {
+                couplingRes1.accumulate(lfsu1.child(energyEqIdx1), vertInElem1,
+                                        this->globalProblem().localResidual2().residual(vertInElem2)[energyEqIdx2]);
+            }
+        }
+        if (cParams.boundaryTypes2.isCouplingNeumann(energyEqIdx2))
+        {
+            const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
+            // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
+            if (ParentType::blModel_)
+            {
+                // convective energy flux (enthalpy is mass based, mass flux also needed for useMoles)
+                Scalar convectiveFlux = boundaryVars1.normalVelocity()
+                                        * cParams.elemVolVarsCur1[vertInElem1].density()
+                                        * cParams.elemVolVarsCur1[vertInElem1].enthalpy();
+
+                // conductive energy flux
+                Scalar conductiveFlux = bfNormal1.two_norm()
+                                        * evalBoundaryLayerTemperatureGradient(cParams, vertInElem1)
+                                        * (boundaryVars1.thermalConductivity()
+                                           + boundaryVars1.thermalEddyConductivity());
+
+                // enthalpy transported by diffusive fluxes
+                Scalar sumDiffusiveFluxes = 0.0;
+                Scalar sumDiffusiveEnergyFlux = 0.0;
+                for (int compIdx=0; compIdx < numComponents1; compIdx++)
+                {
+                    if (compIdx != phaseCompIdx1)
+                    {
+                        Scalar diffusiveFlux = bfNormal1.two_norm()
+                                               * ParentType::evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                               * (boundaryVars1.diffusionCoeff(compIdx)
+                                                  + boundaryVars1.eddyDiffusivity())
+                                               * boundaryVars1.molarDensity()
+                                               * ParentType::evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+                        sumDiffusiveFluxes += diffusiveFlux;
+                        sumDiffusiveEnergyFlux += diffusiveFlux
+                                                  * boundaryVars1.componentEnthalpy(compIdx)
+                                                  * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
+                    }
+                }
+                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes
+                                          * boundaryVars1.componentEnthalpy(phaseCompIdx1)
+                                          * FluidSystem::molarMass(phaseCompIdx1);
+
+                couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
+                                        -(convectiveFlux - sumDiffusiveEnergyFlux - conductiveFlux));
+            }
+            else if (this->globalProblem().sdProblem1().isCornerPoint(globalPos1))
+            {
+                // convective energy flux (enthalpy is mass based, mass flux also needed for useMoles)
+                Scalar convectiveFlux = boundaryVars1.normalVelocity()
+                                        * cParams.elemVolVarsCur1[vertInElem1].density()
+                                        * cParams.elemVolVarsCur1[vertInElem1].enthalpy();
+
+                // conductive energy flux
+                Scalar conductiveFlux = bfNormal1
+                                        * boundaryVars1.temperatureGrad()
+                                        * (boundaryVars1.thermalConductivity()
+                                           + boundaryVars1.thermalEddyConductivity());
+
+                // enthalpy transported by diffusive fluxes
+                Scalar sumDiffusiveFluxes = 0.0;
+                Scalar sumDiffusiveEnergyFlux = 0.0;
+                for (int compIdx=0; compIdx < numComponents1; compIdx++)
+                {
+                    if (compIdx != phaseCompIdx1)
+                    {
+                        Scalar diffusiveFlux = bfNormal1
+                                               * boundaryVars1.moleFractionGrad(compIdx)
+                                               * (boundaryVars1.diffusionCoeff(compIdx)
+                                                  + boundaryVars1.eddyDiffusivity())
+                                               * boundaryVars1.molarDensity();
+                        sumDiffusiveFluxes += diffusiveFlux;
+                        sumDiffusiveEnergyFlux += diffusiveFlux
+                                                  * boundaryVars1.componentEnthalpy(compIdx)
+                                                  * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
+                    }
+                }
+                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes
+                                          * boundaryVars1.componentEnthalpy(phaseCompIdx1)
+                                          * FluidSystem::molarMass(phaseCompIdx1);
+
+                couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
+                                        -(convectiveFlux - sumDiffusiveEnergyFlux - conductiveFlux));
+            }
+            else
+            {
+                couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
+                                        this->globalProblem().localResidual1().residual(vertInElem1)[energyEqIdx1]);
+            }
+        }
+
+        // Dirichlet-like conditions
+        if (cParams.boundaryTypes1.isCouplingDirichlet(energyEqIdx1))
+        {
+            // set residualStokes[energyIdx1] = T in stokesncnicouplinglocalresidual.hh
+            couplingRes1.accumulate(lfsu1.child(energyEqIdx1), vertInElem1,
+                                    -cParams.elemVolVarsCur2[vertInElem2].temperature());
+        }
+
+        if (cParams.boundaryTypes2.isCouplingDirichlet(energyEqIdx2))
+        {
+            // set residualDarcy[energyEqIdx2] = T in 2p2cnicouplinglocalresidual.hh
+            couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
+                                    -cParams.elemVolVarsCur1[vertInElem1].temperature());
+        }
+    }
 
     //! \copydoc Dumux::TwoCStokesTwoPTwoCLocalOperator::evalCoupling12()
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-    void evalCoupling12(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+    DUNE_DEPRECATED_MSG("evalCoupling12() is deprecated. Use evalCoupling() instead.")
+    void evalCoupling12(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
                         const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
                         const CParams &cParams,
                         RES1& couplingRes1, RES2& couplingRes2) const
     {
-        const DimVector& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
-        const DimVector& bfNormal1 = boundaryVars1.face().normal;
+        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
+        const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
         const Scalar normalMassFlux1 = boundaryVars1.normalVelocity() *
             cParams.elemVolVarsCur1[vertInElem1].density();
         GlobalProblem& globalProblem = this->globalProblem();
 
         // evaluate coupling of mass and momentum balances
-        ParentType::evalCoupling12(lfsu_s, lfsu_n,
+        ParentType::evalCoupling12(lfsu1, lfsu2,
                                    vertInElem1, vertInElem2,
                                    sdElement1, sdElement2,
                                    boundaryVars1, boundaryVars2,
                                    cParams,
                                    couplingRes1, couplingRes2);
 
-        if (cParams.boundaryTypes2.isCouplingInflow(energyEqIdx2))
+        if (cParams.boundaryTypes2.isCouplingNeumann(energyEqIdx2))
         {
-            unsigned int blModel = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, BoundaryLayer, Model);
-            // only enter here, if a boundary layer model  is used for the computation of the diffusive fluxes
-            if (blModel)
+            // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
+            if (ParentType::blModel_)
             {
                 // convective energy flux
-                const Scalar convectiveFlux =
-                    normalMassFlux1 *
-                    cParams.elemVolVarsCur1[vertInElem1].enthalpy();
+                const Scalar convectiveFlux = normalMassFlux1
+                                              * cParams.elemVolVarsCur1[vertInElem1].enthalpy();
 
-                // diffusive transported energy
-                const Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-                const Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
-                const Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
-                const Scalar X2 = 1.0 - massFractionOut;
-                const Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
-                const Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
-                Scalar normalMoleFracGrad =
-                    cParams.elemVolVarsCur1[vertInElem1].moleFraction(transportCompIdx1) -
-                    moleFractionOut;
-
-                const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
-                // current position + additional virtual runup distance
-                const Scalar distance = globalPos1[0] + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
-                const Scalar kinematicViscosity = cParams.elemVolVarsCur1[vertInElem2].kinematicViscosity();
-                BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel);
-                if (blModel == 1)
-                    boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
-                if (blModel >= 4)
-                    boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
-                if (blModel >= 5)
-                    boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
-                if (blModel == 7)
-                    boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
-
-                normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
-
-                Scalar diffusiveFlux =
-                    bfNormal1.two_norm() *
-                    normalMoleFracGrad *
-                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
-                    boundaryVars1.molarDensity();
-
+                // enthalpy transported by diffusive fluxes
                 // multiply the diffusive flux with the mass transfer coefficient
-                unsigned int mtModel = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, MassTransfer, Model);
-                if (mtModel != 0)
-                {
-                    MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2),
-                                                                 cParams.elemVolVarsCur2[vertInElem2].porosity(),
-                                                                 boundaryLayerModel.massBoundaryLayerThickness(),
-                                                                 mtModel);
-                    if (mtModel == 1)
-                        massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
-                    if (mtModel == 2 || mtModel == 4)
-                        massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
-                    if (mtModel == 3)
-                        massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[vertInElem2].capillaryPressure());
-                    diffusiveFlux *= massTransferModel.massTransferCoefficient();
-                }
-
-                // the boundary layer models only work for two components
-                assert(numComponents == 2);
+                static_assert(numComponents1 == 2,
+                              "This coupling condition is only implemented for two components.");
                 Scalar diffusiveEnergyFlux = 0.0;
+                Scalar diffusiveFlux = bfNormal1.two_norm()
+                                       * ParentType::evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                          + boundaryVars1.eddyDiffusivity())
+                                       * boundaryVars1.molarDensity()
+                                       * ParentType::evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+
                 diffusiveEnergyFlux += diffusiveFlux * FluidSystem::molarMass(transportCompIdx1)
                                        * boundaryVars1.componentEnthalpy(transportCompIdx1);
                 diffusiveEnergyFlux -= diffusiveFlux * FluidSystem::molarMass(phaseCompIdx1)
                                        * boundaryVars1.componentEnthalpy(phaseCompIdx1);
 
                 // conductive transported energy
-                const Scalar temperatureOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-                Scalar normalTemperatureGrad =
-                    cParams.elemVolVarsCur1[vertInElem1].temperature() -
-                    temperatureOut;
+                const Scalar conductiveFlux = bfNormal1.two_norm()
+                                              * evalBoundaryLayerTemperatureGradient(cParams, vertInElem1)
+                                              * (boundaryVars1.thermalConductivity()
+                                                 + boundaryVars1.thermalEddyConductivity());
 
-                normalTemperatureGrad /= boundaryLayerModel.thermalBoundaryLayerThickness();
-
-                const Scalar conductiveFlux =
-                    bfNormal1.two_norm() *
-                    normalTemperatureGrad *
-                    (boundaryVars1.thermalConductivity() + boundaryVars1.thermalEddyConductivity());
-
-                couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
+                couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
                                         -(convectiveFlux - diffusiveEnergyFlux - conductiveFlux));
             }
             else if (globalProblem.sdProblem1().isCornerPoint(globalPos1))
@@ -316,9 +423,9 @@ public:
                     (boundaryVars1.thermalConductivity() + boundaryVars1.thermalEddyConductivity());
                 Scalar sumDiffusiveFluxes = 0.0;
                 Scalar sumDiffusiveEnergyFlux = 0.0;
-                for (int compIdx=0; compIdx < numComponents; compIdx++)
+                for (int compIdx=0; compIdx < numComponents1; compIdx++)
                 {
-                    if (compIdx != phaseCompIdx)
+                    if (compIdx != phaseCompIdx1)
                     {
                         Scalar diffusiveFlux = boundaryVars1.moleFractionGrad(compIdx)
                                                * boundaryVars1.face().normal
@@ -330,29 +437,30 @@ public:
                                                   * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
                     }
                 }
-                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes * boundaryVars1.componentEnthalpy(phaseCompIdx)
-                                          * FluidSystem::molarMass(phaseCompIdx);
-                couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
+                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes * boundaryVars1.componentEnthalpy(phaseCompIdx1)
+                                          * FluidSystem::molarMass(phaseCompIdx1);
+                couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
                                         -(convectiveFlux - sumDiffusiveEnergyFlux - conductiveFlux));
             }
             else
             {
-                // the energy flux from the stokes domain
-                couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
+                // the energy flux from the Stokes domain
+                couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
                                         globalProblem.localResidual1().residual(vertInElem1)[energyEqIdx1]);
             }
         }
-        if (cParams.boundaryTypes2.isCouplingOutflow(energyEqIdx2))
+        if (cParams.boundaryTypes2.isCouplingDirichlet(energyEqIdx2))
         {
             // set residualDarcy[energyEqIdx2] = T in 2p2cnilocalresidual.hh
-            couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
+            couplingRes2.accumulate(lfsu2.child(energyEqIdx2), vertInElem2,
                                     -cParams.elemVolVarsCur1[vertInElem1].temperature());
         }
     }
 
     //! \copydoc Dumux::TwoCStokesTwoPTwoCLocalOperator::evalCoupling21()
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-    void evalCoupling21(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+    DUNE_DEPRECATED_MSG("evalCoupling21() is deprecated. Use evalCoupling() instead.")
+    void evalCoupling21(const LFSU1& lfsu1, const LFSU2& lfsu2,
                         const int vertInElem1, const int vertInElem2,
                         const SDElement1& sdElement1, const SDElement2& sdElement2,
                         const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
@@ -362,15 +470,15 @@ public:
         GlobalProblem& globalProblem = this->globalProblem();
 
         // evaluate coupling of mass and momentum balances
-        ParentType::evalCoupling21(lfsu_s, lfsu_n,
+        ParentType::evalCoupling21(lfsu1, lfsu2,
                                    vertInElem1, vertInElem2,
                                    sdElement1, sdElement2,
                                    boundaryVars1, boundaryVars2,
                                    cParams,
                                    couplingRes1, couplingRes2);
 
-        const DimVector& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
-        DimVector normalMassFlux2(0.);
+        const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
+        GlobalPosition normalMassFlux2(0.);
 
         // velocity*normal*area*rho
         // mass flux is needed for both (mass/mole) formulation, as the enthalpy is mass based
@@ -378,13 +486,13 @@ public:
             normalMassFlux2[phaseIdx] = -boundaryVars2.volumeFlux(phaseIdx)*
                 cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
 
-        if (cParams.boundaryTypes1.isCouplingOutflow(energyEqIdx1))
+        if (cParams.boundaryTypes1.isCouplingDirichlet(energyEqIdx1))
         {
             // set residualStokes[energyIdx1] = T in stokes2cnilocalresidual.hh
-            couplingRes1.accumulate(lfsu_s.child(energyEqIdx1), vertInElem1,
+            couplingRes1.accumulate(lfsu1.child(energyEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].temperature());
         }
-        if (cParams.boundaryTypes1.isCouplingInflow(energyEqIdx1))
+        if (cParams.boundaryTypes1.isCouplingNeumann(energyEqIdx1))
         {
             if (globalProblem.sdProblem2().isCornerPoint(globalPos2))
             {
@@ -395,15 +503,34 @@ public:
                     cParams.elemVolVarsCur2[vertInElem2].enthalpy(wPhaseIdx2);
                 const Scalar conductiveFlux = boundaryVars2.normalMatrixHeatFlux();
 
-                couplingRes1.accumulate(lfsu_s.child(energyEqIdx1), vertInElem1,
+                couplingRes1.accumulate(lfsu1.child(energyEqIdx1), vertInElem1,
                                         -(convectiveFlux - conductiveFlux));
             }
             else
             {
-                couplingRes1.accumulate(lfsu_s.child(energyEqIdx1), vertInElem1,
+                couplingRes1.accumulate(lfsu1.child(energyEqIdx1), vertInElem1,
                                         globalProblem.localResidual2().residual(vertInElem2)[energyEqIdx2]);
             }
         }
+    }
+
+    /*!
+     * \brief Returns the temperature gradient through the boundary layer
+     *
+     * \todo This function could be moved to a more model specific place, because
+     *       of its runtime parameters.
+     *
+     * \param cParams a parameter container
+     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     */
+    template<typename CParams>
+    Scalar evalBoundaryLayerTemperatureGradient(CParams cParams, const int scvIdx) const
+    {
+        const Scalar temperatureOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
+        Scalar normalTemperatureGrad = cParams.elemVolVarsCur1[scvIdx].temperature()
+                                       - temperatureOut;
+        return normalTemperatureGrad
+               / ParentType::evalBoundaryLayerModel(cParams, scvIdx).thermalBoundaryLayerThickness();
     }
 };
 } // end namespace Dumux

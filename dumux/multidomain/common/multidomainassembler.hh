@@ -129,8 +129,6 @@ public:
                                                                      *mdSubProblem1_, *mdSubProblem2_, *mdCoupling_);
 
         matrix_ = std::make_shared<JacobianMatrix>(*mdGridOperator_);
-        *matrix_ = 0;
-
         residual_ = std::make_shared<SolutionVector>(*mdGridFunctionSpace_);
     }
 
@@ -153,13 +151,6 @@ public:
     //! \copydoc ImplicitAssembler::matrix()
     const JacobianMatrix &matrix() const
     { return *matrix_; }
-
-    /*!
-     * \brief Return constant reference to global Jacobian matrix.
-     *        This is not very nice, but required for the AMG solver
-     *
-     * \return A const reference to matrix
-     */
     JacobianMatrix &matrix()
     { return *matrix_; }
 

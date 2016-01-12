@@ -36,11 +36,14 @@ struct MultiDomainConvergenceWriter;
 
 namespace Properties
 {
+NEW_PROP_TAG(NewtonWriteConvergence);
+
 // set default values for Newton for multidomain problems
 // they can be overwritten in the parameter file
 SET_INT_PROP(MultiDomain, NewtonTargetSteps, 8);
 SET_INT_PROP(MultiDomain, NewtonMaxSteps, 15);
 SET_SCALAR_PROP(MultiDomain, NewtonMaxRelativeShift, 1e-5);
+SET_BOOL_PROP(MultiDomain, NewtonWriteConvergence, false);
 }
 
 
@@ -88,12 +91,11 @@ public:
         , linearSolver_(problem)
         , convergenceWriter_(asImp_())
     {
-//          Writes out, where the relative tolerance is defined
-        std::cout << "ParameterNewtonRelTol= "
-                << PROP_DIAGNOSTIC(TypeTag, NewtonMaxRelativeShift)
-                << ", "
-                << GET_PROP_VALUE(TypeTag, NewtonMaxRelativeShift)
-                << std::endl;
+        std::cout << "NewtonMaxRelativeShift= "
+                  << PROP_DIAGNOSTIC(TypeTag, NewtonMaxRelativeShift)
+                  << ", "
+                  << GET_PROP_VALUE(TypeTag, NewtonMaxRelativeShift)
+                  << std::endl;
     }
 
     //! \copydoc ParentType::newtonUpdateShift()

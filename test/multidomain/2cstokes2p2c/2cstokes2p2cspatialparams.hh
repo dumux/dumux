@@ -77,26 +77,15 @@ class TwoCStokesTwoPTwoCSpatialParams : public ImplicitSpatialParams<TypeTag>
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
-    typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> DimVector;
-
-    typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Entity Element;
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef std::vector<Scalar> PermeabilityType;
-    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-
-public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
-    typedef std::vector<MaterialLawParams> MaterialLawParamsVector;
 
+public:
     /*!
      * \brief Spatial parameters for the
      *        coupling of an isothermal two-component Stokes
@@ -109,7 +98,7 @@ public:
     {
         porosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Porosity);
         permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Permeability);
-        lambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LambdaSolid);
+        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
 
         // residual saturations
         params_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Swr));
@@ -162,57 +151,21 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Evaluate the Beavers-Joseph coefficient at given position
      *
-     * This is only required for non-isothermal models.
+     * \param globalPos The global position
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \return Beavers-Joseph coefficient
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
     {
-        return 790;
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
-    {
-        return lambdaSolid_;
+        return alphaBJ_;
     }
 
 private:
     Scalar permeability_;
     Scalar porosity_;
-    Scalar lambdaSolid_;
+    Scalar alphaBJ_;
     MaterialLawParams params_;
 };
 

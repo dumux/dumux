@@ -25,22 +25,16 @@
 */
 namespace Dumux
 {
-/*!
- * \ingroup BC
- */
 /**
-* @brief Define a class containing boundary condition flags
-*
-*/
+ * \ingroup BC
+ * @brief Define a class containing boundary condition flags
+ */
 
 //! base Class that defines boundary condition flags
 struct BoundaryConditions
 {
     /** \brief These values are ordered according to precedence */
     enum Flags {
-        mortarCoupling = -3, //!< An outflow boundary for coupled models using mortar elements
-        couplingOutflow = -2, //!< An outflow boundary for coupled models
-        couplingInflow = -1, //!< An inflow boundary for coupled models
         outflow = 0, //!< An outflow boundary
         neumann = 1, //!< Neumann boundary
         process = 2, //!< Processor boundary

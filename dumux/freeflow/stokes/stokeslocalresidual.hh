@@ -624,7 +624,7 @@ protected:
         if (dim == 3)
             DUNE_THROW(Dune::NotImplemented, "The function interpolateCornerPoints_() is only implemented for 2D.");
 
-        if (bcTypes.isCouplingInflow(massBalanceIdx) || bcTypes.isCouplingOutflow(massBalanceIdx))
+        if (bcTypes.isCoupling(massBalanceIdx))
         {
             if (scvIdx == 0 || scvIdx == 3)
                 this->residual_[scvIdx][massBalanceIdx] =

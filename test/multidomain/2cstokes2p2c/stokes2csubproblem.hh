@@ -25,10 +25,8 @@
 #define DUMUX_STOKES2C_SUBPROBLEM_HH
 
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
-#include <dumux/multidomain/couplinglocalresiduals/stokesnccouplinglocalresidual.hh>
+#include <dumux/multidomain/2cstokes2p2c/stokesnccouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-
-#include "2cstokes2p2cspatialparams.hh"
 
 namespace Dumux
 {
@@ -39,7 +37,7 @@ class Stokes2cSubProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(Stokes2cSubProblem,
-             INHERITS_FROM(BoxStokesnc, SubDomain, TwoCStokesTwoPTwoCSpatialParams));
+             INHERITS_FROM(BoxStokesnc, SubDomain));
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cSubProblem, Problem, Dumux::Stokes2cSubProblem<TypeTag>);
@@ -93,9 +91,6 @@ class Stokes2cSubProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    // soil parameters for beavers & joseph
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
@@ -148,8 +143,7 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     Stokes2cSubProblem(TimeManager &timeManager, const GridView gridView)
-        : ParentType(timeManager, gridView),
-          spatialParams_(gridView)
+        : ParentType(timeManager, gridView)
     {
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
@@ -171,9 +165,17 @@ public:
         sinusTAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperatureAmplitude);
         sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
 
-        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
         initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
     }
+
+    // functions have to be overwritten, otherwise they remain uninitialized
+    //! \copydoc ImplicitProblem::bBoxMin()
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    //! \copydoc ImplicitProblem::bBoxMax()
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
 
     /*!
      * \name Problem parameters
@@ -247,7 +249,11 @@ public:
             values.setNeumann(transportEqIdx);
 
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
-                values.setAllCouplingOutflow();
+            {
+                values.setAllCouplingDirichlet();
+                values.setCouplingNeumann(momentumXIdx);
+                values.setCouplingNeumann(momentumYIdx);
+            }
         }
 
         // the mass balance has to be of type outflow
@@ -316,33 +322,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient at given position
-     *
-     * \param globalPos The global position
-     *
-     * \return Beavers-Joseph coefficient
-     */
-    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
-    {
-        return alphaBJ_;
-    }
-
-    /*!
-     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar permeability(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return spatialParams_.intrinsicPermeability(element,
-                                                    fvGeometry,
-                                                    scvIdx);
-    }
     // \}
 
     /*!
@@ -360,7 +339,7 @@ public:
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
-        // ATTENTION: The source term of the mass balance has to be chosen as
+        // The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
         values = Scalar(0);
     }
@@ -377,39 +356,6 @@ public:
         initial_(values, globalPos);
     }
     // \}
-
-    /*!
-     * \brief Determines if globalPos is a corner of the grid
-     *
-     * \param globalPos The global position
-     */
-    bool isCornerPoint(const GlobalPosition &globalPos)
-    {
-        if ((onLeftBoundary_(globalPos) && onLowerBoundary_(globalPos)) ||
-            (onLeftBoundary_(globalPos) && onUpperBoundary_(globalPos)) ||
-            (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos)) ||
-            (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)))
-            return true;
-        else
-            return false;
-    }
-
-    /*!
-     * \brief Auxiliary function used for the mortar coupling, if mortar coupling,
-     *        this should return true
-     *
-     * \param globalPos The global position
-     */
-    bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
-    { return false; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParams &spatialParams()
-    { return spatialParams_; }
-    const SpatialParams &spatialParams() const
-    { return spatialParams_; }
 
     //! \brief Returns the reference velocity.
     const Scalar refVelocity() const
@@ -482,18 +428,9 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > bBoxMax_[1] - eps_; }
 
-    bool onBoundary_(const GlobalPosition &globalPos) const
-    {
-        return (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)
-                || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
-    }
-
     // the height of the free-flow domain
     const Scalar height_() const
     { return bBoxMax_[1] - bBoxMin_[1]; }
-
-    // spatial parameters
-    SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bBoxMin_;
@@ -512,8 +449,6 @@ private:
     Scalar sinusXPeriod_;
     Scalar sinusTAmplitude_;
     Scalar sinusTPeriod_;
-
-    Scalar alphaBJ_;
 
     Scalar runUpDistanceX_;
     Scalar initializationTime_;

@@ -23,9 +23,10 @@
 #ifndef DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
 #define DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
 
-#include <dune/pdelab/backend/istlsolverbackend.hh>
-#include <dumux/io/vtkmultiwriter.hh>
 #include <dune/grid/multidomaingrid.hh>
+#include <dune/pdelab/backend/istlsolverbackend.hh>
+
+#include <dumux/io/vtkmultiwriter.hh>
 
 #include "splitandmerge.hh"
 #include "multidomainnewtoncontroller.hh"
@@ -71,13 +72,6 @@ struct MultiDomainConvergenceWriter
         vtkMultiWriter2_ = 0;
     }
 
-    //! \brief Destructor
-    ~MultiDomainConvergenceWriter()
-    {
-        delete vtkMultiWriter1_;
-        delete vtkMultiWriter2_;
-    };
-
     /*!
      * \brief Start and advance in time
      */
@@ -85,11 +79,6 @@ struct MultiDomainConvergenceWriter
     {
         ++timeStepIndex_;
         iteration_ = 0;
-        if (!vtkMultiWriter1_)
-            vtkMultiWriter1_ = new VtkMultiWriter1(problem_().sdProblem1().gridView(), "convergence1");
-
-        if (!vtkMultiWriter2_)
-            vtkMultiWriter2_ = new VtkMultiWriter2(problem_().sdProblem2().gridView(), "convergence2");
     }
 
     /*!
@@ -102,12 +91,17 @@ struct MultiDomainConvergenceWriter
                         const GridView2 &gridView2)
     {
         ++ iteration_;
+        if (!vtkMultiWriter1_)
+            vtkMultiWriter1_ = std::make_shared<VtkMultiWriter2>(gridView1, "convergence1");
         vtkMultiWriter1_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
+
+        if (!vtkMultiWriter2_)
+            vtkMultiWriter2_ = std::make_shared<VtkMultiWriter2>(gridView2, "convergence2");
         vtkMultiWriter2_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
     }
 
     /*!
-     * \brief Start and advance one iteration
+     * \brief Write convergence to vtk
      *
      * \param uLastIter The solution of the last iteration
      * \param deltaU The delta as calculated from solving the linear
@@ -117,17 +111,17 @@ struct MultiDomainConvergenceWriter
     void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
     {
-            SolutionVector1 uLastIter1(ctl_.method().model().sdModel1().curSol());
-            SolutionVector2 uLastIter2(ctl_.method().model().sdModel2().curSol());
-            SolutionVector1 deltaU1(uLastIter1);
-            SolutionVector2 deltaU2(uLastIter2);
+          SolutionVector1 uLastIter1(ctl_.method().model().sdModel1().curSol());
+          SolutionVector2 uLastIter2(ctl_.method().model().sdModel2().curSol());
+          SolutionVector1 deltaU1(uLastIter1);
+          SolutionVector2 deltaU2(uLastIter2);
 
-            SplitAndMerge::splitSolVector(uLastIter, uLastIter1, uLastIter2);
-            SplitAndMerge::splitSolVector(deltaU, deltaU1, deltaU2);
+          SplitAndMerge::splitSolVector(uLastIter, uLastIter1, uLastIter2);
+          SplitAndMerge::splitSolVector(deltaU, deltaU1, deltaU2);
 
-            std::cout << "\n writing convergence file of current Newton iteration \n";
-            ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
-            ctl_.method().model().sdModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
+          std::cout << "\nWriting convergence file of current Newton iteration\n";
+          ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
+          ctl_.method().model().sdModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
     }
 
     //! \brief End of iteration
@@ -140,18 +134,14 @@ struct MultiDomainConvergenceWriter
     //! \brief End of time step
     void endTimestep()
     {
-        ++timeStepIndex_;
         iteration_ = 0;
     }
 
 private:
-    const Problem &problem_() const
-    { return ctl_.method().problem(); }
-
     int timeStepIndex_;
     int iteration_;
-    VtkMultiWriter1 *vtkMultiWriter1_;
-    VtkMultiWriter2 *vtkMultiWriter2_;
+    std::shared_ptr<VtkMultiWriter1> vtkMultiWriter1_;
+    std::shared_ptr<VtkMultiWriter2> vtkMultiWriter2_;
     NewtonController &ctl_;
 };
 

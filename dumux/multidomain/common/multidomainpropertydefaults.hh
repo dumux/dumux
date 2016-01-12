@@ -47,13 +47,13 @@
 #include "multidomainnewtoncontroller.hh"
 #include "splitandmerge.hh"
 
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
 
 namespace Dumux
 {
 template <class TypeTag> class MultiDomainModel;
-template <class TypeTag> class MultiDomainJacobianAssembler;
+template <class TypeTag> class MultiDomainAssembler;
 template <class TypeTag> class MultiDomainNewtonController;
 
 namespace Properties
@@ -139,7 +139,6 @@ public:
 };
 
 // set trivial constraints transformation by default
-// TODO create a proper constraint transformation
 SET_PROP(MultiDomain, MultiDomainConstraintsTrafo)
 {
 private:
@@ -179,16 +178,19 @@ SET_INT_PROP(MultiDomain, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq))
 
 
 // Set property values for the coupled model
-//SET_BOOL_PROP(MultiDomain, DoEnrichedCoupling, false);
 SET_TYPE_PROP(MultiDomain, Model, MultiDomainModel<TypeTag>);
 
 SET_PROP(MultiDomain, SolutionVector)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, numEq> > type;
 };
+
+// Specify the type of the multidomain assembler
+SET_TYPE_PROP(MultiDomain, JacobianAssembler, MultiDomainAssembler<TypeTag>);
 
 // use the plain newton method for the coupled problems by default
 SET_TYPE_PROP(MultiDomain, NewtonMethod, NewtonMethod<TypeTag>);
@@ -215,7 +217,8 @@ public:
 };
 
 SET_PROP(MultiDomain, NumEq1)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) TypeTag1;
     enum {numEq = GET_PROP_VALUE(TypeTag1, NumEq)};
 public:
@@ -223,7 +226,8 @@ public:
 };
 
 SET_PROP(MultiDomain, NumEq2)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TypeTag2;
     enum {numEq = GET_PROP_VALUE(TypeTag2, NumEq)};
 public:

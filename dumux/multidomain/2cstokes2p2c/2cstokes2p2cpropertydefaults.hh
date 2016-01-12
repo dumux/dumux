@@ -47,17 +47,11 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoC, GridView,
 SET_TYPE_PROP(TwoCStokesTwoPTwoC, SolutionVector,
               typename GET_PROP_TYPE(TypeTag, MultiDomainGridOperator)::Traits::Domain);
 
-// Specify the type of the multidomain assembler
-SET_TYPE_PROP(TwoCStokesTwoPTwoC, JacobianAssembler, Dumux::MultiDomainAssembler<TypeTag>);
-
 // Specif the used Newton controller
 SET_TYPE_PROP(TwoCStokesTwoPTwoC, NewtonController, Dumux::TwoCStokesTwoPTwoCNewtonController<TypeTag>);
 
 // Set this to one here (must fit to the structure of the coupled matrix which has block length 1)
 SET_INT_PROP(TwoCStokesTwoPTwoC, NumEq, 1);
-
-// Specitfy if the solutions of individual newton iterations should be written
-SET_BOOL_PROP(TwoCStokesTwoPTwoC, NewtonWriteConvergence, false);
 
 // Specify the used boundary layer model
 SET_INT_PROP(TwoCStokesTwoPTwoC, BoundaryLayerModel, 0);

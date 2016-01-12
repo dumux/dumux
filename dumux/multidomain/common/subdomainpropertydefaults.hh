@@ -35,7 +35,7 @@
 #include "subdomainproperties.hh"
 #include "multidomainproperties.hh"
 #include "multidomainlocaloperator.hh"
-#include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
+#include "boxcouplinglocalresidual.hh"
 
 namespace Dumux
 {
@@ -64,7 +64,8 @@ SET_TYPE_PROP(SubDomain, LocalOperator,
 
 // use the time manager for the coupled problem in the sub problems
 SET_PROP(SubDomain, TimeManager)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) MultiDomainTypeTag;
 public:
     typedef typename GET_PROP_TYPE(MultiDomainTypeTag, TimeManager) type;
@@ -76,19 +77,20 @@ SET_TYPE_PROP(SubDomain, Constraints, Dune::PDELab::NoConstraints);
 // set the grid functions space for the sub-models
 SET_PROP(SubDomain, ScalarGridFunctionSpace)
 {
- private:
+private:
     typedef typename GET_PROP_TYPE(TypeTag, LocalFEMSpace) FEM;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Constraints) Constraints;
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
- public:
+public:
     typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints,
         Dune::PDELab::ISTLVectorBackend<> > type;
 };
 
 // set the grid functions space for the sub-models
 SET_PROP(SubDomain, GridFunctionSpace)
-{private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, ScalarGridFunctionSpace) ScalarGridFunctionSpace;
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
     typedef typename Dune::PDELab::EntityBlockedOrderingTag OrderingTag;
@@ -100,10 +102,10 @@ public:
 // use the local FEM space associated with cubes by default
 SET_PROP(SubDomain, LocalFEMSpace)
 {
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
-
 public:
     typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };

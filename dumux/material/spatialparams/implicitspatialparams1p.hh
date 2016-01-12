@@ -165,6 +165,19 @@ public:
     }
 
     /*!
+     * \brief Function for defining the Beavers-Joseph coefficient for multidomain
+     *        problems\f$\mathrm{[-]}\f$.
+     *
+     * \return Beavers-Joseph coefficient \f$\mathrm{[-]}\f$
+     * \param globalPos The global position
+     */
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide a beaversJosephCoeffAtPos() method.");
+    }
+
+    /*!
      * \brief Apply the Forchheimer coefficient for inertial forces
      *        calculation.
      *

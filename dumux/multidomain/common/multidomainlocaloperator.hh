@@ -46,7 +46,6 @@ class MultiDomainLocalOperator
     MultiDomainLocalOperator(const MultiDomainLocalOperator &);
 
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
 
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
@@ -79,7 +78,7 @@ public:
      */
     template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
     void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
-            const LFSV& lfsv, R& r) const
+                       const LFSV& lfsv, R& r) const
     {
         typedef typename LFSU::Traits::SizeType size_type;
 
@@ -104,14 +103,13 @@ public:
      * \param x Coefficient vector
      * \param lfsv Local function space for test functions
      * \param mat Matrix
-     *
      */
     template<typename EG, typename LFSU, typename X, typename LFSV, typename M>
     void jacobian_volume (const EG& eg,
-            const LFSU& lfsu,
-            const X& x,
-            const LFSV& lfsv,
-            M& mat) const
+                          const LFSU& lfsu,
+                          const X& x,
+                          const LFSV& lfsv,
+                          M& mat) const
     {
         typedef typename LFSU::Traits::SizeType size_typeU;
         typedef typename LFSV::Traits::SizeType size_typeV;
