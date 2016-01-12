@@ -40,7 +40,7 @@ namespace Dumux
  * \ingroup material
  *
  * \brief Implementation of the polynomial of second order relating
- *             specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joakar-Niasar(2007).
+ *             specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joekar-Niasar(2008) \cite joekar2008 .
  */
 template <class ScalarT, class ParamsT = AwnSurfacePolynomial2ndOrderParams<ScalarT> >
 class AwnSurfacePolynomial2ndOrder

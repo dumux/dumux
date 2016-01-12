@@ -373,7 +373,7 @@ public:
      * in
      * S.O.Ochs: "Development of a multiphase multicomponent
      * model for PEMFC - Technical report: IRTG-NUPUS",
-     * University of Stuttgart, 2008
+     * University of Stuttgart, 2008 \cite ochs2008 <BR>
      *
      *
      * \param phaseIdx index of the phase
@@ -630,7 +630,7 @@ public:
      * See:
      * Class Class 2000
      * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in NAPL-kontaminierten porösen Medien
-     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie
+     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
      *
      * Formula (2.42):
      * the specifiv enthalpy of a gasphase result from the sum of (enthalpies*mass fraction) of the components

@@ -43,7 +43,7 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * See:
      *
-     *  Sanders1999 Henry collection
+     *  R. Sander (1999) \cite sander1999
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)

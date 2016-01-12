@@ -26,14 +26,11 @@
  *
  * See:
  *
- * R. Reid, et al.: The Properties of Gases and Liquids, 4th edition,
- * McGraw-Hill, 1987, pp. 43-44
+ * R. Reid, et al. (1987, pp. 43-44) \cite reid1987 <BR>
  *
  * and
  *
- * J.E. Killough, et al.: Fifth Comparative Solution Project:
- * Evaluation of Miscible Flood Simulators, Ninth SPE Symposium on
- * Reservoir Simulation, 1987
+ * J.E. Killough, et al. (1987) \cite SPE5
  */
 #ifndef DUMUX_PENG_ROBINSON_PARAMS_MIXTURE_HH
 #define DUMUX_PENG_ROBINSON_PARAMS_MIXTURE_HH
@@ -54,14 +51,11 @@ namespace Dumux
  *
  * See:
  *
- * R. Reid, et al.: The Properties of Gases and Liquids, 4th edition,
- * McGraw-Hill, 1987, pp. 43-44
+ * R. Reid, et al. (1987, pp. 43-44) \cite reis1987 <BR>
  *
  * and
  *
- * J.E. Killough, et al.: Fifth Comparative Solution Project:
- * Evaluation of Miscible Flood Simulators, Ninth SPE Symposium on
- * Reservoir Simulation, 1987
+ * J.E. Killough, et al. (1987) \cite SPE5
  */
 template <class Scalar, class FluidSystem, int phaseIdx, bool useSpe5Relations=false>
 class PengRobinsonParamsMixture

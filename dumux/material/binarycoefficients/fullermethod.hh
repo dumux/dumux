@@ -43,8 +43,7 @@ namespace BinaryCoeff
  * using to the method proposed by Fuller. This method and is only
  * valid at "low" pressures.
  *
- * See: R. Reid, et al.: The Properties of Gases and Liquids, 4th
- * edition, McGraw-Hill, 1987, pp. 587-588
+ * See: R. Reid, et al. (1987, pp. 587-588) \cite reid1987
  */
 template <class Scalar>
 inline Scalar fullerMethod(const Scalar *M, // molar masses [g/mol]

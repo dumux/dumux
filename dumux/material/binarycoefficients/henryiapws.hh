@@ -43,8 +43,7 @@ namespace Dumux
  * IAPWS: "Guideline on the Henry's Constant and Vapor-Liquid
  * Distribution Constant for Gases in H2O and D2O at High
  * Temperatures"
- * Equation (5)
- * http://www.iapws.org/relguide/HenGuide.pdf
+ * Equation (5) \cite watanabe2004 <BR>
  *
  * Range of validity: T = {278.12 ; 636.46}
  * approximations beyond this range are increasingly incorrect.

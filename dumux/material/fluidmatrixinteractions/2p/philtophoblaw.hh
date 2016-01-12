@@ -74,7 +74,7 @@ namespace Dumux
  *        - the definition of the material law in the spatial parameters is not really intuitive, but using it is:
  *          Hand in values, get back values, do not deal with conversion.
  *
- *        CAREFULL: here w and n still stand for wetting and non-wetting. In the hydrophobic model w stands for
+ *        CAREFUL: here w and n still stand for wetting and non-wetting. In the hydrophobic model w stands for
  *        water (non-wetting) and n for non-water (wetting). Hence, Swr is the wetting phase (gas) residual
  *        saturation and needs to be set accordingly in the spatial parameters.
  */

@@ -86,8 +86,7 @@ public:
      *
      * See:
      *
-      * R. Reid, et al.: The Properties of Gases and Liquids,
-      * 4th edition, McGraw-Hill, 1987, pp. 42-44, 143-145
+      * R. Reid, et al. (1987, pp. 42-44, 143-145) \cite reid1987
       */
     template <class FluidState, class Params>
     static Scalar computeFugacityCoefficient(const FluidState &fs,

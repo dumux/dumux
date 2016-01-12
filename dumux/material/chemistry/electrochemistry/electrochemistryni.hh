@@ -43,7 +43,7 @@ NEW_PROP_TAG(PrimaryVariables);
 /*!
 * \brief
 * Class calculating source terms and current densities for fuel cells
-* with the electrochemical models suggested by Ochs [2008] or Acosta [2006]
+* with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta (2006) \cite A3:acosta:2006
 * for the non-isothermal case
 */
 template <class TypeTag, Dumux::ElectroChemistryModel electroChemistryModel>

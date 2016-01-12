@@ -52,8 +52,7 @@ public:
     /*!
      * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for air and mesitylene.
      * I used the method according to Wilke and Lee
-     * see Handbook of chem. property's Estimation Methods
-     * W.J. Lyman, W.F. Reehl, D.H. Rosenblatt
+     * see W.J. Lyman, W.F. Reehl, D.H. Rosenblatt (1990) \cite lyman1990 <BR>
      * \param temperature temperature in \f$\mathrm{[K]}\f$
      * \param pressure pressure in \f$\mathrm{[Pa]}\f$
      *

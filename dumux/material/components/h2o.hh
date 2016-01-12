@@ -53,7 +53,7 @@ namespace Dumux
  *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation
  * 1997 for the Thermodynamic Properties of Water and Steam",
- * http://www.iapws.org/relguide/IF97-Rev.pdf
+ * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
  */
 template <class Scalar>
 class H2O : public Component<Scalar, H2O<Scalar> >
@@ -146,7 +146,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar vaporTemperature(Scalar pressure)
     {
@@ -168,7 +168,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
@@ -218,7 +218,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar liquidEnthalpy(Scalar temperature,
                                        Scalar pressure)
@@ -259,7 +259,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar gasHeatCapacity(Scalar temperature,
                                         Scalar pressure)
@@ -295,7 +295,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar liquidHeatCapacity(Scalar temperature,
                                            Scalar pressure)
@@ -458,7 +458,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar liquidHeatCapacityConstVolume(Scalar temperature,
                                                       Scalar pressure)
@@ -492,7 +492,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
     */
     static Scalar gasHeatCapacityConstVolume(Scalar temperature, Scalar pressure)
     {
@@ -538,7 +538,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
@@ -616,7 +616,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar gasPressure(Scalar temperature, Scalar density)
     {
@@ -659,7 +659,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -719,7 +719,7 @@ public:
      *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar liquidPressure(Scalar temperature, Scalar density)
     {
@@ -758,7 +758,7 @@ public:
      * See:
      *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
-     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -782,7 +782,7 @@ public:
      * See:
      *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
-     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {

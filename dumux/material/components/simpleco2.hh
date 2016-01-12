@@ -169,8 +169,7 @@ public:
      *
      * See:
      *
-     * See: R. Reid, et al.: The Properties of Gases and Liquids, 4th
-     * edition, McGraw-Hill, 1987, pp 396-397, 667
+     * See: R. Reid, et al. (1987, pp 396-397, 667) \cite reid1987
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {

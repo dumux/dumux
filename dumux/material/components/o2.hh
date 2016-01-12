@@ -92,8 +92,7 @@ public:
      *
      * Taken from:
      *
-     * R. Prydz: "An Improved Oxygen Vapor Pressure Representation",
-     * Metrologia, Vol. 8, No. 1, pp. 1-4, 1972
+     * R. Prydz (1972, pp. 1-4) \cite prydz1972
      */
     static Scalar vaporPressure(Scalar T)
     {
@@ -165,8 +164,7 @@ public:
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * See: R. Reid, et al.: The Properties of Gases and Liquids, 4th
-     * edition, McGraw-Hill, 1987, pp 154, 657, 665
+     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
     static const Scalar gasEnthalpy(Scalar T,
                                     Scalar pressure)
@@ -198,8 +196,7 @@ public:
      *
      * See:
      *
-     * See: R. Reid, et al.: The Properties of Gases and Liquids, 4th
-     * edition, McGraw-Hill, 1987, pp 396-397, 664
+     * See: R. Reid, et al. (1987, pp 396-397, 664) \cite reid1987
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {

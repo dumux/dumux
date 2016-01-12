@@ -91,12 +91,9 @@ public:
      *
      * See:
      *
-     * R. Reid et al.: "The properties of Gases and Liquids", 4th edition,
-     * pp. 599, McGraw-Hill, 1987
+     * R. Reid et al. (1987, pp. 599) \cite reid1987 <BR>
      *
-     * R. Ferrell, D. Himmelblau: "Diffusion Coeffients of Nitrogen and
-     * Oxygen in Water", Journal of Chemical Engineering and Data,
-     * Vol. 12, No. 1, pp. 111-115, 1967
+     * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)

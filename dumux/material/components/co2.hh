@@ -120,12 +120,9 @@ public:
      *
      * See:
      *
-     * R. Span and W. Wagner: A New Equation of State for Carbon
-     * Dioxide Covering the Fluid Region from the Triple‐Point
-     * Temperature to 1100 K at Pressures up to 800 MPa. Journal of
-     * Physical and Chemical Reference Data, 25 (6), pp. 1509-1596,
-     * 1996
+     * R. Span and W. Wagner (1996, pp. 1509-1596) \cite span1996
      */
+
     static Scalar vaporPressure(Scalar T)
     {
         static const Scalar a[4] =

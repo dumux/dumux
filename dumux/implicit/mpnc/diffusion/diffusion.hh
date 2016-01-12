@@ -114,6 +114,8 @@ protected:
      * \param fluxes The Diffusive flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current sub control volume face
      * \param molarDensity The (molar) density of the phase
+     *
+     * Reid et al. (1987, p. 596) \cite reid1987 <BR>
      */
     static void gasFlux_(ComponentVector &fluxes,
                          const FluxVariables &fluxVars,

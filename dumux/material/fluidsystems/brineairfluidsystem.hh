@@ -343,9 +343,10 @@ public:
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      * \param fluidState the fluid state
      *
-     * Equation given in:    - Batzle & Wang (1992)
+     * Equation given in:
+     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids"
+     *                           "Equations of State for basin geofluids" \cite adams2002
      */
     using Base::density;
     template <class FluidState>
@@ -380,9 +381,10 @@ public:
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * Equation given in:    - Batzle & Wang (1992)
+     * Equation given in:
+     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids"
+     *                           "Equations of State for basin geofluids" \cite adams2002
      */
     using Base::viscosity;
     template <class FluidState>
@@ -543,7 +545,7 @@ public:
      * See:
      * Class Class 2000
      * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in NAPL-kontaminierten porösen Medien
-     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie
+     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
      *
      * Formula (2.42):
      * the specific enthalpy of a gas phase result from the sum of (enthalpies*mass fraction) of the components
@@ -699,8 +701,9 @@ private:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * Equations given in:    - Batzle & Wang (1992)
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271
+     * Equations given in:
+     *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
+     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
      */
 
     static Scalar liquidDensity_(Scalar T,

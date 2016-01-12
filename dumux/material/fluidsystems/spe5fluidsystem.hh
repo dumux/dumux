@@ -28,7 +28,7 @@
  *
  * J.E. Killough, et al.: Fifth Comparative Solution Project:
  * Evaluation of Miscible Flood Simulators, Ninth SPE Symposium on
- * Reservoir Simulation, 1987
+ * Reservoir Simulation, 1987 \cite SPE5
  */
 #ifndef DUMUX_SPE5_FLUID_SYSTEM_HH
 #define DUMUX_SPE5_FLUID_SYSTEM_HH
@@ -53,7 +53,7 @@ namespace FluidSystems
  *
  * J.E. Killough, et al.: Fifth Comparative Solution Project:
  * Evaluation of Miscible Flood Simulators, Ninth SPE Symposium on
- * Reservoir Simulation, 1987
+ * Reservoir Simulation, 1987 \cite SPE5
  */
 template <class Scalar>
 class Spe5
