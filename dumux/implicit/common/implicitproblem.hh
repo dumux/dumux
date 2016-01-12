@@ -945,7 +945,7 @@ public:
     const BoundingBoxTree& boundingBoxTree() const
     {
         if(!boundingBoxTree_)
-            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+            DUNE_THROW(Dune::InvalidStateException, "BoundingBoxTree was not initialized in the problem yet!");
 
         return *boundingBoxTree_;
     }
