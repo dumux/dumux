@@ -262,11 +262,10 @@ public:
             values.setDirichlet(temperatureIdx);
         }
         else if (onUpperBoundary_(globalPos)
-            && (globalPos[0] > runUpDistanceX_ - eps_)
-            && (time > initializationTime_))
-            {
-                values.setAllCouplingNeumann();
-            }
+                 && (globalPos[0] > runUpDistanceX_ - eps_)
+                 && (time > initializationTime_))
+        {
+            values.setAllCouplingNeumann();
         }
     }
 
