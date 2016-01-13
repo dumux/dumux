@@ -1003,7 +1003,7 @@ public:
                          const int scvIdx,
                          const ElementVolumeVariables &elemVolVars) const
     {
-        auto key = std::make_pair(this->elementMapper().index(element), scvIdx);
+        auto key = std::make_pair(this->gridView().indexSet().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
