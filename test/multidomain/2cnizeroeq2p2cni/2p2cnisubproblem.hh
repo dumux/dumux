@@ -95,7 +95,6 @@ class TwoPTwoCNISubProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::Grid Grid;
 
     typedef TwoPTwoCNISubProblem<TypeTag> ThisType;
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
@@ -236,16 +235,11 @@ public:
         {
             values.setDirichlet(temperatureIdx);
         }
-
-        if (onUpperBoundary_(globalPos))
+        else if (onUpperBoundary_(globalPos)
+            && (globalPos[0] > runUpDistanceX1_ - eps_)
+            && (globalPos[0] < runUpDistanceX2_ + eps_))
         {
-            if (globalPos[0] > runUpDistanceX1_ - eps_
-                && globalPos[0] < runUpDistanceX2_ + eps_)
-            {
-                values.setAllCouplingNeumann();
-            }
-            else
-                values.setAllNeumann();
+            values.setAllCouplingNeumann();
         }
     }
 
