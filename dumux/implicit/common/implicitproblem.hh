@@ -462,7 +462,7 @@ public:
      * solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param pointSources The vector of point sources
+     * \param pointSource A single point source
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scvIdx The local subcontrolvolume index
@@ -472,11 +472,31 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void solDependentPointSources(std::vector<PointSource> &pointSources,
-                                  const Element &element,
-                                  const FVElementGeometry &fvGeometry,
-                                  const int scvIdx,
-                                  const ElementVolumeVariables &elemVolVars) const {}
+    void solDependentPointSource(PointSource& pointSource,
+                                 const Element &element,
+                                 const FVElementGeometry &fvGeometry,
+                                 const int scvIdx,
+                                 const ElementVolumeVariables &elemVolVars) const
+    {
+        // forward to space dependent interface method
+        asImp_().pointSourceAtPos(pointSource, pointSource.position());
+    }
+
+    /*!
+     * \brief Evaluate the point sources (added by addPointSources)
+     *        for all phases within a given sub-control-volume.
+     *
+     * This is the method for the case where the point source is space dependent
+     *
+     * \param pointSource A single point source
+     * \param position The point source position in global coordinates
+     *
+     * For this method, the \a values() method of the point sources returns
+     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void pointSourceAtPos(PointSource& pointSource,
+                          const GlobalPosition &globalPos) const {}
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -561,7 +581,34 @@ public:
         // Remeber to call the parent class function if this is overwritten
         // on a lower problem level when using an adaptive grid
         if (adaptiveGrid && timeManager().timeStepIndex() > 0)
+        {
             this->gridAdapt().adaptGrid();
+
+            // if the grid changed recompute the source map and the bounding box tree
+            if (this->gridAdapt().wasAdapted())
+            {
+                // update bounding box tree if it exists
+                if (boundingBoxTree_)
+                    boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+                // get and apply point sources if any given in the problem
+                std::vector<PointSource> sources;
+                asImp_().addPointSources(sources);
+                // if there are point sources compute the DOF to point source map
+                if (!sources.empty())
+                {
+                    // in the unlikely case it doesn't exist build it
+                    // who knows what the user does in the problem
+                    if(!boundingBoxTree_)
+                        boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+                    // calculate point source locations and save them in a map
+                    pointSourceMap_.clear();
+                    Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
+                                                                             boundingBoxTree_,
+                                                                             sources,
+                                                                             pointSourceMap_);
+                }
+            }
+        }
     }
 
     /*!
@@ -953,6 +1000,8 @@ public:
     /*!
      * \brief Adds contribution of point sources for a specific sub control volume
      *        to the values.
+     *        Caution: Only overload this method in the implementation if you know
+     *                 what you are doing.
      */
     void scvPointSources(PrimaryVariables &values,
                          const Element &element,
@@ -964,8 +1013,8 @@ public:
         if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
+            // we make a copy of the local point sources here
             auto pointSources = pointSourceMap_.at(key);
-            asImp_().solDependentPointSources(pointSources, element, fvGeometry, scvIdx, elemVolVars);
 
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
@@ -975,7 +1024,22 @@ public:
 
             for (auto&& pointSource : pointSources)
             {
+                // Note: two concepts are implemented here. The PointSource property can be set to a
+                // customized point source function achieving variable point sources,
+                // see Dumux::TimeDependentPointSource for an example. The second imitated the standard
+                // dumux source interface with solDependentPointSource / pointSourceAtPos, methods
+                // that can be overloaded in the actual problem class also achieving variable point sources.
+                // The first one is more convenient for simple function like a time dependent source.
+                // The second one might be more convenient for e.g. a solution dependent point source.
+                // TODO: Decide if one concept can / should be dropped in the future or not.
+
+                // we do an update e.g. used for TimeDependentPointSource
+                pointSource.update(asImp_(), element, fvGeometry, scvIdx, elemVolVars);
+                // call convienience problem interface function
+                asImp_().solDependentPointSource(pointSource, element, fvGeometry, scvIdx, elemVolVars);
+                // at last take care about multiplying with the correct volume
                 pointSource /= volume;
+                // add the point source values to the local residual
                 values += pointSource.values();
             }
         }

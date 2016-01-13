@@ -39,40 +39,118 @@ NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(PrimaryVariables);
 NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(FVElementGeometry);
+NEW_PROP_TAG(ElementVolumeVariables);
 NEW_PROP_TAG(PointSource);
 NEW_PROP_TAG(ImplicitIsBox);
+NEW_PROP_TAG(TimeManager);
 
 } // end namespace Properties
+
+// forward declarations
+template<class TypeTag>
+class PointSourceHelper;
 
 /*!
  * \ingroup Common
  * \brief A point source base class
  */
 template<class TypeTag>
-class PointSource : public GET_PROP_TYPE(TypeTag, PrimaryVariables)
+class PointSource
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GridView::template Codim<0>::Entity Element;
 
     static const int dimworld = GridView::dimensionworld;
     typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
+    friend class Dumux::PointSourceHelper<TypeTag>;
+
 public:
-    // Constructor
+    //! Constructor for constant point sources
     PointSource(GlobalPosition pos, PrimaryVariables values)
-      : PrimaryVariables(values), pos_(pos) {}
+      : values_(values), pos_(pos), embeddings_(1) {}
+
+    //! Constructor for sol dependent point sources, when there is no
+    // value known at the time of initialization
+    PointSource(GlobalPosition pos)
+      : values_(0), pos_(pos), embeddings_(1) {}
+
+    //! Convenience += operator overload modifying only the values
+    PointSource& operator+= (Scalar s)
+    {
+        values_ += s;
+        return *this;
+    }
+
+    //! Convenience -= operator overload modifying only the values
+    PointSource& operator-= (Scalar s)
+    {
+        values_ -= s;
+        return *this;
+    }
+
+    //! Convenience *= operator overload modifying only the values
+    PointSource& operator*= (Scalar s)
+    {
+        values_ *= s;
+        return *this;
+    }
+
+    //! Convenience /= operator overload modifying only the values
+    PointSource& operator/= (Scalar s)
+    {
+        values_ /= s;
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    PointSource& operator= (const PrimaryVariables& values)
+    {
+        values_ = values;
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    PointSource& operator= (Scalar s)
+    {
+        values_ = s;
+        return *this;
+    }
 
     //! return the source values
-    const PrimaryVariables& values() const
-    { return *this; }
+    // don't forget to call this when it's overloaded
+    // in the derived class
+    PrimaryVariables values() const
+    {
+        auto values = PrimaryVariables(values_);
+        values /= embeddings_;
+        return values;
+    }
 
     //! return the source position
     const GlobalPosition& position() const
     { return pos_; }
 
+    //! an update function called before adding the value
+    // to the local residual in the problem in scvPointSources
+    // to be overloaded by derived classes
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
+                const ElementVolumeVariables &elemVolVars)
+    {}
+
+protected:
+    PrimaryVariables values_; //! value of the point source for each equation
 private:
-    GlobalPosition pos_;
+    GlobalPosition pos_; //! position of the point source
+    std::size_t embeddings_; //! how many SCVs the point source is associated with
 };
 
 /*!
@@ -91,9 +169,14 @@ class IdPointSource : public Dumux::PointSource<TypeTag>
     typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
 public:
-    // Constructor
+    //! Constructor for constant point sources
     IdPointSource(GlobalPosition pos, PrimaryVariables values, IdType id)
       :  ParentType(pos, values), id_(id) {}
+
+    //! Constructor for sol dependent point sources, when there is no
+    // value known at the time of initialization
+    IdPointSource(GlobalPosition pos, IdType id)
+      : ParentType(pos, 0), id_(id) {}
 
     //! return the sources identifier
     IdType id() const
@@ -101,6 +184,55 @@ public:
 
 private:
     IdType id_;
+};
+
+/*!
+ * \ingroup Common
+ * \brief A point source class for time dependent point sources
+ */
+template<class TypeTag>
+class TimeDependentPointSource : public Dumux::PointSource<TypeTag>
+{
+    typedef typename Dumux::PointSource<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GridView::template Codim<0>::Entity Element;
+
+    static const int dimworld = GridView::dimensionworld;
+    typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+    // a function that takes a TimeManager and a GlobalPosition
+    // and returns the PointSource values as PrimaryVariables
+    typedef typename std::function<PrimaryVariables(const TimeManager&, const GlobalPosition&)> ValueFunction;
+
+public:
+    //! Constructor for constant point sources
+    TimeDependentPointSource(GlobalPosition pos, PrimaryVariables values,
+                             ValueFunction valueFunction)
+      : ParentType(pos, values), valueFunction_(valueFunction) {}
+
+    //! Constructor for sol dependent point sources, when there is no
+    // value known at the time of initialization
+    TimeDependentPointSource(GlobalPosition pos,
+                             ValueFunction valueFunction)
+      : ParentType(pos, 0), valueFunction_(valueFunction) {}
+
+    //! an update function called before adding the value
+    // to the local residual in the problem in scvPointSources
+    // to be overloaded by derived classes
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
+                const ElementVolumeVariables &elemVolVars)
+    { this->values_ = valueFunction_(problem.timeManager(), this->position()); }
+
+private:
+    ValueFunction valueFunction_;
 };
 
 /*!
@@ -135,7 +267,7 @@ public:
             // compute in which elements the point source falls
             std::vector<unsigned int> entities = boundingBoxTree->computeEntityCollisions(source.position());
             // split the source values equally among all concerned entities
-            source /= entities.size();
+            source.embeddings_ *= entities.size();
             // loop over all concernes elements
             for (unsigned int eIdx : entities)
             {
@@ -164,7 +296,7 @@ public:
                         else
                             pointSourceMap.insert({key, {source}});
                         // split equally on the number of matched scvs
-                        pointSourceMap.at(key).back() /= scvs.size();
+                        pointSourceMap.at(key).back().embeddings_ *= scvs.size();
                     }
                 }
                 else
