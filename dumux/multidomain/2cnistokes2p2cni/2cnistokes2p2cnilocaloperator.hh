@@ -220,6 +220,7 @@ public:
                                  cParams,
                                  couplingRes1, couplingRes2);
 
+        const GlobalPosition& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
         const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
 
         // ENERGY Balance
