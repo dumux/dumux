@@ -195,7 +195,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         return refTemperature_;
-    };
+    }
 
     /*!
      * \name Boundary conditions

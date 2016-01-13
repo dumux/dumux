@@ -226,7 +226,7 @@ public:
 
         setSwitched_(false);
         resetPhasePresence_();
-    };
+    }
 
     /*!
      * \brief Called by the problem if a time integration was

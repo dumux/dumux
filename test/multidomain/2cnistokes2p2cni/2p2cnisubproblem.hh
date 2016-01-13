@@ -95,16 +95,12 @@ class TwoPTwoCNISubProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::Grid Grid;
 
     typedef TwoPTwoCNISubProblem<TypeTag> ThisType;
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
-    // the type tag of the coupled problem
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) CoupledTypeTag;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
@@ -265,22 +261,11 @@ public:
         {
             values.setDirichlet(temperatureIdx);
         }
-
-        if (onUpperBoundary_(globalPos))
+        else if (onUpperBoundary_(globalPos)
+                 && (globalPos[0] > runUpDistanceX_ - eps_)
+                 && (time > initializationTime_))
         {
-            if (time > initializationTime_)
-            {
-                if (globalPos[0] > runUpDistanceX_ - eps_)
-                {
-                    values.setAllCouplingNeumann();
-                }
-                else
-                    values.setAllNeumann();
-            }
-            else
-            {
-                values.setAllNeumann();
-            }
+            values.setAllCouplingNeumann();
         }
     }
 
