@@ -155,12 +155,10 @@ public:
         // if there are point sources compute the DOF to point source map
         if (!sources.empty())
         {
-            // build the bounding box tree for fast point in element search
-            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
-
             // calculate point source locations and save them in a map
+            // this builds the bounding box tree if it doesn't exist yet
             Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
-                                                                     boundingBoxTree_,
+                                                                     this->boundingBoxTree(),
                                                                      sources,
                                                                      pointSourceMap_);
         }
@@ -596,14 +594,10 @@ public:
                 // if there are point sources compute the DOF to point source map
                 if (!sources.empty())
                 {
-                    // in the unlikely case it doesn't exist build it
-                    // who knows what the user does in the problem
-                    if(!boundingBoxTree_)
-                        boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
                     // calculate point source locations and save them in a map
                     pointSourceMap_.clear();
                     Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
-                                                                             boundingBoxTree_,
+                                                                             this->boundingBoxTree(),
                                                                              sources,
                                                                              pointSourceMap_);
                 }

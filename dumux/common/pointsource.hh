@@ -258,14 +258,14 @@ class PointSourceHelper
 public:
     //! calculate a DOF index to point source map from given vector of point sources
     static void computePointSourceMap(const Problem& problem,
-                                      const std::shared_ptr<BoundingBoxTree>& boundingBoxTree,
+                                      const BoundingBoxTree& boundingBoxTree,
                                       std::vector<PointSource>& sources,
                                       std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
     {
         for (auto&& source : sources)
         {
             // compute in which elements the point source falls
-            std::vector<unsigned int> entities = boundingBoxTree->computeEntityCollisions(source.position());
+            std::vector<unsigned int> entities = boundingBoxTree.computeEntityCollisions(source.position());
             // split the source values equally among all concerned entities
             source.embeddings_ *= entities.size();
             // loop over all concernes elements
@@ -274,7 +274,7 @@ public:
                 if(isBox)
                 {
                     // check in which subcontrolvolume(s) we are
-                    const auto element = boundingBoxTree->entity(eIdx);
+                    const auto element = boundingBoxTree.entity(eIdx);
                     FVElementGeometry fvGeometry;
                     fvGeometry.update(problem.gridView(), element);
                     const auto globalPos = source.position();
