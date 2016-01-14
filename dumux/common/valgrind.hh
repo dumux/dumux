@@ -23,11 +23,6 @@
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
 
-#ifndef HAVE_VALGRIND
-// make sure that the HAVE_VALGRIND macro is always defined
-#  define HAVE_VALGRIND 0
-#endif
-
 #if ! HAVE_VALGRIND
 namespace Valgrind
 {
@@ -166,8 +161,8 @@ inline void SetNoAccess(const T *value, int n)
 #endif
 }
 
-}
+} // end namespace Valgrind
 
-#endif
+#endif // HAVE_VALGRIND
 
-#endif
+#endif // DUMUX_VALGRIND_HH
