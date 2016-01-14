@@ -296,8 +296,9 @@ public:
      * \param boundaryFaceIdx The index of the boundary face
      * \param elemVolVars All volume variables for the element
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     void solDependentNeumann(PrimaryVariables &values,
                       const Element &element,
@@ -328,8 +329,9 @@ public:
      * \param scvIdx The local subcontrolvolume index
      * \param boundaryFaceIdx The index of the boundary face
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -350,8 +352,9 @@ public:
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param globalPos The position of the boundary face's integration point in global coordinates
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     void neumannAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
@@ -379,9 +382,10 @@ public:
      * \param scvIdx The local subcontrolvolume index
      * \param elemVolVars All volume variables for the element
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     void solDependentSource(PrimaryVariables &values,
                      const Element &element,
@@ -403,9 +407,10 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param scvIdx The local subcontrolvolume index
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     void source(PrimaryVariables &values,
                 const Element &element,
@@ -426,9 +431,10 @@ public:
      *            for which the source term ought to be
      *            specified in global coordinates
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
@@ -446,9 +452,10 @@ public:
               source values for all phases and space positions.
      *
      * For this method, the \a values method of the point source
-     * has to return the absolute mass rate in untis
+     * has to return the absolute rate values in units
      * \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
-     * Positive values mean that mass is created, negative ones mean that it vanishes.
+     * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
     void addPointSources(std::vector<PointSource>& pointSources) const {}
 
@@ -467,8 +474,10 @@ public:
      * \param elemVolVars All volume variables for the element
      *
      * For this method, the \a values() method of the point sources returns
-     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * the absolute conserved quantity rate generated or annihilate in
+     * units \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
+     * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
     void solDependentPointSource(PointSource& pointSource,
                                  const Element &element,
@@ -490,8 +499,10 @@ public:
      * \param position The point source position in global coordinates
      *
      * For this method, the \a values() method of the point sources returns
-     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * the absolute conserved quantity rate generated or annihilate in
+     * units \f$ [ \textnormal{unit of conserved quantity} / s ] \f$. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
     void pointSourceAtPos(PointSource& pointSource,
                           const GlobalPosition &globalPos) const {}
