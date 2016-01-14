@@ -25,6 +25,8 @@
 #ifndef DUMUX_CUBE_GRID_CREATOR_HH
 #define DUMUX_CUBE_GRID_CREATOR_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9. Use the default (Dumux::GridCreator). Structured grids can be defined via the input file now (see handbook). Set CellType = Cube for cube grid.
+
 #include <dune/grid/utility/structuredgridfactory.hh>
 
 #include <dumux/common/basicproperties.hh>

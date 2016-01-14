@@ -23,6 +23,8 @@
 #ifndef DUMUX_DGF_GRID_CREATOR_HH
 #define DUMUX_DGF_GRID_CREATOR_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9. Use the default grid creator (Dumux::GridCreator).
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 

@@ -25,6 +25,8 @@
 #ifndef DUMUX_SIMPLEX_GRID_CREATOR_HH
 #define DUMUX_SIMPLEX_GRID_CREATOR_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9. Use the default (Dumux::GridCreator). Structured grids can be defined via the input file now (see handbook). Set CellType = Simplex for simplex grid.
+
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 
