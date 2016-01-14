@@ -80,7 +80,7 @@ inline bool Running()
  * \brief Make valgrind complain if the object occupied by an object
  *        is undefined.
  *
- * Please note that this does not check whether the destinations of
+ * \note This does not check whether the destinations of
  * the object's pointers or references are defined.
  *
  * \tparam T The type of the object which ought to be checked
