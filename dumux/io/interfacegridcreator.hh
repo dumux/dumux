@@ -25,6 +25,8 @@
 #ifndef DUMUX_INTERFACEGRIDCREATOR_HH
 #define DUMUX_INTERFACEGRIDCREATOR_HH
 
+#warning This file is deprecated and will be removed after Dumux 2.9. Use the grid template "Dune::YaspGrid<dim, Dune::TensorProductCoordinates<Scalar, dim> >" instead.
+
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
