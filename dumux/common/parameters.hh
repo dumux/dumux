@@ -104,7 +104,7 @@
  * \code
  * // -> retrieves global integer value "NumberOfCellsX" which is
  * // located in the parameter group "Grid"
- * GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, "Grid.NumberOfCellsX");
+ * GET_RUNTIME_PARAM_CSTRING(TypeTag, int, "Grid.NumberOfCellsX");
  * \endcode
  *
  * Example with a string variable:
@@ -114,7 +114,7 @@
  * // located in the parameter group "Grid"
  * std::string paramName = "Grid";
  * paramName += ".NumberOfCellsX";
- * GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, paramName.c_str());
+ * GET_RUNTIME_PARAM_CSTRING(TypeTag, int, paramName.c_str());
  * \endcode
  */
 #define GET_RUNTIME_PARAM_CSTRING(TypeTag, ParamType, ParamName) \
