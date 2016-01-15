@@ -48,11 +48,7 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
 
 #include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
@@ -60,7 +56,6 @@
 
 #include <dumux/material/fluidsystems/h2on2fluidsystemkinetic.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/interfacegridcreator.hh>
 #include <dumux/io/plotoverline2d.hh>
 
 #include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
@@ -83,17 +78,7 @@ NEW_TYPE_TAG(EvaporationAtmosphereProblem,
              INHERITS_FROM(BoxMPNCKinetic, EvaporationAtmosphereSpatialParams));
 
 // Set the grid type
-SET_PROP(EvaporationAtmosphereProblem, Grid)
-{
-#if HAVE_DUNE_ALUGRID
-    typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-#else
-    typedef typename Dune::UGGrid<2> type;
-#endif
-};
-
-// Use the interface grid creator to create the grid
-SET_TYPE_PROP(EvaporationAtmosphereProblem, GridCreator, InterfaceGridCreator<TypeTag>);
+SET_TYPE_PROP(EvaporationAtmosphereProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
 SET_TYPE_PROP(EvaporationAtmosphereProblem,

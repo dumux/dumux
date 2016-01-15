@@ -5,17 +5,13 @@ TEnd = 3600 # [s]
 EpisodeLength = 14400 # [s] # 14400s = 4h
 
 [Grid]
-LowerLeftX = 0.0 # [m]
-UpperRightX = 0.75 # [m]
-LowerLeftY = 0.0 # [m]
-UpperRightY = 0.75 # [m]
-# Number of elements in x-, y-direction
-NumberOfCellsX = 15
-NumberOfCellsY = 30
-# Grading and refinement of the mesh
-GradingFactorY = 1.16
-RefineTopY = true
-# Position information
+Cells0 = 15
+Cells1 = 10 10 10
+Grading0 = 1.0
+Grading1 = 1.1 0.9 1.1
+Positions0 = 0.0 0.75
+Positions1 = 0.0 0.25 0.5 0.75
+
 NoDarcyX1 = 0.25 # [m] # Beginning of PM below
 NoDarcyX2 = 0.5 # [m] # End of PM below
 RunUpDistanceX1 = 0.251 # [m] # Beginning of without Coupling to PM (x-coordinate)

@@ -28,7 +28,6 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
-#include <dumux/io/interfacegridcreator.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnilocaloperator.hh>
@@ -48,13 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(TwoCNIZeroEqTwoPTwoCNIProblem, INHERITS_FROM(TwoCNIStokesTwoPTwoCNI));
 
 // Set the grid type
-#if HAVE_UG
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::UGGrid<2>);
-#elif HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#else
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2>);
-#endif
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the global problem
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Problem, TwoCNIZeroEqTwoPTwoCNIProblem<TypeTag>);
@@ -89,9 +82,6 @@ SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, LinearSolver, SuperLUBackend<TypeTa
 #else
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
-
-// Use the interface grid creator to create the grid
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, GridCreator, Dumux::InterfaceGridCreator<TypeTag>);
 }
 
 /*!

@@ -43,14 +43,6 @@ void printUsage(const char *progName, const std::string &errorMsg)
         errorMessageOut += errorMsg;
         errorMessageOut += "\nAn uncomplete list of mandatory options for this program is:\n"
                            "[Grid]\n"
-                           "LowerLeftX               Minumum x-coordinate [m]\n"
-                           "UpperRightX              Maximum x-coordinate [m]\n"
-                           "LowerLeftY               Minumum y-coordinate [m]\n"
-                           "UpperRightY              Maximum y-coordinate [m]\n"
-                           "NumberOfCellsX           Number of cells in x-direction\n"
-                           "NumberOfCellsY           Number of cells in y-direction\n"
-                           "GradingFactorY           Vertical grading of the cells\n"
-                           "RefineTop                Specifies whethter the top of the free flow will be refined\n"
                            "InterfacePosY            Vertical position of the interface [m]\n"
                            "\n";
 
@@ -61,12 +53,6 @@ void printUsage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if !HAVE_UG && !HAVE_DUNE_ALUGRID
-#warning Evaporation Atmosphere not built, needs either UG or dune-ALUGrid for the log mesh.
-    std::cerr << "Evaporation Atmosphere not built, needs either UG or dune-ALUGrid for the log mesh." << std::endl;
-    return 77;
-#else
     typedef TTAG(EvaporationAtmosphereProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, printUsage);//, usage);
-#endif
+    return Dumux::start<ProblemTypeTag>(argc, argv, printUsage);
 }

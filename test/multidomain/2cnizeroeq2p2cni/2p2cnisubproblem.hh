@@ -157,12 +157,13 @@ public:
     {
         Scalar noDarcyX1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX1);
         Scalar noDarcyX2 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX2);
-        Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
-        Scalar xMax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
+        std::vector<Scalar> positions0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions0);
+        std::vector<Scalar> positions1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions1);
 
-        bBoxMin_[0] = std::max(xMin,noDarcyX1);
-        bBoxMax_[0] = std::min(xMax,noDarcyX2);
-        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftY);
+        bBoxMin_[0] = std::max(positions0.front(),noDarcyX1);
+        bBoxMax_[0] = std::min(positions0.back(),noDarcyX2);
+
+        bBoxMin_[1] = positions1.front();
         bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
         runUpDistanceX1_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX1); // first part of the interface without coupling
         runUpDistanceX2_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX2); // second part of the interface without coupling
