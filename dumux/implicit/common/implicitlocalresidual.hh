@@ -245,6 +245,29 @@ public:
     }
 
     /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param values The source/sink in the sub-control volume for each phase
+     * \param scvIdx The index of the sub-control volume
+     *
+     */
+    void computeSource(PrimaryVariables &source, const int scvIdx)
+    {
+        this->problem_().solDependentSource(source,
+                                            element_(),
+                                            fvGeometry_(),
+                                            scvIdx,
+                                            curVolVars_());
+
+        // add contribution from possible point sources
+        this->problem_().scvPointSources(source,
+                                         element_(),
+                                         fvGeometry_(),
+                                         scvIdx,
+                                         curVolVars_());
+    }
+
+    /*!
      * \brief Returns the local residual for all sub-control
      *        volumes of the element.
      */

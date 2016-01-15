@@ -1,0 +1,30 @@
+[TimeManager]
+DtInitial = 25 # [s]
+TEnd = 500 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 6 4
+Cells = 48 32
+
+[SpatialParams]
+LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner
+LensLowerLeftY = 2.0 # [m] y-coordinate of the lower left lens corner
+LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
+LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
+
+[Problem]
+Name = lensccadaptive # name passed to the output routines
+
+[Implicit]
+EnablePartialReassemble = 1 # enable partial reassembly of the jacobian matrix?
+EnableJacobianRecycling = 1 # Enable reuse of jacobian matrices?
+
+[GridAdapt]
+EnableInitializationIndicator = 1
+RefineAtDirichletBC = 1
+RefineAtFluxBC = 1
+MinLevel = 0
+MaxLevel = 2
+CoarsenTolerance = 1.0e-4
+RefineTolerance = 1.0e-4

@@ -146,22 +146,6 @@ public:
     }
 
     /*!
-     * \brief Calculate the source term of the equation.
-     *
-     * \param source The source/sink in the SCV
-     * \param scvIdx The index of the SCV
-     *
-     */
-    void computeSource(PrimaryVariables &source, const int scvIdx)
-    {
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
-    }
-
-    /*!
      * \brief Return the temperature given the solution vector of a
      *        finite volume.
      */

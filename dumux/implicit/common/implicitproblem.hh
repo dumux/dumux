@@ -28,6 +28,7 @@
 
 #include <dumux/io/restart.hh>
 #include <dumux/implicit/adaptive/gridadapt.hh>
+#include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux
 {
@@ -65,6 +66,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
 
     enum {
         dim = GridView::dimension,
@@ -79,10 +81,12 @@ private:
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
+    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
 
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
@@ -139,9 +143,24 @@ public:
         // set the initial condition of the model
         model().init(asImp_());
 
+        // initialize grid adapt model if we have an adaptive grid
         if (adaptiveGrid)
         {
             gridAdapt().init();
+        }
+
+        // get and apply point sources if any given in the problem
+        std::vector<PointSource> sources;
+        asImp_().addPointSources(sources);
+        // if there are point sources compute the DOF to point source map
+        if (!sources.empty())
+        {
+            // calculate point source locations and save them in a map
+            // this builds the bounding box tree if it doesn't exist yet
+            Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
+                                                                     this->boundingBoxTree(),
+                                                                     sources,
+                                                                     pointSourceMap_);
         }
     }
 
@@ -277,8 +296,9 @@ public:
      * \param boundaryFaceIdx The index of the boundary face
      * \param elemVolVars All volume variables for the element
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     void solDependentNeumann(PrimaryVariables &values,
                       const Element &element,
@@ -309,8 +329,9 @@ public:
      * \param scvIdx The local subcontrolvolume index
      * \param boundaryFaceIdx The index of the boundary face
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -331,8 +352,9 @@ public:
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param globalPos The position of the boundary face's integration point in global coordinates
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     void neumannAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
@@ -360,9 +382,10 @@ public:
      * \param scvIdx The local subcontrolvolume index
      * \param elemVolVars All volume variables for the element
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     void solDependentSource(PrimaryVariables &values,
                      const Element &element,
@@ -384,9 +407,10 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param scvIdx The local subcontrolvolume index
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     void source(PrimaryVariables &values,
                 const Element &element,
@@ -407,9 +431,10 @@ public:
      *            for which the source term ought to be
      *            specified in global coordinates
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
@@ -418,6 +443,69 @@ public:
                    "The problem does not provide "
                    "a sourceAtPos() method.");
     }
+
+    /*!
+     * \brief Applies a vector of point sources. The point sources
+     *        are possibly solution dependent.
+     *
+     * \param pointSources A vector of Dumux::PointSource s that contain
+              source values for all phases and space positions.
+     *
+     * For this method, the \a values method of the point source
+     * has to return the absolute rate values in units
+     * \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
+     * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
+     */
+    void addPointSources(std::vector<PointSource>& pointSources) const {}
+
+    /*!
+     * \brief Evaluate the point sources (added by addPointSources)
+     *        for all phases within a given sub-control-volume.
+     *
+     * This is the method for the case where the point source is
+     * solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param pointSource A single point source
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
+     * \param elemVolVars All volume variables for the element
+     *
+     * For this method, the \a values() method of the point sources returns
+     * the absolute conserved quantity rate generated or annihilate in
+     * units \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
+     * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
+     */
+    void solDependentPointSource(PointSource& pointSource,
+                                 const Element &element,
+                                 const FVElementGeometry &fvGeometry,
+                                 const int scvIdx,
+                                 const ElementVolumeVariables &elemVolVars) const
+    {
+        // forward to space dependent interface method
+        asImp_().pointSourceAtPos(pointSource, pointSource.position());
+    }
+
+    /*!
+     * \brief Evaluate the point sources (added by addPointSources)
+     *        for all phases within a given sub-control-volume.
+     *
+     * This is the method for the case where the point source is space dependent
+     *
+     * \param pointSource A single point source
+     * \param position The point source position in global coordinates
+     *
+     * For this method, the \a values() method of the point sources returns
+     * the absolute conserved quantity rate generated or annihilate in
+     * units \f$ [ \textnormal{unit of conserved quantity} / s ] \f$. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
+     */
+    void pointSourceAtPos(PointSource& pointSource,
+                          const GlobalPosition &globalPos) const {}
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -442,7 +530,7 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The dirichlet values for the primary variables
+     * \param values The initial values for the primary variables
      * \param globalPos The position of the center of the finite volume
      *            for which the initial values ought to be
      *            set (in global coordinates)
@@ -453,7 +541,7 @@ public:
                       const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
+        // for initial values)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
                    "a initialAtPos() method.");
@@ -502,7 +590,30 @@ public:
         // Remeber to call the parent class function if this is overwritten
         // on a lower problem level when using an adaptive grid
         if (adaptiveGrid && timeManager().timeStepIndex() > 0)
+        {
             this->gridAdapt().adaptGrid();
+
+            // if the grid changed recompute the source map and the bounding box tree
+            if (this->gridAdapt().wasAdapted())
+            {
+                // update bounding box tree if it exists
+                if (boundingBoxTree_)
+                    boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+                // get and apply point sources if any given in the problem
+                std::vector<PointSource> sources;
+                asImp_().addPointSources(sources);
+                // if there are point sources compute the DOF to point source map
+                if (!sources.empty())
+                {
+                    // calculate point source locations and save them in a map
+                    pointSourceMap_.clear();
+                    Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
+                                                                             this->boundingBoxTree(),
+                                                                             sources,
+                                                                             pointSourceMap_);
+                }
+            }
+        }
     }
 
     /*!
@@ -888,6 +999,76 @@ public:
     }
 
     /*!
+     * \brief Returns the bounding box tree of the grid
+     */
+    BoundingBoxTree& boundingBoxTree()
+    {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief Returns the bounding box tree of the grid
+     */
+    const BoundingBoxTree& boundingBoxTree() const
+    {
+        if(!boundingBoxTree_)
+            DUNE_THROW(Dune::InvalidStateException, "BoundingBoxTree was not initialized in the problem yet!");
+
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief Adds contribution of point sources for a specific sub control volume
+     *        to the values.
+     *        Caution: Only overload this method in the implementation if you know
+     *                 what you are doing.
+     */
+    void scvPointSources(PrimaryVariables &values,
+                         const Element &element,
+                         const FVElementGeometry &fvGeometry,
+                         const int scvIdx,
+                         const ElementVolumeVariables &elemVolVars) const
+    {
+        auto key = std::make_pair(this->gridView().indexSet().index(element), scvIdx);
+        if (pointSourceMap_.count(key))
+        {
+            // call the solDependent function. Herein the user might fill/add values to the point sources
+            // we make a copy of the local point sources here
+            auto pointSources = pointSourceMap_.at(key);
+
+            // Add the contributions to the dof source values
+            // We divide by the volume. In the local residual this will be multiplied with the same
+            // factor again. That's because the user specifies absolute values in kg/s.
+            const Scalar volume = fvGeometry.subContVol[scvIdx].volume
+                                   * asImp_().boxExtrusionFactor(element, fvGeometry, scvIdx);
+
+            for (auto&& pointSource : pointSources)
+            {
+                // Note: two concepts are implemented here. The PointSource property can be set to a
+                // customized point source function achieving variable point sources,
+                // see Dumux::TimeDependentPointSource for an example. The second imitated the standard
+                // dumux source interface with solDependentPointSource / pointSourceAtPos, methods
+                // that can be overloaded in the actual problem class also achieving variable point sources.
+                // The first one is more convenient for simple function like a time dependent source.
+                // The second one might be more convenient for e.g. a solution dependent point source.
+                // TODO: Decide if one concept can / should be dropped in the future or not.
+
+                // we do an update e.g. used for TimeDependentPointSource
+                pointSource.update(asImp_(), element, fvGeometry, scvIdx, elemVolVars);
+                // call convienience problem interface function
+                asImp_().solDependentPointSource(pointSource, element, fvGeometry, scvIdx, elemVolVars);
+                // at last take care about multiplying with the correct volume
+                pointSource /= volume;
+                // add the point source values to the local residual
+                values += pointSource.values();
+            }
+        }
+    }
+
+    /*!
      * \brief Capability to introduce problem-specific routines at the
      * beginning of the grid adaptation
      *
@@ -963,6 +1144,9 @@ private:
     std::shared_ptr<VtkMultiWriter> resultWriter_;
 
     std::shared_ptr<GridAdaptModel> gridAdapt_;
+
+    std::shared_ptr<BoundingBoxTree> boundingBoxTree_;
+    std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> > pointSourceMap_;
 };
 } // namespace Dumux
 

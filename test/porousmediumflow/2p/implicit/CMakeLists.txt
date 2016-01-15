@@ -1,3 +1,4 @@
+add_subdirectory(pointsources)
 add_input_file_links()
 
 # isothermal tests
