@@ -55,13 +55,13 @@ and \Dumux by adding \texttt{--only=MODULE,dumux}.
 If you want to send changes to an other developer of \Dumux providing patches
 can be quite smart. To create a patch simply type:
 \begin{lstlisting}[style=Bash]
-$ svn diff > PATCHFILE
+$ git diff > PATCHFILE
 \end{lstlisting}
 \noindent which creates a text file containing all your changes to the files
 in the current folder or its subdirectories.
 To apply a patch in the same directory type:
 \begin{lstlisting}[style=Bash]
-$ path -p0 < PATCHFILE
+$ patch -p1 < PATCHFILE
 \end{lstlisting}
 See \ref{sc:patchingDUNE} if you need to apply patches to \Dumux or \Dune.
 

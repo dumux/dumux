@@ -1,39 +1,26 @@
 \section{External Tools}
 \label{sc_externaltools}
 
-\subsection{Subversion (svn)}
-Subversion is a software versioning and revision control system. We use Subversion to
-manage the source code of \Dumux, archive changes and central storage.
-Basic svn commands are:
-\begin{itemize}
-  \item \texttt{svn add} to add files/folder to the repository.
-        Use \texttt{svn add --depth=empty FOLDER} to add just the folder
-        and \texttt{svn add YOURFILES} to add files. Generally, you should only add
-        necessary text-based files. Please do not upload (large) binary files.
-  \item \texttt{svn checkout} checkout a repository
-  \item \texttt{svn update} updates files/folder
-  \item \texttt{svn status} to track changes:
-        \textbf{M}odified, \textbf{D}eleted, \textbf{A}dded, \textbf{?} not in repository
-  \item \texttt{svn diff} to see the actual changes of files/folder
-  \item \texttt{svn commit} upload changes to the repository
-\end{itemize}
-There are also tools providing a graphical user interface, like \emph{kdesvn} or \emph{eclipse}.
-
 \subsection{Git}
-Git is an other version control tool which is currently used to manage the \Dune modules.
+Git is a version control tool which we use.
 The basic Git commands are:
 \begin{itemize}
   \item \texttt{git checkout} receive a specified branch from the repository
-  \item \texttt{git clone} clone a repository (similar to svn checkout)
-  \item \texttt{git diff} to see the actual changes of a file/folder
-  \item \texttt{git pull} pull changes from the repository (similar to svn update)
+  \item \texttt{git clone} clone a repository; creates a local copy
+  \item \texttt{git diff} to see the actual changes compared to your last commit
+  \item \texttt{git pull} pull changes from the repository; synchronizes the
+  repository with your local copy
+  \item \texttt{git push} push comitted changes to the repository;  synchronizes
+  your local copy with the repository
   \item \texttt{git status} to check which files/folders have been changed
+  \item \texttt{git gui} graphical user interface, helps selecting changes for
+  a commit
 \end{itemize}
 
 \subsection{Eclipse}
-There is an eclipse style file which can be used for Dumux.
+There is an Eclipse style file which can be used for \Dumux.
 \begin{enumerate}
-  \item in eclipse open: \texttt{Window} $\rightarrow$ \texttt{Preferences} $\rightarrow$
+  \item open in eclipse: \texttt{Window} $\rightarrow$ \texttt{Preferences} $\rightarrow$
         \texttt{C/C++}  $\rightarrow$ \texttt{Code Style} $\rightarrow$ \texttt{Formatter}
   \item press the \texttt{Import} button
   \item choose the file \texttt{eclipse\_profile.xml} from your dumux-devel directory
