@@ -175,7 +175,7 @@ public:
 
      /*!
      * \brief Set the residual gas saturation.
-     * \param v Set the resiudal gas saturation
+     * \param input Set the resiudal gas saturation
      */
     void setSgr(Scalar input)
     {
