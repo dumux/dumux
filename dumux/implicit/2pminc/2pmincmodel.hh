@@ -432,7 +432,7 @@ public:
         Valgrind::CheckDefined(volFraction_);
         Valgrind::CheckDefined(cellSize_);
 //        Valgrind::CheckDefined(delta_);
-        Valgrind::CheckDefined(volContinuum_);
+        // Valgrind::CheckDefined(volContinuum_);
         Valgrind::CheckDefined(distNestedContinua_);
 //        Valgrind::CheckDefined(x1_test_);
 //        Valgrind::CheckDefined(x2_test_);
