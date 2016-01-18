@@ -23,26 +23,6 @@
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
 
-#ifndef __clang__
-#if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 5)
-// do not do static_asserts for gcc < 4.5 (semantics changed, so old
-// GCCs will complain when using static_assert)
-#  define static_assert(a, b)
-
-// do not do valgrind client requests for gcc < 4.5 (old GCCs do not
-// support anonymous template arguments which results in errors for
-// BoundaryTypes)
-#  ifdef HAVE_VALGRIND
-#    undef HAVE_VALGRIND
-#  endif
-#endif // GCC < 4.5
-#endif // __clang__
-
-#ifndef HAVE_VALGRIND
-// make sure that the HAVE_VALGRIND macro is always defined
-#  define HAVE_VALGRIND 0
-#endif
-
 #if ! HAVE_VALGRIND
 namespace Valgrind
 {
@@ -80,7 +60,7 @@ inline bool Running()
  * \brief Make valgrind complain if the object occupied by an object
  *        is undefined.
  *
- * Please note that this does not check whether the destinations of
+ * \note This does not check whether the destinations of
  * the object's pointers or references are defined.
  *
  * \tparam T The type of the object which ought to be checked
@@ -181,8 +161,8 @@ inline void SetNoAccess(const T *value, int n)
 #endif
 }
 
-}
+} // end namespace Valgrind
 
-#endif
+#endif // HAVE_VALGRIND
 
-#endif
+#endif // DUMUX_VALGRIND_HH

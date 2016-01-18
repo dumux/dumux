@@ -1,10 +1,9 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
-EXCLUDE_PATTERNS       = */.svn/*
-
 PREDEFINED            += "NEW_PROP_TAG(name)=Property tag name" \
-                         "NEW_TYPE_TAG(name)=Type tag name"
+                         "NEW_TYPE_TAG(name)=Type tag name" \
+                         HAVE_VALGRIND:=1
 
 INPUT                 += @srcdir@/mainpage.txt \
                          @srcdir@/modules.txt \
@@ -30,5 +29,5 @@ CITE_BIB_FILES = @top_srcdir@/doc/handbook/dumux-handbook.bib
 # enable macro expansion only for specified macros
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
-PREDEFINED             = "DUNE_DEPRECATED:=/** \deprecated */" \
+PREDEFINED             += "DUNE_DEPRECATED:=/** \deprecated */" \
                          "DUNE_DEPRECATED_MSG(A):=/** \deprecated A */"
