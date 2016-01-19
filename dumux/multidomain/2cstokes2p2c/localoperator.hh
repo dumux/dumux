@@ -952,7 +952,7 @@ public:
      *
      * \param cParams a parameter container
      * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
-     * \param scvIdx1 The local index of the sub-control volume of the Darcy domain
+     * \param scvIdx2 The local index of the sub-control volume of the Darcy domain
      */
     template<typename CParams>
     Scalar evalMassTransferCoefficient(CParams cParams, const int scvIdx1, const int scvIdx2) const

@@ -96,7 +96,7 @@ public:
     /*!
      * \brief Map interface fIdx'th interface of element index to array index.
      *
-     * \param element Index of element.
+     * \param elemIdx Index of element.
      * \param fIdx Index of interface to map.
      * \return An index in the range 0 ... Max number of intersections in set - 1.
      */
@@ -114,7 +114,7 @@ public:
     /*!
      * \brief Map interface fIdx'th interface of element index to array index.
      *
-     * \param element Index of element.
+     * \param elemIdx Index of element.
      * \param fIdx Index of interface to map.
      * \return An index in the range 0 ... Max number of intersections in set - 1.
      */

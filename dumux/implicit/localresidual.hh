@@ -247,7 +247,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param values The source/sink in the sub-control volume for each phase
+     * \param source The source/sink in the sub-control volume for each phase
      * \param scvIdx The index of the sub-control volume
      *
      */
