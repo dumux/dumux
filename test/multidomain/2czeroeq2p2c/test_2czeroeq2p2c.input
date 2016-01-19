@@ -5,17 +5,13 @@ TEnd = 518400 # [s] # 518400 = 6 days
 EpisodeLength = 8e5 # [s] # 43200
 
 [Grid]
-LowerLeftX = 0.0 # [m]
-UpperRightX = 0.5 # [m]
-LowerLeftY = 0.0 # [m]
-UpperRightY = 0.75 # [m]
-# Number of elements in x-, y-direction
-NumberOfCellsX = 20
-NumberOfCellsY = 40
-# Grading and refinement of the mesh
-GradingFactorY = 1.16
-RefineTopY = false
-# Position information
+Cells0 = 40
+Cells1 = 20 20
+Grading0 = 1.0
+Grading1 = -1.2 1.25
+Positions0 = 0.0 0.5
+Positions1 = 0.0 0.25 0.75
+
 NoDarcyX = 0.25 # [m] # Horizontal position without PM below
 RunUpDistanceX = 0.26 # [m] # Horizontal position without Coupling to PM
 InterfacePosY = 0.25 # [m] # Vertical position of coupling interface

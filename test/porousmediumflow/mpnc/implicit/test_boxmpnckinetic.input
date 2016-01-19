@@ -4,6 +4,13 @@ TEnd = 10 # [s]
 MaxTimeStepSize = 2e20 # maximum allowed timestep size
 
 [Grid]
+Cells0 = 14
+Cells1 = 15 15
+Grading0 = 1.0
+Grading1 = 1.2 0.833333
+Positions0 = 0.0 1.0
+Positions1 = 0.0 0.25 0.5
+
 NumberOfCellsX = 14 #
 NumberOfCellsY = 30 #
 LowerLeftX = 0.0

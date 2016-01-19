@@ -96,6 +96,35 @@
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
+ * The third argument is the complete parameter name, which has to be a c-string.
+ * This allows to use string variables as parameter name.
+ *
+ * Example with a temporary c-string:
+ *
+ * \code
+ * // -> retrieves global integer value "NumberOfCellsX" which is
+ * // located in the parameter group "Grid"
+ * GET_RUNTIME_PARAM_CSTRING(TypeTag, int, "Grid.NumberOfCellsX");
+ * \endcode
+ *
+ * Example with a string variable:
+ *
+ * \code
+ * // -> retrieves global integer value "NumberOfCellsX" which is
+ * // located in the parameter group "Grid"
+ * std::string paramName = "Grid";
+ * paramName += ".NumberOfCellsX";
+ * GET_RUNTIME_PARAM_CSTRING(TypeTag, int, paramName.c_str());
+ * \endcode
+ */
+#define GET_RUNTIME_PARAM_CSTRING(TypeTag, ParamType, ParamName) \
+    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(ParamName)
+
+/*!
+ * \ingroup Parameter
+ * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
+ *        the Dumux property system.
+ *
  * The third argument is group name.
  *
  * Example:
@@ -114,8 +143,8 @@
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
- * The third argument is group name, which has to be a c-string
- * This allows to use string variables as group name. The functionality of having varaibles as
+ * The third argument is group name, which has to be a c-string.
+ * This allows to use string variables as group name. The functionality of having variables as
  * group name is no problem when directly using the Dune::ParameterTree. For consistency with the
  * macro way of reading in the parameters this macro is necessary e.g. in the gridcreator to reach
  * a satisfying level of generality.

@@ -584,6 +584,255 @@ private:
 };
 
 /*!
+ * \brief Provides a grid creator for YaspGrids with different zones and grading
+ *
+ * All keys are expected to be in group GridParameterGroup.
+ * The following keys are recognized:
+ * - Positions0 : position array for x-coordinate
+ * - Positions1 : position array for y-coordinate
+ * - Positions2 : position array for z-coordinate
+ * - Cells0 : number of cells array for x-coordinate
+ * - Cells1 : number of cells array for y-coordinate
+ * - Cells2 : number of cells array for z-coordinate
+ * - Grading0 : grading factor array for x-coordinate
+ * - Grading1 : grading factor array for y-coordinate
+ * - Grading2 : grading factor array for z-coordinate
+ * - Verbosity : whether the grid construction should output to standard out
+ * - Periodic : true or false for each direction
+ * - Overlap : overlap size in cells
+ * - Partitioning : a non-standard load-balancing, number of processors per direction
+ * - KeepPyhsicalOverlap : whether to keep the physical overlap
+ *     in physical size or in number of cells upon refinement
+ * - Refinement : the number of global refines to apply initially.
+ *
+ * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
+ * \f$ g = \frac{h_{i+1}}{h_i} \f$.
+ * Negative grading factors are converted to
+ * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
+ * to avoid issues with imprecise fraction numbers.
+ */
+template<class TypeTag, class ct, int dim>
+class GridCreatorImpl<TypeTag, Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ct, dim> > >
+          : public GridCreatorBase<TypeTag, Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ct, dim> > >
+{
+public:
+    typedef typename Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ct, dim> > Grid;
+    typedef GridCreatorBase<TypeTag, Grid> ParentType;
+
+    /*!
+     * \brief Make the grid. This is implemented by specializations of this method.
+     */
+    static void makeGrid()
+    {
+        // Only construction from the input file is possible
+        // Look for the necessary keys to construct from the input file
+        try {
+            typedef typename GET_PROP(TypeTag, ParameterTree) Params;
+            auto params = Params::tree();
+            typedef ct Scalar;
+            typedef std::vector<int> IntVector;
+            typedef std::vector<Scalar> ScalarVector;
+
+            // The positions
+            std::array<ScalarVector, dim> positions;
+            for (int i = 0; i < dim; ++i)
+            {
+              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+              paramName += ".Positions";
+              paramName += std::to_string(i);
+              positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramName.c_str());
+            }
+
+            // the number of cells (has a default)
+            std::array<IntVector, dim> cells;
+            for (int i = 0; i < dim; ++i)
+            {
+              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+              paramName += ".Cells";
+              paramName += std::to_string(i);
+              try { cells[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, IntVector, paramName.c_str()); }
+              catch (Dumux::ParameterException &e) { cells[i].resize(positions[i].size()-1, 1.0); }
+            }
+
+            // grading factor (has a default)
+            std::array<ScalarVector, dim> grading;
+            for (int i = 0; i < dim; ++i)
+            {
+              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+              paramName += ".Grading";
+              paramName += std::to_string(i);
+              try { grading[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramName.c_str()); }
+              catch (Dumux::ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
+            }
+
+            // The optional parameters (they have a default)
+            typedef std::bitset<dim> BitSet;
+            BitSet periodic;
+            try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
+            catch (Dumux::ParameterException &e) { }
+
+            int overlap = 1;
+            try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
+            catch (Dumux::ParameterException &e) { }
+
+            bool default_lb = false;
+            typedef std::array<int, dim> CellArray;
+            CellArray partitioning;
+            try { partitioning = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Partitioning);}
+            catch (Dumux::ParameterException &e) { default_lb = true; }
+
+            //make the grid
+            // sanity check of the input parameters
+            bool verbose = false;
+            try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
+            catch (Dumux::ParameterException &e) {  }
+
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                if (cells[dimIdx].size() + 1 != positions[dimIdx].size())
+                {
+                    DUNE_THROW(Dune::RangeError, "Make sure to specify correct \"Cells\" and \"Positions\" arrays");
+                }
+                if (grading[dimIdx].size() + 1 != positions[dimIdx].size())
+                {
+                    DUNE_THROW(Dune::RangeError, "Make sure to specify correct \"Grading\" and \"Positions\" arrays");
+                }
+                Scalar temp = std::numeric_limits<Scalar>::lowest();
+                for (unsigned int posIdx = 0; posIdx < positions[dimIdx].size(); ++posIdx)
+                {
+                    if (temp > positions[dimIdx][posIdx])
+                    {
+                        DUNE_THROW(Dune::RangeError, "Make sure to specify a monotone increasing \"Positions\" array");
+                    }
+                    temp = positions[dimIdx][posIdx];
+                }
+            }
+
+            std::array<ScalarVector, dim> globalPositions;
+            for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+            {
+                for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
+                {
+                    Scalar lower = positions[dimIdx][zoneIdx];
+                    Scalar upper = positions[dimIdx][zoneIdx+1];
+                    int numCells = cells[dimIdx][zoneIdx];
+                    Scalar gradingFactor = grading[dimIdx][zoneIdx];
+                    Scalar length = upper - lower;
+                    Scalar height = 1.0;
+                    bool reverse = false;
+
+                    if (verbose)
+                    {
+                        std::cout << "dim " << dimIdx
+                                  << " lower "  << lower
+                                  << " upper "  << upper
+                                  << " numCells "  << numCells
+                                  << " grading "  << gradingFactor;
+                    }
+
+                    if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
+                    {
+                        height = 1.0 / numCells;
+                        if (verbose)
+                        {
+                            std::cout << " -> h "  << height * length << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        if (gradingFactor < -1.0)
+                        {
+                            gradingFactor = -gradingFactor;
+                        }
+                        else if (gradingFactor > 0.0 && gradingFactor < 1.0)
+                        {
+                            gradingFactor = 1.0 / gradingFactor;
+                        }
+                        else if (gradingFactor > 1.0)
+                        {
+                            reverse = true;
+                        }
+                        else
+                        {
+                            DUNE_THROW(Dune::NotImplemented, "This grading factor is not implemented.");
+                        }
+                        height = (1.0 - gradingFactor) / (1.0 - std::pow(gradingFactor, numCells));
+
+                        if (verbose)
+                        {
+                            std::cout << " -> grading_eff "  << gradingFactor
+                                      << " h_min "  << height * std::pow(gradingFactor, 0) * length
+                                      << " h_max "  << height * std::pow(gradingFactor, numCells-1) * length
+                                      << std::endl;
+                        }
+                    }
+
+                    std::vector<Scalar> localPositions;
+                    localPositions.push_back(0);
+                    for (int i = 0; i < numCells-1; i++)
+                    {
+                        Scalar hI = height;
+                        if (!(gradingFactor < 1.0 + 1e-7 && gradingFactor > 1.0 - 1e-7))
+                        {
+                            if (reverse)
+                            {
+                                hI *= std::pow(gradingFactor, i);
+                            }
+                            else
+                            {
+                                hI *= std::pow(gradingFactor, numCells-i-1);
+                            }
+                        }
+                        localPositions.push_back(localPositions[i] + hI);
+                    }
+
+                    for (int i = 0; i < localPositions.size(); i++)
+                    {
+                        localPositions[i] *= length;
+                        localPositions[i] += lower;
+                    }
+
+
+                    for (unsigned int i = 0; i < localPositions.size(); ++i)
+                    {
+                        globalPositions[dimIdx].push_back(localPositions[i]);
+                    }
+                }
+                globalPositions[dimIdx].push_back(positions[dimIdx].back());
+            }
+
+            if (default_lb)
+                ParentType::gridPtr() = std::make_shared<Grid>(globalPositions, periodic, overlap);
+            else
+            {
+                typename Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+                ParentType::gridPtr() = std::make_shared<Grid>(globalPositions, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
+            }
+            postProcessing_();
+        }
+        catch (Dumux::ParameterException &e) {
+                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters:" << std::endl
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".Positions0, ..." << std::endl);
+        }
+        catch (...) { throw; }
+    }
+
+private:
+    /*!
+     * \brief Postprocessing for YaspGrid
+     */
+    static void postProcessing_()
+    {
+        // Check if should refine the grid
+        bool keepPhysicalOverlap = true;
+        try { keepPhysicalOverlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), KeepPhysicalOverlap);}
+        catch (Dumux::ParameterException &e) { }
+        ParentType::grid().refineOptions(keepPhysicalOverlap);
+        ParentType::maybeRefineGrid();
+    }
+};
+
+/*!
  * \brief Provides a grid creator for OneDGrids
  *        from information in the input file
  *
@@ -1093,7 +1342,6 @@ public:
 
 #endif // HAVE_ALBERTA
 
-// TODO support Yasp Tensor Product Grid
 // TODO Petrel grids with dune-cornerpoint
 
 } // namespace Dumux

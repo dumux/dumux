@@ -28,7 +28,6 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
-#include <dumux/io/interfacegridcreator.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
@@ -48,13 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(TwoCZeroEqTwoPTwoCProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
 
 // Set the grid type
-#if HAVE_UG
-SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::UGGrid<2>);
-#elif HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#else
-SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::YaspGrid<2>);
-#endif
+SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the global problem
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, Problem, TwoCZeroEqTwoPTwoCProblem<TypeTag>);
@@ -89,9 +82,6 @@ SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #else
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
-
-// Use the interface grid creator to create the grid
-SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, GridCreator, Dumux::InterfaceGridCreator<TypeTag>);
 }
 
 
