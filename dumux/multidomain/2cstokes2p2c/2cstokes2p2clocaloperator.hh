@@ -430,6 +430,10 @@ public:
 
         // MASS Balance
         // Neumann-like conditions
+        if (cParams.boundaryTypes1.isCouplingNeumann(massBalanceIdx1))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingNeumann(massBalanceIdx1) for the Stokes side is not implemented.");
+        }
         if (cParams.boundaryTypes2.isCouplingNeumann(massBalanceIdx2))
         {
             static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
@@ -448,6 +452,10 @@ public:
         }
 
         // Dirichlet-like
+        if (cParams.boundaryTypes1.isCouplingDirichlet(massBalanceIdx1))
+        {
+            DUNE_THROW(Dune::NotImplemented, "The boundary condition isCouplingDirichlet(massBalanceIdx1) for the Stokes side is not implemented.");
+        }
         if (cParams.boundaryTypes2.isCouplingDirichlet(massBalanceIdx2))
         {
             couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
@@ -465,11 +473,10 @@ public:
         // Neumann-like conditions
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
         {
+            // v_tau = v - (v.n)n
             const Scalar normalComp = boundaryVars1.velocity()*bfNormal1;
             GlobalPosition normalV = bfNormal1;
-            normalV *= normalComp; // v*n*n
-
-            // v_tau = v - (v.n)n
+            normalV *= normalComp;
             const GlobalPosition tangentialV = boundaryVars1.velocity() - normalV;
 
             // Implementation as Neumann-like condition: (v.n)n
@@ -503,7 +510,7 @@ public:
         // Neumann-like conditions
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumYIdx1))
         {
-            // p*A*n as condition for free flow
+            // p*A as condition for free flow
             // pressure correction is done in stokeslocalresidual.hh
             couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                     cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
