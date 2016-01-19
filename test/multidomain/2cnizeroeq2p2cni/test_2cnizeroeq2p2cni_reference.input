@@ -8,7 +8,7 @@ EpisodeLength = 14400 # [s] # 14400s = 4h
 Cells0 = 7
 Cells1 = 4 4 4
 Grading0 = 1.0
-Grading1 = 1.5 0.66666 1.5
+Grading1 = -1.5 1.5 -1.5
 Positions0 = 0.0 0.35
 Positions1 = 0.0 0.25 0.375 0.5
 

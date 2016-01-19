@@ -8,7 +8,7 @@ EpisodeLength = 8e5 # [s] # 43200
 Cells0 = 40
 Cells1 = 20 20
 Grading0 = 1.0
-Grading1 = 1.2 0.8
+Grading1 = -1.2 1.25
 Positions0 = 0.0 0.5
 Positions1 = 0.0 0.25 0.75
 
