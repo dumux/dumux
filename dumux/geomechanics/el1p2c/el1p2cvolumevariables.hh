@@ -57,6 +57,8 @@ class ElOnePTwoCVolumeVariables : public OnePTwoCVolumeVariables<TypeTag>{
 
     enum {  dim = GridView::dimension };
 
+    enum {  phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
+
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar,dim> DimVector;
 
@@ -169,6 +171,24 @@ public:
       */
      mutable Scalar effPorosity;
      mutable Scalar divU;
+
+     /*!
+     * \brief Returns the mass fraction of a given component in the
+     *        given fluid phase within the control volume.
+     *
+     * \param compIdx The component index
+     */
+     Scalar massFraction(const int compIdx) const
+     { return this->fluidState_.massFraction(phaseIdx, compIdx); }
+
+     /*!
+     * \brief Returns the mole fraction of a given component in the
+     *        given fluid phase within the control volume.
+     *
+     * \param compIdx The component index
+     */
+     Scalar moleFraction(const int compIdx) const
+     { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
 
 protected:
     PrimaryVariables primaryVars_, prevPrimaryVars_;

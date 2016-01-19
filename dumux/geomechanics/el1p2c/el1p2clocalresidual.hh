@@ -116,13 +116,13 @@ namespace Dumux
                 if(useMoles)
                 {
                     // storage term of the transport equation - mole fractions
-                    storage[transportEqIdx] += volVars.fluidState().moleFraction(phaseIdx, transportCompIdx)
+                    storage[transportEqIdx] += volVars.moleFraction(transportCompIdx)
                         * volVars.effPorosity;
                 }
                 else
                 {
                     //storage term of the transport equation - mass fractions
-                    storage[transportEqIdx] += volVars.fluidState().massFraction(phaseIdx, transportCompIdx)
+                    storage[transportEqIdx] += volVars.massFraction(transportCompIdx)
                             * volVars.effPorosity;
                 }
             }
@@ -209,26 +209,26 @@ namespace Dumux
                     // advective flux of the component
                     flux[transportEqIdx] +=
                       fluxVars.KmvpNormal() *
-                      ((    upwindWeight_)* up.fluidState().moleFraction(phaseIdx, transportCompIdx)/up.viscosity()
+                      ((    upwindWeight_)* up.moleFraction(transportCompIdx)/up.viscosity()
                       +
-                      (1 - upwindWeight_)* dn.fluidState().moleFraction(phaseIdx, transportCompIdx)/dn.viscosity());
+                      (1 - upwindWeight_)* dn.moleFraction(transportCompIdx)/dn.viscosity());
 
                     // flux of the dissolved second component due to solid displacement
                     flux[transportEqIdx] +=
                       fluxVars.timeDerivUNormal() *
-                      ((    upwindWeight_)* up.fluidState().moleFraction(phaseIdx, transportCompIdx)
+                      ((    upwindWeight_)* up.moleFraction(transportCompIdx)
                       * up.effPorosity
                       +
-                      (1 - upwindWeight_)*dn.fluidState().moleFraction(phaseIdx, transportCompIdx)
+                      (1 - upwindWeight_)*dn.moleFraction(transportCompIdx)
                       * up.effPorosity);
 
                     // stabilization term
                     if(withStabilization_)
                         flux[transportEqIdx] -=
                           stabilizationTerm *
-                          ((    upwindWeight_)* up.fluidState().moleFraction(phaseIdx, transportCompIdx)
+                          ((    upwindWeight_)* up.moleFraction(transportCompIdx)
                           +
-                          (1 - upwindWeight_)*dn.fluidState().moleFraction(phaseIdx, transportCompIdx));
+                          (1 - upwindWeight_)*dn.moleFraction(transportCompIdx));
                 }
                 else
                 {
@@ -236,26 +236,26 @@ namespace Dumux
                     // advective flux of the component
                     flux[transportEqIdx] +=
                       fluxVars.KmvpNormal() *
-                      ((    upwindWeight_)* up.fluidState().massFraction(phaseIdx, transportCompIdx)/up.viscosity()
+                      ((    upwindWeight_)* up.massFraction(transportCompIdx)/up.viscosity()
                       +
-                      (1 - upwindWeight_)* dn.fluidState().massFraction(phaseIdx, transportCompIdx)/dn.viscosity());
+                      (1 - upwindWeight_)* dn.massFraction(transportCompIdx)/dn.viscosity());
 
                     // flux of the dissolved second component due to solid displacement
                     flux[transportEqIdx] +=
                       fluxVars.timeDerivUNormal() *
-                      ((    upwindWeight_)* up.fluidState().massFraction(phaseIdx, transportCompIdx)
+                      ((    upwindWeight_)* up.massFraction(transportCompIdx)
                       * up.effPorosity
                       +
-                      (1 - upwindWeight_)*dn.fluidState().massFraction(phaseIdx, transportCompIdx)
+                      (1 - upwindWeight_)*dn.massFraction(transportCompIdx)
                       * up.effPorosity);
 
                     // stabilization term
                     if(withStabilization_)
                         flux[transportEqIdx] -=
                           stabilizationTerm *
-                          ((    upwindWeight_)* up.fluidState().massFraction(phaseIdx, transportCompIdx)
+                          ((    upwindWeight_)* up.massFraction(transportCompIdx)
                           +
-                          (1 - upwindWeight_)*dn.fluidState().massFraction(phaseIdx, transportCompIdx));
+                          (1 - upwindWeight_)*dn.massFraction(transportCompIdx));
                 }
             }
 
