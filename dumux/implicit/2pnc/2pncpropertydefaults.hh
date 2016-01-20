@@ -36,7 +36,7 @@
 #include "2pncproperties.hh"
 #include "2pncnewtoncontroller.hh"
 
-#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>

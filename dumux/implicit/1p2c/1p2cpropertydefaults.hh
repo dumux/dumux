@@ -36,7 +36,7 @@
 #include "1p2cfluxvariables.hh"
 #include "1p2cindices.hh"
 
-#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/spatialparams/implicitspatialparams1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>

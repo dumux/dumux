@@ -34,7 +34,7 @@
 #include "volumevariables.hh"
 #include "localresidual.hh"
 
-#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>

@@ -36,7 +36,7 @@
 #include "2p2clocalresidual.hh"
 #include "2p2cnewtoncontroller.hh"
 
-#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
