@@ -26,7 +26,7 @@
 
 #include <dune/common/deprecated.hh>
 
-#include <dumux/implicit/nonisothermal/nilocalresidual.hh>
+#include <dumux/porousmediumflow/implicit/nonisothermal/localresidual.hh>
 #include <dumux/implicit/2p2c/2p2cproperties.hh>
 
 namespace Dumux

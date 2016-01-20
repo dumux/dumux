@@ -38,7 +38,7 @@
 #include "3p3cnewtoncontroller.hh"
 #include "3p3clocalresidual.hh"
 
-#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
+#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>

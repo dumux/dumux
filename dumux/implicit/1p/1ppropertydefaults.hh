@@ -34,7 +34,7 @@
 #include "1pvolumevariables.hh"
 #include "1pindices.hh"
 
-#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
+#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>

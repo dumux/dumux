@@ -36,7 +36,7 @@
 #include "3pproperties.hh"
 #include "3plocalresidual.hh"
 
-#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
+#include <dumux/porousmediumflow/implicit/nonisothermal/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
