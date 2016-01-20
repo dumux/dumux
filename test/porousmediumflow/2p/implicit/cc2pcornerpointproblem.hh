@@ -23,7 +23,7 @@
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/implicit/2p/2pmodel.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
+#include <dumux/implicit/cellcentered/propertydefaults.hh>
 #include <dumux/linear/amgbackend.hh>
 
 #include <dune/grid/CpGrid.hpp>

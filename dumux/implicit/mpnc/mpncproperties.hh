@@ -20,7 +20,7 @@
 #define DUMUX_MPNC_PROPERTIES_HH
 
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/implicit/cellcentered/properties.hh>
 
 /*!
  * \ingroup Properties

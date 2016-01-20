@@ -36,7 +36,7 @@
 #include <dune/common/version.hh>
 
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dumux/decoupled/common/pressureproperties.hh>
 #include "linearsolverproperties.hh"

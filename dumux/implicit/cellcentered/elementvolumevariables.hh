@@ -20,10 +20,10 @@
  * \file
  * \brief Volume variables gathered on an element
  */
-#ifndef DUMUX_CP_ELEMENT_VOLUME_VARIABLES_HH
-#define DUMUX_CP_ELEMENT_VOLUME_VARIABLES_HH
+#ifndef DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
+#define DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/cellcentered/properties.hh>
+#include "properties.hh"
 
 namespace Dumux
 {
@@ -34,7 +34,7 @@ namespace Dumux
  *        volume variables object for each of the element's vertices
  */
 template<class TypeTag>
-class CpElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeTag, VolumeVariables) >
+class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeTag, VolumeVariables) >
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -50,7 +50,7 @@ public:
     /*!
      * \brief The constructor.
      */
-    CpElementVolumeVariables()
+    CCElementVolumeVariables()
     { }
 
     /*!
@@ -77,6 +77,7 @@ public:
         for (int i = 0; i < numNeighbors; i++)
         {
             const Element& neighbor = fvGeometry.neighbors[i];
+
             const PrimaryVariables &solI
                     = globalSol[problem.elementMapper().index(neighbor)];
 
@@ -101,8 +102,7 @@ public:
                 || elemBCTypes.hasNeumann()
                 || elemBCTypes.hasOutflow())
             {
-                const int numFaces = 6;
-                this->resize(numNeighbors + numFaces);
+                this->resize(numNeighbors + element.subEntities(1));
 
                 // add volume variables for the boundary faces
                 for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {

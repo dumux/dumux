@@ -28,7 +28,7 @@
 #define DUMUX_MODELS_2PDFM_PROPERTIES_HH
 
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/implicit/cellcentered/properties.hh>
 
 namespace Dumux
 {
