@@ -32,7 +32,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 
-#include <dumux/implicit/2pminc/2pmincmodel.hh>
+#include <dumux/porousmediumflow/2pminc/implicit/model.hh>
 
 namespace Dumux
 {

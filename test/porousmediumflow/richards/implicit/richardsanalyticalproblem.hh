@@ -33,7 +33,7 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
-#include <dumux/implicit/richards/richardsmodel.hh>
+#include <dumux/porousmediumflow/richards/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 

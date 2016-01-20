@@ -32,8 +32,8 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/implicit/2pminc/2pmincmodel.hh>
-#include <dumux/implicit/2pminc/2pmincvolumevariables.hh>
+#include <dumux/porousmediumflow/2pminc/implicit/model.hh>
+#include <dumux/porousmediumflow/2pminc/implicit/volumevariables.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
