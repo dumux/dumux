@@ -31,7 +31,7 @@
 #include <iostream>
 
 #include <dune/grid/yaspgrid.hh>
-#include <dumux/geomechanics/el1p2c/el1p2cmodel.hh>
+#include <dumux/geomechanics/el1p2c/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>

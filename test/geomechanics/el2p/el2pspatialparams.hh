@@ -30,7 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/geomechanics/el2p/el2pmodel.hh>
+#include <dumux/geomechanics/el2p/model.hh>
 
 namespace Dumux
 {

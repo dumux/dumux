@@ -26,7 +26,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/geomechanics/elastic/elasticmodel.hh>
+#include <dumux/geomechanics/elastic/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "elasticspatialparams.hh"
