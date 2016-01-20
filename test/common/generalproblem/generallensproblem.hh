@@ -33,7 +33,7 @@
 
 //box model
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 
 //decoupled model
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>

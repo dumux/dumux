@@ -56,7 +56,7 @@
 #include "el2pnewtoncontroller.hh"
 #include "el2pindices.hh"
 #include <dumux/implicit/box/propertydefaults.hh>
-#include <dumux/implicit/2p/2ppropertydefaults.hh>
+#include <dumux/porousmediumflow/2p/implicit/propertydefaults.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/amgbackend.hh>
 

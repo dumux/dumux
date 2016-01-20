@@ -25,7 +25,7 @@
 #ifndef DUMUX_ELASTIC2P_VOLUME_VARIABLES_HH
 #define DUMUX_ELASTIC2P_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/2p/2pvolumevariables.hh>
+#include <dumux/porousmediumflow/2p/implicit/volumevariables.hh>
 
 #include "el2pproperties.hh"
 

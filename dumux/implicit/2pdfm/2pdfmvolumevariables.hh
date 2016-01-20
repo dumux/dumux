@@ -25,7 +25,7 @@
 
 #include <dune/common/fvector.hh>
 
-#include <dumux/implicit/2p/2pvolumevariables.hh>
+#include <dumux/porousmediumflow/2p/implicit/volumevariables.hh>
 
 #include "2pdfmproperties.hh"
 

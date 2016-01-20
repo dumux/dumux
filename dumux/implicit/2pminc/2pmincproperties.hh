@@ -24,7 +24,7 @@
 #ifndef DUMUX_2PMINC_PROPERTIES_HH
 #define DUMUX_2PMINC_PROPERTIES_HH
 
-#include <dumux/implicit/2p/2pproperties.hh>
+#include <dumux/porousmediumflow/2p/implicit/properties.hh>
 
 namespace Dumux
 {

@@ -25,7 +25,7 @@
 #define DUMUX_TUTORIAL_PROBLEM_COUPLED_HH    // guardian macro /*@\label{tutorial-coupled:guardian2}@*/
 
 // The numerical model
-#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 
 // The base porous media box problem
 #include <dumux/porousmediumflow/implicit/problem.hh>

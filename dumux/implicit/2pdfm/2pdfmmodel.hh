@@ -25,7 +25,7 @@
 #ifndef DUMUX_MODELS_2PDFM_MODEL_HH
 #define DUMUX_MODELS_2PDFM_MODEL_HH
 
-#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include "2pdfmproperties.hh"
 
 namespace Dumux

@@ -23,7 +23,7 @@
 #ifndef DUMUX_MODELS_2PDFM_INDICES_HH
 #define DUMUX_MODELS_2PDFM_INDICES_HH
 
-#include<dumux/implicit/2p/2pindices.hh>
+#include<dumux/porousmediumflow/2p/implicit/indices.hh>
 
 namespace Dumux
 {

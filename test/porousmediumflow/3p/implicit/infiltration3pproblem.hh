@@ -27,7 +27,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/implicit/3p/3pmodel.hh>
+#include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>

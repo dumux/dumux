@@ -26,7 +26,7 @@
 #ifndef DUMUX_2PMIN_PROPERTY_DEFAULTS_HH
 #define DUMUX_2PMIN_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/2p/2ppropertydefaults.hh>
+#include <dumux/porousmediumflow/2p/implicit/propertydefaults.hh>
 
 #include "2pmincproperties.hh"
 #include "2pmincmodel.hh"

@@ -24,7 +24,7 @@
 #ifndef DUMUX_TWOPMINC_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_TWOPMINC_LOCAL_RESIDUAL_BASE_HH
 
-#include <dumux/implicit/2p/2plocalresidual.hh>
+#include <dumux/porousmediumflow/2p/implicit/localresidual.hh>
 #include "2pmincproperties.hh"
 
 namespace Dumux

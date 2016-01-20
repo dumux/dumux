@@ -25,7 +25,7 @@
 #define DUMUX_GENERALIZED_DIRICHLET_PROBLEM_HH
 
 // The numerical model
-#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 
 // The base porous media box problem
 #include <dumux/porousmediumflow/implicit/problem.hh>

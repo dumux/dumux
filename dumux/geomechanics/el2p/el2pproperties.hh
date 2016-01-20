@@ -29,7 +29,7 @@
 #define DUMUX_ELASTIC2P_PROPERTIES_HH
 
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/2p/2pproperties.hh>
+#include <dumux/porousmediumflow/2p/implicit/properties.hh>
 
 namespace Dumux
 {

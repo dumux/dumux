@@ -23,7 +23,7 @@
 #ifndef DUMUX_MODELS_2PDFM_LOCAL_RESIDUAL_HH
 #define DUMUX_MODELS_2PDFM_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/2p/2plocalresidual.hh>
+#include <dumux/porousmediumflow/2p/implicit/localresidual.hh>
 #include "2pdfmproperties.hh"
 
 namespace Dumux
