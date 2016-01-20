@@ -42,11 +42,11 @@
 
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/modelkinetic.hh>
 
 #include "combustionspatialparams.hh"
 
-#include <dumux/implicit/mpnc/velomodelnewtoncontroller.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/velomodelnewtoncontroller.hh>
 
 #include <dumux/material/fluidsystems/purewatersimplefluidsystem.hh>
 

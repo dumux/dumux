@@ -43,7 +43,7 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/modelkinetic.hh>
 
 namespace Dumux
 {

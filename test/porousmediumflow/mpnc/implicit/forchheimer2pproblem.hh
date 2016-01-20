@@ -27,7 +27,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/implicit/mpnc/mpncmodel.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>

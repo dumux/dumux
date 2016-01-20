@@ -25,7 +25,7 @@
 #define THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
 #include <algorithm>
-#include <dumux/implicit/mpnc/mpncproperties.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/properties.hh>
 
 namespace Dumux
 {
