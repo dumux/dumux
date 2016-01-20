@@ -28,9 +28,9 @@
 
 #include <dune/grid/CpGrid.hpp>
 #include <dumux/io/cpgridcreator.hh>
-#include <dumux/implicit/cornerpoint/cpelementvolumevariables.hh>
-#include <dumux/implicit/cornerpoint/cpfvelementgeometry.hh>
-#include <dumux/implicit/cornerpoint/cpdarcyfluxvariables.hh>
+#include <dumux/implicit/cornerpoint/elementvolumevariables.hh>
+#include <dumux/implicit/cornerpoint/fvelementgeometry.hh>
+#include <dumux/porousmediumflow/implicit/cpdarcyfluxvariables.hh>
 
 #include "cc2pcornerpointspatialparams.hh"
 
