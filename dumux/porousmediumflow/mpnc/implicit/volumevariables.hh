@@ -26,8 +26,8 @@
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
 
 #include "diffusion/volumevariables.hh"
-#include "energy/mpncvolumevariablesenergy.hh"
-#include "mass/mpncvolumevariablesmass.hh"
+#include "energy/volumevariables.hh"
+#include "mass/volumevariables.hh"
 #include "indices.hh"
 #include "volumevariablesia.hh"
 
