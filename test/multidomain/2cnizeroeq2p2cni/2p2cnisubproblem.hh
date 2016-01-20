@@ -24,7 +24,7 @@
 #ifndef DUMUX_2P2CNISUB_PROBLEM_HH
 #define DUMUX_2P2CNISUB_PROBLEM_HH
 
-#include <dumux/implicit/2p2c/2p2cindices.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/indices.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivityjohansen.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>

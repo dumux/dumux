@@ -24,7 +24,7 @@
 #ifndef DUMUX_CO2_MODEL_HH
 #define DUMUX_CO2_MODEL_HH
 
-#include <dumux/implicit/2p2c/2p2cmodel.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 
 namespace Dumux
 {

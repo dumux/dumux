@@ -19,7 +19,7 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/implicit/2pncmin/2pncminindices.hh>
+#include <dumux/porousmediumflow/2pncmin/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>

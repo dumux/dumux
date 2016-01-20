@@ -31,7 +31,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/implicit/2p2c/2p2cproperties.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
 
 namespace Dumux
 {

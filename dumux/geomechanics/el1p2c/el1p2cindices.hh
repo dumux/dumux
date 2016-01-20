@@ -27,7 +27,7 @@
 #define DUMUX_ELASTIC1P2C_INDICES_HH
 
 #include <dumux/geomechanics/elastic/elasticindices.hh>
-#include <dumux/implicit/1p2c/1p2cindices.hh>
+#include <dumux/porousmediumflow/1p2c/implicit/indices.hh>
 
 namespace Dumux
 {

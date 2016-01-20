@@ -32,7 +32,7 @@
 #ifndef DUMUX_ELASTIC1P2C_PROPERTIES_HH
 #define DUMUX_ELASTIC1P2C_PROPERTIES_HH
 
-#include <dumux/implicit/1p2c/1p2cproperties.hh>
+#include <dumux/porousmediumflow/1p2c/implicit/properties.hh>
 #include <dumux/geomechanics/elastic/elasticproperties.hh>
 
 

@@ -31,7 +31,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/philtophoblaw.hh>
-#include <dumux/implicit/2pnc/2pncmodel.hh>
+#include <dumux/porousmediumflow/2pnc/implicit/model.hh>
 
 namespace Dumux
 {

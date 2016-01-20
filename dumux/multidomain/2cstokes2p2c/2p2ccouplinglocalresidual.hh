@@ -26,8 +26,8 @@
 
 #include <dune/common/deprecated.hh>
 
-#include <dumux/implicit/2p2c/2p2clocalresidual.hh>
-#include <dumux/implicit/2p2c/2p2cproperties.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/localresidual.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
 
 namespace Dumux
 {

@@ -33,7 +33,7 @@
 #define DUMUX_ELASTIC1P2C_FLUX_VARIABLES_HH
 
 #include <dumux/geomechanics/elastic/elasticfluxvariables.hh>
-#include <dumux/implicit/1p2c/1p2cfluxvariables.hh>
+#include <dumux/porousmediumflow/1p2c/implicit/fluxvariables.hh>
 
 namespace Dumux
 {

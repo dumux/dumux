@@ -27,7 +27,7 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/2p2c/2p2cmodel.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2p2cnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>

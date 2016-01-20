@@ -37,7 +37,7 @@
 #include <dumux/freeflow/boundarylayermodel.hh>
 #include <dumux/freeflow/masstransfermodel.hh>
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
-#include <dumux/implicit/2p2c/2p2cmodel.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 
 
 namespace Dumux {
