@@ -31,7 +31,7 @@
 #include "mpncindices.hh"
 #include "mpncvolumevariablesia.hh"
 
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 
 namespace Dumux

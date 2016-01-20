@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/common/implicitmodel.hh>
+#include <dumux/implicit/model.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>

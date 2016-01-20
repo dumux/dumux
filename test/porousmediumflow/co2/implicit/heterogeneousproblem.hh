@@ -34,7 +34,7 @@
 #include <dumux/implicit/co2/co2model.hh>
 #include <dumux/implicit/co2/co2volumevariables.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>
 
 

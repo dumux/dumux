@@ -26,7 +26,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/istl/bvector.hh>
 
-#include <dumux/implicit/common/implicitmodel.hh>
+#include <dumux/implicit/model.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
 

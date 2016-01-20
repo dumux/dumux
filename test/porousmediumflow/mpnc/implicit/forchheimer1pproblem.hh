@@ -30,7 +30,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>

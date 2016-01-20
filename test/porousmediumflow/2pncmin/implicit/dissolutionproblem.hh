@@ -25,7 +25,7 @@
 #define DUMUX_DISSOLUTION_PROBLEM_HH
 
 #include <dumux/implicit/2pncmin/2pncminmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include<dumux/material/fluidsystems/brineairfluidsystem.hh>
 
 #include "dissolutionspatialparams.hh"

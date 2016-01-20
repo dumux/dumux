@@ -24,7 +24,7 @@
 #define DUMUX_BOX_ASSEMBLER_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/implicit/common/implicitassembler.hh>
+#include <dumux/implicit/assembler.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 namespace Dumux {

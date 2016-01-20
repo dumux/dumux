@@ -31,8 +31,8 @@
 
 #include "diffusion/fluxvariables.hh"
 #include "energy/mpncfluxvariablesenergy.hh"
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
-#include <dumux/implicit/common/implicitforchheimerfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/forchheimerfluxvariables.hh>
 
 namespace Dumux
 {

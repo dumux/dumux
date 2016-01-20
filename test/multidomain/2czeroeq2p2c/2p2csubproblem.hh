@@ -26,7 +26,7 @@
 #define DUMUX_TWOPTWOC_SUBPROBLEM_HH
 
 #include <dumux/implicit/2p2c/2p2cindices.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
 #include <dumux/multidomain/2cstokes2p2c/2p2ccouplinglocalresidual.hh>

@@ -19,7 +19,7 @@
 #ifndef DUMUX_BOX_PROPERTIES_HH
 #define DUMUX_BOX_PROPERTIES_HH
 
-#include <dumux/implicit/common/implicitproperties.hh>
+#include <dumux/implicit/properties.hh>
 
 /*!
  * \ingroup Properties

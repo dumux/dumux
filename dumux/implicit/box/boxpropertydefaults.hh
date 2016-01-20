@@ -26,7 +26,7 @@
 #ifndef DUMUX_BOX_PROPERTY_DEFAULTS_HH
 #define DUMUX_BOX_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/common/implicitpropertydefaults.hh>
+#include <dumux/implicit/propertydefaults.hh>
 #include "boxassembler.hh"
 #include "boxfvelementgeometry.hh"
 #include "boxelementboundarytypes.hh"

@@ -24,7 +24,7 @@
 #ifndef DUMUX_EL1P2C_LOCAL_JACOBIAN_HH
 #define DUMUX_EL1P2C_LOCAL_JACOBIAN_HH
 
-#include <dumux/implicit/common/implicitlocaljacobian.hh>
+#include <dumux/implicit/localjacobian.hh>
 
 namespace Dumux
 {

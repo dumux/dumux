@@ -26,7 +26,7 @@
 #define DUMUX_TWOPMINC_VOLUME_VARIABLES_HH
 
 //can't be derived from 2pvolumevariables
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 
 #include <dune/common/fvector.hh>
 

@@ -24,7 +24,7 @@
 #ifndef DUMUX_ELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_ELASTIC_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 
 #include "elasticproperties.hh"
 

@@ -28,7 +28,7 @@
 
 #include <cstdio>
 
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include <dumux/implicit/2p/2pmodel.hh>
 
 #include "2pmincproperties.hh"

@@ -28,7 +28,7 @@
 #ifndef DUMUX_3P3C_MODEL_HH
 #define DUMUX_3P3C_MODEL_HH
 
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "3p3cproperties.hh"
 
 namespace Dumux

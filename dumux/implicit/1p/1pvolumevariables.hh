@@ -25,7 +25,7 @@
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
 #include "1pproperties.hh"
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 

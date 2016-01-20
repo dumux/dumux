@@ -26,7 +26,7 @@
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 
 #include <dumux/implicit/1p/1pmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 

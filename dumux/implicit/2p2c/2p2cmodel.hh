@@ -27,7 +27,7 @@
 
 #include "2p2cproperties.hh"
 #include "2p2cindices.hh"
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 namespace Dumux
 {

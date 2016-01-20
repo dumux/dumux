@@ -29,7 +29,7 @@
 #include <math.h>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/richards/richardsmodel.hh>
 #include <dumux/implicit/richards/richardsproblem.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>

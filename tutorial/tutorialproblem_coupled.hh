@@ -28,7 +28,7 @@
 #include <dumux/implicit/2p/2pmodel.hh>
 
 // The base porous media box problem
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 // The DUNE grid used
 #if  HAVE_DUNE_ALUGRID

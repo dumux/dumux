@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P_VOLUME_VARIABLES_HH
 #define DUMUX_3P_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/common/implicitmodel.hh>
+#include <dumux/implicit/model.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 #include "3pproperties.hh"

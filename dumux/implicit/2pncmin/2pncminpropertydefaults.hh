@@ -36,7 +36,7 @@
 #include "2pncminproperties.hh"
 
 #include <dumux/implicit/2pnc/2pncnewtoncontroller.hh>
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux

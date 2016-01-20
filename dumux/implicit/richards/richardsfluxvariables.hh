@@ -26,7 +26,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include "richardsproperties.hh"
 
 namespace Dumux

@@ -25,8 +25,8 @@
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH
 
-#include <dumux/implicit/common/implicitmodel.hh>
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 #include "richardslocalresidual.hh"
 #include "richardsproblem.hh"

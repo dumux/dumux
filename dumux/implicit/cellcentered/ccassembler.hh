@@ -23,7 +23,7 @@
 #ifndef DUMUX_CC_ASSEMBLER_HH
 #define DUMUX_CC_ASSEMBLER_HH
 
-#include <dumux/implicit/common/implicitassembler.hh>
+#include <dumux/implicit/assembler.hh>
 
 namespace Dumux {
 

@@ -28,7 +28,7 @@
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/geomechanics/el2p/el2pmodel.hh>
 #include <dumux/geomechanics/el2p/el2pamgbackend.hh>
 

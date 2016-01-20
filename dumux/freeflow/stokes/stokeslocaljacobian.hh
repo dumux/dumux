@@ -25,7 +25,7 @@
 
 #include <dune/istl/matrix.hh>
 #include "stokesproperties.hh"
-#include <dumux/implicit/common/implicitlocaljacobian.hh>
+#include <dumux/implicit/localjacobian.hh>
 
 namespace Dumux
 {

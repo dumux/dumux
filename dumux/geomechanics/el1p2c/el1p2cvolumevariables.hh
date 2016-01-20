@@ -27,7 +27,7 @@
 
 
 #include <dumux/implicit/1p2c/1p2cvolumevariables.hh>
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 
 #include "el1p2cproperties.hh"
 

@@ -28,7 +28,7 @@
 #include <iostream>
 #include <vector>
 
-#include <dumux/implicit/common/implicitmodel.hh>
+#include <dumux/implicit/model.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/common/math.hh>
 

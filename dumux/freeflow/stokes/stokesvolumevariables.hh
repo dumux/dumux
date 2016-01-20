@@ -27,7 +27,7 @@
 
 #include "stokesproperties.hh"
 
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
 namespace Dumux

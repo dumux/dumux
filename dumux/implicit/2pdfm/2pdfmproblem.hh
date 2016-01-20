@@ -21,7 +21,7 @@
 #ifndef DUMUX_MODELS_2PDFM_PROBLEM_HH
 #define DUMUX_MODELS_2PDFM_PROBLEM_HH
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include "2pdfmproperties.hh"
 
 namespace Dumux

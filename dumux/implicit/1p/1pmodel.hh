@@ -27,7 +27,7 @@
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "1pproperties.hh"
 
 namespace Dumux

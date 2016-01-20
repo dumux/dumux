@@ -27,7 +27,7 @@
 
 #include "2pproperties.hh"
 
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 
 #include <dune/common/fvector.hh>
 

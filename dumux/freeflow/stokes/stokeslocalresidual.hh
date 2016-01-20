@@ -29,7 +29,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/grid.hh>
 
-#include <dumux/implicit/common/implicitmodel.hh>
+#include <dumux/implicit/model.hh>
 #include "stokesproperties.hh"
 #include "stokesvolumevariables.hh"
 #include "stokesfluxvariables.hh"

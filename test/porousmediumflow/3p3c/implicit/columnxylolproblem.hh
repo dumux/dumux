@@ -30,7 +30,7 @@
 #include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>
 
 #include <dumux/implicit/3p3c/3p3cmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "columnxylolspatialparams.hh"
 

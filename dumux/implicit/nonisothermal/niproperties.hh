@@ -29,7 +29,7 @@
 #ifndef DUMUX_NI_PROPERTIES_HH
 #define DUMUX_NI_PROPERTIES_HH
 
-#include <dumux/implicit/common/implicitproperties.hh>
+#include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {

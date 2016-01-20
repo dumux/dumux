@@ -25,7 +25,7 @@
 #ifndef DUMUX_2PNC_MODEL_HH
 #define DUMUX_2PNC_MODEL_HH
 
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 #include "2pncproperties.hh"
 #include "2pncindices.hh"

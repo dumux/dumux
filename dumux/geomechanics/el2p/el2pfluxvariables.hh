@@ -32,7 +32,7 @@
 #define DUMUX_EL2P_FLUX_VARIABLES_HH
 
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include "el2pproperties.hh"
 
 namespace Dumux

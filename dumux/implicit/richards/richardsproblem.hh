@@ -23,7 +23,7 @@
 #ifndef DUMUX_RICHARDS_PROBLEM_HH
 #define DUMUX_RICHARDS_PROBLEM_HH
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "richardsproperties.hh"
 

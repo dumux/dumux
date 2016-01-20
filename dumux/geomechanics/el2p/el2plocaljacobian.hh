@@ -25,7 +25,7 @@
 #define DUMUX_EL2P_LOCAL_JACOBIAN_HH
 
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
-#include <dumux/implicit/common/implicitlocaljacobian.hh>
+#include <dumux/implicit/localjacobian.hh>
 #include "el2pproperties.hh"
 
 namespace Dumux

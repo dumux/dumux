@@ -37,7 +37,7 @@
 #include "richardsnewtoncontroller.hh"
 #include "richardslocalresidual.hh"
 
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>

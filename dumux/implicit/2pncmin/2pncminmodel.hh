@@ -31,7 +31,7 @@
 #include <dumux/material/constants.hh>
  #include <dumux/implicit/2pnc/2pncmodel.hh>
 #include "2pncminlocalresidual.hh"
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 namespace Dumux
 {

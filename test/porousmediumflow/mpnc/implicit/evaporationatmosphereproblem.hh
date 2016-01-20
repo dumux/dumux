@@ -51,7 +51,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/mpnc/velomodelnewtoncontroller.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystemkinetic.hh>

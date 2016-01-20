@@ -26,7 +26,7 @@
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/valgrind.hh>
-#include <dumux/implicit/common/implicitlocalresidual.hh>
+#include <dumux/implicit/localresidual.hh>
 
 #include "ccproperties.hh"
 

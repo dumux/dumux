@@ -27,7 +27,7 @@
 #ifndef DUMUX_MODELS_2PDFM_PROPERTY_DEFAULTS_HH
 #define DUMUX_MODELS_2PDFM_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>

@@ -40,7 +40,7 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
 

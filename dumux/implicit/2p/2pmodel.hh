@@ -26,7 +26,7 @@
 #ifndef DUMUX_TWOP_MODEL_HH
 #define DUMUX_TWOP_MODEL_HH
 
-#include <dumux/implicit/common/implicitvelocityoutput.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "2pproperties.hh"
 
 namespace Dumux

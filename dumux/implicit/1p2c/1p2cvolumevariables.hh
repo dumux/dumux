@@ -24,7 +24,7 @@
 #ifndef DUMUX_1P2C_VOLUME_VARIABLES_HH
 #define DUMUX_1P2C_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/common/implicitvolumevariables.hh>
+#include <dumux/implicit/volumevariables.hh>
 
 #include "1p2cproperties.hh"
 
