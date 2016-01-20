@@ -24,7 +24,7 @@
 #ifndef DUMUX_STOKES2CNI_SUBPROBLEM_HH
 #define DUMUX_STOKES2CNI_SUBPROBLEM_HH
 
-#include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
+#include <dumux/freeflow/stokesncni/model.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/stokesncnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 

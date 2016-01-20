@@ -36,7 +36,7 @@
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cpropertydefaults.hh>
 #include <dumux/freeflow/boundarylayermodel.hh>
 #include <dumux/freeflow/masstransfermodel.hh>
-#include <dumux/freeflow/stokesnc/stokesncmodel.hh>
+#include <dumux/freeflow/stokesnc/model.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 
 

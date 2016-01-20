@@ -28,7 +28,7 @@
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 
-#include <dumux/freeflow/stokes/stokesmodel.hh>
+#include <dumux/freeflow/stokes/model.hh>
 
 namespace Dumux
 {

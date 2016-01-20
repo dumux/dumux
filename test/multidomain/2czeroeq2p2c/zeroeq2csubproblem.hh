@@ -24,7 +24,7 @@
 #ifndef DUMUX_ZEROEQTWOCSUBPROBLEM_HH
 #define DUMUX_ZEROEQTWOCSUBPROBLEM_HH
 
-#include <dumux/freeflow/zeroeqnc/zeroeqncmodel.hh>
+#include <dumux/freeflow/zeroeqnc/model.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/2cstokes2p2c/stokesnccouplinglocalresidual.hh>
 

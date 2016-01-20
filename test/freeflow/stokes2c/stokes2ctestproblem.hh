@@ -27,7 +27,7 @@
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
-#include <dumux/freeflow/stokesnc/stokesncmodel.hh>
+#include <dumux/freeflow/stokesnc/model.hh>
 
 namespace Dumux
 {

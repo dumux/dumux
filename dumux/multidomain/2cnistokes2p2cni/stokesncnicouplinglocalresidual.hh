@@ -28,8 +28,8 @@
 
 #include <dune/common/deprecated.hh>
 
-#include <dumux/freeflow/stokesncni/stokesncnilocalresidual.hh>
-#include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
+#include <dumux/freeflow/stokesncni/localresidual.hh>
+#include <dumux/freeflow/stokesncni/model.hh>
 
 namespace Dumux
 {
