@@ -27,7 +27,7 @@
 #include<dune/pdelab/localoperator/pattern.hh>
 #include<dune/pdelab/localoperator/flags.hh>
 
-#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/box/properties.hh>
 
 namespace Dumux {
 

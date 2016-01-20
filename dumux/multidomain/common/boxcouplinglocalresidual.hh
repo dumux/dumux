@@ -26,7 +26,7 @@
 
 #include <dune/common/deprecated.hh>
 
-#include <dumux/implicit/box/boxlocalresidual.hh>
+#include <dumux/implicit/box/localresidual.hh>
 
 namespace Dumux
 {

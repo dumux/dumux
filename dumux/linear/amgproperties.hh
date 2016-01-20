@@ -35,7 +35,7 @@
 #include <dune/grid/common/capabilities.hh>
 #include <dune/common/version.hh>
 
-#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dumux/decoupled/common/pressureproperties.hh>

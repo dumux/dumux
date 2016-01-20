@@ -28,7 +28,7 @@
 #ifndef DUMUX_RICHARDS_PROPERTIES_HH
 #define DUMUX_RICHARDS_PROPERTIES_HH
 
-#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
 #include <dumux/implicit/nonisothermal/niproperties.hh>
 

@@ -28,7 +28,7 @@
 #ifndef DUMUX_ELASTIC2P_PROPERTIES_HH
 #define DUMUX_ELASTIC2P_PROPERTIES_HH
 
-#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/2p/2pproperties.hh>
 
 namespace Dumux

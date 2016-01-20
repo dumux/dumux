@@ -28,7 +28,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dumux/linear/linearsolverproperties.hh>
-#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/box/properties.hh>
 #include <dumux/decoupled/common/decoupledproperties.hh>
 
 

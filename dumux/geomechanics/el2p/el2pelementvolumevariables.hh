@@ -25,7 +25,7 @@
 
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 
-#include <dumux/implicit/box/boxelementvolumevariables.hh>
+#include <dumux/implicit/box/elementvolumevariables.hh>
 #include "el2pproperties.hh"
 
 namespace Dumux

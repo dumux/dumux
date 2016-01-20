@@ -23,8 +23,8 @@
 #ifndef DUMUX_BOX_EL1P2C_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_EL1P2C_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/box/boxproperties.hh>
-#include <dumux/implicit/box/boxelementvolumevariables.hh>
+#include <dumux/implicit/box/properties.hh>
+#include <dumux/implicit/box/elementvolumevariables.hh>
 
 namespace Dumux
 {

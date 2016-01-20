@@ -26,7 +26,7 @@
 #define DUMUX_ELASTIC2P_LOCAL_RESIDUAL_HH
 
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
-#include <dumux/implicit/box/boxlocalresidual.hh>
+#include <dumux/implicit/box/localresidual.hh>
 #include "el2pproperties.hh"
 
 namespace Dumux {

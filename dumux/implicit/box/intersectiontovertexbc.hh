@@ -23,7 +23,7 @@
 #ifndef DUMUX_INTERSECTIONTOVERTEXBC_HH
 #define DUMUX_INTERSECTIONTOVERTEXBC_HH
 
-#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/box/properties.hh>
 
 namespace Dumux
 {
