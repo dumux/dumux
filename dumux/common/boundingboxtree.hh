@@ -322,10 +322,10 @@ public:
     {
         // Copy the iterator and get coordinates of first box
         auto it = begin;
-        const double* b = leafBoxes.data() + 6*(*it);
+        const double* bFirst = leafBoxes.data() + 6*(*it);
         // Maybe write out the loop for optimization
         for (std::size_t coordIdx = 0; coordIdx < 6; ++coordIdx)
-            bBox[coordIdx] = b[coordIdx];
+            bBox[coordIdx] = bFirst[coordIdx];
 
         // Compute min and max with the remaining boxes
         for (; it != end; ++it)
@@ -375,7 +375,7 @@ public:
     struct lessXBox
     {
         const std::vector<double>& bBoxes;
-        lessXBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        lessXBox(const std::vector<double>& bBoxes_): bBoxes(bBoxes_) {}
         inline bool operator()(unsigned int i, unsigned int j)
         {
             const double* bi = bBoxes.data() + 6*i;
@@ -387,7 +387,7 @@ public:
     struct lessYBox
     {
         const std::vector<double>& bBoxes;
-        lessYBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        lessYBox(const std::vector<double>& bBoxes_): bBoxes(bBoxes_) {}
         inline bool operator()(unsigned int i, unsigned int j)
         {
             const double* bi = bBoxes.data() + 6*i;
@@ -399,7 +399,7 @@ public:
     struct lessZBox
     {
         const std::vector<double>& bBoxes;
-        lessZBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        lessZBox(const std::vector<double>& bBoxes_): bBoxes(bBoxes_) {}
         inline bool operator()(unsigned int i, unsigned int j)
         {
             const double* bi = bBoxes.data() + 6*i;
@@ -538,10 +538,10 @@ public:
     {
         // Copy the iterator and get coordinates of first box
         auto it = begin;
-        const double* b = leafBoxes.data() + 4*(*it);
+        const double* bFirst = leafBoxes.data() + 4*(*it);
         // Maybe write out the loop for optimization
         for (std::size_t coordIdx = 0; coordIdx < 4; ++coordIdx)
-            bBox[coordIdx] = b[coordIdx];
+            bBox[coordIdx] = bFirst[coordIdx];
 
         // Compute min and max with the remaining boxes
         for (; it != end; ++it)
@@ -581,7 +581,7 @@ public:
     struct lessXBox
     {
         const std::vector<double>& bBoxes;
-        lessXBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        lessXBox(const std::vector<double>& bBoxes_): bBoxes(bBoxes_) {}
         inline bool operator()(unsigned int i, unsigned int j)
         {
             const double* bi = bBoxes.data() + 4*i;
@@ -593,7 +593,7 @@ public:
     struct lessYBox
     {
         const std::vector<double>& bBoxes;
-        lessYBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        lessYBox(const std::vector<double>& bBoxes_): bBoxes(bBoxes_) {}
         inline bool operator()(unsigned int i, unsigned int j)
         {
             const double* bi = bBoxes.data() + 4*i;
@@ -663,9 +663,9 @@ public:
     {
         // Copy the iterator and get coordinates of first box
         auto it = begin;
-        const double* b = leafBoxes.data() + 2*(*it);
-        bBox[0] = b[0];
-        bBox[1] = b[1];
+        const double* bFirst = leafBoxes.data() + 2*(*it);
+        bBox[0] = bFirst[0];
+        bBox[1] = bFirst[1];
 
         // Compute min and max with the remaining boxes
         for (; it != end; ++it)
@@ -692,7 +692,7 @@ public:
     struct lessXBox
     {
         const std::vector<double>& bBoxes;
-        lessXBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        lessXBox(const std::vector<double>& bBoxes_): bBoxes(bBoxes_) {}
         inline bool operator()(unsigned int i, unsigned int j)
         {
             const double* bi = bBoxes.data() + 2*i;
