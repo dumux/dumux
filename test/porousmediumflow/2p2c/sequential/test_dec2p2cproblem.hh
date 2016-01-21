@@ -32,7 +32,7 @@
 #include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
 
 // fluid properties
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 

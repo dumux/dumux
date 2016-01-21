@@ -30,7 +30,7 @@
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
 #include "infiltration3pspatialparams.hh"
 

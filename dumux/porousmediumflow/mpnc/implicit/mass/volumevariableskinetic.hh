@@ -24,7 +24,7 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_MASS_KINETIC_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_MASS_KINETIC_HH
 
-#include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
+#include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/porousmediumflow/mpnc/implicit/mass/volumevariables.hh>
 #include <dumux/material/constraintsolvers/fluidsystemcomputefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/fluidsystemconstraintsolver.hh>

@@ -41,8 +41,8 @@
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 
 namespace Dumux
 {

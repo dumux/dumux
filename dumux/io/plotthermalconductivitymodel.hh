@@ -26,7 +26,7 @@
 
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {

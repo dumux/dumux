@@ -31,8 +31,8 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
-#include <dumux/material/fluidstates/2p2cfluidstate.hh>
-#include <dumux/material/fluidstates/pseudo1p2cfluidstate.hh>
+#include <dumux/material/fluidstates/2p2c.hh>
+#include <dumux/material/fluidstates/pseudo1p2c.hh>
 
 namespace Dumux
 {

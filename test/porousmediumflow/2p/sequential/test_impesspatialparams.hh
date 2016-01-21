@@ -24,7 +24,7 @@
 #ifndef TEST_IMPES_SPATIALPARAMS_HH
 #define TEST_IMPES_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fvspatialparams.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

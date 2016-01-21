@@ -30,7 +30,7 @@
 
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
-#include <dumux/material/spatialparams/fvspatialparams1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {

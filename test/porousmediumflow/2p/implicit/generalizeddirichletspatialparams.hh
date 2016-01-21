@@ -26,7 +26,7 @@
 #define DUMUX_GENERALIZED_DIRICHLET_SPATIAL_PARAMS_COUPLED_HH
 
 // include parent spatialparameters
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 
 // include material laws
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>

@@ -25,7 +25,7 @@
 #define DUMUX_EFFECTIVE_DIFFUSIVITY_SPATIAL_PARAMS_HH
 
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 

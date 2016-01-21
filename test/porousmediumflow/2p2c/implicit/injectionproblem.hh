@@ -28,7 +28,7 @@
 
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 
 #include "injectionspatialparams.hh"
 

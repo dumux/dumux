@@ -54,14 +54,14 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/porousmediumflow/mpnc/implicit/velomodelnewtoncontroller.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystemkinetic.hh>
+#include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotoverline2d.hh>
 
-#include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
-//#include <dumux/material/fluidstates/nonequilibriumenergyfluidstate.hh>
-//#include <dumux/material/fluidstates/nonequilibriummassfluidstate.hh>
-//#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/nonequilibrium.hh>
+//#include <dumux/material/fluidstates/nonequilibriumenergy.hh>
+//#include <dumux/material/fluidstates/nonequilibriummass.hh>
+//#include <dumux/material/fluidstates/compositional.hh>
 
 #include "evaporationatmospherespatialparams.hh"
 

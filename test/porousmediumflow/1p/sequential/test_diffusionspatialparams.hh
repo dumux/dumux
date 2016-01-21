@@ -25,7 +25,7 @@
 #define TEST_DIFFUSION_SPATIALPARAMS_HH
 
 #include <dumux/decoupled/common/decoupledproperties.hh>
-#include <dumux/material/spatialparams/fvspatialparams.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 

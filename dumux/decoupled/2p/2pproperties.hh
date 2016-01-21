@@ -33,7 +33,7 @@
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include "2pindices.hh"
-#include <dumux/material/spatialparams/fvspatialparams.hh>
+#include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux
 {
@@ -85,8 +85,8 @@ NEW_PROP_TAG( ImpetErrorTermUpperBound );
 
 #include <dumux/decoupled/common/variableclass.hh>
 #include <dumux/decoupled/2p/celldata2p.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isothermalimmisciblefluidstate.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidstates/isothermalimmiscible.hh>
 
 namespace Dumux
 {

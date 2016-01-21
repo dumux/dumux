@@ -31,7 +31,7 @@
 #ifndef DUMUX_PENG_ROBINSON_HH
 #define DUMUX_PENG_ROBINSON_HH
 
-#include <dumux/material/fluidstates/temperatureoverlayfluidstate.hh>
+#include <dumux/material/fluidstates/temperatureoverlay.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>

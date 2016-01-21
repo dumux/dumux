@@ -38,7 +38,7 @@
 #include "model.hh"
 #include "volumevariables.hh"
 
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {

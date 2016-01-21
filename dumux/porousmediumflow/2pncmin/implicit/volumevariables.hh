@@ -26,7 +26,7 @@
 #define DUMUX_2PNCMin_VOLUME_VARIABLES_HH
 
 #include <dumux/implicit/model.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/common/math.hh>
 #include <vector>
 #include <iostream>

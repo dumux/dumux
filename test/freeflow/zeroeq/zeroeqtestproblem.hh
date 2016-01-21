@@ -32,7 +32,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #endif
 
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 
 #include <dumux/freeflow/zeroeq/model.hh>

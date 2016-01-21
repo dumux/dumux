@@ -36,7 +36,7 @@
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 
 // use the same spatial parameters as the injection problem of the
 // 2p2c test program

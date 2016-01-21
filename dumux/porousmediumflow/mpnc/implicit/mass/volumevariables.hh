@@ -26,7 +26,7 @@
 
 #include <dumux/porousmediumflow/mpnc/implicit/properties.hh>
 
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {

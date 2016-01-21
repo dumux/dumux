@@ -40,7 +40,7 @@
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 
 namespace Dumux

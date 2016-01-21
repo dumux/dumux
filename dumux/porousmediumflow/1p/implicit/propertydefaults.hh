@@ -38,8 +38,8 @@
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
-#include <dumux/material/fluidsystems/1pfluidsystem.hh>
-#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
+#include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 

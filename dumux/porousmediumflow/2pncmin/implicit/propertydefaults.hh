@@ -37,7 +37,7 @@
 
 #include <dumux/porousmediumflow/2pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 
 namespace Dumux
 {

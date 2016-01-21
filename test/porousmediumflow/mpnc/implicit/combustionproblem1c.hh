@@ -48,9 +48,9 @@
 
 #include <dumux/porousmediumflow/mpnc/implicit/velomodelnewtoncontroller.hh>
 
-#include <dumux/material/fluidsystems/purewatersimplefluidsystem.hh>
+#include <dumux/material/fluidsystems/purewatersimple.hh>
 
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 

@@ -25,7 +25,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/freeflow/stokesnc/model.hh>
 

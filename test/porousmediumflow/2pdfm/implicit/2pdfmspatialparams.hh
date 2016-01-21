@@ -27,7 +27,7 @@
 #include <dumux/io/artgridcreator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 
 namespace Dumux
 {

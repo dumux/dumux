@@ -19,7 +19,7 @@
 #ifndef DUMUX_CC2P_CORNERPOINT_SPATIAL_PARAMS_HH
 #define DUMUX_CC2P_CORNERPOINT_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

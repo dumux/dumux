@@ -27,7 +27,7 @@
 
 #include <dumux/implicit/model.hh>
 #include <dumux/material/constants.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include "properties.hh"

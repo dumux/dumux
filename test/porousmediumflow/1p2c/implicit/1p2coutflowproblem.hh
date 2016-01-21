@@ -32,7 +32,7 @@
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
 #include "1p2coutflowspatialparams.hh"
 
 #define NONISOTHERMAL 0

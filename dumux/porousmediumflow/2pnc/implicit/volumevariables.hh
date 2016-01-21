@@ -29,7 +29,7 @@
 #include <vector>
 
 #include <dumux/implicit/model.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/common/math.hh>
 
 #include "properties.hh"

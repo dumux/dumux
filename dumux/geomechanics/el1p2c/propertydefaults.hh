@@ -42,7 +42,7 @@
 #include "volumevariables.hh"
 #include "indices.hh"
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 
 namespace Dumux

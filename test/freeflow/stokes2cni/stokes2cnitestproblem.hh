@@ -30,7 +30,7 @@
 #endif
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/freeflow/stokesncni/model.hh>
 
 namespace Dumux

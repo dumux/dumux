@@ -30,7 +30,7 @@
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include "1p2cnispatialparams.hh"
 

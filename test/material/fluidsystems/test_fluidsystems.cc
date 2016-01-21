@@ -31,21 +31,21 @@
 #include "checkfluidsystem.hh"
 
 // include all fluid systems in dumux-stable
-#include <dumux/material/fluidsystems/1pfluidsystem.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-#include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
-#include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>
+#include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
+#include <dumux/material/fluidsystems/h2oairxylene.hh>
 
 // include all fluid states
-#include <dumux/material/fluidstates/pressureoverlayfluidstate.hh>
-#include <dumux/material/fluidstates/saturationoverlayfluidstate.hh>
-#include <dumux/material/fluidstates/temperatureoverlayfluidstate.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
-#include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
-#include <dumux/material/fluidstates/immisciblefluidstate.hh>
+#include <dumux/material/fluidstates/pressureoverlay.hh>
+#include <dumux/material/fluidstates/saturationoverlay.hh>
+#include <dumux/material/fluidstates/temperatureoverlay.hh>
+#include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/fluidstates/nonequilibrium.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
 
 int main()
 {

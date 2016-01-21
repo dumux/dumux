@@ -32,9 +32,9 @@
 #include <dumux/porousmediumflow/mpnc/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 #include "forchheimerspatialparams.hh"
 

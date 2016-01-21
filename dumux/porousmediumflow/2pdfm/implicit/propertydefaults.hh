@@ -29,11 +29,11 @@
 
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/components/nullcomponent.hh>
-#include <dumux/material/fluidstates/immisciblefluidstate.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 
 #include "model.hh"
 #include "problem.hh"

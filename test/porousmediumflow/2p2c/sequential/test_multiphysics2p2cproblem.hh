@@ -31,8 +31,8 @@
 #include <dumux/decoupled/2p2c/fvtransport2p2cmultiphysics.hh>
 #include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>
 // fluid properties
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 

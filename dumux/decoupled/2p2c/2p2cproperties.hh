@@ -31,7 +31,7 @@
 #include <dumux/decoupled/common/pressureproperties.hh>
 #include <dumux/decoupled/common/transportproperties.hh>
 #include <dumux/decoupled/common/impetproperties.hh>
-#include <dumux/material/spatialparams/fvspatialparams.hh>
+#include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux
 {

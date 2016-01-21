@@ -34,7 +34,7 @@
 #include <dumux/geomechanics/el1p2c/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
 #include "el1p2cspatialparams.hh"
 #include <dumux/linear/amgbackend.hh>
 

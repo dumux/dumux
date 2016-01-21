@@ -36,7 +36,7 @@
 #include <dumux/decoupled/2p/impes/gridadaptionindicator2p.hh>
 #include <dumux/io/cubegridcreator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 

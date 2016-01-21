@@ -25,7 +25,7 @@
 #define DUMUX_TUTORIAL_SPATIAL_PARAMS_DECOUPLED_HH
 
 
-#include <dumux/material/spatialparams/fvspatialparams.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

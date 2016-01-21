@@ -27,7 +27,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
-#include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
+#include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/geomechanics/el2p/model.hh>
 #include <dumux/geomechanics/el2p/amgbackend.hh>

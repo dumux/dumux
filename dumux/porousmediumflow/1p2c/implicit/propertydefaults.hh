@@ -37,10 +37,10 @@
 #include "indices.hh"
 
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
-#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
+#include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {
