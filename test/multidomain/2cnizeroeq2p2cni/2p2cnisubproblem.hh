@@ -29,7 +29,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivityjohansen.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-#include <dumux/multidomain/common/multidomainlocaloperator.hh>
+#include <dumux/multidomain/common/localoperator.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2p2cnicouplinglocalresidual.hh>
 
 #include "2cnizeroeq2p2cnispatialparameters.hh"

@@ -23,7 +23,7 @@
 #ifndef DUMUX_SPLIT_AND_MERGE_HH
 #define DUMUX_SPLIT_AND_MERGE_HH
 
-#include "multidomainproperties.hh"
+#include "properties.hh"
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux

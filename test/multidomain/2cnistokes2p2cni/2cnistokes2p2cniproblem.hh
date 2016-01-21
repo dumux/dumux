@@ -38,9 +38,9 @@
 #include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
-#include <dumux/multidomain/common/multidomainproblem.hh>
-#include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnilocaloperator.hh>
-#include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnipropertydefaults.hh>
+#include <dumux/multidomain/common/problem.hh>
+#include <dumux/multidomain/2cnistokes2p2cni/localoperator.hh>
+#include <dumux/multidomain/2cnistokes2p2cni/propertydefaults.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #ifdef HAVE_PARDISO

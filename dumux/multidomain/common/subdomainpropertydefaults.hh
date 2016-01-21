@@ -33,8 +33,8 @@
 #include <dune/pdelab/constraints/conforming.hh>
 
 #include "subdomainproperties.hh"
-#include "multidomainproperties.hh"
-#include "multidomainlocaloperator.hh"
+#include "properties.hh"
+#include "localoperator.hh"
 #include "boxcouplinglocalresidual.hh"
 
 namespace Dumux
