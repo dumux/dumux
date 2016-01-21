@@ -62,6 +62,7 @@ public:
     typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
 };
 
+#if HAVE_MPI
 template <class MType, class VType>
 class NonoverlappingSolverTraits<MType, VType, true>
 {
@@ -71,6 +72,7 @@ public:
     typedef Dune::NonoverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
     typedef Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
 };
+#endif
 
 //! Box: use the non-overlapping AMG
 SET_PROP(BoxModel, AmgTraits)
@@ -104,6 +106,7 @@ public:
     typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
 };
 
+#if HAVE_MPI
 template <class MType, class VType>
 class OverlappingSolverTraits<MType, VType, true>
 {
@@ -113,6 +116,7 @@ public:
     typedef Dune::OverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
     typedef Dune::BlockPreconditioner<VType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
 };
+#endif
 
 //! Cell-centered: use the overlapping AMG
 SET_PROP(CCModel, AmgTraits)
