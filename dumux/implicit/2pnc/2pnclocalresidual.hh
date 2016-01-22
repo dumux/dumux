@@ -182,7 +182,7 @@ public:
                     {
                         storage[eqIdx] += volVars.molarDensity(phaseIdx)
                                         * volVars.saturation(phaseIdx)
-                                        * volVars.fluidState().moleFraction(phaseIdx, compIdx)
+                                        * volVars.moleFraction(phaseIdx, compIdx)
                                         * volVars.porosity();
                     }
                     else
@@ -249,12 +249,12 @@ public:
                         * (massUpwindWeight_
                             * up.mobility(phaseIdx)
                             * up.molarDensity(phaseIdx)
-                            * up.fluidState().moleFraction(phaseIdx, compIdx)
+                            * up.moleFraction(phaseIdx, compIdx)
                         +
                             (1.0 - massUpwindWeight_)
                             * dn.mobility(phaseIdx)
                             * dn.molarDensity(phaseIdx)
-                            * dn.fluidState().moleFraction(phaseIdx, compIdx));
+                            * dn.moleFraction(phaseIdx, compIdx));
 
             Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
             Valgrind::CheckDefined(up.molarDensity(phaseIdx));
@@ -328,7 +328,7 @@ protected:
             {
                 result[conti0EqIdx + compIdx] += volVars.density(phaseIdx)
                                 * volVars.saturation(phaseIdx)
-                                * volVars.fluidState().massFraction(phaseIdx, compIdx)
+                                * volVars.massFraction(phaseIdx, compIdx)
                                 * volVars.porosity();
             }
             result *= this->fvGeometry_().subContVol[i].volume;
