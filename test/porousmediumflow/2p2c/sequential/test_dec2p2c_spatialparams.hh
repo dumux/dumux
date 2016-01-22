@@ -24,7 +24,7 @@
 #ifndef TEST_2P2C_SPATIALPARAMS_HH
 #define TEST_2P2C_SPATIALPARAMS_HH
 
-#include <dumux/decoupled/2p2c/2p2cproperties.hh>
+#include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

@@ -36,9 +36,9 @@
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 
 //decoupled model
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 
 #include "generallensspatialparams.hh"
 

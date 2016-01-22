@@ -24,7 +24,7 @@
 #ifndef DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 #define DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 
-#include <dumux/decoupled/2p2c/2p2cproperties.hh>
+#include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 
 namespace Dumux
 {

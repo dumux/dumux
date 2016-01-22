@@ -26,7 +26,7 @@
 #ifndef DUMUX_BENCHMARKRESULT_HH
 #define DUMUX_BENCHMARKRESULT_HH
 
-#include <dumux/decoupled/common/onemodelproblem.hh>
+#include <dumux/porousmediumflow/sequential/onemodelproblem.hh>
 
 namespace Dumux
 {

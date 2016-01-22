@@ -27,7 +27,7 @@
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/decoupled/common/pressureproperties.hh>
+#include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 
 namespace Dumux

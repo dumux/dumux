@@ -34,13 +34,13 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/lnapl.hh>
 
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 
 #include "test_impesadaptivespatialparams.hh"
 
-#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
+#include<dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
 
 namespace Dumux
 {

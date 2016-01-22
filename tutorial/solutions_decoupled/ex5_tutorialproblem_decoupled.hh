@@ -29,15 +29,15 @@
 #include <dumux/io/cubegridcreator.hh>
 
 // dumux 2p-decoupled environment
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh> /*@\label{tutorial-decoupled:parent-problem}@*/
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/problem.hh> /*@\label{tutorial-decoupled:parent-problem}@*/
 
 // assign parameters dependent on space (e.g. spatial parameters)
 #include "ex5_tutorialspatialparams_decoupled.hh" /*@\label{tutorial-decoupled:spatialparameters}@*/
 
 // include cfl-criterion after coats: more suitable if the problem is not advection dominated
-#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
+#include<dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
 
 // the components that are used
 #include <dumux/material/components/h2o.hh>
