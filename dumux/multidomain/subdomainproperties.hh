@@ -21,21 +21,15 @@
  * \ingroup Properties
  * \ingroup ImplicitProperties
  * \ingroup MultidomainModel
- *
- * \brief Defines the properties required for the coupled 2cstokes2p2c model.
+ * \brief Specify properties required for the subdomains of the coupled model
  */
+#ifndef DUMUX_SUBDOMAIN_PROPERTIES_HH
+#define DUMUX_SUBDOMAIN_PROPERTIES_HH
 
-#ifndef DUMUX_TWOCSTOKESTWOPTWOC_PROPERTIES_HH
-#define DUMUX_TWOCSTOKESTWOPTWOC_PROPERTIES_HH
-
-#include <dumux/multidomain/propertydefaults.hh>
+#include <dumux/common/propertysystem.hh>
 
 namespace Dumux
 {
-
-////////////////////////////////
-// properties
-////////////////////////////////
 namespace Properties
 {
 
@@ -43,18 +37,30 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the coupled 2cstokes2p2c model
-NEW_TYPE_TAG(TwoCStokesTwoPTwoC, INHERITS_FROM(MultiDomain));
+//! The type tag from which sub-problems of coupling models inherit
+NEW_TYPE_TAG(SubDomain);
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(BoundaryLayerModel); //!< Type of the used boundary layer model
-NEW_PROP_TAG(MassTransferModel); //!< Type of the used mass transfer model
+//! Specifies the host grid
+NEW_PROP_TAG(Grid);
 
-} // end namespace properties
+//! Specifies the scalar grid function space used for sub-problems
+NEW_PROP_TAG(ScalarGridFunctionSpace);
 
-} // end namespace Dumux
+//! Specifies the grid function space used for sub-problems
+NEW_PROP_TAG(GridFunctionSpace);
 
+//! Specifies the type of the constraints
+NEW_PROP_TAG(Constraints);
 
-#endif
+//! Specifies the local finite element space
+NEW_PROP_TAG(LocalFEMSpace);
+
+//! Specifies the local operator
+NEW_PROP_TAG(LocalOperator);
+
+} // namespace Properties
+} // namespace Dumux
+#endif // DUMUX_SUBDOMAIN_PROPERTIES_HH

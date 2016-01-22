@@ -1,8 +1,8 @@
 #ifndef DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH_OLD
 #define DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH_OLD
 
-#warning this header is deprecated, use dumux/multidomain/common/propertydefaults.hh instead
+#warning this header is deprecated, use dumux/multidomain/propertydefaults.hh instead
 
-#include <dumux/multidomain/common/propertydefaults.hh>
+#include <dumux/multidomain/propertydefaults.hh>
 
 #endif

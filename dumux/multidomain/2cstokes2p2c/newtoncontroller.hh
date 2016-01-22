@@ -24,7 +24,7 @@
 #ifndef DUMUX_2CSTOKES_2P2C_NEWTON_CONTROLLER_HH
 #define DUMUX_2CSTOKES_2P2C_NEWTON_CONTROLLER_HH
 
-#include <dumux/multidomain/common/newtoncontroller.hh>
+#include <dumux/multidomain/newtoncontroller.hh>
 
 namespace Dumux
 {

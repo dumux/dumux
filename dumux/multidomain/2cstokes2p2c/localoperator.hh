@@ -32,7 +32,7 @@
 #include <dune/pdelab/localoperator/pattern.hh>
 #include <dune/pdelab/localoperator/idefault.hh>
 
-#include <dumux/multidomain/common/properties.hh>
+#include <dumux/multidomain/properties.hh>
 #include <dumux/multidomain/2cstokes2p2c/propertydefaults.hh>
 #include <dumux/freeflow/boundarylayermodel.hh>
 #include <dumux/freeflow/masstransfermodel.hh>

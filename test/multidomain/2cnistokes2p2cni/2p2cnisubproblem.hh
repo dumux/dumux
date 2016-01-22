@@ -30,8 +30,8 @@
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2p2cnicouplinglocalresidual.hh>
-#include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-#include <dumux/multidomain/common/localoperator.hh>
+#include <dumux/multidomain/subdomainpropertydefaults.hh>
+#include <dumux/multidomain/localoperator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 #include "2cnistokes2p2cnispatialparams.hh"

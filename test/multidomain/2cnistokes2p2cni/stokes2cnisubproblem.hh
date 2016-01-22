@@ -26,7 +26,7 @@
 
 #include <dumux/freeflow/stokesncni/model.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/stokesncnicouplinglocalresidual.hh>
-#include <dumux/multidomain/common/subdomainpropertydefaults.hh>
+#include <dumux/multidomain/subdomainpropertydefaults.hh>
 
 namespace Dumux
 {
