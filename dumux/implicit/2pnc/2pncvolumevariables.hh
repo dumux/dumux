@@ -445,6 +445,37 @@ public:
     Scalar diffCoeff(int phaseIdx, int compIdx) const
     { return diffCoeff_[phaseIdx][compIdx]; }
 
+    /*!
+     * \brief Returns the molarity of a component in the phase
+     *
+     * \param phaseIdx the index of the fluid phase
+     * \param compIdx the index of the component
+     */
+     Scalar molarity(int phaseIdx, int compIdx) const // [moles/m^3]
+    { return this->fluidState_.molarity(phaseIdx, compIdx);}
+
+     /*!
+      * \brief Returns the mass fraction of a component in the phase
+      *
+      * \param phaseIdx the index of the fluid phase
+      * \param compIdx the index of the component
+      */
+     Scalar massFraction(int phaseIdx, int compIdx) const
+     {
+        return this->fluidState_.massFraction(phaseIdx, compIdx);
+     }
+
+     /*!
+      * \brief Returns the mole fraction of a component in the phase
+      *
+      * \param phaseIdx the index of the fluid phase
+      * \param compIdx the index of the component
+      */
+     Scalar moleFraction(int phaseIdx, int compIdx) const
+     {
+        return this->fluidState_.moleFraction(phaseIdx, compIdx);
+     }
+
 protected:
 
     static Scalar temperature_(const PrimaryVariables &priVars,

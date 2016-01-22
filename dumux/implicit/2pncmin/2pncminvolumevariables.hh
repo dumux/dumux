@@ -416,16 +416,16 @@ public:
     Scalar permeabilityFactor() const
     { return permeabilityFactor_; }
 
-    /*!
-     * \brief Returns the mole fraction of a component in the phase
-     *
-     * \param phaseIdx the index of the fluid phase
-     * \param compIdx the index of the component
-     */
-    Scalar moleFraction(int phaseIdx, int compIdx) const
-    {
-       return this->fluidState_.moleFraction(phaseIdx, compIdx);
-    }
+//    /*!
+//     * \brief Returns the mole fraction of a component in the phase
+//     *
+//     * \param phaseIdx the index of the fluid phase
+//     * \param compIdx the index of the component
+//     */
+//    Scalar moleFraction(int phaseIdx, int compIdx) const
+//    {
+//       return this->fluidState_.moleFraction(phaseIdx, compIdx);
+//    }
 
     /*!
      * \brief Returns the mole fraction of the salinity in the liquid phase
@@ -478,9 +478,15 @@ public:
      *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
+     * molality=\frac{n_{component}}{m_{solvent}}
+     * =\frac{n_{component}}{n_{solvent}*M_{solvent}}
+     * compIdx of the main component (solvent) in the
+     * phase is equal to the phaseIdx
      */
      Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
-    { return this->fluidState_.moleFraction(phaseIdx, compIdx)/FluidSystem::molarMass(compIdx);}
+    { return this->fluidState_.moleFraction(phaseIdx, compIdx)
+                  /(fluidState_.moleFraction(phaseIdx, phaseIdx)
+                  * FluidSystem::molarMass(phaseIdx));}
 
 protected:
     friend class TwoPNCVolumeVariables<TypeTag>;
@@ -528,6 +534,7 @@ protected:
     Scalar sumPrecipitates_;
     Scalar salinity_;
     Scalar moleFractionSalinity_;
+    FluidState fluidState_;
 
 private:
     Implementation &asImp_()

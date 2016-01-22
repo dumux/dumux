@@ -371,8 +371,8 @@ public:
                 (*pg)[dofIdxGlobal]             = elemVolVars[scvIdx].pressure(nPhaseIdx);
                 (*pl)[dofIdxGlobal]             = elemVolVars[scvIdx].pressure(wPhaseIdx);
                 (*pc)[dofIdxGlobal]             = elemVolVars[scvIdx].capillaryPressure();
-                (*rhoL)[dofIdxGlobal]           = elemVolVars[scvIdx].fluidState().density(wPhaseIdx);
-                (*rhoG)[dofIdxGlobal]           = elemVolVars[scvIdx].fluidState().density(nPhaseIdx);
+                (*rhoL)[dofIdxGlobal]           = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoG)[dofIdxGlobal]           = elemVolVars[scvIdx].density(nPhaseIdx);
                 (*mobL)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(wPhaseIdx);
                 (*mobG)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(nPhaseIdx);
                 (*boxVolume)[dofIdxGlobal]     += fvGeometry.subContVol[scvIdx].volume;
@@ -383,12 +383,12 @@ public:
                 {
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
-                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= volVars.fluidState().moleFraction(phaseIdx,compIdx);
+                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= volVars.moleFraction(phaseIdx,compIdx);
                         Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]);
                     }
                 }
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    (*molarity[compIdx])[dofIdxGlobal] = (volVars.fluidState().molarity(wPhaseIdx, compIdx));
+                    (*molarity[compIdx])[dofIdxGlobal] = (volVars.molarity(wPhaseIdx, compIdx));
 
                 Tensor K = perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
 
@@ -641,11 +641,11 @@ protected:
                     //switch not depending on formulation
                     //switch "Sl" to "xgH20"
                     globalSol[dofIdxGlobal][switchIdx]
-                            = volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx /*H2O*/);
+                            = volVars.moleFraction(nPhaseIdx, wCompIdx /*H2O*/);
 
                     //switch all secondary components to mole fraction in gas phase
                     for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                        globalSol[dofIdxGlobal][compIdx] = volVars.fluidState().moleFraction(nPhaseIdx,compIdx);
+                        globalSol[dofIdxGlobal][compIdx] = volVars.moleFraction(nPhaseIdx,compIdx);
                 }
                 //if saturation of gas phase is smaller than 0 switch
                 else if (volVars.saturation(nPhaseIdx) <= Smin)
@@ -659,7 +659,7 @@ protected:
 
                     //switch "Sl" to "xlN2"
                     globalSol[dofIdxGlobal][switchIdx]
-                            = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx /*N2*/);
+                            = volVars.moleFraction(wPhaseIdx, nCompIdx /*N2*/);
                 }
             }
             else if (phasePresence == nPhaseOnly)
@@ -669,7 +669,7 @@ protected:
                 //Calculate sum of mole fractions in the hypothetical liquid phase
                 for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
-                    sumxl += volVars.fluidState().moleFraction(wPhaseIdx, compIdx);
+                    sumxl += volVars.moleFraction(wPhaseIdx, compIdx);
                 }
                 if (sumxl > xlmax)
                     wouldSwitch = true;
@@ -691,7 +691,7 @@ protected:
 
                     //switch all secondary components back to liquid mole fraction
                     for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                        globalSol[dofIdxGlobal][compIdx] = volVars.fluidState().moleFraction(wPhaseIdx,compIdx);
+                        globalSol[dofIdxGlobal][compIdx] = volVars.moleFraction(wPhaseIdx,compIdx);
                 }
             }
             else if (phasePresence == wPhaseOnly)
@@ -701,7 +701,7 @@ protected:
                 //Calculate sum of mole fractions in the hypothetical liquid phase
                 for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
-                    sumxg += volVars.fluidState().moleFraction(nPhaseIdx, compIdx);
+                    sumxg += volVars.moleFraction(nPhaseIdx, compIdx);
                 }
                 if (sumxg > xgmax)
                     wouldSwitch = true;

@@ -147,11 +147,11 @@ protected:
                     if(compIdx != phaseIdx) //No grad is needed for this case
                     {
                         tmp = feGrad;
-                        tmp *= elemVolVars[idx].fluidState().massFraction(phaseIdx, compIdx);
+                        tmp *= elemVolVars[idx].massFraction(phaseIdx, compIdx);
                         massFractionGrad_[phaseIdx][compIdx] += tmp;
 
                         tmp = feGrad;
-                        tmp *= elemVolVars[idx].fluidState().moleFraction(phaseIdx, compIdx);
+                        tmp *= elemVolVars[idx].moleFraction(phaseIdx, compIdx);
                         moleFractionGrad_[phaseIdx][compIdx] += tmp;
                     }
                 }
