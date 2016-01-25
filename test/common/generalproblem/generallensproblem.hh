@@ -32,13 +32,13 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 //box model
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 
 //decoupled model
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 
 #include "generallensspatialparams.hh"
 

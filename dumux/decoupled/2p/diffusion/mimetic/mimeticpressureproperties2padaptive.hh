@@ -1,76 +1,8 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
-/*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
- *                                                                           *
- *   This program is free software: you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
- *****************************************************************************/
+#ifndef DUMUX_MIMETICPROPERTIES2PADAPTIVE_DECOUPLED_HH_OLD
+#define DUMUX_MIMETICPROPERTIES2PADAPTIVE_DECOUPLED_HH_OLD
 
+#warning this header is deprecated, use dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressurepropertiesadaptive.hh instead
 
-#ifndef DUMUX_MIMETICPROPERTIES2PADAPTIVE_DECOUPLED_HH
-#define DUMUX_MIMETICPROPERTIES2PADAPTIVE_DECOUPLED_HH
-
-/*!
- * \ingroup IMPES
- * \ingroup Properties
- */
-/*!
- * \file
- *
- * \brief Defines the properties required for (immiscible) twophase sequential models.
- */
-
-//Dumux-includes
-#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
-#include <dumux/decoupled/common/mimetic/mimeticproperties.hh>
-namespace Dumux
-{
-
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-
-
-////////////////////////////////
-// properties
-////////////////////////////////
-namespace Properties
-{
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-
-//! The type tag for the two-phase problems
-NEW_TYPE_TAG(MimeticPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, Mimetic))
-;
-
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-}
-}
-
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2padaptive.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimetic2padaptive.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
-SET_TYPE_PROP(MimeticPressureTwoPAdaptive, PressureModel, MimeticPressure2PAdaptive<TypeTag>);
-SET_TYPE_PROP(MimeticPressureTwoPAdaptive, LocalStiffness, MimeticTwoPLocalStiffnessAdaptive<TypeTag>);
-}
-}
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressurepropertiesadaptive.hh>
 
 #endif

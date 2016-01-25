@@ -9,4 +9,11 @@ boxlocalresidual.hh
 boxproperties.hh
 boxpropertydefaults.hh
 intersectiontovertexbc.hh
+assembler.hh
+elementboundarytypes.hh
+elementvolumevariables.hh
+fvelementgeometry.hh
+localresidual.hh
+properties.hh
+propertydefaults.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/implicit/box)

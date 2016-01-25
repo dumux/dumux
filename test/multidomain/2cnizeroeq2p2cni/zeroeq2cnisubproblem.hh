@@ -24,8 +24,8 @@
 #ifndef DUMUX_ZEROEQTWOCNI_SUBPROBLEM_HH
 #define DUMUX_ZEROEQTWOCNI_SUBPROBLEM_HH
 
-#include <dumux/freeflow/zeroeqncni/zeroeqncnimodel.hh>
-#include <dumux/multidomain/common/subdomainpropertydefaults.hh>
+#include <dumux/freeflow/zeroeqncni/model.hh>
+#include <dumux/multidomain/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/stokesncnicouplinglocalresidual.hh>
 
 namespace Dumux

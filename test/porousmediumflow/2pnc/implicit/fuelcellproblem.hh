@@ -25,9 +25,9 @@
 #define DUMUX_FUELCELL_PROBLEM_HH
 
 #include <dumux/io/cubegridcreator.hh>
-#include <dumux/implicit/2pnc/2pncmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/material/fluidsystems/h2on2o2fluidsystem.hh>
+#include <dumux/porousmediumflow/2pnc/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/material/fluidsystems/h2on2o2.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
 

@@ -25,12 +25,12 @@
 #ifndef DUMUX_LENS_SPATIAL_PARAMS_HH
 #define DUMUX_LENS_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 
 namespace Dumux
 {

@@ -27,12 +27,12 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
 
-#include <dumux/decoupled/2p2c/2p2cproblem.hh>
-#include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
-#include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
+#include <dumux/porousmediumflow/2p2c/sequential/problem.hh>
+#include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
+#include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>
 
 // fluid properties
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 

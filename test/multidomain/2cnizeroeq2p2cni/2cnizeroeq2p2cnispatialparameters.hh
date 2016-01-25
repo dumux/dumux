@@ -26,7 +26,7 @@
 #ifndef DUMUX_TWOCNIZEROEQTWOPTWOCNISPATIALPARAMS_HH
 #define DUMUX_TWOCNIZEROEQTWOPTWOCNISPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>

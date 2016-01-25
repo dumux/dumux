@@ -10,4 +10,13 @@ el1p2cmodel.hh
 el1p2cproperties.hh
 el1p2cpropertydefaults.hh
 el1p2cvolumevariables.hh
+elementvolumevariables.hh
+fluxvariables.hh
+indices.hh
+localjacobian.hh
+localresidual.hh
+model.hh
+properties.hh
+propertydefaults.hh
+volumevariables.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/geomechanics/el1p2c)

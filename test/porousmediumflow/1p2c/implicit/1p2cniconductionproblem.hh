@@ -27,10 +27,10 @@
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/implicit/1p2c/1p2cmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/1p2c/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include "1p2cnispatialparams.hh"
 

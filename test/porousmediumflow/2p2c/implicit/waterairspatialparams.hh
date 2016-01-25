@@ -27,11 +27,11 @@
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/implicit/2p2c/2p2cmodel.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 
 namespace Dumux
 {

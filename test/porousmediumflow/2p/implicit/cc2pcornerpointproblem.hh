@@ -21,16 +21,16 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/implicit/2p/2pmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/implicit/cellcentered/propertydefaults.hh>
 #include <dumux/linear/amgbackend.hh>
 
 #include <dune/grid/CpGrid.hpp>
 #include <dumux/io/cpgridcreator.hh>
-#include <dumux/implicit/cornerpoint/cpelementvolumevariables.hh>
-#include <dumux/implicit/cornerpoint/cpfvelementgeometry.hh>
-#include <dumux/implicit/cornerpoint/cpdarcyfluxvariables.hh>
+#include <dumux/implicit/cornerpoint/elementvolumevariables.hh>
+#include <dumux/implicit/cornerpoint/fvelementgeometry.hh>
+#include <dumux/porousmediumflow/implicit/cpdarcyfluxvariables.hh>
 
 #include "cc2pcornerpointspatialparams.hh"
 

@@ -24,8 +24,8 @@
 #ifndef DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 #define DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 
-#include <dumux/implicit/3p3c/3p3cindices.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/porousmediumflow/3p3c/implicit/indices.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>

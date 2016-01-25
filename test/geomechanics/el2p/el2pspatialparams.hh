@@ -25,12 +25,12 @@
 #ifndef DUMUX_ELTWOPSPARAMETERS_HH
 #define DUMUX_ELTWOPSPARAMETERS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/geomechanics/el2p/el2pmodel.hh>
+#include <dumux/geomechanics/el2p/model.hh>
 
 namespace Dumux
 {

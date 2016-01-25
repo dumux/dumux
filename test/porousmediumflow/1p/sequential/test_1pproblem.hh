@@ -30,9 +30,9 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
 
-#include <dumux/decoupled/1p/diffusion/fv/fvpressureproperties1p.hh>
-#include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
-#include <dumux/decoupled/common/fv/fvvelocity.hh>
+#include <dumux/porousmediumflow/1p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/1p/sequential/diffusion/problem.hh>
+#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
 #include "test_1pspatialparams.hh"
 

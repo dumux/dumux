@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
 #define DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
+#include <dumux/material/spatialparams/implicit1p.hh>
 
 namespace Dumux
 {

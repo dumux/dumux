@@ -25,11 +25,11 @@
 #ifndef DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 #define DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/implicit/mpnc/mpncmodel.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/model.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 

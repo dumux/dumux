@@ -38,10 +38,10 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/implicit/2p/2pmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
-#include <dumux/implicit/2p/2pgridadaptindicator.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/implicit/cellcentered/propertydefaults.hh>
+#include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 
 #include "lensspatialparams.hh"

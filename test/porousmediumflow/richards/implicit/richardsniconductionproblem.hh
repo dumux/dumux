@@ -28,11 +28,11 @@
 #include <math.h>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/implicit/richards/richardsmodel.hh>
-#include <dumux/implicit/richards/richardsproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/richards/implicit/model.hh>
+#include <dumux/porousmediumflow/richards/implicit/problem.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include "richardsnispatialparams.hh"
 
 namespace Dumux

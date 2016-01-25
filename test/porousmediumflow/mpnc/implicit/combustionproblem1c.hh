@@ -40,17 +40,17 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/modelkinetic.hh>
 
 #include "combustionspatialparams.hh"
 
-#include <dumux/implicit/mpnc/velomodelnewtoncontroller.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/velomodelnewtoncontroller.hh>
 
-#include <dumux/material/fluidsystems/purewatersimplefluidsystem.hh>
+#include <dumux/material/fluidsystems/purewatersimple.hh>
 
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 

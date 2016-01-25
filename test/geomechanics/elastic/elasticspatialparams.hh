@@ -24,7 +24,7 @@
 #ifndef DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 
-#include <dumux/geomechanics/el2p/el2pproperties.hh>
+#include <dumux/geomechanics/el2p/properties.hh>
 
 namespace Dumux
 {

@@ -37,10 +37,10 @@
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
-#include <dumux/multidomain/common/multidomainproblem.hh>
-#include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
-#include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cpropertydefaults.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/multidomain/problem.hh>
+#include <dumux/multidomain/2cstokes2p2c/localoperator.hh>
+#include <dumux/multidomain/2cstokes2p2c/propertydefaults.hh>
 
 #ifdef HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>

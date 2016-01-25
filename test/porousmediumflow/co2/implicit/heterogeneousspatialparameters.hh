@@ -27,11 +27,11 @@
 #ifndef DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/implicit/co2/co2model.hh>
+#include <dumux/porousmediumflow/co2/implicit/model.hh>
 
 namespace Dumux
 {

@@ -1,48 +1,8 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
-/*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
- *                                                                           *
- *   This program is free software: you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
- *****************************************************************************/
-/*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup BoxStokesncniModel
- *
- * \file
- *
- * \brief Defines the additional properties required for the non-isothermal compositional n-compontent
- * Stokes box model.
- */
-#ifndef DUMUX_STOKESNCNI_PROPERTIES_HH
-#define DUMUX_STOKESNCNI_PROPERTIES_HH
+#ifndef DUMUX_STOKESNCNI_PROPERTIES_HH_OLD
+#define DUMUX_STOKESNCNI_PROPERTIES_HH_OLD
 
-#include <dumux/freeflow/stokesnc/stokesncproperties.hh>
+#warning this header is deprecated, use dumux/freeflow/stokesncni/properties.hh instead
 
-namespace Dumux
-{
-namespace Properties
-{
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
+#include <dumux/freeflow/stokesncni/properties.hh>
 
-//! The type tag for the non-isothermal compositional n-component Stokes problems
-NEW_TYPE_TAG(BoxStokesncni, INHERITS_FROM(BoxStokesnc));
-
-}
-
-}
 #endif

@@ -26,12 +26,12 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/implicit/2p2c/2p2cmodel.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2p2cnicouplinglocalresidual.hh>
-#include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-#include <dumux/multidomain/common/multidomainlocaloperator.hh>
+#include <dumux/multidomain/subdomainpropertydefaults.hh>
+#include <dumux/multidomain/localoperator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 #include "2cnistokes2p2cnispatialparams.hh"

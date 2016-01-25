@@ -5,4 +5,10 @@ install(FILES
 2cstokes2p2cnewtoncontroller.hh
 2cstokes2p2cproperties.hh
 2cstokes2p2cpropertydefaults.hh
+localoperator.hh
+newtoncontroller.hh
+properties.hh
+propertydefaults.hh
+2p2ccouplinglocalresidual.hh
+stokesnccouplinglocalresidual.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/2cstokes2p2c)

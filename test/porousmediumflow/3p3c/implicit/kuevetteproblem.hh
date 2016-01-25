@@ -29,10 +29,10 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
-#include <dumux/implicit/3p3c/3p3cmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/3p3c/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "kuevettespatialparams.hh"
 

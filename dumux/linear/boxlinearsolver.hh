@@ -31,7 +31,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 
-#include <dumux/implicit/common/implicitproperties.hh>
+#include <dumux/implicit/properties.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>

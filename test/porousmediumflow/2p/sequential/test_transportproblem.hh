@@ -30,8 +30,8 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
 
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
-#include <dumux/decoupled/2p/transport/transportproblem2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/problem.hh>
 
 #include "test_transportspatialparams.hh"
 

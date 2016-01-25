@@ -25,9 +25,9 @@
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
-#include <dumux/implicit/box/boxproperties.hh>
-#include <dumux/implicit/cellcentered/ccproperties.hh>
-#include <dumux/decoupled/common/pressureproperties.hh>
+#include <dumux/implicit/box/properties.hh>
+#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 
 namespace Dumux

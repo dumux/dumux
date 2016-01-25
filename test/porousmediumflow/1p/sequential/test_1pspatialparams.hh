@@ -24,7 +24,7 @@
 #ifndef TEST_1P_SPATIALPARAMS_HH
 #define TEST_1P_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/fvspatialparams1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {

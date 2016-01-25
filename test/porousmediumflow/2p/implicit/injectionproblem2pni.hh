@@ -33,10 +33,10 @@
 #include <dumux/io/simplexgridcreator.hh>
 #include <dumux/io/cubegridcreator.hh>
 
-#include <dumux/implicit/2p/2pmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 
 // use the same spatial parameters as the injection problem of the
 // 2p2c test program

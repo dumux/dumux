@@ -34,19 +34,19 @@
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal3dpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal3dpressureproperties2padaptive.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2padaptive.hh>
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressurepropertiesadaptive.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressurepropertiesadaptive.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 
 #include "test_3d2pspatialparams.hh"
 
-#include <dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
-#include <dumux/decoupled/2p/impes/gridadaptionindicator2plocal.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/gridadaptionindicatorlocal.hh>
 
 
 namespace Dumux

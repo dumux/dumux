@@ -27,10 +27,10 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
-#include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/geomechanics/el2p/el2pmodel.hh>
-#include <dumux/geomechanics/el2p/el2pamgbackend.hh>
+#include <dumux/material/fluidsystems/brineco2.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/geomechanics/el2p/model.hh>
+#include <dumux/geomechanics/el2p/amgbackend.hh>
 
 #include "el2pco2tables.hh"
 #include "el2pspatialparams.hh"
@@ -454,7 +454,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The center of the finite volume which ought to be set.
      *
-     *               This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
+     *               This function is called directly from dumux/geomechanics/el2p/localoperator.hh
      *               If it is renamed to boundaryTypesAtPos it should be adjusted there as well.
      */
     void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) const
@@ -521,7 +521,7 @@ public:
      * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
      *
-     * This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
+     * This function is called directly from dumux/geomechanics/el2p/localoperator.hh
      * If it is renamed to dirichletAtPos it should be adjusted there as well.
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
@@ -537,7 +537,7 @@ public:
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param globalPos The position of the integration point of the boundary segment.
      *
-     * This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
+     * This function is called directly from dumux/geomechanics/el2p/localoperator.hh
      * If it is renamed to neumannAtPos it should be adjusted there as well.
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
@@ -676,8 +676,8 @@ public:
  *
  * Set initial conditions for solution of momentum balance equation
  * i.e. initialize solid displacement
- * This function is called from dumux/geomechanics/el2p/el2pmodel.hh
- *  * This function is called from dumux/geomechanics/el2p/el2pmodel.hh.
+ * This function is called from dumux/geomechanics/el2p/model.hh
+ *  * This function is called from dumux/geomechanics/el2p/model.hh.
  *
  * The primary variables are initialized two times:
  * 1. before the initialization run.
@@ -727,7 +727,7 @@ public:
  * Set initial conditions for solution of the mass balance equations
  * i.e. initialize wetting phase pressure and nonwetting phase saturation
  *
- * This function is called from dumux/geomechanics/el2p/el2pmodel.hh.
+ * This function is called from dumux/geomechanics/el2p/model.hh.
  * The primary variables are initialized two times:
  * 1. before the initialization run.
  * 2. at the start of the actual simulation applying pressure field
@@ -826,7 +826,7 @@ public:
      *
      * \param pInit The pressure field vector defined in the problem class
      *
-     * This function is called from dumux/geomechanics/el2p/el2pmodel.hh.
+     * This function is called from dumux/geomechanics/el2p/model.hh.
      */
         void setPressure(std::vector<Scalar> pInit)
         {

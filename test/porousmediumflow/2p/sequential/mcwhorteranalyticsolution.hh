@@ -19,7 +19,7 @@
 #ifndef DUMUX_MCWHORTER_ANALYTIC_HH
 #define DUMUX_MCWHORTER_ANALYTIC_HH
 
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
 /**
  * @file

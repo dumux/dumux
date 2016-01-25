@@ -23,11 +23,11 @@
 #ifndef DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 #define DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 
-#include <dumux/implicit/2pdfm/2pdfmmodel.hh>
+#include <dumux/porousmediumflow/2pdfm/implicit/model.hh>
 #include <dumux/io/artgridcreator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 
 namespace Dumux
 {

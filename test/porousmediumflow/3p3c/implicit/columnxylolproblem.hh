@@ -27,10 +27,10 @@
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairxylene.hh>
 
-#include <dumux/implicit/3p3c/3p3cmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/3p3c/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "columnxylolspatialparams.hh"
 

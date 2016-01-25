@@ -26,11 +26,11 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/implicit/2p2c/2p2cindices.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/indices.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/multidomain/2cstokes2p2c/2p2ccouplinglocalresidual.hh>
-#include <dumux/multidomain/common/subdomainpropertydefaults.hh>
-#include <dumux/multidomain/common/multidomainlocaloperator.hh>
+#include <dumux/multidomain/subdomainpropertydefaults.hh>
+#include <dumux/multidomain/localoperator.hh>
 
 #include "2cstokes2p2cspatialparams.hh"
 

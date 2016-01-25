@@ -30,12 +30,12 @@
 #include <dune/grid/uggrid.hh>
 #include <dumux/material/components/unit.hh>
 
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal3dpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressureproperties.hh>
 
-#include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
-#include <dumux/decoupled/common/fv/fvvelocity.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/problem.hh>
+#include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
 #include "test_diffusionspatialparams3d.hh"
 

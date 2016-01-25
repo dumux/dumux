@@ -25,7 +25,7 @@
 #ifndef DUMUX_ELONEPTWOCSPARAMETERS_HH
 #define DUMUX_ELONEPTWOCSPARAMETERS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
+#include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

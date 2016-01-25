@@ -31,8 +31,8 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/implicit/2pdfm/2pdfmmodel.hh>
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/porousmediumflow/2pdfm/implicit/model.hh>
+#include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/io/artgridcreator.hh>

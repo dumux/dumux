@@ -24,7 +24,7 @@
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -43,7 +43,7 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
+#include <dumux/porousmediumflow/mpnc/implicit/modelkinetic.hh>
 
 namespace Dumux
 {

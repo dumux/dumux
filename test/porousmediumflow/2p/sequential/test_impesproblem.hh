@@ -33,18 +33,18 @@
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/components/lnapl.hh>
 
-#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 
 //following includes are only needed if a global pressure formulation is chosen!
 //Then only a total velocity can be reconstructed for the transport step
-#include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
-#include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/capillarydiffusion.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/gravitypart.hh>
 
 #include "test_impesspatialparams.hh"
 
-#include <dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
+#include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
 
 #include <dumux/linear/amgbackend.hh>
 
