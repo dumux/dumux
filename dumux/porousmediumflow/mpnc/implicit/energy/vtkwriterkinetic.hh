@@ -377,7 +377,7 @@ public:
             const unsigned int vIdxGlobal = this->problem_.vertexMapper().subIndex(element, localVertexIdx, dim);
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
-            qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
+            qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.saturation(wPhaseIdx));
             qsf_[vIdxGlobal] = LocalResidual::qsf(volVars);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {

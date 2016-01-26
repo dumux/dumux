@@ -76,7 +76,7 @@ public:
         storage = 0;
         for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
             storage[compIdx] +=
-                volVars.fluidState().saturation(phaseIdx)*
+                volVars.saturation(phaseIdx)*
                 volVars.fluidState().molarity(phaseIdx, compIdx);
 #ifndef NDEBUG
 if (!std::isfinite(storage[compIdx]))
@@ -184,7 +184,7 @@ if (!std::isfinite(volumeFlux))
                                 +
                         (  1. - massUpwindWeight)*dn.fluidState().molarity(phaseIdx, compIdx) );
                         if (!std::isfinite(flux[compIdx]))
-                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.fluidState().saturation(phaseIdx)  ) ;
+                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.saturation(phaseIdx)  ) ;
             }
         }
     }
@@ -211,8 +211,8 @@ if (!std::isfinite(volumeFlux))
 
         const VolumeVariables &volVarsI = fluxVars.volVars(fluxVars.face().i);
         const VolumeVariables &volVarsJ = fluxVars.volVars(fluxVars.face().j);
-        if (volVarsI.fluidState().saturation(phaseIdx) < 1e-4 ||
-            volVarsJ.fluidState().saturation(phaseIdx) < 1e-4)
+        if (volVarsI.saturation(phaseIdx) < 1e-4 ||
+            volVarsJ.saturation(phaseIdx) < 1e-4)
         {
             return; // phase is not present in one of the finite volumes
         }

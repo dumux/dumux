@@ -266,6 +266,15 @@ public:
     { return fluidState_; }
 
     /*!
+     * \brief Returns the saturation of a given phase within
+     *        the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar saturation(int phaseIdx) const
+    { return fluidState_.saturation(phaseIdx); }
+
+    /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
      *
