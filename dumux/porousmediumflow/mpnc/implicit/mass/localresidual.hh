@@ -144,8 +144,8 @@ if (!std::isfinite(volumeFlux))
                 const Scalar sign   = (kGradPNormal > 0)?-1:1;
 
                 // approximate the mean viscosity at the face
-                const Scalar meanVisc = (up.fluidState().viscosity(phaseIdx) +
-                                   dn.fluidState().viscosity(phaseIdx))/2;
+                const Scalar meanVisc = (up.viscosity(phaseIdx) +
+                                   dn.viscosity(phaseIdx))/2;
 
                 // put the mean viscosity and permeanbility in
                 // relation to the viscosity of water at
