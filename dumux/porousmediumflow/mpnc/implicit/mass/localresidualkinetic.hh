@@ -205,7 +205,7 @@ public:
         Scalar x[numPhases][numComponents]; // mass fractions in wetting phase
         for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
             for (int compIdx=0; compIdx< numComponents; ++ compIdx){
-                x[phaseIdx][compIdx] = volVars.fluidState().moleFraction(phaseIdx, compIdx);
+                x[phaseIdx][compIdx] = volVars.moleFraction(phaseIdx, compIdx);
             }
         }
         Valgrind::CheckDefined(x);
@@ -221,7 +221,7 @@ public:
 #endif
         Scalar phaseDensity[numPhases];
         for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-            phaseDensity[phaseIdx] = volVars.fluidState().molarDensity(phaseIdx);
+            phaseDensity[phaseIdx] = volVars.molarDensity(phaseIdx);
         }
 
         // diffusion coefficients in wetting phase

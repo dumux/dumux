@@ -275,6 +275,40 @@ public:
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
+     * \brief Returns the mass fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mole fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.moleFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     *
+     * \param compIdx The index of the component
+     */
+    Scalar molarity(const int phaseIdx, int compIdx) const
+    { return fluidState_.molarity(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar molarDensity(const int phaseIdx) const
+    { return fluidState_.molarDensity(phaseIdx);}
+
+    /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
      *

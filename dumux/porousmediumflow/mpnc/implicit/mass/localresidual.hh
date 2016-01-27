@@ -77,7 +77,7 @@ public:
         for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
             storage[compIdx] +=
                 volVars.saturation(phaseIdx)*
-                volVars.fluidState().molarity(phaseIdx, compIdx);
+                volVars.molarity(phaseIdx, compIdx);
 #ifndef NDEBUG
 if (!std::isfinite(storage[compIdx]))
     DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
@@ -131,10 +131,10 @@ if (!std::isfinite(volumeFlux))
             if (enableSmoothUpwinding_) {
                 const Scalar kGradPNormal   = fluxVars.kGradPNormal(phaseIdx);
                 const Scalar mobUp          = up.mobility(phaseIdx);
-                const Scalar conUp          = up.fluidState().molarity(phaseIdx, compIdx);
+                const Scalar conUp          = up.molarity(phaseIdx, compIdx);
 
                 const Scalar mobDn  = dn.mobility(phaseIdx);
-                const Scalar conDn  = dn.fluidState().molarity(phaseIdx, compIdx);
+                const Scalar conDn  = dn.molarity(phaseIdx, compIdx);
 
                 const Scalar mobConUp   = mobUp*conUp;
                 const Scalar mobConDn   = mobDn*conDn;
@@ -180,9 +180,9 @@ if (!std::isfinite(volumeFlux))
             {// not use smooth upwinding
                 flux[compIdx] =
                         volumeFlux *
-                        ((     massUpwindWeight)*up.fluidState().molarity(phaseIdx, compIdx)
+                        ((     massUpwindWeight)*up.molarity(phaseIdx, compIdx)
                                 +
-                        (  1. - massUpwindWeight)*dn.fluidState().molarity(phaseIdx, compIdx) );
+                        (  1. - massUpwindWeight)*dn.molarity(phaseIdx, compIdx) );
                         if (!std::isfinite(flux[compIdx]))
                             DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.saturation(phaseIdx)  ) ;
             }
@@ -221,8 +221,8 @@ if (!std::isfinite(volumeFlux))
         // integration point by the arithmetic mean of the
         // concentration of the sub-control volumes
         Scalar molarDensityAtIP;
-        molarDensityAtIP = volVarsI.fluidState().molarDensity(phaseIdx);
-        molarDensityAtIP += volVarsJ.fluidState().molarDensity(phaseIdx);
+        molarDensityAtIP = volVarsI.molarDensity(phaseIdx);
+        molarDensityAtIP += volVarsJ.molarDensity(phaseIdx);
         molarDensityAtIP /= 2;
 
         Diffusion::flux(flux, phaseIdx, fluxVars, molarDensityAtIP);

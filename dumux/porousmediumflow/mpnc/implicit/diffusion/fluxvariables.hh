@@ -105,12 +105,12 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx){
 
                     // calculate mole fractions at the integration points of the face
-                    moleFraction_[phaseIdx][compIdx] += elemVolVars[volVarsIdx].fluidState().moleFraction(phaseIdx, compIdx)*
+                    moleFraction_[phaseIdx][compIdx] += elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx)*
                     face.shapeValue[idx];
 
                     // calculate mole fraction gradients
                     tmp =  feGrad;
-                    tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(phaseIdx, compIdx);
+                    tmp *= elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx);
                     moleFractionGrad_[phaseIdx][compIdx] += tmp;
                 }
             }
