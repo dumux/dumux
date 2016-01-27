@@ -478,8 +478,8 @@ public:
 
         FluidState fluidState;
 
-        const Scalar pn = elemVolVars[scvIdx].fluidState().pressure(nPhaseIdx);
-        const Scalar pw = elemVolVars[scvIdx].fluidState().pressure(wPhaseIdx);
+        const Scalar pn = elemVolVars[scvIdx].pressure(nPhaseIdx);
+        const Scalar pw = elemVolVars[scvIdx].pressure(wPhaseIdx);
 
         const Scalar Tn = elemVolVars[scvIdx].fluidState().temperature(nPhaseIdx);
         const Scalar Tw = elemVolVars[scvIdx].fluidState().temperature(wPhaseIdx);

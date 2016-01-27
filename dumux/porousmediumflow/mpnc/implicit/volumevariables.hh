@@ -309,6 +309,19 @@ public:
     { return fluidState_.molarDensity(phaseIdx);}
 
     /*!
+     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     *        the control volume.
+     */
+    Scalar pressure(const int phaseIdx) const
+    { return fluidState_.pressure(phaseIdx); }
+
+    /*!
+     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar density(const int phaseIdx) const
+    { return fluidState_.density(phaseIdx); }
+
+    /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
      *

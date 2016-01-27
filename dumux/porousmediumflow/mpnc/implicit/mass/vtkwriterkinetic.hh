@@ -127,7 +127,7 @@ public:
 //            }
 
             if (deltaPOutput_) {
-                deltaP_[vIdxGlobal] = volVars.fluidState().pressure(nPhaseIdx) - 100000.;
+                deltaP_[vIdxGlobal] = volVars.pressure(nPhaseIdx) - 100000.;
             }
         }
     }

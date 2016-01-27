@@ -152,8 +152,8 @@ public:
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 if (saturationOutput_) saturation_[phaseIdx][dofIdxGlobal] = volVars.saturation(phaseIdx);
-                if (pressureOutput_) pressure_[phaseIdx][dofIdxGlobal] = volVars.fluidState().pressure(phaseIdx);
-                if (densityOutput_) density_[phaseIdx][dofIdxGlobal] = volVars.fluidState().density(phaseIdx);
+                if (pressureOutput_) pressure_[phaseIdx][dofIdxGlobal] = volVars.pressure(phaseIdx);
+                if (densityOutput_) density_[phaseIdx][dofIdxGlobal] = volVars.density(phaseIdx);
                 if (mobilityOutput_) mobility_[phaseIdx][dofIdxGlobal] = volVars.mobility(phaseIdx);
                 if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][dofIdxGlobal] = volVars.fluidState().averageMolarMass(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {

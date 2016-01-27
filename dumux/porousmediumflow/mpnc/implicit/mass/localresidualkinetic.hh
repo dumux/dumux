@@ -196,7 +196,7 @@ public:
 
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
         const Scalar temperature            = volVars.fluidState().temperature(wPhaseIdx);
-        const Scalar pn                     = volVars.fluidState().pressure(nPhaseIdx);
+        const Scalar pn                     = volVars.pressure(nPhaseIdx);
         const Scalar henry                  = FluidSystem::henry(temperature) ;
         const Scalar gradNinWApprox  = ( mu_wPhaseNComp - mu_nPhaseNCompEquil) / characteristicLength;    // very 2p2c // 1. / henry *
         const Scalar gradWinNApprox  = ( mu_nPhaseWComp - mu_wPhaseWCompEquil) / characteristicLength;    // very 2p2c // 1. / pn *
