@@ -225,7 +225,7 @@ public:
      */
     void update()
     {
-        assemble(false); Dune::dinfo << "pressure calculation"<< std::endl;
+        asImp_().assemble(false); Dune::dinfo << "pressure calculation"<< std::endl;
         solve();
 
         return;
@@ -431,9 +431,8 @@ void FVPressure<TypeTag>::assemble(bool first)
                     int eIdxGlobalJ = problem_.variables().index(elementNeighbor);
 
                     // check for hanging nodes
-                    // take a hanging node never from the element with smaller level!
                     bool haveSameLevel = (element.level() == elementNeighbor.level());
-                    // calculate only from one side, but add matrix entries for both sides
+                    // calculate only from one side (except for hanging nodes), but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
@@ -441,7 +440,6 @@ void FVPressure<TypeTag>::assemble(bool first)
                         && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         continue;
 
-                    //check for hanging nodes
                     entries = 0;
                     asImp_().getFlux(entries, intersection, cellDataI, first);
 

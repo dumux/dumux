@@ -132,6 +132,7 @@ class FVSaturation2P: public FVTransport<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
+protected:
     CapillaryFlux& capillaryFlux()
     {
         return *capillaryFlux_;
@@ -261,7 +262,7 @@ public:
         if (this->enableLocalTimeStepping())
             this->innerUpdate(updateVec);
         else
-            updateSaturationSolution(updateVec);
+            asImp_().updateSaturationSolution(updateVec);
     }
 
     /*! \brief Updates the primary transport variable.
@@ -272,7 +273,7 @@ public:
      */
     void updateTransportedQuantity(TransportSolutionType& updateVec, Scalar dt)
     {
-        updateSaturationSolution(updateVec, dt);
+        asImp_().updateSaturationSolution(updateVec, dt);
     }
 
     /*! \brief Globally updates the saturation solution

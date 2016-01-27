@@ -100,6 +100,9 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
 {
     typedef FVPressure<TypeTag> ParentType;
 
+    //the model implementation
+    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -300,7 +303,7 @@ public:
         // iterate through leaf grid
         for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            storePressureSolution(element);
+            asImp_().storePressureSolution(element);
         }
     }
 
@@ -547,6 +550,14 @@ public:
     }
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     Problem& problem_;
     const GlobalPosition& gravity_; //!< vector including the gravity constant
 
