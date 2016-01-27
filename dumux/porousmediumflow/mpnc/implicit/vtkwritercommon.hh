@@ -155,7 +155,7 @@ public:
                 if (pressureOutput_) pressure_[phaseIdx][dofIdxGlobal] = volVars.pressure(phaseIdx);
                 if (densityOutput_) density_[phaseIdx][dofIdxGlobal] = volVars.density(phaseIdx);
                 if (mobilityOutput_) mobility_[phaseIdx][dofIdxGlobal] = volVars.mobility(phaseIdx);
-                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][dofIdxGlobal] = volVars.fluidState().averageMolarMass(phaseIdx);
+                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][dofIdxGlobal] = volVars.averageMolarMass(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                     if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.moleFraction(phaseIdx, compIdx);
                     if (massFracOutput_) massFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.massFraction(phaseIdx, compIdx);

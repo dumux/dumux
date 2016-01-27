@@ -193,9 +193,9 @@ public:
             if (temperatureOutput_) temperature_[gobalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 if (enthalpyOutput_)
-                    enthalpy_[phaseIdx][gobalIdx] = volVars.fluidState().enthalpy(phaseIdx);
+                    enthalpy_[phaseIdx][gobalIdx] = volVars.enthalpy(phaseIdx);
                 if (internalEnergyOutput_)
-                    internalEnergy_[phaseIdx][gobalIdx] = volVars.fluidState().internalEnergy(phaseIdx);
+                    internalEnergy_[phaseIdx][gobalIdx] = volVars.internalEnergy(phaseIdx);
             }
         }
     }

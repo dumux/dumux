@@ -248,7 +248,7 @@ if (!std::isfinite(storage[energyEqIdx]))
         // use the phase enthalpy of the upstream vertex to calculate
         // the enthalpy transport
         const VolumeVariables &up = elemVolVars[upIdx];
-        flux[energyEqIdx] += up.fluidState().enthalpy(phaseIdx) * massFlux;
+        flux[energyEqIdx] += up.enthalpy(phaseIdx) * massFlux;
 #ifndef NDEBUG
 if (!std::isfinite(flux[energyEqIdx]) )
     DUNE_THROW(NumericalProblem, "Calculated non-finite energy flux");

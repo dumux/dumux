@@ -322,6 +322,30 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
+     * \brief Return enthalpy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar enthalpy(const int phaseIdx) const
+    { return fluidState_.enthalpy(phaseIdx); }
+
+    /*!
+     * \brief Return internal energy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar internalEnergy(const int phaseIdx) const
+    { return fluidState_.internalEnergy(phaseIdx); }
+
+    /*!
+     * \brief Return fugacity \f$\mathrm{[kg/m^3]}\f$ the of the component.
+     */
+    Scalar fugacity(const int compIdx) const
+    { return fluidState_.fugacity(compIdx); }
+
+    /*!
+     * \brief Return average molar mass \f$\mathrm{[kg/m^3]}\f$ the of the phase.
+     */
+    Scalar averageMolarMass(const int phaseIdx) const
+    { return fluidState_.averageMolarMass(phaseIdx); }
+
+    /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
      *

@@ -209,8 +209,8 @@ public:
          * To be more precise this should be the components enthalpy.
          * In the same vein: Counter current diffusion is not accounted for here.
          */
-        const Scalar transportedThingUp =  up.fluidState().enthalpy(phaseIdx) ;
-        const Scalar transportedThingDn =  dn.fluidState().enthalpy(phaseIdx) ;
+        const Scalar transportedThingUp =  up.enthalpy(phaseIdx) ;
+        const Scalar transportedThingDn =  dn.enthalpy(phaseIdx) ;
 
 
         const Scalar massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
@@ -574,8 +574,8 @@ public:
         /* todo
          * CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy? To be more precise this should be the components enthalpy. In the same vein: Counter current diffusion is not accounted for here.
          */
-        const Scalar transportedThingUp =  up.fluidState().enthalpy(phaseIdx) ;
-        const Scalar transportedThingDn =  dn.fluidState().enthalpy(phaseIdx) ;
+        const Scalar transportedThingUp =  up.enthalpy(phaseIdx) ;
+        const Scalar transportedThingDn =  dn.enthalpy(phaseIdx) ;
 
         const Scalar massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
         flux[energyEq0Idx] += massFlux *

@@ -136,8 +136,8 @@ public:
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
-                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
+                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.enthalpy(phaseIdx);
+                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.internalEnergy(phaseIdx);
                 reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
                 prandtlNumber_[phaseIdx][vIdxGlobal]     = volVars.prandtlNumber(phaseIdx);
                 nusseltNumber_[phaseIdx][vIdxGlobal]             = volVars.nusseltNumber(phaseIdx);
@@ -381,8 +381,8 @@ public:
             qsf_[vIdxGlobal] = LocalResidual::qsf(volVars);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
-                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
+                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.enthalpy(phaseIdx);
+                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.internalEnergy(phaseIdx);
                 reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
                 prandtlNumber_[phaseIdx][vIdxGlobal]     = volVars.prandtlNumber(phaseIdx);
                 nusseltNumber_[phaseIdx][vIdxGlobal]             = volVars.nusseltNumber(phaseIdx);
