@@ -266,6 +266,114 @@ public:
     { return fluidState_; }
 
     /*!
+     * \brief Returns the saturation of a given phase within
+     *        the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar saturation(int phaseIdx) const
+    { return fluidState_.saturation(phaseIdx); }
+
+    /*!
+     * \brief Returns the mass fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mole fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.moleFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     *
+     * \param compIdx The index of the component
+     */
+    Scalar molarity(const int phaseIdx, int compIdx) const
+    { return fluidState_.molarity(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar molarDensity(const int phaseIdx) const
+    { return fluidState_.molarDensity(phaseIdx);}
+
+    /*!
+     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     *        the control volume.
+     */
+    Scalar pressure(const int phaseIdx) const
+    { return fluidState_.pressure(phaseIdx); }
+
+    /*!
+     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar density(const int phaseIdx) const
+    { return fluidState_.density(phaseIdx); }
+
+    /*!
+     * \brief Returns the fluid/solid phase temperature
+     *        in the sub-control volume for the assumption of local thermal
+     *        non-equillibrium where there is more than one energy equation
+     *        and each phase and the matrix can have different temperatures
+     *
+     * \param phaseIdx The local index of the phases
+     */
+    template <class T = TypeTag>
+    typename std::enable_if<(GET_PROP_VALUE(T, NumEnergyEquations) > 1), Scalar>::type temperature(const unsigned int phaseIdx) const
+    {
+        return EnergyVolumeVariables::temperature(phaseIdx);
+    }
+
+     /*!
+     * \brief Returns the fluid/solid phase temperature
+     *        in the sub-control volume for the assumption of local thermal
+     *        equillibrium where there is only one or no energy equation
+     *        and all phases including the  matrix have the same temperature
+     *
+     * \param phaseIdx The local index of the phases
+     */
+    template <class T = TypeTag>
+    typename std::enable_if<(GET_PROP_VALUE(T, NumEnergyEquations) < 2), Scalar>::type temperature(const unsigned int phaseIdx) const
+    {
+        return fluidState_.temperature(phaseIdx);
+    }
+
+    /*!
+     * \brief Return enthalpy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar enthalpy(const int phaseIdx) const
+    { return fluidState_.enthalpy(phaseIdx); }
+
+    /*!
+     * \brief Return internal energy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     */
+    Scalar internalEnergy(const int phaseIdx) const
+    { return fluidState_.internalEnergy(phaseIdx); }
+
+    /*!
+     * \brief Return fugacity \f$\mathrm{[kg/m^3]}\f$ the of the component.
+     */
+    Scalar fugacity(const int compIdx) const
+    { return fluidState_.fugacity(compIdx); }
+
+    /*!
+     * \brief Return average molar mass \f$\mathrm{[kg/m^3]}\f$ the of the phase.
+     */
+    Scalar averageMolarMass(const int phaseIdx) const
+    { return fluidState_.averageMolarMass(phaseIdx); }
+
+    /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
      *

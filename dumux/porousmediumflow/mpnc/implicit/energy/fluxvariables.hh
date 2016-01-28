@@ -141,7 +141,7 @@ public:
             // index for the element volume variables
             int volVarsIdx = face.fapIndices[idx];
 
-            tmp *= elemVolVars[volVarsIdx].fluidState().temperature(/*phaseIdx=*/0);
+            tmp *= elemVolVars[volVarsIdx].temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 
@@ -192,13 +192,13 @@ protected:
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
             lambdaI =
-                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].saturation(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(nPhaseIdx),
                                                                    problem.spatialParams().solidThermalConductivity(element, fvGeometry, i),
                                                                    problem.spatialParams().porosity(element, fvGeometry, i));
             lambdaJ =
-                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].saturation(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(nPhaseIdx),
                                                                    problem.spatialParams().solidThermalConductivity(element, fvGeometry, j),
@@ -211,7 +211,7 @@ protected:
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
             lambdaI =
-                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].saturation(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(nPhaseIdx),
                                                                    problem.spatialParams().solidThermalConductivity(elementI, fvGeometryI, 0),
@@ -222,7 +222,7 @@ protected:
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
             lambdaJ =
-                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].saturation(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(nPhaseIdx),
                                                                    problem.spatialParams().solidThermalConductivity(elementJ, fvGeometryJ, 0),

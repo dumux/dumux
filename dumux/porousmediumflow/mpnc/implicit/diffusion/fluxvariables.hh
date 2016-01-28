@@ -105,12 +105,12 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx){
 
                     // calculate mole fractions at the integration points of the face
-                    moleFraction_[phaseIdx][compIdx] += elemVolVars[volVarsIdx].fluidState().moleFraction(phaseIdx, compIdx)*
+                    moleFraction_[phaseIdx][compIdx] += elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx)*
                     face.shapeValue[idx];
 
                     // calculate mole fraction gradients
                     tmp =  feGrad;
-                    tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(phaseIdx, compIdx);
+                    tmp *= elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx);
                     moleFractionGrad_[phaseIdx][compIdx] += tmp;
                 }
             }
@@ -129,8 +129,8 @@ public:
         {
             // make sure to only calculate diffusion coefficents
             // for phases which exist in both finite volumes
-            if (elemVolVars[i].fluidState().saturation(phaseIdx) <= 1e-4 ||
-                elemVolVars[j].fluidState().saturation(phaseIdx) <= 1e-4)
+            if (elemVolVars[i].saturation(phaseIdx) <= 1e-4 ||
+                elemVolVars[j].saturation(phaseIdx) <= 1e-4)
             {
                 continue;
             }
@@ -141,11 +141,11 @@ public:
             // and j
             //
             Scalar red_i =
-                elemVolVars[i].fluidState().saturation(phaseIdx)/elemVolVars[i].porosity() *
-                pow(elemVolVars[i].porosity() * elemVolVars[i].fluidState().saturation(phaseIdx), 7.0/3);
+                elemVolVars[i].saturation(phaseIdx)/elemVolVars[i].porosity() *
+                pow(elemVolVars[i].porosity() * elemVolVars[i].saturation(phaseIdx), 7.0/3);
             Scalar red_j =
-                elemVolVars[j].fluidState().saturation(phaseIdx)/elemVolVars[j].porosity() *
-                pow(elemVolVars[j].porosity() * elemVolVars[j].fluidState().saturation(phaseIdx), 7.0/3);
+                elemVolVars[j].saturation(phaseIdx)/elemVolVars[j].porosity() *
+                pow(elemVolVars[j].porosity() * elemVolVars[j].saturation(phaseIdx), 7.0/3);
 
             if (phaseIdx == wPhaseIdx) {
                 // Liquid phase diffusion coefficients in the porous medium

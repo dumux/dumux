@@ -136,8 +136,8 @@ public:
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
-                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
+                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.enthalpy(phaseIdx);
+                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.internalEnergy(phaseIdx);
                 reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
                 prandtlNumber_[phaseIdx][vIdxGlobal]     = volVars.prandtlNumber(phaseIdx);
                 nusseltNumber_[phaseIdx][vIdxGlobal]             = volVars.nusseltNumber(phaseIdx);
@@ -377,12 +377,12 @@ public:
             const unsigned int vIdxGlobal = this->problem_.vertexMapper().subIndex(element, localVertexIdx, dim);
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
-            qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
+            qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.saturation(wPhaseIdx));
             qsf_[vIdxGlobal] = LocalResidual::qsf(volVars);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
-                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
+                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.enthalpy(phaseIdx);
+                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.internalEnergy(phaseIdx);
                 reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
                 prandtlNumber_[phaseIdx][vIdxGlobal]     = volVars.prandtlNumber(phaseIdx);
                 nusseltNumber_[phaseIdx][vIdxGlobal]             = volVars.nusseltNumber(phaseIdx);

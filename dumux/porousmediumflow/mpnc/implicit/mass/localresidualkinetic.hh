@@ -195,8 +195,8 @@ public:
         Valgrind::CheckDefined(mu_nPhaseWComp);
 
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
-        const Scalar temperature            = volVars.fluidState().temperature(wPhaseIdx);
-        const Scalar pn                     = volVars.fluidState().pressure(nPhaseIdx);
+        const Scalar temperature            = volVars.temperature(wPhaseIdx);
+        const Scalar pn                     = volVars.pressure(nPhaseIdx);
         const Scalar henry                  = FluidSystem::henry(temperature) ;
         const Scalar gradNinWApprox  = ( mu_wPhaseNComp - mu_nPhaseNCompEquil) / characteristicLength;    // very 2p2c // 1. / henry *
         const Scalar gradWinNApprox  = ( mu_nPhaseWComp - mu_wPhaseWCompEquil) / characteristicLength;    // very 2p2c // 1. / pn *
@@ -205,7 +205,7 @@ public:
         Scalar x[numPhases][numComponents]; // mass fractions in wetting phase
         for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
             for (int compIdx=0; compIdx< numComponents; ++ compIdx){
-                x[phaseIdx][compIdx] = volVars.fluidState().moleFraction(phaseIdx, compIdx);
+                x[phaseIdx][compIdx] = volVars.moleFraction(phaseIdx, compIdx);
             }
         }
         Valgrind::CheckDefined(x);
@@ -221,7 +221,7 @@ public:
 #endif
         Scalar phaseDensity[numPhases];
         for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-            phaseDensity[phaseIdx] = volVars.fluidState().molarDensity(phaseIdx);
+            phaseDensity[phaseIdx] = volVars.molarDensity(phaseIdx);
         }
 
         // diffusion coefficients in wetting phase

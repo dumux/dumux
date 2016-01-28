@@ -76,8 +76,8 @@ public:
         storage = 0;
         for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
             storage[compIdx] +=
-                volVars.fluidState().saturation(phaseIdx)*
-                volVars.fluidState().molarity(phaseIdx, compIdx);
+                volVars.saturation(phaseIdx)*
+                volVars.molarity(phaseIdx, compIdx);
 #ifndef NDEBUG
 if (!std::isfinite(storage[compIdx]))
     DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
@@ -131,10 +131,10 @@ if (!std::isfinite(volumeFlux))
             if (enableSmoothUpwinding_) {
                 const Scalar kGradPNormal   = fluxVars.kGradPNormal(phaseIdx);
                 const Scalar mobUp          = up.mobility(phaseIdx);
-                const Scalar conUp          = up.fluidState().molarity(phaseIdx, compIdx);
+                const Scalar conUp          = up.molarity(phaseIdx, compIdx);
 
                 const Scalar mobDn  = dn.mobility(phaseIdx);
-                const Scalar conDn  = dn.fluidState().molarity(phaseIdx, compIdx);
+                const Scalar conDn  = dn.molarity(phaseIdx, compIdx);
 
                 const Scalar mobConUp   = mobUp*conUp;
                 const Scalar mobConDn   = mobDn*conDn;
@@ -144,8 +144,8 @@ if (!std::isfinite(volumeFlux))
                 const Scalar sign   = (kGradPNormal > 0)?-1:1;
 
                 // approximate the mean viscosity at the face
-                const Scalar meanVisc = (up.fluidState().viscosity(phaseIdx) +
-                                   dn.fluidState().viscosity(phaseIdx))/2;
+                const Scalar meanVisc = (up.viscosity(phaseIdx) +
+                                   dn.viscosity(phaseIdx))/2;
 
                 // put the mean viscosity and permeanbility in
                 // relation to the viscosity of water at
@@ -180,11 +180,11 @@ if (!std::isfinite(volumeFlux))
             {// not use smooth upwinding
                 flux[compIdx] =
                         volumeFlux *
-                        ((     massUpwindWeight)*up.fluidState().molarity(phaseIdx, compIdx)
+                        ((     massUpwindWeight)*up.molarity(phaseIdx, compIdx)
                                 +
-                        (  1. - massUpwindWeight)*dn.fluidState().molarity(phaseIdx, compIdx) );
+                        (  1. - massUpwindWeight)*dn.molarity(phaseIdx, compIdx) );
                         if (!std::isfinite(flux[compIdx]))
-                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.fluidState().saturation(phaseIdx)  ) ;
+                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.temperature(phaseIdx) << "S "<<up.saturation(phaseIdx)  ) ;
             }
         }
     }
@@ -211,8 +211,8 @@ if (!std::isfinite(volumeFlux))
 
         const VolumeVariables &volVarsI = fluxVars.volVars(fluxVars.face().i);
         const VolumeVariables &volVarsJ = fluxVars.volVars(fluxVars.face().j);
-        if (volVarsI.fluidState().saturation(phaseIdx) < 1e-4 ||
-            volVarsJ.fluidState().saturation(phaseIdx) < 1e-4)
+        if (volVarsI.saturation(phaseIdx) < 1e-4 ||
+            volVarsJ.saturation(phaseIdx) < 1e-4)
         {
             return; // phase is not present in one of the finite volumes
         }
@@ -221,8 +221,8 @@ if (!std::isfinite(volumeFlux))
         // integration point by the arithmetic mean of the
         // concentration of the sub-control volumes
         Scalar molarDensityAtIP;
-        molarDensityAtIP = volVarsI.fluidState().molarDensity(phaseIdx);
-        molarDensityAtIP += volVarsJ.fluidState().molarDensity(phaseIdx);
+        molarDensityAtIP = volVarsI.molarDensity(phaseIdx);
+        molarDensityAtIP += volVarsJ.molarDensity(phaseIdx);
         molarDensityAtIP /= 2;
 
         Diffusion::flux(flux, phaseIdx, fluxVars, molarDensityAtIP);
