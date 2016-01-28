@@ -343,11 +343,11 @@ public:
     {
         source = 0;
         const  VolumeVariables &volVars = elemVolVars[scvIdx];
-        Scalar moleFracNaCl_lPhase = volVars.fluidState().moleFraction(wPhaseIdx, NaClIdx);
-        Scalar moleFracNaCl_gPhase = volVars.fluidState().moleFraction(nPhaseIdx, NaClIdx);
+        Scalar moleFracNaCl_lPhase = volVars.moleFraction(wPhaseIdx, NaClIdx);
+        Scalar moleFracNaCl_gPhase = volVars.moleFraction(nPhaseIdx, NaClIdx);
         Scalar massFracNaCl_Max_lPhase = this->spatialParams().SolubilityLimit();
         Scalar moleFracNaCl_Max_lPhase = massTomoleFrac_(massFracNaCl_Max_lPhase);
-        Scalar moleFracNaCl_Max_gPhase = moleFracNaCl_Max_lPhase / volVars.fluidState().pressure(nPhaseIdx);
+        Scalar moleFracNaCl_Max_gPhase = moleFracNaCl_Max_lPhase / volVars.pressure(nPhaseIdx);
         Scalar saltPorosity = this->spatialParams().porosityMin(element, fvGeometry, scvIdx);
 
         // liquid phase
