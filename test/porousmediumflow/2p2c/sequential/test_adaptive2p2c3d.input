@@ -13,13 +13,9 @@ MinLevel = 0
 MaxLevel = 1
 
 [Grid]
-NumberOfCellsX = 10 # [-] resolution in x-direction
-NumberOfCellsY = 10 # [-] resolution in y-direction
-NumberOfCellsZ = 10 # [-] resolution in z-direction
+Cells = 10 10 10 # [-] resolution in x-, y- and z-direction
 
-UpperRightX = 10 # [m] length of the domain
-UpperRightY = 10 # [m] width of the domain
-UpperRightZ = 10 # [m] height of the domain
+UpperRight = 10 10 10 # [m] length, width and height of the domain
 
 [BoundaryConditions]
 Injectionrate = 1e-4	# kg / sec

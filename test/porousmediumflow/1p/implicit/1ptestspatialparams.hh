@@ -58,20 +58,11 @@ public:
     OnePTestSpatialParams(const GridView& gridView)
         : ParentType(gridView)
     {
-            lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
-            if (dimWorld > 1)
-                lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
-            if (dimWorld > 2)
-                lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftZ);
-
-            lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightX);
-            if (dimWorld > 1)
-                lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightY);
-            if (dimWorld > 2)
-                lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightZ);
-
             permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
-            permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
+            permeabilityLens_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
+
+            lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
+            lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
     }
 
     /*!

@@ -6,11 +6,9 @@ SubTimestepVerbosity = 0
 [Grid]
 File = grids/test_mpfa2p.dgf#grid for buckley-leverett or mcwhorter problem
 
-NumberOfCellsX = 10# [-] level 0 resolution in x-direction
-NumberOfCellsY = 10# [-] level 0 resolution in y-direction
+Cells = 10 10
 
-UpperRightX = 20# [m] dimension of the grid
-UpperRightY = 10# [m] dimension of the grid # 2D
+UpperRight = 20 10
 
 [Problem]
 OutputInterval =0
@@ -27,30 +25,18 @@ InjectionFlux = 0.1
 OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
 
 [SpatialParams]
-BackgroundPermeabilityXX = 1e-10
-BackgroundPermeabilityXY = 0
-BackgroundPermeabilityYX = 0
-BackgroundPermeabilityYY = 1e-10
+BackgroundPermeability = 1e-10 0 0 1e-10 # XX XY YX YY
 
-LensPermeabilityXX = 1e-14
-LensPermeabilityXY = 0
-LensPermeabilityYX = 0
-LensPermeabilityYY = 1e-14
+LensPermeability = 1e-14 0 0 1e-14 # XX XY YX YY
 
-LensOneLowerLeftX = 7
-LensOneLowerLeftY = 6
-LensOneUpperRightX = 13
-LensOneUpperRightY = 7
+LensOneLowerLeft = 7 6
+LensOneUpperRight = 13 7
 
-LensTwoLowerLeftX = 2
-LensTwoLowerLeftY = 4
-LensTwoUpperRightX = 8
-LensTwoUpperRightY = 5
+LensTwoLowerLeft = 2 4
+LensTwoUpperRight = 8 5
 
-LensThreeLowerLeftX = 10
-LensThreeLowerLeftY = 2
-LensThreeUpperRightX = 18
-LensThreeUpperRightY = 3
+LensThreeLowerLeft = 10 2
+LensThreeUpperRight = 18 3
 
 BackgroundEntryPressure = 500
 LenseEntryPressure = 5000

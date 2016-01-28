@@ -30,22 +30,12 @@
 // The base porous media box problem
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-// The DUNE grid used
-#if  HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#elif HAVE_UG
-#include <dune/grid/uggrid.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
-#endif // HAVE_DUNE_ALUGRID, HAVE_UG
-
 // Spatially dependent parameters
 #include "tutorialspatialparams_implicit.hh"
 
 // The components that are used
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/lnapl.hh>
-#include <dumux/io/cubegridcreator.hh>
 
 namespace Dumux{
 // Forward declaration of the problem class
@@ -68,7 +58,6 @@ SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::YaspGrid<2>);
 #endif // HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TutorialProblemImplicit, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-implicit:set-gridcreator}@*/
 
 // Set the wetting phase
 SET_PROP(TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/

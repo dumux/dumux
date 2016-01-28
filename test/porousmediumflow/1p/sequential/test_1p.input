@@ -10,11 +10,8 @@ EnableGravity = 0 # Disable Gravity
 Verbosity = 1 #
 
 [Grid]
-NumberOfCellsX = 1 # [-] resolution in x-direction
-NumberOfCellsY = 1 # [-] resolution in y-direction
-
-UpperRightX = 1 # [m] length of the domain
-UpperRightY = 1 # [m] height of the domain
+Cells = 1 1
+UpperRight = 1 1
 
 NumRefine = 3 # refinement level of the created grid
 

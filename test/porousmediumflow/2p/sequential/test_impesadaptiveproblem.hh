@@ -24,11 +24,6 @@
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
-
-#include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -60,9 +55,6 @@ NEW_TYPE_TAG(TestIMPESAdaptiveRestartProblem, INHERITS_FROM(TestIMPESAdaptivePro
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
-
-// set the GridCreator property
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 #if HAVE_DUNE_ALUGRID
 // reset the GridCreator to the standard one for testing the restart functionality

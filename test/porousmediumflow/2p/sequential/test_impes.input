@@ -3,11 +3,9 @@ TEnd = 1e7 # [s]
 DtInitial = 0 #[s]
 
 [Grid]
-NumberOfCellsX = 30 # [-] resolution in x-direction
-NumberOfCellsY = 6 # [-] resolution in y-direction
+Cells = 30 6
 
-UpperRightX = 300 # [m] length of the domain
-UpperRightY = 60 # [m] height of the domain
+UpperRight = 300 60
 
 [Impet]
 CFLFactor = 0.95

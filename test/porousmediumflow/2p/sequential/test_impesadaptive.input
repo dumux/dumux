@@ -6,11 +6,9 @@ DtInitial = 0 # [s]
 Name = test_2padaptive # name passed to the output routines
 
 [Grid]
-NumberOfCellsX = 2 # [-] level 0 resolution in x-direction
-NumberOfCellsY = 1 # [-] level 0 resolution in y-direction
+Cells = 2 1
 
-UpperRightX = 300 # [m] length of the domain
-UpperRightY = 100 # [m] height of the domain
+UpperRight = 300 100
 
 [GridAdapt]
 MinLevel = 0 # [-] minimum level of refinement
