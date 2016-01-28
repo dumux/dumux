@@ -100,7 +100,7 @@ public:
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (temperatureOutput_)
-                temperature_[dofIdxGlobal] = volVars.fluidState().temperature(/*phaseIdx=*/0);
+                temperature_[dofIdxGlobal] = volVars.temperature(/*phaseIdx=*/0);
         }
     }
 
@@ -190,7 +190,7 @@ public:
             int gobalIdx = this->problem_.model().dofMapper().subIndex(element, scvIdx, dofCodim);
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-            if (temperatureOutput_) temperature_[gobalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
+            if (temperatureOutput_) temperature_[gobalIdx] = volVars.temperature(/*phaseIdx=*/0);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 if (enthalpyOutput_)
                     enthalpy_[phaseIdx][gobalIdx] = volVars.enthalpy(phaseIdx);

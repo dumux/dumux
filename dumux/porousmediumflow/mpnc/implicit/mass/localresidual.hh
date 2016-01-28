@@ -184,7 +184,7 @@ if (!std::isfinite(volumeFlux))
                                 +
                         (  1. - massUpwindWeight)*dn.molarity(phaseIdx, compIdx) );
                         if (!std::isfinite(flux[compIdx]))
-                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.saturation(phaseIdx)  ) ;
+                            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.temperature(phaseIdx) << "S "<<up.saturation(phaseIdx)  ) ;
             }
         }
     }

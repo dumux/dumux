@@ -322,6 +322,34 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
+     * \brief Returns the fluid/solid phase temperature
+     *        in the sub-control volume for the assumption of local thermal
+     *        non-equillibrium where there is more than one energy equation
+     *        and each phase and the matrix can have different temperatures
+     *
+     * \param phaseIdx The local index of the phases
+     */
+    template <class T = TypeTag>
+    typename std::enable_if<(GET_PROP_VALUE(T, NumEnergyEquations) > 1), Scalar>::type temperature(const unsigned int phaseIdx) const
+    {
+        return EnergyVolumeVariables::temperature(phaseIdx);
+    }
+
+     /*!
+     * \brief Returns the fluid/solid phase temperature
+     *        in the sub-control volume for the assumption of local thermal
+     *        equillibrium where there is only one or no energy equation
+     *        and all phases including the  matrix have the same temperature
+     *
+     * \param phaseIdx The local index of the phases
+     */
+    template <class T = TypeTag>
+    typename std::enable_if<(GET_PROP_VALUE(T, NumEnergyEquations) < 2), Scalar>::type temperature(const unsigned int phaseIdx) const
+    {
+        return fluidState_.temperature(phaseIdx);
+    }
+
+    /*!
      * \brief Return enthalpy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      */
     Scalar enthalpy(const int phaseIdx) const

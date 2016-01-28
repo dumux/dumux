@@ -141,7 +141,7 @@ public:
             // index for the element volume variables
             int volVarsIdx = face.fapIndices[idx];
 
-            tmp *= elemVolVars[volVarsIdx].fluidState().temperature(/*phaseIdx=*/0);
+            tmp *= elemVolVars[volVarsIdx].temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 

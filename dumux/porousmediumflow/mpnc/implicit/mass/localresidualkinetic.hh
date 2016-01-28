@@ -195,7 +195,7 @@ public:
         Valgrind::CheckDefined(mu_nPhaseWComp);
 
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
-        const Scalar temperature            = volVars.fluidState().temperature(wPhaseIdx);
+        const Scalar temperature            = volVars.temperature(wPhaseIdx);
         const Scalar pn                     = volVars.pressure(nPhaseIdx);
         const Scalar henry                  = FluidSystem::henry(temperature) ;
         const Scalar gradNinWApprox  = ( mu_wPhaseNComp - mu_nPhaseNCompEquil) / characteristicLength;    // very 2p2c // 1. / henry *
