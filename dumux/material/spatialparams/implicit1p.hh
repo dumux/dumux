@@ -70,9 +70,6 @@ public:
     ImplicitSpatialParamsOneP(const GridView &gridView)
     { }
 
-    ~ImplicitSpatialParamsOneP()
-    {}
-
     /*!
      * \brief Averages the intrinsic permeability (Scalar).
      * \param result averaged intrinsic permeability

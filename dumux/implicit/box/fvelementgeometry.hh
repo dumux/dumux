@@ -26,7 +26,6 @@
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
-#include <dune/grid/common/intersectioniterator.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/parameters.hh>
