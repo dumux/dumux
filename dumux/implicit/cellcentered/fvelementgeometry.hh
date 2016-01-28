@@ -26,7 +26,6 @@
 
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/referenceelements.hh>
-#include <dune/grid/common/intersectioniterator.hh>
 
 #include <dumux/common/propertysystem.hh>
 
