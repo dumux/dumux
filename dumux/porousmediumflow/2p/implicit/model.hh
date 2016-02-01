@@ -155,19 +155,33 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                int eIdx = this->elementMapper().index(element);
 
-                (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
-                (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
-                (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
-                (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
-                (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                (*rank)[eIdx] = this->gridView_().comm().rank();
+
+                const auto& fvGeometry = this->fvGeometries(eIdx);
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                   element,
+                                   fvGeometry,
+                                   false /* oldSol? */);
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+
+                    (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                    (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                    (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
+                    (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                    (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                    (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
+                    (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
+                    (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                    (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
+                    (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                }
             }
 
             // velocity output

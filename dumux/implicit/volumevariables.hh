@@ -85,20 +85,20 @@ public:
         Valgrind::CheckDefined(evalPoint_);
     }
 
-    /*!
-     * \brief Returns the evaluation point used by the local jacobian.
-     *
-     * The evaluation point is only used by semi-smooth models.
-     */
-    const Implementation &evalPoint() const
-    { return (evalPoint_ == 0)?asImp_():*evalPoint_; }
+    // /*!
+    //  * \brief Returns the evaluation point used by the local jacobian.
+    //  *
+    //  * The evaluation point is only used by semi-smooth models.
+    //  */
+    // const Implementation &evalPoint() const
+    // { return (evalPoint_ == 0)?asImp_():*evalPoint_; }
 
-    /*!
-     * \brief Set the volume variables which should be used as initial
-     *        conditions for complex calculations.
-     */
-    void setHint(const Implementation *hint)
-    {}
+    // /*!
+    //  * \brief Set the volume variables which should be used as initial
+    //  *        conditions for complex calculations.
+    //  */
+    // void setHint(const Implementation *hint)
+    // {}
 
     /*!
      * \brief Update all quantities for a given control volume

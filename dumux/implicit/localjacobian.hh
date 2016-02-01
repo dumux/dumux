@@ -23,6 +23,7 @@
 #ifndef DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 #define DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 
+#include <dune/istl/io.hh>
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/math.hh>
@@ -145,32 +146,31 @@ public:
         // set the current grid element and update the element's
         // finite volume geometry
         elemPtr_ = &element;
-        fvElemGeom_.update(gridView_(), element);
         reset_();
 
-        bcTypes_.update(problem_(), element_(), fvElemGeom_);
+        bcTypes_.update(problem_(), element_(), fvElemGeom_());
 
         // set the hints for the volume variables
-        model_().setHints(element, prevVolVars_, curVolVars_);
+        // model_().setHints(element, prevVolVars_, curVolVars_);
 
         // update the secondary variables for the element at the last
         // and the current time levels
         prevVolVars_.update(problem_(),
                             element_(),
-                            fvElemGeom_,
+                            fvElemGeom_(),
                             true /* isOldSol? */);
 
         curVolVars_.update(problem_(),
                            element_(),
-                           fvElemGeom_,
+                           fvElemGeom_(),
                            false /* isOldSol? */);
 
         // update the hints of the model
-        model_().updateCurHints(element, curVolVars_);
+        // model_().updateCurHints(element, curVolVars_);
 
         // calculate the local residual
         localResidual().eval(element_(),
-                             fvElemGeom_,
+                             fvElemGeom_(),
                              prevVolVars_,
                              curVolVars_,
                              bcTypes_);
@@ -183,7 +183,7 @@ public:
         int numRows, numCols;
         if (isBox)
         {
-            numRows = numCols = fvElemGeom_.numScv;
+            numRows = numCols = fvElemGeom_().numScv;
             // resize for hanging nodes or lower dimensional grids
             if(numRows > 1<<dim || numCols > 1<<dim)
                 A_.setSize(numRows, numCols);
@@ -191,7 +191,7 @@ public:
         else
         {
             numRows = 1;
-            numCols = fvElemGeom_.numNeighbors;
+            numCols = fvElemGeom_().numNeighbors;
             // resize for hanging nodes or lower dimensional grids
             if(numCols > 2*dim + 1)
                 A_.setSize(numRows, numCols);
@@ -310,6 +310,15 @@ protected:
     }
 
     /*!
+     * \brief Returns a reference to the problem.
+     */
+    Problem &problem_()
+    {
+        Valgrind::CheckDefined(problemPtr_);
+        return *problemPtr_;
+    }
+
+    /*!
      * \brief Returns a reference to the grid view.
      */
     const GridView &gridView_() const
@@ -413,15 +422,17 @@ protected:
         }
         else
         {
-            neighbor = fvElemGeom_.neighbors[col];
+            neighbor = fvElemGeom_().neighbors[col];
             neighborFVGeom.updateInner(neighbor);
             dofIdxGlobal = problemPtr_->elementMapper().index(neighbor);
         }
 
-        PrimaryVariables priVars(model_().curSol()[dofIdxGlobal]);
-        VolumeVariables origVolVars(curVolVars_[col]);
+        auto priVars = model_().curSol()[dofIdxGlobal];
+        // std::cout << "Copy old volVars: " << std::endl;
+        auto origVolVars = curVolVars_[col];
+        // std::cout << "...end copy old volVars." << std::endl;
 
-        curVolVars_[col].setEvalPoint(&origVolVars);
+        // curVolVars_[col].setEvalPoint(&origVolVars);
         Scalar eps = asImp_().numericEpsilon(col, pvIdx);
         Scalar delta = 0;
 
@@ -434,11 +445,12 @@ protected:
             delta += eps;
 
             // calculate the residual
+            // std::cout << "Compute forward-deflected residual: " << std::endl;
             if (isBox)
                 curVolVars_[col].update(priVars,
                                         problem_(),
                                         element_(),
-                                        fvElemGeom_,
+                                        fvElemGeom_(),
                                         col,
                                         false);
             else
@@ -450,10 +462,11 @@ protected:
                                         false);
 
             localResidual().eval(element_(),
-                                 fvElemGeom_,
+                                 fvElemGeom_(),
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
+            // std::cout << "...end compute forward-deflected residual." << std::endl;
 
             // store the residual and the storage term
             partialDeriv = localResidual().residual();
@@ -479,11 +492,12 @@ protected:
             delta += eps;
 
             // calculate residual again
+            // std::cout << "Compute backward-deflected residual: " << std::endl;
             if (isBox)
                 curVolVars_[col].update(priVars,
                                         problem_(),
                                         element_(),
-                                        fvElemGeom_,
+                                        fvElemGeom_(),
                                         col,
                                         false);
             else
@@ -495,10 +509,11 @@ protected:
                                         false);
 
             localResidual().eval(element_(),
-                                 fvElemGeom_,
+                                 fvElemGeom_(),
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
+            // std::cout << "...end compute backward-deflected residual." << std::endl;
             partialDeriv -= localResidual().residual();
             if (isBox || col == 0)
                 storageDeriv -= localResidual().storageTerm()[col];
@@ -518,7 +533,9 @@ protected:
         storageDeriv /= delta;
 
         // restore the original state of the element's volume variables
+        // std::cout << "Restore to orgininal volVars: " << std::endl;
         curVolVars_[col] = origVolVars;
+        // std::cout << "...end Restore to orgininal volVars." << std::endl << std::endl;
 
 #if HAVE_VALGRIND
         for (unsigned i = 0; i < partialDeriv.size(); ++i)
@@ -544,7 +561,7 @@ protected:
             }
         }
 
-        for (int i = 0; i < fvElemGeom_.numScv; i++)
+        for (int i = 0; i < fvElemGeom_().numScv; i++)
         {
             // Green vertices are not to be changed!
             if (!isBox || jacAsm_().vertexColor(element_(), i) != Green) {
@@ -558,11 +575,19 @@ protected:
                 }
             }
         }
+
+        // std::cout << std::endl << std::endl;
+        // Dune::printmatrix(std::cout, A_, "THE LOCAL JACOBIAN MATRIX", "");
+        // std::cout << std::endl << std::endl;
+
+    }
+
+    const FVElementGeometry& fvElemGeom_() const
+    {
+        return model_().fvGeometries(problem_().elementMapper().index(element_()));
     }
 
     const Element *elemPtr_;
-    FVElementGeometry fvElemGeom_;
-
     ElementBoundaryTypes bcTypes_;
 
     // The problem we would like to solve

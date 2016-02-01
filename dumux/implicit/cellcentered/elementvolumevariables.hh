@@ -34,12 +34,13 @@ namespace Dumux
  *        volume variables object for each of the element's vertices
  */
 template<class TypeTag>
-class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeTag, VolumeVariables) >
+class CCElementVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
@@ -55,35 +56,21 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param oldSol Tells whether the model's previous or current solution should be used.
      */
-    void update(const Problem &problem,
+    void update(Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
                 bool oldSol)
     {
-        const SolutionVector &globalSol =
-            oldSol?
-            problem.model().prevSol():
-            problem.model().curSol();
+        oldSol_ = oldSol;
+        problem_ = &problem;
 
         int numNeighbors = fvGeometry.numNeighbors;
-        this->resize(numNeighbors);
+        stencil_.resize(numNeighbors);
 
         for (int i = 0; i < numNeighbors; i++)
         {
             const Element& neighbor = fvGeometry.neighbors[i];
-
-            const PrimaryVariables &solI
-                    = globalSol[problem.elementMapper().index(neighbor)];
-
-            FVElementGeometry neighborFVGeom;
-            neighborFVGeom.updateInner(neighbor);
-
-            (*this)[i].update(solI,
-                              problem,
-                              neighbor,
-                              neighborFVGeom,
-                              /*scvIdx=*/0,
-                              oldSol);
+            stencil_[i] = problem.elementMapper().index(neighbor);
         }
 
         // only treat boundary if current solution is evaluated
@@ -96,40 +83,69 @@ public:
                 || elemBCTypes.hasNeumann()
                 || elemBCTypes.hasOutflow())
             {
-                this->resize(numNeighbors + element.subEntities(1));
+                ghostVolVars_ = std::vector<VolumeVariables>(element.subEntities(1));
+                isDirichlet_ = std::vector<bool>(element.subEntities(1), false);
 
                 // add volume variables for the boundary faces
                 for (const auto& intersection : intersections(problem.gridView(), element))
                 {
-                    if (intersection.boundary())
+                    if (!intersection.boundary())
+                        continue;
+
+                    BoundaryTypes bcTypes;
+                    problem.boundaryTypes(bcTypes, intersection);
+
+                    int fIdx = intersection.indexInInside();
+                    if (bcTypes.hasDirichlet())
                     {
-                        BoundaryTypes bcTypes;
-                        problem.boundaryTypes(bcTypes, intersection);
+                        PrimaryVariables dirichletValues;
+                        problem.dirichlet(dirichletValues, intersection);
 
-                        int fIdx = intersection.indexInInside();
-                        int indexInVariables = numNeighbors + fIdx;
-
-                        if (bcTypes.hasDirichlet())
-                        {
-                            PrimaryVariables dirichletValues;
-                            problem.dirichlet(dirichletValues, intersection);
-
-                            (*this)[indexInVariables].update(dirichletValues,
-                                                            problem,
-                                                            element,
-                                                            fvGeometry,
-                                                            /*scvIdx=*/0,
-                                                            oldSol);
-                        }
-                        else
-                        {
-                            (*this)[indexInVariables] = (*this)[0];
-                        }
+                        ghostVolVars_[fIdx].update(dirichletValues,
+                                                    problem,
+                                                    element,
+                                                    fvGeometry,
+                                                    /*scvIdx=*/0,
+                                                    oldSol);
+                        isDirichlet_[fIdx] = true;
                     }
                 }
             }
         }
     }
+
+    const VolumeVariables& operator [](const unsigned int i) const
+    {
+        if (i >= stencil_.size())
+        {
+            assert(!oldSol_); // old boundary volVars don't exist
+            if (isDirichlet_[i - stencil_.size()]) // ghost volVars only exist for Dirichlet boundaries
+                return ghostVolVars_[i - stencil_.size()];
+            else
+                return problem_->model().volVars(stencil_[0]);
+        }
+        else
+        {
+            if(!oldSol_)
+                return problem_->model().volVars(stencil_[i]);
+            else
+                return problem_->model().prevVolVars(stencil_[i]);
+        }
+    }
+
+    VolumeVariables& operator [](const unsigned int i)
+    {
+        assert(!oldSol_); // old volVars should never be modified
+        assert(i < stencil_.size()); // boundary volVars should not be modified
+        return problem_->model().volVars(stencil_[i]);
+    }
+
+private:
+    bool oldSol_ = false;
+    std::vector<unsigned int> stencil_;
+    std::vector<VolumeVariables> ghostVolVars_;
+    std::vector<bool> isDirichlet_;
+    Problem* problem_;
 };
 
 } // namespace Dumux

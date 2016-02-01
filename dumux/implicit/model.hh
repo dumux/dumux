@@ -84,7 +84,8 @@ public:
     ImplicitModel()
     : problemPtr_(0)
     {
-        enableHints_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableHints);
+        // enableHints_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableHints);
+        // std::cout << enableHints_ << std::endl;
     }
 
     /*!
@@ -101,7 +102,8 @@ public:
 
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
-        uPrev_.resize(numDofs);
+        volVars_.resize(numDofs);
+        fvGeometries_.resize(numDofs);
         if (isBox)
             boxVolume_.resize(numDofs);
 
@@ -111,89 +113,102 @@ public:
 
         asImp_().applyInitialSolution_();
 
-        // resize the hint vectors
-        if (isBox && enableHints_) {
-            int numVertices = gridView_().size(dim);
-            curHints_.resize(numVertices);
-            prevHints_.resize(numVertices);
-            hintsUsable_.resize(numVertices);
-            std::fill(hintsUsable_.begin(),
-                      hintsUsable_.end(),
-                      false);
+        // update the volVars with the initial solution
+        for (const auto& element : elements(gridView_()))
+        {
+            int dofIdxGlobal = elementMapper().index(element);
+            volVars_[dofIdxGlobal].update(uCur_[dofIdxGlobal],
+                                               this->problem_(),
+                                               element,
+                                               fvGeometries_[dofIdxGlobal],
+                                               0,
+                                               false);
         }
+
+        // // resize the hint vectors
+        // if (isBox && enableHints_) {
+        //     int numVertices = gridView_().size(dim);
+        //     curHints_.resize(numVertices);
+        //     prevHints_.resize(numVertices);
+        //     hintsUsable_.resize(numVertices);
+        //     std::fill(hintsUsable_.begin(),
+        //               hintsUsable_.end(),
+        //               false);
+        // }
 
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
+        prevVolVars_ = volVars_;
     }
 
-    void setHints(const Element &element,
-                  ElementVolumeVariables &prevVolVars,
-                  ElementVolumeVariables &curVolVars) const
-    {
-        if (!isBox || !enableHints_)
-            return;
+    // void setHints(const Element &element,
+    //               ElementVolumeVariables &prevVolVars,
+    //               ElementVolumeVariables &curVolVars) const
+    // {
+    //     if (!isBox || !enableHints_)
+    //         return;
 
-        int n = element.subEntities(dim);
-        prevVolVars.resize(n);
-        curVolVars.resize(n);
-        for (int i = 0; i < n; ++i)
-        {
-            int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
+    //     int n = element.subEntities(dim);
+    //     prevVolVars_.resize(n);
+    //     curVolVars_.resize(n);
+    //     for (int i = 0; i < n; ++i)
+    //     {
+    //         int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
 
-            if (!hintsUsable_[vIdxGlobal]) {
-                curVolVars[i].setHint(NULL);
-                prevVolVars[i].setHint(NULL);
-            }
-            else {
-                curVolVars[i].setHint(&curHints_[vIdxGlobal]);
-                prevVolVars[i].setHint(&prevHints_[vIdxGlobal]);
-            }
-        }
-    }
+    //         if (!hintsUsable_[vIdxGlobal]) {
+    //             curVolVars[i].setHint(NULL);
+    //             prevVolVars[i].setHint(NULL);
+    //         }
+    //         else {
+    //             curVolVars[i].setHint(&curHints_[vIdxGlobal]);
+    //             prevVolVars[i].setHint(&prevHints_[vIdxGlobal]);
+    //         }
+    //     }
+    // }
 
-    void setHints(const Element &element,
-                  ElementVolumeVariables &curVolVars) const
-    {
-        if (!isBox || !enableHints_)
-            return;
+    // void setHints(const Element &element,
+    //               ElementVolumeVariables &curVolVars) const
+    // {
+    //     if (!isBox || !enableHints_)
+    //         return;
 
-        int n = element.subEntities(dim);
-        curVolVars.resize(n);
-        for (int i = 0; i < n; ++i)
-        {
-            int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
+    //     int n = element.subEntities(dim);
+    //     curVolVars.resize(n);
+    //     for (int i = 0; i < n; ++i)
+    //     {
+    //         int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
 
-            if (!hintsUsable_[vIdxGlobal])
-                curVolVars[i].setHint(NULL);
-            else
-                curVolVars[i].setHint(&curHints_[vIdxGlobal]);
-        }
-    }
+    //         if (!hintsUsable_[vIdxGlobal])
+    //             curVolVars[i].setHint(NULL);
+    //         else
+    //             curVolVars[i].setHint(&curHints_[vIdxGlobal]);
+    //     }
+    // }
 
-    void updatePrevHints()
-    {
-        if (!isBox || !enableHints_)
-            return;
+    // void updatePrevHints()
+    // {
+    //     if (!isBox || !enableHints_)
+    //         return;
 
-        prevHints_ = curHints_;
-    }
+    //     prevHints_ = curHints_;
+    // }
 
-    void updateCurHints(const Element &element,
-                        const ElementVolumeVariables &elemVolVars) const
-    {
-        if (!isBox || !enableHints_)
-            return;
+    // void updateCurHints(const Element &element,
+    //                     const ElementVolumeVariables &elemVolVars) const
+    // {
+    //     if (!isBox || !enableHints_)
+    //         return;
 
-        for (unsigned int i = 0; i < elemVolVars.size(); ++i)
-        {
-            int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-            curHints_[vIdxGlobal] = elemVolVars[i];
-            if (!hintsUsable_[vIdxGlobal])
-                prevHints_[vIdxGlobal] = elemVolVars[i];
-            hintsUsable_[vIdxGlobal] = true;
-        }
-    }
+    //     for (unsigned int i = 0; i < elemVolVars.size(); ++i)
+    //     {
+    //         int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
+    //         curHints_[vIdxGlobal] = elemVolVars[i];
+    //         if (!hintsUsable_[vIdxGlobal])
+    //             prevHints_[vIdxGlobal] = elemVolVars[i];
+    //         hintsUsable_[vIdxGlobal] = true;
+    //     }
+    // }
 
 
     /*!
@@ -456,6 +471,7 @@ public:
         if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
         {
             uPrev_ = uCur_;
+            prevVolVars_ = volVars_;
 
             updateBoundaryIndices_();
 
@@ -466,17 +482,19 @@ public:
 
             jacAsm_->init(problem_());
 
-            // resize the hint vectors
-            if (isBox && enableHints_) {
-                int numVertices = gridView_().size(dim);
-                curHints_.resize(numVertices);
-                prevHints_.resize(numVertices);
-                hintsUsable_.resize(numVertices);
-                std::fill(hintsUsable_.begin(),
-                          hintsUsable_.end(),
-                          false);
-            }
+            // // resize the hint vectors
+            // if (isBox && enableHints_) {
+            //     int numVertices = gridView_().size(dim);
+            //     curHints_.resize(numVertices);
+            //     prevHints_.resize(numVertices);
+            //     hintsUsable_.resize(numVertices);
+            //     std::fill(hintsUsable_.begin(),
+            //               hintsUsable_.end(),
+            //               false);
+            // }
+
         }
+
     }
 
 
@@ -487,6 +505,21 @@ public:
      */
     void updateSuccessful()
     { }
+
+    void updateVolVars()
+    {
+        // update the volVars with the computed solution
+        for (const auto& element : Dune::elements(gridView_()))
+        {
+                int dofIdxGlobal = dofMapper().subIndex(element, 0, dofCodim);
+                this->volVars(dofIdxGlobal).update(curSol()[dofIdxGlobal],
+                                                   this->problem_(),
+                                                   element,
+                                                   fvGeometries_[dofIdxGlobal],
+                                                   0,
+                                                   false);
+        }
+    }
 
     /*!
      * \brief Called by the update() method if it was
@@ -499,8 +532,9 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
-        if (isBox)
-            curHints_ = prevHints_;
+        volVars_ = prevVolVars_;
+        // if (isBox)
+        //     curHints_ = prevHints_;
 
         jacAsm_->reassembleAll();
     }
@@ -516,10 +550,12 @@ public:
     {
         // make the current solution the previous one.
         uPrev_ = uCur_;
-        if (isBox)
-            prevHints_ = curHints_;
+        prevVolVars_ = volVars_;
 
-        updatePrevHints();
+        // if (isBox)
+        //     prevHints_ = curHints_;
+
+        // updatePrevHints();
     }
 
     /*!
@@ -846,6 +882,25 @@ public:
         VolumeVariables::completeFluidState(priVars, problem, element,
                                             fvGeometry, scvIdx, fluidState);
     }
+
+    const VolumeVariables& volVars(unsigned int dofIdxGlobal) const
+    { return volVars_[dofIdxGlobal]; }
+
+    VolumeVariables& volVars(unsigned int dofIdxGlobal)
+    { return volVars_[dofIdxGlobal]; }
+
+    const VolumeVariables& prevVolVars(unsigned int dofIdxGlobal) const
+    { return prevVolVars_[dofIdxGlobal]; }
+
+    VolumeVariables& prevVolVars(unsigned int dofIdxGlobal)
+    { return prevVolVars_[dofIdxGlobal]; }
+
+    const FVElementGeometry& fvGeometries(unsigned int dofIdxGlobal) const
+    { return fvGeometries_[dofIdxGlobal]; }
+
+    FVElementGeometry& fvGeometries(unsigned int dofIdxGlobal)
+    { return fvGeometries_[dofIdxGlobal]; }
+
 protected:
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -882,14 +937,13 @@ protected:
         uCur_ = Scalar(0.0);
         boxVolume_ = Scalar(0.0);
 
-        FVElementGeometry fvGeometry;
-
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume
         for (const auto& element : elements(gridView_())) {
             // deal with the current element
-            fvGeometry.update(gridView_(), element);
-
+            int eIdx = elementMapper().index(element);
+            fvGeometries_[eIdx].update(gridView_(), element);
+            const auto& fvGeometry = fvGeometries_[eIdx];
             // loop over all element vertices, i.e. sub control volumes
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
@@ -991,9 +1045,9 @@ protected:
 
     // the hint cache for the previous and the current volume
     // variables
-    mutable std::vector<bool> hintsUsable_;
-    mutable std::vector<VolumeVariables> curHints_;
-    mutable std::vector<VolumeVariables> prevHints_;
+    // mutable std::vector<bool> hintsUsable_;
+    // mutable std::vector<VolumeVariables> curHints_;
+    // mutable std::vector<VolumeVariables> prevHints_;
 
     // the problem we want to solve. defines the constitutive
     // relations, matxerial laws, etc.
@@ -1007,6 +1061,10 @@ protected:
 
     // the set of all indices of vertices on the boundary
     std::vector<bool> boundaryIndices_;
+
+    std::vector<VolumeVariables> volVars_;
+    std::vector<VolumeVariables> prevVolVars_;
+    std::vector<FVElementGeometry> fvGeometries_;
 
     // cur is the current iterative solution, prev the converged
     // solution of the previous time step
@@ -1027,7 +1085,7 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    bool enableHints_;
+    // bool enableHints_;
 };
 } // end namespace Dumux
 

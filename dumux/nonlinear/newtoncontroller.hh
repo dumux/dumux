@@ -471,6 +471,8 @@ public:
             }
         }
 
+        this->model_().updateVolVars();
+
     }
 
     /*!

@@ -85,14 +85,11 @@ public:
      */
     void eval(const Element &element)
     {
-        FVElementGeometry fvGeometry;
-
-        fvGeometry.update(gridView_(), element);
-        fvElemGeomPtr_ = &fvGeometry;
+        fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
         ElementVolumeVariables volVarsPrev, volVarsCur;
         // update the hints
-        model_().setHints(element, volVarsPrev, volVarsCur);
+        // model_().setHints(element, volVarsPrev, volVarsCur);
 
         volVarsPrev.update(problem_(),
                            element,
@@ -121,10 +118,7 @@ public:
     void evalStorage(const Element &element)
     {
         elemPtr_ = &element;
-
-        FVElementGeometry fvGeometry;
-        fvGeometry.update(gridView_(), element);
-        fvElemGeomPtr_ = &fvGeometry;
+        fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -136,7 +130,7 @@ public:
         ElementVolumeVariables volVars;
 
         // update the hints
-        model_().setHints(element, volVars);
+        // model_().setHints(element, volVars);
 
         // calculate volume current variables
         volVars.update(problem_(), element, fvGeometry_(), false);
@@ -157,10 +151,7 @@ public:
                     const ElementVolumeVariables &curVolVars)
     {
         elemPtr_ = &element;
-
-        FVElementGeometry fvGeometry;
-        fvGeometry.update(gridView_(), element);
-        fvElemGeomPtr_ = &fvGeometry;
+        fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -422,6 +413,12 @@ protected:
      * \brief Returns a reference to the problem.
      */
     const Problem &problem_() const
+    { return *problemPtr_; }
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    Problem &problem_()
     { return *problemPtr_; }
 
     /*!
