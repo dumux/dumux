@@ -59,12 +59,12 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if HAVE_ALBERTA
+#if HAVE_DUNE_FOAMGRID
     typedef TTAG(OnePOneDThreeDTestBoxProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-#warning External grid Alberta needed to run this example.
-    std::cerr << "Test skipped, it needs Alberta!" << std::endl;
+#warning External grid module dune-foamgrid needed to run this example.
+    std::cerr << "Test skipped, it needs dune-foamgrid!" << std::endl;
     return 77;
 #endif
 }

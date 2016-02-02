@@ -82,17 +82,17 @@ NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
 SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
-// if AlbertaGrid is available, test for dim < dimWorld
-#if HAVE_ALBERTA
+// if FoamGrid is available, test for dim < dimWorld
+#if HAVE_DUNE_FOAMGRID
 NEW_TYPE_TAG(OnePOneDThreeDTestProblem, INHERITS_FROM(OnePTestProblem));
 NEW_TYPE_TAG(OnePOneDThreeDTestBoxProblem, INHERITS_FROM(BoxModel, OnePOneDThreeDTestProblem));
 NEW_TYPE_TAG(OnePOneDThreeDTestCCProblem, INHERITS_FROM(CCModel, OnePOneDThreeDTestProblem));
-SET_TYPE_PROP(OnePOneDThreeDTestProblem, Grid, Dune::AlbertaGrid<1, 3>);
+SET_TYPE_PROP(OnePOneDThreeDTestProblem, Grid, Dune::FoamGrid<1, 3>);
 
 NEW_TYPE_TAG(OnePTwoDThreeDTestProblem, INHERITS_FROM(OnePTestProblem));
 NEW_TYPE_TAG(OnePTwoDThreeDTestBoxProblem, INHERITS_FROM(BoxModel, OnePTwoDThreeDTestProblem));
 NEW_TYPE_TAG(OnePTwoDThreeDTestCCProblem, INHERITS_FROM(CCModel, OnePTwoDThreeDTestProblem));
-SET_TYPE_PROP(OnePTwoDThreeDTestProblem, Grid, Dune::AlbertaGrid<2, 3>);
+SET_TYPE_PROP(OnePTwoDThreeDTestProblem, Grid, Dune::FoamGrid<2, 3>);
 #endif
 
 // Enable gravity
