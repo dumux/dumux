@@ -60,8 +60,8 @@ NEW_TYPE_TAG(FVPressureVelocityOneP, INHERITS_FROM(PressureOneP));
 }
 }
 
-#include "fvvelocity1p.hh"
-#include "fvpressurevelocity1p.hh"
+#include "velocity.hh"
+#include "pressurevelocity.hh"
 
 namespace Dumux
 {
