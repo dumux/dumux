@@ -187,7 +187,6 @@ public:
     static bool isIdealGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-
         if (phaseIdx == nPhaseIdx)
             // let the components decide
             return H2O::gasIsIdeal() && N2::gasIsIdeal() && O2::gasIsIdeal();
@@ -342,7 +341,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the surface tension between water and air,
+     * \brief Calculate the surface tension between water and air in \f$\mathrm{[\frac{N}{m}]}\f$,
      * according to IAPWS Release on Surface Tension from September 1994.
      * The equation is valid between the triple Point (0.01C) and the critical temperature.
      *
@@ -351,15 +350,14 @@ public:
     template <class FluidState>
     static Scalar surfaceTension(const FluidState &fluidState)
     {
-        return 0.0625;
-        //        const Scalar T = fluidState.temperature(); //K
-        //        const Scalar B   = 0.2358 ; // [N/m]
-        //        const Scalar T_c = H2O::criticalTemperature(); //K
-        //        const Scalar mu  = 1.256;
-        //        const Scalar b   = -0.625;
-        //        //Equation to calculate surface Tension of Water According to IAPWS Release on Surface Tension from September 1994
-        //        const Scalar surfaceTension = B*pow((1.-(T/T_c)),mu)*(1.+b*(1.-(T/T_c)));
-        //        return surfaceTension; //surface Tension [N/m]
+        const Scalar T = fluidState.temperature(); //K
+        const Scalar B   = 0.2358 ; // [N/m]
+        const Scalar T_c = H2O::criticalTemperature(); //K
+        const Scalar mu  = 1.256;
+        const Scalar b   = -0.625;
+        //Equation to calculate surface Tension of Water According to IAPWS Release on Surface Tension from September 1994
+        const Scalar surfaceTension = B*std::pow((1.-(T/T_c)),mu)*(1.+b*(1.-(T/T_c)));
+        return surfaceTension; //surface Tension [N/m]
     }
     /****************************************
      * thermodynamic relations
@@ -615,7 +613,6 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
@@ -742,7 +739,6 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        //TODO: Implement sub-routine for component enthalpy
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
@@ -864,20 +860,6 @@ public:
             + c_pO2*fluidState.massFraction(nPhaseIdx, O2Idx);
     }
 
-    static Scalar saltDensity(int phaseIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "saltDensity");
-    }
-
-    static Scalar saltMolarDensity(int phaseIdx)
-     {
-        DUNE_THROW(Dune::NotImplemented, "saltMolarDensity");
-     }
-
-    static Scalar solubilityLimit(int compIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "solubilityLimit");
-    }
 };
 
 } // end namespace FluidSystems
