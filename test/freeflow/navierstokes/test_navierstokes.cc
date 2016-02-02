@@ -51,12 +51,12 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if HAVE_SUPERLU && (HAVE_DUNE_ALUGRID || HAVE_UG)
+#if HAVE_SUPERLU
     typedef TTAG(NavierStokesTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-#warning "You need to have SuperLU and dune-ALUGrid or UG to run this test."
-    std::cerr << "You need to have SuperLU and dune-ALUGrid or UG to run this test." << std::endl;
+#warning "You need to have SuperLU to run this test."
+    std::cerr << "You need to have SuperLU to run this test." << std::endl;
     return 77;
 #endif
 }
