@@ -64,7 +64,7 @@ SET_BOOL_PROP(ZeroEq2cniTestProblem, ProblemEnableGravity, false);
 }
 
 /*!
- * \ingroup BoxZeroEqncniModel
+ * \ingroup BoxZeroEqncModel
  * \ingroup ImplicitTestProblems
  * \brief Non-isothermal compositional ZeroEqncni flow problem.
  *

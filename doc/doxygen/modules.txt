@@ -129,21 +129,9 @@
          */
         /*!
          * \ingroup ImplicitModels
-         * \defgroup TwoPNIModel Non-isothermal two-phase
-         *
-         * \copydetails Dumux::TwoPNIModel
-         */
-        /*!
-         * \ingroup ImplicitModels
          * \defgroup TwoPTwoCModel Two-phase, two-component
          *
          * \copydetails Dumux::TwoPTwoCModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup TwoPTwoCNIModel Non-isothermal two-phase, two-component
-         *
-         * \copydetails Dumux::TwoPTwoCNIModel
          */
         /*!
          * \ingroup ImplicitModels
@@ -151,13 +139,6 @@
          *
          * \copydetails Dumux::CO2Model
          */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup CO2NIModel Non-isothermal CO2
-         *
-         * \copydetails Dumux::CO2NIModel
-         */
-        /*!
          * \ingroup ImplicitModels
          * \defgroup TwoPDFMModel Two-phase flow in discrete fracture-matrix
          *
@@ -174,12 +155,6 @@
          * \defgroup ThreePThreeCModel Three-phase, three-component
          *
          * \copydetails Dumux::ThreePThreeCModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup ThreePThreeCNIModel Non-isothermal three-phase, three-component
-         *
-         * \copydetails Dumux::ThreePThreeCNIModel
          */
         /*!
          * \ingroup ImplicitModels
@@ -207,12 +182,6 @@
          */
         /*!
          * \ingroup ImplicitModels
-         * \defgroup BoxStokesncniModel Non-isothermal N-component Stokes
-         *
-         * \copydetails Dumux::StokesncniModel
-         */
-        /*!
-         * \ingroup ImplicitModels
          * \defgroup BoxZeroEqModel ZeroEq
          *
          * \copydetails Dumux::ZeroEqModel
@@ -222,30 +191,6 @@
          * \defgroup BoxZeroEqncModel N-component ZeroEq
          *
          * \copydetails Dumux::ZeroEqncModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup BoxZeroEqncniModel Non-isothermal N-component ZeroEq
-         *
-         * \copydetails Dumux::ZeroEqncniModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup BoxZeroEqModel ZeroEq
-         *
-         * \copydetails Dumux::ZeroEqModel
-         */
-         /*!
-         * \ingroup ImplicitModels
-         * \defgroup BoxZeroEqncModel N-component ZeroEq
-         *
-         * \copydetails Dumux::ZeroEqncModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup BoxZeroEqncniModel Non-isothermal N-component ZeroEq
-         *
-         * \copydetails Dumux::ZeroEqncniModel
          */
         /*!
          * \ingroup ImplicitModels
@@ -281,16 +226,6 @@
          */
         /*!
          * \ingroup ImplicitModels
-         * \defgroup TwoPTwoCNIStokesTwoCNIModel Non-isothermal, two-component, Stokes-Darcy
-         *
-         * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
-         * <br><br><br>
-         * \copydetails Dumux::TwoPTwoCNIModel
-         * <br>
-         * \copydetails Dumux::StokesncniModel
-         */
-        /*!
-         * \ingroup ImplicitModels
          * \defgroup TwoPTwoCZeroEqTwoCModel Two-component, ZeroEq turbulence-Darcy
          *
          * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
@@ -298,16 +233,6 @@
          * \copydetails Dumux::TwoPTwoCModel
          * <br>
          * \copydetails Dumux::ZeroEqncModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup TwoPTwoCNIZeroEqTwoCNIModel Non-isothermal, two-component, ZeroEq turbulence-Darcy
-         *
-         * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
-         * <br><br><br>
-         * \copydetails Dumux::TwoPTwoCNIModel
-         * <br>
-         * \copydetails Dumux::ZeroEqncniModel
          */
     /*!
      * \ingroup ImplicitModel

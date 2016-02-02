@@ -65,7 +65,7 @@ SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
 }
 
 /*!
- * \ingroup BoxStokesncniModel
+ * \ingroup BoxStokesncModel
  * \ingroup ImplicitTestProblems
  * \brief Stokesncni problem with air flowing
  *        from the bottom to the top, blowing away a warm and dry square.

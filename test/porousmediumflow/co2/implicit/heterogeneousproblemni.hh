@@ -82,7 +82,7 @@ SET_BOOL_PROP(HeterogeneousNIProblem, UseMoles, false);
 
 
 /*!
- * \ingroup CO2NIModel
+ * \ingroup CO2Model
  * \ingroup ImplicitTestProblems
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  *
