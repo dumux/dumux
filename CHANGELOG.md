@@ -3,9 +3,8 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 
 * IMPORTANT NOTES:
   - The support for the external grid library ALBERTA was dropped. Instead
-    we now offically support dune-foamgrid
-    (https://gitlab.dune-project.org/extensions/dune-foamgrid). Dune-foamgrid
-    supports 1d and 2d simplex grids embedded in an arbitrary dimension world space.
+    we now offically support [dune-foamgrid](https://gitlab.dune-project.org/extensions/dune-foamgrid)
+    Dune-foamgrid supports 1d and 2d simplex grids embedded in an arbitrary dimension world space.
     It features element parametrizations, runtime growth, runtime-movable vertices.
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -25,9 +24,12 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
   - For the multidomain models, the notation of the boundary condition types
     has changed. This is especially important for all momentum boundary
     conditions. In general:
+
       couplingInflow  -> couplingNeumann
       couplingOutflow -> couplingDirichlet
+
     But for the momentum balances:
+
       couplingInflow  -> couplingDirichlet
       couplingOutflow -> couplingNeumann
 
@@ -46,7 +48,6 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
   - DgfGridCreator, functionality available in default GridCreator (since 2.8)
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.9:
-  -
 
 * Deprecated protected MEMBER VARIABLES, to be removed after 2.9: BEWARE: Older
   compilers will not print any warning if a deprecated protected member variable
@@ -54,7 +55,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 
 * DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.8:
-  Everything listed as deprecated below has been removed.
+  - Everything listed as deprecated below has been removed.
 
 Differences Between DuMuX 2.7 and DuMuX 2.8
 ===================================================
