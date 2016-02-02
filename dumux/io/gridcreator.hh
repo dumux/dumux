@@ -30,6 +30,7 @@
 #include <sstream>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/classname.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -219,12 +220,12 @@ protected:
     /*!
      * \brief Makes a grid from a file. We currently support *.dgf (Dune Grid Format) and *.msh (Gmsh mesh format).
      */
-    static void makeGridFromFile(const std::string& fileName, const std::string& gridName)
+    static void makeGridFromFile(const std::string& fileName)
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = getFileExtension(fileName);
         if(extension != "dgf" && extension != "msh")
-            DUNE_THROW(Dune::IOError, "Grid manager " << gridName << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
+            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
 
         // make the grid
         if(extension == "dgf")
@@ -262,12 +263,12 @@ protected:
     /*!
      * \brief Makes a grid from a DGF file. This is used by grid managers that only support DGF.
      */
-    static void makeGridFromDgfFile(const std::string& fileName, const std::string& gridName)
+    static void makeGridFromDgfFile(const std::string& fileName)
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = getFileExtension(fileName);
         if(extension != "dgf")
-            DUNE_THROW(Dune::IOError, "Grid manager " << gridName << " only supports DGF (*.dgf) but the specified filename has extension: *."<< extension);
+            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) but the specified filename has extension: *."<< extension);
 
         enableDgfGridPointer_ = true;
         dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
@@ -367,7 +368,7 @@ public:
     static void makeGrid()
     {
         DUNE_THROW(Dune::NotImplemented,
-            "The GridCreator for this Grid manager is not implemented! Consider providing your own GridCreator.");
+            "The GridCreator for grid type " << Dune::className<Grid>() << " is not implemented! Consider providing your own GridCreator.");
     }
 };
 
@@ -417,7 +418,7 @@ public:
         // First try to create it from a DGF file in GridParameterGroup.File
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromDgfFile(fileName, "YaspGrid");
+            ParentType::makeGridFromDgfFile(fileName);
             postProcessing_();
             return;
         }
@@ -855,7 +856,7 @@ public:
         // First try to create it from a DGF file in GridParameterGroup.File
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromDgfFile(fileName, "OneDGrid");
+            ParentType::makeGridFromDgfFile(fileName);
             postProcessing_();
             return;
         }
@@ -961,7 +962,7 @@ public:
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
             preProcessing_();
-            ParentType::makeGridFromFile(fileName, "UGGrid");
+            ParentType::makeGridFromFile(fileName);
             postProcessing_();
             return;
         }
@@ -1118,7 +1119,7 @@ public:
         // Then try to create it from a DGF or msh file in GridParameterGroup.File
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromFile(fileName, "ALUGrid");
+            ParentType::makeGridFromFile(fileName);
             ParentType::maybeRefineGrid();
             return;
         }
@@ -1178,7 +1179,7 @@ public:
         // First try to create it from a DGF or msh file in GridParameterGroup.File
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromFile(fileName, "FoamGrid");
+            ParentType::makeGridFromFile(fileName);
             ParentType::maybeRefineGrid();
             return;
         }
@@ -1230,7 +1231,7 @@ public:
         // First try to create it from a DGF or msh file in GridParameterGroup.File
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromFile(fileName, "FoamGrid");
+            ParentType::makeGridFromFile(fileName);
             ParentType::maybeRefineGrid();
             return;
         }
