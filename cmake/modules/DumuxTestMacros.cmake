@@ -65,6 +65,12 @@ function(add_dumux_all_flags)
     add_dune_ug_flags(${_target})
     add_dune_umfpack_flags(${_target})
     add_dune_superlu_flags(${_target})
+    if(${Valgrind_FOUND})
+      get_target_property(_props ${_target} INCLUDE_DIRECTORIES)
+      string(REPLACE "_props-NOTFOUND" "" _props "${_props}")
+      set_target_properties(${_target} PROPERTIES INCLUDE_DIRECTORIES
+          "${_props};${VALGRIND_INCLUDE_DIR}")
+    endif()
     # add Dune libraries
     target_link_libraries(${_target} ${DUNE_LIBS})
     target_link_libraries(${_target} ${ZLIB_LIBRARIES})
