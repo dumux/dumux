@@ -93,16 +93,15 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular xylene in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and xylene in liquid water.
      * \param temperature temperature in \f$\mathrm{[K]}\f$
      * \param pressure pressure in \f$\mathrm{[Pa]}\f$
-     *
-     * \todo
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented,
-                 "Binary liquid diffusion coefficients of air and xylene");
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "Binary liquid diffusion coefficients of air and xylene");
     }
 };
 
