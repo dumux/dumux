@@ -40,29 +40,14 @@ namespace Properties
 {
 ///////////////////////////////////
 // Type tag definitions:
-//
-// NumericModel
-// |
-// +-> ImplicitModel
-// |
-// \-> ExplicitModel
 ///////////////////////////////////
 
 //! Type tag for all models.
 NEW_TYPE_TAG(NumericModel);
 
-//! Type tag for all fully coupled models.
-NEW_TYPE_TAG(ImplicitModel, INHERITS_FROM(NumericModel));
-
-//! Type tag for all decoupled models.
-NEW_TYPE_TAG(ExplicitModel, INHERITS_FROM(NumericModel));
-
-
-///////////////////////////////////
+/////////////////////////////////////////////
 // Property names which are always available:
-//
-// Scalar
-///////////////////////////////////
+/////////////////////////////////////////////
 
 //! Property to specify the type of scalar values.
 NEW_PROP_TAG(Scalar);
@@ -109,8 +94,6 @@ NEW_PROP_TAG(VtkMultiWriter);
 
 ///////////////////////////////////
 // Default values for properties:
-//
-// Scalar -> double
 ///////////////////////////////////
 
 //! Set the default type of scalar values to double

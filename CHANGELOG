@@ -19,13 +19,17 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - For the multidomain models, the notation of the boundary condition types
-    has changed. This is especially important for all momentum boundary conditions.
-    In general:
+    has changed. This is especially important for all momentum boundary
+    conditions. In general:
       couplingInflow  -> couplingNeumann
       couplingOutflow -> couplingDirichlet
     But for the momentum balances:
       couplingInflow  -> couplingDirichlet
       couplingOutflow -> couplingNeumann
+
+  - The TypeTags "ImplicitModel" and "ExplicitModel" have been deleted. They
+    haven't been used apart from one internal inheritance. See FS#304 for
+    details.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.9: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
