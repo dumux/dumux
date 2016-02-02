@@ -236,14 +236,16 @@ In the following list, you can find some external modules and external libraries
 and some more libraries and tools which are prerequisites for their use.
 
 \begin{itemize}
-\item \textbf{ALBERTA}: External grid library. Adaptive multi-level grid manager using bisectioning
-  refinement and error control by residual techniques for scientific Applications. Requires a Fortran
-  compiler like \texttt{gfortran}. Download: \texttt{\url{http://www.alberta-fem.de}} or for version 3.0
-  \texttt{\url{http://www.mathematik.uni-stuttgart.de/fak8/ians/lehrstuhl/nmh/downloads/alberta/}}.
-
 \item \textbf{dune-ALUGrid}: Grid library, comes as a \Dune module.
   The parallel version needs also a graph partitioner, such as \texttt{ParMETIS}.
   Download: \texttt{\url{https://gitlab.dune-project.org/extensions/dune-alugrid}}
+
+\item \textbf{dune-foamgrid}: External grid module. One- and two-dimensional grids
+  in a physical space of arbitrary dimension; non-manifold grids, growth, element
+  paramterizations, and movable vertices. This makes FoamGrid the grid data structure
+  of choice for simulating structures such as foams, discrete fracture networks,
+  or network flow problems.
+  Download: \texttt{\url{https://gitlab.dune-project.org/extensions/dune-foamgrid}}
 
 \item \textbf{\Dune-multidomaingrid} and \textbf{\Dune-multidomain}: External modules which offer a meta grid that
   has different sub-domains. Each sub-domain can have a local operator that is coupled by a coupling condition. They are
@@ -279,7 +281,7 @@ depending on which modules of \Dune and which external libraries you use.
   when they are going to be built for parallel computing. \texttt{OpenMPI} and \texttt{MPICH} in a recent
   version have been reported to work.
 
-\item \textbf{BLAS}: Alberta and SuperLU make use of BLAS. Thus install GotoBLAS2, ATLAS, non-optimized BLAS
+\item \textbf{BLAS}: SuperLU makes use of BLAS. Thus install GotoBLAS2, ATLAS, non-optimized BLAS
   or BLAS provided by a chip manufacturer. Take care that the installation scripts select the intended
   version of BLAS.
 
