@@ -182,7 +182,7 @@ public:
                     = *(writer.template allocateManagedBuffer<Scalar,dim>(problem_.gridView().size(0)));
 
             // compute update vector
-            for (const auto& element : Dune::elements(problem_.gridView()))
+            for (const auto& element : elements(problem_.gridView()))
             {
                 // cell index
                 int eIdxGlobal = problem_.variables().index(element);
@@ -193,7 +193,7 @@ public:
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
 
                 // run through all intersections with neighbors and boundary
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+                for (const auto& intersection : intersections(problem_.gridView(), element))
                 {
                     int isIndex = intersection.indexInInside();
 

@@ -301,7 +301,7 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             asImp_().storePressureSolution(element);
         }
@@ -1060,7 +1060,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         int eIdxGlobal = problem_.variables().index(element);
 

@@ -515,7 +515,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
             auto element1 = interactionVolume.getSubVolumeElement(0);
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element1))
+            for (const auto& intersection : intersections(problem_.gridView(), element1))
             {
                 int idxInInside = intersection.indexInInside();
 
@@ -548,13 +548,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             auto element45 = interactionVolume.getSubVolumeElement(4);
             auto element23 = interactionVolume.getSubVolumeElement(2);
 
-            for (const auto& intersection1 : Dune::intersections(problem_.gridView(), element45))
+            for (const auto& intersection1 : intersections(problem_.gridView(), element45))
             {
                 if (intersection1.neighbor())
                 {
                     auto element45Outside = intersection1.outside();
 
-                    for (const auto& intersection2 : Dune::intersections(problem_.gridView(), element23))
+                    for (const auto& intersection2 : intersections(problem_.gridView(), element23))
                     {
                         if (intersection2.neighbor())
                         {
@@ -772,7 +772,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 auto outside1 = element1;
                 auto outside4 = element4;
 
-                for (const auto& intersection1 : Dune::intersections(problem_.gridView(), element1))
+                for (const auto& intersection1 : intersections(problem_.gridView(), element1))
                 {
                     if (intersection1.neighbor())
                     {
@@ -783,7 +783,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                for (const auto& intersection4 : Dune::intersections(problem_.gridView(), element4))
+                for (const auto& intersection4 : intersections(problem_.gridView(), element4))
                 {
                     if (intersection4.neighbor())
                     {
@@ -866,7 +866,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 faceArea = crossProduct(crossProductVector1, crossProductVector2).two_norm()/2.0;
                 interactionVolume.setFaceArea(faceArea, 11);
 
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+                for (const auto& intersection : intersections(problem_.gridView(), element))
                 {
                     if (intersection.indexInInside() == interactionVolume.getIndexOnElement(0, 2))
                     {
@@ -894,7 +894,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 auto element3 = interactionVolume.getSubVolumeElement(2);
                 auto element4 = interactionVolume.getSubVolumeElement(3);
 
-                for (const auto& intersection1 : Dune::intersections(problem_.gridView(), element1))
+                for (const auto& intersection1 : intersections(problem_.gridView(), element1))
                 {
                     if (intersection1.neighbor())
                     {
@@ -908,7 +908,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                for (const auto& intersection2 : Dune::intersections(problem_.gridView(), element2))
+                for (const auto& intersection2 : intersections(problem_.gridView(), element2))
                 {
                     if (intersection2.neighbor())
                     {
@@ -924,7 +924,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                for (const auto& intersection3 : Dune::intersections(problem_.gridView(), element3))
+                for (const auto& intersection3 : intersections(problem_.gridView(), element3))
                 {
                     if (intersection3.neighbor())
                     {
@@ -939,7 +939,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                for (const auto& intersection4 : Dune::intersections(problem_.gridView(), element4))
+                for (const auto& intersection4 : intersections(problem_.gridView(), element4))
                 {
                     if (intersection4.neighbor())
                     {
@@ -1023,7 +1023,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                     interactionVolume.setFacePosition(element5.geometry().center(), 4);
                     interactionVolume.setFacePosition(element7.geometry().center(), 6);
 
-                    for (const auto& intersection : Dune::intersections(problem_.gridView(), element5))
+                    for (const auto& intersection : intersections(problem_.gridView(), element5))
                     {
                         if (intersection.neighbor())
                         {
@@ -1073,7 +1073,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                     interactionVolume.setFacePosition(element5.geometry().center(), 7);
                     interactionVolume.setFacePosition(globalPosFace, 6);
 
-                    for (const auto& intersection : Dune::intersections(problem_.gridView(), element5))
+                    for (const auto& intersection : intersections(problem_.gridView(), element5))
                     {
                         if (intersection.neighbor())
                         {
@@ -1344,7 +1344,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
                 bool hasFaceOne = false;
                 bool hasFaceTwo = false;
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), element1))
+                for (const auto& intersection : intersections(problem_.gridView(), element1))
                 {
                     if (intersection.indexInInside() == interactionVolume.getIndexOnElement(0, 1))
                     {
@@ -1481,7 +1481,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
             auto element3 = interactionVolume.getSubVolumeElement(2);
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element3))
+            for (const auto& intersection : intersections(problem_.gridView(), element3))
             {
                 if (intersection.indexInInside() == interactionVolume.getIndexOnElement(2, 2))
                 {
@@ -1592,7 +1592,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
     //Add elements to the interaction volumes and store element-vertex map
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
         asImp_().storeSubVolumeElements(element, elemVertMap);
 
     for (unsigned int i = 0; i < asImp_().interactionVolumes_.size(); i++)
@@ -1600,7 +1600,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
             asImp_().interactionVolumes_[i].printInteractionVolumeInfo();
 
     // Store information related to DUNE intersections for all interaction volumes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
         asImp_().storeIntersectionInfo(element, elemVertMap);
 
     faceVertices_.clear();
@@ -1608,7 +1608,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
 
     // Complete storage of the interaction volumes using the previously stored information
     // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
-    for (const auto& vertex : Dune::vertices(problem_.gridView()))
+    for (const auto& vertex : vertices(problem_.gridView()))
     {
         int vIdxGlobal = problem_.variables().index(vertex);
 

@@ -91,7 +91,7 @@ public:
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvGeometry;
             const GridView &gridView = this->problem_().gridView();
-            for (const auto& element : Dune::elements(gridView)) {
+            for (const auto& element : elements(gridView)) {
                 fvGeometry.update(gridView, element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {

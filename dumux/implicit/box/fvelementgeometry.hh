@@ -951,7 +951,7 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        for (const auto& intersection : Dune::intersections(gridView, element))
+        for (const auto& intersection : intersections(gridView, element))
             if (intersection.boundary())
             {
                 int fIdx = intersection.indexInInside();

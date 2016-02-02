@@ -154,7 +154,7 @@ public:
         setSwitched_(false);
 
         // check, if velocity output can be used (works only for cubes so far)
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if (!isBox) // i.e. cell-centered discretization
             {
@@ -174,7 +174,7 @@ public:
 
         if (isBox) // i.e. vertex-centered discretization
         {
-            for (const auto& vertex : Dune::vertices(this->gridView_()))
+            for (const auto& vertex : vertices(this->gridView_()))
             {
                 int vIdxGlobal = this->dofMapper().index(vertex);
                 const GlobalPosition &globalPos = vertex.geometry().corner(0);
@@ -201,7 +201,7 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             if(element.partitionType() == Dune::InteriorEntity)
             {
 
@@ -321,7 +321,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
@@ -481,7 +481,7 @@ public:
 
             FVElementGeometry fvGeometry;
             static VolumeVariables volVars;
-            for (const auto& element : Dune::elements(this->gridView_()))
+            for (const auto& element : elements(this->gridView_()))
             {
                 fvGeometry.update(this->gridView_(), element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)

@@ -351,7 +351,7 @@ public:
 
         FVElementGeometry fvGeometry;
 
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             fvGeometry.update(this->gridView(), element);
 

@@ -104,7 +104,7 @@ public:
         ElementVolumeVariables elemVolVars;
 
         // Loop over elements
-        for (const auto& element : Dune::elements(this->problem_.gridView()))
+        for (const auto& element : elements(this->problem_.gridView()))
         {
             if (element.partitionType() != Dune::InteriorEntity)
                 continue;
@@ -158,7 +158,7 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             int eIdx = this->elementMapper().index(element);
 

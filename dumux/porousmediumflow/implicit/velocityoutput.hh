@@ -85,7 +85,7 @@ public:
             {
                 cellNum_.assign(problem_.gridView().size(dofCodim), 0);
 
-                for (const auto& element : Dune::elements(problem_.gridView()))
+                for (const auto& element : elements(problem_.gridView()))
                 {
                     FVElementGeometry fvGeometry;
                     fvGeometry.update(problem_.gridView(), element);
@@ -213,7 +213,7 @@ public:
                 std::vector<Scalar> scvfFluxes(element.subEntities(1), 0);
 
                 int fIdxInner = 0;
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+                for (const auto& intersection : intersections(problem_.gridView(), element))
                 {
                     int fIdx = intersection.indexInInside();
 
@@ -248,7 +248,7 @@ public:
                 // Neumann conditions.
                 if (element.hasBoundaryIntersections())
                 {
-                    for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+                    for (const auto& intersection : intersections(problem_.gridView(), element))
                     {
                         if (intersection.boundary())
                         {

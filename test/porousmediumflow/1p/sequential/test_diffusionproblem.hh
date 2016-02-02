@@ -219,7 +219,7 @@ public:
     {
         ScalarSolution *exactPressure = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
 
-        for(const auto& element : Dune::elements(this->gridView()))
+        for(const auto& element : elements(this->gridView()))
         {
             (*exactPressure)[this->elementMapper().index(element)][0] = exact(element.geometry().center());
         }

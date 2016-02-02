@@ -525,7 +525,7 @@ public:
         fractureEdgesIdx_.resize(nEdges);
         std::fill(isDuneFractureEdge_.begin(), isDuneFractureEdge_.end(), false);
 
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
              Dune::GeometryType geomType = element.geometry().type();
 
@@ -592,7 +592,7 @@ public:
 
 #if PLOT
         int i=0;
-        for (const auto& vertex : Dune::vertices(gridView_))
+        for (const auto& vertex : vertices(gridView_))
         {
             Dune::GeometryType geomType = vertex.type();
             std::cout << "visiting " << geomType

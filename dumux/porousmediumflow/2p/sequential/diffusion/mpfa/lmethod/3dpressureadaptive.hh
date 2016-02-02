@@ -282,7 +282,7 @@ template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell index
         int globalIdxI = problem_.variables().index(element);
@@ -366,7 +366,7 @@ template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 {
     // determine position of matrix entries
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell index
         int globalIdxI = problem_.variables().index(element);
@@ -417,7 +417,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    for (const auto& vertex : Dune::vertices(problem_.gridView()))
+    for (const auto& vertex : vertices(problem_.gridView()))
     {
 #if HAVE_MPI
         if (vertex.partitionType() != Dune::InteriorEntity && vertex.partitionType() != Dune::BorderEntity)

@@ -234,7 +234,7 @@ public:
         typedef std::unordered_map<int, int> CoarsenMarkerType;
         CoarsenMarkerType coarsenMarker;
 
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             // only mark non-ghost elements
             if (element.partitionType() != Dune::GhostEntity)
@@ -342,7 +342,7 @@ private:
     bool checkNeighborsRefine_(const Element &element, int level = 1)
     {
         // this also refines the neighbor elements
-        for(const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for(const auto& intersection : intersections(problem_.gridView(), element))
         {
             if(!intersection.neighbor())
                 continue;
@@ -386,14 +386,14 @@ private:
         {
             // run through all cells
             done=true;
-            for (const auto& element : Dune::elements(leafGridView))
+            for (const auto& element : elements(leafGridView))
             {
                 // only mark non-ghost elements
                 if (element.partitionType() == Dune::GhostEntity)
                     continue;
 
                 // run through all neighbor-cells (intersections)
-                for (const auto& intersection : Dune::intersections(leafGridView, element))
+                for (const auto& intersection : intersections(leafGridView, element))
                 {
                     if(!intersection.neighbor())
                         continue;

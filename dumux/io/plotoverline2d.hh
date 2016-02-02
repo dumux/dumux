@@ -139,7 +139,7 @@ public:
         }
 
         // Looping over all elements of the domain
-        for (const auto& element : Dune::elements(problem.gridView()))
+        for (const auto& element : elements(problem.gridView()))
         {
             // updating the volume variables
             fvGeometry.update(problem.gridView(), element);

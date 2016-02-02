@@ -179,7 +179,7 @@ public:
     {
         phaseStorage = 0;
 
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             this->localResidual().addPhaseStorage(phaseStorage, element, phaseIdx);
         }
 
