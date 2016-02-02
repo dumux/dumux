@@ -218,7 +218,7 @@ public:
         int gridSize = problem().gridView().size(0);
         this->pressure().resize(gridSize);
 
-        for (const auto& element : Dune::elements(problem().gridView()))
+        for (const auto& element : elements(problem().gridView()))
         {
             // get the global index of the cell
             int eIdxGlobalI = problem().variables().index(element);
@@ -332,7 +332,7 @@ template<class TypeTag>
 void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // cell index
         int eIdxGlobalI = problem().variables().index(element);
@@ -349,7 +349,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
 
         int numberOfIntersections = 0;
         // run through all intersections with neighbors
-        for (const auto& intersection : Dune::intersections(problem().gridView(), element))
+        for (const auto& intersection : intersections(problem().gridView(), element))
         {
             cellDataI.perimeter() += intersection.geometry().volume();
             numberOfIntersections++;
@@ -386,7 +386,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
         std::multimap<int,int>::iterator rangeIt;
 
         // second loop for further sub-faces
-        for (const auto& element : Dune::elements(problem().gridView()))
+        for (const auto& element : elements(problem().gridView()))
         {
             // cell index
             int eIdxGlobalI = problem().variables().index(element);
@@ -443,7 +443,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             bool additional2isNeighbor(false), additional3isNeighbor(false);
                             // run through all intersections with neighbors if eIt
                             for (const auto& checkIntersection
-                                 : Dune::intersections(problem().gridView(), element))
+                                 : intersections(problem().gridView(), element))
                             {
                                 if (checkIntersection.neighbor())
                                 {
@@ -503,7 +503,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             additional2isNeighbor = additional3isNeighbor = false;
                             // run through all intersections with neighbors of J
                             for (const auto& checkIntersection
-                                 : Dune::intersections(problem().gridView(), intersection.outside()))
+                                 : intersections(problem().gridView(), intersection.outside()))
                             {
                                 if (checkIntersection.neighbor())
                                 {
@@ -575,7 +575,7 @@ template<class TypeTag>
 void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
 {
     // determine position of matrix entries
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // cell index
         int eIdxGlobalI = problem().variables().index(element);
@@ -650,7 +650,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get the global index of the cell
         int eIdxGlobalI = problem().variables().index(element);
@@ -1292,7 +1292,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
     {
         Scalar maxError = 0.;
         // iterate through leaf grid an evaluate c0 at cell center
-        for (const auto& element : Dune::elements(problem().gridView()))
+        for (const auto& element : elements(problem().gridView()))
         {
             int eIdxGlobal = problem().variables().index(element);
             CellData& cellData = problem().variables().cellData(eIdxGlobal);

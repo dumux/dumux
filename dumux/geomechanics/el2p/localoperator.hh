@@ -370,7 +370,7 @@ public:
         }
         // include boundary conditions
         // iterate over element intersections of codim dim-1
-        for (const auto& intersection : Dune::intersections(model_.problem().gridView(), eg.entity()))
+        for (const auto& intersection : intersections(model_.problem().gridView(), eg.entity()))
         {
             // handle only faces on the boundary
             if (!intersection.boundary())

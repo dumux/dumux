@@ -102,7 +102,7 @@ public:
 
         uMean = 0;
         double domainVolume = 0;
-        for (const auto& element : Dune::elements(gridview))
+        for (const auto& element : elements(gridview))
         {
             // get volume
             double volume = element.geometry().volume();
@@ -155,7 +155,7 @@ public:
         double numeratorFlux = 0;
         double denominatorFlux = 0;
         bool exactOutput = true;
-        for (const auto& element : Dune::elements(gridview))
+        for (const auto& element : elements(gridview))
         {
             // element geometry
             const Geometry& geometry = element.geometry();
@@ -205,7 +205,7 @@ public:
             int i = -1;
             Dune::FieldVector<ct,2*dim> fluxVector;
             Dune::FieldVector<ct,dim> exactGradient;
-            for (const auto& intersection : Dune::intersections(gridview, element))
+            for (const auto& intersection : intersections(gridview, element))
             {
                 // local number of facet
                 i = intersection.indexInInside();
@@ -460,7 +460,7 @@ public:
         double numeratorFluxIn = 0;
         double denominatorFluxIn = 0;
         bool exactOutput = true;
-        for (const auto& element : Dune::elements(gridView))
+        for (const auto& element : elements(gridView))
         {
             // element geometry
             const Geometry& geometry = element.geometry();
@@ -489,7 +489,7 @@ public:
 
             // calculate the relative error for inner cells
             bool bndCell = false;
-            for (const auto& intersection : Dune::intersections(gridView, element))
+            for (const auto& intersection : intersections(gridView, element))
             {
                 if (intersection.boundary())
                 {
@@ -527,7 +527,7 @@ public:
             int isIdx = -1;
             Dune::FieldVector<Scalar,2*dim> fluxVector;
             Dune::FieldVector<Scalar,dim> exactGradient;
-            for (const auto& intersection : Dune::intersections(gridView, element))
+            for (const auto& intersection : intersections(gridView, element))
             {
                 // local number of facet
                 int fIdx = intersection.indexInInside();
@@ -713,7 +713,7 @@ public:
         Scalar maxFlux = -1;
         Scalar numerator = 0;
         Scalar denominator = 0;
-        for (const auto& element : Dune::elements(gridView))
+        for (const auto& element : elements(gridView))
         {
             // element geometry
             const Geometry& geometry = element.geometry();
@@ -748,7 +748,7 @@ public:
 
             int i = -1;
             Dune::FieldVector<Scalar,dim> exactGradient;
-            for (const auto& intersection : Dune::intersections(gridView, element))
+            for (const auto& intersection : intersections(gridView, element))
             {
                 // get geometry type of face
                 Dune::GeometryType gtf = intersection.geometryInInside().type();

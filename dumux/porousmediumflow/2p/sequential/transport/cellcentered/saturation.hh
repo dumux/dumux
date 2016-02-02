@@ -1130,7 +1130,7 @@ void FVSaturation2P<TypeTag>::initialize()
     }
 
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         PrimaryVariables initSol(0.0);
         problem_.initial(initSol, element);
@@ -1173,7 +1173,7 @@ template<class TypeTag>
 void FVSaturation2P<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         int eIdxGlobal = problem_.variables().index(element);
 

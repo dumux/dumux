@@ -142,7 +142,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
     PhaseVector entries(0.), timestepFlux(0.);
     // compute update vector
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get cell infos
         int globalIdxI = problem().variables().index(element);
@@ -155,7 +155,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             double sumfactorout = 0;
 
             // run through all intersections with neighbors and boundary
-            for (const auto& intersection : Dune::intersections(problem().gridView(), element))
+            for (const auto& intersection : intersections(problem().gridView(), element))
             {
                 int indexInInside = intersection.indexInInside();
 

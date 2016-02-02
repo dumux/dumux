@@ -263,7 +263,7 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
     std::vector<int> local2Global(2*dim);
 
     // run over all leaf elements
-    for (const auto& element : Dune::elements(gridView_))
+    for (const auto& element : elements(gridView_))
     {
         // build local stiffness matrix for CR elements
         // inludes rhs and boundary condition information
@@ -302,7 +302,7 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
 
     }
     // run over all leaf elements
-    for (const auto& element : Dune::elements(gridView_))
+    for (const auto& element : elements(gridView_))
     {
         int eIdxGlobal = intersectionMapper_.index(element);
 

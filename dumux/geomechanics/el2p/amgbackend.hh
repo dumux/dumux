@@ -99,7 +99,7 @@ private:
         // each vertex
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numVertices);
-        for (const auto& element : Dune::elements(this->problem().gridView())) {
+        for (const auto& element : elements(this->problem().gridView())) {
 
             // loop over all element vertices
             int n = element.subEntities(dim);

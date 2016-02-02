@@ -264,7 +264,7 @@ public:
          FVElementGeometry fvGeometry;
          VolumeVariables volVars;
 
-         for (const auto& element : Dune::elements(this->gridView()))
+         for (const auto& element : elements(this->gridView()))
          {
              int eIdx = this->elementMapper().index(element);
              (*rank)[eIdx] = this->gridView().comm().rank();

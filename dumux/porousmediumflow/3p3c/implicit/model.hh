@@ -155,7 +155,7 @@ public:
 
         if (isBox)
         {
-            for (const auto& vertex : Dune::vertices(this->gridView_()))
+            for (const auto& vertex : vertices(this->gridView_()))
             {
                 int vIdxGlobal = this->dofMapper().index(vertex);
 
@@ -173,7 +173,7 @@ public:
         }
         else
         {
-            for (const auto& element : Dune::elements(this->gridView_()))
+            for (const auto& element : elements(this->gridView_()))
             {
                 int eIdxGlobal = this->dofMapper().index(element);
                 const GlobalPosition &globalPos = element.geometry().center();
@@ -201,7 +201,7 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             if(element.partitionType() == Dune::InteriorEntity)
             {
                 this->localResidual().evalPhaseStorage(element, phaseIdx);
@@ -321,7 +321,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
@@ -469,7 +469,7 @@ public:
 
             FVElementGeometry fvGeometry;
             static VolumeVariables volVars;
-            for (const auto& element : Dune::elements(this->gridView_()))
+            for (const auto& element : elements(this->gridView_()))
             {
                 fvGeometry.update(this->gridView_(), element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)

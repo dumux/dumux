@@ -107,7 +107,7 @@ public:
 
              FVElementGeometry fvGeometry;
              static VolumeVariables volVars;
-             for (const auto& element : Dune::elements(this->gridView_()))
+             for (const auto& element : elements(this->gridView_()))
              {
 
                  fvGeometry.update(this->gridView_(), element);

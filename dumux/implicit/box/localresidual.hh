@@ -113,7 +113,7 @@ protected:
         Dune::GeometryType geoType = this->element_().geometry().type();
         const ReferenceElement &refElement = ReferenceElements::general(geoType);
 
-        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
+        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
         {
             // handle only faces on the boundary
             if (intersection.boundary()) {

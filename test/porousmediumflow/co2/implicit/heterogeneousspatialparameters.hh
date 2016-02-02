@@ -135,7 +135,7 @@ public:
         int numElements = gridView_.size(0);
         paramIdx_.resize(numElements);
 
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             int eIdx = gridView_.indexSet().index(element);
             int param = GridCreator::parameters(element)[0];

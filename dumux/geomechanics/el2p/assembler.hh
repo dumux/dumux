@@ -320,7 +320,7 @@ public:
         };
 
         // Mark all red elements
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
@@ -343,7 +343,7 @@ public:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             int eIdx = this->elementMapper_().index(element);
             if (elementColor_[eIdx] != Red)
                 continue; // non-red elements do not tint vertices
@@ -360,7 +360,7 @@ public:
         }
 
         // Mark yellow elements
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             int eIdx = this->elementMapper_().index(element);
             if (elementColor_[eIdx] == Red) {
                 continue; // element is red already!
@@ -384,7 +384,7 @@ public:
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             int eIdx = this->elementMapper_().index(element);
             if (elementColor_[eIdx] != Green)
                 continue; // yellow and red elements do not make

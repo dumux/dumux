@@ -313,7 +313,7 @@ public:
         ScalarField *permX = this->resultWriter().allocateManagedBuffer(numElements);
         ScalarField *permZ = this->resultWriter().allocateManagedBuffer(numElements);
 
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView(), element);

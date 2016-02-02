@@ -201,7 +201,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
     Dune::FieldVector<Scalar, 2> entries(0.), timestepFlux(0.);
     // compute update vector
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get cell infos
         int globalIdxI = problem().variables().index(element);

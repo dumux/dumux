@@ -195,7 +195,7 @@ private:
         Scalar globalVolume = 0;
         Scalar errorNorm = 0.0;
 
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             // get entity
             int index = problem_.variables().index(element);
@@ -237,7 +237,7 @@ private:
         Scalar xMax =  frontParams_[0].second * time;
 
         // iterate over vertices and get analytic saturation solution
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             // get global coordinate of cell center
             GlobalPosition globalPos = element.geometry().center();
