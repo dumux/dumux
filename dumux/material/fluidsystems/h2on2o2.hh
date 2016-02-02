@@ -356,7 +356,7 @@ public:
         const Scalar mu  = 1.256;
         const Scalar b   = -0.625;
         //Equation to calculate surface Tension of Water According to IAPWS Release on Surface Tension from September 1994
-        const Scalar surfaceTension = B*pow((1.-(T/T_c)),mu)*(1.+b*(1.-(T/T_c)));
+        const Scalar surfaceTension = B*std::pow((1.-(T/T_c)),mu)*(1.+b*(1.-(T/T_c)));
         return surfaceTension; //surface Tension [N/m]
     }
     /****************************************
