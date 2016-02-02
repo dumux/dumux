@@ -117,8 +117,7 @@ public:
                         fluidState_[cIdx].saturation(wPhaseIdx));
             }
 
-//            std::cout << "krw: " << krw << "\t krn: " << krn << std::endl;
-            volFraction_[cIdx] = problem.volFraction[cIdx];
+            volFraction_[cIdx] = problem.model().getVolFraction()[cIdx];
 
             mobility_[wPhaseIdx][cIdx] =
                     krw / fluidState_[cIdx].viscosity(wPhaseIdx);

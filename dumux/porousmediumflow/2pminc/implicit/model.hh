@@ -26,7 +26,7 @@
 #ifndef DUMUX_TWOPMINC_MODEL_HH
 #define DUMUX_TWOPMINC_MODEL_HH
 
-#include <cstdio>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
@@ -86,7 +86,7 @@ public:
         :ParentType(),
          interactingContinuaType_(GET_PARAM_FROM_GROUP(TypeTag, int, Problem, InteractingContinuaType))
     {
-        assert(dim==2);
+        static_assert(dim==2, "The TwoPMincModel only works for two dimensional grids");
     }
 
     /*!
@@ -193,29 +193,18 @@ public:
         }
         for (int nC=0; nC<numContinua; nC++)
         {
-            char buff[100];
-            sprintf(buff, "pW_%d", nC);
-            writer.attachDofData(*pw[nC], buff, isBox);
-            sprintf(buff, "pN_%d", nC);
-            writer.attachDofData(*pn[nC], buff, isBox);
-            sprintf(buff, "pC_%d", nC);
-            writer.attachDofData(*pc[nC], buff, isBox);
-            sprintf(buff, "Sw_%d", nC);
-            writer.attachDofData(*sw[nC], buff, isBox);
-            sprintf(buff, "Sn_%d", nC);
-            writer.attachDofData(*sn[nC], buff, isBox);
-            sprintf(buff, "rhoW_%d", nC);
-            writer.attachDofData(*rhoW[nC], buff, isBox);
-            sprintf(buff, "rhoN_%d", nC);
-            writer.attachDofData(*rhoN[nC], buff, isBox);
-            sprintf(buff, "mobW_%d", nC);
-            writer.attachDofData(*mobW[nC], buff, isBox);
-            sprintf(buff, "mobM_%d", nC);
-            writer.attachDofData(*mobN[nC], buff, isBox);
-            sprintf(buff, "por_%d", nC);
-            writer.attachDofData(*poro[nC], buff, isBox);
-            sprintf(buff, "K_%d", nC);
-            writer.attachDofData(*perm[nC], buff, isBox);
+            const std::string num = std::to_string(nC);
+            writer.attachDofData(*pw[nC], "pW_" + num, isBox);
+            writer.attachDofData(*pn[nC], "pN_" + num, isBox);
+            writer.attachDofData(*pc[nC], "pC_" + num, isBox);
+            writer.attachDofData(*sw[nC], "Sw_" + num, isBox);
+            writer.attachDofData(*sn[nC], "Sn_" + num, isBox);
+            writer.attachDofData(*rhoW[nC], "rhoW_" + num, isBox);
+            writer.attachDofData(*rhoN[nC], "rhoN_" + num, isBox);
+            writer.attachDofData(*mobW[nC], "mobW_" + num, isBox);
+            writer.attachDofData(*mobN[nC], "mobM_" + num, isBox);
+            writer.attachDofData(*poro[nC], "por_" + num, isBox);
+            writer.attachDofData(*perm[nC], "K_" + num, isBox);
         }
         writer.attachDofData(*Te, "temperature", isBox);
 
@@ -229,16 +218,15 @@ public:
 
 
     /*
-     * Geometric implementation of classic MINC (Pruess and Narasimhan 1982, 1985)
-     *
+     * \brief Geometric implementation of classic MINC (Pruess and Narasimhan 1982, 1985)
      */
-    void calculateMincGeometricParameters(GridResolution res,
-            GlobalPosition bboxMin,
-            GlobalPosition bboxMax,
-            std::string filename="empty.csv")//TODO implement the reading of the 1p solution
+    void calculateMincGeometricParameters(const GridResolution& res,
+                                          const GlobalPosition& bboxMin,
+                                          const GlobalPosition& bboxMax,
+                                          const std::string& filename="empty.csv")
     {
-        Scalar length_x = bboxMax[0]- bboxMin[0];
-        Scalar length_y = bboxMax[1]- bboxMin[1];
+        const Scalar length_x = bboxMax[0]- bboxMin[0];
+        const Scalar length_y = bboxMax[1]- bboxMin[1];
 
         cellSize_[0] = length_x/res[0];
         cellSize_[1] = length_y/res[1];
@@ -248,12 +236,9 @@ public:
          */
         for (int nC = 0; nC<numContinua; nC++)
         {
-//            volContinuum_[nC] = 0;
             volFraction_[nC] = 0;
             interfaceArea_[nC] = 0.0;
-//            transmissibility_[nC] = 0.0;
             distNestedContinua_[nC] =0.0;
-//          volumetricFraction_[nC] =0.0;
         }
 
         /*
@@ -272,7 +257,6 @@ public:
              * adjacent continua faces, i.e., the equidistant
              * case only works for quadratic elements.
              */
-            std::cout << cellSize_[0] << cellSize_[1] << std::endl;
             assert( Dune::FloatCmp::eq(cellSize_[0],cellSize_[1]) );
 
             distNestedContinua_ = cellSize_[0]/(2.0*numContinua-1.0);
@@ -282,7 +266,6 @@ public:
             delta[1] = cellSize_[1]/(2.0*numContinua-1.0);
             Dune::FieldVector <Scalar, numContinua> volContinuum;
 
-            std::cout<<"Using equidistant nested elements\n";
             //LENGTH of the nested volume elements
             for (int nC=0; nC<numContinua; nC++)
             {
@@ -303,7 +286,6 @@ public:
             {
                 volFraction_[nC] = volContinuum[nC] - volContinuum[nC+1];
                 volFraction_[nC] /= volContinuum[0];
-                std::cout<<"volF: "<<volFraction_[nC]<<std::endl;
             }
             }
             break;
@@ -312,7 +294,6 @@ public:
          * Constant volume fractions - and the interface area is determined
          */
         case constantVolFraction_:{
-            std::cout<<"Using constant volume fractions\n";
             Scalar x1 = 0;
             Scalar x2 = 0;
 
@@ -325,12 +306,6 @@ public:
             volFraction_ = 1.0/numContinua;
 
             assert(numContinua>1);
-            //            for (int nC = 1; nC < numContinua; nC++){
-            //                volFraction_[nC] = (1.0 - volFraction_[0])/(numContinua-1);
-            //            }
-            for (int nC = 0; nC < numContinua; nC++){
-                std::cout<<"volFraction_["<<nC<<"]"<<volFraction_[nC]<<std::endl;
-            }
             //assuming that nC=0 is the outermost frame that surrounds the matrix continua
             for (int nC=1; nC<numContinua; nC++)
             {
@@ -385,10 +360,8 @@ public:
                 }
                 else
                 {
-                    distNestedContinua_[nC] = std::min<Scalar>(x1,x2);
-                    std::cout<<"warning!!! - check the solution of the nested "
-                            "continua geometric parameters" << "\n";
-                    exit(1);
+                    distNestedContinua_[nC] = std::min<Scalar>(x1, x2);
+                    DUNE_THROW(Dune::InvalidStateException, "Check the solution of the nested continua geometric parameters");
                 }
 
                 length_[0][nC] = length_[0][nC-1] - 2*distNestedContinua_[nC];
@@ -396,14 +369,11 @@ public:
                 sumDistNestedContinua_ += distNestedContinua_[nC];
             }
 
-            //            distNestedContinua_[numContinua] = length_[0][0]/2 - sumDistNestedContinua_;
             }
             break; //ConstantVolumeFractions
 
         default:
-            std::cout<<"Please specify how the volumetric fractions should "
-            "be calculated. MINC_DFM problem\n";
-            exit(1);
+            DUNE_THROW(Dune::InvalidStateException, "InteractingContinuaType not set!");
         }
 
         //INTEFACE AREA
@@ -426,47 +396,32 @@ public:
                                       +length_[1][nC]*length_[2][nC]);
             }
         }
-        std::cout<<"interfaceArea_: "<<interfaceArea_<<std::endl;
 
         Valgrind::CheckDefined(interfaceArea_);
         Valgrind::CheckDefined(volFraction_);
         Valgrind::CheckDefined(cellSize_);
-//        Valgrind::CheckDefined(delta_);
-        // Valgrind::CheckDefined(volContinuum_);
         Valgrind::CheckDefined(distNestedContinua_);
-//        Valgrind::CheckDefined(x1_test_);
-//        Valgrind::CheckDefined(x2_test_);
-//        Valgrind::CheckDefined(transmissibility_);
-//        Valgrind::CheckDefined(volumetricFraction_);
     }
 
-    Dune::FieldVector <Scalar, numContinua> getDistNestedContinua(){
-        return (distNestedContinua_);
-    }
+    const Dune::FieldVector<Scalar, numContinua>& getDistNestedContinua() const
+    { return distNestedContinua_; }
 
-    Dune::FieldVector <Scalar, numContinua> getInterfaceArea(){
-        return (interfaceArea_);
-    }
+    const Dune::FieldVector<Scalar, numContinua>& getInterfaceArea() const
+    { return interfaceArea_; }
 
-    Dune::FieldVector <Scalar, numContinua> getVolFraction(){
-        return (volFraction_);
-    }
+    const Dune::FieldVector<Scalar, numContinua>& getVolFraction() const
+    { return volFraction_; }
 
 
 private:
      Dune::FieldVector <Scalar, dim> cellSize_;
-//     Dune::FieldVector <Scalar, dim> delta_; //discretization on x, y, or z directions for the nested blocks
      Dune::FieldMatrix <Scalar, dim, numContinua> length_;//dimensions of the nested elements length width
-//     Dune::FieldVector <Scalar, numContinua> transmissibility_;
-//     Dune::FieldVector <Scalar, numContinua> volumetricFraction_;
      Dune::FieldVector <Scalar, numContinua> volFraction_;
      Dune::FieldVector <Scalar, numContinua> interfaceArea_;
-//     Dune::FieldVector <Scalar, numContinua> volContinuum_;
      Dune::FieldVector <Scalar, numContinua> distNestedContinua_; //distance between two nested continua
-//     Dune::FieldVector <Scalar, numContinua> x1_test_; //distance to the nearest fracture
-//     Dune::FieldVector <Scalar, numContinua> x2_test_; //distance to the nearest fracture
      int interactingContinuaType_;
 };
+
 }
 
 #include "propertydefaults.hh"
