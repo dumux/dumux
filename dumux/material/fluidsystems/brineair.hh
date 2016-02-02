@@ -475,7 +475,6 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
