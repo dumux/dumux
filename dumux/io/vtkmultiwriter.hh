@@ -49,6 +49,7 @@ namespace Dumux {
  * This class automatically keeps the meta file up to date and
  * simplifies writing datasets consisting of multiple files. (i.e.
  * multiple time steps or grid refinements within a time step.)
+ * \todo This class can most likely be replaced by Dune::VTKSequenceWriter
  */
 template<class GridView, Dune::VTK::OutputType OutputValue = Dune::VTK::ascii >
 class VtkMultiWriter
@@ -146,9 +147,6 @@ public:
         return &(vfs->vf);
     }
 
-    // todo: remove these two functions as soon as we depend on a
-    //       contemporary compilers which support default template
-    //       arguments for function templates
     template <class Scalar>
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > *allocateManagedBuffer(int nEntities)
     { return allocateManagedBuffer<Scalar, 1>(nEntities); }
@@ -443,7 +441,7 @@ private:
     }
 
     //////////////////////////////
-    // HACK: when ever we attach some data we need to copy the
+    // Trick: when ever we attach some data we need to copy the
     //       vector field (that's because Dune::VTKWriter is not
     //       able to write fields one at a time and using
     //       VTKWriter::add*Data doesn't copy the data's
@@ -458,16 +456,12 @@ private:
     //       list and a derived template class which actually
     //       knows the type of the vector field it must delete.
 
-    /** \todo Please doc me! */
-
     class ManagedObject_
     {
     public:
         virtual ~ManagedObject_()
         {}
     };
-
-    /** \todo Please doc me! */
 
     template <class VF>
     class ManagedVectorField_ : public ManagedObject_
