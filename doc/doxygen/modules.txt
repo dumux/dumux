@@ -59,72 +59,51 @@
  * \defgroup Material Material and Fluid Framework
  * Short description of the most important concepts of the material and fluid framework:
  *
- *  - _Binary coefficient:_ Binary coefficients describe the relations
- *  of a mixture of two components. Typical binary coefficients are
- *  Henry coefficients or binary molecular diffusion
- *  coefficients. So far, the programming interface for accessing binary
- *  coefficients has not been standardized in Dumux. 
+ *  - __Binary coefficient:__  @copydoc Binarycoefficients
  * 
- *  - _Component:_ Components are fluid systems which provide the
- *  thermodynamic relations for the liquid and gas phase of a single
- *  chemical species or a fixed mixture of species. Their main purpose
- *  is to provide a convenient way to access these quantities from
- *  full-fledged fluid systems. Components are not supposed to be used
- *  by models directly.
  * 
- *  - _Constraint solver:_ Constraint solvers are auxiliary tools to
- *  make sure that a fluid state is consistent with some thermodynamic
- *  constraints. All constraint solvers specify a well defined set of
- *  input variables and make sure that the resulting fluid state is
- *  consistent with a given set of thermodynamic equations.
+ *  - __Component:__ @copydoc Components
  * 
- *  - _Equation of state:_ Equations of state (EOS) are auxiliary
- *  classes which provide relations between a fluid phase's temperature,
- *  pressure, composition and density. Since these classes are only used
- *  internally in fluid systems, their programming interface is
- *  currently ad-hoc.
  * 
- *  - _Fluid state:_ Fluid states are responsible for representing the
- *  complete thermodynamic configuration of a system at a given spatial
- *  and temporal position. A fluid state always provides access methods
- *  to __all__ thermodynamic quantities, but the concept of a fluid state does not
- *  mandate what assumptions are made to store these thermodynamic
- *  quantities. What fluid states also do __not__ do is to make sure
- *  that the thermodynamic state which they represent is physically
- *  possible.
+ *  - __Constraint solver:__ @copydoc ConstraintSolver
  * 
- *  - _Fluid system:_ Fluid systems express the thermodynamic relations 
- *  Strictly speaking, these relations are
- *  functions, mathematically.} between quantities. Since functions do
- *  not exhibit any internal state, fluid systems are stateless classes,
- *  i.e. all member functions are static. This is a conscious
- *  decision since the thermodynamic state of the system is expressed by
- *  a fluid state!
+ * 
+ *  - __Equation of state:__ @copydoc EOS
+ * 
+ * 
+ *  - __Fluid state:__ @copydoc FluidStates
+ * 
+ * 
+ *  - __Fluid system:__ @copydoc Fluidsystems
+ * 
  *   
- *  - _Fluid-Matrix Interactions:_ Some parameters are functions of the fluid state as well as parameters of
- *  the matrix. For example the capillary pressure is a function of the phase saturation
- *  and the shape parameter \f$\lambda\f$ which is dependent on the material. All such relations
- *  are gathered in this module.
+ *  - __Fluid-Matrix Interactions:__ @copydoc fluidmatrixinteractions
  * 
- *  - _Parameter cache:_ Fluid systems sometimes require
- *  computationally expensive parameters for multiple relations. Such
- *  parameters can be cached using a so-called parameter
- *  cache. Parameter cache objects are specific for each fluid system
- *  but they must provide a common interface to update the internal
- *  parameters depending on the quantities which changed since the last
- *  update.
  * 
- *  - _Spatial Parameters:_ All parameters which depend on the matrix and
- *   therefore on the position within the model domain are defined as spatial
- *   parameters. For example permeability, porosity etc.
+ *  - __Parameter cache:__ @copydoc ParameterCache
+ * 
+ * 
+ *  - __Spatial Parameters:__ @copydoc SpatialParameters
  */
     /*!
      * \ingroup Material
      * \defgroup Binarycoefficients Binary Coefficients
+     *  Binary coefficients describe the relations
+     *  of a mixture of two components. Typical binary coefficients are
+     *  Henry coefficients or binary molecular diffusion
+     *  coefficients. So far, the programming interface for accessing binary
+     *  coefficients has not been standardized in Dumux.
      */
     /*!
      * \ingroup Material
      * \defgroup Components Components
+     * Components are fluid systems which provide the
+     *  thermodynamic relations for the liquid and gas phase of a single
+     *  chemical species or a fixed mixture of species. Their main purpose
+     *  is to provide a convenient way to access these quantities from
+     *  full-fledged fluid systems. Components are not supposed to be used
+     *  by models directly.
+     * 
      */
         /*!
          * \ingroup Components
@@ -133,6 +112,11 @@
     /*!
      * \ingroup Material
      * \defgroup ConstraintSolver Constraint Solver
+     * Constraint solvers are auxiliary tools to
+     * make sure that a fluid state is consistent with some thermodynamic
+     * constraints. All constraint solvers specify a well defined set of
+     * input variables and make sure that the resulting fluid state is
+     * consistent with a given set of thermodynamic equations.
      * Constraint solvers connect the thermodynamic relations expressed by
      * fluid systems with the thermodynamic quantities stored by fluid
      * states. Using them is not mandatory for models, but given the fact
@@ -142,21 +126,43 @@
     /*!
      * \ingroup Material
      * \defgroup EOS Equation of State
+     * 
+     * Equations of state (EOS) are auxiliary
+     * classes which provide relations between a fluid phase's temperature,
+     * pressure, composition and density. Since these classes are only used
+     * internally in fluid systems, their programming interface is
+     * currently ad-hoc.
      */
     /*!
      * \ingroup Material
      * \defgroup FluidStates Fluid States
-     * Fluid state objects express the complete thermodynamic state of a system at a given spatial and
-     * temporal position.
+     * Fluid states are responsible for representing the
+     * complete thermodynamic configuration of a system at a given spatial
+     * and temporal position. A fluid state always provides access methods
+     * to __all__ thermodynamic quantities, but the concept of a fluid state does not
+     * mandate what assumptions are made to store these thermodynamic
+     * quantities. What fluid states also do __not__ do is to make sure
+     * that the thermodynamic state which they represent is physically
+     * possible.
      */
     /*!
      * \ingroup Material
      * \defgroup Fluidsystems Fluid Systems
-     * Fluid systems express the thermodynamic relations between the quantities of a fluid state.
+     * Fluid systems express the thermodynamic relations 
+    *  Strictly speaking, these relations are
+    *  functions, mathematically.} between quantities. Since functions do
+    *  not exhibit any internal state, fluid systems are stateless classes,
+    *  i.e. all member functions are static. This is a conscious
+    *  decision since the thermodynamic state of the system is expressed by
+    *  a fluid state!
      */
     /*!
      * \ingroup Material
      *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
+     * Some parameters are functions of the fluid state as well as parameters of
+     * the matrix. For example the capillary pressure is a function of the phase saturation
+     * and the shape parameter \f$\lambda\f$ which is dependent on the material. All such relations
+     * are gathered in this module.
      */
         /*!
          * \ingroup fluidmatrixinteractions
@@ -169,6 +175,13 @@
     /*!
      * \ingroup Material
      * \defgroup ParameterCache Parameter Cache
+     * Fluid systems sometimes require
+     * computationally expensive parameters for multiple relations. Such
+     * parameters can be cached using a so-called parameter
+     * cache. Parameter cache objects are specific for each fluid system
+     * but they must provide a common interface to update the internal
+     * parameters depending on the quantities which changed since the last
+     * update.
      * All fluid systems must export a type for their __ParameterCache__
      * objects. Parameter caches can be used to cache parameter that are
      * expensive to compute and are required in multiple thermodynamic
@@ -178,11 +191,14 @@
      * to the fluid system and no assumptions on what they provide should be
      * made outside of their fluid system. Parameter cache objects provide a
      * well-defined set of methods to make them coherent with a given fluid
-     *state, though.
+     * state, though.
      */ 
     /*!
      * \ingroup Material
      * \defgroup SpatialParameters Spatial Parameters
+     * All parameters which depend on the matrix and
+     * therefore on the position within the model domain are defined as spatial
+     * parameters. For example permeability, porosity etc.
      */
 
 /* ***************** Fully Implicit ******************/
