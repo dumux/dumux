@@ -180,7 +180,13 @@
          *
          * \copydetails Dumux::StokesncModel
          */
-        /*!
+         /*!
+         * \ingroup ImplicitModels
+         * \defgroup BoxStokesncniModel Non-isothermal N-component Stokes
+         *
+         * \copydetails Dumux::StokesncniModel
+         */
+         /*!
          * \ingroup ImplicitModels
          * \defgroup BoxZeroEqModel ZeroEq
          *
@@ -191,6 +197,11 @@
          * \defgroup BoxZeroEqncModel N-component ZeroEq
          *
          * \copydetails Dumux::ZeroEqncModel
+         */
+         /*!
+         * \defgroup BoxZeroEqncniModel Non-isothermal N-component ZeroEq
+         *
+         * \copydetails Dumux::ZeroEqncniModel
          */
         /*!
          * \ingroup ImplicitModels
@@ -362,4 +373,3 @@
      * \ingroup Sequential
      * \defgroup IMPETtests Test Problems
      */
-
