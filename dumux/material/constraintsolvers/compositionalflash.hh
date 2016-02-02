@@ -37,6 +37,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup ConstraintSolver
  * \brief Flash calculation routines for compositional decoupled models
  *
  *        Routines for isothermal and isobaric 2p2c and 1p2c flash.

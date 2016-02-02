@@ -34,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup ConstraintSolver
  * \brief Calculates the chemical equilibrium from the component
  *        fugacities in a phase.
  */

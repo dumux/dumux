@@ -35,6 +35,7 @@
 
 namespace Dumux {
 /*!
+ * \ingroup ConstraintSolver
  * \brief Computes the composition of all phases from a function in the fluidsystem.
  *
  *        This is basically an interface in order to use ConstraintSolver with fluidsystems,

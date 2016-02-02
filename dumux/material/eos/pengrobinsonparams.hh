@@ -34,6 +34,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup EOS
  * \brief Stores and provides access to the Peng-Robinson parameters
  *
  * See:

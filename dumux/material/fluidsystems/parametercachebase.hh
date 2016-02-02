@@ -27,6 +27,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup ParameterCache
  * \brief The base class of the parameter cache classes for fluid systems
  */
 template <class Implementation>
