@@ -27,6 +27,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_HH
 #define DUMUX_EFF_TO_ABS_LAW_HH
 
+#include <dune/common/exceptions.hh>
+
 #include "efftoabslawparams.hh"
 
 namespace Dumux

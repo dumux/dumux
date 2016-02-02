@@ -48,11 +48,6 @@ SET_TYPE_PROP(Stokes2cniSubProblem, Problem, Dumux::Stokes2cniSubProblem<TypeTag
 // Use the Stokes2cniCouplingLocalResidual for the computation of the local residual in the Stokes domain
 SET_TYPE_PROP(Stokes2cniSubProblem, LocalResidual, StokesncniCouplingLocalResidual<TypeTag>);
 
-// Set the property for the material parameters by extracting it from the material law.
-SET_TYPE_PROP(Stokes2cniSubProblem,
-              MaterialLawParams,
-              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 // Used the fluid system from the coupled problem
 SET_TYPE_PROP(Stokes2cniSubProblem,
               FluidSystem,

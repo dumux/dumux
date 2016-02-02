@@ -24,6 +24,7 @@
 #ifndef DUMUX_CPGRID_CREATOR_HH
 #define DUMUX_CPGRID_CREATOR_HH
 
+#if (HAVE_DUNE_CORNERPOINT && HAVE_OPM_PARSER)
 #include <dune/grid/CpGrid.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
@@ -101,5 +102,6 @@ public:
     }
 };
 }
+#endif // (HAVE_DUNE_CORNERPOINT && HAVE_OPM_PARSER)
 
 #endif

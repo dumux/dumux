@@ -23,6 +23,8 @@
 #ifndef BOUNDARY_TYPES_HH
 #define BOUNDARY_TYPES_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
