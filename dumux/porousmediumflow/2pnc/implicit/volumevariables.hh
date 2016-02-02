@@ -108,23 +108,23 @@ public:
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
-     * \param primaryVariables The primary Variables
+     * \param priVars The primary Variables
      */
-    void update(const PrimaryVariables &primaryVariables,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
-        ParentType::update(primaryVariables,
+        ParentType::update(priVars,
                            problem,
                            element,
                            fvGeometry,
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(primaryVariables, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
 
         /////////////
         // calculate the remaining quantities
@@ -169,15 +169,15 @@ public:
     Valgrind::CheckDefined(porosity_);
     // energy related quantities not contained in the fluid state
 
-    asImp_().updateEnergy_(primaryVariables, problem,element, fvGeometry, scvIdx, isOldSol);
+    asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
     }
 
    /*!
     * \copydoc ImplicitModel::completeFluidState
     * \param isOldSol Specifies whether this is the previous solution or the current one
-    * \param primaryVariables The primary Variables
+    * \param priVars The primary Variables
     */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                     const Problem& problem,
                     const Element& element,
                     const FVElementGeometry& fvGeometry,
@@ -186,7 +186,7 @@ public:
                     bool isOldSol = false)
 
     {
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+        Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
@@ -205,9 +205,9 @@ public:
         }
         else if (phasePresence == bothPhases) {
             if (formulation == plSg)
-                Sg = primaryVariables[switchIdx];
+                Sg = priVars[switchIdx];
             else if (formulation == pgSl)
-                Sg = 1.0 - primaryVariables[switchIdx];
+                Sg = 1.0 - priVars[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
     else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
@@ -225,20 +225,20 @@ public:
 
         // extract the pressures
         if (formulation == plSg) {
-            fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx]);
-            if (primaryVariables[pressureIdx] + pc < 0.0)
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
+            if (priVars[pressureIdx] + pc < 0.0)
                  DUNE_THROW(Dumux::NumericalProblem,"Capillary pressure is too low");
-            fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx] + pc);
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
         else if (formulation == pgSl) {
-            fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx]);
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
             // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
-            if (primaryVariables[pressureIdx] - pc < 0.0)
+            if (priVars[pressureIdx] - pc < 0.0)
             {
-                std::cout<< "p_g: "<< primaryVariables[pressureIdx]<<" Cap_press: "<< pc << std::endl;
+                std::cout<< "p_g: "<< priVars[pressureIdx]<<" Cap_press: "<< pc << std::endl;
                 DUNE_THROW(Dumux::NumericalProblem,"Capillary pressure is too high");
             }
-            fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx] - pc);
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
@@ -259,7 +259,7 @@ public:
             // can be used by the Miscible2pNCComposition constraint solver
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-                fluidState.setMoleFraction(wPhaseIdx, compIdx, primaryVariables[compIdx]);
+                fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
             }
 
             Miscible2pNCComposition::solve(fluidState,
@@ -273,10 +273,10 @@ public:
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
 
-            moleFrac[wCompIdx] =  primaryVariables[switchIdx];
+            moleFrac[wCompIdx] =  priVars[switchIdx];
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                    moleFrac[compIdx] = primaryVariables[compIdx];
+                    moleFrac[compIdx] = priVars[compIdx];
 
 
             Scalar sumMoleFracNotGas = 0;
@@ -310,9 +310,9 @@ public:
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-                moleFrac[compIdx] = primaryVariables[compIdx];
+                moleFrac[compIdx] = priVars[compIdx];
             }
-            moleFrac[nCompIdx] = primaryVariables[switchIdx];
+            moleFrac[nCompIdx] = priVars[switchIdx];
             Scalar sumMoleFracNotWater = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {

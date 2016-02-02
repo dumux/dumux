@@ -416,17 +416,6 @@ public:
     Scalar permeabilityFactor() const
     { return permeabilityFactor_; }
 
-//    /*!
-//     * \brief Returns the mole fraction of a component in the phase
-//     *
-//     * \param phaseIdx the index of the fluid phase
-//     * \param compIdx the index of the component
-//     */
-//    Scalar moleFraction(int phaseIdx, int compIdx) const
-//    {
-//       return this->fluidState_.moleFraction(phaseIdx, compIdx);
-//    }
-
     /*!
      * \brief Returns the mole fraction of the salinity in the liquid phase
      */
@@ -478,8 +467,8 @@ public:
      *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
-     * molality=\frac{n_{component}}{m_{solvent}}
-     * =\frac{n_{component}}{n_{solvent}*M_{solvent}}
+     * \f$ molality=\frac{n_{component}}{m_{solvent}}
+     * =\frac{n_{component}}{n_{solvent}*M_{solvent}}\f$
      * compIdx of the main component (solvent) in the
      * phase is equal to the phaseIdx
      */

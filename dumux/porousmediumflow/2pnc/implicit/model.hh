@@ -609,8 +609,10 @@ protected:
         switchFlag_ = yesno;
     }
 
-    //  perform variable switch at a vertex; Returns true if a
-    //  variable switch was performed.
+    /*!
+     * \brief  perform variable switch at a vertex; Returns true if a
+     *         variable switch was performed.
+     */
     bool primaryVarSwitch_(SolutionVector &globalSol,
                            const VolumeVariables &volVars, int dofIdxGlobal,
                            const GlobalPosition &globalPos)
