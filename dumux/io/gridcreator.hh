@@ -63,12 +63,6 @@
 #include <dune/foamgrid/dgffoam.cc>
 #endif
 
-// Alberta specific includes
-#if HAVE_ALBERTA
-#include <dune/grid/albertagrid.hh>
-#include <dune/grid/albertagrid/dgfparser.hh>
-#endif
-
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 
@@ -1288,59 +1282,6 @@ public:
 };
 
 #endif // HAVE_DUNE_FOAMGRID
-
-#if HAVE_ALBERTA
-
-/*!
- * \brief Provides a grid creator for FoamGrids
- *        from information in the input file
- *
- * All keys are expected to be in group GridParameterGroup.
-
- * The following keys are recognized:
- * - File : A DGF or gmsh file to load from, type detection by file extension
- * - Verbosity : whether the grid construction should output to standard out
- *
- */
-template<class TypeTag, int dim, int dimworld>
-class GridCreatorImpl<TypeTag, Dune::AlbertaGrid<dim, dimworld> >
-          : public GridCreatorBase<TypeTag, Dune::AlbertaGrid<dim, dimworld> >
-{
-public:
-    typedef typename Dune::AlbertaGrid<dim, dimworld> Grid;
-    typedef GridCreatorBase<TypeTag, Grid> ParentType;
-
-    /*!
-     * \brief Make the grid. This is implemented by specializations of this method.
-     */
-    static void makeGrid()
-    {
-        // First try to create it from a DGF or msh file in GridParameterGroup.File
-        try {
-            const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromFile(fileName, "Alberta");
-            ParentType::maybeRefineGrid();
-            return;
-        }
-        catch (Dumux::ParameterException &e) {}
-        catch (...) { throw; }
-
-        // Then look for the necessary keys to construct a structured grid from the input file
-        try {
-            ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex);
-            ParentType::maybeRefineGrid();
-        }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight and "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LowerLeft or a grid file in "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
-        }
-        catch (...) { throw; }
-    }
-};
-
-#endif // HAVE_ALBERTA
 
 // TODO Petrel grids with dune-cornerpoint
 
