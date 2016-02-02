@@ -389,7 +389,7 @@ protected:
             // \f$\frac{m}{\partial t}\f$ term if using implicit
             // euler as time discretization.
             //
-            // TODO (?): we might need a more explicit way for
+            // We might need a more explicit way for
             // doing the time discretization...
             Valgrind::SetUndefined(storageTerm_[scvIdx]);
             Valgrind::SetUndefined(values);
