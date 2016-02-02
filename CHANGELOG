@@ -2,7 +2,11 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 ===================================================
 
 * IMPORTANT NOTES:
-  -
+  - The support for the external grid library ALBERTA was dropped. Instead
+    we now offically support dune-foamgrid
+    (https://gitlab.dune-project.org/extensions/dune-foamgrid). Dune-foamgrid
+    supports 1d and 2d simplex grids embedded in an arbitrary dimension world space.
+    It features element parametrizations, runtime growth, runtime-movable vertices.
 
 * IMPROVEMENTS and ENHANCEMENTS:
   - The multidomain models have been restructured. This aims at a reduction in
