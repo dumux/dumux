@@ -697,9 +697,10 @@ private:
     /*!
      * \brief The density of pure brine at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
+     * \warning The influence of dissolved air in Brine is neglected
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
      * Equations given in:
      *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
@@ -726,8 +727,7 @@ private:
                        "Liquid density for Brine and Air is only "
                        "defined below 100MPa (is " << pl << ")");
         }
-        Scalar rho_brine = Brine::liquidDensity(T, pl, XlNaCl); // WARNING: Here we just neglect the influence of dissolved air in Brine
-        return rho_brine;
+        return Brine::liquidDensity(T, pl, XlNaCl); // The influence of dissolved air in Brine is neglected
     }
 
     static Scalar liquidEnthalpyBrine_(Scalar T,
