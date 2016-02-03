@@ -477,7 +477,7 @@ protected:
 
                     const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
 
-                    tangent[0] = elementUnitNormal[1];  //TODO: 3D
+                    tangent[0] = elementUnitNormal[1];
                     tangent[1] = -elementUnitNormal[0];
 
                     Dune::FieldMatrix<Scalar, dim, dim> velGrad = boundaryVars.velocityGrad();

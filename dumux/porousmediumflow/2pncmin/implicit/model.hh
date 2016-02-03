@@ -481,8 +481,6 @@ protected:
             {
             Scalar sumxl = 0;
             //Calculate sum of mole fractions (water and air) in the hypothetical liquid phase
-            //WARNING: Here numComponents is replaced by numMajorComponents as the solutes
-            //are only present in the liquid phase and cannot condense as the liquid (water).
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
                     sumxl += volVars.moleFraction(wPhaseIdx, compIdx);

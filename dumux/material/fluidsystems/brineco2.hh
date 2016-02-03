@@ -356,8 +356,7 @@ public:
         assert(pressure > 0);
 
         // calulate the equilibrium composition for the given
-        // temperature and pressure. TODO: calculateMoleFractions()
-        // could use some cleanup.
+        // temperature and pressure.
         Scalar xlH2O, xgH2O;
         Scalar xlCO2, xgCO2;
         Brine_CO2::calculateMoleFractions(temperature,
