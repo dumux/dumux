@@ -20,6 +20,8 @@
  * \file
  * \brief Provides a grid creator for all supported grid managers with
  *        input file interfaces.
+ *
+ * \todo add Petrel grids with dune-cornerpoint
  */
 #ifndef DUMUX_GRID_CREATOR_HH
 #define DUMUX_GRID_CREATOR_HH
@@ -1283,8 +1285,6 @@ public:
 };
 
 #endif // HAVE_DUNE_FOAMGRID
-
-// TODO Petrel grids with dune-cornerpoint
 
 } // namespace Dumux
 

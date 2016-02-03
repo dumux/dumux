@@ -87,6 +87,8 @@ public:
      * Taken from:
      *
      * See: R. Reid, et al. (1987, pp 208-209, 669) \cite reid1987
+     *
+     * \todo implement the Gomez-Thodos approach...
      */
     static Scalar vaporPressure(Scalar temperature)
     {
@@ -95,8 +97,6 @@ public:
         if (temperature < tripleTemperature())
             return 0; // H2 is solid: We don't take sublimation into
                       // account
-
-        // TODO: the Gomez-Thodos approach would probably be better...
 
         // antoine equatuion
         const Scalar A = -7.76451;

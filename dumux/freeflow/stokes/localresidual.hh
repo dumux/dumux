@@ -166,6 +166,8 @@ protected:
      * \brief Evaluates the advective fluxes over
      *        a face of a sub-control volume.
      *
+     * \todo dilatation term has to be accounted for in outflow, coupling, neumann
+     *
      * \param flux The advective flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current SCV/boundary face
      */
@@ -234,7 +236,6 @@ protected:
         {
             velGradComp = velGrad[velIdx];
 
-            // TODO: dilatation term has to be accounted for in outflow, coupling, neumann
             //            velGradComp[velIdx] += 2./3*fluxVars.velocityDiv;
 
             velGradComp *= fluxVars.dynamicViscosity() + fluxVars.dynamicEddyViscosity();
