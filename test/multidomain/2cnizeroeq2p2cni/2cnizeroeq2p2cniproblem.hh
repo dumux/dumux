@@ -29,8 +29,8 @@
 #include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2oair.hh>
-#include <dumux/multidomain/problem.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/localoperator.hh>
+#include <dumux/multidomain/2cnistokes2p2cni/problem.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/propertydefaults.hh>
 
 #include "2cnizeroeq2p2cnispatialparameters.hh"
@@ -40,29 +40,29 @@
 namespace Dumux
 {
 template <class TypeTag>
-class TwoCNIZeroEqTwoPTwoCNIProblem;
+class TwoCNIZeroEqTwoPTwoCNITestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TwoCNIZeroEqTwoPTwoCNIProblem, INHERITS_FROM(TwoCNIStokesTwoPTwoCNI));
+NEW_TYPE_TAG(TwoCNIZeroEqTwoPTwoCNITestProblem, INHERITS_FROM(TwoCNIStokesTwoPTwoCNI));
 
 // Set the grid type
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the global problem
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Problem, TwoCNIZeroEqTwoPTwoCNIProblem<TypeTag>);
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, Problem, TwoCNIZeroEqTwoPTwoCNITestProblem<TypeTag>);
 
 // Set the local coupling operator
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, MultiDomainCouplingLocalOperator,
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, MultiDomainCouplingLocalOperator,
               Dumux::TwoCNIStokesTwoPTwoCNILocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, SubDomain1TypeTag, TTAG(ZeroEq2cniSubProblem));
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, SubDomain2TypeTag, TTAG(TwoPTwoCNISubProblem));
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, SubDomain1TypeTag, TTAG(ZeroEq2cniSubProblem));
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, SubDomain2TypeTag, TTAG(TwoPTwoCNISubProblem));
 
 // Set the global problem in the context of the two sub-problems
-SET_TYPE_PROP(ZeroEq2cniSubProblem, MultiDomainTypeTag, TTAG(TwoCNIZeroEqTwoPTwoCNIProblem));
-SET_TYPE_PROP(TwoPTwoCNISubProblem, MultiDomainTypeTag, TTAG(TwoCNIZeroEqTwoPTwoCNIProblem));
+SET_TYPE_PROP(ZeroEq2cniSubProblem, MultiDomainTypeTag, TTAG(TwoCNIZeroEqTwoPTwoCNITestProblem));
+SET_TYPE_PROP(TwoPTwoCNISubProblem, MultiDomainTypeTag, TTAG(TwoCNIZeroEqTwoPTwoCNITestProblem));
 
 // Set the other sub-problem for each of the two sub-problems
 SET_TYPE_PROP(ZeroEq2cniSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCNISubProblem));
@@ -72,15 +72,15 @@ SET_TYPE_PROP(TwoPTwoCNISubProblem, OtherSubDomainTypeTag, TTAG(ZeroEq2cniSubPro
 SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, Dumux::TwoCNIZeroEqTwoPTwoCNISpatialParams<TypeTag>);
 
 // Set the fluid system to use complex relations (last argument)
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, FluidSystem,
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
                                    Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
 
 // If SuperLU is not available, the UMFPack solver is used:
 #ifdef HAVE_SUPERLU
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #else
-SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, LinearSolver, UMFPackBackend<TypeTag>);
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 }
 
@@ -95,10 +95,11 @@ SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, LinearSolver, UMFPackBackend<TypeTa
  * The initial and boundary conditions of the submodels are specified in the two subproblems,
  * 2p2csubproblem.hh and zeroeq2csubproblem.hh, which are accessible via the coupled problem.
  */
-template <class TypeTag = TTAG(TwoCNIZeroEqTwoPTwoCNIProblem) >
-class TwoCNIZeroEqTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
+template <class TypeTag = TTAG(TwoCNIZeroEqTwoPTwoCNITestProblem) >
+class TwoCNIZeroEqTwoPTwoCNITestProblem : public TwoCNIStokesTwoPTwoCNIProblem<TypeTag>
 {
-    typedef MultiDomainProblem<TypeTag> ParentType;
+    typedef TwoCNIZeroEqTwoPTwoCNITestProblem<TypeTag> ThisType;
+    typedef TwoCNIStokesTwoPTwoCNIProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -119,8 +120,8 @@ public:
      * \param gridView The grid view
      */
     template<class GridView>
-    TwoCNIZeroEqTwoPTwoCNIProblem(TimeManager &timeManager,
-                                  GridView gridView)
+    TwoCNIZeroEqTwoPTwoCNITestProblem(TimeManager &timeManager,
+                                      GridView gridView)
     : ParentType(timeManager, gridView)
     {
         dtInit_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);

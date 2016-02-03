@@ -94,7 +94,7 @@ void printUsage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if (HAVE_SUPERLU || HAVE_UMFPACK)
-    typedef TTAG(TwoCZeroEqTwoPTwoCProblem) ProblemTypeTag;
+    typedef TTAG(TwoCZeroEqTwoPTwoCTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, printUsage);
 #else
 #warning "You need to have SuperLU or UMFPack installed to run this test."

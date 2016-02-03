@@ -38,8 +38,8 @@
 #include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2oair.hh>
-#include <dumux/multidomain/problem.hh>
 #include <dumux/multidomain/2cstokes2p2c/localoperator.hh>
+#include <dumux/multidomain/2cstokes2p2c/problem.hh>
 #include <dumux/multidomain/2cstokes2p2c/propertydefaults.hh>
 
 #ifdef HAVE_PARDISO
@@ -53,29 +53,29 @@
 namespace Dumux
 {
 template <class TypeTag>
-class TwoCStokesTwoPTwoCProblem;
+class TwoCStokesTwoPTwoCTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TwoCStokesTwoPTwoCProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
+NEW_TYPE_TAG(TwoCStokesTwoPTwoCTestProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
 
 // Set the grid type
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the global problem
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Problem, Dumux::TwoCStokesTwoPTwoCProblem<TypeTag>);
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Problem, Dumux::TwoCStokesTwoPTwoCTestProblem<TypeTag>);
 
 // Set the local coupling operator
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, MultiDomainCouplingLocalOperator,
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, MultiDomainCouplingLocalOperator,
               Dumux::TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, SubDomain1TypeTag, TTAG(Stokes2cSubProblem));
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, SubDomain2TypeTag, TTAG(TwoPTwoCSubProblem));
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, SubDomain1TypeTag, TTAG(Stokes2cSubProblem));
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, SubDomain2TypeTag, TTAG(TwoPTwoCSubProblem));
 
 // Set the global problem in the context of the two sub-problems
-SET_TYPE_PROP(Stokes2cSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCProblem));
-SET_TYPE_PROP(TwoPTwoCSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCProblem));
+SET_TYPE_PROP(Stokes2cSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCTestProblem));
+SET_TYPE_PROP(TwoPTwoCSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCTestProblem));
 
 // Set the other sub-problem for each of the two sub-problems
 SET_TYPE_PROP(Stokes2cSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCSubProblem));
@@ -85,15 +85,15 @@ SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cSubProblem
 SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
 
 // Set the fluid system to use simple relations (last argument)
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, FluidSystem,
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
                                    Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
 
 // if you do not have PARDISO, the SuperLU solver is used:
 #ifdef HAVE_PARDISO
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, PardisoBackend<TypeTag>);
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, LinearSolver, PardisoBackend<TypeTag>);
 #else
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #endif // HAVE_PARDISO
 }
 
@@ -110,11 +110,11 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
  * The initial and boundary conditions of the submodels are specified in the two subproblems,
  * 2p2csubproblem.hh and stokes2csubproblem.hh, which are accessible via the coupled problem.
  */
-template <class TypeTag = TTAG(TwoCStokesTwoPTwoCProblem) >
-class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
+template <class TypeTag = TTAG(TwoCStokesTwoPTwoCTestProblem) >
+class TwoCStokesTwoPTwoCTestProblem : public TwoCStokesTwoPTwoCProblem<TypeTag>
 {
-    typedef TwoCStokesTwoPTwoCProblem<TypeTag> ThisType;
-    typedef MultiDomainProblem<TypeTag> ParentType;
+    typedef TwoCStokesTwoPTwoCTestProblem<TypeTag> ThisType;
+    typedef TwoCStokesTwoPTwoCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -134,8 +134,8 @@ public:
      * \param gridView The grid view
      */
     template<class GridView>
-    TwoCStokesTwoPTwoCProblem(TimeManager &timeManager,
-                              GridView gridView)
+    TwoCStokesTwoPTwoCTestProblem(TimeManager &timeManager,
+                                  GridView gridView)
     : ParentType(timeManager, gridView)
     {
         interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
