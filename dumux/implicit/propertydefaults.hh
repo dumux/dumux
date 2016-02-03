@@ -25,6 +25,11 @@
 #ifndef DUMUX_IMPLICIT_PROPERTY_DEFAULTS_HH
 #define DUMUX_IMPLICIT_PROPERTY_DEFAULTS_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+#include <dune/istl/bcrsmatrix.hh>
+
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/common/boundarytypes.hh>
