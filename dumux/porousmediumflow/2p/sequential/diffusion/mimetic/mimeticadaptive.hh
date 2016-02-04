@@ -403,7 +403,7 @@ private:
 
 private:
     Problem& problem_;
-    const GridView& gridView_;
+    const GridView gridView_;
     const IntersectionMapper& intersectionMapper_;
     Dune::DynamicVector<Scalar> rhs_;
     std::vector<Dune::DynamicMatrix<Scalar> > W_;

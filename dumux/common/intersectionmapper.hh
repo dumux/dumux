@@ -267,7 +267,7 @@ public:
     }
 
 protected:
-    const GridView& gridView_;
+    const GridView gridView_;
     ElementMapper elementMapper_;
     unsigned int size_;
     std::vector<std::unordered_map<int, int> > intersectionMapGlobal_;

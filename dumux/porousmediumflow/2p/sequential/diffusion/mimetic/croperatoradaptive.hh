@@ -175,7 +175,7 @@ public:
     void updateMatrix();
 
 protected:
-    const GridView& gridView_;
+    const GridView gridView_;
     const IS& is_;
     IntersectionMapper intersectionMapper_;
     RepresentationType A_;
