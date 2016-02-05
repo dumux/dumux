@@ -427,7 +427,8 @@ protected:
     }
 
     /*!
-     * \copydoc 2pnc::primaryVarSwitch_
+     * \brief Set whether there was a primary variable switch after in
+     *        the last timestep.
      */
     bool primaryVarSwitch_(SolutionVector &globalSol,
                            const VolumeVariables &volVars, int globalIdx,

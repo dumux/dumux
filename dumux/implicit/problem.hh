@@ -496,7 +496,7 @@ public:
      * This is the method for the case where the point source is space dependent
      *
      * \param pointSource A single point source
-     * \param position The point source position in global coordinates
+     * \param globalPos The point source position in global coordinates
      *
      * For this method, the \a values() method of the point sources returns
      * the absolute conserved quantity rate generated or annihilate in

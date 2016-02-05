@@ -240,6 +240,8 @@ public:
 
     /*!
      * \brief Returns the phase state for the control-volume.
+     *
+     * \param nC The continuum index
      */
     const FluidState &fluidState(int nC) const
     { return fluidState_[nC]; }
@@ -249,6 +251,7 @@ public:
      *        the control volume.
      *
      * \param phaseIdx The phase index
+     * \param nC The continuum index
      */
     Scalar saturation(int phaseIdx, int nC) const
     { return fluidState_[nC].saturation(phaseIdx); }
@@ -258,6 +261,7 @@ public:
      *        control volume.
      *
      * \param phaseIdx The phase index
+     * \param nC The continuum index
      */
     Scalar density(int phaseIdx, int nC) const
     { return fluidState_[nC].density(phaseIdx); }
@@ -267,12 +271,15 @@ public:
      *        the control volume.
      *
      * \param phaseIdx The phase index
+     * \param nC The continuum index
      */
     Scalar pressure(int phaseIdx, int nC) const
     { return fluidState_[nC].pressure(phaseIdx); }
 
     /*!
      * \brief Returns the capillary pressure within the control volume [Pa].
+     *
+     * \param nC The continuum index
      */
     Scalar capillaryPressure(int nC) const
     { return fluidState_[nC].pressure(nPhaseIdx) - fluidState_[nC].pressure(wPhaseIdx); }
@@ -292,12 +299,15 @@ public:
      *        the control volume.
      *
      * \param phaseIdx The phase index
+     * \param nC The continuum index
      */
     Scalar mobility(int phaseIdx, int nC) const
     { return mobility_[phaseIdx][nC]; }
 
     /*!
      * \brief Returns the average porosity within the control volume.
+     *
+     * \param nC The continuum index
      */
     Scalar porosity(int nC) const
     { return porosity_[nC]; }

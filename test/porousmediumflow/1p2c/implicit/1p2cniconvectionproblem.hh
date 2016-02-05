@@ -71,7 +71,7 @@ SET_BOOL_PROP(OnePTwoCNIConvectionProblem, UseMoles, true);
 
 
 /*!
- * \ingroup OnePTwoCNIModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitTestProblems
  *
  * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:

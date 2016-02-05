@@ -77,7 +77,7 @@ SET_BOOL_PROP(OnePTwoCNIConductionProblem, ProblemEnableGravity, false);
 
 
 /*!
- * \ingroup OnePTwoCNIModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitTestProblems
  *
  * \brief Test for the OnePTwoCModel in combination with the NI model for a conduction problem:

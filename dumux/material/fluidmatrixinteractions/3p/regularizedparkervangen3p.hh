@@ -89,7 +89,7 @@ public:
      /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
-     * \param sw wetting phase saturation or sum of wetting phase saturations
+     * \param swe Effective wetting phase saturation
      *
      */
     static Scalar pcgw(const Params &params, Scalar swe)
@@ -120,7 +120,7 @@ public:
   /*!
      * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
      * \param params Array of parameters
-     * \param sw wetting phase saturation or sum of wetting phase saturations
+     * \param swe Effective wetting phase saturation
      */
     static Scalar pcnw(const Params &params, Scalar swe)
     {
@@ -149,7 +149,7 @@ public:
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
-     * \param St sum of wetting (liquid) phase saturations
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar pcgn(const Params &params, Scalar ste)
     {
@@ -180,7 +180,7 @@ public:
     /*!
      * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
-     * \param sne Non-wetting liquid saturation
+     * \param sne Effective non-wetting liquid saturation
      */
     static Scalar pcAlpha(const Params &params, Scalar sne)
     {
@@ -229,10 +229,8 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
-     * \param sn Non-wetting liquid saturation
-     * \param sg Gas saturation
-     * \param saturation wetting liquid saturation
      * \param params Array of parameters.
+     * \param swe Effective wetting phase saturation
      */
     static Scalar krw(const Params &params,  const Scalar swe)
     {
@@ -255,11 +253,10 @@ public:
      * liquid transport in the vadose zone", Leonardo I. Oliveira, Avery H. Demond,
      * Journal of Contaminant Hydrology 66 (2003), 261-285
      *
-     *
-     * \param sw Wetting liquid saturation
-     * \param sg Gas saturation
-     * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
+     * \param swe Effective wetting phase saturation
+     * \param sne Effective non-wetting liquid saturation
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
     {
@@ -285,10 +282,8 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
-     * \param sw Wetting liquid saturation
-     * \param sn Non-wetting liquid saturation
-     * \param saturation Gas saturation
      * \param params Array of parameters.
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
@@ -302,11 +297,11 @@ public:
 
     /*!
      * \brief The relative permeability for a phase.
-     * \param sw Wetting liquid saturation
-     * \param sg Gas saturation
-     * \param sn Non-wetting liquid saturation
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
+     * \param swe Effective wetting phase saturation
+     * \param sne Effective non-wetting liquid saturation
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
     {

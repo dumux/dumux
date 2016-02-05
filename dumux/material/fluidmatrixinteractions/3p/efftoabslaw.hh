@@ -108,7 +108,7 @@ public:
      /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
-     * \param St sum of wetting (liquid) phase saturations
+     * \param st sum of wetting (liquid) phase saturations
      */
     static Scalar pcgn(const Params &params, const Scalar st)
     {
@@ -191,6 +191,8 @@ public:
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
+     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$. It is converted to effective saturation
+     *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
@@ -208,6 +210,8 @@ public:
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
+     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$. It is converted to effective saturation
+     *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
@@ -224,6 +228,8 @@ public:
      * \brief The relative permeability for the gas phase.
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[{S}_w]}\f$. It is converted to effective saturation
+     *                  and then handed over to the material law actually used for calculation.
+     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,

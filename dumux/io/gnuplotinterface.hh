@@ -93,6 +93,7 @@ public:
      *
      * \param title The name of the output file
      * \param plottingWindowNumber Change the number of the window in which the plot is shown
+     * \param terminalType Set the terminal type for the graphical output
      */
     void plot(const std::string &title, const unsigned int plottingWindowNumber = 0, const std::string& terminalType = "x11")
     {
