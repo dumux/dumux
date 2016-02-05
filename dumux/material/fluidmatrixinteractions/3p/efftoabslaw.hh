@@ -160,7 +160,7 @@ public:
     */
     static Scalar dpc_dsw(const Params &params, const Scalar sw)
     {
-        return EffLaw::dpc_dsw(params, pc);
+        return EffLaw::dpc_dswe(params, pc);
     }
 
     /*!

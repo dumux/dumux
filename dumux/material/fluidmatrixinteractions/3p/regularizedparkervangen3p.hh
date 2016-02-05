@@ -110,7 +110,7 @@ public:
 
             // value and derivative at regularization point
             const Scalar pc = ParkerVanGen3P::pcgw(params, seRegu);
-            const Scalar slope = ParkerVanGen3P::dpcgw_dsw(params, seRegu);
+            const Scalar slope = ParkerVanGen3P::dpcgw_dswe(params, seRegu);
 
             //evaluate tangential
             return (swe-seRegu)*slope+pc;
@@ -140,7 +140,7 @@ public:
 
             // value and derivative at regularization point
            const Scalar pc = ParkerVanGen3P::pcnw(params, seRegu);
-           const Scalar slope = ParkerVanGen3P::dpcnw_dsw(params, seRegu);
+           const Scalar slope = ParkerVanGen3P::dpcnw_dswe(params, seRegu);
 
             //evaluate tangential
             return (swe-seRegu)*slope + pc;
@@ -170,7 +170,7 @@ public:
 
             // value and derivative at regularization point
             const Scalar pc = ParkerVanGen3P::pcgn(params, seRegu);
-            const Scalar slope = ParkerVanGen3P::dpcgn_dst(params, seRegu);
+            const Scalar slope = ParkerVanGen3P::dpcgn_dste(params, seRegu);
 
             //evaluate tangential
            return (ste-seRegu)*slope + pc;
@@ -204,9 +204,9 @@ public:
      * \param params Array of parameters
      * \param sw Wetting liquid saturation
     */
-    static Scalar dpc_dsw(const Params &params, Scalar sw)
+    static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
-        return ParkerVanGen3P::dpc_dsw(params, sw);
+        return ParkerVanGen3P::dpc_dswe(params, swe);
     }
 
     /*!
@@ -215,9 +215,9 @@ public:
      * \param params Array of parameters
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
-        return ParkerVanGen3P::dsw_dpc(params, pc);
+        return ParkerVanGen3P::dswe_dpc(params, pc);
     }
 
     /*!

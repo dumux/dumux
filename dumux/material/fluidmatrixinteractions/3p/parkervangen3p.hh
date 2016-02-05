@@ -143,9 +143,9 @@ public:
      * \param params Array of parameters
      * \param sw Wetting liquid saturation
     */
-    static Scalar dpc_dsw(const Params &params, const Scalar sw)
+    static Scalar dpc_dswe(const Params &params, const Scalar swe)
     {
-        DUNE_THROW(Dune::NotImplemented, "dpc/dsw for three phases not implemented! Do it yourself!");
+        DUNE_THROW(Dune::NotImplemented, "dpc/dswe for three phases not implemented! Do it yourself!");
     }
 
      /*!
@@ -154,7 +154,7 @@ public:
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
     */
-    static Scalar dpcgw_dsw(const Params &params, const Scalar seRegu)
+    static Scalar dpcgw_dswe(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
@@ -167,7 +167,7 @@ public:
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
     */
-    static Scalar dpcnw_dsw(const Params &params, const Scalar seRegu)
+    static Scalar dpcnw_dswe(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
@@ -180,7 +180,7 @@ public:
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
     */
-    static Scalar dpcgn_dst(const Params &params, const Scalar seRegu)
+    static Scalar dpcgn_dste(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
@@ -194,9 +194,9 @@ public:
      * \param params Array of parameters
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dsw_dpc(const Params &params, const Scalar pc)
+    static Scalar dswe_dpc(const Params &params, const Scalar pc)
     {
-        DUNE_THROW(Dune::NotImplemented, "dsw/dpc for three phases not implemented! Do it yourself!");
+        DUNE_THROW(Dune::NotImplemented, "dswe/dpc for three phases not implemented! Do it yourself!");
     }
 
     /*!
