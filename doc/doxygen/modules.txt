@@ -199,6 +199,7 @@
          * \copydetails Dumux::ZeroEqncModel
          */
          /*!
+         * \ingroup ImplicitModels
          * \defgroup BoxZeroEqncniModel Non-isothermal N-component ZeroEq
          *
          * \copydetails Dumux::ZeroEqncniModel
