@@ -104,7 +104,7 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to linear material relation.
     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+    static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         return - (params.maxPc() - params.entryPc());
     }

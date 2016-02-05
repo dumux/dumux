@@ -108,7 +108,7 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+    static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         assert(0 <= swe && swe <= 1);
 
@@ -126,7 +126,7 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
         assert(pc >= 0);
 
@@ -162,7 +162,7 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dkrw_dsw(const Params &params, Scalar swe)
+    static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
         assert(0 <= swe && swe <= 1);
 
@@ -201,7 +201,7 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dkrn_dsw(const Params &params, Scalar swe)
+    static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
         assert(0 <= swe && swe <= 1);
 

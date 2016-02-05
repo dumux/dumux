@@ -111,7 +111,7 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to Brooks & Corey.
     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+    static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         assert(0 <= swe && swe <= 1);
 
@@ -128,7 +128,7 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return Partial derivative of effective saturation w.r.t. \f$\mathrm{[p_c]}\f$ according to Brooks & Corey.
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
         assert(pc >= 0);
 
@@ -165,7 +165,7 @@ public:
      * \return Derivative of the relative permeability of the wetting phase w.r.t. effective wetting phase
      *                  saturation calculated as implied by Brooks & Corey.
      */
-    static Scalar dkrw_dsw(const Params &params, Scalar swe)
+    static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
         assert(0 <= swe && swe <= 1);
 
@@ -205,7 +205,7 @@ public:
      * \return Derivative of the relative permeability of the non-wetting phase w.r.t. effective wetting phase
      *                  saturation calculated as implied by Brooks & Corey.
      */
-    static Scalar dkrn_dsw(const Params &params, Scalar swe)
+    static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
         assert(0 <= swe && swe <= 1);
 

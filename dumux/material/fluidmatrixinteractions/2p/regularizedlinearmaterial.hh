@@ -116,9 +116,9 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+    static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
-        return LinearMaterial::dpc_dsw(params, swe);
+        return LinearMaterial::dpc_dswe(params, swe);
     }
 
     /*!
@@ -130,9 +130,9 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
-        return LinearMaterial::dsw_dpc(params, pc);
+        return LinearMaterial::dswe_dpc(params, pc);
     }
 
     /*!
