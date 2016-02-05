@@ -151,15 +151,15 @@ public:
             if (boundaryTypesOutput_) boundaryTypes_[dofIdxGlobal] = tmp;
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                if (saturationOutput_) saturation_[phaseIdx][dofIdxGlobal] = volVars.fluidState().saturation(phaseIdx);
-                if (pressureOutput_) pressure_[phaseIdx][dofIdxGlobal] = volVars.fluidState().pressure(phaseIdx);
-                if (densityOutput_) density_[phaseIdx][dofIdxGlobal] = volVars.fluidState().density(phaseIdx);
+                if (saturationOutput_) saturation_[phaseIdx][dofIdxGlobal] = volVars.saturation(phaseIdx);
+                if (pressureOutput_) pressure_[phaseIdx][dofIdxGlobal] = volVars.pressure(phaseIdx);
+                if (densityOutput_) density_[phaseIdx][dofIdxGlobal] = volVars.density(phaseIdx);
                 if (mobilityOutput_) mobility_[phaseIdx][dofIdxGlobal] = volVars.mobility(phaseIdx);
-                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][dofIdxGlobal] = volVars.fluidState().averageMolarMass(phaseIdx);
+                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][dofIdxGlobal] = volVars.averageMolarMass(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.fluidState().moleFraction(phaseIdx, compIdx);
-                    if (massFracOutput_) massFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.fluidState().massFraction(phaseIdx, compIdx);
-                    if (molarityOutput_) molarity_[phaseIdx][compIdx][dofIdxGlobal] = volVars.fluidState().molarity(phaseIdx, compIdx);
+                    if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.moleFraction(phaseIdx, compIdx);
+                    if (massFracOutput_) massFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.massFraction(phaseIdx, compIdx);
+                    if (molarityOutput_) molarity_[phaseIdx][compIdx][dofIdxGlobal] = volVars.molarity(phaseIdx, compIdx);
                 }
             }
         }

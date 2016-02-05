@@ -206,7 +206,7 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             storePressureSolution(element);
         }
@@ -401,7 +401,7 @@ public:
             ScalarSolutionType *potentialSecond = writer.allocateManagedBuffer(size);
             ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
 
-            for (const auto& element : Dune::elements(problem_.gridView()))
+            for (const auto& element : elements(problem_.gridView()))
             {
                 int idx = problem_.variables().index(element);
                 CellData& cellData = problem_.variables().cellData(idx);
@@ -549,7 +549,7 @@ template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell index
         int eIdxGlobalI = problem_.variables().index(element);
@@ -586,7 +586,7 @@ template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
 {
     // determine position of matrix entries
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell index
         int eIdxGlobalI = problem_.variables().index(element);
@@ -624,7 +624,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    for (const auto& vertex : Dune::vertices(problem_.gridView()))
+    for (const auto& vertex : vertices(problem_.gridView()))
     {
         int vIdxGlobal = problem_.variables().index(vertex);
 
@@ -2474,7 +2474,7 @@ template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         int eIdxGlobal = problem_.variables().index(element);
 

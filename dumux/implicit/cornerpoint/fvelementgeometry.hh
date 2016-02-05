@@ -127,7 +127,7 @@ public:
         bool onBoundary = false;
 
         // fill neighbor information and control volume face data:
-        for (const auto& intersection : Dune::intersections(gridView, element))
+        for (const auto& intersection : intersections(gridView, element))
         {
             const auto isGeometry = intersection.geometry();
 

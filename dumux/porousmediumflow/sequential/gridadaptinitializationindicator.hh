@@ -236,7 +236,7 @@ public:
 
         // 1) calculate Indicator -> min, maxvalues
         // Schleife über alle Leaf-Elemente
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             int globalIdxI = problem_.variables().index(element);
 
@@ -268,7 +268,7 @@ public:
             if (indicatorVector_[globalIdxI] != refineCell && (refineAtDirichletBC_ || refineAtFluxBC_))
             {
                 // Berechne Verfeinerungsindikator an allen Zellen
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+                for (const auto& intersection : intersections(problem_.gridView(), element))
                 {
                     if (intersection.boundary() && indicatorVector_[globalIdxI] != refineCell)
                     {

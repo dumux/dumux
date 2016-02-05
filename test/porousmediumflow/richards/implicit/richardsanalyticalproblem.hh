@@ -342,7 +342,7 @@ public:
         Scalar l2analytic = 0.0;
         const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
 
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             // value from numerical approximation
             Scalar numericalSolution =

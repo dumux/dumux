@@ -226,7 +226,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
     this->f_.resize(gridSize_);
 
     // determine matrix row sizes
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // cell index
         int globalIdxI = problem().variables().index(element);
@@ -273,7 +273,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                     {
                         bool increaseRowSize = true;
                         //check if additional cell is ordinary neighbor of eIt
-                        for (const auto& intersection2 : Dune::intersections(problem_.gridView(), element))
+                        for (const auto& intersection2 : intersections(problem_.gridView(), element))
                         {
                             if(!intersection2.neighbor())
                                 continue;
@@ -301,7 +301,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
     this->A_.endrowsizes();
 
     // determine position of matrix entries
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // cell index
         int globalIdxI = problem().variables().index(element);
@@ -372,7 +372,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get the global index of the cell
         int globalIdxI = problem().variables().index(element);

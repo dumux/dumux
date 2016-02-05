@@ -28,9 +28,6 @@
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
-#if HAVE_ALBERTA
-#include <dune/grid/albertagrid/agrid.hh>
-#endif
 
 #include <dune/grid/common/backuprestore.hh>
 #if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
@@ -56,14 +53,6 @@ struct GridRestartCheck
 #if HAVE_DUNE_ALUGRID
 template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
 struct GridRestartCheck<Dune::ALUGrid<dim, dimworld, elType, refinementType> >
-{
-    static const bool allowRestart = true;
-};
-#endif
-
-#if HAVE_ALBERTA
-template<int dim, int dimworld>
-struct GridRestartCheck<Dune::AlbertaGrid<dim, dimworld> >
 {
     static const bool allowRestart = true;
 };

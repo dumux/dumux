@@ -322,7 +322,7 @@ public:
         ScalarField *reactionSourceH2O = this->resultWriter().allocateManagedBuffer (numDofs);
         ScalarField *reactionSourceO2 = this->resultWriter().allocateManagedBuffer (numDofs);
 
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView(), element);

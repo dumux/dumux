@@ -212,7 +212,7 @@ template<class TypeTag>
 void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity()
 {
     // run through all vertices
-    for (const auto& vertex : Dune::vertices(problem_.gridView()))
+    for (const auto& vertex : vertices(problem_.gridView()))
     {
         int vIdxGlobal = problem_.variables().index(vertex);
 

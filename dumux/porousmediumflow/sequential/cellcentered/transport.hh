@@ -293,7 +293,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
     updateVec = 0.0;
 
     // compute update vector
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
 #if HAVE_MPI
         if (element.partitionType() != Dune::InteriorEntity)
@@ -323,7 +323,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         }
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();
             if (switchNormals_)
@@ -446,7 +446,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
     dt = std::numeric_limits<Scalar>::max();
 
     // update target time-step-sizes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
 #if HAVE_MPI
         if (element.partitionType() != Dune::InteriorEntity)
@@ -465,7 +465,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -527,7 +527,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(problem_.gridView(), element))
             {
                 if (intersection.neighbor())
                 {

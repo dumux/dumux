@@ -116,7 +116,7 @@ public:
         }
 
         // run over all level elements
-        for (const auto& element : Dune::elements(this->gridView_))
+        for (const auto& element : elements(this->gridView_))
         {
             int eIdxGlobal = problem.variables().index(element);
 
@@ -133,7 +133,7 @@ public:
 
             int intersectionIdx = -1;
             // get local to global id map and pressure traces
-            for (const auto& intersection : Dune::intersections(problem.gridView(), element))
+            for (const auto& intersection : intersections(problem.gridView(), element))
             {
                 ++intersectionIdx;
 
@@ -208,7 +208,7 @@ public:
             loc.constructVelocity(element, velocityNw, pressTraceNw, cellData.potential(nPhaseIdx));
 
             intersectionIdx = -1;
-            for (const auto& intersection : Dune::intersections(problem.gridView(), element))
+            for (const auto& intersection : intersections(problem.gridView(), element))
             {
                 ++intersectionIdx;
                 int idxInInside = intersection.indexInInside();

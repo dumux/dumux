@@ -194,7 +194,7 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
     Scalar maxDist = this->bBoxMin().two_norm();
 
     // calculate the bounding box of the grid view
-    for (const auto& vertex : Dune::vertices(gridView)) {
+    for (const auto& vertex : vertices(gridView)) {
         GlobalPosition vertexCoord(vertex.geometry().center());
 
         Scalar dist = vertexCoord.two_norm();

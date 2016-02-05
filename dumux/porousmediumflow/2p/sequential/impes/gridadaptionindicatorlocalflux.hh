@@ -147,7 +147,7 @@ public:
 
         // 1) calculate Indicator -> min, maxvalues
         // Schleife über alle Leaf-Elemente
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             // Bestimme maximale und minimale Sättigung
             // Index des aktuellen Leaf-Elements
@@ -216,7 +216,7 @@ public:
             std::vector<Scalar> flux(numberOfFaces,0);
 
             // Calculate refinement indicator on all cells
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(problem_.gridView(), element))
             {
                 if (isSpecialCell)
                 {

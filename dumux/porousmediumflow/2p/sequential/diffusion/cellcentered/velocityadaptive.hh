@@ -207,7 +207,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         // for efficienty this is done in one intersection loop
 
         // Intersectioniterator around cell I
-        for (const auto& intersectionI : Dune::intersections(problem_.gridView(), elementI))
+        for (const auto& intersectionI : intersections(problem_.gridView(), elementI))
         {
             if (intersectionI.neighbor())
             {

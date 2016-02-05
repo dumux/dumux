@@ -45,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for fully-implicit models
-NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel, GridAdapt));
+NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, NumericModel, GridAdapt));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

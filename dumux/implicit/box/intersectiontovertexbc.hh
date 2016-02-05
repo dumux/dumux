@@ -58,11 +58,11 @@ public:
         for (int vIdx = 0; vIdx < vertexBC.size(); vIdx++)
             vertexBC[vIdx].setAllNeumann();
 
-        for (const auto& element : Dune::elements(problem.gridView())) {
+        for (const auto& element : elements(problem.gridView())) {
             Dune::GeometryType geomType = element.geometry().type();
             const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-            for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+            for (const auto& intersection : intersections(problem.gridView(), element)) {
                 if (!intersection.boundary())
                     continue;
 

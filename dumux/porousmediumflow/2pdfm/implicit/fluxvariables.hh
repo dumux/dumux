@@ -227,10 +227,10 @@ private:
 
                         // calculate the phase density at the integration point. we
                         // only do this if the wetting phase is present in both cells
-                        Scalar SI = elemVolVars[this->face().i].fluidState().saturation(phaseIdx);
-                        Scalar SJ = elemVolVars[this->face().j].fluidState().saturation(phaseIdx);
-                        Scalar rhoI = elemVolVars[this->face().i].fluidState().density(phaseIdx);
-                        Scalar rhoJ = elemVolVars[this->face().j].fluidState().density(phaseIdx);
+                        Scalar SI = elemVolVars[this->face().i].saturation(phaseIdx);
+                        Scalar SJ = elemVolVars[this->face().j].saturation(phaseIdx);
+                        Scalar rhoI = elemVolVars[this->face().i].density(phaseIdx);
+                        Scalar rhoJ = elemVolVars[this->face().j].density(phaseIdx);
                         Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
                         Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
                         if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))

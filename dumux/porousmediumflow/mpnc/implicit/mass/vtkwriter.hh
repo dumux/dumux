@@ -99,7 +99,7 @@ public:
 
             if (fugacityOutput_) {
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    fugacity_[compIdx][dofIdxGlobal] = volVars.fluidState().fugacity(compIdx);
+                    fugacity_[compIdx][dofIdxGlobal] = volVars.fugacity(compIdx);
                 }
             }
         }

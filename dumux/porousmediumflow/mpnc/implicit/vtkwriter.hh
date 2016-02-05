@@ -75,7 +75,7 @@ public:
         ElementVolumeVariables elemVolVars;
         ElementBoundaryTypes elemBcTypes;
 
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {

@@ -72,7 +72,7 @@ protected:
      */
     void evalBoundaryFluxes_()
     {
-        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
+        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
         {
             // handle only faces on the boundary
             if (!intersection.boundary())
@@ -101,7 +101,7 @@ protected:
      */
     void evalDirichlet_()
     {
-        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
+        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
         {
             // handle only faces on the boundary
             if (!intersection.boundary())
@@ -265,7 +265,7 @@ protected:
         // calculate the mass flux over the faces and subtract
         // it from the local rates
         int fIdx = -1;
-        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_())) {
+        for (const auto& intersection : intersections(this->gridView_(), this->element_())) {
             if (!intersection.neighbor())
                 continue;
 

@@ -467,8 +467,8 @@ public:
      *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
-     * \f$ molality=\frac{n_{component}}{m_{solvent}}
-     * =\frac{n_{component}}{n_{solvent}*M_{solvent}}\f$
+     * \f$\mathrm{molality}=\frac{n_\mathrm{component}}{m_\mathrm{solvent}}
+     * =\frac{n_\mathrm{component}}{n_\mathrm{solvent}*M_\mathrm{solvent}}\f$
      * compIdx of the main component (solvent) in the
      * phase is equal to the phaseIdx
      */

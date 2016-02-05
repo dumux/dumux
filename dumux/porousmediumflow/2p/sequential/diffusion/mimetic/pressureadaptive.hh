@@ -253,7 +253,7 @@ public:
         }
 
 
-            for (const auto& element : Dune::elements(problem_.gridView()))
+            for (const auto& element : elements(problem_.gridView()))
             {
                 int eIdxGlobal = problem_.variables().index(element);
                 CellData& cellData = problem_.variables().cellData(eIdxGlobal);
@@ -296,7 +296,7 @@ public:
                 std::vector<Scalar> fluxNw(numberOfFaces,0);
 
                 // run through all intersections with neighbors and boundary
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+                for (const auto& intersection : intersections(problem_.gridView(), element))
                 {
                     int isIndex = intersection.indexInInside();
 
@@ -497,7 +497,7 @@ template<class TypeTag>
 void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         int eIdxGlobal = problem_.variables().index(element);
 

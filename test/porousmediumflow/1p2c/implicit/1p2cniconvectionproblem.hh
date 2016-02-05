@@ -219,7 +219,7 @@ public:
             Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
             std::cout<<"retarded velocity: "<<retardedFrontVelocity<<std::endl;
 
-            for (const auto& element : Dune::elements(this->gridView()))
+            for (const auto& element : elements(this->gridView()))
             {
                 fvGeometry.update(this->gridView(), element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)

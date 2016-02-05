@@ -246,7 +246,7 @@ public:
 
         // initialize start and end of element iterator
         // loop over all elements (cells)
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {

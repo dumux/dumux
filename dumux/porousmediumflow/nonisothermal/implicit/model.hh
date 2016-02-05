@@ -95,7 +95,7 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         ScalarField &temperature = *writer.allocateManagedBuffer(numDofs);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {

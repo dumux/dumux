@@ -166,7 +166,7 @@ public:
 
         setSwitched_(false);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if (!isBox) // i.e. cell-centered discretization
             {
@@ -186,7 +186,7 @@ public:
 
         if (isBox) // i.e. vertex-centered discretization
         {
-            for (const auto& vertex : Dune::vertices(this->gridView_()))
+            for (const auto& vertex : vertices(this->gridView_()))
             {
                 int dofIdxGlobal = this->dofMapper().index(vertex);
                 const GlobalPosition &globalPos = vertex.geometry().corner(0);
@@ -213,7 +213,7 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
@@ -343,7 +343,7 @@ public:
         VolumeVariables volVars;
         ElementVolumeVariables elemVolVars;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             int eIdxGlobal = this->problem_().elementMapper().index(element);
             (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
@@ -510,7 +510,7 @@ public:
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             fvGeometry.update(this->gridView_(), element);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
