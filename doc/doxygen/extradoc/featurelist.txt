@@ -9,6 +9,8 @@
  * they can be found.
  * The list is currently in progress, it will be completed soon.
  *
+ * <div style="width:70%;overflow:auto;">
+ *
  * \section  Freeflow
  * | | Fluidsystem | Gridmanager | Primyvariables | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | Gravity | TurbulenceModels | Comments |
  * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
@@ -27,7 +29,7 @@
  * | \c gnuplotinterface/test_gnuplotinterface | tests the plotting of data sets, functions, and files |
  *
  * \section Implicit
- * | Tests | | Fluidsystem | Gridmanager | Primyvariables | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | JacobeanRecycling | PartialReassemble | Implicit discretization |
+ * | Tests | | Fluidsystem | Gridmanager | Primyvariables | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | JacobianRecycling | PartialReassemble | Comments |
  * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
  * | 1p | test | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
  * | | convection | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
@@ -65,6 +67,22 @@
  * | | conduction | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
  * | | convection | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
  *
+ * \section Sequential
+ * | Tests | | Fluidsystem | Gridmanager | Primyvariables | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | JacobianRecycling | PartialReassemble | Comments |
+ * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
+ * | 1p | dec1p | liquidphase | YaspGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | yes | dirichletAtPos, neumannAtPos | homogeneous | - | Matrix | FALSE | - | - | TPFA flux |
+ * | | diffusion | - | ALUGrid/UGGrid | pw, sw | i | cc | SSORBiCGSTABBackend | yes | neumannAPos, dirichletAtPos, sourceAtPos | homogeneous| - | Matrix | FALSE | - | - | - |
+ * | | diffusion 3d | - | ALUGrid/UGGrid | pw, sw | i | cc | SuperLUBackend/ILUnRestartedGMResBackend | yes | neumannAPos, dirichletAtPos, sourceAtPos | homogeneous | - | Matrix | FALSE | - | - | TPFA, MPFA, Mimetic flux |
+ * | 2p | 3c2p | - | ALUGrid | pn,sw/pw,sw | i | cc | ILU0BiCGSTABBackend | yes/no | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Matrix | FALSE | - | - | TPFA, MPFA, Mimetic flux |
+ * | | impesadaptive | - | ALUGrid | pw,sw | i | cc | ILU0BiCGSTABBackend | yes | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Scalar | FALSE | - | - | TPFA flux |
+ * | | impes | - | ALUGrid | pw,sw | i | cc | ILU0BiCGSTABBackend | no | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Scalar | FALSE | - | - | TPFA flux |
+ * | | mpfa2p | - | ALUGrid | pn,sw/pw,sw | i | cc | ILU0BiCGSTABBackend | no | dirichletAtPos, neumannAtPos | Lense-Problem | RegularizedBrooksCorey | Matrix | TRUE/FALSE | - | - | TPFA/MPFA flux  |
+ * | | transport | - | YaspGrid | pw,sw | i | cc | ILU0BiCGSTABBackend | no | dirichletAtPos, neumannAtPos | homogeneous | Linear| Scalar | FALSE | - | - | TPFA flux  |
+ * | 2p2c | multiphysics2p2c | H2OAir | YaspGrid | pn,sw | i | cc | ILU0BiCGSTABBackend | no |  dirichletAtPos, neumannAtPos | homogeneous | Linear| Matrix | TRUE | - | - | TPFA flux |
+ * | | adaptive2p2c2d | H2OAir/H2ON2 | ALUGrid/YaspGrid | pn, sn | i | cc | ILU0BiCGSTABBackend | yes | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | TRUE | - | - | TPFA (MPFA on hanging nodes) flux  |
+ * | | dec2p2c | H2OAir | YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | no | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | TRUE | - | - | TPFA flux |
+ * | | adaptive2p2c3d | H2OAir | ALUGrid/YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | yes | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | FALSE | - | - | TPFA (MPFA on hanging nodes) flux |
+ *
  * \section  Material
  * | | Comments |
  * | :- | :- |
@@ -82,4 +100,5 @@
  * | \c 2czeroeq2p2c/2czeroeq2p2c | H2OAir | UGGrid/ALUGrid | Mass | i | box | SuperLU,UMFPack | TRUE/FALSE | RegularizedVanGenuchten | No | |
  * | \c 2cnizeroeq2p2cni/2cnizeroeq2p2cni | H2OAir | UGGrid/ALUGrid | Mass | ni | box | SuperLU,UMFPack | TRUE/FALSE | RegularizedVanGenuchten,ThermalConductivityJohansen | No | |
  *
+ * </div>
  */
