@@ -78,7 +78,7 @@ class ThreePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
 
     /*!

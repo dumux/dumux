@@ -138,8 +138,6 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
-    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
-
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
 
