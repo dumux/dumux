@@ -27,6 +27,7 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_HH
 #define DUMUX_EFF_TO_ABS_LAW_HH
 
+#include <dune/common/exceptions.hh>
 #include "efftoabslawparams.hh"
 
 namespace Dumux
@@ -160,7 +161,7 @@ public:
     */
     static Scalar dpc_dsw(const Params &params, const Scalar sw)
     {
-        return EffLaw::dpc_dsw(params, pc);
+        return EffLaw::dpc_dswe(params, pc);
     }
 
     /*!
