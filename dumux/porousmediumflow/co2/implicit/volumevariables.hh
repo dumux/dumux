@@ -97,7 +97,7 @@ class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
+    typedef typename ParentType::FluidState FluidState;
 
 
     /*!

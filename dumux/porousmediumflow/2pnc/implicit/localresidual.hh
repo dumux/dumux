@@ -62,7 +62,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
