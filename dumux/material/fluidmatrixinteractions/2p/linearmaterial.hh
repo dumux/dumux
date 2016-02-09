@@ -25,6 +25,7 @@
 #ifndef LINEAR_MATERIAL_HH
 #define LINEAR_MATERIAL_HH
 
+#include <dune/common/deprecated.hh>
 #include "linearmaterialparams.hh"
 
 #include <algorithm>

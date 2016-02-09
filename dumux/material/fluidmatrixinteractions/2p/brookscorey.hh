@@ -26,6 +26,7 @@
 #ifndef DUMUX_BROOKS_COREY_HH
 #define DUMUX_BROOKS_COREY_HH
 
+#include <dune/common/deprecated.hh>
 #include "brookscoreyparams.hh"
 
 #include <algorithm>

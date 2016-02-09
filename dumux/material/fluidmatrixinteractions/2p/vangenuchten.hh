@@ -25,6 +25,7 @@
 #ifndef VAN_GENUCHTEN_HH
 #define VAN_GENUCHTEN_HH
 
+#include <dune/common/deprecated.hh>
 #include "vangenuchtenparams.hh"
 
 #include <algorithm>
