@@ -168,7 +168,7 @@ public:
     DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
     static Scalar dpc_dsw(const Params &params, Scalar swe)
     {
-        return dpc_dswe(params, swe)
+        return dpc_dswe(params, swe);
     }
 
     /*!
