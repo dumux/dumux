@@ -104,6 +104,27 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to linear material relation.
     */
+    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
+    static Scalar dpc_dsw(const Params &params, Scalar swe)
+    {
+        return dpc_dswe(params, swe);
+    }
+
+    /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure w.r.t. the effective saturation.
+     *
+     * This is equivalent to
+     * \f$\mathrm{
+     \frac{\partial p_C}{\partial \overline{S}_w} =
+     - (p_{C,max} - p_{C,min})
+     }\f$
+     * \param swe  Effective saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$ conversion from absolute saturation happened in EffToAbsLaw.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to linear material relation.
+    */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         return - (params.maxPc() - params.entryPc());
