@@ -637,11 +637,29 @@ public:
                       << nextDt << " seconds\n";
         }
 
+        // if the simulation  run is about to abort, write restart files for the current and previous time steps:
+        // write restart file for the current time step
+        serialize();
+
+        //write restart file for the previous time step:
+        //set the time manager and the solution vector to the previous time step
+        const Scalar time = timeManager().time();
+        timeManager().setTime(time - timeManager().previousTimeStepSize());
+        const auto curSol = model_.curSol();
+        model_.curSol() = model_.prevSol();
+        //write restart file
+        serialize();
+        //reset time manager and solution vector
+        model_.curSol() = curSol;
+        timeManager().setTime(time);
+
         DUNE_THROW(Dune::MathError,
                    "Newton solver didn't converge after "
                    << maxFails
                    << " time-step divisions. dt="
-                   << timeManager().timeStepSize());
+                   << timeManager().timeStepSize()
+                   << ".\nThe solutions of the current and the previous time steps "
+                   << "have been saved to restart files.");
     }
 
     /*!
