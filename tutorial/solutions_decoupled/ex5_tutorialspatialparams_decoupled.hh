@@ -22,7 +22,7 @@
  * \brief spatial parameters for the sequential tutorial
  */
 #ifndef DUMUX_TUTORIAL_EX5_SPATIAL_PARAMS_DECOUPLED_HH
-#define DUMUX_TUTORIAL_EX%_SPATIAL_PARAMS_DECOUPLED_HH
+#define DUMUX_TUTORIAL_EX5_SPATIAL_PARAMS_DECOUPLED_HH
 
 
 #include <dumux/material/spatialparams/fv.hh>

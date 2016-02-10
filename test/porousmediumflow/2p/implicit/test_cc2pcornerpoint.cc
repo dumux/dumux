@@ -23,9 +23,13 @@
  * a cornerpoint grid.
  */
 #include <config.h>
+
+#if (HAVE_DUNE_CORNERPOINT && HAVE_OPM_CORE && HAVE_OPM_PARSER)
+
 #include "cc2pcornerpointproblem.hh"
 #include <dumux/common/start.hh>
 #include <opm/core/io/eclipse/EclipseGridInspector.hpp>
+
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
@@ -60,4 +64,11 @@ int main(int argc, char** argv)
 {
     typedef TTAG(CC2PCornerPointProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
+#else
+int main(int argc, char** argv)
+{
+#warning You need to have dune-cornerpoint, opm-core and opm-parser installed to run this test
+    std::cerr << "You need to have dune-cornerpoint, opm-core and opm-parser installed to run this test\n";
+    return 77;
 }
+#endif

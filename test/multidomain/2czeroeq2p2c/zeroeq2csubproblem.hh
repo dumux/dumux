@@ -42,11 +42,6 @@ NEW_TYPE_TAG(ZeroEq2cSubProblem,
 // Set the problem property
 SET_TYPE_PROP(ZeroEq2cSubProblem, Problem, Dumux::ZeroEq2cSubProblem<TypeTag>);
 
-// Set the property for the material parameters by extracting it from the material law.
-SET_TYPE_PROP(ZeroEq2cSubProblem,
-              MaterialLawParams,
-              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 // Use the StokencCouplingLocalResidual for the computation of the local residual in the ZeroEq domain
 SET_TYPE_PROP(ZeroEq2cSubProblem, LocalResidual,
               StokesncCouplingLocalResidual<TypeTag>);
