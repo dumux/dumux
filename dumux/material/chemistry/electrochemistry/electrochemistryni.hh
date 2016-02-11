@@ -22,8 +22,8 @@
  * \brief Electrochemical model for a fuel cell application.
  */
 
-#ifndef ELECTRO_CHEMNI_HH
-#define ELECTRO_CHEMNI_HH
+#ifndef DUMUX_ELECTROCHEMISTRY_NI_HH
+#define DUMUX_ELECTROCHEMISTRY_NI_HH
 
 #include <dumux/common/basicproperties.hh>
 #include <dumux/material/constants.hh>

@@ -21,8 +21,8 @@
  *
  * \brief Electrochemical model for a fuel cell application.
  */
-#ifndef ELECTRO_CHEM_HH
-#define ELECTRO_CHEM_HH
+#ifndef DUMUX_ELECTROCHEMISTRY_HH
+#define DUMUX_ELECTROCHEMISTRY_HH
 
 #include <cmath>
 
