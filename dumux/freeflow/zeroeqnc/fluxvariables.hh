@@ -101,12 +101,7 @@ public:
 
         // Richardson number
         // Schlichting, Boundary Layer Theory, 1997, p472
-        Scalar gravity = 0.0;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
-            gravity = problem.gravity()[wallNormal_];
-        else
-            gravity = 9.81;
-        richardsonNumber_ = -gravity / this->density()
+        richardsonNumber_ = problem.gravity()[wallNormal_] / this->density()
                             * densityGrad()[wallNormal_] / (velGradWall_ * velGradWall_);
 
         // calculation of an eddy diffusivity only makes sense with Navier-Stokes equation

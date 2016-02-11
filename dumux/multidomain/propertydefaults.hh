@@ -59,11 +59,14 @@ template <class TypeTag> class MultiDomainNewtonController;
 namespace Properties
 {
 
+SET_INT_PROP(MultiDomain, MaxSubDomains, 2);
+
 SET_PROP(MultiDomain, MultiDomainGrid)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
-    typedef typename Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MDGridTraits;
+    enum { maxSubDomains = GET_PROP_VALUE(TypeTag, MaxSubDomains) };
+    typedef typename Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension, maxSubDomains> MDGridTraits;
 public:
     typedef typename Dune::MultiDomainGrid<HostGrid, MDGridTraits> type;
 };
