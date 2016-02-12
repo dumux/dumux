@@ -38,6 +38,16 @@ license.
 
 See the file `LICENSE.md` for full copying permissions.
 
+Automated Testing
+-----------------
+
+DuMuX features many tests (some unit tests and test problems) that can
+be run manually. We have experimental support for automated testing with buildbot.
+Click <a href="https://git.iws.uni-stuttgart.de/buildbot/#/builders" target="_blank">here</a>
+to see the latest builds (clicking on a build
+number will show a detailed overview of the build).
+
+
 [0]: http://dumux.org
 [1]: http://dune-project.org
 [2]: http://dumux.org/documents/dumux_awrpaper.pdf
