@@ -78,7 +78,7 @@ public:
      */
     static Scalar pcgw(const Params &params, const Scalar swe)
     {
-        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGw();
+        return pc_(swe);
     }
 
   /*!
@@ -88,7 +88,7 @@ public:
      */
     static Scalar pcnw(const Params &params, const Scalar swe)
     {
-        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaNw();
+        return pc_(swe)/params.betaNw();
     }
 
     /*!
@@ -98,7 +98,7 @@ public:
      */
     static Scalar pcgn(const Params &params, const Scalar ste)
     {
-        return std::pow(std::pow(ste, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGn();
+        return pc_(ste)/params.betaGn();
     }
 
      /*!
@@ -328,6 +328,8 @@ public:
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
+//         if((1-ste) < params.sgr())
+//             return 0;
         return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
     }
 
@@ -362,6 +364,20 @@ public:
    {
       return params.rhoBulk() * params.KdNAPL();
    }
+
+private:
+
+    /*!
+     * \brief The standard van Genuchten two-phase pc-S relation either with respect to
+     *        the effective wetting phase saturation Swe or the effective total liquid saturation Ste.
+     * \param params Array of parameters.
+     * \param Se Effective wetting phase ortotal liquid  saturation
+     */
+    pc_(const Scalar se)
+    {
+        return std::pow(std::pow(se, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha();
+    }
+
 };
 }
 
