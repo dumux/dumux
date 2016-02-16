@@ -319,7 +319,7 @@ public:
         assert(0 <= compIdx  && compIdx < numComponents);
 
         if (phaseIdx == compIdx)
-            // TODO (?): calculate the real fugacity coefficient of
+            // We could calculate the real fugacity coefficient of
             // the component in the fluid. Probably that's not worth
             // the effort, since the fugacity coefficient of the other
             // component is infinite anyway...

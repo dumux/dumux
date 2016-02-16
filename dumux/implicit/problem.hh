@@ -1072,7 +1072,6 @@ public:
                 // that can be overloaded in the actual problem class also achieving variable point sources.
                 // The first one is more convenient for simple function like a time dependent source.
                 // The second one might be more convenient for e.g. a solution dependent point source.
-                // TODO: Decide if one concept can / should be dropped in the future or not.
 
                 // we do an update e.g. used for TimeDependentPointSource
                 pointSource.update(asImp_(), element, fvGeometry, scvIdx, elemVolVars);

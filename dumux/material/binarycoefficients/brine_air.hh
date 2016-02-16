@@ -397,6 +397,7 @@ public:
      * \brief Returns the _mole_ (!) fraction of Air in the liquid
      *        phase at a given temperature, pressure and density of
      *        Air.
+     *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      * \param rhoAir density of Air
@@ -529,17 +530,17 @@ private:
     /*!
      * \brief computation of partial pressure Air
      *
+     * We assume that the partial pressure of brine is its vapor pressure.
+     * \warning: Strictly this is assumption is invalid for air because the
+     *           mole fraction of air in brine can be considerable
+     *
      * \param temperature the temperature [K]
      * \param pg the gas phase pressure [Pa]
      */
     static Scalar partialPressureAir_(Scalar temperature, Scalar pg)
     {
-        // We assume that the partial pressure of brine is its vapor
-        // pressure. TODO: Strictly this is assumption is invalid for
-        // Air because the mole fraction of Air in brine can be
-        // considerable
         return pg - Brine::vaporPressure(temperature);
-    };
+    }
 
     /*!
      * \brief The fugacity coefficent of Air for a Air-H2O mixture.

@@ -343,8 +343,6 @@ public:
 //        std::cout<< "KPN Mass: flux: " << flux << endl;
 
 
-        // \todo
-        //
         // The computeflux() of the Energy module needs a
         // component-wise flux (for the diffusive enthalpy transport)
         // It makes some sense calling energy from here, because energy

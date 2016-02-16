@@ -93,16 +93,15 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular mesitylene in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and mesitylene in liquid water.
      * \param temperature temperature in \f$\mathrm{[K]}\f$
      * \param pressure pressure in \f$\mathrm{[Pa]}\f$
-     *
-     * \todo
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented,
-                 "Binary liquid diffusion coefficients of air and mesitylene");
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "Binary liquid diffusion coefficients of air and mesitylene");
     }
 };
 

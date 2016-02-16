@@ -888,6 +888,9 @@ protected:
 
     /*!
      * \brief Applies the initial solution for all vertices of the grid.
+     *
+     * \todo the initial condition needs to be unique for
+     *       each vertex. we should think about the API...
      */
     void applyInitialSolution_()
     {
@@ -899,9 +902,6 @@ protected:
 
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume
-        //
-        // TODO: the initial condition needs to be unique for
-        // each vertex. we should think about the API...
         for (const auto& element : elements(gridView_())) {
             // deal with the current element
             fvGeometry.update(gridView_(), element);

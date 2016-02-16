@@ -510,15 +510,15 @@ private:
     /*!
      * \brief computation of partial pressure CO2
      *
+     * We assume that the partial pressure of brine is its vapor pressure.
+     * \warning: Strictly this is assumption is invalid for CO2 because the
+     *           mole fraction of CO2 in brine can be considerable
+     *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar partialPressureCO2_(Scalar temperature, Scalar pg)
     {
-        // We assume that the partial pressure of brine is its vapor
-        // pressure. TODO: Strictly this is assumption is invalid for
-        // CO2 because the mole fraction of CO2 in brine can be
-        // considerable
         return pg - Brine::vaporPressure(temperature);
     }
 

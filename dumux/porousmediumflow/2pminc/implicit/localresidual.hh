@@ -196,18 +196,13 @@ public:
              */
             //wetting phase
             pGrad_[wPhaseIdx][nC] *= volVars.intrinsicPermeability(nC);
-            pGrad_[wPhaseIdx][nC] /= this->problem_().distNestedContinua[nC+1];
-            pGrad_[wPhaseIdx][nC] *= this->problem_().interfaceArea[nC];
-
-//            std::cout << "dist: " << this->problem_().distNestedContinua[nC+1] << "\t iA: " << this->problem_().interfaceArea[nC] << std::endl;
-            // TODO introduce appropriate alpha coefficient
-            //pGrad_[wPhaseIdx][nC] *= volVars.transferTerm(nC);
-
+            pGrad_[wPhaseIdx][nC] /= this->problem_().model().getDistNestedContinua()[nC+1];
+            pGrad_[wPhaseIdx][nC] *= this->problem_().model().getInterfaceArea()[nC];
 
             //non-wetting phase
             pGrad_[nPhaseIdx][nC] *= volVars.intrinsicPermeability(nC);
-            pGrad_[nPhaseIdx][nC] /= this->problem_().distNestedContinua[nC+1];
-            pGrad_[nPhaseIdx][nC] *= this->problem_().interfaceArea[nC];
+            pGrad_[nPhaseIdx][nC] /= this->problem_().model().getDistNestedContinua()[nC+1];
+            pGrad_[nPhaseIdx][nC] *= this->problem_().model().getInterfaceArea()[nC];
 
             Valgrind::CheckDefined(pGrad_);
             Scalar mobilityW = 0;
@@ -233,11 +228,9 @@ public:
             {
                 mobilityN = volVars.mobility(nPhaseIdx,nC+1);
             }
-//            std::cout << "mobility: "<<mobilityW<<"\t"<<mobilityN<< std::endl;
 
             pGrad_[nPhaseIdx][nC] *= mobilityN;
             pGrad_[nPhaseIdx][nC] *= volVars.density(nPhaseIdx,nC);
-//                        std::cout << "pgrad: "<<pGrad_[wPhaseIdx][nC]<<"\t"<<pGrad_[nPhaseIdx][nC]<< std::endl;
             Valgrind::CheckDefined(pGrad_);
 
             //wetting phase

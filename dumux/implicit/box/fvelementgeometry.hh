@@ -846,10 +846,6 @@ public:
         }
 
         // fill sub control volume data use specialization for this
-        // \todo maybe it would be a good idea to migrate everything
-        // which is dependend of the grid's dimension to
-        // _BoxFVElemGeomHelper in order to benefit from more aggressive
-        // compiler optimizations...
         BoxFVElemGeomHelper::fillSubContVolData(*this, numScv, edgeCoordinates, faceCoordinates);
         subContVolGeometries.clear();
         BoxFVElemGeomHelper::template computeGeometries<BoxGeometry>(*this, numScv, edgeCoordinates, faceCoordinates);

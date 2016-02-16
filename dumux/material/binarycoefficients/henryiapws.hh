@@ -88,9 +88,7 @@ inline Scalar henryIAPWS(Scalar E,
          G*pow(tau, 2.0/3) +
          H*tau)*
         exp((H2O::tripleTemperature() - temperature)/100);
-    // CAUTION: K_D is formulated in mole fractions. We have to
-    // multiply it with the vapor pressure of water in order to get
-    // derivative of the partial pressure.
+
     return exp(exponent)*H2O::vaporPressure(temperature);
 }
 }

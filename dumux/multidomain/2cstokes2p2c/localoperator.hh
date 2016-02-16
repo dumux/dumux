@@ -32,13 +32,13 @@
 #include <dune/pdelab/localoperator/pattern.hh>
 #include <dune/pdelab/localoperator/idefault.hh>
 
-#include <dumux/multidomain/properties.hh>
-#include <dumux/multidomain/2cstokes2p2c/propertydefaults.hh>
 #include <dumux/freeflow/boundarylayermodel.hh>
 #include <dumux/freeflow/masstransfermodel.hh>
 #include <dumux/freeflow/stokesnc/model.hh>
+#include <dumux/multidomain/properties.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 
+#include "propertydefaults.hh"
 
 namespace Dumux {
 
@@ -559,13 +559,13 @@ public:
                                        * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
 
                 Scalar diffusiveFlux = bfNormal1.two_norm()
-                                       * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                       * globalProblem_.evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                                        * (boundaryVars1.diffusionCoeff(transportCompIdx1)
                                          + boundaryVars1.eddyDiffusivity())
                                        * boundaryVars1.molarDensity()
                                        * FluidSystem::molarMass(transportCompIdx1);
 
-                const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+                const Scalar massTransferCoeff = globalProblem_.evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
 
                 if (massTransferModel_ && globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                 {
@@ -695,7 +695,7 @@ public:
             {
                 const Scalar diffusiveFlux =
                     bfNormal1.two_norm()
-                    * evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                    * globalProblem_.evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                     * (boundaryVars1.diffusionCoeff(transportCompIdx1)
                        + boundaryVars1.eddyDiffusivity())
                     * boundaryVars1.molarDensity()
@@ -703,7 +703,7 @@ public:
 
                 Scalar advectiveFlux = normalMassFlux * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
 
-                const Scalar massTransferCoeff = evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+                const Scalar massTransferCoeff = globalProblem_.evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
 
                 if (globalProblem_.sdProblem1().isCornerPoint(globalPos1) && massTransferModel_)
                 {
@@ -887,88 +887,41 @@ public:
     /*!
      * \brief Returns a BoundaryLayerModel object
      *
-     * This function is reused in Child LocalOperators and used for extracting
-     * the respective boundary layer thickness.<br>
-     * \todo This function could be moved to a more model specific place, because
-     *       of its runtime parameters.
-     *
      * \param cParams a parameter container
      * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
      */
     template<typename CParams>
+    DUNE_DEPRECATED_MSG("evalBoundaryLayerModel() is deprecated.")
     BoundaryLayerModel<TypeTag> evalBoundaryLayerModel(CParams cParams, const int scvIdx1) const
     {
-        // current position + additional virtual runup distance
-        const Scalar distance = cParams.fvGeometry1.subContVol[scvIdx1].global[0]
-                                + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
-        BoundaryLayerModel<TypeTag> boundaryLayerModel(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity),
-                                                       distance,
-                                                       cParams.elemVolVarsCur1[scvIdx1].kinematicViscosity(),
-                                                       blModel_);
-        if (blModel_ == 1)
-            boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
-        if (blModel_ >= 4)
-            boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
-        if (blModel_ >= 5)
-            boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
-        if (blModel_ == 7)
-            boundaryLayerModel.setHydraulicDiameter(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, HydraulicDiameter));
-
-        return boundaryLayerModel;
+        globalProblem().evalBoundaryLayerModel(cParams, cParams);
     }
 
     /*!
      * \brief Returns the concentration gradient through the boundary layer
      *
-     * \todo This function could be moved to a more model specific place, because
-     *       of its runtime parameters.
-     *
      * \param cParams a parameter container
      * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
      */
     template<typename CParams>
+    DUNE_DEPRECATED_MSG("evalBoundaryLayerConcentrationGradient() is deprecated.")
     Scalar evalBoundaryLayerConcentrationGradient(CParams cParams, const int scvIdx1) const
     {
-        static_assert(numComponents1 == 2,
-                      "This coupling condition is only implemented for two components.");
-        Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-        Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
-        Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
-        Scalar X2 = 1.0 - massFractionOut;
-        Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
-        Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
-
-        Scalar normalMoleFracGrad = cParams.elemVolVarsCur1[scvIdx1].moleFraction(transportCompIdx1)
-                                    - moleFractionOut;
-        return normalMoleFracGrad / evalBoundaryLayerModel(cParams, scvIdx1).massBoundaryLayerThickness();
+        globalProblem().evalBoundaryLayerConcentrationGradient(cParams, scvIdx1);
     }
 
     /*!
      * \brief Returns the mass transfer coefficient
-     *
-     * This function is reused in Child LocalOperators.
-     * \todo This function could be moved to a more model specific place, because
-     *       of its runtime parameters.
      *
      * \param cParams a parameter container
      * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
      * \param scvIdx2 The local index of the sub-control volume of the Darcy domain
      */
     template<typename CParams>
+    DUNE_DEPRECATED_MSG("evalMassTransferCoefficient() is deprecated.")
     Scalar evalMassTransferCoefficient(CParams cParams, const int scvIdx1, const int scvIdx2) const
     {
-        MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[scvIdx2].saturation(wPhaseIdx2),
-                                                     cParams.elemVolVarsCur2[scvIdx2].porosity(),
-                                                     evalBoundaryLayerModel(cParams, scvIdx1).massBoundaryLayerThickness(),
-                                                     massTransferModel_);
-        if (massTransferModel_ == 1)
-            massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
-        if (massTransferModel_ == 2 || massTransferModel_ == 4)
-            massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
-        if (massTransferModel_ == 3)
-            massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[scvIdx2].capillaryPressure());
-
-        return massTransferModel.massTransferCoefficient();
+        globalProblem().evalMassTransferCoefficient(cParams, scvIdx1, scvIdx2);
     }
 
  protected:

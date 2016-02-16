@@ -125,7 +125,7 @@ public:
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,
                                                                           Dune::Amg::FirstDiagonal> >
             Criterion;
-        // \todo Check whether the default accumulation mode atOnceAccu is needed.
+        //! \todo Check whether the default accumulation mode atOnceAccu is needed.
         Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(GET_PROP_TYPE(TypeTag, GridView)::Traits::Grid::dimension);
         params.setDebugLevel(verbosity);
