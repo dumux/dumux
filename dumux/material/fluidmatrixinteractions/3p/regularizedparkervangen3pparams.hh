@@ -45,7 +45,10 @@ public:
 
     RegularizedParkerVanGen3PParams()
         : ParkerVanGen3PParams()
-    { thresholdSw_ = 1e-2; }
+    {
+        pcLowS_ = 1e-2;
+        pcHighS_ = 99e-2;
+    }
 
     RegularizedParkerVanGen3PParams(Scalar vgAlpha, Scalar vgn, Scalar KdNAPL, Scalar rhoBulk,
                          Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1.,
@@ -53,7 +56,10 @@ public:
         : ParkerVanGen3PParams(vgAlpha, vgn, KdNAPL, rhoBulk,
                          residualSaturation, betaNw,
                          betaGn , betaGw, regardSnr)
-    { thresholdSw_ = 1e-2; }
+    {
+        pcLowS_ = 1e-2;
+        pcHighS_ = 99e-2;
+    }
 
     /*!
      * \brief Threshold saturation below which the capillary pressure
@@ -62,7 +68,7 @@ public:
      * This is just 1%. If you need a different value, overload this
      * class.
      */
-    Scalar thresholdSw() const
+    Scalar pcLowS() const
     {
         // Most problems are very sensitive to this value
         // (e.g. making it smaller might result in negative
@@ -70,19 +76,46 @@ public:
         //
         // If you want to use a different regularization threshold,
         // overload this class and supply the new class as second
-        // template parameter for the regularized Parker - van Genuchten law!
-        return thresholdSw_;
+        // template parameter for the RegularizedVanGenuchten law!
+        return pcLowS_;
     }
 
     /*!
-     * \brief Set the saturation threshold value
+     * \brief Threshold saturation above which the capillary pressure
+     *        is regularized.
+     *
+     * This is just 99%. If you need a different value, overload this
+     * class.
+     */
+    Scalar pcHighS() const
+    {
+        // Most problems are very sensitive to this value
+        // (e.g. making it smaller might result in negative
+        // pressures)
+        //
+        // If you want to use a different regularization threshold,
+        // overload this class and supply the new class as second
+        // template parameter for the RegularizedVanGenuchten law!
+        return pcHighS_;
+    }
+
+    /*!
+     * \brief Set the lower saturation threshold value
      * \param input The saturation threshold value
      */
-    void setThresholdSw(const Scalar input)
-    { thresholdSw_ = input; }
+    void setPcLowS(const Scalar input)
+    { pcLowS_ = input; }
+
+    /*!
+     * \brief Set the upper saturation threshold value
+     * \param input The saturation threshold value
+     */
+    void setPcHighS(const Scalar input)
+    { pcHighS_ = input; }
 
 private:
-    Scalar thresholdSw_;
+    Scalar pcLowS_;
+    Scalar pcHighS_;
 
 };
 } // namespace Dumux
