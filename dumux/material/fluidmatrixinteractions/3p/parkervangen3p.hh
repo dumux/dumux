@@ -78,6 +78,7 @@ public:
      */
     static Scalar pcgw(const Params &params, const Scalar swe)
     {
+        assert(0 <= swe && swe <= 1);
         return pc_(params, swe);
     }
 
@@ -88,6 +89,7 @@ public:
      */
     static Scalar pcnw(const Params &params, const Scalar swe)
     {
+        assert(0 <= swe && swe <= 1);
         return pc_(params, swe)/params.betaNw();
     }
 
@@ -98,6 +100,7 @@ public:
      */
     static Scalar pcgn(const Params &params, const Scalar ste)
     {
+        assert(0 <= swe && swe <= 1);
         return pc_(params,ste)/params.betaGn();
     }
 

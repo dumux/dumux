@@ -96,10 +96,6 @@ public:
     {
         const Scalar pcvgReg = params.thresholdSw();
 
-        /* regularization */
-        if (swe<0.0) swe=0.0;
-        if (swe>1.0) swe=1.0;
-
         if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
         {
             return ParkerVanGen3P::pcgw(params, swe);
@@ -126,10 +122,6 @@ public:
     {
         const Scalar pcvgReg = params.thresholdSw();
 
-        /* regularization */
-        if (swe<0.0) swe=0.0;
-        if (swe>1.0) swe=1.0;
-
         if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
         {
           return ParkerVanGen3P::pcnw(params, swe);
@@ -154,11 +146,6 @@ public:
     static Scalar pcgn(const Params &params, Scalar ste)
     {
         const Scalar pcvgReg = params.thresholdSw();
-
-        /* regularization */
-        if (ste<0.0) ste=0.0;
-        if (ste>1.0) ste=1.0;
-
 
         if (ste>pcvgReg && ste<1-pcvgReg) //use actual material law
         {
