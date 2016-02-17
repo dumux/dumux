@@ -78,7 +78,7 @@ public:
      */
     static Scalar pcgw(const Params &params, const Scalar swe)
     {
-        return pc_(swe);
+        return pc_(params, swe);
     }
 
   /*!
@@ -88,7 +88,7 @@ public:
      */
     static Scalar pcnw(const Params &params, const Scalar swe)
     {
-        return pc_(swe)/params.betaNw();
+        return pc_(params, swe)/params.betaNw();
     }
 
     /*!
@@ -98,7 +98,7 @@ public:
      */
     static Scalar pcgn(const Params &params, const Scalar ste)
     {
-        return pc_(ste)/params.betaGn();
+        return pc_(params,ste)/params.betaGn();
     }
 
      /*!
@@ -373,7 +373,7 @@ private:
      * \param params Array of parameters.
      * \param Se Effective wetting phase ortotal liquid  saturation
      */
-    pc_(const Scalar se)
+    const static Scalar pc_(const Params &params, const Scalar se)
     {
         return std::pow(std::pow(se, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha();
     }
