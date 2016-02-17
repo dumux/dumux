@@ -66,6 +66,24 @@ public:
     }
 
     /*!
+     * \brief Plot the capillary pressure-saturation curve for all  phases
+     *
+     * \param params The material law parameters
+     * \param lowerSat Minimum x-value
+     * \param upperSat Maximum x-value
+     * \param plotName Name of the plotted curve
+     */
+    void plotpc(const MaterialLawParams &params,
+                  Scalar lowerSat = 0.0,
+                  Scalar upperSat = 1.0,
+                  std::string plotName = "")
+    {
+        plotpcgw(params, lowerSat, upperSat);
+        plotpcnw(params, lowerSat, upperSat);
+        plotpcgn(params, lowerSat, upperSat);
+    }
+
+    /*!
      * \brief Plot the capillary pressure-saturation curve for the water-gas interphase
      *
      * \param params The material law parameters
