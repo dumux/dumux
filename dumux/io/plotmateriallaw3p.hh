@@ -73,9 +73,9 @@ public:
                   Scalar upperSat = 1.0,
                   std::string plotName = "")
     {
-        plotpcgw(params, lowerSat, upperSat);
-        plotpcnw(params, lowerSat, upperSat);
-        plotpcgn(params, lowerSat, upperSat);
+        plotpcgw(params, lowerSat, upperSat, plotName);
+        plotpcnw(params, lowerSat, upperSat, plotName);
+        plotpcgn(params, lowerSat, upperSat, plotName);
     }
 
     /*!
