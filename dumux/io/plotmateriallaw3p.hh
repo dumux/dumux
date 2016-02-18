@@ -54,13 +54,8 @@ public:
     PlotMaterialLaw(bool interaction = true)
     : numIntervals_(1000)
     {
-        gnuplotpcgw_.setInteraction(interaction);
-        gnuplotpcnw_.setInteraction(interaction);
-        gnuplotpcgn_.setInteraction(interaction);
+        gnuplotpc_.setInteraction(interaction);
         gnuplotpcAlpha_.setInteraction(interaction);
-        gnuplotdpcgw_dswe_.setInteraction(interaction);
-        gnuplotdpcnw_dswe_.setInteraction(interaction);
-        gnuplotdpcgn_dste_.setInteraction(interaction);
         gnuplotkr_.setInteraction(interaction);
         gnuplotkrn_.setInteraction(interaction);
     }
@@ -111,12 +106,12 @@ public:
             pcMax = std::max(pcMax, pc[i]);
         }
 
-        gnuplotpcgw_.setXRange(lowerSat, upperSat);
-        gnuplotpcgw_.setYRange(pcMin, pcMax);
-        gnuplotpcgw_.setXlabel("wetting phase saturation [-]");
-        gnuplotpcgw_.setYlabel("capillary pressure [Pa]");
-        gnuplotpcgw_.addDataSetToPlot(sw, pc, plotName + "_pcgw-Sw");
-        gnuplotpcgw_.plot("pcgw-Sw");
+        gnuplotpc_.setXRange(lowerSat, upperSat);
+        gnuplotpc_.setYRange(pcMin, pcMax);
+        gnuplotpc_.setXlabel("wetting phase saturation [-]");
+        gnuplotpc_.setYlabel("capillary pressure [Pa]");
+        gnuplotpc_.addDataSetToPlot(sw, pc, plotName + "_pcgw-Sw");
+        gnuplotpc_.plot("pcgw-Sw");
     }
 
     /*!
@@ -147,12 +142,12 @@ public:
             pcMax = std::max(pcMax, pc[i]);
         }
 
-        gnuplotpcgw_.setXRange(lowerSat, upperSat);
-        gnuplotpcgw_.setYRange(pcMin, pcMax);
-        gnuplotpcgw_.setXlabel("wetting phase saturation [-]");
-        gnuplotpcgw_.setYlabel("capillary pressure [Pa]");
-        gnuplotpcgw_.addDataSetToPlot(sw, pc, plotName + "_pcnw-Sw");
-        gnuplotpcgw_.plot("pcnw-Sw");
+        gnuplotpc_.setXRange(lowerSat, upperSat);
+        gnuplotpc_.setYRange(pcMin, pcMax);
+        gnuplotpc_.setXlabel("wetting phase saturation [-]");
+        gnuplotpc_.setYlabel("capillary pressure [Pa]");
+        gnuplotpc_.addDataSetToPlot(sw, pc, plotName + "_pcnw-Sw");
+        gnuplotpc_.plot("pcnw-Sw");
     }
 
     /*!
@@ -183,12 +178,12 @@ public:
             pcMax = std::max(pcMax, pc[i]);
         }
 
-        gnuplotpcgw_.setXRange(lowerSat, upperSat);
-        gnuplotpcgw_.setYRange(pcMin, pcMax);
-        gnuplotpcgw_.setXlabel("wetting phase saturation [-]");
-        gnuplotpcgw_.setYlabel("capillary pressure [Pa]");
-        gnuplotpcgw_.addDataSetToPlot(st, pc, plotName + "_pcgn-St");
-        gnuplotpcgw_.plot("pcgn-St (St=Sw+Sn)");
+        gnuplotpc_.setXRange(lowerSat, upperSat);
+        gnuplotpc_.setYRange(pcMin, pcMax);
+        gnuplotpc_.setXlabel("wetting phase saturation [-]");
+        gnuplotpc_.setYlabel("capillary pressure [Pa]");
+        gnuplotpc_.addDataSetToPlot(st, pc, plotName + "_pcgn-St");
+        gnuplotpc_.plot("pcgn-St (St=Sw+Sn)");
     }
 
 
@@ -232,6 +227,42 @@ public:
     }
 
     /*!
+     * \brief Plot the transition (2P/3P) function
+     *
+     * \param params The material law parameters
+     * \param lowerSat Minimum x-value
+     * \param upperSat Maximum x-value
+     * \param plotName Name of the plotted curve
+     */
+    void plotPcAlpha(const MaterialLawParams &params,
+                Scalar lowerSat = 0.0,
+                Scalar upperSat = 1.0,
+                std::string plotName = "")
+    {
+        std::vector<Scalar> sn(numIntervals_ + 1);
+        std::vector<Scalar> alpha(numIntervals_ + 1);
+        Scalar satInterval = upperSat - lowerSat;
+        Scalar alphaMin = -2;
+        Scalar alphaMax = 2;
+        checkEffectiveSaturation(params, lowerSat, upperSat, plotName);
+
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            sn[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            alpha[i] = MaterialLaw::pcAlpha(params, sn[i]);
+            alphaMin = std::min(alphaMin, alpha[i]);
+            alphaMax = std::max(alphaMax, alpha[i]);
+        }
+
+        gnuplotpcAlpha_.setXRange(lowerSat, upperSat);
+        gnuplotpcAlpha_.setYRange(alphaMin, alphaMax);
+        gnuplotpcAlpha_.setXlabel("non-wetting phase saturation [-]");
+        gnuplotpcAlpha_.setYlabel("transition function [-]");
+        gnuplotpcAlpha_.addDataSetToPlot(sn, alpha, plotName + "_alpha");
+        gnuplotpcAlpha_.plot("alpha");
+    }
+
+    /*!
      * \brief Check the validity range for wetting saturation, to avoid an
      *        assert of the used material laws
      *
@@ -253,13 +284,8 @@ public:
 
 private:
     int numIntervals_;
-    GnuplotInterface<Scalar> gnuplotpcgw_;
-    GnuplotInterface<Scalar> gnuplotpcnw_;
-    GnuplotInterface<Scalar> gnuplotpcgn_;
+    GnuplotInterface<Scalar> gnuplotpc_;
     GnuplotInterface<Scalar> gnuplotpcAlpha_;
-    GnuplotInterface<Scalar> gnuplotdpcgw_dswe_;
-    GnuplotInterface<Scalar> gnuplotdpcnw_dswe_;
-    GnuplotInterface<Scalar> gnuplotdpcgn_dste_;
     GnuplotInterface<Scalar> gnuplotkr_;
     GnuplotInterface<Scalar> gnuplotkrn_;
 
