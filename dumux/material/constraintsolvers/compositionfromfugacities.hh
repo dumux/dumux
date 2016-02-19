@@ -307,25 +307,26 @@ protected:
         //Scalar sumMoleFrac = 0.0;
         //ComponentVector newB(1e100);
         //for (int numTries = 0; numTries < 1; ++numTries) {
-            // change composition
-            for (int i = 0; i < numComponents; ++i) {
-                Scalar newx = origComp[i] - x[i];
-#if 1
-                // only allow negative mole fractions if the target fugacity is negative
-                if (targetFug[i] > 0)
-                    newx = std::max(0.0, newx);
-                // only allow positive mole fractions if the target fugacity is positive
-                else if (targetFug[i] < 0)
-                    newx = std::min(0.0, newx);
-                // if the target fugacity is zero, the mole fraction must also be zero
-                else
-                    newx = 0;
-#endif
-                fluidState.setMoleFraction(phaseIdx, i, newx);
-                //sumMoleFrac += std::abs(newx);
-            }
+        // change composition
+        for (unsigned int i = 0; i < numComponents; ++i)
+        {
+            Scalar newx = origComp[i] - x[i];
 
-            paramCache.updateComposition(fluidState, phaseIdx);
+            // only allow negative mole fractions if the target fugacity is negative
+            if (targetFug[i] > 0)
+                newx = std::max(0.0, newx);
+            // only allow positive mole fractions if the target fugacity is positive
+            else if (targetFug[i] < 0)
+                newx = std::min(0.0, newx);
+            // if the target fugacity is zero, the mole fraction must also be zero
+            else
+                newx = 0;
+
+            fluidState.setMoleFraction(phaseIdx, i, newx);
+            //sumMoleFrac += std::abs(newx);
+        }
+
+        paramCache.updateComposition(fluidState, phaseIdx);
 
             /*
             // if the sum of the mole fractions gets 0, we take the

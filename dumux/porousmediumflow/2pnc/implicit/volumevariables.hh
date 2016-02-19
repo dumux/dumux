@@ -137,39 +137,42 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {// relative permeabilities
-                    Scalar kr;
-                    if (phaseIdx == wPhaseIdx)
-                        kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
-                    else // ATTENTION: krn requires the liquid saturation
-                        // as parameter!
-                        kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
-                        mobility_[phaseIdx] = kr / fluidState_.viscosity(phaseIdx);
-                        Valgrind::CheckDefined(mobility_[phaseIdx]);
-                    int compIIdx = phaseIdx;
-                    for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    {
-                    int compJIdx = compIdx;
-                    // binary diffusion coefficents
-                    diffCoeff_[phaseIdx][compIdx] = 0.0;
-                    if(compIIdx!= compJIdx)
-                    diffCoeff_[phaseIdx][compIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                    paramCache,
-                                                                                    phaseIdx,
-                                                                                    compIIdx,
-                                                                                    compJIdx);
-                    Valgrind::CheckDefined(diffCoeff_[phaseIdx][compIdx]);
+        {// relative permeabilities
+            Scalar kr;
+            if (phaseIdx == wPhaseIdx)
+                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
+            else // ATTENTION: krn requires the liquid saturation
+                // as parameter!
+                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
+
+            mobility_[phaseIdx] = kr / fluidState_.viscosity(phaseIdx);
+            Valgrind::CheckDefined(mobility_[phaseIdx]);
+            int compIIdx = phaseIdx;
+            for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+            {
+                // binary diffusion coefficents
+                diffCoeff_[phaseIdx][compJIdx] = 0.0;
+                if(compIIdx!= compJIdx)
+                {
+                    diffCoeff_[phaseIdx][compJIdx] =
+                        FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                                paramCache,
+                                                                phaseIdx,
+                                                                compIIdx,
+                                                                compJIdx);
                 }
+                Valgrind::CheckDefined(diffCoeff_[phaseIdx][compJIdx]);
             }
+        }
 
-    // porosity
-    porosity_ = problem.spatialParams().porosity(element,
-                                                        fvGeometry,
-                                                        scvIdx);
-    Valgrind::CheckDefined(porosity_);
-    // energy related quantities not contained in the fluid state
+        // porosity
+        porosity_ = problem.spatialParams().porosity(element,
+                                                     fvGeometry,
+                                                     scvIdx);
+        Valgrind::CheckDefined(porosity_);
+        // energy related quantities not contained in the fluid state
 
-    asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
     }
 
    /*!

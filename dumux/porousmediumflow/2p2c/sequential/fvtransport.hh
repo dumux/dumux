@@ -1328,44 +1328,44 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                 if (verbosity_ > 0)
                     std::cout<<"    Sub-time-step size: "<<subDt<< std::endl;
 
-                    bool stopTimeStep = false;
-                    int size = problem_.gridView().size(0);
-                    for (int i = 0; i < size; i++)
+                bool stopTimeStep = false;
+                int size = problem_.gridView().size(0);
+                for (int i = 0; i < size; i++)
+                {
+                    EntryType newVal(0);
+                    int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
+                    for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
                     {
-                        EntryType newVal(0);
-                        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
-                        for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
-                        {
-                            newVal[eqNumber] = totalConcentration_[eqNumber][i];
-                            newVal[eqNumber] += updateVec[eqNumber][i] * subDt;
-                        }
-                        if (!asImp_().inPhysicalRange(newVal))
-                        {
-                            stopTimeStep = true;
-
-                            break;
-                        }
+                        newVal[eqNumber] = totalConcentration_[eqNumber][i];
+                        newVal[eqNumber] += updateVec[eqNumber][i] * subDt;
                     }
+                    if (!asImp_().inPhysicalRange(newVal))
+                    {
+                        stopTimeStep = true;
+
+                        break;
+                    }
+                }
 
 #if HAVE_MPI
-                    int rank = 0;
-                    if (stopTimeStep)
-                        rank = problem_.gridView().comm().rank();
+                int rank = 0;
+                if (stopTimeStep)
+                    rank = problem_.gridView().comm().rank();
 
-                    rank = problem_.gridView().comm().max(rank);
-                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
+                rank = problem_.gridView().comm().max(rank);
+                problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
 #endif
 
 
-                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
-                    {
-                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
-                        break;
-                    }
-                    else
-                    {
-                        asImp_().updateTransportedQuantity(updateVec, subDt);
-                    }
+                if (stopTimeStep && accumulatedDtOld > dtThreshold_)
+                {
+                    problem_.timeManager().setTimeStepSize(accumulatedDtOld);
+                    break;
+                }
+                else
+                {
+                    asImp_().updateTransportedQuantity(updateVec, subDt);
+                }
 
 
                 if (accumulatedDt_ >= realDt)
