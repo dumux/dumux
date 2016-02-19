@@ -22,7 +22,9 @@
  * \brief Test for the two-phase CC model with point source
  */
 #include <config.h>
+#if HAVE_UG
 #include "lensproblem.hh"
+#endif
 #include <dumux/common/start.hh>
 
 /*!
