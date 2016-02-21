@@ -26,6 +26,7 @@
 
 #include <cmath>
 
+#include <dune/common/deprecated.hh>
 #include <dumux/common/basicproperties.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/constants.hh>
@@ -97,6 +98,12 @@ class ElectroChemistry
         energyEqIdx = FluidSystem::numComponents //energy equation
     };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? GridView::dimension : 0 };
+
+    using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using CellVector = typename Dune::FieldVector<Scalar, GridView::dimension>;
+
 public:
     /*!
     * \brief Calculates reaction sources with an electrochemical model approach.
@@ -107,31 +114,22 @@ public:
     * For this method, the \a values parameter stores source values
     */
     static void reactionSource(PrimaryVariables &values,
-                               const VolumeVariables &volVars)
+                               Scalar currentDensity)
     {
-        static Scalar transportNumberH2O = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransportNumberH20);
-        static Scalar maxIter = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.MaxIterations);
-        static Scalar gridYMin = 0.0;
-        static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
-        static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.NumberOfCellsY);
-
-        //initialise current density
-        Scalar currentDensity = 0.0;
-
-        //call internal method to calculate the current density
-        currentDensity = calculateCurrentDensity_(volVars, maxIter);
-
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box
-        Scalar lengthBox = (gridYMax - gridYMin)/nCellsY;
+        //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
+        static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
+        static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, CellVector, Grid.Cells)[1];
 
-        if(electroChemistryModel == ElectroChemistryModel::Acosta)
-            currentDensity = currentDensity/lengthBox;
+        // Warning: This assumes the reaction layer is always just one cell (cell-centered) or half a box (box) thick
+        const auto lengthBox = gridYMax/nCellsY;
+        if (isBox)
+            currentDensity *= 2.0/lengthBox;
         else
-            currentDensity = currentDensity*2/lengthBox;
+            currentDensity *= 1.0/lengthBox;
 
-        //conversion from [A/cm^2] to [A/m^2]
-        currentDensity = currentDensity*10000;
+        static Scalar transportNumberH2O = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransportNumberH20);
 
         //calculation of flux terms with faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer
@@ -139,13 +137,20 @@ public:
         values[contiO2EqIdx]  = -currentDensity/(4*Constant::F);                 //O2-equation
     }
 
-protected:
+    DUNE_DEPRECATED_MSG("First compute the currentDensity with calculateCurrentDensity(const VolumeVariables&) and then use the method reactionSource(PrimaryVariables&, Scalar) instead")
+    static void reactionSource(PrimaryVariables &values,
+                               const VolumeVariables &volVars)
+    {
+        reactionSource(values, calculateCurrentDensity(volVars));
+    }
 
     /*!
     * \brief Newton solver for calculation of the current density.
+    * \returns The current density in A/m^2
     */
-    static Scalar calculateCurrentDensity_(const VolumeVariables &volVars, Scalar maxIter)
+    static Scalar calculateCurrentDensity(const VolumeVariables &volVars)
     {
+        static Scalar maxIter = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.MaxIterations);
         static Scalar specificResistance = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.SpecificResistance);
         static Scalar reversibleVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ReversibleVoltage);
         static Scalar cellVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.CellVoltage);
@@ -201,8 +206,14 @@ protected:
             }
         }
 
-        return currentDensity;
+        //conversion from [A/cm^2] to [A/m^2]
+        return currentDensity*10000;
     }
+
+protected:
+    DUNE_DEPRECATED_MSG("This is now a public member function (the name lost the underscore postfix.)")
+    static Scalar calculateCurrentDensity_(const VolumeVariables &volVars)
+    { calculateCurrentDensity(volVars); }
 
 private:
 

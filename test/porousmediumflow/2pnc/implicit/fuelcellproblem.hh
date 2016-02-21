@@ -24,7 +24,6 @@
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
-#include <dumux/io/cubegridcreator.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
@@ -46,11 +45,7 @@ NEW_TYPE_TAG(FuelCellBoxProblem, INHERITS_FROM(BoxModel, FuelCellProblem));
 NEW_TYPE_TAG(FuelCellCCProblem, INHERITS_FROM(CCModel, FuelCellProblem));
 
 // Set the grid type
-#if HAVE_UG
-SET_TYPE_PROP(FuelCellProblem, Grid, Dune::UGGrid<2>);
-#endif
-// Set the grid creator
-SET_TYPE_PROP(FuelCellProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
+SET_TYPE_PROP(FuelCellProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(FuelCellProblem, Problem, Dumux::FuelCellProblem<TypeTag>);
 // Set the primary variable combination for the 2pnc model

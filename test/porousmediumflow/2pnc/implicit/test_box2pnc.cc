@@ -41,19 +41,7 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                                        "\t-Grid.File                     Name of the file containing the grid \n"
-                                        "\t                               definition in DGF format\n"
-                                        "\t-FluidSystem.NTemperature      Number of tabularization entries [-] \n"
-                                        "\t-FluidSystem.NPressure         Number of tabularization entries [-] \n"
-                                        "\t-FluidSystem.PressureLow       Low end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.PressureHigh      High end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.TemperatureLow    Low end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.TemperatureHigh   High end for tabularization of fluid properties [Pa] \n"
-                                        "\t-SimulationControl.Name        The name of the output files [-] \n"
-                                        "\t-InitialConditions.Temperature Initial temperature in the reservoir [K] \n"
-                                        "\t-InitialConditions.DepthBOR    Depth below ground surface [m] \n";
+                                        "\t-ParameterFile Parameter file (Input file) \n";
 
         std::cout << errorMessageOut
                   << "\n";
@@ -62,12 +50,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if HAVE_UG
     typedef TTAG(FuelCellBoxProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
-#else
-#warning You need UGGrid to run this test.
-    std::cerr << "You need UGGrid to run this test." << std::endl;
-    return 77;
-#endif
 }
