@@ -209,6 +209,7 @@ private:
         }
     }
 
+    DUNE_DEPRECATED_MSG("This method will be removed without replacement!")
     Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementVolumeVariables &elemVolVars)
     {
         static const Scalar eps = 1e-2;
