@@ -44,7 +44,7 @@ public:
     typedef ScalarT Scalar;
 
     RegularizedParkerVanGen3PParams()
-        : ParkerVanGen3PParams()
+        : ParkerVanGen3PParams(), constRegularization_(false)
     {
         pcLowS_ = 1e-2;
         pcHighS_ = 99e-2;
@@ -55,7 +55,7 @@ public:
                          Scalar betaGn = 1., Scalar betaGw = 1., bool regardSnr=false)
         : ParkerVanGen3PParams(vgAlpha, vgn, KdNAPL, rhoBulk,
                          residualSaturation, betaNw,
-                         betaGn , betaGw, regardSnr)
+                         betaGn , betaGw, regardSnr), constRegularization_(false)
     {
         pcLowS_ = 1e-2;
         pcHighS_ = 99e-2;
@@ -113,9 +113,29 @@ public:
     void setPcHighS(const Scalar input)
     { pcHighS_ = input; }
 
+    /*!
+     * \brief Choose whether to use a constant value for regularization of the
+     *        pc-S curves or not
+     * \param input True or false
+     */
+    void useConstRegularization(const bool input)
+    {
+        constRegularization_ = input;
+    }
+
+    /*!
+     * \brief Returns whether to use a constant value for regularization of the
+     *        pc-S curves or not
+     */
+    bool constRegularization() const
+    {
+        return constRegularization_;
+    }
+
 private:
     Scalar pcLowS_;
     Scalar pcHighS_;
+    bool constRegularization_;
 
 };
 } // namespace Dumux

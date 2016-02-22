@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Interface for plotting the two-phase fluid-matrix-interaction laws
+ * \brief Interface for plotting the three-phase fluid-matrix-interaction laws
  */
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH

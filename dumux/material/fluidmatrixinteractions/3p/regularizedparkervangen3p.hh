@@ -92,6 +92,15 @@ public:
      */
     static Scalar pcgw(const Params &params, Scalar swe)
     {
+        //if specified, a constant value is used for regularization
+        if(params.constRegularization())
+        {
+            if(swe < 0.0)
+                swe = 0.0;
+            if(swe > 1.0)
+                swe = 1.0;
+        }
+
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
         const Scalar swThLow = params.pcLowS();
@@ -138,6 +147,15 @@ public:
      */
     static Scalar pcnw(const Params &params, Scalar swe)
     {
+        //if specified, a constant value is used for regularization
+        if(params.constRegularization())
+        {
+            if(swe < 0.0)
+                swe = 0.0;
+            if(swe > 1.0)
+                swe = 1.0;
+        }
+
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
         const Scalar swThLow = params.pcLowS();
@@ -183,6 +201,15 @@ public:
      */
     static Scalar pcgn(const Params &params, Scalar ste)
     {
+        //if specified, a constant value is used for regularization
+        if(params.constRegularization())
+        {
+            if(ste < 0.0)
+                ste = 0.0;
+            if(ste > 1.0)
+                ste = 1.0;
+        }
+
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
         const Scalar swThLow = params.pcLowS();
