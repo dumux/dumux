@@ -135,7 +135,7 @@ public:
      */
     template<class GridView>
     TwoCNIStokesTwoPTwoCNITestProblem(TimeManager &timeManager,
-                                  GridView gridView)
+                                      GridView gridView)
     : ParentType(timeManager, gridView)
     {
         interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);

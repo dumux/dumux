@@ -49,7 +49,8 @@ SET_PROP(SubDomain, Grid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) MultiDomain;
     typedef typename GET_PROP_TYPE(MultiDomain, Grid) HostGrid;
-    typedef typename Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MDGridTraits;
+    enum { maxSubDomains = GET_PROP_VALUE(MultiDomain, MaxSubDomains) };
+    typedef typename Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,maxSubDomains> MDGridTraits;
     typedef typename Dune::MultiDomainGrid<HostGrid, MDGridTraits> Grid;
 public:
     typedef typename Grid::SubDomainGrid type;

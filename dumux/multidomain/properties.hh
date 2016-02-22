@@ -49,6 +49,9 @@ NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ImplicitBase));
 //! Specifies the model
 NEW_PROP_TAG(Model);
 
+//! Specifies the maximum number of sub-problems
+NEW_PROP_TAG(MaxSubDomains);
+
 //! Specifies the type tag of the first sub-problem
 NEW_PROP_TAG(SubDomain1TypeTag);
 

@@ -120,7 +120,7 @@ public:
      */
     template<class GridView>
     TwoCZeroEqTwoPTwoCTestProblem(TimeManager &timeManager,
-                              GridView gridView)
+                                  GridView gridView)
     : ParentType(timeManager, gridView)
     {
         dtInit_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
