@@ -60,15 +60,15 @@ public:
                              int phaseIdx,
                              const ComponentVector &fugVec)
     {
-        if (FluidSystem::isIdealMixture(phaseIdx))
-            return;
-
-        // Pure component fugacities
-        for (int i = 0; i < numComponents; ++ i) {
-            //std::cout << f << " -> " << mutParams.fugacity(phaseIdx, i)/f << "\n";
-            fluidState.setMoleFraction(phaseIdx,
-                                   i,
-                                   1.0/numComponents);
+        if (!FluidSystem::isIdealMixture(phaseIdx))
+        {
+            // Pure component fugacities
+            for (unsigned int i = 0; i < numComponents; ++ i)
+            {
+                fluidState.setMoleFraction(phaseIdx,
+                                           i,
+                                           1.0/numComponents);
+            }
         }
     }
 
@@ -207,7 +207,6 @@ protected:
 
         Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
         fluidState.setDensity(phaseIdx, rho);
-        return;
     }
 
     template <class FluidState>
@@ -291,46 +290,43 @@ protected:
         Dune::FieldVector<Scalar, numComponents> origComp;
         Scalar relError = 0;
         Scalar sumDelta = 0;
-        Scalar sumx = 0;
-        for (int i = 0; i < numComponents; ++i) {
+        for (unsigned int i = 0; i < numComponents; ++i)
+        {
             origComp[i] = fluidState.moleFraction(phaseIdx, i);
             relError = std::max(relError, std::abs(x[i]));
-
-            sumx += std::abs(fluidState.moleFraction(phaseIdx, i));
             sumDelta += std::abs(x[i]);
         }
 
-#if 1
         // chop update to at most 20% change in composition
         const Scalar maxDelta = 0.2;
         if (sumDelta > maxDelta)
             x /= (sumDelta/maxDelta);
-#endif
 
         //Scalar curDefect = calculateDefect_(fluidState, phaseIdx, targetFug);
         //Scalar nextDefect;
         //Scalar sumMoleFrac = 0.0;
         //ComponentVector newB(1e100);
         //for (int numTries = 0; numTries < 1; ++numTries) {
-            // change composition
-            for (int i = 0; i < numComponents; ++i) {
-                Scalar newx = origComp[i] - x[i];
-#if 1
-                // only allow negative mole fractions if the target fugacity is negative
-                if (targetFug[i] > 0)
-                    newx = std::max(0.0, newx);
-                // only allow positive mole fractions if the target fugacity is positive
-                else if (targetFug[i] < 0)
-                    newx = std::min(0.0, newx);
-                // if the target fugacity is zero, the mole fraction must also be zero
-                else
-                    newx = 0;
-#endif
-                fluidState.setMoleFraction(phaseIdx, i, newx);
-                //sumMoleFrac += std::abs(newx);
-            }
+        // change composition
+        for (unsigned int i = 0; i < numComponents; ++i)
+        {
+            Scalar newx = origComp[i] - x[i];
 
-            paramCache.updateComposition(fluidState, phaseIdx);
+            // only allow negative mole fractions if the target fugacity is negative
+            if (targetFug[i] > 0)
+                newx = std::max(0.0, newx);
+            // only allow positive mole fractions if the target fugacity is positive
+            else if (targetFug[i] < 0)
+                newx = std::min(0.0, newx);
+            // if the target fugacity is zero, the mole fraction must also be zero
+            else
+                newx = 0;
+
+            fluidState.setMoleFraction(phaseIdx, i, newx);
+            //sumMoleFrac += std::abs(newx);
+        }
+
+        paramCache.updateComposition(fluidState, phaseIdx);
 
             /*
             // if the sum of the mole fractions gets 0, we take the

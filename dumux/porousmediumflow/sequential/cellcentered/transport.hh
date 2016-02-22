@@ -590,41 +590,41 @@ void FVTransport<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                 if (verbosity_ > 0)
                     std::cout<<"    Sub-time-step size: "<<subDt<<"\n";
 
-                    TransportSolutionType transportedQuantity;
-                    asImp_().getTransportedQuantity(transportedQuantity);
+                TransportSolutionType transportedQuantity;
+                asImp_().getTransportedQuantity(transportedQuantity);
 
-                    bool stopTimeStep = false;
-                    int size = transportedQuantity.size();
-                    for (int i = 0; i < size; i++)
+                bool stopTimeStep = false;
+                int size = transportedQuantity.size();
+                for (int i = 0; i < size; i++)
+                {
+                    Scalar newVal = transportedQuantity[i] += updateVec[i] * subDt;
+                    if (!asImp_().inPhysicalRange(newVal))
                     {
-                        Scalar newVal = transportedQuantity[i] += updateVec[i] * subDt;
-                        if (!asImp_().inPhysicalRange(newVal))
-                        {
-                            stopTimeStep = true;
+                        stopTimeStep = true;
 
-                            break;
-                        }
+                        break;
                     }
+                }
 
 #if HAVE_MPI
-                    int rank = 0;
-                    if (stopTimeStep)
-                        rank = problem_.gridView().comm().rank();
+                int rank = 0;
+                if (stopTimeStep)
+                    rank = problem_.gridView().comm().rank();
 
-                    rank = problem_.gridView().comm().max(rank);
-                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
+                rank = problem_.gridView().comm().max(rank);
+                problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
 #endif
 
 
-                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
-                    {
-                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
-                        break;
-                    }
-                    else
-                    {
-                        asImp_().setTransportedQuantity(transportedQuantity);
-                    }
+                if (stopTimeStep && accumulatedDtOld > dtThreshold_)
+                {
+                    problem_.timeManager().setTimeStepSize(accumulatedDtOld);
+                    break;
+                }
+                else
+                {
+                    asImp_().setTransportedQuantity(transportedQuantity);
+                }
 
 
                 if (accumulatedDt_ >= realDt)
