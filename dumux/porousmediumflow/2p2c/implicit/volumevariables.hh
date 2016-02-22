@@ -122,6 +122,9 @@ public:
                            scvIdx,
                            isOldSol);
 
+        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
+        phasePresence_ = problem.model().phasePresence(dofIdxGlobal, isOldSol);
+
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
 
         /////////////
@@ -456,6 +459,12 @@ public:
     { return fluidState_; }
 
     /*!
+     * \brief Returns the phase presence within the control volume.
+     */
+    const int phasePresence() const
+    { return phasePresence_; }
+
+    /*!
      * \brief Returns the saturation of a given phase within
      *        the control volume in \f$[-]\f$.
      *
@@ -605,6 +614,7 @@ protected:
     Scalar relativePermeability_[numPhases]; //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;
+    int phasePresence_;
 
 private:
     Implementation &asImp_()
