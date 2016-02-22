@@ -475,7 +475,8 @@ public:
     {
         bool wasSwitched = false;
         int succeeded;
-        try {
+        try
+        {
             for (unsigned i = 0; i < staticDat_.size(); ++i)
                 staticDat_[i].visited = false;
 
@@ -488,24 +489,24 @@ public:
                 {
                     int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                    if (staticDat_[dofIdxGlobal].visited)
-                        continue;
-
-                    staticDat_[dofIdxGlobal].visited = true;
-                    volVars.update(curGlobalSol[dofIdxGlobal],
-                            this->problem_(),
-                            element,
-                            fvGeometry,
-                            scvIdx,
-                            false);
-                    const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-                    if (primaryVarSwitch_(curGlobalSol,
-                            volVars,
-                            dofIdxGlobal,
-                            globalPos))
+                    if (!staticDat_[dofIdxGlobal].visited)
                     {
-                        this->jacobianAssembler().markDofRed(dofIdxGlobal);
-                        wasSwitched = true;
+                        staticDat_[dofIdxGlobal].visited = true;
+                        volVars.update(curGlobalSol[dofIdxGlobal],
+                                      this->problem_(),
+                                      element,
+                                      fvGeometry,
+                                      scvIdx,
+                                      false);
+                        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+                        if (primaryVarSwitch_(curGlobalSol,
+                                              volVars,
+                                              dofIdxGlobal,
+                                              globalPos))
+                        {
+                            this->jacobianAssembler().markDofRed(dofIdxGlobal);
+                            wasSwitched = true;
+                        }
                     }
                 }
             }
@@ -523,10 +524,10 @@ public:
         if (this->gridView_().comm().size() > 1)
             succeeded = this->gridView_().comm().min(succeeded);
 
-        if (!succeeded) {
-                DUNE_THROW(NumericalProblem,
-                        "A process did not succeed in updating the static data.");
-            return;
+        if (!succeeded)
+        {
+            DUNE_THROW(NumericalProblem,
+                       "A process did not succeed in updating the static data.");
         }
 
         // make sure that if there was a variable switch in an
