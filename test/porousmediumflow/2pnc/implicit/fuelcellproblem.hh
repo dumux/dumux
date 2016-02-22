@@ -188,14 +188,18 @@ public:
                             const int scvIdx,
                             const ElementVolumeVariables &elemVolVars) const
     {
-        const GlobalPosition globalPos = element.geometry().corner(scvIdx);
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
-
         values = 0.0;
 
+        const auto& globalPos = isBox ? element.geometry().corner(scvIdx)
+                                      : element.geometry().center();
+
         //reaction sources from electro chemistry
-        if(onLowerBoundary_(globalPos))
-            ElectroChemistry::reactionSource(values, volVars);
+        if(inReactionLayer_(globalPos))
+        {
+            const auto& volVars = elemVolVars[scvIdx];
+            auto currentDensity = ElectroChemistry::calculateCurrentDensity(volVars);
+            ElectroChemistry::reactionSource(values, currentDensity);
+        }
     }
 
 
@@ -287,16 +291,16 @@ public:
     }
 
     /*!
-     * \brief Return the initial phase state inside a control volume.
+     * \brief Return the initial phase state inside a sub control volume.
      *
-     * \param vertex The vertex
-     * \param globalIdx The index of the global vertex
-     * \param globalPos The global position
+     * \param element The element of the sub control volume
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The sub control volume index
      */
 
-    int initialPhasePresence(const Vertex &vertex,
-                             int &globalIdx,
-                             const GlobalPosition &globalPos) const
+    int initialPhasePresence(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             int scvIdx) const
     {
         return Indices::bothPhases;
     }
@@ -310,7 +314,7 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // get the number of degrees of freedom
-        unsigned numDofs = this->model().numDofs();
+        auto numDofs = this->model().numDofs();
 
         // create the required scalar fields
         ScalarField *currentDensity = this->resultWriter().allocateManagedBuffer (numDofs);
@@ -330,28 +334,32 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+                const auto& globalPos = isBox ? element.geometry().corner(scvIdx)
+                                              : element.geometry().center();
 
-                //reactionSource Output
-                PrimaryVariables source;
-                this->solDependentSource(source, element, fvGeometry, scvIdx, elemVolVars);
+                auto dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                (*reactionSourceH2O)[dofIdxGlobal] = source[wPhaseIdx];
-                (*reactionSourceO2)[dofIdxGlobal] = source[numComponents-1];
+                //reaction sources from electro chemistry
+                if(inReactionLayer_(globalPos))
+                {
+                    //reactionSource Output
+                    PrimaryVariables source;
+                    auto i = ElectroChemistry::calculateCurrentDensity(elemVolVars[scvIdx]);
+                    ElectroChemistry::reactionSource(source, i);
 
-                //Current Output
-                (*currentDensity)[dofIdxGlobal] = -1.0*source[numComponents-1]*4*Constant::F;
-                //recorrection of the area for output
-                Scalar gridYMin = 0.0;
-                Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
-                Scalar nCellsY  = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.NumberOfCellsY);
+                    (*reactionSourceH2O)[dofIdxGlobal] = source[wPhaseIdx];
+                    (*reactionSourceO2)[dofIdxGlobal] = source[numComponents-1];
 
-                Scalar lengthBox = (gridYMax - gridYMin)/nCellsY;
-
-                // Only works for box
-                (*currentDensity)[dofIdxGlobal] = (*currentDensity)[dofIdxGlobal]/2*lengthBox/10000; //i in [A/cm^2]
+                    //Current Output in A/cm^2
+                    (*currentDensity)[dofIdxGlobal] = i/10000;
+                }
+                else
+                {
+                    (*reactionSourceH2O)[dofIdxGlobal] = 0.0;
+                    (*reactionSourceO2)[dofIdxGlobal] = 0.0;
+                    (*currentDensity)[dofIdxGlobal] = 0.0;
+                }
             }
-
         }
 
         this->resultWriter().attachDofData(*reactionSourceH2O, "reactionSourceH2O [mol/(sm^2)]", isBox);
@@ -382,6 +390,9 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->bBoxMax()[1] - eps_; }
 
+    bool inReactionLayer_(const GlobalPosition& globalPos) const
+    { return globalPos[1] < 0.1*(this->bBoxMax()[1] - this->bBoxMin()[1]) + eps_; }
+
     Scalar temperature_;
     Scalar eps_;
     int nTemperature_;
@@ -391,6 +402,7 @@ private:
     Scalar temperatureLow_, temperatureHigh_;
     Scalar pO2Inlet_;
 };
+
 } //end namespace
 
 #endif
