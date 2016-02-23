@@ -151,7 +151,7 @@ public:
         const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
 
         /*Regularization*/
-        salinity = std::min(salinity, salSat);
+        salinity = std::min(std::max(salinity,0.0), salSat);
 
         const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
 
@@ -168,14 +168,12 @@ public:
             }
         }
 
+        /* heat of dissolution for halite according to Michaelides 1971 */
         const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
 
-        /* Enthalpy of brine */
-
+        /* Enthalpy of brine without air */
         const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
-        const Scalar h_ls = h_ls1*1E3; /*J/kg*/
-
-        return (h_ls);
+        return h_ls1*1E3; /*J/kg*/
     }
 
     /*!
@@ -212,7 +210,7 @@ public:
     static const Scalar liquidHeatCapacity(Scalar temperature,
                                         Scalar pressure, Scalar salinity = constantSalinity)
     {
-        Scalar eps = temperature*1e-8;
+        const Scalar eps = temperature*1e-8;
         return (liquidEnthalpy(temperature + eps, pressure, salinity) - liquidEnthalpy(temperature, pressure, salinity))/eps;
     }
 
@@ -301,13 +299,13 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
     {
-        Scalar TempC = temperature - 273.15;
-        Scalar pMPa = pressure/1.0E6;
-        salinity = std::abs(salinity);
+        const Scalar TempC = temperature - 273.15;
+        const Scalar pMPa = pressure/1.0E6;
+        salinity = std::max(0.0, salinity);
 
-        Scalar rhow = H2O::liquidDensity(temperature, pressure);
+        const Scalar rhow = H2O::liquidDensity(temperature, pressure);
 
-            Scalar  density =  rhow +
+            const Scalar  density =  rhow +
             1000*salinity*(
                 0.668 +
                 0.44*salinity +
@@ -347,7 +345,7 @@ public:
        // assume the pressure to be 10% higher than the vapor
        // pressure
        Scalar pressure = 1.1*vaporPressure(temperature);
-       Scalar eps = pressure*1e-7;
+       const Scalar eps = pressure*1e-7;
 
        Scalar deltaP = pressure*2;
        for (int i = 0; i < 5 && std::abs(pressure*1e-9) < std::abs(deltaP); ++i) {
@@ -389,14 +387,13 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
     {
-        if(temperature <= 275.) // regularisation
-        { temperature = 275; }
-        salinity = std::abs(salinity);
-        Scalar T_C = temperature - 273.15;
-        if(salinity < 0.0)
-        {salinity = 0.0; }
-        Scalar A = (0.42*pow((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
-        Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
+        // regularisation
+        temperature = std::max(temperature, 275.0);
+        salinity = std::max(0.0, salinity);
+
+        const Scalar T_C = temperature - 273.15;
+        const Scalar A = (0.42*pow((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
+        const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
         assert(mu_brine > 0.0);
         return mu_brine/1000.0;
     }

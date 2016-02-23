@@ -583,7 +583,7 @@ public:
         if (phaseIdx == lPhaseIdx)
         {
             Scalar XlNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
-            Scalar result = liquidEnthalpyBrine_(T, p, XlNaCl);
+            Scalar result = Brine::liquidEnthalpy(T, p, XlNaCl);
                 Valgrind::CheckDefined(result);
                 return result;
         }
@@ -697,127 +697,6 @@ public:
         return Brine_Air::molalityNaCl(salinity);// massfraction
       }
 
-private:
-    static Scalar gasDensity_(Scalar T,
-                              Scalar pg,
-                              Scalar xgH2O)
-    {
-        Scalar pH2O = xgH2O*pg; //Dalton' Law
-        Scalar pAir = pg - pH2O;
-        Scalar gasDensityAir = Air::gasDensity(T, pAir);
-        Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
-        Scalar gasDensity = gasDensityAir + gasDensityH2O;
-        return gasDensity;
-    }
-
-    /*!
-     * \brief The density of pure brine at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \warning The influence of dissolved air in Brine is neglected
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * Equations given in:
-     *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
-     */
-
-    static Scalar liquidDensity_(Scalar T,
-                                 Scalar pl,
-                                 Scalar xlAir,
-                                 Scalar xlH2O,
-                                 Scalar XlNaCl)
-    {
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(pl);
-        Valgrind::CheckDefined(XlNaCl);
-        Valgrind::CheckDefined(xlAir);
-
-        if(T < 273.15 || T > 623.15) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and Air is only "
-                       "defined between 273.15K and 623.15K (is " << T << ")");
-              }
-        if(pl >= 1.0e8) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and Air is only "
-                       "defined below 100MPa (is " << pl << ")");
-        }
-        return Brine::liquidDensity(T, pl, XlNaCl); // The influence of dissolved air in Brine is neglected
-    }
-
-    static Scalar liquidEnthalpyBrine_(Scalar T,
-                                       Scalar p,
-                                       Scalar XlNaCl)
-    {
-        /* XlAir : mass fraction of Air in brine */
-        /* same function as enthalpy_brine, only extended by Air content */
-        /*Numerical coefficents from PALLISER (The values for F [] are given in ADAMS and BACHO)*/
-
-        static const Scalar f[] =
-        {2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10};
-
-        /*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
-        static const Scalar a[4][3] =
-        {{ 9633.6, -4080.0, +286.49 },
-            { +166.58, +68.577, -4.6856 },
-            { -0.90963, -0.36524, +0.249667E-1 },
-            { +0.17965E-2, +0.71924E-3, -0.4900E-4 }};
-
-        Scalar theta, h_NaCl;
-        Scalar m, h_ls, d_h, hw;
-        Scalar S_lSAT, delta_h;
-        int i, j;
-        XlNaCl = std::abs(XlNaCl); // Added by Vishal
-
-        theta = T - 273.15;
-
-        S_lSAT = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta; // This is NaCl specific (S_lSAT = 0.265234)
-       // std::cout<<"saturation limit : " << S_lSAT<< std::endl;
-
-        /*Regularization*/
-        if (XlNaCl > S_lSAT) {
-            XlNaCl = S_lSAT;
-        }
-
-        hw = H2O::liquidEnthalpy(T, p) /1E3; /* kJ/kg */
-
-        /*DAUBERT and DANNER*/
-        /*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T // enthalpy of Halite (Confirm with Dr. Melani)
-                        +((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
-
-        m = (1E3/58.44)*(XlNaCl/(1-XlNaCl));
-        i = 0;
-        j = 0;
-        d_h = 0;
-
-        for (i = 0; i<=3; i++) {
-            for (j=0; j<=2; j++) {
-                d_h = d_h + a[i][j] * pow(theta, i) * pow(m, j);
-            }
-        }
-        /* heat of dissolution for halite according to Michaelides 1971 */
-        delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
-
-        /* Enthalpy of brine without Air */
-        h_ls = (1-XlNaCl)*hw + XlNaCl*h_NaCl + XlNaCl*delta_h; /* kJ/kg */
-        return (h_ls);
-    }
-
-    static Scalar vaporPressure_(Scalar T, Scalar x)
-    {
-     Scalar p_0 = H2O::vaporPressure(T);//Saturation vapor pressure for pure water
-     Scalar p_s = p_0; // modified saturation vapor pressure for saline water
-// #if SALINIZATION
-//     Scalar vw = 18.0e-6;//[m3/mol] volume per unit mole of water
-//     Scalar R = 8.314;//[j/K mol] universal gas constant
-//     Scalar pi = (R * T * std::log(1- x))/vw;
-//     if (x > 0.26) // here we have hard coaded the solubility limit for NaCl
-//      pi = (R * T * std::log(0.74))/vw;
-//     p_s = p_0 * std::exp((pi*vw)/(R*T));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
-// #endif
-      return p_s;
-    }
 };
 
 } // end namespace
