@@ -278,7 +278,7 @@ public:
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
-     static Scalar precipitateHeatCapacity(int phaseIdx)
+    static Scalar precipitateHeatCapacity(int phaseIdx)
     {
         return NaCl::heatCapacity();
     }
@@ -698,7 +698,8 @@ private:
     }
 };
 
-} // end namespace
-} // end namespace
+} // end namespace FluidSystems
+
+} // end namespace Dumux
 
 #endif

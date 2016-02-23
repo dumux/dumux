@@ -50,8 +50,7 @@ class H2O_Tabulated = TabulatedComponent<Scalar, H2O<Scalar>>>
 class Brine : public Component<Scalar, Brine<Scalar, H2O_Tabulated> >
 {
 public:
-
-    typedef TabulatedComponent<Scalar, Dumux::H2O<Scalar>> H2O;
+    using H2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
 
     //HACK: If salinity is a pseudo-component, a constat value is used
     static Scalar constantSalinity;
@@ -387,6 +386,6 @@ public:
 template <class Scalar, class H2O>
 Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
