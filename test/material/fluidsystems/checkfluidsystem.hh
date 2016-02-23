@@ -33,21 +33,33 @@
 // include all fluid systems in dumux-stable
 #include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
+#include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/fluidsystems/brineair.hh>
+#include <dumux/material/fluidsystems/brineco2.hh>
+#include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/fluidsystems/h2on2kinetic.hh>
+#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
+#include <dumux/material/fluidsystems/h2on2o2.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/purewatersimple.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
-#include <dumux/material/fluidstates/pressureoverlay.hh>
-#include <dumux/material/fluidstates/saturationoverlay.hh>
-#include <dumux/material/fluidstates/temperatureoverlay.hh>
+#include <dumux/material/fluidstates/2p2c.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidstates/isothermalimmiscible.hh>
+#include <dumux/material/fluidstates/nonequilibrium.hh>
+#include <dumux/material/fluidstates/nonequilibriumenergy.hh>
+#include <dumux/material/fluidstates/nonequilibriummass.hh>
+#include <dumux/material/fluidstates/pressureoverlay.hh>
+#include <dumux/material/fluidstates/pseudo1p2c.hh>
+#include <dumux/material/fluidstates/saturationoverlay.hh>
+#include <dumux/material/fluidstates/temperatureoverlay.hh>
 
 namespace Dumux
 {
