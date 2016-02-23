@@ -189,13 +189,6 @@ public:
             mobilityFracture_[nPhaseIdx] =
                     MaterialLaw::krn(materialParamsFracture, fluidStateFracture_.saturation(wPhaseIdx))
                         / fluidStateFracture_.viscosity(nPhaseIdx);
-
-            // derivative resulted from BrooksCorey pc_Sw formulation
-            dsm_dsf_ = (1 - problem.spatialParams().swrm_) / (1 - problem.spatialParams().swrf_)
-                    * pow((problem.spatialParams().pdm_/ problem.spatialParams().pdf_),problem.spatialParams().lambdaM_)
-                    * (problem.spatialParams().lambdaM_ / problem.spatialParams().lambdaF_)
-                    * pow((satWFracture_ - problem.spatialParams().swrf_ ) / (1 - problem.spatialParams().swrf_),
-                            (problem.spatialParams().lambdaM_ / problem.spatialParams().lambdaF_) - 1);
         }// end if (node)
         ///////////////////////////////////////////////////////////////////////////////
         else
@@ -343,12 +336,6 @@ public:
     Scalar permeabilityFracture() const
     { return permeabilityFracture_; }
 
-    /*!
-     * \brief Returns the derivative dsm/dsf
-     */
-    Scalar dsm_dsf() const
-    { return dsm_dsf_;}
-
 protected:
     FluidState fluidState_;
     FluidState fluidStateFracture_;
@@ -370,7 +357,6 @@ protected:
     Scalar pcFracture_;
     Scalar pcMatrix_;
     Scalar pEntryMatrix_;
-    Scalar dsm_dsf_;
 
     bool isNodeOnFracture_;
 
