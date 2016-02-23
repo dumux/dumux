@@ -1,5 +1,5 @@
-\section[Fully-Implicit Model]{Solving a Problem Using a Fully-Coupled Model}
-\label{tutorial-coupled}
+\section[Fully-Implicit Model]{Solving a Problem Using a Fully-Implicit Model}
+\label{tutorial-implicit}
 
 The process of setting up a problem using \Dumux can be roughly divided into four parts:
 \begin{enumerate}
@@ -9,7 +9,7 @@ The process of setting up a problem using \Dumux can be roughly divided into fou
  \item Boundary conditions and initial conditions have to be specified.
 \end{enumerate}
 
-The problem being solved in this tutorial is illustrated in Figure \ref{tutorial-coupled:problemfigure}.
+The problem being solved in this tutorial is illustrated in Figure \ref{tutorial-implicit:problemfigure}.
 A rectangular domain with no-flow boundaries on the top and on the bottom, which is initially saturated with oil, is considered.
 Water infiltrates from the left side into the domain and replaces the oil. Gravity effects are neglected here.
 
@@ -40,7 +40,7 @@ Water infiltrates from the left side into the domain and replaces the oil. Gravi
   \node [anchor=west] at (7.5,0.4){$q_n = \unitfrac[3 \cdot 10^{-2}] {kg}{m^2s}$};
 \end{tikzpicture}
 \caption{Geometry of the tutorial problem with initial and boundary conditions.}
-\label{tutorial-coupled:problemfigure}
+\label{tutorial-implicit:problemfigure}
 \end{figure}
 
 The solved equations are the mass balances of water and oil:
@@ -64,26 +64,26 @@ The solved equations are the mass balances of water and oil:
 \end{align}
 
 \subsection{The Main File}
-Listing \ref{tutorial-coupled:mainfile} shows the main application file
-\texttt{tutorial/tutorial\_coupled.cc} for the coupled two-phase
+Listing \ref{tutorial-implicit:mainfile} shows the main application file
+\texttt{tutorial/tutorial\_implicit.cc} for the implicit two-phase
 model. This file has to be compiled and executed in order to solve the problem described
 above.
 
-\begin{lst}[File tutorial/tutorial\_coupled.cc]\label{tutorial-coupled:mainfile} \mbox{}
-  \lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_coupled.cc}
+\begin{lst}[File tutorial/tutorial\_implicit.cc]\label{tutorial-implicit:mainfile} \mbox{}
+  \lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_implicit.cc}
 \end{lst}
 
-From line \ref{tutorial-coupled:include-begin} to line
-\ref{tutorial-coupled:include-end} the required headers are included.
+From line \ref{tutorial-implicit:include-begin} to line
+\ref{tutorial-implicit:include-end} the required headers are included.
 
-At line \ref{tutorial-coupled:set-type-tag} the type tag of the
+At line \ref{tutorial-implicit:set-type-tag} the type tag of the
 problem, which is going to be simulated, is specified. All other data
 types can be retrieved via the \Dumux property system and only depend
 on this single type tag. For a more thorough introduction to the
 \Dumux property system, see chapter~\ref{sec:propertysystem}.
 
 After this, the default startup routine \texttt{Dumux::start()} is
-called on line \ref{tutorial-coupled:call-start}. This function deals
+called on line \ref{tutorial-implicit:call-start}. This function deals
 with parsing the command line arguments, reading the parameter file,
 setting up the infrastructure necessary for \Dune, loading the grid, and
 starting the simulation.
@@ -92,45 +92,45 @@ such as the initial time-step size, the simulation time or details of the grid,
 can be either specified by command line arguments of the form
 (\texttt{-ParameterName ParameterValue}), in the file specified by the
 \texttt{-ParameterFile} argument, or if the latter is not specified,
-in the file \mbox{\texttt{tutorial\_coupled.input}}.
+in the file \mbox{\texttt{tutorial\_implicit.input}}.
 If a parameter is
 specified on the command line as well as in the parameter file, the
 values provided in the command line have
-precedence. Listing~\ref{tutorial-coupled:parameter-file} shows the
+precedence. Listing~\ref{tutorial-implicit:parameter-file} shows the
 default parameter file for the tutorial problem.
 
-\begin{lst}[File tutorial/tutorial\_coupled.input]\label{tutorial-coupled:parameter-file} \mbox{}
-\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_coupled.input}
+\begin{lst}[File tutorial/tutorial\_implicit.input]\label{tutorial-implicit:parameter-file} \mbox{}
+\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_implicit.input}
 \end{lst}
 
 To provide an error message, the usage message which is displayed to
 the user if the simulation is called incorrectly, is printed via the
 custom function which is defined on
-line~\ref{tutorial-coupled:usage-function} in the main file.
+line~\ref{tutorial-implicit:usage-function} in the main file.
 In this function the usage message is customized to the problem at hand.
 This means that at least the necessary parameters are listed here.
 
 \subsection{The Problem Class}
-\label{tutorial-coupled:problem}
+\label{tutorial-implicit:problem}
 When solving a problem using \Dumux, the most important file is the
 so-called \textit{problem file} as shown in
-listing~\ref{tutorial-coupled:problemfile}.
+listing~\ref{tutorial-implicit:problemfile}.
 
-\begin{lst}[File tutorial/tutorialproblem\_coupled.hh]\label{tutorial-coupled:problemfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialproblem_coupled.hh}
+\begin{lst}[File tutorial/tutorialproblem\_implicit.hh]\label{tutorial-implicit:problemfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialproblem_implicit.hh}
 \end{lst}
 
 First, a new type tag is created for the problem in line
-\ref{tutorial-coupled:create-type-tag}.  In this case, the new type
+\ref{tutorial-implicit:create-type-tag}.  In this case, the new type
 tag inherits all properties from the \texttt{BoxTwoP} type tag, which
 means that for this problem the two-phase box model is chosen as
 discretization scheme. Further, it inherits from the spatial
 parameters type tag, which is defined in line
-\ref{tutorial-coupled:define-spatialparameters-typetag} of the problem-dependent spatial
+\ref{tutorial-implicit:define-spatialparameters-typetag} of the problem-dependent spatial
 parameters file.  On line
-\ref{tutorial-coupled:set-problem}, a problem class is attached to the
+\ref{tutorial-implicit:set-problem}, a problem class is attached to the
 new type tag, while the grid which is going to be used is defined in
-line \ref{tutorial-coupled:set-grid} -- in this case that is
+line \ref{tutorial-implicit:set-grid} -- in this case that is
 \texttt{Dune::YaspGrid}.  Since there's no uniform mechanism to
 allocate grids in \Dune, \Dumux features the concept of grid creators.
 In this case the generic \texttt{CubeGridCreator} which creates a
@@ -148,17 +148,17 @@ assumes immiscibility of the phases, but requires the components
 used for the wetting and non-wetting phases to be explicitly set. In
 this case, liquid water which uses the relations from
 IAPWS'97~\cite{IAPWS1997} is chosen as the wetting phase on line
-\ref{tutorial-coupled:wettingPhase} and liquid oil is chosen as the
-non-wetting phase on line \ref{tutorial-coupled:nonwettingPhase}. The
-last property, which is set in line \ref{tutorial-coupled:gravity},
+\ref{tutorial-implicit:wettingPhase} and liquid oil is chosen as the
+non-wetting phase on line \ref{tutorial-implicit:nonwettingPhase}. The
+last property, which is set in line \ref{tutorial-implicit:gravity},
 tells the model not to use gravity.
 
-\label{tutorial-coupled:boundaryStart}Parameters which are specific to a physical set-up to be simulated,
+\label{tutorial-implicit:boundaryStart}Parameters which are specific to a physical set-up to be simulated,
 such as boundary and initial conditions, source terms or temperature
 within the domain, and which are required to solve the differential
 equations of the models are specified via a \textit{problem} class. This class
 should be derived from \texttt{ImplicitPorousMediaProblem} as done in line
-\ref{tutorial-coupled:def-problem}.
+\ref{tutorial-implicit:def-problem}.
 
 The problem class always has at least five methods:
 \begin{itemize}
@@ -236,7 +236,7 @@ and the analogous \texttt{bBoxMin()} method are provided by the base
 class \texttt{Dumux::BoxProblem<TypeTag>}.
 
 \subsection{Defining Fluid Properties}
-\label{tutorial-coupled:description-fluid-class}
+\label{tutorial-implicit:description-fluid-class}
 The \Dumux distribution includes some common substances which can be
 used out of the box. The properties of the pure substances (such as
 the components nitrogen, water, or the pseudo-component air) are
@@ -248,13 +248,15 @@ interactions such as solubility effects come into play and properties
 of mixtures such as density or enthalpy are of interest. These
 interactions are defined by {\em fluid systems}, which are located in
 \verb+dumux/material/fluidsystems+. A more thorough overview of the
-\Dumux fluid framework can be found in chapter~\ref{sec:fluidframework}.
+\Dumux fluid framework can be found 
+at \url{http://www.dumux.org/doxygen-stable/html-2.9/modules.php}
+%in chapter~\ref{sec:fluidframework}.
 
 % In this example, a class for the definition of a two-phase system is used. This allows for the choice
 % of the two components oil and water and for access of the parameters that are relevant for the two-phase model.
 
 \subsection{Defining Spatially Dependent Parameters}
-\label{tutorial-coupled:description-spatialParameters}
+\label{tutorial-implicit:description-spatialParameters}
 In \Dumux, many properties of the porous medium can depend on the
 spatial location. Such properties are the \textit{intrinsic
   permeability}, the parameters of the \textit{capillary pressure} and
@@ -266,42 +268,42 @@ class.
 If the box discretization is used, the spatial parameters class
 should be derived from the base class
 \texttt{Dumux::BoxSpatialParams<TypeTag>}. Listing
-\ref{tutorial-coupled:spatialparametersfile} shows the file \\
-\verb+tutorialspatialparams_coupled.hh+:
+\ref{tutorial-implicit:spatialparametersfile} shows the file \\
+\verb+tutorialspatialparams_implicit.hh+:
 
-\begin{lst}[File tutorial/tutorialspatialparams\_coupled.hh]\label{tutorial-coupled:spatialparametersfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=25, firstnumber=25]{../../tutorial/tutorialspatialparams_coupled.hh}
+\begin{lst}[File tutorial/tutorialspatialparams\_implicit.hh]\label{tutorial-implicit:spatialparametersfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=25, firstnumber=25]{../../tutorial/tutorialspatialparams_implicit.hh}
 \end{lst}
 
 First, the spatial parameters type tag is created on line
-\ref{tutorial-coupled:define-spatialparameters-typetag}. The type tag
+\ref{tutorial-implicit:define-spatialparameters-typetag}. The type tag
 for the problem is then derived from it. The \Dumux properties defined on
 the type tag for the spatial parameters are, for example, the spatial
 parameters class itself (line
-\ref{tutorial-coupled:set-spatialparameters}) or the capillary
+\ref{tutorial-implicit:set-spatialparameters}) or the capillary
 pressure/relative permeability relations\footnote{Taken together, the
   capillary pressure and the relative permeability relations are
   called \textit{material law}.} which ought to be used by the
 simulation (line
-\ref{tutorial-coupled:rawlaw} \label{tutorial-coupled:materialLaw}).
+\ref{tutorial-implicit:rawlaw} \label{tutorial-implicit:materialLaw}).
 \Dumux provides several material laws in the folder
 \verb+dumux/material/fluidmatrixinteractions+.  The selected one --
 here it is a relation according to a regularized version of
 \textsc{Brooks} \& \textsc{Corey} -- is included in line
-\ref{tutorial-coupled:rawLawInclude}.
-After the selection, an adapter class is specified in line \ref{tutorial-coupled:eff2abs} to
+\ref{tutorial-implicit:rawLawInclude}.
+After the selection, an adapter class is specified in line \ref{tutorial-implicit:eff2abs} to
 translate between effective and absolute saturations. Like this,
 residual saturations can be specified in a generic way.  As only the employed
 material law knows the names of the parameters which it
 requires, it provides a parameter class
 \texttt{RegularizedBrooksCoreyParams} which has the type
 \texttt{Params} and which is defined in line
-\ref{tutorial-coupled:matLawObjectType}. In this case, the spatial
+\ref{tutorial-implicit:matLawObjectType}. In this case, the spatial
 parameters only require a single set of parameters which means that it
 only requires a single material parameter object as can be seen in
-line~\ref{tutorial-coupled:matParamsObject}.
+line~\ref{tutorial-implicit:matParamsObject}.
 
-In line \ref{tutorial-coupled:permeability}, a method returning the
+In line \ref{tutorial-implicit:permeability}, a method returning the
 intrinsic permeability is specified. As can be seen, the method has
 to be called with three arguments:
 \begin{description}
@@ -322,21 +324,21 @@ a $\texttt{dim} \times \texttt{dim}$-matrix, where \texttt{dim} is the
 dimension of the grid.
 
 The method \texttt{porosity()} defined in line
-\ref{tutorial-coupled:porosity} is called with the same arguments as
+\ref{tutorial-implicit:porosity} is called with the same arguments as
 \texttt{intrinsicPermeability()} and returns a scalar value for
 porosity dependent on the position in the domain.
 
 Next, the method \texttt{materialLawParams()}, defined in line
-\ref{tutorial-coupled:matLawParams}, returns the
+\ref{tutorial-implicit:matLawParams}, returns the
 \verb+materialParams_+ object that is applied at the specified
 position. Although in this case only one object is returned, in
 general, the problem may be heterogeneous, which necessitates
 returning different objects at different positions in space.  While
 the selection of the type of this object was already explained (line
-\ref{tutorial-coupled:rawLawInclude}), some specific parameter values
+\ref{tutorial-implicit:rawLawInclude}), some specific parameter values
 of the used material law, such as the \textsc{Brooks} \&
 \textsc{Corey} parameters, are still needed. This is done in the
-constructor at line \ref{tutorial-coupled:setLawParams}.  Depending on
+constructor at line \ref{tutorial-implicit:setLawParams}.  Depending on
 the type of the \texttt{materialLaw} object, the \texttt{set}-methods
 might be different than those given in this example. The name of the
 access / set functions as well as the rest of the implementation of
@@ -344,11 +346,11 @@ the material description can be found in
 \verb+dumux/material/fluidmatrixinteractions/2p+.
 
 \subsection{Exercises}
-\label{tutorial-coupled:exercises}
+\label{tutorial-implicit:exercises}
 The following exercises will give you the opportunity to learn how you
 can change soil parameters, boundary conditions, run-time parameters
 and fluid properties in \Dumux. Possible solutions to these exercises are given in the tutorial folder in the
-sub-folder \texttt{solutions\_coupled} as \texttt{.diff} files. In these files only
+sub-folder \texttt{solutions\_implicit} as \texttt{.diff} files. In these files only
 the lines that are different from the original file are listed.
 They can be opened using the program \texttt{kompare}, simply type \texttt{kompare SOLUTIONFILE} into the terminal.
 
@@ -360,7 +362,7 @@ to make only some small changes in the tutorial files.
 
 \item \textbf{Running the Program} \\
 To get an impression what the results should look like you can compile and run the original version of
-the coupled tutorial model by typing \texttt{make tutorial\_coupled} followed by \texttt{./tutorial\_coupled}.
+the implicit tutorial model by typing \texttt{make tutorial\_implicit} followed by \texttt{./tutorial\_implicit}.
 Note, that the time-step size is automatically adapted during the simulation.
 For the visualization of the results using ParaView, please refer to section \ref{quick-start-guide}.
 
@@ -368,19 +370,19 @@ For the visualization of the results using ParaView, please refer to section \re
   Change the size of the model domain so that you get a rectangle with
   edge lengths of $\text{x} = \unit[400]{m}$ and $\text{y} = \unit[500]{m}$ and with
   discretization lengths of $\Delta \text{x} = \unit[20]{m}$ and $\Delta
-  \text{y} = \unit[20]{m}$. For this you have to edit the parameter file (\texttt{tutorial\_coupled.input})
+  \text{y} = \unit[20]{m}$. For this you have to edit the parameter file (\texttt{tutorial\_implicit.input})
   and run the program again.\\
   Note, that you do not have to recompile the program if you make changes to the parameter file.
 
 
   Change the boundary conditions in the file
-  \texttt{tutorialproblem\_coupled.hh} so that water enters from the
+  \texttt{tutorialproblem\_implicit.hh} so that water enters from the
   bottom and oil is extracted from the top boundary. The right and the
   left boundary should be closed for water and oil fluxes. \\
   The Neumannn Boundary conditions are multiplied by the normal (pointing outwards),
   so an influx is negative, an outflux always positive.
   Such information can easily be found in the documentation of the functions (also look into base classes).
-  Compile the main file by typing \texttt{make tutorial\_coupled} and
+  Compile the main file by typing \texttt{make tutorial\_implicit} and
   run the model as explained above.
 
   \item \textbf{Changing  the Shape of the Discrete Elements} \\
@@ -388,12 +390,12 @@ For the visualization of the results using ParaView, please refer to section \re
   simplex grids, like \texttt{ALUGrid} or \texttt{UGGrid}. If this is not the case,
   please skip this exercise.
   Change the types of elements used for discretizing the domain. In line
-  \ref{tutorial-coupled:set-gridcreator} of the problem
+  \ref{tutorial-implicit:set-gridcreator} of the problem
   file  the type of gridcreator is chosen. By choosing a different grid creator
   you can discretize the domain with different elements.
   Hint: You can find gridcreators in \texttt{dumux/io/}, change for example from
   \texttt{cubegridcreator.hh} to \texttt{simplexgridcreator.hh}.
-  For ALUGrid you have to change the ALUGrid type in line \ref{tutorial-coupled:set-grid-ALU} from \texttt{Dune::cube}
+  For ALUGrid you have to change the ALUGrid type in line \ref{tutorial-implicit:set-grid-ALU} from \texttt{Dune::cube}
   to \texttt{Dune::simplex}.
   The shape of the employed elements can be visualized in ParaView by choosing \texttt{Surface with Edges}.
 
@@ -414,16 +416,18 @@ To do that, you have to select different components via the property system in t
 \end{enumerate}
 If you want to take a closer look on how the fluid classes are defined and which
 substances are already available please browse through the files in the directory
-\texttt{/dumux/material/components} and read chapter~\ref{sec:fluidframework}.
+\texttt{/dumux/material/components} and read 
+the doxygen documentation \url{http://www.dumux.org/doxygen-stable/html-2.9/modules.php}.
+%chapter~\ref{sec:fluidframework}.
 
 \item \textbf{Use a Full-Fledged Fluid System} \\
 \Dumux usually describes fluid mixtures via \textit{fluid systems}, see also chapter \ref{sec:fluidframework}.
-In order to include a fluid system, you first have to comment out lines \ref{tutorial-coupled:2p-system-start}
-to \ref{tutorial-coupled:2p-system-end} in the problem file. If you use eclipse,
+In order to include a fluid system, you first have to comment out lines \ref{tutorial-implicit:2p-system-start}
+to \ref{tutorial-implicit:2p-system-end} in the problem file. If you use eclipse,
 this can easily be done by pressing \textit{Ctrl + Shift + 7} --
 the same as to cancel the comment later on.\\
-Now include the file \texttt{fluidsystems/h2oairfluidsystem.hh} in the material
-folder, and set a type property \texttt{FluidSystem} (see line \ref{tutorial-coupled:set-fluidsystem})
+Now include the file \texttt{fluidsystems/h2oair.hh} in the material
+folder, and set a type property \texttt{FluidSystem} (see line \ref{tutorial-implicit:set-fluidsystem})
 with the appropriate type, which is either:\\
  \texttt{Dumux::FluidSystems::H2OAir<typename GET\_PROP\_TYPE(TypeTag, Scalar)>}\\
 or in the \Dumux tongue\\
@@ -435,7 +439,7 @@ be initialized -- i.e. the tables need to be filled with values.
 The initialization of the fluid system is normally done in the constructor of the
 problem by calling \texttt{GET\_PROP\_TYPE(TypeTag, FluidSystem)::init();}.
 Remember that the constructor function always has the same name as the respective
-class, i.e. \texttt{TutorialProblemCoupled(..)}.\\
+class, i.e. \texttt{TutorialProblemImplicit(..)}.\\
 As water flow replacing a gas is much faster, test your simulation only until $2000$
 seconds and start with a time-step of $1$ second.\\
 Please reverse the changes made in this part of the exercise, as we will continue
@@ -447,8 +451,8 @@ to use immiscible phases from here on and hence do not need a complex fluid syst
  regularized Brooks-Corey law for the
   relative permeability and for the capillary pressure saturation relationship.
   To do that you have
-  to change the material law property (line \ref{tutorial-coupled:eff2abs}) in
-  \texttt{tutorialspatialparams\_coupled.hh}. Leave the type definition of \texttt{Scalar} and remove
+  to change the material law property (line \ref{tutorial-implicit:eff2abs}) in
+  \texttt{tutorialspatialparams\_implicit.hh}. Leave the type definition of \texttt{Scalar} and remove
  the type definition of \texttt{BrooksAndCorey} in the private section of
  the property definition. Exchange the \texttt{EffToAbsLaw} with the \texttt{LinearMaterial} law type in the
 public section.
@@ -457,11 +461,11 @@ public section.
 of the linear law and the respective \texttt{set}-functions can be found
  in the file \\
  \verb+dumux/material/fluidmatrixinteractions/2p/linearmaterialparams.hh+.\\
-Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspatialparams\_coupled.hh}.
+Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspatialparams\_implicit.hh}.
 
 \item \textbf{Heterogeneities}  \\
   Set up a model domain with the soil properties given in Figure
-  \ref{tutorial-coupled:exercise1_d}. Adjust the boundary conditions
+  \ref{tutorial-implicit:exercise1_d}. Adjust the boundary conditions
   so that water is again flowing from the left to the right of the
 \begin{figure}[ht]
 \centering
@@ -482,7 +486,7 @@ Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspat
   \node [anchor=west] at (3.2,1){$\phi=0.3$};
 \end{tikzpicture}
 \caption{Exercise 1g: Set-up of a model domain with a heterogeneity. Grid
-spacing: $\Delta x = \unit[20]{m}$ $\Delta y = \unit[20]{m}$.}\label{tutorial-coupled:exercise1_d}
+spacing: $\Delta x = \unit[20]{m}$ $\Delta y = \unit[20]{m}$.}\label{tutorial-implicit:exercise1_d}
 \end{figure}
 domain. You can use the fluids of exercise 1b.\\
 \textbf{Hint:} The current position of the control volume can be obtained
@@ -496,22 +500,22 @@ sizes.
 
 \subsubsection{Exercise 2}
 For this exercise you should create a new problem file analogous to
-the file \texttt{tutorialproblem\_coupled.hh} (e.g. with the name
-\texttt{ex2\_tutorialproblem\_coupled.hh} and new spatial parameters \texttt{ex2\_tutorial\allowbreak spatialparams\_coupled.hh},
-just like \texttt{tutorialspatialparams\_coupled.hh}.
+the file \texttt{tutorialproblem\_implicit.hh} (e.g. with the name
+\texttt{ex2\_tutorialproblem\_implicit.hh} and new spatial parameters \texttt{ex2\_tutorial\allowbreak spatialparams\_implicit.hh},
+just like \texttt{tutorialspatialparams\_implicit.hh}.
 
 The new files should contain the definition of new classes with names
 that relate to the file name, such as
-\texttt{Ex2TutorialProblemCoupled}. Make sure that you also adjust the
-guardian macros in lines \ref{tutorial-coupled:guardian1} and
-\ref{tutorial-coupled:guardian2}
+\texttt{Ex2TutorialProblemImplicit}. Make sure that you also adjust the
+guardian macros in lines \ref{tutorial-implicit:guardian1} and
+\ref{tutorial-implicit:guardian2}
 in the header files (e.g. change
-\mbox{\texttt{DUMUX\_TUTORIALPROBLEM\_COUPLED\_HH}} to\\
-\mbox{\texttt{DUMUX\_EX2\_TUTORIALPROBLEM\_COUPLED\_HH}}). Include the new problem file in \texttt{tutorial\_coupled.cc}.
+\mbox{\texttt{DUMUX\_TUTORIALPROBLEM\_IMPLICIT\_HH}} to\\
+\mbox{\texttt{DUMUX\_EX2\_TUTORIALPROBLEM\_IMPLICIT\_HH}}). Include the new problem file in \texttt{tutorial\_implicit.cc}.
 Besides adjusting the guardian macros, the new problem file should define and
 use a new type tag for the problem as well as a new problem class
-e.g. \mbox{\texttt{Ex2TutorialProblemCoupled}}. The type tag definition has
-to be adjusted in \texttt{tutorial\_coupled.cc} too (see line \ref{tutorial-coupled:set-type-tag}).
+e.g. \mbox{\texttt{Ex2TutorialProblemImplicit}}. The type tag definition has
+to be adjusted in \texttt{tutorial\_implicit.cc} too (see line \ref{tutorial-implicit:set-type-tag}).
 Similarly adjust your new spatial parameters file. If you are using Eclipse there is
 a very helpful function called \texttt{Refactor} which you can use to change
 all similar variables or types in your current file in one go. Just place the
@@ -522,9 +526,9 @@ newly defined spatial parameter class to the
 type tag.
 
 After this, change the run-time parameters so that they match the
-domain described by figure \ref{tutorial-coupled:ex2_Domain}. Adapt
+domain described by figure \ref{tutorial-implicit:ex2_Domain}. Adapt
 the problem class so that the boundary conditions are consistent with
-figure \ref{tutorial-coupled:ex2_BC}. Initially, the domain is fully
+figure \ref{tutorial-implicit:ex2_BC}. Initially, the domain is fully
 saturated with water and the pressure is $p_w = \unit[5 \times
 10^5]{Pa}$. Oil infiltrates from the left side. Create a grid
 with $20$ cells in $x$-direction and $10$ cells in $y$-direction. The
@@ -565,7 +569,7 @@ initial time-step size of $\unit[100]{s}$. Then, you can compile the program.
   \node [anchor=south west] at (11,-1.0){$\lambda = 2, p_e = \unit[1500]{Pa}$};
   \draw [->] (11,1.5) -- (7,2.5);
 \end{tikzpicture}
-\caption{Set-up of the model domain and the soil parameters}\label{tutorial-coupled:ex2_Domain}
+\caption{Set-up of the model domain and the soil parameters}\label{tutorial-implicit:ex2_Domain}
 \end{figure}
 
 \begin{figure}[ht]
@@ -586,7 +590,7 @@ initial time-step size of $\unit[100]{s}$. Then, you can compile the program.
   \node [anchor=west] at(-4,2){$S_n = 1$};
   \node [anchor=west] at(-4,3){$p_w = \unit[5 \cdot 10^5]{Pa}$};
 \end{tikzpicture}
-\caption{Boundary Conditions}\label{tutorial-coupled:ex2_BC}
+\caption{Boundary Conditions}\label{tutorial-implicit:ex2_BC}
 \end{figure}
 
 \begin{itemize}
@@ -602,7 +606,7 @@ via \textit{parameter input files}.
 In the code, parameters can be read via the macro
 \texttt{GET\_RUNTIME\_PARAM(TypeTag, Scalar, 
 MyWonderful\allowbreak Group.MyWonderfulParameter);}. In this exercise we will explore the possibilities of the
-parameter file. For this we take a look at the file \texttt{ex3\_tutorial\_coupled.input} in the \texttt{solutions\_coupled} folder.
+parameter file. For this we take a look at the file \texttt{ex3\_tutorial\_implicit.input} in the \texttt{solutions\_implicit} folder.
 Besides the parameters which you already used in the parameter file above,
 there are parameters which can be used to control the
 Newton and the Linear solver (groups: \texttt{Newton} and \texttt{LinearSolver}).
@@ -610,10 +614,10 @@ Run-time parameters used in the problem or spatial parameters classes
 can also be set with the respective group names (\texttt{Problem} and \texttt{SpatialParams})
 in the parameter file. For the latter parameters to be included in the program
 they have to be assigned in the problem or spatial parameters constructor. This
-can be done as shown in the files \texttt{ex3\_tutorialproblem\_coupled.diff}
-and \texttt{ex3\_tutorialspatialparams\_coupled.diff} in the \texttt{solutions\_coupled} folder. Add some (for
+can be done as shown in the files \texttt{ex3\_tutorialproblem\_implicit.diff}
+and \texttt{ex3\_tutorialspatialparams\_implicit.diff} in the \texttt{solutions\_implicit} folder. Add some (for
 example \texttt{Newton.MaxSteps} and \texttt{Problem.EnableGravity}) to the
-parameter file \texttt{tutorial\_coupled.input} and observe what
+parameter file \texttt{tutorial\_implicit.input} and observe what
 happens if they are modified.
 
 \subsubsection{Exercise 4: Create a New Component}
@@ -630,9 +634,9 @@ conditions. For this, redo the steps of exercise 2 and create a new problem and
 spatial parameters file.
 
 After this, change the run-time parameters so that they match the
-domain described by figure \ref{tutorial-coupled:ex5_Domain}. Adapt
+domain described by figure \ref{tutorial-implicit:ex5_Domain}. Adapt
 the problem class so that the boundary conditions are consistent with
-figure \ref{tutorial-coupled:ex5_BC}. Here you can see the time dependence of the
+figure \ref{tutorial-implicit:ex5_BC}. Here you can see the time dependence of the
 nonwetting saturation, where water infiltrates only during $\unit[10^5]{s}$ and
 $\unit[4 \cdot 10^5]{s}$. To implement these time dependencies you need the actual
 time $t_{n+1}=t_n + \Delta t$ and the endtime of the simulation. For this you can
@@ -673,7 +677,7 @@ you should set the parameter \texttt{MaxTimeStepSize} for the group \texttt{Time
   \node [anchor=south west] at (2.5,1.8){\textsc{Brooks-Corey Law}};
   \node [anchor=south west] at (2.5,1.0){$\lambda = 2, \; p_e = \unit[500]{Pa}$};
 \end{tikzpicture}
-\caption{Set-up of the model domain and the soil parameters}\label{tutorial-coupled:ex5_Domain}
+\caption{Set-up of the model domain and the soil parameters}\label{tutorial-implicit:ex5_Domain}
 \end{figure}
 
 \begin{figure}[ht]
@@ -703,7 +707,7 @@ you should set the parameter \texttt{MaxTimeStepSize} for the group \texttt{Time
 
     \node [anchor=base] at (5,3){$1-\sin\left(\pi\frac{\text{time}-10^5}{3\cdot 10^5 }\right)$};
 \end{tikzpicture}
-\caption{Time Dependent Boundary Conditions}\label{tutorial-coupled:ex5_BC}
+\caption{Time Dependent Boundary Conditions}\label{tutorial-implicit:ex5_BC}
 \end{figure}
 
 \begin{itemize}

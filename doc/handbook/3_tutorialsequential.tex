@@ -1,4 +1,4 @@
-\section[Decoupled model]{Solving a problem using a Decoupled Model}\label{tutorial-decoupled}
+\section[Sequential model]{Solving a problem using a Sequential Model}\label{tutorial-sequential}
 The process of solving a problem using \Dumux can be roughly divided into four parts:
 \begin{enumerate}
  \item The geometry of the problem and correspondingly a grid have to be defined.
@@ -7,7 +7,7 @@ The process of solving a problem using \Dumux can be roughly divided into four p
  \item A suitable model has to be chosen.
 \end{enumerate}
 
-In contrast to the last section, we now apply a decoupled solution procedure, a
+In contrast to the last section, we now apply a sequential solution procedure, a
 so-called \textit{IMPET} (\textit{IM}plicit \textit{P}ressure \textit{E}xplicit
 \textit{T}ransport) algorithm. This means that the pressure equation is first
 solved using an implicit method. The resulting velocities are then used to solve
@@ -17,7 +17,7 @@ of both pressure- and transport step. Primary variables, according to default
 settings of the model, are the pressure and the saturation of the wetting phase.
 
 The problem which is solved in this tutorial is illustrated in figure
-\ref{tutorial-decoupled:problemfigure}. A rectangular domain with no flow
+\ref{tutorial-sequential:problemfigure}. A rectangular domain with no flow
 boundaries on the top and at the bottom, which is initially saturated with oil,
 is considered. Water infiltrates from the left side into the domain. Gravity
 effects are neglected.
@@ -49,77 +49,77 @@ effects are neglected.
   \node [anchor=west] at (7.5,0.4){$q_n = \unitfrac[3 \cdot 10^{-2}] {kg}{m^2s}$};
 \end{tikzpicture}
 \caption{Geometry of the tutorial problem with initial and boundary conditions.}
-\label{tutorial-decoupled:problemfigure}
+\label{tutorial-sequential:problemfigure}
 \end{figure}
 
-Listing \ref{tutorial-decoupled:mainfile} shows how the main file, which has to be
+Listing \ref{tutorial-sequential:mainfile} shows how the main file, which has to be
 executed, has to be set up, if the problem described above is to be solved using
-a decoupled model. This main file can be found in the directory \texttt{/tutorial}
+a sequential model. This main file can be found in the directory \texttt{/tutorial}
 of the stable part of \Dumux.
 
-\begin{lst}[File tutorial/tutorial\_decoupled.cc]\label{tutorial-decoupled:mainfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_decoupled.cc}
+\begin{lst}[File tutorial/tutorial\_sequential.cc]\label{tutorial-sequential:mainfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_sequential.cc}
 \end{lst}
 
-First, from line \ref{tutorial-decoupled:include-begin} to line
-\ref{tutorial-decoupled:include-end} the \Dune and \Dumux files containing
+First, from line \ref{tutorial-sequential:include-begin} to line
+\ref{tutorial-sequential:include-end} the \Dune and \Dumux files containing
 essential functions and classes are included.
 
-At line \ref{tutorial-decoupled:set-type-tag} the type tag of the
+At line \ref{tutorial-sequential:set-type-tag} the type tag of the
 problem which is going to be simulated is set. All other data types
 can be retrieved by the \Dumux property system and only depend on this
 single type tag. For an introduction to the
 property system, see section \ref{sec:propertysystem}.
 
 After this \Dumux' default startup routine \texttt{Dumux::start()} is
-called in line \ref{tutorial-decoupled:call-start}. This function deals
+called in line \ref{tutorial-sequential:call-start}. This function deals
 with parsing the command line arguments, reading the parameter file,
 setting up the infrastructure necessary for \Dune, loading the grid, and
 starting the simulation. All parameters can
 be either specified by command line arguments of the form
 (\texttt{-ParameterName ParameterValue}), in the file specified by the
 \texttt{-parameterFile} argument, or if the latter is not specified,
-in the file \texttt{tutorial\_decoupled.input}. If a parameter is
+in the file \texttt{tutorial\_sequential.input}. If a parameter is
 specified on the command line as well as in the parameter file, the
 values provided in the command line have
-precedence. Listing~\ref{tutorial-decoupled:parameter-file} shows the
+precedence. Listing~\ref{tutorial-sequential:parameter-file} shows the
 default parameter file for the tutorial problem.
 
-\begin{lst}[File tutorial/tutorial\_decoupled.input]\label{tutorial-decoupled:parameter-file} \mbox{}
-\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_decoupled.input}
+\begin{lst}[File tutorial/tutorial\_sequential.input]\label{tutorial-sequential:parameter-file} \mbox{}
+\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_sequential.input}
 \end{lst}
 
 To provide an error message, the usage message which is displayed to
 the user if the simulation is called incorrectly, is printed via the
 custom function which is defined on
-line~\ref{tutorial-decoupled:usage-function}. In this function the usage
+line~\ref{tutorial-sequential:usage-function}. In this function the usage
 message is customized to the problem at hand. This means that at least
 the necessary parameters are listed here.
 
 \subsection{The Problem Class}
-\label{decoupled_problem}
+\label{sequential_problem}
 
 When solving a problem using \Dumux, the most important file is the
 so-called \textit{problem file} as shown in listing
-\ref{tutorial-decoupled:problemfile} of
-\texttt{tutorialproblem\_decoupled.hh}.
+\ref{tutorial-sequential:problemfile} of
+\texttt{tutorialproblem\_sequential.hh}.
 
-\begin{lst}[File tutorial/tutorialproblem\_decoupled.hh]\label{tutorial-decoupled:problemfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialproblem_decoupled.hh}
+\begin{lst}[File tutorial/tutorialproblem\_sequential.hh]\label{tutorial-sequential:problemfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialproblem_sequential.hh}
 \end{lst}
 
-First, both \Dune  grid handlers and the decoupled model of \Dumux
+First, both \Dune  grid handlers and the sequential model of \Dumux
 have to be included. Then, a new type tag is created for the problem
-in line \ref{tutorial-decoupled:create-type-tag}.  In this case, the
-new type tag inherits all properties defined for the \texttt{DecoupledTwoP}
-type tag, which means that for this problem the two-phase decoupled approach
+in line \ref{tutorial-sequential:create-type-tag}.  In this case, the
+new type tag inherits all properties defined for the \texttt{SequentialTwoP}
+type tag, which means that for this problem the two-phase sequential approach
 is chosen as discretization scheme (defined via the include in line
-\ref{tutorial-decoupled:parent-problem}). On line \ref{tutorial-decoupled:set-problem},
+\ref{tutorial-sequential:parent-problem}). On line \ref{tutorial-sequential:set-problem},
 a problem class is attached to the new type tag, while the grid which
-is going to be used is defined in line \ref{tutorial-decoupled:set-grid-type} --
+is going to be used is defined in line \ref{tutorial-sequential:set-grid-type} --
 in this case an \texttt{YaspGrid} is created. Since there's no uniform mechanism to
 allocate grids in \Dune, \Dumux features the concept of grid creators.
-In this case the generic \texttt{CubeGridCreator} (line \ref{tutorial-decoupled:set-gridcreator}) which creates a
+In this case the generic \texttt{CubeGridCreator} (line \ref{tutorial-sequential:set-gridcreator}) which creates a
 structured hexahedron grid of a specified size and resolution. For
 this grid creator the  physical domain of the grid is specified via the
 run-time parameters \texttt{Grid.upperRightX},
@@ -134,41 +134,41 @@ Next, we select the material of the simulation: In the case of a pure two-phase
 model, each phase is a bulk fluid, and the complex (compositional) fluidsystems
 do not need to be used. However, they can be used (see exercise 1 \ref{dec-ex1-fluidsystem}).
 Instead, we use a simplified fluidsystem container that provides classes
-for liquid and gas phases, line \ref{tutorial-decoupled:2p-system-start} to
-\ref{tutorial-decoupled:2p-system-end}. These are linked to the appropriate
-chemical species in line \ref{tutorial-decoupled:wettingPhase} and
-\ref{tutorial-decoupled:nonwettingPhase}. For all parameters that depend
+for liquid and gas phases, line \ref{tutorial-sequential:2p-system-start} to
+\ref{tutorial-sequential:2p-system-end}. These are linked to the appropriate
+chemical species in line \ref{tutorial-sequential:wettingPhase} and
+\ref{tutorial-sequential:nonwettingPhase}. For all parameters that depend
 on space, such as the properties of the soil, the specific spatial parameters
 for the problem of interest are specified in line
-\ref{tutorial-decoupled:set-spatialparameters}.
+\ref{tutorial-sequential:set-spatialparameters}.
 
-Now we arrive at some model parameters of the applied two-phase decoupled
-model. First, in line  \ref{tutorial-decoupled:cflflux} a flux function for the
+Now we arrive at some model parameters of the applied two-phase sequential
+model. First, in line  \ref{tutorial-sequential:cflflux} a flux function for the
 evaluation of the cfl-criterion is defined. This is optional as there exists also
 a default flux function. The choice depends on the problem which has to be solved.
 For cases which are not advection dominated the one chosen here is more reasonable.
-Line \ref{tutorial-decoupled:cflfactor} assigns the CFL-factor to be used in the
+Line \ref{tutorial-sequential:cflfactor} assigns the CFL-factor to be used in the
 simulation run, which scales the time-step size (kind of security factor). The last
-property in line \ref{tutorial-decoupled:gravity}
+property in line \ref{tutorial-sequential:gravity}
 is optional and tells the model not to use gravity.
 
 After all necessary information is written into the property system and
-its namespace is closed in line \ref{tutorial-decoupled:propertysystem-end},
-the problem class is defined in line \ref{tutorial-decoupled:def-problem}.
+its namespace is closed in line \ref{tutorial-sequential:propertysystem-end},
+the problem class is defined in line \ref{tutorial-sequential:def-problem}.
 As its property, the problem class itself is also derived from a parent,
 \texttt{IMPESProblem2P}. The class constructor (line
-\ref{tutorial-decoupled:constructor-problem}) is able to hold two vectors,
+\ref{tutorial-sequential:constructor-problem}) is able to hold two vectors,
 which is not needed in this tutorial.
 
 Beside the definition of the boundary and initial conditions (discussed in
-subsection \ref{tutorial-coupled:problem} from 4$^{th}$ paragraph on page
-\pageref{tutorial-coupled:boundaryStart}), the problem class also contains
+subsection \ref{tutorial-implicit:problem} from 4$^{th}$ paragraph on page
+\pageref{tutorial-implicit:boundaryStart}), the problem class also contains
 general information about the current simulation. First, the name used by
 the \texttt{VTK-writer} to generate output is defined in the method of line
-\ref{tutorial-decoupled:name}, and line \ref{tutorial-decoupled:restart} indicates
-whether restart files are written. As decoupled schemes usually feature small
+\ref{tutorial-sequential:name}, and line \ref{tutorial-sequential:restart} indicates
+whether restart files are written. As sequential schemes usually feature small
 time-steps, it can be usefull to set an output interval larger than 1. The respective
-function is called in line \ref{tutorial-decoupled:outputinterval}, which gets the output interval as argument.
+function is called in line \ref{tutorial-sequential:outputinterval}, which gets the output interval as argument.
 
 The following methods all have in common that they may be dependent on space.
 Hence, they all have either an \texttt{element} or an \texttt{intersection} as their
@@ -177,33 +177,33 @@ the method is defined in an element, such as
     initial values, or on an intersection, such as a boundary condition. As it may
     be sufficient to return values only based on a position, \Dumux models can also
     access functions in the problem with the form \mbox{\texttt{...AtPos(GlobalPosition\& globalPos)}},
-    without an \Dune entity, as one can see in line \ref{tutorial-decoupled:bctype}.
+    without an \Dune entity, as one can see in line \ref{tutorial-sequential:bctype}.
 
 There are the methods for general parameters, source- or
-sinkterms, boundary conditions (lines \ref{tutorial-decoupled:bctype} to
-\ref{tutorial-decoupled:neumann}) and initial values for the transported
-quantity in line \ref{tutorial-decoupled:initial}. For more information
+sinkterms, boundary conditions (lines \ref{tutorial-sequential:bctype} to
+\ref{tutorial-sequential:neumann}) and initial values for the transported
+quantity in line \ref{tutorial-sequential:initial}. For more information
 on the functions, consult the documentation in the code.
 
-\subsection{The Definition of the Parameters that are Dependent on Space}\label{tutorial-decoupled:description-spatialParameters}
+\subsection{The Definition of the Parameters that are Dependent on Space}\label{tutorial-sequential:description-spatialParameters}
 
-Listing \ref{tutorial-decoupled:spatialparamsfile} shows the file
-\verb+tutorialspatialparams_decoupled.hh+:
+Listing \ref{tutorial-sequential:spatialparamsfile} shows the file
+\verb+tutorialspatialparams_sequential.hh+:
 
-\begin{lst}[File tutorial/tutorialspatialparams\_decoupled.hh]\label{tutorial-decoupled:spatialparamsfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialspatialparams_decoupled.hh}
+\begin{lst}[File tutorial/tutorialspatialparams\_sequential.hh]\label{tutorial-sequential:spatialparamsfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialspatialparams_sequential.hh}
 \end{lst}
-As this file only slightly differs from the coupled version, consult
-chapter \ref{tutorial-coupled:description-spatialParameters} for explanations.
+As this file only slightly differs from the implicit version, consult
+chapter \ref{tutorial-implicit:description-spatialParameters} for explanations.
 However, as a standard Finite Volume scheme is used, in contrast to the box-method
-in the coupled case, the argument list here is the same as for the problem
+in the implicit case, the argument list here is the same as for the problem
 functions: Either an \texttt{element}, or only the global position if the function is called \texttt{...AtPos(...)}.
 
 \subsection{Exercises}
 \label{tutorial-deoucpled:exercises}
 The following exercises will give you the opportunity to learn how you can change
 soil parameters, boundary conditions and fluid properties in \Dumux and to play along
-with the decoupled modelling framework.
+with the sequential modelling framework.
 
 \subsubsection{Exercise 1}
 \renewcommand{\labelenumi}{\alph{enumi})}
@@ -212,24 +212,24 @@ For Exercise 1 you only have to make some small changes in the tutorial files.
 \item \textbf{Altering output}
 
 To get an impression what the results should look like you can first run the
-original version of the decoupled tutorial model by typing  \texttt{./tutorial\_decoupled}.
-The runtime parameters which are set can be found in the input file (listing~\ref{tutorial-decoupled:parameter-file}).
-If the input file has the same name than the main file (e.g. \texttt{tutorial\_decoupled.cc}
-and \texttt{tutorial\_decoupled.input}), it is automatically chosen. If the name differs
-the program has to be started typing \texttt{./tutorial\_decoupled -parameterFile <filename>.input}.
-For more options you can also type \texttt{./tutorial\_decoupled -h}. For the
+original version of the sequential tutorial model by typing  \texttt{./tutorial\_sequential}.
+The runtime parameters which are set can be found in the input file (listing~\ref{tutorial-sequential:parameter-file}).
+If the input file has the same name than the main file (e.g. \texttt{tutorial\_sequential.cc}
+and \texttt{tutorial\_sequential.input}), it is automatically chosen. If the name differs
+the program has to be started typing \texttt{./tutorial\_sequential -parameterFile <filename>.input}.
+For more options you can also type \texttt{./tutorial\_sequential -h}. For the
 visualisation with paraview please refer to \ref{quick-start-guide}.\\
 As you can see, the simulation creates many output files. To reduce these in order
 to perform longer simulations, change the method responsible for output (line
-\ref{tutorial-decoupled:outputinterval} in the file \texttt{tutorialproblem\_\allowbreak decoupled})
+\ref{tutorial-sequential:outputinterval} in the file \texttt{tutorialproblem\_\allowbreak sequential})
 as to write an output only every 20 time-steps. Compile the main file by typing
-\texttt{make tutorial\_decoupled} and run the model. Now, run the simulation for 5e5 seconds.
+\texttt{make tutorial\_sequential} and run the model. Now, run the simulation for 5e5 seconds.
 
 \item \textbf{Changing the Model Domain and the Boundary Conditions} \\
 Change the size of the model domain so that you get a rectangle
 with edge lengths of x = 300 m \\  and y = 300 m and with discretisation lengths
 of  $\Delta \text{x} = 20$ m and $\Delta \text{y} = 10$ m. \\
-Change the boundary conditions in the file \texttt{tutorialproblem\_decoupled.hh}
+Change the boundary conditions in the file \texttt{tutorialproblem\_sequential.hh}
 so that water enters from the bottom and oil flows out at the top boundary. The
 right and the left boundary should be closed for water and oil fluxes. The Neumannn
 Boundary conditions are multiplied by the normal (pointing outwards), so an influx
@@ -258,7 +258,7 @@ substances are already available please browse through the files in the director
 \item \textbf{Use the \Dumux fluid system}\label{dec-ex1-fluidsystem} \\
 \Dumux usually organizes fluid mixtures via a \texttt{fluidsystem}, see also chapter
 \ref{sec:fluidframework}. In order to include a fluidsystem you first have to comment
-the lines \ref{tutorial-decoupled:2p-system-start} to \ref{tutorial-decoupled:2p-system-end}
+the lines \ref{tutorial-sequential:2p-system-start} to \ref{tutorial-sequential:2p-system-end}
 in the problem file. If you use eclipse, this can easily be done by pressing
 \textit{str + shift + 7} -- the same as to cancel the comment later on.\\
 Now include the file \texttt{fluidsystems/h2oairfluidsystem.hh} in the material folder,
@@ -267,11 +267,11 @@ and set a property \texttt{FluidSystem} with the appropriate type,
 uses tabularized fluid data, which need to be initialized (i.e. the tables need to be
 filled with values) in the constructor body of the current problem by adding
 \texttt{GET\_PROP\_TYPE(TypeTag, FluidSystem)::init();}. Remember that the constructor
-function always has the same name as the respective class, i.e. \texttt{TutorialProblemDecoupled(..)}.\\
+function always has the same name as the respective class, i.e. \texttt{TutorialProblemSequential(..)}.\\
 To avoid the initialization, use the simpler version of water \texttt{Dumux::SimpleH2O}
 or a non-tabulated version \texttt{Dumux::H2O}. This can be done by setting the property
 \texttt{Components} type \texttt{H2O},
-as is done in all the test problems of the decoupled 2p2c model.\\
+as is done in all the test problems of the sequential 2p2c model.\\
 The density of the gas is magnitudes smaller than that of oil, so please decrease
 the outflow rate to $q_n = 3 \times 10^{-4}$ $\left[\frac{\textnormal{kg}}{\textnormal{m}^2 \textnormal{s}}\right]$.
 Also reduce the simulation duration to 2e4 seconds.\\
@@ -309,34 +309,34 @@ feeling of the time-step sizes.
 
 \subsubsection{Exercise 2}
 For this exercise you should create a new problem file analogous to
-the file \texttt{tutorialproblem\_decoupled.hh} (e.g. with the name
-\texttt{ex2\_tutorialproblem\_decoupled.hh} and new spatial parameters
-just like \texttt{tutorial\-spatialparams\_decoupled.hh}. These files need to
-be included in the file \texttt{tutorial\_decoupled.cc}.
+the file \texttt{tutorialproblem\_sequential.hh} (e.g. with the name
+\texttt{ex2\_tutorialproblem\_sequential.hh} and new spatial parameters
+just like \texttt{tutorial\-spatialparams\_sequential.hh}. These files need to
+be included in the file \texttt{tutorial\_sequential.cc}.
 
 Each new files should contain the definition of a new class with a
-name that relates to the file name, such as \texttt{Ex2TutorialProblemDecoupled}.
+name that relates to the file name, such as \texttt{Ex2TutorialProblemSequential}.
 Make sure that you also adjust the guardian
-macros in lines \ref{tutorial-decoupled:guardian1} and \ref{tutorial-decoupled:guardian2}
+macros in lines \ref{tutorial-sequential:guardian1} and \ref{tutorial-sequential:guardian2}
  in the header files (e.g. change \\
-\texttt{DUMUX\_TUTORIALPROBLEM\_DECOUPLED\_HH} to
-\texttt{DUMUX\_EX2\_TUTORIALPROBLEM\_DECOUPLED\_HH}).  Beside also adjusting the guardian macros,
+\texttt{DUMUX\_TUTORIALPROBLEM\_SEQUENTIAL\_HH} to
+\texttt{DUMUX\_EX2\_TUTORIALPROBLEM\_SEQUENTIAL\_HH}).  Beside also adjusting the guardian macros,
 the new problem file should define and use a new type tag for the problem as well as a new problem class
-e.g. \texttt{Ex2TutorialProblemDecoupled}. Make sure to assign your newly defined spatial
+e.g. \texttt{Ex2TutorialProblemSequential}. Make sure to assign your newly defined spatial
 parameter class to the \texttt{SpatialParams} property for the new
 type tag.
 
 After this, change the domain size (parameter input file) to match the domain described
-by figure \ref{tutorial-decoupled:ex2_Domain}. Adapt the problem class
+by figure \ref{tutorial-sequential:ex2_Domain}. Adapt the problem class
 so that the boundary conditions are consistent with figure
-\ref{tutorial-decoupled:ex2_BC}. Initially, the domain is fully saturated
+\ref{tutorial-sequential:ex2_BC}. Initially, the domain is fully saturated
 with water and the pressure is $p_w = 2 \times 10^5 \, \text{Pa}$ . Oil
 infiltrates from the left side. Create a grid with $20$ cells in
 $x$-direction and $10$ cells in $y$-direction. The simulation time
 should be set to $\unit[1e6]{s}$.
 
 Now include your new problem file in the main file and replace the
-\texttt{TutorialProblemDecoupled} type tag by the one you've created and
+\texttt{TutorialProblemSequential} type tag by the one you've created and
 compile the program.
 
 
@@ -373,7 +373,7 @@ compile the program.
   \node [anchor=south west] at (11,-1.0){$\lambda = 2, p_e = \unit[1500]{Pa}$};
   \draw [->] (11,1.5) -- (7,2.5);
 \end{tikzpicture}
-\caption{Set-up of the model domain and the soil parameters}\label{tutorial-decoupled:ex2_Domain}
+\caption{Set-up of the model domain and the soil parameters}\label{tutorial-sequential:ex2_Domain}
 \end{figure}
 
 \begin{figure}[ht]
@@ -394,7 +394,7 @@ compile the program.
   \node [anchor=west] at(-4,2){$S_w = 0$};
   \node [anchor=west] at(-4,3){$p_w = \unit[2 \cdot 10^5]{Pa}$};
 \end{tikzpicture}
-\caption{Boundary Conditions}\label{tutorial-decoupled:ex2_BC}
+\caption{Boundary Conditions}\label{tutorial-sequential:ex2_BC}
 \end{figure}
 
 \begin{itemize}
@@ -414,7 +414,7 @@ the main file looks rather empty: The parameter file \texttt{test\_box2p.input}
 is read by a standard start procedure, which is called in the main function.
 This should be adapted for your problem at hand. The program run has to be
 called with the parameter file as argument. As this is a basic \Dumux feature,
-the procedure is the equivalent in the decoupled as in the box models.
+the procedure is the equivalent in the sequential as in the box models.
 In the code, parameters can be read via the macro
 \texttt{GET\_RUNTIME\_PARAM(TypeTag, Scalar, MyWonderfulGroup.MyWonderfulParameter);}.
 In \texttt{test\_2p}, \texttt{MyWonderfulGroup} is the group \texttt{SpatialParams}
@@ -440,9 +440,9 @@ conditions. For this, redo the steps of exercise 2 and create a new problem and
 spatial parameters file.
 
 After this, change the run-time parameters so that they match the
-domain described by figure \ref{tutorial-decoupled:ex5_Domain}. Adapt
+domain described by figure \ref{tutorial-sequential:ex5_Domain}. Adapt
 the problem class so that the boundary conditions are consistent with
-figure \ref{tutorial-decoupled:ex5_BC}. Here you can see the time dependence of
+figure \ref{tutorial-sequential:ex5_BC}. Here you can see the time dependence of
 the wetting saturation, where water infiltrates only during $10^5\,\text{s}$ and
 $4 \cdot 10^5\,\text{s}$. To implement these time dependencies you need the actual
 time $t_{n+1}=t_n + \Delta t$ and the endtime of the simulation. For this you can
@@ -484,7 +484,7 @@ every $100^{th}$ time-step (see exercise 1a). Then, you can compile the program.
   \node [anchor=south west] at (2.5,1.8){\textsc{Brooks-Corey Law}};
   \node [anchor=south west] at (2.5,1.0){$\lambda = 2, \; p_e = \unit[500]{Pa}$};
 \end{tikzpicture}
-\caption{Set-up of the model domain and the soil parameters}\label{tutorial-decoupled:ex5_Domain}
+\caption{Set-up of the model domain and the soil parameters}\label{tutorial-sequential:ex5_Domain}
 \end{figure}
 
 %  \draw (0,0) sin (5,5) cos (10,0);
@@ -511,7 +511,7 @@ every $100^{th}$ time-step (see exercise 1a). Then, you can compile the program.
 
     \node [anchor=base] at (5,2){$\sin(\pi\frac{\text{time}-10^5}{3\cdot 10^5 })$};
 \end{tikzpicture}
-\caption{Time Dependent Boundary Conditions}\label{tutorial-decoupled:ex5_BC}
+\caption{Time Dependent Boundary Conditions}\label{tutorial-sequential:ex5_BC}
 \end{figure}
 
 \begin{itemize}
@@ -521,11 +521,11 @@ every $100^{th}$ time-step (see exercise 1a). Then, you can compile the program.
 \end{itemize}
 
 \subsubsection{Exercise 6}
-If both the coupled and the decoupled tutorial are completed, one should have
+If both the implicit and the sequential tutorial are completed, one should have
 noticed that the function arguments in the problem function differ slighty, as
 the numerical models differ. However, both are functions that depend on space,
 so both models can also work with functions based ond \mbox{\texttt{...AtPos(GlobalPosition \& globalPos)}},
-no matter if we model coupled or decoupled. Try to formulate a spatial parameters
-file that works with both problems, the coupled and the decoupled. Therein, only
+no matter if we model implicit or sequential. Try to formulate a spatial parameters
+file that works with both problems, the implicit and the sequential. Therein, only
 use functions at the position.
 

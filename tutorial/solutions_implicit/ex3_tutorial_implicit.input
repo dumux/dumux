@@ -1,0 +1,30 @@
+[Problem]
+OutflowRateOil = 3e-2 # Rate of oil outflow for the Neumann boundary
+EnableGravity = true
+
+[SpatialParams]
+Perm = 1e-8 # Peremeability
+Porosity = 0.15
+
+[TimeManager]
+TEnd = 100000 # duration of the simulation [s]
+DtInitial = 10 # initial time step size [s]
+
+[Grid]
+UpperRightX = 100 # x-coordinate of the upper-right corner of the grid [m]
+UpperRightY = 50 # y-coordinate of the upper-right corner of the grid [m]
+NumberOfCellsX = 20 # x-resolution of the grid
+NumberOfCellsY = 10 # y-resolution of the grid
+
+[Newton]
+EnableShiftCriterion = true # activate relative criterion for convergence
+MaxRelativeShift = 1e-8 # set relative tolerance
+EnableResidualCriterion = false # activate absolute criterion
+ResidualReduction = 1e-5 # set absolute tolerance
+SatisfyResidualAndShiftCriterion = false # use absolute and relative criteria
+TargetSteps = 10
+MaxSteps = 18 # if maximum number of steps are reached, the newton solver will not converge
+
+[LinearSolver]
+ResidualReduction = 1e-9 # factor for reduction of error for iterative linear solvers
+MaxIterations = 5000 # number of iterations for iterative linear solvers

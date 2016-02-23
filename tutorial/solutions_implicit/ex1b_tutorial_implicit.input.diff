@@ -1,0 +1,16 @@
+Index: tutorial_implicit.input
+===================================================================
+--- tutorial_implicit.input	(revision 15171)
++++ tutorial_implicit.input	(working copy)
+@@ -3,7 +3,7 @@
+ DtInitial = 10 # initial time step size [s]
+ 
+ [Grid]
+-UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
+-UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
+-NumberOfCellsX = 100 # x-resolution of the grid
+-NumberOfCellsY = 1 # y-resolution of the grid
++UpperRightX = 400 # x-coordinate of the upper-right corner of the grid [m]
++UpperRightY = 500 # y-coordinate of the upper-right corner of the grid [m]
++NumberOfCellsX = 20 # x-resolution of the grid
++NumberOfCellsY = 25 # y-resolution of the grid

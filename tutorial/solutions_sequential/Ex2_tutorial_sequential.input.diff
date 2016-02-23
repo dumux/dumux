@@ -1,0 +1,18 @@
+Index: tutorial_decoupled.input
+===================================================================
+--- tutorial_decoupled.input	(revision 15171)
++++ tutorial_decoupled.input	(working copy)
+@@ -1,9 +1,9 @@
+ [TimeManager]
+-TEnd = 100000 # duration of the simulation [s]
++TEnd = 1e6 # duration of the simulation [s]
+ DtInitial = 10 # initial time step size [s]
+ 
+ [Grid]
+ UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
+-UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
+-NumberOfCellsX = 100 # x-resolution of the grid
+-NumberOfCellsY = 1 # y-resolution of the grid
++UpperRightY = 50 # y-coordinate of the upper-right corner of the grid [m]
++NumberOfCellsX = 20 # x-resolution of the grid
++NumberOfCellsY = 10 # y-resolution of the grid
