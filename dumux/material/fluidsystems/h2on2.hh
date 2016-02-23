@@ -654,31 +654,23 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                Scalar temperature  = fluidState.temperature(phaseIdx) ;
-                Scalar pressure = fluidState.pressure(phaseIdx);
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                return  0.578078;   // conductivity of water[W / (m K ) ] IAPWS evaluated at p=.1 MPa, T=8°C
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
-        else{// gas phase
-
-            // Isobaric Properties for Nitrogen in: NIST Standard
-            // Reference Database Number 69, Eds. P.J. Linstrom and
-            // W.G. Mallard evaluated at p=.1 MPa, T=8°C, does not
-            // change dramatically with p,T
-            Scalar lambdaPureN2 = 0.024572;
-            if (useComplexRelations){
+        else
+        {
+            Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
+            if (useComplexRelations)
+            {
                 Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
                 Scalar lambdaN2 = xN2 * lambdaPureN2;
 
                 // Assuming Raoult's, Daltons law and ideal gas
                 // in order to obtain the partial density of water in the air phase
-                Scalar temperature = fluidState.temperature(phaseIdx) ;
-                Scalar pressure = fluidState.pressure(phaseIdx);
                 Scalar partialPressure  = pressure * xH2O;
 
                 Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);

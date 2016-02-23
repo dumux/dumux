@@ -761,25 +761,16 @@ public:
         Scalar temperature  = fluidState.temperature(phaseIdx) ;
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                // Database of National Institute of Standards and Technology
-                 // Isobaric conductivity at 293.15 K
-                 return 0.59848;   // conductivity of liquid water[W / (m K ) ]
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
-        else{// gas phase
-
-            // Isobaric Properties for Nitrogen and Oxygen in: NIST Standard
-            // Reference Database Number 69, Eds. P.J. Linstrom and
-            // W.G. Mallard evaluated at p=.1 MPa, does not
-            // change dramatically with p
-            // and can be interpolated linearly with temperature
-            Scalar lambdaPureN2 = 6.525e-5 * temperature + 0.024031;
-            Scalar lambdaPureO2 = 8.044e-5 * temperature + 0.024486;
-            if (useComplexRelations){
+        else
+        {
+            Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
+            Scalar lambdaPureO2 = O2::gasThermalConductivity(temperature, pressure);
+            if (useComplexRelations)
+            {
                 Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
                 Scalar xO2 = fluidState.moleFraction(phaseIdx, O2Idx);
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);

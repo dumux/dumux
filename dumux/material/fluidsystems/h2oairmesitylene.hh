@@ -526,31 +526,19 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        if (phaseIdx == wPhaseIdx){
-            const Scalar temperature  = fluidState.temperature(phaseIdx) ;
-            const Scalar pressure = fluidState.pressure(phaseIdx);
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
             return H2O::liquidThermalConductivity(temperature, pressure);
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            //Thermal Conductivity of p-Xylene
-            //taken from the Dortmund Data Bank
-            //see http://www.ddbst.de/en/EED/PCP/TCN_C176.php
-            const Scalar lambdaPureXylene = 0.13;
-            return lambdaPureXylene; // conductivity of p-xylene [W/(m K)]
+            return NAPL::liquidThermalConductivity(temperature, pressure);
         }
         else if (phaseIdx == gPhaseIdx)
         {
-            //gPhaseIdx i.e. air
-            // Isobaric Properties for Nitrogen in: NIST Standard
-            // see http://webbook.nist.gov/chemistry/fluid/
-            // evaluated at p=.1 MPa, T=20°C
-            // Nitrogen: 0.025398
-            // Oxygen: 0.026105
-            // lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
-            const Scalar lambdaPureAir = 0.0255535;
-
-            return lambdaPureAir; // conductivity of pure air [W/(m K)]
+            return Air::gasThermalConductivity(temperature, pressure);
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

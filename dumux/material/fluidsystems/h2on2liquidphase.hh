@@ -572,14 +572,11 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                Scalar temperature  = fluidState.temperature(phaseIdx) ;
-                Scalar pressure = fluidState.pressure(phaseIdx);
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                return  0.578078;   // conductivity of water[W / (m K ) ] IAPWS evaluated at p=.1 MPa, T=8C
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
         else //gas phase index
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);

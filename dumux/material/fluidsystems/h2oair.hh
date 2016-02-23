@@ -722,31 +722,20 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        // PRELIMINARY, values for 293.15 K - has to be generalized
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                const Scalar temperature  = fluidState.temperature(phaseIdx) ;
-                const Scalar pressure = fluidState.pressure(phaseIdx);
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                // Database of National Institute of Standards and Technology
-                // Isobaric conductivity at 293.15 K
-                return 0.59848;   // conductivity of liquid water[W / (m K ) ]
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
-        else{// gas phase
-            // Isobaric Properties for Nitrogen in: NIST Standard
-            // see http://webbook.nist.gov/chemistry/fluid/
-            // evaluated at p=.1 MPa, T=20°C
-            // Nitrogen: 0.025398
-            // Oxygen: 0.026105
-            // lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
-            const Scalar lambdaPureAir = 0.0255535;
-
-            return lambdaPureAir; // conductivity of pure air [W/(m K)]
+        else if (phaseIdx == nPhaseIdx)
+        {
+            return Air::gasThermalConductivity(temperature, pressure);
         }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     /*!

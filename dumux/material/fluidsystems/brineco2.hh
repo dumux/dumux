@@ -551,12 +551,14 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        // TODO way too simple!
         if (phaseIdx == lPhaseIdx)
-            return  0.6; // conductivity of water[W / (m K ) ]
-
-        // gas phase
-        return 0.025; // conductivity of air [W / (m K ) ]
+        {
+            return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx),
+                                                  fluidState.pressure(phaseIdx));
+        }
+        else // gas phase
+            return CO2::gasThermalConductivity(fluidState.temperature(phaseIdx),
+                                               fluidState.pressure(phaseIdx));
     }
 
     /*!
