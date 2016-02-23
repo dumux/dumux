@@ -377,11 +377,9 @@ public:
 
         switch (phaseIdx) {
             case lPhaseIdx:
-                return liquidDensity_(temperature,
-                                pressure,
-                                fluidState.moleFraction(lPhaseIdx, AirIdx),
-                                fluidState.moleFraction(lPhaseIdx, H2OIdx),
-                                fluidState.massFraction(lPhaseIdx, NaClIdx));
+                return Brine::liquidDensity(temperature,
+                              pressure,
+                              fluidState.massFraction(lPhaseIdx, NaClIdx));
             case gPhaseIdx:
                 return gasDensity_(temperature,
                             pressure,
@@ -475,7 +473,7 @@ public:
         else if (phaseIdx == lPhaseIdx)
         {
         if (compIdx == H2OIdx)
-            return vaporPressure_(T,fluidState.moleFraction(lPhaseIdx,NaClIdx))/p;
+            return Brine::vaporPressure(T)/p;
         else if (compIdx == AirIdx)
             return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
         else
@@ -697,6 +695,17 @@ public:
         return Brine_Air::molalityNaCl(salinity);// massfraction
       }
 
+private:
+    static Scalar gasDensity_(Scalar T, Scalar pg, Scalar xgH2O)
+    {
+        //Dalton' Law
+        const Scalar pH2O = xgH2O*pg;
+        const Scalar pAir = pg - pH2O;
+        const Scalar gasDensityAir = Air::gasDensity(T, pAir);
+        const Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
+        const Scalar gasDensity = gasDensityAir + gasDensityH2O;
+        return gasDensity;
+    }
 };
 
 } // end namespace
