@@ -171,28 +171,9 @@ public:
         /* heat of dissolution for halite according to Michaelides 1971 */
         const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
 
-        /* Enthalpy of brine without air */
+        /* Enthalpy of brine without any dissolved gas */
         const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
         return h_ls1*1E3; /*J/kg*/
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
-     * See:
-     *
-     * IAPWS: "Revised Release on the IAPWS Industrial Formulation
-     * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
-     */
-     DUNE_DEPRECATED_MSG("liquidHeatCapacity(Scalar temperature, Scalar pressure) is deprecated. Use liquidHeatCapacity(Scalar temperature, Scalar pressure, Scalar salinity) instead.")
-    static const Scalar liquidHeatCapacity(Scalar temperature,
-                                        Scalar pressure)
-    {
-        return liquidHeatCapacity(temperature, pressure, constantSalinity);
     }
 
     /*!
@@ -313,7 +294,7 @@ public:
                     300*pMPa -
                     2400*pMPa*salinity +
                     TempC*(
-                        80.0 -
+                        80.0 +
                         3*TempC -
                         3300*salinity -
                         13*pMPa +
