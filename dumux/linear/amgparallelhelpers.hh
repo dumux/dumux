@@ -1016,6 +1016,7 @@ struct LinearAlgebraPreparator
     }
 };
 
+#if HAVE_MPI
 /*!
  * \brief Specialization for the parallel case.
  */
@@ -1069,7 +1070,7 @@ struct LinearAlgebraPreparator<TypeTag, true>
         }
     }
 };
-
+#endif
 
 } // end namespace Dumux
 
