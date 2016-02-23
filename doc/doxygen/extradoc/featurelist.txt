@@ -8,7 +8,7 @@
  * implemented in DuMuX and in which respective test problem
  * they can be found.
  *
- * <div style="width:70%;overflow:auto;">
+ * <div style="width:100%;overflow:auto;">
  *
  * \section  Freeflow
  * |Tests | |Fluidsystem | Gridmanager | Mass-/Molefractionfraction | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | Gravity | TurbulenceModels | Comments |
