@@ -347,6 +347,20 @@ public:
         // no difference for supercritical CO2
         return gasViscosity(temperature, pressure);
     }
+
+    /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of CO2.
+     *
+     * Thermal conductivity of CO2 at T=20°C, see:
+     * http://www.engineeringtoolbox.com/carbon-dioxide-d_1000.html
+     *
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+        return 0.087;
+    }
 };
 
 template <class Scalar, class CO2Tables>
