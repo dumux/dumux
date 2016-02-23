@@ -124,17 +124,6 @@ public:
             Valgrind::CheckDefined(J);
             Valgrind::CheckDefined(b);
 
-            /*
-            std::cout << FluidSystem::phaseName(phaseIdx) << "Phase composition: ";
-            for (int i = 0; i < FluidSystem::numComponents; ++i)
-                std::cout << fluidState.moleFraction(phaseIdx, i) << " ";
-            std::cout << "\n";
-            std::cout << FluidSystem::phaseName(phaseIdx) << "Phase phi: ";
-            for (int i = 0; i < FluidSystem::numComponents; ++i)
-                std::cout << fluidState.fugacityCoeff(phaseIdx, i) << " ";
-            std::cout << "\n";
-            */
-
             // Solve J*x = b
             x = 0;
             try { J.solve(x, b); }
@@ -144,21 +133,6 @@ public:
             //std::cout << "original delta: " << x << "\n";
 
             Valgrind::CheckDefined(x);
-
-            /*
-            std::cout << FluidSystem::phaseName(phaseIdx) << "Phase composition: ";
-            for (int i = 0; i < FluidSystem::numComponents; ++i)
-                std::cout << fluidState.moleFraction(phaseIdx, i) << " ";
-            std::cout << "\n";
-            std::cout << "J: " << J << "\n";
-            std::cout << "rho: " << fluidState.density(phaseIdx) << "\n";
-            std::cout << "delta: " << x << "\n";
-            std::cout << "defect: " << b << "\n";
-
-            std::cout << "J: " << J << "\n";
-
-            std::cout << "---------------------------\n";
-            */
 
             // update the fluid composition. b is also used to store
             // the defect for the next iteration.
@@ -302,11 +276,6 @@ protected:
         if (sumDelta > maxDelta)
             x /= (sumDelta/maxDelta);
 
-        //Scalar curDefect = calculateDefect_(fluidState, phaseIdx, targetFug);
-        //Scalar nextDefect;
-        //Scalar sumMoleFrac = 0.0;
-        //ComponentVector newB(1e100);
-        //for (int numTries = 0; numTries < 1; ++numTries) {
         // change composition
         for (unsigned int i = 0; i < numComponents; ++i)
         {
@@ -327,37 +296,6 @@ protected:
         }
 
         paramCache.updateComposition(fluidState, phaseIdx);
-
-            /*
-            // if the sum of the mole fractions gets 0, we take the
-            // original composition divided by 100
-            if (sumMoleFrac < 1e-10) {
-                for (int i = 0; i < numComponents; ++i) {
-                    fluidState.setMoleFraction(phaseIdx, i, origComp[i]/100);
-                }
-                return relError;
-            }
-            */
-
-            /*
-            // calculate new residual
-            for (int i = 0; i < numComponents; ++i) {
-                Scalar phi = FluidSystem::computeFugacityCoeff(fluidState,
-                                                               phaseIdx,
-                                                               i);
-                fluidState.setFugacityCoeff(phaseIdx, i, phi);
-            }
-
-            nextDefect = calculateDefect_(fluidState, phaseIdx, targetFug);
-            //std::cout << "try delta: " << x << "\n";
-            //std::cout << "defect: old=" << curDefect << " new=" << nextDefect << "\n";
-            if (nextDefect <= curDefect)
-                break;
-
-             // divide delta vector
-             x /= 2;
-        }
-            */
 
         return relError;
     }
