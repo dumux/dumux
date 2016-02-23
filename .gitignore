@@ -4,6 +4,10 @@ build-*
 # auto-saved files
 *~
 
+# hidden files
+.cproject
+.project
+
 # left overs from git rebase
 *.orig
 *.rej
@@ -17,6 +21,7 @@ build-*
 *.dvi
 *.idx
 *.out
+*.tdo
 *.toc
 
 # always consider files containing source code regardless of their name
