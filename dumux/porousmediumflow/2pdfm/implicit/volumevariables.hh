@@ -212,6 +212,8 @@ public:
                                                                   fvGeometry,
                                                                   scvIdx);
 
+        permeabilityFracture_ = problem.spatialParams().intrinsicPermeabilityFracture(element, fvGeometry, scvIdx);
+
         // After modifying the Matrix saturations we have to update the fluid state and the matrix mobilities
         PrimaryVariables updatedMatrixPV;
         updatedMatrixPV[pressureIdx] = priVars[pressureIdx];
