@@ -159,11 +159,12 @@ public:
                 boxSurface_[I]      += scvfArea;
                 boxSurface_[J]      += scvfArea;
 
-                FluxVariables fluxVars(this->problem_(),
-                            element,
-                            fvGeometry,
-                            fIdx,
-                            elemVolVars);
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element,
+                                fvGeometry,
+                                fIdx,
+                                elemVolVars);
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                     GlobalPosition faceDarcyVelocity = fluxVars.velocity(phaseIdx);

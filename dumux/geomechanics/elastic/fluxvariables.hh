@@ -69,7 +69,7 @@ class ElasticFluxVariablesBase
 
 public:
     /*
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -79,29 +79,64 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ElasticFluxVariablesBase(const Problem &problem,
             const Element &element,
             const FVElementGeometry &fvGeometry,
             int fIdx,
             const ElementVolumeVariables &elemVolVars,
             const bool onBoundary = false)
-    : fvElemGeom_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
-        gradU_ = Scalar(0);
-        gradUTransposed_ = Scalar(0);
-        epsilon_ = Scalar(0);
-        sigma_ = Scalar(0);
+        DUNE_THROW(Dune::InvalidStateException, "The FluxVariables now have to be default contructed. "
+                                                << "In case you have your own FluxVariables you have to make them default "
+                                                << " constructable too. All calls to the old constructor will throw this error. "
+                                                << "Everywhere you instantiate FluxVariables do this now by default constructing "
+                                                << "a FluxVariables object (FluxVariables fluxVars;) and then updating it where "
+                                                << "the update method has the same signature as the old constructor (fluxVars.update(...).)");
+    }
 
-        lambda_ = 0.;
-        mu_ = 0.;
-        divU_ = 0.;
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ElasticFluxVariablesBase() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     * \todo The fvGeometry should be better initialized, passed and stored as an std::shared_ptr
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        fvGeometryPtr_ = &fvGeometry;
+        onBoundary_ = onBoundary;
+        faceIdx_ = fIdx;
+
+        gradU_ = 0.0;
+        gradUTransposed_ = 0.0;
+        epsilon_ = 0.0;
+        sigma_ = 0.0;
+
+        lambda_ = 0.0;
+        mu_ = 0.0;
+        divU_ = 0.0;
 
         calculateGradients_(problem, element, elemVolVars);
         calculateStrain_(problem, element, elemVolVars);
         calculateStress_(problem, element, elemVolVars);
-    };
-
-public:
+    }
 
         /*!
          * \brief Return a stress tensor component [Pa] at the integration point.
@@ -138,16 +173,16 @@ public:
           * \brief Returns the sub-control-volume face.
           */
         const SCVFace &face() const
-        { return fvElemGeom_.subContVolFace[faceIdx_]; }
+        { return fvGeometry_().subContVolFace[faceIdx_]; }
 
 protected:
-        /*!
-         * \brief Calculation of the solid displacement gradients.
-         *
-         *        \param problem The considered problem file
-         *        \param element The considered element of the grid
-         *        \param elemVolVars The parameters stored in the considered element
-         */
+    /*!
+     * \brief Calculation of the solid displacement gradients.
+     *
+     *        \param problem The considered problem file
+     *        \param element The considered element of the grid
+     *        \param elemVolVars The parameters stored in the considered element
+     */
     void calculateGradients_(const Problem &problem,
             const Element &element,
             const ElementVolumeVariables &elemVolVars)
@@ -158,7 +193,7 @@ protected:
         // calculate gradients
         DimVector tmp(0.0);
         for (int idx = 0;
-                idx < fvElemGeom_.numScv;
+                idx < fvGeometry_().numScv;
                 idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
@@ -232,9 +267,12 @@ protected:
         sigma_ += secondTerm;
     }
 
-    const FVElementGeometry &fvElemGeom_;
-    const int faceIdx_;
-    const bool onBoundary_;
+    // return const reference to fvGeometry
+    const FVElementGeometry& fvGeometry_() const
+    { return *fvGeometryPtr_; }
+
+    int faceIdx_;
+    bool onBoundary_;
 
     // Lame parameter mu at the integration point
     Scalar mu_;
@@ -251,6 +289,9 @@ protected:
     DimMatrix epsilon_;
     // stress tensor at the integration point
     DimMatrix sigma_;
+
+private:
+    const FVElementGeometry* fvGeometryPtr_; //!< Information about the geometry of discretization
 
 };
 

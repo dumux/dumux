@@ -161,11 +161,12 @@ public:
             {
                 stress = 0.0;
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                FluxVariables fluxVars(this->problem_(),
-                              element,
-                              fvGeometry,
-                              fIdx,
-                              elemVolVars);
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element,
+                                fvGeometry,
+                                fIdx,
+                                elemVolVars);
 
                 stress = fluxVars.sigma();
                 stress /= fvGeometry.numScvf;

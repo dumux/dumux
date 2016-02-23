@@ -220,8 +220,13 @@ public:
             {
                 int fIdx = intersection.indexInInside();
 
-                FluxVariables fluxVars(this->problem_(), element, fvGeometry,
-                                       fIdx, elemVolVars, false);
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element,
+                                fvGeometry,
+                                fIdx,
+                                elemVolVars,
+                                false);
 
                 asImp_().writeFluxVarsData(fluxVarsFile, fluxVars);
                 fluxVarsFile << std::endl;
@@ -598,13 +603,13 @@ public:
 
             for (int fIdx = 0; fIdx < fvGeometry.numScvf; ++fIdx)
             {
-
-                FluxVariables fluxVars(this->problem_(),
-                                    element,
-                                    fvGeometry,
-                                    fIdx,
-                                    elemVolVars,
-                                    false);
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element,
+                                fvGeometry,
+                                fIdx,
+                                elemVolVars,
+                                false);
 
                 GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
 
@@ -678,12 +683,13 @@ public:
             for (const auto& intersection : intersections(this->gridView_(), element))
             {
                 int fIdx = intersection.indexInInside();
-                FluxVariables fluxVars(this->problem_(),
-                                                    element,
-                                                    fvGeometry,
-                                                    fIdx,
-                                                    elemVolVars,
-                                                    false);
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element,
+                                fvGeometry,
+                                fIdx,
+                                elemVolVars,
+                                false);
 
                 GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
                 int posIdx = getPosIdx(globalPos);
@@ -750,15 +756,13 @@ public:
                 {
                     int boundaryFaceIdx = fvGeometry.boundaryFaceIndex(fIdx, faceVertIdx);
 
-
-
-
-                    const FluxVariables boundaryVars(this->problem_(),
-                                                     element,
-                                                     fvGeometry,
-                                                     boundaryFaceIdx,
-                                                     elemVolVars,
-                                                     true);
+                    FluxVariables boundaryVars;
+                    boundaryVars.update(this->problem_(),
+                                        element,
+                                        fvGeometry,
+                                        boundaryFaceIdx,
+                                        elemVolVars,
+                                        true);
 
                     GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
                     if (

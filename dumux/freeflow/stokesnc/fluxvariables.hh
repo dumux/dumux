@@ -47,7 +47,8 @@ namespace Dumux
 template <class TypeTag>
 class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
 {
-    typedef StokesFluxVariables<TypeTag> ParentType;
+    friend class StokesFluxVariables<TypeTag>; // be friends with parent
+    typedef Dumux::StokesFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -71,17 +72,20 @@ class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
-    //Constructor calls ParentType function
+    // old constructor
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     StokesncFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvGeometry,
                           const int fIdx,
                           const ElementVolumeVariables &elemVolVars,
-                          const bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-    {
-        calculateValues_(problem, element, elemVolVars);
-    }
+                          const bool onBoundary = false) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    StokesncFluxVariables() = default;
 
     /*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
@@ -124,6 +128,7 @@ protected:
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
+        ParentType::calculateValues_(problem, element, elemVolVars);
 
         // loop over all components
         for (int compIdx=0; compIdx<numComponents; compIdx++){
@@ -138,7 +143,7 @@ protected:
 
                 // calculate gradients and secondary variables at IPs
                 for (int scvIdx = 0;
-                     scvIdx < this->fvGeometry_.numScv;
+                     scvIdx < this->fvGeometry_().numScv;
                      scvIdx++) // loop over vertices of the element
                 {
 

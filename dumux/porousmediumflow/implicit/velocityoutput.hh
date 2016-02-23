@@ -170,11 +170,12 @@ public:
                     const typename Element::Geometry::JacobianTransposed jacobianT1 =
                         geometry.jacobianTransposed(localPosIP);
 
-                    FluxVariables fluxVars(problem_,
-                                           element,
-                                           fvGeometry,
-                                           fIdx,
-                                           elemVolVars);
+                    FluxVariables fluxVars;
+                    fluxVars.update(problem_,
+                                    element,
+                                    fvGeometry,
+                                    fIdx,
+                                    elemVolVars);
 
                     const GlobalPosition globalNormal = fluxVars.face().normal;
 
@@ -222,11 +223,12 @@ public:
 
                     if (intersection.neighbor())
                     {
-                        FluxVariables fluxVars(problem_,
-                                               element,
-                                               fvGeometry,
-                                               fIdxInner,
-                                               elemVolVars);
+                        FluxVariables fluxVars;
+                        fluxVars.update(problem_,
+                                        element,
+                                        fvGeometry,
+                                        fIdxInner,
+                                        elemVolVars);
 
                         scvfFluxes[fIdx] += fluxVars.volumeFlux(phaseIdx);
 
@@ -234,11 +236,13 @@ public:
                     }
                     else if (intersection.boundary())
                     {
-                        FluxVariables fluxVars(problem_,
-                                               element,
-                                               fvGeometry,
-                                               fIdx,
-                                               elemVolVars,true);
+
+                        FluxVariables fluxVars;
+                        fluxVars.update(problem_,
+                                        element,
+                                        fvGeometry,
+                                        fIdx,
+                                        elemVolVars,true);
 
                         scvfFluxes[fIdx] = fluxVars.volumeFlux(phaseIdx);
                     }

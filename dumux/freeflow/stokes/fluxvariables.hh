@@ -26,6 +26,9 @@
 #ifndef DUMUX_STOKES_FLUX_VARIABLES_HH
 #define DUMUX_STOKES_FLUX_VARIABLES_HH
 
+#include <dune/common/exceptions.hh>
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/valgrind.hh>
 
@@ -47,6 +50,7 @@ namespace Dumux
 template <class TypeTag>
 class StokesFluxVariables
 {
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -63,20 +67,65 @@ class StokesFluxVariables
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
-    //! \brief The constructor
+    //! \brief The old constructor
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     StokesFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const int fIdx,
                         const ElementVolumeVariables &elemVolVars,
                         const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), onBoundary_(onBoundary), fIdx_(fIdx)
     {
-        calculateValues_(problem, element, elemVolVars);
-        determineUpwindDirection_(elemVolVars);
+        DUNE_THROW(Dune::InvalidStateException, "The FluxVariables now have to be default contructed. "
+                                                << "In case you have your own FluxVariables you have to make them default "
+                                                << " constructable too. All calls to the old constructor will throw this error. "
+                                                << "Everywhere you instantiate FluxVariables do this now by default constructing "
+                                                << "a FluxVariables object (FluxVariables fluxVars;) and then updating it where "
+                                                << "the update method has the same signature as the old constructor (fluxVars.update(...).)");
+    }
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    StokesFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     * \todo The fvGeometry should be better initialized, passed and stored as an std::shared_ptr
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        fvGeometryPtr_ = &fvGeometry;
+        onBoundary_ = onBoundary;
+        fIdx_ = fIdx;
+
+        asImp_().calculateValues_(problem, element, elemVolVars);
+        asImp_().determineUpwindDirection_(elemVolVars);
     }
 
 protected:
+    //! Returns the implementation of the flux variables (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     void calculateValues_(const Problem &problem,
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
@@ -93,7 +142,7 @@ protected:
         velocityGrad_ = Scalar(0);
 
         for (int scvIdx = 0;
-             scvIdx < fvGeometry_.numScv;
+             scvIdx < fvGeometry_().numScv;
              scvIdx++) // loop over adjacent vertices
         {
             // phase density and viscosity at IP
@@ -157,9 +206,9 @@ public:
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvGeometry_.boundaryFace[fIdx_];
+            return fvGeometry_().boundaryFace[fIdx_];
         else
-            return fvGeometry_.subContVolFace[fIdx_];
+            return fvGeometry_().subContVolFace[fIdx_];
     }
 
     /*!
@@ -168,8 +217,8 @@ public:
      */
     const Scalar averageSCVVolume() const
     {
-        return 0.5*(fvGeometry_.subContVol[upstreamIdx_].volume +
-                fvGeometry_.subContVol[downstreamIdx_].volume);
+        return 0.5*(fvGeometry_().subContVol[upstreamIdx_].volume +
+                fvGeometry_().subContVol[downstreamIdx_].volume);
     }
 
     /*!
@@ -260,8 +309,11 @@ public:
     { return onBoundary_; }
 
 protected:
-    const FVElementGeometry &fvGeometry_;
-    const bool onBoundary_;
+    // return const reference to fvGeometry
+    const FVElementGeometry& fvGeometry_() const
+    { return *fvGeometryPtr_; }
+
+    bool onBoundary_;
 
     // values at the integration point
     Scalar density_;
@@ -280,6 +332,9 @@ protected:
     int downstreamIdx_;
     // the index of the considered face
     int fIdx_;
+
+private:
+    const FVElementGeometry* fvGeometryPtr_; //!< Information about the geometry of discretization
 };
 
 } // end namespace

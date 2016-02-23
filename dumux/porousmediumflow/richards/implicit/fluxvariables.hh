@@ -41,8 +41,8 @@ namespace Dumux
 template <class TypeTag>
 class RichardsFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
-
-    typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
+    friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
+    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -60,7 +60,7 @@ class RichardsFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 
 public:
     /*
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -70,14 +70,20 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     RichardsFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-    {    }
+    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    RichardsFluxVariables() = default;
 
 public:
     /*!

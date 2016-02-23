@@ -53,8 +53,11 @@ template<class TypeTag>
 class ElOnePTwoCFluxVariables: public ElasticFluxVariablesBase<TypeTag> ,
                                public OnePTwoCFluxVariables<TypeTag>
 {
-    typedef ElasticFluxVariablesBase<TypeTag> ElasticBase;
-    typedef OnePTwoCFluxVariables<TypeTag> OnePTwoCBase;
+    friend class ElasticFluxVariablesBase<TypeTag>; // be friends with parents
+    friend class OnePTwoCFluxVariables<TypeTag>; // be friends with parents
+
+    typedef Dumux::ElasticFluxVariablesBase<TypeTag> ElasticBase;
+    typedef Dumux::OnePTwoCFluxVariables<TypeTag> OnePTwoCBase;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -79,7 +82,7 @@ class ElOnePTwoCFluxVariables: public ElasticFluxVariablesBase<TypeTag> ,
 
 public:
     /*
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -89,30 +92,53 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ElOnePTwoCFluxVariables(const Problem &problem,
                     const Element &element,
                     const FVElementGeometry &fvGeometry,
                     int fIdx,
                     const ElementVolumeVariables &elemVolVars,
-                    const bool onBoundary = false)
-        : ElasticBase(problem, element, fvGeometry, fIdx, elemVolVars),
-          OnePTwoCBase(problem, element, fvGeometry, fIdx, elemVolVars),
-          fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
+                    const bool onBoundary = false) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ElOnePTwoCFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
-        dU_ = Scalar(0);
-        dGradP_ = Scalar(0);
-        porosity_ = 0;
-        effPorosity_ = 0;
-        pressure_ = 0;
-        timeDerivUNormal_ = 0;
+        ElasticBase::update(problem, element, fvGeometry, fIdx, elemVolVars);
+        OnePTwoCBase::update(problem, element, fvGeometry, fIdx, elemVolVars);
+
+        dU_ = 0.0;
+        dGradP_ = 0.0;
+        porosity_ = 0.0;
+        effPorosity_ = 0.0;
+        pressure_ = 0.0;
+        timeDerivUNormal_ = 0.0;
 
         elOnePTwoCGradients_(problem, element, elemVolVars);
         calculateEffectiveValues_(problem, element, elemVolVars);
         calculateDiffCoeffPM_(problem, element, elemVolVars);
         calculateDDt_(problem, element, elemVolVars);
-
     }
-    ;
 
 public:
     /*!
@@ -184,10 +210,19 @@ public:
 
     const SCVFace &face() const
     {
-        return fvGeometry_.subContVolFace[faceIdx_];
+        return ElasticBase::face();
     }
 
 protected:
+    // Overload the parent's methods to avoid ambiguous overloads due to multiple inheritance
+    // The elastic gradients are already computed in the elastic base class update
+    void calculateGradients_(const Problem &problem,
+                             const Element &element,
+                             const ElementVolumeVariables &elemVolVars)
+    {
+        OnePTwoCBase::calculateGradients_(problem, element, elemVolVars);
+    }
+
     /*!
      * \brief Calculation of the solid displacement and pressure gradients.
      *
@@ -201,7 +236,7 @@ protected:
     {
         // calculate gradients
         GlobalPosition tmp(0.0);
-        for (int idx = 0; idx < fvGeometry_.numScv; idx++) // loop over adjacent vertices
+        for (int idx = 0; idx < ElasticBase::fvGeometry_().numScv; idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
             const DimVector &feGrad = face().grad[idx];
@@ -293,10 +328,6 @@ protected:
             tmp[i] = dGradP_[i] / dt;
               timeDerivGradPNormal_ = tmp * face().normal;
     }
-
-    const FVElementGeometry &fvGeometry_;
-    int faceIdx_;
-    const bool onBoundary_;
 
     //! change of solid displacement with time at integration point
     GlobalPosition dU_;

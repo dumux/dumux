@@ -47,8 +47,11 @@ namespace Dumux
 template <class TypeTag>
 class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
 {
-    typedef TwoPNCFluxVariables<TypeTag> ParentType;
-    typedef TwoPNCMinFluxVariables<TypeTag> ThisType;
+    friend typename GET_PROP_TYPE(TypeTag, BaseFluxVariables); // be friends with base class
+    friend class TwoPNCFluxVariables<TypeTag>; // be friends with parent class
+
+    typedef Dumux::TwoPNCFluxVariables<TypeTag> ParentType;
+    typedef Dumux::TwoPNCMinFluxVariables<TypeTag> ThisType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -73,8 +76,8 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> DimVector;
-    typedef Dune::FieldMatrix<CoordScalar, dim, dim> DimMatrix;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> DimWorldMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -85,7 +88,7 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -94,66 +97,114 @@ public:
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     TwoPNCMinFluxVariables(const Problem &problem,
                      const Element &element,
                      const FVElementGeometry &fvGeometry,
                      const int fIdx,
                      const ElementVolumeVariables &elemVolVars,
                      const bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-    {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            this->density_[phaseIdx] = Scalar(0);
-            this->molarDensity_[phaseIdx] = Scalar(0);
-            this->potentialGrad_[phaseIdx] = Scalar(0);
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                this->massFractionGrad_[phaseIdx][compIdx] = Scalar(0);
-                this->moleFractionGrad_[phaseIdx][compIdx] = Scalar(0);
-            }
-        }
-        this->calculateGradients_(problem, element, elemVolVars);
-        this->calculateVelocities_(problem, element, elemVolVars);
-        this->calculateporousDiffCoeff_(problem, element, elemVolVars);
-    };
+    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    TwoPNCMinFluxVariables() = default;
 
 protected:
-    void calculateVelocities_(const Problem &problem,
-                              const Element &element,
-                              const ElementVolumeVariables &elemVolVars)
+    /*!
+     * \brief Actual calculation of the normal Darcy velocities.
+     * \note this overloads the darcy flux variables velocity calculation
+     *       This is only necessary because of the permeability factor.
+     * \todo Remove this once we have solDependent spatialParams!
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param elemVolVars The volume variables of the current element
+     */
+    void calculateNormalVelocity_(const Problem &problem,
+                                  const Element &element,
+                                  const ElementVolumeVariables &elemVolVars)
     {
+        // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        // multiply the pressure potential with the intrinsic permeability
-        DimMatrix K(0.0);
+        DimWorldMatrix K;
+        const VolumeVariables &volVarsI = elemVolVars[this->face().i];
+        const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
-            const VolumeVariables &volVarsI = elemVolVars[this->face().i];
-            const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
+            auto Ki = spatialParams.intrinsicPermeability(element, this->fvGeometry_(), this->face().i);
+            Ki *= volVarsI.permeabilityFactor();
 
-            auto K_i = spatialParams.intrinsicPermeability(element,this->fvGeometry_,this->face().i);
-            K_i *= volVarsI.permeabilityFactor();
+            auto Kj = spatialParams.intrinsicPermeability(element, this->fvGeometry_(), this->face().j);
+            Kj *= volVarsJ.permeabilityFactor();
 
-            auto K_j = spatialParams.intrinsicPermeability(element,this->fvGeometry_,this->face().j);
-            K_j *= volVarsJ.permeabilityFactor();
+            spatialParams.meanK(K, Ki, Kj);
+        }
+        else
+        {
+            const Element& elementI = this->fvGeometry_().neighbors[this->face().i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
-            spatialParams.meanK(K,K_i,K_j);
+            const Element& elementJ = this->fvGeometry_().neighbors[this->face().j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
-            K.mv(this->potentialGrad_[phaseIdx], this->Kmvp_[phaseIdx]);
-            this->KmvpNormal_[phaseIdx] = - (this->Kmvp_[phaseIdx] * this->face().normal);
+            auto Ki = spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0);
+            Ki *= volVarsI.permeabilityFactor();
+
+            auto Kj = spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0);
+            Kj *= volVarsJ.permeabilityFactor();
+
+            spatialParams.meanK(K, Ki, Kj);
         }
 
-        // set the upstream and downstream vertices
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        // loop over all phases
+        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
-            this->upstreamIdx_[phaseIdx] = this->face().i;
-            this->downstreamIdx_[phaseIdx] = this->face().j;
+            // calculate the flux in the normal direction of the
+            // current sub control volume face:
+            //
+            // v = - (K_f grad phi) * n
+            // with K_f = rho g / mu K
+            //
+            // Mind, that the normal has the length of it's area.
+            // This means that we are actually calculating
+            //  Q = - (K grad phi) dot n /|n| * A
 
-            if (this->KmvpNormal_[phaseIdx] < 0) {
-                std::swap(this->upstreamIdx_[phaseIdx],
-                          this->downstreamIdx_[phaseIdx]);
+
+            K.mv(this->potentialGrad_[phaseIdx], this->kGradP_[phaseIdx]);
+            this->kGradPNormal_[phaseIdx] = this->kGradP_[phaseIdx]*this->face().normal;
+
+            // determine the upwind direction
+            if (this->kGradPNormal_[phaseIdx] < 0)
+            {
+                this->upstreamIdx_[phaseIdx] = this->face().i;
+                this->downstreamIdx_[phaseIdx] = this->face().j;
             }
-        }
+            else
+            {
+                this->upstreamIdx_[phaseIdx] = this->face().j;
+                this->downstreamIdx_[phaseIdx] = this->face().i;
+            }
+
+            // obtain the upwind volume variables
+            const VolumeVariables& upVolVars = elemVolVars[ this->upstreamIdx(phaseIdx) ];
+            const VolumeVariables& downVolVars = elemVolVars[ this->downstreamIdx(phaseIdx) ];
+
+            // the minus comes from the Darcy relation which states that
+            // the flux is from high to low potentials.
+            // set the velocity
+            this->velocity_[phaseIdx] = this->kGradP_[phaseIdx];
+            this->velocity_[phaseIdx] *= - ( this->mobilityUpwindWeight_*upVolVars.mobility(phaseIdx)
+                    + (1.0 - this->mobilityUpwindWeight_)*downVolVars.mobility(phaseIdx)) ;
+
+            // set the volume flux
+            this->volumeFlux_[phaseIdx] = this->velocity_[phaseIdx] * this->face().normal;
+        }// loop all phases
     }
 };
 

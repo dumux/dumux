@@ -58,7 +58,8 @@ NEW_PROP_TAG(SpatialParams);
 template<class TypeTag>
 class ElTwoPFluxVariables: public ImplicitDarcyFluxVariables<TypeTag>
 {
-    typedef ImplicitDarcyFluxVariables<TypeTag> TwoPBase;
+    friend class ImplicitFluxVariables<TypeTag>; // be friends with parent
+    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -84,34 +85,59 @@ class ElTwoPFluxVariables: public ImplicitDarcyFluxVariables<TypeTag>
     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
 public:
-/*
- * \brief The constructor
- *
- * \param problem The problem
- * \param element The finite element
- * \param fvGeometry The finite-volume geometry in the fully implicit scheme
- * \param fIdx The local index of the SCV (sub-control-volume) face
- * \param elemVolVars The volume variables of the current element
- * \param onBoundary A boolean variable to specify whether the flux variables
- * are calculated for interior SCV faces or boundary faces, default=false
- */
+    /*
+     * \brief The old constructor
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ElTwoPFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         int fIdx,
                         const ElementVolumeVariables &elemVolVars,
                         const bool onBoundary = false)
-    : TwoPBase(problem, element, fvGeometry, fIdx, elemVolVars),
-      fvGeometry_(fvGeometry), faceIdx_(fIdx)
+    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ElTwoPFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
-        dU_ = Scalar(0);
-        timeDerivUNormal_ = Scalar(0);
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars);
+
+        dU_ = 0.0;
+        timeDerivUNormal_ = 0.0;
 
         elTwoPGradients_(problem, element, elemVolVars);
         calculateDDt_(problem, element, elemVolVars);
         calculateK_(problem, element, elemVolVars);
     }
-    ;
 
 public:
     /*!
@@ -150,7 +176,7 @@ public:
 
     const SCVFace &face() const
     {
-        return fvGeometry_.subContVolFace[faceIdx_];
+        return this->fvGeometry_().subContVolFace[this->faceIdx_];
     }
 
 protected:
@@ -247,15 +273,12 @@ protected:
         const SpatialParams &spatialParams = problem.spatialParams();
         spatialParams.meanK(K_,
                             spatialParams.intrinsicPermeability(element,
-                                                                fvGeometry_,
+                                                                this->fvGeometry_(),
                                                                 face().i),
                             spatialParams.intrinsicPermeability(element,
-                                                                fvGeometry_,
+                                                                this->fvGeometry_(),
                                                                 face().j));
     }
-
-    const FVElementGeometry &fvGeometry_;
-    int faceIdx_;
 
     //! time derivative of solid displacement times normal vector at integration point
     Scalar timeDerivUNormal_;

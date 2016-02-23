@@ -48,6 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class TwoPDFMFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
+    friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
+    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
@@ -67,7 +69,7 @@ class TwoPDFMFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -77,16 +79,40 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     TwoPDFMFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary),
-          fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
+        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    TwoPDFMFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
-        faceSCV_ = &this->face();
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -95,9 +121,8 @@ public:
 
         calculateGradientsInFractures_(problem, element, elemVolVars, fIdx);
         calculateVelocitiesFracture_(problem, element, elemVolVars, fIdx);
-    };
+    }
 
-public:
     /*!
      * \brief Calculates the velocities in the lower-dimenstional fracture.
      *
@@ -118,9 +143,9 @@ public:
         if (isFracture_)
         {
             KFi = problem.spatialParams().
-                intrinsicPermeabilityFracture(element, this->fvGeometry_, this->face().i);
+                intrinsicPermeabilityFracture(element, this->fvGeometry_(), this->face().i);
             KFj = problem.spatialParams().
-                intrinsicPermeabilityFracture(element, this->fvGeometry_, this->face().j);
+                intrinsicPermeabilityFracture(element, this->fvGeometry_(), this->face().j);
         }
         else
         {
@@ -145,8 +170,8 @@ public:
         // set the upstream and downstream vertices
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            upstreamFractureIdx[phaseIdx] = faceSCV_->i;
-            downstreamFractureIdx[phaseIdx] = faceSCV_->j;
+            upstreamFractureIdx[phaseIdx] = this->face().i;
+            downstreamFractureIdx[phaseIdx] = this->face().j;
 
             if (vDarcyFracture_[phaseIdx] < 0)
             {
@@ -174,12 +199,8 @@ public:
 protected:
     // gradients
     Scalar potentialGradFracture_[numPhases];
-    const FVElementGeometry &fvGeometry_;
-    int faceIdx_;
-    const bool onBoundary_;
     bool isFracture_;
     Scalar fractureWidth_;
-    const SCVFace *faceSCV_;
 
 private:
     /*!

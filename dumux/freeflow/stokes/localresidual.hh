@@ -148,12 +148,13 @@ protected:
      */
     void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
     {
-        const FluxVariables fluxVars(this->problem_(),
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     fIdx,
-                                     this->curVolVars_(),
-                                     onBoundary);
+        FluxVariables fluxVars;
+        fluxVars.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->curVolVars_(),
+                        onBoundary);
         flux = 0.0;
 
         asImp_()->computeAdvectiveFlux(flux, fluxVars);
@@ -373,12 +374,13 @@ protected:
                         continue;
 
                     const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
-                    const FluxVariables boundaryVars(this->problem_(),
-                                                     this->element_(),
-                                                     this->fvGeometry_(),
-                                                     boundaryFaceIdx,
-                                                     this->curVolVars_(),
-                                                     true);
+                    FluxVariables boundaryVars;
+                    boundaryVars.update(this->problem_(),
+                                        this->element_(),
+                                        this->fvGeometry_(),
+                                        boundaryFaceIdx,
+                                        this->curVolVars_(),
+                                        true);
 
                     // the computed residual of the momentum equations is stored
                     // into momentumResidual for the replacement of the mass balance
@@ -578,11 +580,12 @@ protected:
             // loop over the edges of the element
             for (int fIdx = 0; fIdx < this->fvGeometry_().numScvf; fIdx++)
             {
-                const FluxVariables fluxVars(this->problem_(),
-                                             this->element_(),
-                                             this->fvGeometry_(),
-                                             fIdx,
-                                             this->curVolVars_());
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                this->element_(),
+                                this->fvGeometry_(),
+                                fIdx,
+                                this->curVolVars_());
 
                 const int i = this->fvGeometry_().subContVolFace[fIdx].i;
                 const int j = this->fvGeometry_().subContVolFace[fIdx].j;

@@ -51,6 +51,7 @@ template <class TypeTag>
 class MPNCFluxVariables
     : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
+    friend typename GET_PROP_TYPE(TypeTag, BaseFluxVariables); // be friends with base class
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -75,7 +76,7 @@ class MPNCFluxVariables
 
 public:
     /*
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -85,16 +86,43 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     MPNCFluxVariables(const Problem &problem,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
                       const unsigned int fIdx,
                       const ElementVolumeVariables &elemVolVars,
                       const bool onBoundary = false)
-        : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary),
-          fvGeometry_(fvGeometry), faceIdx_(fIdx), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
+        : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    MPNCFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
+        elemVolVarsPtr_ = &elemVolVars;
+
         // velocities can be obtained from the Parent class.
+        BaseFluxVariables::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
 
         // update the flux data of the energy module (i.e. isothermal
         // or non-isothermal)
@@ -115,7 +143,7 @@ public:
      *        element.
      */
     const VolumeVariables &volVars(const unsigned int idx) const
-    { return elemVolVars_[idx]; }
+    { return (*elemVolVarsPtr_)[idx]; }
 
     /*!
      * \brief Returns th extrusion factor for the sub-control volume face
@@ -154,10 +182,7 @@ public:
     ////////////////////////////////////////////////
 
 private:
-    const FVElementGeometry &fvGeometry_;
-    const unsigned int faceIdx_;
-    const ElementVolumeVariables &elemVolVars_;
-    const bool onBoundary_;
+    const ElementVolumeVariables* elemVolVarsPtr_;
 
     // The extrusion factor for the sub-control volume face
     Scalar extrusionFactor_;

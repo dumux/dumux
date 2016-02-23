@@ -66,17 +66,46 @@ class ZeroEqncFluxVariables : public ZeroEqFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
+    //! \brief The old constructor
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ZeroEqncFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvGeometry,
                           const int fIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-        , flowNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal))
-        , wallNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal))
-        , eddyDiffusivityModel_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyDiffusivityModel))
+        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ZeroEqncFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
+
+        flowNormal_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal);
+        wallNormal_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal);
+        eddyDiffusivityModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyDiffusivityModel);
+
         globalPos_ = this->face().ipGlobal;
         posIdx_ = problem.model().getPosIdx(globalPos_);
         wallIdx_ = problem.model().getWallIdx(globalPos_, posIdx_);
@@ -92,7 +121,7 @@ public:
         densityGrad_ = 0.0;
 
         // calculate gradients and secondary variables at IPs
-        for (int idx = 0; idx < this->fvGeometry_.numScv; idx++)
+        for (int idx = 0; idx < this->fvGeometry_().numScv; idx++)
         {
             tmp = this->face().grad[idx];
             tmp *= elemVolVars[idx].density();
@@ -107,7 +136,7 @@ public:
         // calculation of an eddy diffusivity only makes sense with Navier-Stokes equation
         if (GET_PROP_VALUE(TypeTag, EnableNavierStokes))
             calculateEddyDiffusivity_(problem, element, elemVolVars);
-    };
+    }
 
 protected:
     /*!
@@ -231,21 +260,21 @@ public:
     { return this->kinematicEddyViscosity() / eddyDiffusivity(); }
 
 private:
-        const int flowNormal_;
-        const int wallNormal_;
-        const int eddyDiffusivityModel_;
-        int posIdx_;
-        int wallIdx_;
+    int flowNormal_;
+    int wallNormal_;
+    int eddyDiffusivityModel_;
+    int posIdx_;
+    int wallIdx_;
 
-        Scalar velGrad_;
-        Scalar velGradWall_;
-        Scalar yPlusReal_;
-        DimVector globalPos_;
+    Scalar velGrad_;
+    Scalar velGradWall_;
+    Scalar yPlusReal_;
+    DimVector globalPos_;
 
-        Scalar eddyDiffusivity_;
-        Scalar mixingLengthDiffusivity_;
-        Scalar richardsonNumber_;
-        DimVector densityGrad_;
+    Scalar eddyDiffusivity_;
+    Scalar mixingLengthDiffusivity_;
+    Scalar richardsonNumber_;
+    DimVector densityGrad_;
 };
 
 } // end namespace
