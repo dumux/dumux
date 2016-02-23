@@ -838,7 +838,7 @@ public:
             Scalar c_pH2Omolar = Dumux::Constants<Scalar>::R + c_vH2Omolar;
 
             c_pN2 = c_pN2molar/molarMass(N2Idx);
-            c_pN2 = c_pO2molar/molarMass(O2Idx);
+            c_pO2 = c_pO2molar/molarMass(O2Idx);
             c_pH2O = c_pH2Omolar/molarMass(H2OIdx);
         }
 
