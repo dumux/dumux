@@ -29,7 +29,7 @@
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
-#include <dumux/material/components/brinevarsalinity.hh>
+#include <dumux/material/components/brine.hh>
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
@@ -96,7 +96,7 @@ public:
     typedef Dumux::BinaryCoeff::H2O_Air H2O_Air;
     typedef Dumux::Air<Scalar> Air;
     typedef Dumux::BinaryCoeff::Brine_Air<Scalar, Air> Brine_Air;
-    typedef Dumux::BrineVarSalinity<Scalar, H2Otype> Brine;
+    typedef Dumux::Brine<Scalar, H2Otype> Brine;
     typedef Dumux::NaCl<Scalar> NaCl;
 
     // the type of parameter cache objects. this fluid system does not
@@ -243,19 +243,23 @@ public:
         {
         case H2OIdx: return H2O::molarMass();
         case AirIdx: return Air::molarMass();
-        case NaClIdx:return 35.453e-3 + 22.9898e-3;
+        case NaClIdx:return NaCl::molarMass();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
+
     /*!
      * \brief Return the mass density of the precipitate \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
-    static Scalar precipitateDensity(int phaseIdx) //Density of solid salt phase (kg/m3)
+    static Scalar precipitateDensity(int phaseIdx)
     {
-        return /*2165.0*/NaCl::Density();
+        if(phaseIdx != sPhaseIdx)
+            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << sPhaseIdx);
+        return NaCl::density();
     }
+
     /*!
      * \brief Return the saturation vapor pressure of the liquid phase \f$\mathrm{[Pa]}\f$.
      *
@@ -266,21 +270,34 @@ public:
      {
        return vaporPressure_(Temperature,salinity);
      }
+
      /*!
      * \brief Return the salt specific heat capacity \f$\mathrm{[J/(kg K)]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
+     DUNE_DEPRECATED_MSG("saltSpecificHeatCapacity(int phaseIdx) is deprecated. Use precipitateSpecificHeatCapacity(int sPhaseIdx) instead.")
      static Scalar saltSpecificHeatCapacity(int phaseIdx)//Specific heat capacity per unit mole of solid salt phase (J/Kkg)
     {
-    return 36.79/molarMass(phaseIdx);
+        return 36.79/molarMass(phaseIdx);
     }
+
+     /*!
+     * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
+     *
+     * \param sPhaseIdx The index of the precipitated phase to consider
+     */
+     static Scalar precipitateHeatCapacity(int phaseIdx)
+    {
+        return NaCl::heatCapacity();
+    }
+
     /*!
      * \brief Return the molar density of the precipitate \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
-    static Scalar precipitateMolarDensity(int phaseIdx)//Density of solid salt phase (mol/m3)
+    static Scalar precipitateMolarDensity(int phaseIdx)
      {
         return precipitateDensity(phaseIdx)/molarMass(phaseIdx);
      }
