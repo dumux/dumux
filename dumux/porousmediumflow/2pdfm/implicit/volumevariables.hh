@@ -218,7 +218,7 @@ public:
         PrimaryVariables updatedMatrixPV;
         updatedMatrixPV[pressureIdx] = priVars[pressureIdx];
         updatedMatrixPV[saturationIdx] = satWMatrix_;
-        this->completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
+        this->completeFluidState(updatedMatrixPV, problem, element, fvGeometry, scvIdx, fluidState_);
 
         mobilityMatrix_[wPhaseIdx] =
             MaterialLaw::krw(materialParamsMatrix, satWMatrix_)
