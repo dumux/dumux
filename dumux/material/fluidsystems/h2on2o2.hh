@@ -788,9 +788,7 @@ public:
                 // Assuming Raoult's, Daltons law and ideal gas
                 // in order to obtain the partial density of water in the air phase
                 Scalar partialPressure  = pressure * xH2O;
-                Scalar lambdaH2O =
-                    xH2O
-                    * H2O::gasThermalConductivity(temperature, partialPressure);
+                Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
                 return lambdaN2 + lambdaH2O + lambdaO2;
             }
             else

@@ -541,7 +541,6 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
@@ -682,9 +681,7 @@ public:
                 Scalar pressure = fluidState.pressure(phaseIdx);
                 Scalar partialPressure  = pressure * xH2O;
 
-                Scalar lambdaH2O =
-                    xH2O
-                    * H2O::gasThermalConductivity(temperature, partialPressure);
+                Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
                 return lambdaN2 + lambdaH2O;
             }
             else

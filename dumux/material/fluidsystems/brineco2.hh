@@ -76,7 +76,6 @@ class BrineCO2
 public:
     typedef Dumux::NullParameterCache ParameterCache;
     typedef H2Otype H2O;
-//    typedef Dumux::Brine<Scalar, H2O> BrineRawComponent; //salinity is stored into the raw brine component, wether tabulated or not.
     typedef Brinetype Brine;
     typedef typename Dumux::CO2<Scalar, CO2Table> CO2;
 
@@ -85,8 +84,6 @@ public:
 
     static const int lPhaseIdx = 0; // index of the liquid phase
     static const int gPhaseIdx = 1; // index of the gas phase
-    static const int wPhaseIdx = lPhaseIdx;
-    static const int nPhaseIdx = gPhaseIdx;
     static const int wCompIdx = 0;
     static const int nCompIdx = 1;
     static const int lCompIdx = wCompIdx;
@@ -446,6 +443,8 @@ public:
      * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
      *
+     * Maybe see http://www.ddbst.de/en/EED/PCP/DIF_C1050.php
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
@@ -563,8 +562,9 @@ public:
     /*!
      * \copydoc BaseFluidSystem::heatCapacity
      *
-     * We employ the heat capacity of the pure phases.
-     * Todo: Include compositional effects.
+     * \note We employ the heat capacity of the pure phases.
+     *
+     * \todo implement heat capacity for gaseous co2
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -574,12 +574,12 @@ public:
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
     {
-        if(phaseIdx == wPhaseIdx)
+        if(phaseIdx == lPhaseIdx)
             return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));
         else
             return CO2::liquidHeatCapacity(fluidState.temperature(phaseIdx),
-                                       fluidState.pressure(phaseIdx));
+                                           fluidState.pressure(phaseIdx));
     }
 
 private:
