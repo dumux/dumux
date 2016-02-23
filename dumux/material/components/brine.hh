@@ -53,6 +53,9 @@ public:
 
     typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>> H2O;
 
+    //HACK: If salinity is a pseudo-component, a constat value is used
+    static Scalar constantSalinity;
+
     /*!
      * \brief A human readable name for the brine.
      */
@@ -64,7 +67,7 @@ public:
      *\param salinity The mass fraction of salt in brine
      * This assumes that the salt is pure NaCl.
      */
-   static Scalar molarMass(Scalar salinity)
+   static Scalar molarMass(Scalar salinity = constantSalinity)
    {
        const Scalar M1 = H2O::molarMass();
        const Scalar M2 = NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
@@ -129,7 +132,7 @@ public:
      *
      */
     static const Scalar liquidEnthalpy(Scalar T,
-                                       Scalar p, Scalar salinity)
+                                       Scalar p, Scalar salinity = constantSalinity)
     {
         /*Numerical coefficents from PALLISER*/
         static const Scalar f[] = {
@@ -144,45 +147,33 @@ public:
             { +0.17965E-2, +0.71924E-3, -0.4900E-4 }
         };
 
-        Scalar theta, h_NaCl;
-        Scalar m, h_ls, h_ls1, d_h;
-        Scalar S_lSAT, delta_h;
-        int i, j;
-        Scalar hw;
+        const Scalar theta = T - 273.15;
+        const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
 
-        theta = T - 273.15;
-
-        Scalar S = salinity;
-        S_lSAT = f[0] + f[1]*theta + f[2]*pow(theta,2) + f[3]*pow(theta,3);
         /*Regularization*/
-        if (S>S_lSAT) {
-            S = S_lSAT;
-        }
+        salinity = std::min(salinity, salSat);
 
-        hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
+        const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
 
         /*DAUBERT and DANNER*/
-        /*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-                        +((2.8000E-5)/4)*pow(T,4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
+        /*U=*/const Scalar h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
+                        +((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
-        m = (1E3/58.44)*(S/(1-S));
-        i = 0;
-        j = 0;
-        d_h = 0;
+        const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
 
-        for (i = 0; i<=3; i++) {
-            for (j=0; j<=2; j++) {
+        Scalar d_h = 0;
+        for (int i = 0; i<=3; i++) {
+            for (int j=0; j<=2; j++) {
                 d_h = d_h + a[i][j] * pow(theta, i) * pow(m, j);
             }
         }
 
-        delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
+        const Scalar delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
 
         /* Enthalpy of brine */
 
-        h_ls1 =(1-S)*hw + S*h_NaCl + S*delta_h; /* kJ/kg */
-
-        h_ls = h_ls1*1E3; /*J/kg*/
+        const Scalar h_ls1 =(1-salinity)*hw + salinity*h_NaCl + salinity*delta_h; /* kJ/kg */
+        const Scalar h_ls = h_ls1*1E3; /*J/kg*/
 
         return (h_ls);
     }
@@ -203,8 +194,7 @@ public:
     static const Scalar liquidHeatCapacity(Scalar temperature,
                                         Scalar pressure)
     {
-        Scalar deprecatedDefaultSalinity = 0.1;
-        return liquidHeatCapacity(temperature, pressure, deprecatedDefaultSalinity);
+        return liquidHeatCapacity(temperature, pressure, constantSalinity);
     }
 
     /*!
@@ -220,7 +210,7 @@ public:
      * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
      */
     static const Scalar liquidHeatCapacity(Scalar temperature,
-                                        Scalar pressure, Scalar salinity)
+                                        Scalar pressure, Scalar salinity = constantSalinity)
     {
         Scalar eps = temperature*1e-8;
         return (liquidEnthalpy(temperature + eps, pressure, salinity) - liquidEnthalpy(temperature, pressure, salinity))/eps;
@@ -264,7 +254,7 @@ public:
      * \param salinity The mass fraction of salt
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
-                                             Scalar pressure, Scalar salinity)
+                                             Scalar pressure, Scalar salinity = constantSalinity)
     {
         return
             liquidEnthalpy(temperature, pressure) -
@@ -309,7 +299,7 @@ public:
      *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
      *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
      */
-    static Scalar liquidDensity(Scalar temperature, Scalar pressure, Scalar salinity)
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
     {
         Scalar TempC = temperature - 273.15;
         Scalar pMPa = pressure/1.0E6;
@@ -351,7 +341,7 @@ public:
     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
     * \param salinity The mass fraction of salt
     */
-   static Scalar liquidPressure(Scalar temperature, Scalar density, Scalar salinity)
+   static Scalar liquidPressure(Scalar temperature, Scalar density, Scalar salinity = constantSalinity)
    {
        // We use the Newton method for this. For the initial value we
        // assume the pressure to be 10% higher than the vapor
@@ -397,7 +387,7 @@ public:
      *                         - cited by: Bachu & Adams (2002)
      *                           "Equations of State for basin geofluids" \cite adams2002
      */
-    static Scalar liquidViscosity(Scalar temperature, Scalar pressure, Scalar salinity)
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
     {
         if(temperature <= 275.) // regularisation
         { temperature = 275; }
@@ -411,6 +401,13 @@ public:
         return mu_brine/1000.0;
     }
 };
+
+/*!
+ * \brief Default value for the salinity of the brine (dimensionless).
+ */
+template <class Scalar, class H2O>
+Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
+
 } // end namespace
 
 #endif
