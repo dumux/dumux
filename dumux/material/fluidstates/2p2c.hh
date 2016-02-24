@@ -65,10 +65,7 @@ public:
      * \name acess functions
      */
     //@{
-    /*!
-     * \brief Returns the saturation of a phase.
-     *
-     * \param phaseIdx the index of the phase
+    /*! @copydoc CompositionalFluidState::saturation()
      */
     Scalar saturation(int phaseIdx) const
     {
@@ -78,62 +75,38 @@ public:
             return Scalar(1.0) - sw_;
     }
 
-    /*!
-     * \brief Returns the mass fraction of a component in a phase.
-     *
-     * \param phaseIdx the index of the phase
-     * \param compIdx the index of the component
+    /*! @copydoc CompositionalFluidState::massFraction()
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return massFraction_[phaseIdx][compIdx];
     }
 
-    /*!
-     * \brief Returns the molar fraction of a component in a fluid phase.
-     *
-     * \param phaseIdx the index of the phase
-     * \param compIdx the index of the component
+    /*! @copydoc CompositionalFluidState::moleFraction()
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         return moleFraction_[phaseIdx][compIdx];
     }
 
-    /*!
-     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \param phaseIdx the index of the phase
+    /*! @copydoc CompositionalFluidState::density()
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
-    /*!
-     * \brief Returns the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
-     *
-     * \param phaseIdx the index of the phase
+    /*! @copydoc CompositionalFluidState::viscosity(int )
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }
 
-    /*!
-     * \brief Return the partial pressure of a component in the gas phase.
-     *
-     * For an ideal gas, this means \f$ R*T*c \f$.
-     * Unit: \f$\mathrm{[Pa] = [N/m^2]}\f$
-     *
-     * \param compIdx the index of the component
+    /*! @copydoc CompositionalFluidState::partialPressure(int)
      */
     Scalar partialPressure(int compIdx) const
     {
         return partialPressure(nPhaseIdx, compIdx);
     }
 
-    /*!
-     * \brief Return the partial pressure of a component in a phase.
-     *
-     * \param phaseIdx the index of the phase
-     * \param compIdx the index of the component
+    /*! @copydoc CompositionalFluidState::partialPressure(int)
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
@@ -141,10 +114,7 @@ public:
         return pressure(phaseIdx)*moleFraction(phaseIdx, compIdx);
     }
 
-    /*!
-     * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
-     *
-     * \param phaseIdx the index of the phase
+    /*! @copydoc CompositionalFluidState::pressure()
      */
     Scalar pressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }
@@ -155,22 +125,12 @@ public:
     Scalar capillaryPressure() const
     { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
 
-    /*!
-     * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
-     *
-     * Note that we assume thermodynamic equilibrium, so all fluids
-     * and the rock matrix exhibit the same temperature.
+    /*! @copydoc CompositionalFluidState::temperature()
      */
     Scalar temperature(int phaseIdx = 0) const
     { return temperature_; }
 
-    /*!
-     * \brief Return the average molar mass of a phase.
-     *
-     * This is the sum of all molar masses times their respective mole
-     * fractions in the phase.
-     *
-     * Unit: \f$\mathrm{[kg/m^3]}\f$
+    /*! @copydoc CompositionalFluidState::averageMolarMass()
      */
     Scalar averageMolarMass(int phaseIdx) const
     {
