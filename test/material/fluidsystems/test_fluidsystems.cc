@@ -70,6 +70,7 @@ int main()
     typedef Dumux::LiquidPhase<Scalar, H2O> Liquid;
     typedef Dumux::GasPhase<Scalar, N2> Gas;
 
+    int success = 0;
     std::string collectedExceptions;
 
     /////////////////////////
@@ -87,8 +88,8 @@ int main()
         if (!collectedExceptions.empty())
         {
             std::cout<<"Dumux::CompositionalFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
-
 
         // ImmiscibleFluidState
         Dumux::ImmiscibleFluidState<Scalar, FluidSystem> immiscibleFluidState;
@@ -96,15 +97,16 @@ int main()
         if (!collectedExceptions.empty())
         {
             std::cout<<"Dumux::ImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
-
 
         // IsothermalImmiscibleFluidState
         Dumux::IsothermalImmiscibleFluidState<Scalar, FluidSystem> isothermalImmiscibleFluidState;
         collectedExceptions = Dumux::checkFluidState<Scalar>(isothermalImmiscibleFluidState);
         if (!collectedExceptions.empty())
         {
-              std::cout<<"Dumux::IsothermalImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
+            std::cout<<"Dumux::IsothermalImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
 
         // NonEquilibriumFluidState
@@ -113,6 +115,7 @@ int main()
         if (!collectedExceptions.empty())
         {
             std::cout<<"Dumux::NonEquilibriumFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
 
         // NonEquilibriumEnergyFluidState uses TypeTag
@@ -125,6 +128,7 @@ int main()
         if (!collectedExceptions.empty())
         {
             std::cout<<"Dumux::PressureOverlayFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
 
         // SaturationOverlayFluidState
@@ -133,6 +137,7 @@ int main()
         if (!collectedExceptions.empty())
         {
             std::cout<<"Dumux::SaturationOverlayFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
 
         // TemperatureOverlayFluidState
@@ -141,6 +146,7 @@ int main()
         if (!collectedExceptions.empty())
         {
             std::cout<<"Dumux::TemperatureOverlayFluidState: \n"<<collectedExceptions<<"\n";
+            success++;
         }
     }
 
@@ -150,17 +156,17 @@ int main()
 
     // 1p
     {   typedef Dumux::FluidSystems::OneP<Scalar, Liquid> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::OneP<Scalar, Gas> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // 2p-immiscible
     {   typedef Dumux::FluidSystems::TwoPImmiscible<Scalar, Liquid, Liquid> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::TwoPImmiscible<Scalar, Liquid, Gas> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {  typedef Dumux::FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   typedef Dumux::FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid> FluidSystem;
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // base
 
@@ -168,11 +174,11 @@ int main()
     {   typedef Dumux::Brine<Scalar> Brine;
         const bool enableComplexRelations=false;
         typedef Dumux::FluidSystems::BrineAir<Scalar, H2O, enableComplexRelations> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::Brine<Scalar> Brine;
         const bool enableComplexRelations=true;
         typedef Dumux::FluidSystems::BrineAir<Scalar, H2O, enableComplexRelations> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // Brine -- CO2
 
@@ -180,73 +186,73 @@ int main()
     {   typedef Dumux::SimpleH2O<Scalar> H2O;
         const bool enableComplexRelations=false;
         typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::SimpleH2O<Scalar> H2O;
         const bool enableComplexRelations=true;
         typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::H2O<Scalar> H2O;
         const bool enableComplexRelations=false;
         typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::H2O<Scalar> H2O;
         const bool enableComplexRelations=true;
         typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
     {   typedef Dumux::GasPhase<Scalar, H2O> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::GasPhase<Scalar, H2O> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- Air -- Mesitylene
     {   typedef Dumux::FluidSystems::H2OAirMesitylene<Scalar> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- Air -- Xylene
     {   typedef Dumux::FluidSystems::H2OAirXylene<Scalar> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2
     {   typedef Dumux::FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/false> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/true> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- kinetic
     {   typedef Dumux::FluidSystems::H2ON2Kinetic<Scalar, /*enableComplexRelations=*/false> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::H2ON2Kinetic<Scalar, /*enableComplexRelations=*/true> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- liquid phase
     {   typedef Dumux::FluidSystems::H2ON2LiquidPhase<Scalar, /*enableComplexRelations=*/false> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::H2ON2LiquidPhase<Scalar, /*enableComplexRelations=*/true> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- o2
     {   typedef Dumux::FluidSystems::H2ON2O2<Scalar, /*enableComplexRelations=*/false> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::H2ON2O2<Scalar, /*enableComplexRelations=*/true> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase
     {   typedef Dumux::LiquidPhase<Scalar, H2O> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::LiquidPhase<Scalar, H2O> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // pure water simple
     {   typedef Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*enableComplexRelations=*/false> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*enableComplexRelations=*/true> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // spe5
     {   typedef Dumux::FluidSystems::Spe5<Scalar> FluidSystem;
-        Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
-    return 0;
+    return success;
 }

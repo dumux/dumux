@@ -149,8 +149,8 @@ public:
     {
         if (!allowPressure_)
         {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "pressure called but not allowed\n\n");
+            std::cout << "Dune::InvalidStateException: pressure called but not allowed\n\n";
+            exit(2);
         }
         assert(restrictPhaseIdx_ < 0 || restrictPhaseIdx_ == phaseIdx);
         return BaseFluidState::pressure(phaseIdx);
@@ -373,8 +373,9 @@ std::string checkFluidState(const BaseFluidState &fs)
 }
 
 template<class Scalar, class FluidSystem>
-void checkFluidSystem()
+int checkFluidSystem()
 {
+    int success = 0;
     std::cout << "Testing fluid system '" << Dune::className<FluidSystem>() << "'\n";
 
     // make sure the fluid system provides the number of phases and
@@ -487,6 +488,7 @@ void checkFluidSystem()
         } catch (Dune::Exception e)
         {
             std::cout << "\ndensity calculation throws exception:\n" << e.what();
+            success++;
         }
 
         fs.allowPressure(true);
@@ -563,6 +565,7 @@ void checkFluidSystem()
     }
 
     std::cout << "----------------------------------\n";
+    return success;
 }
 
 } // end namespace Dumux
