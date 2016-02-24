@@ -81,12 +81,7 @@ public:
     /*!
      * \brief The constructor.
      */
-    ImplicitModel()
-    : problemPtr_(0)
-    {
-        // enableHints_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableHints);
-        // std::cout << enableHints_ << std::endl;
-    }
+    ImplicitModel() : problemPtr_(nullptr) {}
 
     /*!
      * \brief Apply the initial conditions to the model.
@@ -125,91 +120,11 @@ public:
                                                false);
         }
 
-        // // resize the hint vectors
-        // if (isBox && enableHints_) {
-        //     int numVertices = gridView_().size(dim);
-        //     curHints_.resize(numVertices);
-        //     prevHints_.resize(numVertices);
-        //     hintsUsable_.resize(numVertices);
-        //     std::fill(hintsUsable_.begin(),
-        //               hintsUsable_.end(),
-        //               false);
-        // }
-
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
         prevVolVars_ = volVars_;
     }
-
-    // void setHints(const Element &element,
-    //               ElementVolumeVariables &prevVolVars,
-    //               ElementVolumeVariables &curVolVars) const
-    // {
-    //     if (!isBox || !enableHints_)
-    //         return;
-
-    //     int n = element.subEntities(dim);
-    //     prevVolVars_.resize(n);
-    //     curVolVars_.resize(n);
-    //     for (int i = 0; i < n; ++i)
-    //     {
-    //         int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-
-    //         if (!hintsUsable_[vIdxGlobal]) {
-    //             curVolVars[i].setHint(NULL);
-    //             prevVolVars[i].setHint(NULL);
-    //         }
-    //         else {
-    //             curVolVars[i].setHint(&curHints_[vIdxGlobal]);
-    //             prevVolVars[i].setHint(&prevHints_[vIdxGlobal]);
-    //         }
-    //     }
-    // }
-
-    // void setHints(const Element &element,
-    //               ElementVolumeVariables &curVolVars) const
-    // {
-    //     if (!isBox || !enableHints_)
-    //         return;
-
-    //     int n = element.subEntities(dim);
-    //     curVolVars.resize(n);
-    //     for (int i = 0; i < n; ++i)
-    //     {
-    //         int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-
-    //         if (!hintsUsable_[vIdxGlobal])
-    //             curVolVars[i].setHint(NULL);
-    //         else
-    //             curVolVars[i].setHint(&curHints_[vIdxGlobal]);
-    //     }
-    // }
-
-    // void updatePrevHints()
-    // {
-    //     if (!isBox || !enableHints_)
-    //         return;
-
-    //     prevHints_ = curHints_;
-    // }
-
-    // void updateCurHints(const Element &element,
-    //                     const ElementVolumeVariables &elemVolVars) const
-    // {
-    //     if (!isBox || !enableHints_)
-    //         return;
-
-    //     for (unsigned int i = 0; i < elemVolVars.size(); ++i)
-    //     {
-    //         int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-    //         curHints_[vIdxGlobal] = elemVolVars[i];
-    //         if (!hintsUsable_[vIdxGlobal])
-    //             prevHints_[vIdxGlobal] = elemVolVars[i];
-    //         hintsUsable_[vIdxGlobal] = true;
-    //     }
-    // }
-
 
     /*!
      * \brief Compute the global residual for an arbitrary solution
@@ -481,18 +396,6 @@ public:
                 boxVolume_.resize(numDofs);
 
             jacAsm_->init(problem_());
-
-            // // resize the hint vectors
-            // if (isBox && enableHints_) {
-            //     int numVertices = gridView_().size(dim);
-            //     curHints_.resize(numVertices);
-            //     prevHints_.resize(numVertices);
-            //     hintsUsable_.resize(numVertices);
-            //     std::fill(hintsUsable_.begin(),
-            //               hintsUsable_.end(),
-            //               false);
-            // }
-
         }
 
     }
@@ -533,8 +436,6 @@ public:
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
         volVars_ = prevVolVars_;
-        // if (isBox)
-        //     curHints_ = prevHints_;
 
         jacAsm_->reassembleAll();
     }
@@ -551,11 +452,6 @@ public:
         // make the current solution the previous one.
         uPrev_ = uCur_;
         prevVolVars_ = volVars_;
-
-        // if (isBox)
-        //     prevHints_ = curHints_;
-
-        // updatePrevHints();
     }
 
     /*!
@@ -1043,12 +939,6 @@ protected:
         }
     }
 
-    // the hint cache for the previous and the current volume
-    // variables
-    // mutable std::vector<bool> hintsUsable_;
-    // mutable std::vector<VolumeVariables> curHints_;
-    // mutable std::vector<VolumeVariables> prevHints_;
-
     // the problem we want to solve. defines the constitutive
     // relations, matxerial laws, etc.
     Problem *problemPtr_;
@@ -1085,8 +975,8 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    // bool enableHints_;
 };
+
 } // end namespace Dumux
 
 #include "propertydefaults.hh"

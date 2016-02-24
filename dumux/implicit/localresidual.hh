@@ -88,9 +88,6 @@ public:
         fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
         ElementVolumeVariables volVarsPrev, volVarsCur;
-        // update the hints
-        // model_().setHints(element, volVarsPrev, volVarsCur);
-
         volVarsPrev.update(problem_(),
                            element,
                            fvGeometry_(),
@@ -128,9 +125,6 @@ public:
         prevVolVarsPtr_ = 0;
 
         ElementVolumeVariables volVars;
-
-        // update the hints
-        // model_().setHints(element, volVars);
 
         // calculate volume current variables
         volVars.update(problem_(), element, fvGeometry_(), false);

@@ -150,9 +150,6 @@ public:
 
         bcTypes_.update(problem_(), element_(), fvElemGeom_());
 
-        // set the hints for the volume variables
-        // model_().setHints(element, prevVolVars_, curVolVars_);
-
         // update the secondary variables for the element at the last
         // and the current time levels
         prevVolVars_.update(problem_(),
@@ -164,9 +161,6 @@ public:
                            element_(),
                            fvElemGeom_(),
                            false /* isOldSol? */);
-
-        // update the hints of the model
-        // model_().updateCurHints(element, curVolVars_);
 
         // calculate the local residual
         localResidual().eval(element_(),

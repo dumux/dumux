@@ -97,16 +97,6 @@ NEW_PROP_TAG(ImplicitEnablePartialReassemble);
  */
 NEW_PROP_TAG(ImplicitNumericDifferenceMethod);
 
-/*!
- * \brief Specify whether to use the already calculated solutions as
- *        starting values of the volume variables.
- *
- * This only makes sense if the calculation of the volume variables is
- * very expensive (e.g. for non-linear fugacity functions where the
- * solver converges faster).
- */
-NEW_PROP_TAG(ImplicitEnableHints);
-
 // mappers from local to global indices
 
 //! mapper for vertices
