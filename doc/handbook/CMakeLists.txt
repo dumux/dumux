@@ -6,8 +6,8 @@ set(TEX_INPUTS
   2_quickinstall.tex
   2_quickstartguide.tex
   3_tutorial.tex
-  3_tutorialcoupled.tex
-  3_tutorialdecoupled.tex
+  3_tutorialimplicit.tex
+  3_tutorialsequential.tex
   3_furtherpractice.tex
   4_assemblinglinearsystem.tex
   4_guidelines.tex
@@ -23,14 +23,14 @@ set(TEX_INPUTS
   5_models.tex
   5_propertysystem.tex
   5_spatialdiscretizations.tex
-  ../../tutorial/tutorial_coupled.cc
-  ../../tutorial/tutorial_coupled.input
-  ../../tutorial/tutorialproblem_coupled.hh
-  ../../tutorial/tutorialspatialparams_coupled.hh
-  ../../tutorial/tutorial_decoupled.cc
-  ../../tutorial/tutorial_decoupled.input
-  ../../tutorial/tutorialproblem_decoupled.hh
-  ../../tutorial/tutorialspatialparams_decoupled.hh)
+  ../../tutorial/tutorial_implicit.cc
+  ../../tutorial/tutorial_implicit.input
+  ../../tutorial/tutorialproblem_implicit.hh
+  ../../tutorial/tutorialspatialparams_implicit.hh
+  ../../tutorial/tutorial_sequential.cc
+  ../../tutorial/tutorial_sequential.input
+  ../../tutorial/tutorialproblem_sequential.hh
+  ../../tutorial/tutorialspatialparams_sequential.hh)
 
 set(TEX_IMAGES
   PNG/box_disc.png
