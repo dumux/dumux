@@ -543,15 +543,14 @@ public:
      * \param phaseIdx The index of the phase
      *
      * See:
-     * Class Class 2000
+     * Class 2000
      * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in NAPL-kontaminierten porösen Medien
      * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
      *
      * Formula (2.42):
      * the specific enthalpy of a gas phase result from the sum of (enthalpies*mass fraction) of the components
      * For the calculation of enthalpy of brine we refer to (Michaelides 1981)
-     */
-    /*!
+     *
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */

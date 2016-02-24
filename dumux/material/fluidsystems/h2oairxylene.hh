@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with water, gas and NAPL as phases and
- *        \f$\mathrm{H_2O}\f$ and \f$\mathrm{Air}\f$ and \f$\mathrm{NAPL (contaminant)}\f$ as components.
+ * \brief @copybrief Dumux::FluidSystems::H2OAirXylene
  */
 #ifndef DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH
@@ -44,8 +43,10 @@ namespace FluidSystems
 
 /*!
  * \ingroup Fluidsystems
- * \brief A compositional fluid with water and molecular nitrogen as
- *        components in both, the liquid and the gas phase.
+ * \brief A three-phase fluid system featuring gas, NAPL and water as phases and
+ * distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
+ * \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_8H_{10}})\f$ as components. It assumes all phases to be ideal mixtures.
+ */
  */
 template <class Scalar,
           class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >

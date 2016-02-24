@@ -19,11 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system for two-phase models assuming immiscibility and
- *        thermodynamic equilibrium
- *
- * The wetting and the non-wetting phase can be defined via their
- * individual components.
+ * \brief @copybrief Dumux::FluidSystems::TwoPImmiscible
  */
 #ifndef DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
 #define DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
@@ -48,6 +44,8 @@ namespace FluidSystems {
  * \brief A fluid system for two-phase models assuming immiscibility and
  *        thermodynamic equilibrium
  *
+ * The fluid phases are completely specified by means of their
+ * constituting components.
  * The wetting and the non-wetting phase can be defined individually
  * via Dumux::LiquidPhase<Component> and
  * Dumux::GasPhase<Component>. These phases consist of one pure
@@ -421,7 +419,11 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of a fluid phase.
+     * @copybrief Base::thermalConductivity
+     *
+     * Additional comments:
+     *
+     * Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)]}\f$.
      *
      * \param fluidState The fluid state of the two-phase model

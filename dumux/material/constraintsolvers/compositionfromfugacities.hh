@@ -36,7 +36,18 @@ namespace Dumux {
 /*!
  * \ingroup ConstraintSolver
  * \brief Calculates the chemical equilibrium from the component
- *        fugacities in a phase.
+ *        fugacities \f$ f^\kappa \f$ in the phase \f$ \alpha \f$.
+ *
+ * This constraint solver takes the component fugacity \f$f^\kappa\f$ of
+ * of component \f$\kappa\f$, the temperature \f$ T_\alpha \f$, the pressure
+ * \f$p_\alpha\f$ and the composition \f$x^\lambda_\alpha\f$ of a phase
+ * \f$\alpha\f$ as input and calculates the mole fraction of component
+ * \f$\kappa\f$ in that fluid phase \f$x^\kappa_\alpha\f$. This means
+ * that the thermodynamic constraints used by this solver are
+ *
+ * \f$ f^\kappa = \Phi^\kappa_\alpha(\{x^\lambda_\alpha \}, T_\alpha, p_\alpha)  p_\alpha x^\kappa_\alpha\; \f$,
+ *
+ * where \f${f^\kappa}\f$, \f$ T_\alpha \f$ and \f$ p_\alpha \f$ are fixed values.
  */
 template <class Scalar, class FluidSystem>
 class CompositionFromFugacities

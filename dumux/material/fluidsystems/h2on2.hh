@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief @copybrief Dumux::FluidSystems::H2ON2
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_HH
@@ -52,7 +52,9 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase fluid system featuring gas and liquid phases and destilled
+ * water \f$(\mathrm{H_2O})\f$ and pure molecular Nitrogen \f$(\mathrm{N_2})\f$ as
+ * components.
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an

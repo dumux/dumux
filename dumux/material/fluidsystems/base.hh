@@ -163,10 +163,19 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
+     * \brief Thermal conductivity \f$\lambda_\alpha \f$ of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
+     *
+     * Given a fluid state, an up-to-date parameter cache and a phase index,
+     * this method returns the thermal conductivity  \f$\lambda_\alpha \f$ of the fluid
+     * phase. The thermal conductivity is defined by means of the relation
+     *
+     * \f$ q = \lambda_\alpha \mathbf{grad}\;T_\alpha \; \f$,
+     *
+     * where \f$ q\f$ is the local heat flux density caused by the temperature gradient
+     * \f$\mathbf{grad}\;T_\alpha\f$.
      *
      * Use the conductivity of air and water as a first approximation.
      * Source:
@@ -181,11 +190,19 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of a fluid phase \f$\mathrm{[J/(kg*K)]}\f$.
+     * \brief Specific isobaric heat capacity \f$c_{p,\alpha}\f$ of a fluid phase \f$\mathrm{[J/(kg*K)]}\f$.
      *
      * \param paramCache mutable parameters
      * \param phaseIdx  for which phase to give back the heat capacity
      * \param fluidState represents all relevant thermodynamic quantities of a fluid system
+     *
+     * Given a fluid state, an up-to-date parameter cache and a phase index, this method
+     * computes the isobaric heat capacity \f$c_{p,\alpha}\f$ of the fluid phase. The isobaric
+     * heat capacity is defined as the partial derivative of the specific enthalpy \f$h_\alpha\f$
+     * to the fluid pressure \f$p_\alpha\f$:
+     *
+     * \f$ c_{p,\alpha} = \frac{\partial h_\alpha}{\partial p_\alpha} \f$
+     *
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
