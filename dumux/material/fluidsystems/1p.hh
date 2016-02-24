@@ -52,8 +52,8 @@ namespace FluidSystems {
  * \brief A fluid system for single phase models.
  *
  * The fluid is defined as a template parameter. For existing
- * components the Dumux::LiquidPhase<Component> and
- * Dumux::GasPhase<Component> may be used.
+ * components the Dumux::FluidSystems::LiquidPhase<Component> and
+ * Dumux::FluidSystems::GasPhase<Component> may be used.
  */
 template <class Scalar, class Fluid>
 class OneP

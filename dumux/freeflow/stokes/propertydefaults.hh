@@ -108,7 +108,7 @@ SET_PROP(BoxStokes, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
 //! Set the indices used by the Stokes model

@@ -61,7 +61,7 @@ SET_PROP(TransportTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -70,7 +70,7 @@ SET_PROP(TransportTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
 SET_INT_PROP(TransportTestProblem, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);

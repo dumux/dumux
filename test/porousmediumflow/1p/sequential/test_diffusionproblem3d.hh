@@ -69,7 +69,7 @@ SET_PROP(DiffusionTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -78,7 +78,7 @@ SET_PROP(DiffusionTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
 #if HAVE_SUPERLU

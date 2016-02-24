@@ -60,8 +60,8 @@ SET_TYPE_PROP(ZeroEqTestProblem, Problem, Dumux::ZeroEqTestProblem<TypeTag>);
 
 // Set the air as the gas phase
 SET_TYPE_PROP(ZeroEqTestProblem, Fluid,
-              Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                              Dumux::Air<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              Dumux::FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                            Dumux::Air<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEqTestProblem, ProblemEnableGravity, false);

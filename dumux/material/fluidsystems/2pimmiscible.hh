@@ -47,8 +47,8 @@ namespace FluidSystems {
  * The fluid phases are completely specified by means of their
  * constituting components.
  * The wetting and the non-wetting phase can be defined individually
- * via Dumux::LiquidPhase<Component> and
- * Dumux::GasPhase<Component>. These phases consist of one pure
+ * via Dumux::FluidSystem::LiquidPhase<Component> and
+ * Dumux::FluidSystem::GasPhase<Component>. These phases consist of one pure
  * component. With the help of this adapter class, the phase
  * properties can be accessed. This is suitable for pure two-phase
  * systems without compositional effects.

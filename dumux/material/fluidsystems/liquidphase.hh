@@ -24,6 +24,9 @@
 #ifndef DUMUX_LIQUID_PHASE_HH
 #define DUMUX_LIQUID_PHASE_HH
 
+#include <cassert>
+#include <limits>
+
 #include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 

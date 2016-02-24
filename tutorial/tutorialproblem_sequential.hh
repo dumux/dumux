@@ -76,7 +76,7 @@ SET_PROP(TutorialProblemSequential, WettingPhase) /*@\label{tutorial-sequential:
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-sequential:wettingPhase}@*/
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-sequential:wettingPhase}@*/
 };
 
 // Set the non-wetting phase
@@ -85,7 +85,7 @@ SET_PROP(TutorialProblemSequential, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-sequential:nonwettingPhase}@*/
+    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-sequential:nonwettingPhase}@*/
 }; /*@\label{tutorial-sequential:2p-system-end}@*/
 
 SET_TYPE_PROP(TutorialProblemSequential, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-sequential:cflflux}@*/
