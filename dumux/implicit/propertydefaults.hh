@@ -40,6 +40,7 @@
 #include "localjacobian.hh"
 #include "volumevariables.hh"
 #include "volumevariablesvector.hh"
+#include "fluxvariables"
 #include "fluxvariablesvector.hh"
 #include "fvelementgeometry.hh"
 
@@ -95,6 +96,29 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
+
+//! Set darcy fluxes as the default fluxes to be considered
+SET_BOOL_PROP(ImplicitBase, DarcyFluxes, true);
+
+//! By default diffusive fluxes are switched off
+SET_BOOL_PROP(ImplicitBase, DiffusiveFluxes, false);
+
+//! By default energy fluxes are not considered
+SET_BOOL_PROP(ImplicitBase, EnergyFluxes, false);
+
+//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+SET_PROP(ImplicitBase, FluxVariables)
+{
+private:
+  enum
+  {
+    darcy = GET_PROP_VALUE(TypeTag, DarcyFluxes),
+    diffusion = GET_PROP_VALUE(TypeTag, DiffusiveFluxes),
+    energy = GET_PROP_VALUE(TypeTag, EnergyFluxes)
+  };
+public:
+  typedef FluxVariables<TypeTag, darcy, diffusion, energy> type;
+}
 
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);
