@@ -68,7 +68,7 @@ class CCTpfaImplicitDarcyFluxVariables
 
 public:
 
-    void update(const Problem &problem, SubControlVolumeFace scvFace)
+    void update(const Problem &problem, const SubControlVolumeFace &scvFace)
     {
         problemPtr_ = &problem;
         scvFace_ = &scvFace;
