@@ -472,7 +472,7 @@ protected:
 
         // calculate the flux in the undeflected state
         Scalar origFlux = 0.0;
-        for (fluxVarIdx : fluxVarsJ)
+        for (auto&& fluxVarIdx : fluxVarsJ)
             origFlux += localResidual().computeFlux(fluxVarIdx);
 
         Scalar eps = asImp_().numericEpsilon(scvJ, pvIdx);
@@ -484,16 +484,16 @@ protected:
             // calculate f(x + \epsilon)
 
             // deflect primary variables
-            priVars[pvIdx] += eps;
+            priVarsJ[pvIdx] += eps;
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars(scvJ).update(priVars, problem_(), element_(), scvJ);
+            model_().curVolVars(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
             Scalar deflectFlux = 0.0;
-            for (fluxVarIdx : fluxVarsJ)
+            for (auto&& fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().computeFlux(fluxVarIdx);
 
             // store the calculated flux
@@ -513,16 +513,16 @@ protected:
             // need to calculate f(x - \epsilon)
 
             // deflect the primary variables
-            priVars[pvIdx] -= delta + eps;
+            priVarsJ[pvIdx] -= delta + eps;
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars(scvJ).update(priVars, problem_(), element_(), scvJ);
+            model_().curVolVars(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
             Scalar deflectFlux = 0.0;
-            for (fluxVarIdx : fluxVarsJ)
+            for (auto&& fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().computeFlux(fluxVarIdx);
 
             // subtract the residual from the derivative storage
@@ -541,7 +541,7 @@ protected:
         partialDeriv /= delta;
 
         // restore the original state of the scv's volume variables
-        model_().curVolVars_(scvJ) = origVolVars;
+        model_().curVolVars_(scvJ) = origVolVarsJ;
 
 #if HAVE_VALGRIND
         for (unsigned i = 0; i < partialDeriv.size(); ++i)
