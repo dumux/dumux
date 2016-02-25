@@ -39,6 +39,7 @@ class FluxVariablesVector
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
     void update(const Problem& problem)
@@ -52,6 +53,17 @@ public:
             }
 
         }
+    }
+
+    void update(const Problem& problem, const SubControlVolumeFace& scvFace)
+    {
+        (*this)[scvFace.index()].update(problem, scvf);
+    }
+
+    void update(const Problem& problem, const IndexType scvFaceIndex)
+    {
+        auto&& scvFace = problem.model().fvGeometries().SubControlVolumeFace(scvFaceIndex);
+        (*this)[scvFace.index()].update(problem, scvf);
     }
 
     const FluxVariables& operator [](IndexType scvfIdx) const
