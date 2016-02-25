@@ -143,18 +143,30 @@ public:
     : fvGeometryVector_(fvGeometryVector), scvIndices_(scvIndices), scvfIndices_(scvfIndices)
     {}
 
-    // iterator range for sub control volumes
+    //! iterator range for sub control volumes
     inline Dune::IteratorRange<ScvIterator> scvs()
     {
         return Dune::IteratorRange<ScvIterator>(ScvIterator(scvIndices_.begin(), fvGeometryVector_),
                                                 ScvIterator(scvIndices_.end(), fvGeometryVector_));
     }
 
-    // iterator range for sub control volume faces
+    //! number of sub control volumes in this fv element geometry
+    std::size_t numScv() const
+    {
+        return scvIndices_.size();
+    }
+
+    //! iterator range for sub control volume faces
     inline Dune::IteratorRange<ScvfIterator> scvfs()
     {
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(scvfIndices_.begin(), fvGeometryVector_),
                                                  ScvfIterator(scvfIndices_.end(), fvGeometryVector_));
+    }
+
+    //! number of sub control volumes in this fv element geometry
+    std::size_t numScvf() const
+    {
+        return scvfIndices_.size();
     }
 
 private:
