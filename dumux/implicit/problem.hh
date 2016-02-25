@@ -391,11 +391,9 @@ public:
      * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
-    void solDependentPointSource(PointSource& pointSource,
+    PrimaryVariables pointSource(PointSource& pointSource,
                                  const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 const int scvIdx,
-                                 const ElementVolumeVariables &elemVolVars) const
+                                 const SubControlVolume &scv) const
     {
         // forward to space dependent interface method
         asImp_().pointSourceAtPos(pointSource, pointSource.position());
@@ -978,12 +976,11 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
-    void scvPointSources(PrimaryVariables &values,
-                         const Element &element,
-                         const FVElementGeometry &fvGeometry,
-                         const int scvIdx,
-                         const ElementVolumeVariables &elemVolVars) const
+    PrimaryVariables scvPointSources(const Element &element, const SubControlVolume &scv) const
     {
+        PrimaryVariables source(0);
+        int scvIdx = scv.indexInElement();
+
         auto key = std::make_pair(this->gridView().indexSet().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
@@ -994,8 +991,7 @@ public:
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
             // factor again. That's because the user specifies absolute values in kg/s.
-            const Scalar volume = fvGeometry.subContVol[scvIdx].volume
-                                   * asImp_().boxExtrusionFactor(element, fvGeometry, scvIdx);
+            const Scalar volume = scv.volume()*model().curVolVars(scv).extrusionFactor();
 
             for (auto&& pointSource : pointSources)
             {
@@ -1008,15 +1004,17 @@ public:
                 // The second one might be more convenient for e.g. a solution dependent point source.
 
                 // we do an update e.g. used for TimeDependentPointSource
-                pointSource.update(asImp_(), element, fvGeometry, scvIdx, elemVolVars);
+                pointSource.update(asImp_(), element, scv);
                 // call convienience problem interface function
-                asImp_().solDependentPointSource(pointSource, element, fvGeometry, scvIdx, elemVolVars);
+                source = asImp_().pointSource(pointSource, element, scv);
                 // at last take care about multiplying with the correct volume
-                pointSource /= volume;
+                source /= volume;
                 // add the point source values to the local residual
-                values += pointSource.values();
+                source += pointSource.values();
             }
         }
+
+        return source;
     }
 
     /*!
