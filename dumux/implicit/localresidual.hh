@@ -186,20 +186,14 @@ public:
      * \param scvIdx The index of the sub-control volume
      *
      */
-    void computeSource(PrimaryVariables &source, const int scvIdx)
+    PrimaryVariables computeSource(const SubControlVolume &scv)
     {
-        this->problem_().solDependentSource(source,
-                                            element_(),
-                                            fvGeometry_(),
-                                            scvIdx,
-                                            curVolVars_());
+        PrimaryVariables source(0);
+
+        source += this->problem_().source(element_(), scv);
 
         // add contribution from possible point sources
-        this->problem_().scvPointSources(source,
-                                         element_(),
-                                         fvGeometry_(),
-                                         scvIdx,
-                                         curVolVars_());
+        source += this->problem_().scvPointSources(element_(), scv);
     }
 
     /*!
@@ -318,7 +312,7 @@ protected:
             residual_[scvIdx] += storageTerm_[scvIdx];
 
             // subtract the source term from the local rate
-            PrimaryVariables source = asImp_().computeSource(element_(), scv);
+            PrimaryVariables source = asImp_().computeSource(scv);
             source *= scv.volume()*curExtrusionFactor;
 
             residual_[scvIdx] -= source;
