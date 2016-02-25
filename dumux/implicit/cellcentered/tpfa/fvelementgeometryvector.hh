@@ -57,7 +57,7 @@ private:
  *        for each element.
  */
 template<class TypeTag>
-class TpfaFVElementGeometryVector
+class CCTpfaFVElementGeometryVector
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -69,7 +69,7 @@ class TpfaFVElementGeometryVector
 
 public:
     //! Constructor
-    TpfaFVElementGeometryVector(const GridView gridView)
+    CCTpfaFVElementGeometryVector(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     /* \brief Get the finite volume geometry of an element

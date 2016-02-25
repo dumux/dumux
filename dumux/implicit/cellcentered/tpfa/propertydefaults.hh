@@ -44,7 +44,7 @@ template<class TypeTag> class FVElementGeometry;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, TpfaFVElementGeometryVector<TypeTag>);
+SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
