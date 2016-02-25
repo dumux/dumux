@@ -51,8 +51,6 @@ NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, Nume
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(FVElementGeometry); //! The type of the finite-volume geometry
-
 NEW_PROP_TAG(BaseModel); //!< The type of the base class of the model
 NEW_PROP_TAG(NumEq); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG(BaseLocalResidual); //!< The type of the base class of the local residual
@@ -75,7 +73,6 @@ NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a
 
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
 NEW_PROP_TAG(VolumeVariablesVector);  //!< The type for a container of volume variables
-NEW_PROP_TAG(ElementVolumeVariables); //!< The secondary variables of all sub-control volumes in an element
 NEW_PROP_TAG(FluxVariables); //!< Data required to calculate a flux over a face
 NEW_PROP_TAG(FluxVariablesVector); //!< The global vector of flux variables
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces (outflow)
