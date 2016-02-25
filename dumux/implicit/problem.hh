@@ -235,15 +235,26 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values,
-                   const Intersection &intersection) const
+    PrimaryVariables dirichlet(const SubControlVolumeFace &scvFace) const
     {
-        if (isBox)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "dirichlet(..., intersection) called for box method.");
-
         // forward it to the method which only takes the global coordinate
-        asImp_().dirichletAtPos(values, intersection.geometry().center());
+        if (isBox)
+        {
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvFace) called for box method.");
+        }
+        else
+            return asImp_().dirichletAtPos(scvFace.center());
+    }
+
+    PrimaryVariables dirichlet(const SubControlVolume &scv) const
+    {
+        // forward it to the method which only takes the global coordinate
+        if (!isBox)
+        {
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for cell-centered method.");
+        }
+        else
+            return asImp_().dirichletAtPos(scv.dofPosition());
     }
 
     /*!
@@ -289,48 +300,10 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    void solDependentNeumann(PrimaryVariables &values,
-                      const Element &element,
-                      const FVElementGeometry &fvGeometry,
-                      const Intersection &intersection,
-                      const int scvIdx,
-                      const int boundaryFaceIdx,
-                      const ElementVolumeVariables &elemVolVars) const
-    {
-        // forward it to the interface without the volume variables
-        asImp_().neumann(values,
-                         element,
-                         fvGeometry,
-                         intersection,
-                         scvIdx,
-                         boundaryFaceIdx);
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local subcontrolvolume index
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-     * For this method, the \a values parameter stores the flux
-     * in normal direction of each phase. Negative values mean influx.
-     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
-     */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
+    PrimaryVariables neumann(const SubControlVolumeFace &scvFace) const
     {
         // forward it to the interface with only the global position
-        asImp_().neumannAtPos(values, fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal);
+        return asImp_().neumannAtPos(scvFace.center());
     }
 
     /*!
@@ -345,8 +318,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    void neumannAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Neumann conditions)
