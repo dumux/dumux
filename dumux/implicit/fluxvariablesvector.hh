@@ -59,7 +59,7 @@ public:
         return fluxVars_[scvfIdx];
     }
 
-    FluxVariables & operator [](IndexType scvfIdx)
+    FluxVariables& operator [](IndexType scvfIdx)
     {
         return fluxVars_[scvfIdx];
     }
