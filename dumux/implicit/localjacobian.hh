@@ -139,7 +139,7 @@ public:
         bcTypes_.update(problem_(), element_(), fvElemGeom_());
 
         // calculate the local residual
-        localResidual().eval(element_(), fvElemGeom_(), bcTypes_);
+        localResidual().eval(element_(), bcTypes_);
         residual_ = localResidual().residual();
 
         model_().updatePVWeights(fvElemGeom_());
@@ -406,7 +406,7 @@ protected:
             model_().curVolVars(scv).update(priVars, problem_(), element_(), scv);
 
             // calculate the residual with the deflected primary variables
-            localResidual().eval(element_(), fvElemGeom_(), bcTypes_);
+            localResidual().eval(element_(), bcTypes_);
 
             // store the residual and the storage term
             partialDeriv = localResidual().residual();
@@ -432,7 +432,7 @@ protected:
             model_().curVolVars(scv).update(priVars, problem_(), element_(), scv);
 
             // calculate the residual with the deflected primary variables
-            localResidual().eval(element_(), fvElemGeom_(), bcTypes_);
+            localResidual().eval(element_(), bcTypes_);
 
             // subtract the residual from the derivative storage
             partialDeriv -= localResidual().residual();
