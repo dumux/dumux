@@ -75,9 +75,11 @@ public:
      * \param problem The problem object which needs to be simulated
      * \param element The DUNE Codim<0> entity for which the boundary
      *                types should be collected
+     * \param fvGeometry The element's finite volume geometry
      */
     void update(const Problem &problem,
-                const Element &element)
+                const Element &element,
+                const FVElementGeometry &fvGeometry)
     {
         int numVertices = element.subEntities(dim);
 
@@ -87,15 +89,18 @@ public:
         hasNeumann_ = false;
         hasOutflow_ = false;
 
-        for (int i = 0; i < numVertices; ++i) {
-            (*this)[i].reset();
+        for (auto&& scv : fvGeometry.scvs())
+        {
+            int scvIdxLocal = scv.indexInElement();
+            (*this)[scvIdxLocal].reset();
 
-            if (problem.model().onBoundary(element, i)) {
-                problem.boundaryTypes((*this)[i], element.template subEntity<dim>(i));
+            if (problem.model().onBoundary(scv))
+            {
+                (*this)[scvIdxLocal] = problem.boundaryTypes(element, scv);
 
-                hasDirichlet_ = hasDirichlet_ || (*this)[i].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();
-                hasOutflow_ = hasOutflow_ || (*this)[i].hasOutflow();
+                hasDirichlet_ = hasDirichlet_ || (*this)[scvIdxLocal].hasDirichlet();
+                hasNeumann_ = hasNeumann_ || (*this)[scvIdxLocal].hasNeumann();
+                hasOutflow_ = hasOutflow_ || (*this)[scvIdxLocal].hasOutflow();
             }
         }
     }
@@ -106,12 +111,13 @@ public:
      * \param problem The problem object which needs to be simulated
      * \param element The DUNE Codim<0> entity for which the boundary
      *                types should be collected
-     * \param fvGeometry The element's finite volume geometry
      */
     void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry)
-    { update(problem, element); }
+                const Element &element)
+    {
+        const auto& fvGeometry = problem.model().fvGeometries(element);
+        update(problem, element, fvGeometry);
+    }
 
     /*!
      * \brief Returns whether the element has a vertex which contains
