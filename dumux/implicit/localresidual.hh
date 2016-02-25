@@ -87,20 +87,10 @@ public:
     {
         fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
-        ElementVolumeVariables volVarsPrev, volVarsCur;
-        volVarsPrev.update(problem_(),
-                           element,
-                           fvGeometry_(),
-                           true /* oldSol? */);
-        volVarsCur.update(problem_(),
-                          element,
-                          fvGeometry_(),
-                          false /* oldSol? */);
-
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
-        asImp_().eval(element, fvGeometry_(), volVarsPrev, volVarsCur, bcTypes);
+        asImp_().eval(element, fvGeometry_(), bcTypes);
     }
 
     /*!
@@ -121,15 +111,6 @@ public:
         bcTypes.update(problem_(), element, fvGeometry_());
         bcTypesPtr_ = &bcTypes;
 
-        // no previous volume variables!
-        prevVolVarsPtr_ = 0;
-
-        ElementVolumeVariables volVars;
-
-        // calculate volume current variables
-        volVars.update(problem_(), element, fvGeometry_(), false);
-        curVolVarsPtr_ = &volVars;
-
         asImp_().evalStorage_();
     }
 
@@ -141,8 +122,7 @@ public:
      * \param curVolVars The volume averaged variables for all
      *                   sub-contol volumes of the element
      */
-    void evalFluxes(const Element &element,
-                    const ElementVolumeVariables &curVolVars)
+    void evalFluxes(const Element &element)
     {
         elemPtr_ = &element;
         fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
@@ -154,8 +134,6 @@ public:
         residual_ = 0;
 
         bcTypesPtr_ = &bcTypes;
-        prevVolVarsPtr_ = 0;
-        curVolVarsPtr_ = &curVolVars;
         asImp_().evalFluxes_();
     }
 
@@ -177,8 +155,6 @@ public:
      */
     void eval(const Element &element,
               const FVElementGeometry &fvGeometry,
-              const ElementVolumeVariables &prevVolVars,
-              const ElementVolumeVariables &curVolVars,
               const ElementBoundaryTypes &bcTypes)
     {
         Valgrind::CheckDefined(prevVolVars);
@@ -194,11 +170,9 @@ public:
         elemPtr_ = &element;
         fvElemGeomPtr_ = &fvGeometry;
         bcTypesPtr_ = &bcTypes;
-        prevVolVarsPtr_ = &prevVolVars;
-        curVolVarsPtr_ = &curVolVars;
 
         // resize the vectors for all terms
-        int numScv = fvGeometry_().numScv;
+        int numScv = fvGeometry_().numScv();
         residual_.resize(numScv);
         storageTerm_.resize(numScv);
 
@@ -293,6 +267,30 @@ protected:
     {
         assert(static_cast<const Implementation*>(this) != 0);
         return *static_cast<const Implementation*>(this);
+    }
+
+    void evalFluxes_()
+    {
+        // calculate the mass flux over the scv faces and subtract
+        for (auto&& scvFace : fvGeometry_().scvfs())
+        {
+            PrimaryVariables flux;
+
+            Valgrind::SetUndefined(flux);
+            this->asImp_().computeFlux_(flux, scvFace);
+            Valgrind::CheckDefined(flux);
+
+            if (!isBox)
+                residual_[0] += flux;
+            else
+            {
+                auto& insideScv = problem_().fvGeometries().subControlVolume(scvFace.insideScvIdx());
+                auto& outsideScv = problem_().fvGeometries().subControlVolume(scvFace.outsideScvIdx());
+
+                residual[insideScv.indexInElement()] += flux;
+                residual[outsideScv.indexInElement()] -= flux;
+            }
+        }
     }
 
     /*!
@@ -472,46 +470,6 @@ protected:
     Scalar curPriVar_(const int i, const int j) const
     {
         return curVolVars_(i).priVar(j);
-    }
-
-    /*!
-     * \brief Returns a reference to the current volume variables of
-     *        all sub-control volumes of the current element.
-     */
-    const ElementVolumeVariables &curVolVars_() const
-    {
-        Valgrind::CheckDefined(curVolVarsPtr_);
-        return *curVolVarsPtr_;
-    }
-
-    /*!
-     * \brief Returns a reference to the volume variables of the i-th
-     *        sub-control volume of the current element.
-     */
-    const VolumeVariables &curVolVars_(const int i) const
-    {
-        return curVolVars_()[i];
-    }
-
-    /*!
-     * \brief Returns a reference to the previous time step's volume
-     *        variables of all sub-control volumes of the current
-     *        element.
-     */
-    const ElementVolumeVariables &prevVolVars_() const
-    {
-        Valgrind::CheckDefined(prevVolVarsPtr_);
-        return *prevVolVarsPtr_;
-    }
-
-    /*!
-     * \brief Returns a reference to the previous time step's volume
-     *        variables of the i-th sub-control volume of the current
-     *        element.
-     */
-    const VolumeVariables &prevVolVars_(const int i) const
-    {
-        return prevVolVars_()[i];
     }
 
     /*!
