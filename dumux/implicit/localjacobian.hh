@@ -491,6 +491,7 @@ protected:
             model_().curVolVars(scvJ).update(priVars, problem_(), element_(), scvJ);
 
             // calculate the flux with the deflected primary variables
+            // TODO: for solution dependent spatial params fluxVar update needed!
             Scalar deflectFlux = 0.0;
             for (fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().computeFlux(fluxVarIdx);
@@ -519,6 +520,7 @@ protected:
             model_().curVolVars(scvJ).update(priVars, problem_(), element_(), scvJ);
 
             // calculate the flux with the deflected primary variables
+            // TODO: for solution dependent spatial params fluxVar update needed!
             Scalar deflectFlux = 0.0;
             for (fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().computeFlux(fluxVarIdx);
