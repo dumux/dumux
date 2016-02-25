@@ -65,6 +65,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
     typedef typename GET_PROP_TYPE(TypeTag, PointSourceHelper) PointSourceHelper;
@@ -160,15 +162,15 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values,
-                       const Vertex &vertex) const
+    BoundaryTypes boundaryTypes(const Element &element,
+                                const SubControlVolume &scv) const
     {
         if (!isBox)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., vertex) called for cell-centered method.");
+                       "boundaryTypes(..., scv) called for cell-centered method.");
 
         // forward it to the method which only takes the global coordinate
-        asImp_().boundaryTypesAtPos(values, vertex.geometry().center());
+        return asImp_().boundaryTypesAtPos(scv.dofPosition());
     }
 
     /*!
@@ -178,15 +180,15 @@ public:
      * \param values The boundary types for the conservation equations
      * \param intersection The intersection for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values,
-                       const Intersection &intersection) const
+    PrimaryVariables boundaryTypes(const Element &element,
+                                   const SubControlVolumeFace &scvFace) const
     {
         if (isBox)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., intersection) called for box method.");
+                       "boundaryTypes(..., scvFace) called for box method.");
 
         // forward it to the method which only takes the global coordinate
-        asImp_().boundaryTypesAtPos(values, intersection.geometry().center());
+        return asImp_().boundaryTypesAtPos(scvFace.center());
     }
 
     /*!
@@ -196,8 +198,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position of the finite volume in global coordinates
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    PrimaryVariables boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -211,31 +212,11 @@ public:
      *        control volume.
      *
      * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex representing the "half volume on the boundary"
+     * \param scvFace the sub control volume face
      *
-     * For this method, the \a values parameter stores primary variables.
+     * The method returns the boundary types information.
      */
-    void dirichlet(PrimaryVariables &values,
-                   const Vertex &vertex) const
-    {
-        if (!isBox)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "dirichlet(..., vertex) called for cell-centered method.");
-
-        // forward it to the method which only takes the global coordinate
-        asImp_().dirichletAtPos(values, vertex.geometry().center());
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param intersection The intersection for which the condition is evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables dirichlet(const SubControlVolumeFace &scvFace) const
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvFace) const
     {
         // forward it to the method which only takes the global coordinate
         if (isBox)
@@ -246,7 +227,7 @@ public:
             return asImp_().dirichletAtPos(scvFace.center());
     }
 
-    PrimaryVariables dirichlet(const SubControlVolume &scv) const
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
         if (!isBox)
@@ -261,15 +242,13 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position of the center of the finite volume
      *            for which the dirichlet condition ought to be
      *            set in global coordinates
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values,
-                        const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -300,7 +279,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    PrimaryVariables neumann(const SubControlVolumeFace &scvFace) const
+    PrimaryVariables neumann(const Element &element, const SubControlVolumeFace &scvFace) const
     {
         // forward it to the interface with only the global position
         return asImp_().neumannAtPos(scvFace.center());
@@ -348,38 +327,11 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    void solDependentSource(PrimaryVariables &values,
-                     const Element &element,
-                     const FVElementGeometry &fvGeometry,
-                     const int scvIdx,
-                     const ElementVolumeVariables &elemVolVars) const
+    PrimaryVariables source(const Element &element,
+                            const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
-        asImp_().source(values, element, fvGeometry, scvIdx);
-    }
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
-     */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx) const
-    {
-        // forward to generic interface
-        asImp_().sourceAtPos(values, fvGeometry.subContVol[scvIdx].global);
+        return asImp_().sourceAtPos(scv.dofPosition());
     }
 
     /*!
@@ -397,8 +349,7 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
