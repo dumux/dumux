@@ -29,8 +29,9 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/implicit/tpfa/properties.hh>
 #include <dumux/implicit/tpfa/fvelementgeometryvector.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/implicit/subcontrolvolume.hh>
@@ -38,45 +39,30 @@
 
 namespace Dumux
 {
+
+template<class TypeTag>
+class MockProblem
+{
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    MockProblem(const GridView& gridView) : mapper_(gridView) {}
+
+    const ElementMapper& elementMapper() const
+    { return mapper_; }
+private:
+    ElementMapper mapper_;
+};
+
 namespace Properties
 {
-NEW_PROP_TAG(SubControlVolume);
-NEW_PROP_TAG(SubControlVolumeFace);
-NEW_PROP_TAG(FVElementGeometry);
-NEW_PROP_TAG(FVElementGeometryVector);
-
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(NumericModel));
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(TestFVGeometry, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
-
-SET_PROP(TestFVGeometry, SubControlVolume)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-public:
-    typedef Dumux::SubControlVolume<ScvGeometry, IndexType> type;
-};
-
-SET_PROP(TestFVGeometry, SubControlVolumeFace)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-public:
-    typedef Dumux::SubControlVolumeFace<ScvfGeometry, IndexType> type;
-
-};
-
-SET_TYPE_PROP(TestFVGeometry, FVElementGeometry, FVElementGeometry<TypeTag>);
-
-SET_TYPE_PROP(TestFVGeometry, FVElementGeometryVector, TpfaFVElementGeometryVector<TypeTag>);
-
+SET_TYPE_PROP(TestFVGeometry, Problem, Dumux::MockProblem<TypeTag>);
 }
+
 }
 
 template<class T>
@@ -107,6 +93,8 @@ int main (int argc, char *argv[]) try
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometryVector = typename GET_PROP_TYPE(TypeTag, FVElementGeometryVector);
 
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+
     // make a grid
     GlobalPosition lower(0.0);
     GlobalPosition upper(1.0);
@@ -114,14 +102,17 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
+    Problem problem(leafGridView);
+
     FVElementGeometryVector fvGeometries(leafGridView);
-    fvGeometries.update();
+    fvGeometries.update(problem);
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        std::cout << std::endl << "Checking fvGeometry of element " << leafGridView.indexSet().index(element) << std::endl;
-        auto fvGeometry = fvGeometries.fvGeometry(element);
+        auto eIdx = problem.elementMapper().index(element);
+        std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
+        auto fvGeometry = fvGeometries.fvGeometry(eIdx);
 
         auto range = fvGeometry.scvs();
         NoopFunctor<SubControlVolume> op;
@@ -140,7 +131,9 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scvf : fvGeometry.scvfs())
         {
-            std::cout << "-- scvf center at: " << scvf.center() << std::endl;
+            std::cout << "-- scvf center at: " << scvf.center();
+            if (scvf.boundary()) std::cout << " (on boundary).";
+            std::cout << std::endl;
         }
     }
 }
