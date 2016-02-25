@@ -27,21 +27,14 @@
 
 namespace Dumux
 {
-
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for a sub control volume, i.e a part of the control
  *        volume we are making the balance for.
  */
-template<class G, typename I>
-class SubControlVolume
+template<class Geometry, typename IndexType>
+class SubControlVolumeBase
 {
-public:
-    // exported types
-    using Geometry = G;
-    using IndexType = I;
-
-private:
     using Scalar = typename Geometry::ctype;
     enum { dimworld = Geometry::coorddimension };
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
@@ -52,24 +45,11 @@ public:
      * \param elementIndex The index of the element the scv is part of
      * \param indexInElement The local index of the scv in the element
      */
-    SubControlVolume(Geometry geometry,
-                     IndexType elementIndex,
-                     IndexType indexInElement)
+    SubControlVolumeBase(Geometry geometry,
+                         IndexType elementIndex)
     : geometry_(std::move(geometry)),
-      elementIndex_(std::move(elementIndex)),
-      indexInElement_(std::move(indexInElement)) {}
-
-    // The move contructor
-    SubControlVolume(SubControlVolume&& other)
-    : geometry_(std::move(other.geometry_)),
-      elementIndex_(std::move(other.elementIndex_)),
-      indexInElement_(std::move(other.indexInElement_)) {}
-
-    // The copy contructor
-    SubControlVolume(const SubControlVolume& other)
-    : geometry_(other.geometry_),
-      elementIndex_(other.elementIndex_),
-      indexInElement_(other.indexInElement_) {}
+      elementIndex_(std::move(elementIndex))
+    {}
 
     //! The center of the sub control volume
     GlobalPosition center() const
@@ -90,20 +70,113 @@ public:
         return geometry_;
     }
 
+    //! The global index of the element this scv is embedded in
     IndexType elementIndex() const
     {
         return elementIndex_;
     }
+
+private:
+    Geometry geometry_;
+    IndexType elementIndex_;
+};
+
+// This class is set as the property
+template<class G, typename I, bool isBox>
+class SubControlVolume {};
+
+// Specialization for cc models
+template<class G, typename I>
+class SubControlVolume<G, I, false> : public SubControlVolumeBase<G, I>
+{
+public:
+    // exported types
+    using Geometry = G;
+    using IndexType = I;
+
+private:
+    using Scalar = typename Geometry::ctype;
+    enum { dimworld = Geometry::coorddimension };
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+
+public:
+    // the contructor in the cc case
+    SubControlVolume(Geometry geometry,
+                     IndexType elementIndex)
+    : SubControlVolumeBase<G, I>(std::move(geometry), std::move(elementIndex)) {}
+
+    IndexType indexInElement() const
+    {
+        return IndexType(0);
+    }
+
+    //! The global index of this scv
+    IndexType index() const
+    {
+        return this->elementIndex();
+    }
+
+    IndexType dofIndex() const
+    {
+        return this->elementIndex();
+    }
+
+    GlobalPosition dofPosition() const
+    {
+        return this->geometry().center();
+    }
+};
+
+// Specialization for box models
+template<class G, typename I>
+class SubControlVolume<G, I, true> : public SubControlVolumeBase<G, I>
+{
+public:
+    // exported types
+    using Geometry = G;
+    using IndexType = I;
+
+private:
+    using Scalar = typename Geometry::ctype;
+    enum { dimworld = Geometry::coorddimension };
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+
+public:
+    // the contructor in the box case
+    SubControlVolume(Geometry geometry,
+                     IndexType scvIdx,
+                     IndexType elementIndex,
+                     IndexType indexInElement,
+                     IndexType dofIndex)
+    : SubControlVolumeBase<G, I>(std::move(geometry), std::move(elementIndex)),
+      scvIdx_(scvIdx), indexInElement_(std::move(indexInElement)),
+      dofIndex_(std::move(dofIndex)) {}
 
     IndexType indexInElement() const
     {
         return indexInElement_;
     }
 
+    //! The global index of this scv
+    IndexType index() const
+    {
+        return scvIdx_;
+    }
+
+    IndexType dofIndex() const
+    {
+        return dofIndex_;
+    }
+
+    GlobalPosition dofPosition() const
+    {
+        return this->geometry().corner(indexInElement_);
+    }
+
 private:
-    Geometry geometry_;
-    IndexType elementIndex_;
+    IndexType scvIdx_;
     IndexType indexInElement_;
+    IndexType dofIndex_;
 };
 
 } // end namespace
