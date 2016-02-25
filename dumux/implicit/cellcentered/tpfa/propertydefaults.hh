@@ -30,7 +30,7 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/implicit/cellcentered/assembler.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
-#include <dumux/implicit/tpfa/fvelementgeometryvector.hh>
+#include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
 #include <dumux/implicit/cellcentered/elementboundarytypes.hh>
 #include <dumux/implicit/cellcentered/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>

@@ -31,8 +31,8 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/implicit/tpfa/properties.hh>
-#include <dumux/implicit/tpfa/fvelementgeometryvector.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/implicit/subcontrolvolume.hh>
 #include <dumux/implicit/subcontrolvolumeface.hh>

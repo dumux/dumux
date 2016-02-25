@@ -47,6 +47,6 @@ NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(ImplicitBase));
 
 // \}
 
-#include <dumux/implicit/tpfa/propertydefaults.hh>
+#include <dumux/implicit/cellcentered/tpfa/propertydefaults.hh>
 
 #endif
