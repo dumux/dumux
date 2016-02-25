@@ -34,6 +34,7 @@
 #include <dumux/implicit/cellcentered/elementboundarytypes.hh>
 #include <dumux/implicit/cellcentered/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyfluxvariables.hh>
 
 namespace Dumux {
 
@@ -82,8 +83,17 @@ private:
     using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
 public:
     typedef Dumux::SubControlVolumeFace<ScvfGeometry, IndexType> type;
-
 };
+
+//! The darcy flux variables
+SET_PROP(CCTpfaModel, DarcyFluxVariables, Dumux::CCTpfaImplicitDarcyFluxVariables<TypeTag>);
+
+// TODO: Actually implement the diffusion and energy flux variables
+//! The diffusion flux variables
+SET_PROP(CCTpfaModel, DiffusionFluxVariables, Dumux::CCTpfaImplicitDarcyFluxVariables<TypeTag>);
+
+//! The energy flux variables
+SET_PROP(CCTpfaModel, EnergyFluxVariables, Dumux::CCTpfaImplicitDarcyFluxVariables<TypeTag>);
 
 } // namespace Properties
 
