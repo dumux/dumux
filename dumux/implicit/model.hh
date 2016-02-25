@@ -591,8 +591,7 @@ public:
      * \param element The DUNE codim 0 entity
      * \param volVars All volume variables for the element
      */
-    void updatePVWeights(const Element &element,
-                         const ElementVolumeVariables &volVars) const
+    void updatePVWeights(const FVElementGeometry& fvGeometry) const
     { }
 
     /*!
@@ -727,30 +726,9 @@ public:
      *             volume's associated vertex.
      * \param vIdx The local vertex index inside element
      */
-    bool onBoundary(const Element &element, const int vIdx) const
+    bool onBoundary(const SubControlVolume &scv) const
     {
-        if (isBox)
-            return asImp_().onBoundary(vertexMapper().subIndex(element, vIdx, dim));
-
-        DUNE_THROW(Dune::InvalidStateException,
-                   "requested for cell-centered model");
-    }
-
-
-    /*!
-     * \brief Returns true if the control volume touches
-     *        the grid's boundary.
-     *
-     * \param element A DUNE Codim<0> entity coinciding with the control
-     *             volume.
-     */
-    bool onBoundary(const Element &element) const
-    {
-        if (!isBox)
-            return asImp_().onBoundary(elementMapper().index(element));
-
-        DUNE_THROW(Dune::InvalidStateException,
-                   "requested for box model");
+        return asImp_().onBoundary(onBoundary(scv.dofIdxGlobal()));
     }
 
     /*!
