@@ -44,11 +44,13 @@ class SubControlVolumeFace
 public:
     SubControlVolumeFace(const Geometry& geometry,
                          const GlobalPosition& unitOuterNormal,
+                         IndexType scvfIndex,
                          const std::vector<IndexType>& scvIndices,
                          const std::vector<IndexType>& volVarsIndices,
                          bool boundary = false)
     : geometry_(geometry),
       unitOuterNormal_(unitOuterNormal),
+      scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       volVarsIndices_(volVarsIndices),
       boundary_(boundary) {}
@@ -108,9 +110,16 @@ public:
         return volVarsIndices_[1];
     }
 
+    //! The global index of this sub control volume face
+    IndexType index() const
+    {
+        return scvfIndex_;
+    }
+
 private:
     Geometry geometry_;
     GlobalPosition unitOuterNormal_;
+    IndexType scvfIndex_;
     std::vector<IndexType> scvIndices_, volVarsIndices_;
     bool boundary_;
 };
