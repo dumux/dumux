@@ -31,13 +31,6 @@
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG(SubControlVolume);
-NEW_PROP_TAG(SubControlVolumeFace);
-NEW_PROP_TAG(FVElementGeometry);
-NEW_PROP_TAG(FVElementGeometryVector);
-}
 
 //! An index to element map
 template <class GridView>
@@ -66,6 +59,7 @@ private:
 template<class TypeTag>
 class TpfaFVElementGeometryVector
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -82,11 +76,6 @@ public:
      * \note The finite volume geometry offers iterators over the sub control volumes
      *       and the sub control volume faces of an element.
      */
-    FVElementGeometry fvGeometry(const Element& element) const
-    {
-        return fvGeometry(gridView_.indexSet().index(element));
-    }
-
     FVElementGeometry fvGeometry(IndexType eIdx) const
     {
         return fvGeometries_[eIdx];
@@ -104,12 +93,28 @@ public:
         return *scvfs_[scvfIdx];
     }
 
+    //! The total number of sub control volumes
+    std::size_t numScv() const
+    {
+        return scvs_.size();
+    }
+
+    //! The total number of sun control volume faces
+    std::size_t numScvf() const
+    {
+        return scvfs_.size();
+    }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
 
+    // Get an element from a global element index
+    Element element(IndexType eIdx) const
+    { return elementMap_.element(eIdx); }
+
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update()
+    void update(const Problem& problem)
     {
         scvs_.clear();
         scvfs_.clear();
@@ -122,8 +127,8 @@ public:
         scvs_.resize(gridView_.size(0));
         for (const auto& element : elements(gridView_))
         {
-            auto eIdx = gridView_.indexSet().index(element);
-            scvs_[eIdx] = std::make_shared<SubControlVolume>(element.geometry(), eIdx, 0);
+            auto eIdx = problem.elementMapper().index(element);
+            scvs_[eIdx] = std::make_shared<SubControlVolume>(element.geometry(), eIdx);
 
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
@@ -134,9 +139,10 @@ public:
             {
                 if (!intersection.boundary())
                 {
-                    auto nIdx = gridView_.indexSet().index(intersection.outside());
+                    auto nIdx = problem.elementMapper().index(intersection.outside());
                     scvfs_.push_back(std::make_shared<SubControlVolumeFace>(intersection.geometry(),
                                                                             intersection.centerUnitOuterNormal(),
+                                                                            scvfIdx,
                                                                             std::vector<IndexType>({eIdx, nIdx}),
                                                                             std::vector<IndexType>({eIdx, nIdx}),
                                                                             false));
@@ -146,6 +152,7 @@ public:
                 {
                     scvfs_.push_back(std::make_shared<SubControlVolumeFace>(intersection.geometry(),
                                                                             intersection.centerUnitOuterNormal(),
+                                                                            scvfIdx,
                                                                             std::vector<IndexType>({eIdx}),
                                                                             std::vector<IndexType>({eIdx}),
                                                                             true));
