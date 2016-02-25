@@ -39,6 +39,9 @@
 #include "model.hh"
 #include "localjacobian.hh"
 #include "volumevariables.hh"
+#include "volumevariablesvector.hh"
+#include "fluxvariablesvector.hh"
+#include "fvelementgeometry.hh"
 
 namespace Dumux {
 
@@ -84,8 +87,17 @@ SET_TYPE_PROP(ImplicitBase,
 //! Set the BaseModel to ImplicitModel
 SET_TYPE_PROP(ImplicitBase, BaseModel, ImplicitModel<TypeTag>);
 
+//! The finite volume element geometry providing iterators over scvs and scv faces
+SET_TYPE_PROP(ImplicitBase, FVElementGeometry, Dumux::FVElementGeometry<TypeTag>);
+
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
+
+//! The global volume variables vector class
+SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
+
+//! The global volume variables vector class
+SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);
 
 //! The local jacobian operator
 SET_TYPE_PROP(ImplicitBase, LocalJacobian, ImplicitLocalJacobian<TypeTag>);

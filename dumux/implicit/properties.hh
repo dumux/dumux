@@ -59,6 +59,11 @@ NEW_PROP_TAG(BaseLocalResidual); //!< The type of the base class of the local re
 NEW_PROP_TAG(LocalResidual); //!< The type of the local residual function
 NEW_PROP_TAG(LocalJacobian); //!< The type of the local jacobian operator
 
+NEW_PROP_TAG(SubControlVolume);//!< The type of the sub control volume
+NEW_PROP_TAG(SubControlVolumeFace); //!< The type of the sub control volume face
+NEW_PROP_TAG(FVElementGeometry); //!< The type of the finite volume geometry (iterators over scvs, scvfs)
+NEW_PROP_TAG(FVElementGeometryVector); //!< The type of the finite volume geometry vector
+
 NEW_PROP_TAG(JacobianAssembler); //!< Assembles the global jacobian matrix
 NEW_PROP_TAG(JacobianMatrix); //!< Type of the global jacobian matrix
 NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
@@ -69,8 +74,10 @@ NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
 
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
+NEW_PROP_TAG(VolumeVariablesVector);  //!< The type for a container of volume variables
 NEW_PROP_TAG(ElementVolumeVariables); //!< The secondary variables of all sub-control volumes in an element
 NEW_PROP_TAG(FluxVariables); //!< Data required to calculate a flux over a face
+NEW_PROP_TAG(FluxVariablesVector); //!< The global vector of flux variables
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces (outflow)
 
 // high level simulation control

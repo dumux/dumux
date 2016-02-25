@@ -52,13 +52,19 @@ class ImplicitModel
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariablesVector) VolumeVariablesVector;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesVector) FluxVariablesVector;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension
     };
 
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometryVector) FVElementGeometryVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) LocalJacobian;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
@@ -95,10 +101,11 @@ public:
 
         updateBoundaryIndices_();
 
+        fvGeometries_ = std::make_shared<FVElementGeometryVector>(gridView_());
+        fvGeometries_.update();
+
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
-        volVars_.resize(numDofs);
-        fvGeometries_.resize(numDofs);
         if (isBox)
             boxVolume_.resize(numDofs);
 
@@ -109,21 +116,12 @@ public:
         asImp_().applyInitialSolution_();
 
         // update the volVars with the initial solution
-        for (const auto& element : elements(gridView_()))
-        {
-            int dofIdxGlobal = elementMapper().index(element);
-            volVars_[dofIdxGlobal].update(uCur_[dofIdxGlobal],
-                                               this->problem_(),
-                                               element,
-                                               fvGeometries_[dofIdxGlobal],
-                                               0,
-                                               false);
-        }
+        volVarsVector_.update(problem_(), curSol());
 
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
-        prevVolVars_ = volVars_;
+        prevVolVarsVector_ = volVarsVector_;
     }
 
     /*!
@@ -386,7 +384,7 @@ public:
         if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
         {
             uPrev_ = uCur_;
-            prevVolVars_ = volVars_;
+            prevVolVarsVector_ = volVarsVector_;
 
             updateBoundaryIndices_();
 
@@ -410,19 +408,7 @@ public:
     { }
 
     void updateVolVars()
-    {
-        // update the volVars with the computed solution
-        for (const auto& element : Dune::elements(gridView_()))
-        {
-                int dofIdxGlobal = dofMapper().subIndex(element, 0, dofCodim);
-                this->volVars(dofIdxGlobal).update(curSol()[dofIdxGlobal],
-                                                   this->problem_(),
-                                                   element,
-                                                   fvGeometries_[dofIdxGlobal],
-                                                   0,
-                                                   false);
-        }
-    }
+    { volVarsVector_.update(problem_(), curSol()); }
 
     /*!
      * \brief Called by the update() method if it was
@@ -435,7 +421,7 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
-        volVars_ = prevVolVars_;
+        volVarsVector_ = prevVolVarsVector_;
 
         jacAsm_->reassembleAll();
     }
@@ -451,7 +437,7 @@ public:
     {
         // make the current solution the previous one.
         uPrev_ = uCur_;
-        prevVolVars_ = volVars_;
+        prevVolVarsVector_ = volVarsVector_;
     }
 
     /*!
@@ -745,37 +731,59 @@ public:
      * \param scvIdx The index of the subcontrol volume.
      * \param fluidState The fluid state to fill.
      */
-    template <class FluidState>
-    static void completeFluidState(const PrimaryVariables& priVars,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const int scvIdx,
-                                   FluidState& fluidState)
-    {
-        VolumeVariables::completeFluidState(priVars, problem, element,
-                                            fvGeometry, scvIdx, fluidState);
-    }
+    // template <class FluidState>
+    // static void completeFluidState(const PrimaryVariables& priVars,
+    //                                const Problem& problem,
+    //                                const Element& element,
+    //                                const FVElementGeometry& fvGeometry,
+    //                                const int scvIdx,
+    //                                FluidState& fluidState)
+    // {
+    //     VolumeVariables::completeFluidState(priVars, problem, element,
+    //                                         fvGeometry, scvIdx, fluidState);
+    // }
 
-    const VolumeVariables& volVars(unsigned int dofIdxGlobal) const
-    { return volVars_[dofIdxGlobal]; }
+    const FluxVariables& fluxVars(const SubControlVolumeFace& scvf) const
+    { return fluxVarsVector_[scvf.index()]; }
 
-    VolumeVariables& volVars(unsigned int dofIdxGlobal)
-    { return volVars_[dofIdxGlobal]; }
+    const FluxVariables& fluxVars(unsigned int scvfIdx) const
+    { return fluxVarsVector_[scvfIdx]; }
 
-    const VolumeVariables& prevVolVars(unsigned int dofIdxGlobal) const
-    { return prevVolVars_[dofIdxGlobal]; }
+    const VolumeVariables& volVars(const SubControlVolume& scv) const
+    { return volVarsVector_[scv.index()]; }
 
-    VolumeVariables& prevVolVars(unsigned int dofIdxGlobal)
-    { return prevVolVars_[dofIdxGlobal]; }
+    const VolumeVariables& volVars(unsigned int scvIdx) const
+    { return volVarsVector_[scvIdx]; }
 
-    const FVElementGeometry& fvGeometries(unsigned int dofIdxGlobal) const
-    { return fvGeometries_[dofIdxGlobal]; }
+    const VolumeVariables& prevVolVars(const SubControlVolume& scv) const
+    { return prevVolVarsVector_[scv.index()]; }
 
-    FVElementGeometry& fvGeometries(unsigned int dofIdxGlobal)
-    { return fvGeometries_[dofIdxGlobal]; }
+    const VolumeVariables& prevVolVars(unsigned int scvIdx) const
+    { return prevVolVarsVector_[scvIdx]; }
+
+    const FVElementGeometryVector& fvGeometries() const
+    { return fvGeometries_; }
+
+    const FVElementGeometry& fvGeometries(const Element& element) const
+    { return fvGeometries_.fvGeometry(elementMapper().index(element)); }
+
+    const FVElementGeometry& fvGeometries(unsigned int eIdx) const
+    { return fvGeometries_.fvGeometry(eIdx); }
 
 protected:
+    // only to be called by friends and deriving classes
+    VolumeVariables& volVars_(const SubControlVolume& scv)
+    { return volVarsVector_[scv.index()]; }
+
+    VolumeVariables& volVars_(unsigned int scvIdx)
+    { return volVarsVector_[scvIdx]; }
+
+    VolumeVariables& prevVolVars_(const SubControlVolume& scv)
+    { return prevVolVarsVector_[scv.index()]; }
+
+    VolumeVariables& prevVolVars_(unsigned int scvIdx)
+    { return prevVolVarsVector_[scvIdx]; }
+
     /*!
      * \brief A reference to the problem on which the model is applied.
      */
@@ -813,39 +821,27 @@ protected:
 
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume
-        for (const auto& element : elements(gridView_())) {
+        for (const auto& element : elements(gridView_()))
+        {
             // deal with the current element
-            int eIdx = elementMapper().index(element);
-            fvGeometries_[eIdx].update(gridView_(), element);
-            const auto& fvGeometry = fvGeometries_[eIdx];
-            // loop over all element vertices, i.e. sub control volumes
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
+            for(auto&& scv : fvGeometries(element).scvs())
             {
-                // get the global index of the degree of freedom
-                int dofIdxGlobal = dofMapper().subIndex(element, scvIdx, dofCodim);
-
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
-                PrimaryVariables initPriVars;
-                Valgrind::SetUndefined(initPriVars);
-                problem_().initial(initPriVars,
-                                   element,
-                                   fvGeometry,
-                                   scvIdx);
-                Valgrind::CheckDefined(initPriVars);
+                auto initPriVars = problem_().initial(scv);
 
+                auto dofIdxGlobal = scv.dofIndex();
                 if (isBox)
                 {
                     // add up the initial values of all sub-control
                     // volumes. If the initial values disagree for
                     // different sub control volumes, the initial value
                     // will be the arithmetic mean.
-                    initPriVars *= fvGeometry.subContVol[scvIdx].volume;
-                    boxVolume_[dofIdxGlobal] += fvGeometry.subContVol[scvIdx].volume;
+                    initPriVars *= scv.volume();
+                    boxVolume_[dofIdxGlobal] += scv.volume();
                 }
 
                 uCur_[dofIdxGlobal] += initPriVars;
-                Valgrind::CheckDefined(uCur_[dofIdxGlobal]);
             }
         }
 
@@ -930,14 +926,20 @@ protected:
     // the set of all indices of vertices on the boundary
     std::vector<bool> boundaryIndices_;
 
-    std::vector<VolumeVariables> volVars_;
-    std::vector<VolumeVariables> prevVolVars_;
-    std::vector<FVElementGeometry> fvGeometries_;
-
     // cur is the current iterative solution, prev the converged
     // solution of the previous time step
     SolutionVector uCur_;
     SolutionVector uPrev_;
+
+    // the current and previous variables (primary and secondary variables)
+    VolumeVariablesVector volVarsVector_;
+    VolumeVariablesVector prevVolVarsVector_;
+
+    // the flux variables vector
+    FluxVariablesVector fluxVarsVector_;
+
+    // the finite volume element geometries
+    std::shared_ptr<FVElementGeometryVector> fvGeometries_;
 
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 
