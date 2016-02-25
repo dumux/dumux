@@ -125,7 +125,7 @@ $\boldsymbol{v}_\alpha$ & velocity (Darcy or free flow)& & \\
 
 
 \subsection{Available Models}
-We distinguish fully-implicit and decoupled models. A list of all available models can be found
+We distinguish fully-implicit and sequential models. A list of all available models can be found
 in the Doxygen documentation at
 \url{http://www.dumux.org/doxygen-stable/html-2.8/modules.php}.
 The documentation includes a detailed description for every model.
@@ -137,19 +137,19 @@ for spatial and the implicit Euler
 method as temporal discretization. The models are located in
 subdirectories of \texttt{dumux/implicit}.
 
-\subsubsection{Decoupled Models}
-The basic idea of the decoupled models is to reformulate the
+\subsubsection{Sequential Models}
+The basic idea of the sequential models is to reformulate the
 equations of multi-phase flow into one equation for
 pressure and equations for phase/component/... transport. The pressure equation
 is the sum of the mass balance equations and thus considers the total flow of the
 fluid system. The new set of equations is considered as decoupled (or weakly coupled)
-and can thus be solved sequentially. The most popular decoupled model is the
+and can thus be solved sequentially. The most popular sequential model is the
 fractional flow formulation for two-phase flow which is usually implemented applying
 an IMplicit Pressure Explicit Saturation algorithm (IMPES).
-In comparison to a fully implicit model, the decoupled structure allows the use of
+In comparison to a fully implicit model, the sequential structure allows the use of
 different discretization methods for the different equations. The standard method
-used in the decoupled models is a cell-centered finite volume method. Further schemes,
+used in the sequential models is a cell-centered finite volume method. Further schemes,
 so far only available for the two-phase pressure equation, are cell-centered finite
 volumes with multi-point flux approximation (MPFA O-method) and mimetic finite differences.
 
-An $h$-adaptive implementation of both decoupled models is provided for two dimensions.
+An $h$-adaptive implementation of both sequential models is provided for two dimensions.
