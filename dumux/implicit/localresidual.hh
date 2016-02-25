@@ -276,13 +276,13 @@ protected:
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numScv; scvIdx++) {
-            Valgrind::SetUndefined(storageTerm_[scvIdx]);
-            asImp_().computeStorage(storageTerm_[scvIdx], scvIdx, /*isOldSol=*/false);
-            storageTerm_[scvIdx] *=
-                fvGeometry_().subContVol[scvIdx].volume
-                * curVolVars_(scvIdx).extrusionFactor();
-            Valgrind::CheckDefined(storageTerm_[scvIdx]);
+        for (auto&& scv : fvGeometry_().scvs())
+        {
+            int scvIdx = scv.indexInElement();
+
+            storageTerm_[scvIdx] = asImp_().computeStorage(scv, /*isOldSol=*/false);
+            storageTerm_[scvIdx] *= scv.volume();
+            storageTerm_[scvIdx] *= problem_().model().curVolVars(scv).extrusionFactor();
         }
     }
 
