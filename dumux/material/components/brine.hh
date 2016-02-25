@@ -141,7 +141,7 @@ public:
 
         /*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
         static const Scalar a[4][3] = {
-            { -9633.6, -4080.0, +286.49 },
+            { +9633.6, -4080.0, +286.49 },
             { +166.58, +68.577, -4.6856 },
             { -0.90963, -0.36524, +0.249667E-1 },
             { +0.17965E-2, +0.71924E-3, -0.4900E-4 }
