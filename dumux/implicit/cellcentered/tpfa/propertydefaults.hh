@@ -40,7 +40,6 @@ namespace Dumux {
 // forward declarations
 template<class TypeTag> class CCLocalResidual;
 template<class TypeTag> class CCElementBoundaryTypes;
-template<class TypeTag> class FVElementGeometry;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry vector
