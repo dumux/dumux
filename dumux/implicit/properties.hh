@@ -73,9 +73,18 @@ NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a
 
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
 NEW_PROP_TAG(VolumeVariablesVector);  //!< The type for a container of volume variables
-NEW_PROP_TAG(FluxVariables); //!< Data required to calculate a flux over a face
-NEW_PROP_TAG(FluxVariablesVector); //!< The global vector of flux variables
+NEW_PROP_TAG(FluxVariables); //!< Container storing the different types of flux variables
+NEW_PROP_TAG(FluxVariablesVector); //!< The global vector of flux variable containers
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces (outflow)
+
+// Specify the forms of fluxes that should be considered in the model
+// also, specify their corresponding flux variables
+NEW_PROP_TAG(DarcyFluxes); //! specifies if darcy fluxes are considered in the model
+NEW_PROP_TAG(DarcyFluxVariables); //! The type for the calculation of the darcy fluxes
+NEW_PROP_TAG(DiffusiveFluxes); //! specifies if diffusive fluxes are considered in the model
+NEW_PROP_TAG(DiffusionFluxVariables); //! The type that handles the calculation of the molecular diffusion fluxes
+NEW_PROP_TAG(EnergyFluxes); //! specifies if the model consideres heat transport phenomena
+NEW_PROP_TAG(EnergyFluxVariables); //! The type for the heat flux calculation
 
 // high level simulation control
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
