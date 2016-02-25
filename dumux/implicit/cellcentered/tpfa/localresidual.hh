@@ -66,7 +66,7 @@ public:
 
 protected:
 
-    void computeFlux_(PrimaryVariables &flux, const SubControlVolumeFace &scvFace)
+    PrimaryVariables computeFlux_(const SubControlVolumeFace &scvFace)
     {
         if (!scvFace.boundary() /*TODO: || GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
         {
