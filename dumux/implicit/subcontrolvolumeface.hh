@@ -1,0 +1,120 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \brief Base class for a sub control volume face
+ */
+#ifndef DUMUX_SUBCONTROLVOLUMEFACE_HH
+#define DUMUX_SUBCONTROLVOLUMEFACE_HH
+
+#include <utility>
+#include <dune/common/fvector.hh>
+
+namespace Dumux
+{
+
+/*!
+ * \ingroup ImplicitModel
+ * \brief Base class for a sub control volume face, i.e a part of the boundary
+ *        of a sub control volume we computing a flux on.
+ */
+template<class Geometry, typename IndexType>
+class SubControlVolumeFace
+{
+    using Scalar = typename Geometry::ctype;
+    enum { dimworld = Geometry::coorddimension };
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+
+public:
+    SubControlVolumeFace(const Geometry& geometry,
+                         const GlobalPosition& unitOuterNormal,
+                         const std::vector<IndexType>& scvIndices,
+                         const std::vector<IndexType>& volVarsIndices,
+                         bool boundary = false)
+    : geometry_(geometry),
+      unitOuterNormal_(unitOuterNormal),
+      scvIndices_(scvIndices),
+      volVarsIndices_(volVarsIndices),
+      boundary_(boundary) {}
+
+    //! The center of the sub control volume face
+    GlobalPosition center() const
+    {
+        return geometry_.center();
+    }
+
+    //! The area of the sub control volume face
+    Scalar area() const
+    {
+        return geometry_.volume();
+    }
+
+    //! The geometry of the sub control volume face
+    const Geometry& geometry() const
+    {
+        return geometry_;
+    }
+
+    //! returns bolean if the sub control volume face is on the boundary
+    bool boundary() const
+    {
+        return boundary_;
+    }
+
+    GlobalPosition unitOuterNormal() const
+    {
+        return unitOuterNormal_;
+    }
+
+    //! index of the inside sub control volume for spatial param evaluation
+    IndexType insideScvIdx() const
+    {
+        return scvIndices_[0];
+    }
+
+    //! index of the inside sub control volume for upwinding
+    IndexType insideVolVarsIdx() const
+    {
+        return volVarsIndices_[0];
+    }
+
+    //! index of the outside sub control volume for spatial param evaluation
+    // This results in undefined behaviour if boundary is false
+    IndexType outsideScvIdx() const
+    {
+        return scvIndices_[1];
+    }
+
+    //! index of the outside sub control volume for upwinding
+    // This results in undefined behaviour if boundary is false
+    IndexType outsideVolVarsIdx() const
+    {
+        return volVarsIndices_[1];
+    }
+
+private:
+    Geometry geometry_;
+    GlobalPosition unitOuterNormal_;
+    std::vector<IndexType> scvIndices_, volVarsIndices_;
+    bool boundary_;
+};
+
+} // end namespace
+
+#endif
