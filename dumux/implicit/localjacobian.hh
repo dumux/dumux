@@ -473,7 +473,7 @@ protected:
         // calculate the flux in the undeflected state
         Scalar origFlux = 0.0;
         for (auto&& fluxVarIdx : fluxVarsJ)
-            origFlux += localResidual().computeFlux(fluxVarIdx);
+            origFlux += localResidual().evalFlux_(fluxVarIdx);
 
         Scalar eps = asImp_().numericEpsilon(scvJ, pvIdx);
         Scalar delta = 0;
@@ -494,7 +494,7 @@ protected:
             // TODO: for solution dependent spatial params fluxVar update needed!
             Scalar deflectFlux = 0.0;
             for (auto&& fluxVarIdx : fluxVarsJ)
-                deflectFlux += localResidual().computeFlux(fluxVarIdx);
+                deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // store the calculated flux
             partialDeriv = deflectFlux
@@ -523,7 +523,7 @@ protected:
             // TODO: for solution dependent spatial params fluxVar update needed!
             Scalar deflectFlux = 0.0;
             for (auto&& fluxVarIdx : fluxVarsJ)
-                deflectFlux += localResidual().computeFlux(fluxVarIdx);
+                deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // subtract the residual from the derivative storage
             partialDeriv -= deflectFlux
