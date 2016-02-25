@@ -85,8 +85,6 @@ public:
      */
     void eval(const Element &element)
     {
-        fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
-
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
@@ -105,7 +103,6 @@ public:
     void evalStorage(const Element &element)
     {
         elemPtr_ = &element;
-        fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -125,7 +122,6 @@ public:
     void evalFluxes(const Element &element)
     {
         elemPtr_ = &element;
-        fvElemGeomPtr_ = &model_().fvGeometries(model_().elementMapper().index(element));
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -154,21 +150,9 @@ public:
      *                vertices of the element
      */
     void eval(const Element &element,
-              const FVElementGeometry &fvGeometry,
               const ElementBoundaryTypes &bcTypes)
     {
-        Valgrind::CheckDefined(prevVolVars);
-        Valgrind::CheckDefined(curVolVars);
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (unsigned int i = 0; i < prevVolVars.size(); i++) {
-            prevVolVars[i].checkDefined();
-            curVolVars[i].checkDefined();
-        }
-#endif // HAVE_VALGRIND
-
         elemPtr_ = &element;
-        fvElemGeomPtr_ = &fvGeometry;
         bcTypesPtr_ = &bcTypes;
 
         // resize the vectors for all terms
@@ -179,7 +163,7 @@ public:
         residual_ = 0.0;
         storageTerm_ = 0.0;
 
-        asImp_().evalFluxes_();
+        evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvGeometry_().numScv; i++)
@@ -192,14 +176,6 @@ public:
         for (int i=0; i < fvGeometry_().numScv; i++) {
             Valgrind::CheckDefined(residual_[i]);
         }
-#endif // HAVE_VALGRIND
-
-        // evaluate the boundary conditions
-        asImp_().evalBoundary_();
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numScv; i++)
-            Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
     }
 
@@ -274,18 +250,14 @@ protected:
         // calculate the mass flux over the scv faces and subtract
         for (auto&& scvFace : fvGeometry_().scvfs())
         {
-            PrimaryVariables flux;
-
-            Valgrind::SetUndefined(flux);
-            this->asImp_().computeFlux_(flux, scvFace);
-            Valgrind::CheckDefined(flux);
+            PrimaryVariables flux = asImp_().computeFlux_(flux, scvFace);
 
             if (!isBox)
                 residual_[0] += flux;
             else
             {
-                auto& insideScv = problem_().fvGeometries().subControlVolume(scvFace.insideScvIdx());
-                auto& outsideScv = problem_().fvGeometries().subControlVolume(scvFace.outsideScvIdx());
+                const auto& insideScv = problem_().fvGeometries().subControlVolume(scvFace.insideScvIdx());
+                const auto& outsideScv = problem_().fvGeometries().subControlVolume(scvFace.outsideScvIdx());
 
                 residual[insideScv.indexInElement()] += flux;
                 residual[outsideScv.indexInElement()] -= flux;
@@ -293,38 +265,6 @@ protected:
         }
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions
-     *        of the current element.
-     */
-    void evalBoundary_()
-    {
-        // Dirichlet boundary conditions are treated differently
-        // depending on the spatial discretization: for box,
-        // they are incorporated in a strong sense, whereas for
-        // cell-centered, they are treated by means of fluxes.
-        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
-        {
-            if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
-                asImp_().evalBoundaryFluxes_();
-
-            if (bcTypes_().hasDirichlet())
-                asImp_().evalDirichlet_();
-        }
-        else
-        {
-            asImp_().evalBoundaryFluxes_();
-
-            // additionally treat mixed D/N conditions in a strong sense
-            if (bcTypes_().hasDirichlet())
-                asImp_().evalDirichlet_();
-        }
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numScv; i++)
-            Valgrind::CheckDefined(residual_[i]);
-#endif // HAVE_VALGRIND
-    }
 
     void evalDirichlet_()
     {
@@ -440,8 +380,7 @@ protected:
      */
     const FVElementGeometry &fvGeometry_() const
     {
-        Valgrind::CheckDefined(fvElemGeomPtr_);
-        return *fvElemGeomPtr_;
+        return model_().fvGeometries(element_());
     }
 
     /*!
@@ -499,11 +438,6 @@ protected:
     Problem *problemPtr_;
 
     const Element *elemPtr_;
-    const FVElementGeometry *fvElemGeomPtr_;
-
-    // current and previous secondary variables for the element
-    const ElementVolumeVariables *prevVolVarsPtr_;
-    const ElementVolumeVariables *curVolVarsPtr_;
 
     const ElementBoundaryTypes *bcTypesPtr_;
 };
