@@ -52,7 +52,7 @@ SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<T
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(CCTpfaModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
 
-//! Set the BaseLocalResidual to CCTpfaLocalResidual
+//! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
 
 //! An array of secondary variable containers
