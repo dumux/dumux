@@ -258,31 +258,6 @@ protected:
             }
         }
     }
-
-    /*!
-     * \brief Add the flux terms to the local residual of the current element
-     */
-    void evalFluxes_()
-    {
-        // calculate the mass flux over the faces and subtract
-        // it from the local rates
-        int fIdx = -1;
-        for (const auto& intersection : intersections(this->gridView_(), this->element_())) {
-            if (!intersection.neighbor())
-                continue;
-
-            fIdx++;
-            PrimaryVariables flux;
-
-            Valgrind::SetUndefined(flux);
-            this->asImp_().computeFlux(flux, fIdx);
-            Valgrind::CheckDefined(flux);
-
-            flux *= this->curVolVars_(0).extrusionFactor();
-
-            this->residual_[0] += flux;
-        }
-    }
 };
 
 }
