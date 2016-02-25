@@ -265,13 +265,6 @@ protected:
         }
     }
 
-
-    void evalDirichlet_()
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "evalDirichlet_ has been called but is not implemented");
-    }
-
     /*!
      * \brief Set the local residual to the storage terms of all
      *        sub-control volumes of the current element.
@@ -301,12 +294,11 @@ protected:
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numScv; scvIdx++)
+        for (auto&& scv : fvGeometry_().scvs())
         {
-            Scalar extrusionFactor =
-                curVolVars_(scvIdx).extrusionFactor();
-
-            PrimaryVariables values(0.0);
+            int scvIdx = scv.indexInElement();
+            Scalar prevExtrusionFactor = problem_().model().prevVolVars(scv).extrusionFactor();
+            Scalar curExtrusionFactor = problem_().model().curVolVars(scv).extrusionFactor();
 
             // mass balance within the element. this is the
             // \f$\frac{m}{\partial t}\f$ term if using implicit
@@ -314,30 +306,22 @@ protected:
             //
             // We might need a more explicit way for
             // doing the time discretization...
-            Valgrind::SetUndefined(storageTerm_[scvIdx]);
-            Valgrind::SetUndefined(values);
-            asImp_().computeStorage(storageTerm_[scvIdx], scvIdx, false);
-            asImp_().computeStorage(values, scvIdx, true);
-            Valgrind::CheckDefined(storageTerm_[scvIdx]);
-            Valgrind::CheckDefined(values);
+            PrimaryVariables prevStorage = asImp_().computeStorage(scv, true);
+            PrimaryVariables curStorage = asImp_().computeStorage(scv, false);
 
-            storageTerm_[scvIdx] -= values;
-            storageTerm_[scvIdx] *=
-                fvGeometry_().subContVol[scvIdx].volume
-                / problem_().timeManager().timeStepSize()
-                * extrusionFactor;
+            storageTerm_[scvIdx] = curStorage*curExtrusionFactor;
+            storageTerm_[scvIdx] -= prevStorage*prevExtrusionFactor;
+            storageTerm_[scvIdx] *= scv.volume();
+            storageTerm_[scvIdx] /= problem_().timeManager().timeStepSize();
+
+            // add the storage term to the residual
             residual_[scvIdx] += storageTerm_[scvIdx];
 
             // subtract the source term from the local rate
-            Valgrind::SetUndefined(values);
-            asImp_().computeSource(values, scvIdx);
-            Valgrind::CheckDefined(values);
-            values *= fvGeometry_().subContVol[scvIdx].volume * extrusionFactor;
-            residual_[scvIdx] -= values;
+            PrimaryVariables source = asImp_().computeSource(element_(), scv);
+            source *= scv.volume()*curExtrusionFactor;
 
-            // make sure that only defined quantities were used
-            // to calculate the residual.
-            Valgrind::CheckDefined(residual_[scvIdx]);
+            residual_[scvIdx] -= source;
         }
     }
 
