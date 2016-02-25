@@ -471,7 +471,7 @@ protected:
         auto origVolVarsJ = model_().curVolVars(scvJ);
 
         // calculate the flux in the undeflected state
-        Scalar origFlux = 0.0;
+        PrimaryVariables origFlux = 0.0;
         for (auto&& fluxVarIdx : fluxVarsJ)
             origFlux += localResidual().evalFlux_(fluxVarIdx);
 
@@ -492,7 +492,7 @@ protected:
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
-            Scalar deflectFlux = 0.0;
+            PrimaryVariables deflectFlux = 0.0;
             for (auto&& fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
@@ -504,7 +504,7 @@ protected:
             // we are using backward differences, i.e. we don't need
             // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) flux f(x)
-            partialDeriv = origFlux;
+            partialDeriv = PrimaryVariables;
         }
 
         if (numericDifferenceMethod_ <= 0)
@@ -521,9 +521,9 @@ protected:
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
-            Scalar deflectFlux = 0.0;
+            PrimaryVariables deflectFlux = 0.0;
             for (auto&& fluxVarIdx : fluxVarsJ)
-                deflectFlux += localResidual().evalFlux_(fluxVarIdx);
+                PrimaryVariables += localResidual().evalFlux_(fluxVarIdx);
 
             // subtract the residual from the derivative storage
             partialDeriv -= deflectFlux
