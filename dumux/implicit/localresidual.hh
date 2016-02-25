@@ -41,6 +41,7 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitLocalResidual
 {
+    friend class typename GET_PROP_TYPE(TypeTag, LocalJacobian);
 private:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -244,7 +245,7 @@ protected:
         // calculate the mass flux over the scv faces and subtract
         for (auto&& scvFace : fvGeometry_().scvfs())
         {
-            PrimaryVariables flux = asImp_().computeFlux_(flux, scvFace);
+            PrimaryVariables flux = asImp_().computeFlux_(scvFace);
 
             if (!isBox)
                 residual_[0] += flux;
@@ -257,6 +258,18 @@ protected:
                 residual[outsideScv.indexInElement()] -= flux;
             }
         }
+    }
+
+    PrimaryVariables evalFlux_(const int scvFaceIdx)
+    {
+        auto&& scvFace = problem_().model().fvGeometries().subControlVolumeFace(scvFaceIdx);
+
+        return evalFlux_(scvFace);
+    }
+
+    PrimaryVariables evalFlux_(const subControlVolumeFace &scvFace)
+    {
+        return asImp_().computeFlux_(scvFace);
     }
 
     /*!
