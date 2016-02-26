@@ -489,11 +489,10 @@ public:
      * are assumed to extend 1 m to the back.
      */
     Scalar boxExtrusionFactor(const Element &element,
-                              const FVElementGeometry &fvGeometry,
-                              const int scvIdx) const
+                              const SubControlVolume &scv) const
     {
         // forward to generic interface
-        return asImp_().extrusionFactorAtPos(fvGeometry.subContVol[scvIdx].global);
+        return asImp_().extrusionFactorAtPos(scv.dofPosition());
     }
 
     /*!
