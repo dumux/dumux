@@ -46,59 +46,10 @@ class ImplicitVolumeVariables
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 public:
-    // default constructor
-    ImplicitVolumeVariables()
-    { evalPoint_ = 0; }
-
-    // copy constructor
-    ImplicitVolumeVariables(const ImplicitVolumeVariables &v)
-    {
-        evalPoint_ = 0;
-        priVars_ = v.priVars_;
-        extrusionFactor_ = v.extrusionFactor_;
-    }
-
-    /*!
-     * \brief Assignment operator
-     */
-    ImplicitVolumeVariables &operator=(const ImplicitVolumeVariables &v)
-    {
-        evalPoint_ = 0;
-        priVars_ = v.priVars_;
-        extrusionFactor_ = v.extrusionFactor_;
-
-        return *this;
-    }
-
-    /*!
-     * \brief Sets the evaluation point used by the local jacobian.
-     *
-     * The evaluation point is only used by semi-smooth models.
-     */
-    void setEvalPoint(const Implementation *ep)
-    {
-        evalPoint_ = ep;
-        Valgrind::CheckDefined(evalPoint_);
-    }
-
-    // /*!
-    //  * \brief Returns the evaluation point used by the local jacobian.
-    //  *
-    //  * The evaluation point is only used by semi-smooth models.
-    //  */
-    // const Implementation &evalPoint() const
-    // { return (evalPoint_ == 0)?asImp_():*evalPoint_; }
-
-    // /*!
-    //  * \brief Set the volume variables which should be used as initial
-    //  *        conditions for complex calculations.
-    //  */
-    // void setHint(const Implementation *hint)
-    // {}
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -119,13 +70,11 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const bool isOldSol)
+                const SubControlVolume &scv)
     {
         Valgrind::CheckDefined(priVars);
         priVars_ = priVars;
-        extrusionFactor_ = problem.boxExtrusionFactor(element, fvGeometry, scvIdx);
+        extrusionFactor_ = problem.boxExtrusionFactor(element, scv);
     }
 
     /*!
@@ -164,9 +113,6 @@ public:
     {
 #if !defined NDEBUG && HAVE_VALGRIND
         Valgrind::CheckDefined(priVars_);
-        Valgrind::CheckDefined(evalPoint_);
-        if (evalPoint_ && evalPoint_ != this)
-            evalPoint_->checkDefined();
 #endif
     }
 
@@ -175,9 +121,6 @@ protected:
     { return *static_cast<const Implementation*>(this); }
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
-
-    // the evaluation point of the local jacobian
-    const Implementation *evalPoint_;
 
     PrimaryVariables priVars_;
     Scalar extrusionFactor_;
