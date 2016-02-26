@@ -53,6 +53,7 @@ template<class TypeTag>
 class ImplicitSpatialParamsOneP
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
 
@@ -67,8 +68,9 @@ class ImplicitSpatialParamsOneP
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
 public:
-    ImplicitSpatialParamsOneP(const GridView &gridView)
-    { }
+    ImplicitSpatialParamsOneP(const Problem problem, const GridView &gridView)
+    : problemPtr_(&problem)
+    {}
 
     /*!
      * \brief Averages the intrinsic permeability (Scalar).
@@ -208,12 +210,19 @@ public:
         }
     }
 
+    const Problem& problem_()
+    {
+        return *problemPtr_;
+    }
+
 private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
+
+    const Problem *problemPtr_;
 };
 
 } // namespace Dumux

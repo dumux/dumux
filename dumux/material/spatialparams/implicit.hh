@@ -49,6 +49,7 @@ class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
 
@@ -62,8 +63,8 @@ class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
 public:
-    ImplicitSpatialParams(const GridView &gridView)
-    :ImplicitSpatialParamsOneP<TypeTag>(gridView)
+    ImplicitSpatialParams(const Problem &problem, const GridView &gridView)
+    :ImplicitSpatialParamsOneP<TypeTag>(problem, gridView)
     { }
 
     /*!
