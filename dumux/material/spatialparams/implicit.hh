@@ -49,7 +49,7 @@ class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
-
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
 
     enum {
@@ -75,8 +75,7 @@ public:
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-            const FVElementGeometry &fvGeometry,
-            int scvIdx) const
+                                               const SubControlVolume &scv) const
     {
             return asImp_().materialLawParamsAtPos(element.geometry().center());
     }
