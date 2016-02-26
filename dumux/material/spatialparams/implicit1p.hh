@@ -56,6 +56,7 @@ class ImplicitSpatialParamsOneP
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
 
     enum { dimWorld = GridView::dimensionworld };
     enum { dim = GridView::dimension};
@@ -115,11 +116,9 @@ public:
      * \param scvIdx The index of the sub-control volume.
      * \return the intrinsic permeability
      */
-    const DimWorldMatrix& intrinsicPermeability (const Element &element,
-            const FVElementGeometry &fvGeometry,
-            int scvIdx) const
+    const DimWorldMatrix& intrinsicPermeability (const SubControlVolume &scv) const
     {
-        return asImp_().intrinsicPermeabilityAtPos(element.geometry().center());
+        return asImp_().intrinsicPermeability(scv.dofPosition());
     }
 
     /*!
@@ -143,11 +142,9 @@ public:
      * \param scvIdx The index of the sub-control volume.
      * \return porosity
      */
-    Scalar porosity(const Element &element,
-            const FVElementGeometry &fvGeometry,
-            int scvIdx) const
+    Scalar porosity(const SubControlVolume &scv) const
     {
-        return asImp_().porosityAtPos(element.geometry().center());
+        return asImp_().porosityAtPos(scv.dofPosition());
     }
 
     /*!
@@ -190,24 +187,10 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    Scalar forchCoeff(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const unsigned int scvIdx) const
+    Scalar forchCoeff(const SubControlVolume &scv) const
     {
-        try
-        {
-            const Scalar forchCoeff = GET_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, ForchCoeff);
-
-            return forchCoeff ;
-        }
-        catch (ParameterException &e) {
-            std::cerr << e << ". Aborted in file "<< __FILE__ << "!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1) ;
-        }
+        static Scalar forchCoeff = GET_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, ForchCoeff);
+        return forchCoeff;
     }
 
     const Problem& problem_()
