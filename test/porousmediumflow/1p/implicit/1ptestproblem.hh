@@ -25,6 +25,7 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -43,7 +44,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
 NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
-NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCModel, OnePTestProblem));
+NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
 
 SET_PROP(OnePTestProblem, Fluid)
 {
@@ -204,7 +205,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
             const GlobalPosition &globalPos) const
     {
-        double eps = 1.0e-3;
+        double eps = 1.0e-6;
         if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
