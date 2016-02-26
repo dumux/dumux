@@ -234,7 +234,7 @@ private:
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
-        int numDofs = problem_().model().numDofs()
+        auto numDofs = problem_().model().numDofs();
 
         // allocate raw matrix
         matrix_ = std::make_shared<JacobianMatrix>(numDofs, numDofs, JacobianMatrix::random);
@@ -250,10 +250,10 @@ private:
     {
         if (!isBox)
         {
-            for (const auto& element : elements(gridview_()))
+            for (const auto& element : elements(gridView_()))
             {
                 // the global index of the element at hand
-                const unsigned int elemIdx = elementMapper_().index(element);
+                const auto elemIdx = elementMapper_().index(element);
                 const auto& stencil = model_().stencils().elementStencil(element);
                 matrix_->setrowsize(elemIdx, stencil.size());
             }
@@ -269,13 +269,13 @@ private:
     {
         if (!isBox)
         {
-            for (const auto& element : elements(gridview_()))
+            for (const auto& element : elements(gridView_()))
             {
                 // the global index of the element at hand
-                const unsigned int globalI = elementMapper_().index(element);
+                const auto globalI = elementMapper_().index(element);
                 const auto& stencil = model_().stencils().elementStencil(element);
 
-                for (globalJ : stencil)
+                for (auto&& globalJ : stencil)
                     matrix_->addindex(globalI, globalJ);
             }
             matrix_->endrowsizes();

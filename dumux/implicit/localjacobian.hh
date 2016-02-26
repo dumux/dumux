@@ -84,6 +84,7 @@ private:
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -145,10 +146,10 @@ public:
         model_().updatePVWeights(fvElemGeom_());
 
         // get stencil informations
-        //const auto& sourceStencil = model_().stencils().sourceStencil(element);
+        const auto& elementStencil = model_().stencils().elementStencil(element);
 
         // set size of local jacobian matrix
-        const std::size_t numCols = stencil.size();
+        const std::size_t numCols = elementStencil.size();
         std::size_t numRows;
 
         if (isBox)
@@ -187,7 +188,7 @@ public:
         // for cellcentered methods, calculate the derivatives w.r.t cells in stencil
         if (!isBox)
         {
-            const auto& neighborDofs = model_().stencils().neighborStencil(element);
+            const auto& neighborStencil = model_().stencils().neighborStencil(element);
 
             // map each neighbor dof to a set of fluxVars that need to be recalculated
             // i.o.t calculate derivative w.r.t this neighbor
@@ -197,8 +198,8 @@ public:
             for (auto&& scvFace : fvElemGeom_().scvf())
             {
                 int fluxVarIdx = scvFace.index();
-                auto&& fluxVars = model_().fluxVars(fluxVarIdx);
-                for (auto&& globalJ : neighborDofs)
+                const auto& fluxVars = model_().fluxVars(fluxVarIdx);
+                for (auto&& globalJ : neighborStencil)
                     if (fluxVars.stencil().count(globalJ))
                         neighborToFluxVars[globalJ].insert(fluxVarIdx);
             }
@@ -206,7 +207,7 @@ public:
             // loop over the neighbors and calculation of the change in flux
             // with a change in the primary variables at the neighboring dof
             int j = 1;
-            for (auto&& globalJ : neighborDofs)
+            for (auto&& globalJ : neighborStencil)
             {
                 for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
                 {
@@ -503,7 +504,7 @@ protected:
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // store the calculated flux
-            partialDeriv = deflectFlux
+            partialDeriv = deflectFlux;
         }
         else
         {
@@ -532,7 +533,7 @@ protected:
                 PrimaryVariables += localResidual().evalFlux_(fluxVarIdx);
 
             // subtract the residual from the derivative storage
-            partialDeriv -= deflectFlux
+            partialDeriv -= deflectFlux;
         }
         else
         {
