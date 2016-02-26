@@ -63,6 +63,7 @@ class PointSource
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     static const int dimworld = GridView::dimensionworld;
@@ -139,9 +140,7 @@ public:
     // to be overloaded by derived classes
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const ElementVolumeVariables &elemVolVars)
+                const SubControlVolume& scv)
     {}
 
     //! set the number of embeddings for this point source
@@ -225,6 +224,7 @@ class TimeDependentPointSource : public PointSource<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     static const int dimworld = GridView::dimensionworld;
@@ -250,9 +250,7 @@ public:
     // to be overloaded by derived classes
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const ElementVolumeVariables &elemVolVars)
+                const SubControlVolume &scv)
     { this->values_ = valueFunction_(problem.timeManager(), this->position()); }
 
     //! Convenience = operator overload modifying only the values

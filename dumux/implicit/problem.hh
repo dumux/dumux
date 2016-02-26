@@ -391,9 +391,9 @@ public:
      * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
-    PrimaryVariables pointSource(PointSource& pointSource,
-                                 const Element &element,
-                                 const SubControlVolume &scv) const
+    void pointSource(PointSource& pointSource,
+                     const Element &element,
+                     const SubControlVolume &scv) const
     {
         // forward to space dependent interface method
         asImp_().pointSourceAtPos(pointSource, pointSource.position());
@@ -974,9 +974,8 @@ public:
     PrimaryVariables scvPointSources(const Element &element, const SubControlVolume &scv) const
     {
         PrimaryVariables source(0);
-        int scvIdx = scv.indexInElement();
 
-        auto key = std::make_pair(this->gridView().indexSet().index(element), scvIdx);
+        auto key = std::make_pair(this->gridView().indexSet().index(element), scv.indexInElement());
         if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
@@ -1001,9 +1000,9 @@ public:
                 // we do an update e.g. used for TimeDependentPointSource
                 pointSource.update(asImp_(), element, scv);
                 // call convienience problem interface function
-                source = asImp_().pointSource(pointSource, element, scv);
+                asImp_().pointSource(pointSource, element, scv);
                 // at last take care about multiplying with the correct volume
-                source /= volume;
+                pointSource /= volume;
                 // add the point source values to the local residual
                 source += pointSource.values();
             }
