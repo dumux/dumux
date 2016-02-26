@@ -58,6 +58,7 @@ class CCTpfaImplicitDarcyFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GridView::IndexSet::IndexType IndexType;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -151,9 +152,9 @@ public:
             return volumeFlux_*upwindFunction(outsideVolVars, insideVolVars);
     }
 
-    std::set<unsigned int> stencil() const
+    std::set<IndexType> stencil() const
     {
-        return std::set<unsigned int>(stencil_.begin(), stencil.end());
+        return std::set<IndexType>(stencil_.begin(), stencil.end());
     }
 
 protected:
@@ -231,7 +232,7 @@ protected:
     const Problem *problem_;
     const SubControlVolumeFace *scvFace_;       //!< Pointer to the sub control volume face for which the flux variables are created
     Scalar t_;                                            //!< transmissivities for the flux calculation
-    std::array<Scalar, 2> stencil_;                       //!< Indices of the cells of which the pressure is needed for the flux calculation
+    std::array<IndexType, 2> stencil_;                       //!< Indices of the cells of which the pressure is needed for the flux calculation
 };
 
 } // end namespace
