@@ -45,7 +45,7 @@ public:
     {
         auto gridView = problem.gridView();
 
-        this->resize(gridView.size(0));
+        this->resize(problem.model().fvGeometries().numScv());
         for (const auto& element : elements(gridView))
         {
             for (auto&& scv : problem.model().fvGeometries(element).scvs())
