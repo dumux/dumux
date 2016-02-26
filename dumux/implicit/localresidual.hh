@@ -293,6 +293,20 @@ protected:
         }
     }
 
+    PrimaryVariables evalSource_()
+    {
+        PrimaryVariables source(0);
+        for (scv : fvGeometry_().scvs())
+        {
+            source += this->problem_().source(element_(), scv);
+
+            // add contribution from possible point sources
+            source += this->problem_().scvPointSources(element_(), scv);
+        }
+
+        return source;
+    }
+
     /*!
      * \brief Add the change in the storage terms and the source term
      *        to the local residual of all sub-control volumes of the
