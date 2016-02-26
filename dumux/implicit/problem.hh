@@ -428,13 +428,10 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const int scvIdx) const
+    PrimaryVariables initial(const SubControlVolume &scv) const
     {
         // forward to generic interface
-        asImp_().initialAtPos(values, fvGeometry.subContVol[scvIdx].global);
+        return asImp_().initialAtPos(scv.dofPosition());
     }
 
     /*!
@@ -447,8 +444,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for initial values)
