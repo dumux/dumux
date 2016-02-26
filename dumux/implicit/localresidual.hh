@@ -262,7 +262,7 @@ protected:
 
     PrimaryVariables evalFlux_(const int scvFaceIdx)
     {
-        auto&& scvFace = problem_().model().fvGeometries().subControlVolumeFace(scvFaceIdx);
+        auto&& scvFace = model_().fvGeometries().subControlVolumeFace(scvFaceIdx);
 
         return evalFlux_(scvFace);
     }
@@ -287,9 +287,9 @@ protected:
         {
             int scvIdx = scv.indexInElement();
 
-            storageTerm_[scvIdx] = asImp_().computeStorage(scv, /*isOldSol=*/false);
+            storageTerm_[scvIdx] = asImp_().computeStorage(scv, model_().curVolVars(scv));
             storageTerm_[scvIdx] *= scv.volume();
-            storageTerm_[scvIdx] *= problem_().model().curVolVars(scv).extrusionFactor();
+            storageTerm_[scvIdx] *= model_().curVolVars(scv).extrusionFactor();
         }
     }
 
@@ -318,8 +318,8 @@ protected:
         for (auto&& scv : fvGeometry_().scvs())
         {
             int scvIdx = scv.indexInElement();
-            Scalar prevExtrusionFactor = problem_().model().prevVolVars(scv).extrusionFactor();
-            Scalar curExtrusionFactor = problem_().model().curVolVars(scv).extrusionFactor();
+            Scalar prevExtrusionFactor = model_().prevVolVars(scv).extrusionFactor();
+            Scalar curExtrusionFactor = model_().curVolVars(scv).extrusionFactor();
 
             // mass balance within the element. this is the
             // \f$\frac{m}{\partial t}\f$ term if using implicit
@@ -327,8 +327,8 @@ protected:
             //
             // We might need a more explicit way for
             // doing the time discretization...
-            PrimaryVariables prevStorage = asImp_().computeStorage(scv, true);
-            PrimaryVariables curStorage = asImp_().computeStorage(scv, false);
+            PrimaryVariables prevStorage = asImp_().computeStorage(scv, model_().prevVolVars(scv));
+            PrimaryVariables curStorage = asImp_().computeStorage(scv, model_().curVolVars(scv));
 
             storageTerm_[scvIdx] = curStorage*curExtrusionFactor;
             storageTerm_[scvIdx] -= prevStorage*prevExtrusionFactor;
@@ -362,7 +362,7 @@ protected:
      * \brief Returns a reference to the model.
      */
     const Model &model_() const
-    { return problem_().model(); }
+    { return model_(); }
 
     /*!
      * \brief Returns a reference to the grid view.
