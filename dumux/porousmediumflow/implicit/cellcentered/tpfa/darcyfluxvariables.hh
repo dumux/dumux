@@ -74,7 +74,13 @@ public:
         problemPtr_ = &problem;
         scvFacePtr_ = &scvFace;
 
-        updateTransmissibilitiesAndStencil_();
+        updateTransmissibilities_();
+        updateStencil_();
+    }
+
+    void updateTransmissibilities(const Problem &problem, const SubControlVolumeFace &scvFace)
+    {
+        updateTransmissibilities_();
     }
 
     /*!
@@ -161,7 +167,7 @@ public:
 protected:
 
 
-    void updateTransmissibilitiesAndStencil_()
+    void updateTransmissibilities_()
     {
         if (!scvFace_().boundary())
         {
@@ -176,9 +182,6 @@ protected:
             Scalar tj = -1.0*calculateOmega_(outsideK, outsideScv);
 
             tij_ = scvFace_().area()*(ti * tj)/(ti + tj);
-
-            // fill the stencil
-            stencil_= {scvFace_().insideVolVarsIdx(), scvFace_().outsideVolVarsIdx()};
         }
         else
         {
@@ -188,10 +191,17 @@ protected:
             Scalar ti = calculateOmega_(insideK, insideScv);
 
             tij_ = scvFace_().area()*ti;
+        }
+    }
 
+    void updateStencil_()
+    {
+        // fill the stencil
+        if (!scvFace_().boundary())
+            stencil_= {scvFace_().insideVolVarsIdx(), scvFace_().outsideVolVarsIdx()};
+        else
             // fill the stencil
             stencil_ = {scvFace_().insideVolVarsIdx()};
-        }
     }
 
     Scalar calculateOmega_(const DimWorldMatrix &K, const SubControlVolume &scv) const
