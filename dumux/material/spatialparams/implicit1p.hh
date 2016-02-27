@@ -69,7 +69,7 @@ class ImplicitSpatialParamsOneP
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
 public:
-    ImplicitSpatialParamsOneP(const Problem problem, const GridView &gridView)
+    ImplicitSpatialParamsOneP(const Problem& problem, const GridView &gridView)
     : problemPtr_(&problem)
     {}
 
