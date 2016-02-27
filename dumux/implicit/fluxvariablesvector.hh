@@ -55,15 +55,15 @@ public:
         }
     }
 
-    void update(const Problem& problem, const SubControlVolumeFace& scvFace)
+    void update(const Problem& problem, const SubControlVolumeFace& scvf)
     {
-        (*this)[scvFace.index()].update(problem, scvf);
+        (*this)[scvf.index()].update(problem, scvf);
     }
 
-    void update(const Problem& problem, const IndexType scvFaceIndex)
+    void update(const Problem& problem, const IndexType scvfIdx)
     {
-        auto&& scvFace = problem.model().fvGeometries().SubControlVolumeFace(scvFaceIndex);
-        (*this)[scvFace.index()].update(problem, scvf);
+        auto&& scvf = problem.model().fvGeometries().subControlVolumeFace(scvfIdx);
+        (*this)[scvf.index()].update(problem, scvf);
     }
 
     const FluxVariables& operator [](IndexType scvfIdx) const

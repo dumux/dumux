@@ -41,7 +41,7 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitLocalResidual
 {
-    friend class typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
 private:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -51,18 +51,23 @@ private:
     typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
-    // copying the local residual class is not a good idea
-    ImplicitLocalResidual(const ImplicitLocalResidual &);
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? GridView::dimension : 0 };
 
 public:
-    ImplicitLocalResidual()
-    { }
+    // copying the local residual class is not a good idea
+    ImplicitLocalResidual(const ImplicitLocalResidual &) = delete;
+
+    // the default constructor
+    ImplicitLocalResidual() = default;
 
     /*!
      * \brief Initialize the local residual.
@@ -88,7 +93,7 @@ public:
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
-        asImp_().eval(element, fvGeometry_(), bcTypes);
+        asImp_().eval(element, bcTypes);
     }
 
     /*!
@@ -163,14 +168,14 @@ public:
         residual_ = 0.0;
         storageTerm_ = 0.0;
 
-        evalFluxes_();
+        asImp_().evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvGeometry_().numScv; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
-        asImp_().evalVolumeTerms_();
+       asImp_().evalVolumeTerms_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvGeometry_().numScv; i++) {
@@ -194,6 +199,8 @@ public:
 
         // add contribution from possible point sources
         source += this->problem_().scvPointSources(element_(), scv);
+
+        return source;
     }
 
     /*!
@@ -242,33 +249,34 @@ protected:
     void evalFluxes_()
     {
         // calculate the mass flux over the scv faces and subtract
-        for (auto&& scvFace : fvGeometry_().scvfs())
+        for (auto&& scvf : fvGeometry_().scvfs())
         {
-            PrimaryVariables flux = asImp_().computeFlux_(scvFace);
+            auto flux = asImp_().computeFlux_(scvf);
 
             if (!isBox)
+            {
                 residual_[0] += flux;
+            }
             else
             {
-                const auto& insideScv = problem_().fvGeometries().subControlVolume(scvFace.insideScvIdx());
-                const auto& outsideScv = problem_().fvGeometries().subControlVolume(scvFace.outsideScvIdx());
+                const auto& insideScv = model_().fvGeometries().subControlVolume(scvf.insideScvIdx());
+                const auto& outsideScv = model_().fvGeometries().subControlVolume(scvf.outsideScvIdx());
 
-                residual[insideScv.indexInElement()] += flux;
-                residual[outsideScv.indexInElement()] -= flux;
+                residual_[insideScv.indexInElement()] += flux;
+                residual_[outsideScv.indexInElement()] -= flux;
             }
         }
     }
 
-    PrimaryVariables evalFlux_(const int scvFaceIdx)
+    PrimaryVariables evalFlux_(const int scvfIdx)
     {
-        auto&& scvFace = model_().fvGeometries().subControlVolumeFace(scvFaceIdx);
-
-        return evalFlux_(scvFace);
+        auto&& scvf = model_().fvGeometries().subControlVolumeFace(scvfIdx);
+        return evalFlux_(scvf);
     }
 
-    PrimaryVariables evalFlux_(const subControlVolumeFace &scvFace)
+    PrimaryVariables evalFlux_(const SubControlVolumeFace &scvf)
     {
-        return asImp_().computeFlux_(scvFace);
+        return asImp_().computeFlux_(scvf);
     }
 
     /*!
@@ -277,25 +285,24 @@ protected:
      */
     void evalStorage_()
     {
-        storageTerm_.resize(fvGeometry_().numScv);
+        storageTerm_.resize(fvGeometry_().numScv());
         storageTerm_ = 0;
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
         for (auto&& scv : fvGeometry_().scvs())
         {
-            int scvIdx = scv.indexInElement();
+            auto scvIdx = scv.indexInElement();
 
             storageTerm_[scvIdx] = asImp_().computeStorage(scv, model_().curVolVars(scv));
-            storageTerm_[scvIdx] *= scv.volume();
-            storageTerm_[scvIdx] *= model_().curVolVars(scv).extrusionFactor();
+            storageTerm_[scvIdx] *= scv.volume() * model_().curVolVars(scv).extrusionFactor();
         }
     }
 
     PrimaryVariables evalSource_()
     {
         PrimaryVariables source(0);
-        for (scv : fvGeometry_().scvs())
+        for (auto&& scv : fvGeometry_().scvs())
         {
             source += this->problem_().source(element_(), scv);
 
@@ -316,9 +323,9 @@ protected:
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : fvGeometry_().scvs())
         {
-            int scvIdx = scv.indexInElement();
-            Scalar prevExtrusionFactor = model_().prevVolVars(scv).extrusionFactor();
-            Scalar curExtrusionFactor = model_().curVolVars(scv).extrusionFactor();
+            auto scvIdx = scv.indexInElement();
+            auto prevExtrusionFactor = model_().prevVolVars(scv).extrusionFactor();
+            auto curExtrusionFactor = model_().curVolVars(scv).extrusionFactor();
 
             // mass balance within the element. this is the
             // \f$\frac{m}{\partial t}\f$ term if using implicit
@@ -361,7 +368,7 @@ protected:
      * \brief Returns a reference to the model.
      */
     const Model &model_() const
-    { return model_(); }
+    { return problem_().model(); }
 
     /*!
      * \brief Returns a reference to the grid view.
@@ -385,34 +392,6 @@ protected:
     const FVElementGeometry &fvGeometry_() const
     {
         return model_().fvGeometries(element_());
-    }
-
-    /*!
-     * \brief Returns a reference to the primary variables of
-     *           the last time step of the i'th
-     *        sub-control volume of the current element.
-     */
-    const PrimaryVariables &prevPriVars_(const int i) const
-    {
-        return prevVolVars_(i).priVars();
-    }
-
-    /*!
-     * \brief Returns a reference to the primary variables of the i'th
-     *        sub-control volume of the current element.
-     */
-    const PrimaryVariables &curPriVars_(const int i) const
-    {
-        return curVolVars_(i).priVars();
-    }
-
-    /*!
-     * \brief Returns the j'th primary of the i'th sub-control volume
-     *        of the current element.
-     */
-    Scalar curPriVar_(const int i, const int j) const
-    {
-        return curVolVars_(i).priVar(j);
     }
 
     /*!

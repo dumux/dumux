@@ -42,6 +42,7 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitModel
 {
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -103,7 +104,7 @@ public:
         updateBoundaryIndices_();
 
         fvGeometries_ = std::make_shared<FVElementGeometryVector>(gridView_());
-        fvGeometries_.update();
+        fvGeometries_->update(problem_());
 
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
@@ -720,7 +721,7 @@ public:
      */
     bool onBoundary(const SubControlVolume &scv) const
     {
-        return asImp_().onBoundary(onBoundary(scv.dofIdxGlobal()));
+        return asImp_().onBoundary(onBoundary(scv.dofIndex()));
     }
 
     /*!

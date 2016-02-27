@@ -111,7 +111,7 @@ SET_BOOL_PROP(ImplicitBase, DiffusiveFluxes, false);
 //! By default energy fluxes are not considered
 SET_BOOL_PROP(ImplicitBase, EnergyFluxes, false);
 
-//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+// //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
 SET_PROP(ImplicitBase, FluxVariables)
 {
 private:
@@ -123,13 +123,16 @@ private:
   };
 public:
   typedef FluxVariables<TypeTag, darcy, diffusion, energy> type;
-}
+};
 
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);
 
 //! The local jacobian operator
 SET_TYPE_PROP(ImplicitBase, LocalJacobian, ImplicitLocalJacobian<TypeTag>);
+
+//! Assembler for the global jacobian matrix
+SET_TYPE_PROP(ImplicitBase, JacobianAssembler, Dumux::ImplicitAssembler<TypeTag>);
 
 //! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,

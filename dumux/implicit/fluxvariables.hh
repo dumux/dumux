@@ -28,6 +28,12 @@
 namespace Dumux
 {
 
+namespace Properties
+{
+NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(NumComponents);
+}
+
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables
@@ -42,8 +48,11 @@ template<class TypeTag>
 class FluxVariables<TypeTag, true, false, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using DarcyFluxVariables = typename GET_PROP_TYPE(TypeTag, DarcyFluxVariables);
+    using Stencil = std::set<IndexType>;
 
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scv)
@@ -56,9 +65,9 @@ public:
         return darcyFluxVars_;
     }
 
-    DarcyFluxVariables& darcyFluxVars()
+    Stencil stencil() const
     {
-        return darcyFluxVars_;
+        return darcyFluxVars().stencil();
     }
 
 private:
@@ -77,8 +86,8 @@ class FluxVariables<TypeTag, true, true, false>
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, numPhases);
-        numComponents = GET_PROP_VALUE(TypeTag, numComponents);
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
 public:
@@ -126,8 +135,8 @@ class FluxVariables<TypeTag, false, true, false>
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, numPhases);
-        numComponents = GET_PROP_VALUE(TypeTag, numComponents);
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
 public:
@@ -207,8 +216,8 @@ class FluxVariables<TypeTag, true, true, true>
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, numPhases);
-        numComponents = GET_PROP_VALUE(TypeTag, numComponents);
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
 public:
@@ -269,8 +278,8 @@ class FluxVariables<TypeTag, false, true, true>
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, numPhases);
-        numComponents = GET_PROP_VALUE(TypeTag, numComponents);
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
 public:

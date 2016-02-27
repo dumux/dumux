@@ -34,23 +34,19 @@
 #include "localresidual.hh"
 #include "elementvolumevariables.hh"
 #include "properties.hh"
+#include "stencils.hh"
 
-namespace Dumux {
+namespace Dumux
+{
 
-/*!
- * \brief The cell centered finite-volume method uses the elements of the grid as control volumes.
- */
-// forward declarations
-template<class TypeTag> class CCModel;
-template<class TypeTag> class CCLocalResidual;
+// forward declaration
 template<class TypeTag> class CCElementBoundaryTypes;
-template<class TypeTag> class CCElementVolumeVariables;
-template<class TypeTag> class CCFVElementGeometry;
+template<class TypeTag> class CCLocalResidual;
+template<class TypeTag> class CCStencils;
+template<class TypeTag> class CCAssembler;
 
-namespace Properties {
-//! Set the default for the FVElementGeometry
-SET_TYPE_PROP(CCModel, FVElementGeometry, CCFVElementGeometry<TypeTag>);
-
+namespace Properties
+{
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 

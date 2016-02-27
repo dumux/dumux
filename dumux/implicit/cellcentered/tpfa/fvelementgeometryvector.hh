@@ -43,7 +43,7 @@ class ElementMap
 public:
     ElementMap(const GridView& gridView_) : grid_(gridView_.grid()) {}
 
-    Element element(IndexType eIdx)
+    Element element(IndexType eIdx) const
     { return grid_.entity((*this)[eIdx]); }
 
 private:
@@ -76,7 +76,7 @@ public:
      * \note The finite volume geometry offers iterators over the sub control volumes
      *       and the sub control volume faces of an element.
      */
-    FVElementGeometry fvGeometry(IndexType eIdx) const
+    const FVElementGeometry& fvGeometry(IndexType eIdx) const
     {
         return fvGeometries_[eIdx];
     }
