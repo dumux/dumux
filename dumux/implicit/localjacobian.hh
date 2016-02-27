@@ -481,7 +481,7 @@ protected:
         auto origVolVarsJ = model_().curVolVars(scvJ);
 
         // calculate the flux in the undeflected state
-        PrimaryVariables origFlux = 0.0;
+        PrimaryVariables origFlux(0.0);
         for (auto&& fluxVarIdx : fluxVarsJ)
             origFlux += localResidual().evalFlux_(fluxVarIdx);
 
@@ -502,7 +502,7 @@ protected:
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
-            PrimaryVariables deflectFlux = 0.0;
+            PrimaryVariables deflectFlux(0.0);
             for (auto&& fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
@@ -531,7 +531,7 @@ protected:
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
-            PrimaryVariables deflectFlux = 0.0;
+            PrimaryVariables deflectFlux(0.0);
             for (auto&& fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 

@@ -336,8 +336,11 @@ protected:
             PrimaryVariables prevStorage = asImp_().computeStorage(scv, model_().prevVolVars(scv));
             PrimaryVariables curStorage = asImp_().computeStorage(scv, model_().curVolVars(scv));
 
-            storageTerm_[scvIdx] = curStorage*curExtrusionFactor;
-            storageTerm_[scvIdx] -= prevStorage*prevExtrusionFactor;
+            prevStorage *= prevExtrusionFactor;
+            curStorage *= curExtrusionFactor;
+
+            storageTerm_[scvIdx] = curStorage;
+            storageTerm_[scvIdx] -= prevStorage;
             storageTerm_[scvIdx] *= scv.volume();
             storageTerm_[scvIdx] /= problem_().timeManager().timeStepSize();
 
