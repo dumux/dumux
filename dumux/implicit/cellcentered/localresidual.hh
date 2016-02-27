@@ -217,10 +217,6 @@ protected:
 
         auto dirichletFlux = this->asImp_().computeFlux(scvf);
 
-        // multiply dirichlet fluxes with the area and the extrusion factor
-        const auto& scv = this->problem_().model().fvGeometries().subControlVolume(scvf.insideScvIdx());
-        dirichletFlux *= scvf.area()*this->problem_().model().curVolVars(scv).extrusionFactor();
-
         // add fluxes to the residual
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             if (bcTypes.isDirichlet(eqIdx))
