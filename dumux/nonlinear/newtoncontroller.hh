@@ -437,19 +437,8 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        if (enableShiftCriterion_ || enablePartialReassemble_)
+        if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
-
-        // compute the vertex and element colors for partial reassembly
-        if (enablePartialReassemble_) {
-            const Scalar minReasmTol = 1e-2*shiftTolerance_;
-            const Scalar maxReasmTol = 1e1*shiftTolerance_;
-            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->shift_/1e4));
-            //Scalar reassembleTol = minReasmTol;
-
-            this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
-            this->model_().jacobianAssembler().computeColors(reassembleTol);
-        }
 
         writeConvergence_(uLastIter, deltaU);
 
@@ -518,7 +507,6 @@ public:
      */
     void newtonFail()
     {
-        model_().jacobianAssembler().reassembleAll();
         numSteps_ = targetSteps_*2;
     }
 
@@ -528,12 +516,7 @@ public:
      * This method is called _after_ newtonEnd()
      */
     void newtonSucceed()
-    {
-        if (enableJacobianRecycling_)
-            model_().jacobianAssembler().setMatrixReuseable(true);
-        else
-            model_().jacobianAssembler().reassembleAll();
-    }
+    {}
 
     /*!
      * \brief Suggest a new time-step size based on the old time-step
