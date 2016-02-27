@@ -73,7 +73,6 @@ class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -104,7 +103,7 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
@@ -121,19 +120,19 @@ public:
         ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
         ScalarField *Te = writer.allocateManagedBuffer(numDofs);
-        VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+        // VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        // VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
-        if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        {
-            // initialize velocity fields
-            for (unsigned int i = 0; i < numDofs; ++i)
-            {
-                (*velocityN)[i] = Scalar(0);
-                (*velocityW)[i] = Scalar(0);
-            }
-        }
+        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
+        // {
+        //     // initialize velocity fields
+        //     for (unsigned int i = 0; i < numDofs; ++i)
+        //     {
+        //         (*velocityN)[i] = Scalar(0);
+        //         (*velocityW)[i] = Scalar(0);
+        //     }
+        // }
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
@@ -156,37 +155,30 @@ public:
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int eIdx = this->elementMapper().index(element);
-
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
-                const auto& fvGeometry = this->fvGeometries(eIdx);
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                   element,
-                                   fvGeometry,
-                                   false /* oldSol? */);
-
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                for (auto&& scv : this->fvGeometries(element).scvs())
                 {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                    auto dofIdxGlobal = scv.dofIndex();
+                    const auto& volVars = this->curVolVars(scv);
 
-                    (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                    (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                    (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
-                    (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                    (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                    (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
-                    (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
-                    (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                    (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
-                    (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                    (*pw)[dofIdxGlobal] = volVars.pressure(wPhaseIdx);
+                    (*pn)[dofIdxGlobal] = volVars.pressure(nPhaseIdx);
+                    (*pc)[dofIdxGlobal] = volVars.capillaryPressure();
+                    (*sw)[dofIdxGlobal] = volVars.saturation(wPhaseIdx);
+                    (*sn)[dofIdxGlobal] = volVars.saturation(nPhaseIdx);
+                    (*rhoW)[dofIdxGlobal] = volVars.density(wPhaseIdx);
+                    (*rhoN)[dofIdxGlobal] = volVars.density(nPhaseIdx);
+                    (*mobW)[dofIdxGlobal] = volVars.mobility(wPhaseIdx);
+                    (*mobN)[dofIdxGlobal] = volVars.mobility(nPhaseIdx);
+                    (*poro)[dofIdxGlobal] = volVars.porosity();
+                    (*Te)[dofIdxGlobal] = volVars.temperature();
                 }
-            }
 
-            // velocity output
-            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                // // velocity output
+                // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+            }
         }
 
         writer.attachDofData(*sn, "Sn", isBox);
@@ -201,11 +193,11 @@ public:
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*Te, "temperature", isBox);
 
-        if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        {
-            writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
-            writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
-        }
+        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
+        // {
+        //     writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
+        //     writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
+        // }
 
         writer.attachCellData(*rank, "process rank");
     }

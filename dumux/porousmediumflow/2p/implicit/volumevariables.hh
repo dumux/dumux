@@ -50,6 +50,7 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -77,21 +78,14 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                int scvIdx,
-                bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(priVars, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, scv, fluidState_);
 
         const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, scv);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
@@ -102,12 +96,10 @@ public:
             / fluidState_.viscosity(nPhaseIdx);
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                     fvGeometry,
-                                                     scvIdx);
+        porosity_ = problem.spatialParams().porosity(scv);
 
         // energy related quantities not belonging to the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, scv);
     }
 
     /*!
@@ -116,16 +108,14 @@ public:
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   int scvIdx,
+                                   const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                fvGeometry, scvIdx);
+        Scalar t = Implementation::temperature_(priVars, problem, element, scv);
         fluidState.setTemperature(t);
 
         const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, scv);
 
         if (int(formulation) == pwsn) {
             Scalar sn = priVars[saturationIdx];
@@ -245,29 +235,26 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
                                const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               int scvIdx)
+                               const SubControlVolume &scv)
     {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+        return problem.temperatureAtPos(scv.dofPosition());
     }
 
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,
-                            int phaseIdx)
+                            const int phaseIdx)
     {
         return 0;
     }
 
     /*!
-     * \brief Called by update() to compute the energy related quantities
+     * \brief Called by update() to compute the energy related quantities.
      */
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       int vIdx,
-                       bool isOldSol)
+                       const SubControlVolume& scv)
     { }
 
     FluidState fluidState_;

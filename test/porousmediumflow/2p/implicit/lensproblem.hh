@@ -30,7 +30,7 @@
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/cellcentered/propertydefaults.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 #include <dumux/porousmediumflow/2p/implicit/adaptionhelper.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
@@ -51,7 +51,7 @@ namespace Properties
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(TwoP, LensSpatialParams));
 NEW_TYPE_TAG(LensBoxProblem, INHERITS_FROM(BoxModel, LensProblem));
 NEW_TYPE_TAG(LensBoxAdaptiveProblem, INHERITS_FROM(BoxModel, LensProblem));
-NEW_TYPE_TAG(LensCCProblem, INHERITS_FROM(CCModel, LensProblem));
+NEW_TYPE_TAG(LensCCProblem, INHERITS_FROM(CCTpfaModel, LensProblem));
 NEW_TYPE_TAG(LensCCAdaptiveProblem, INHERITS_FROM(CCModel, LensProblem));
 
 #if HAVE_UG
@@ -276,10 +276,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0.0;
+        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -296,15 +295,16 @@ public:
      * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes values;
         if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) {
             values.setAllDirichlet();
         }
         else {
             values.setAllNeumann();
         }
+        return values;
     }
 
     /*!
@@ -315,9 +315,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values,
-                        const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
@@ -334,6 +334,8 @@ public:
         // hydrostatic pressure scaled by alpha
         values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
         values[snIdx] = 0.0;
+
+        return values;
     }
 
     /*!
@@ -347,13 +349,13 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumannAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0.0;
+        PrimaryVariables values(0.0);
         if (onInlet_(globalPos)) {
             values[contiNEqIdx] = -0.04; // kg / (m * s)
         }
+        return values;
     }
     // \}
 
@@ -370,9 +372,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
@@ -385,6 +387,7 @@ public:
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
         values[snIdx] = 0.0;
+        return values;
     }
     // \}
 

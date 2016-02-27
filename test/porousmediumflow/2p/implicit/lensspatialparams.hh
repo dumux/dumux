@@ -71,6 +71,7 @@ class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
@@ -95,8 +96,8 @@ public:
      *
      * \param gridView The grid view
      */
-    LensSpatialParams(const GridView& gridView)
-    : ParentType(gridView)
+    LensSpatialParams(const Problem& problem, const GridView& gridView)
+    : ParentType(problem, gridView)
     {
             lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[0];
             lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[1];
@@ -127,12 +128,8 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 int scvIdx) const
+    Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition& globalPos = element.geometry().center();
-
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
@@ -145,9 +142,7 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
@@ -157,12 +152,8 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition& globalPos = element.geometry().center();
-
         if (isInLens_(globalPos))
             return lensMaterialParams_;
         return outerMaterialParams_;

@@ -41,7 +41,6 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/spatialparams/implicit.hh>
-#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 namespace Dumux
@@ -72,9 +71,6 @@ SET_TYPE_PROP(TwoP, Model, TwoPModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(TwoP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(TwoP, ImplicitMassUpwindWeight, 1.0);
@@ -166,9 +162,6 @@ SET_BOOL_PROP(TwoPNI, NiOutputLevel, 0);
 
 // set isothermal Model
 SET_TYPE_PROP(TwoPNI, IsothermalModel, TwoPModel<TypeTag>);
-
-// set isothermal FluxVariables
-SET_TYPE_PROP(TwoPNI, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);
