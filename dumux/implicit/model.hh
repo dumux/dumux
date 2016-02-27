@@ -129,7 +129,7 @@ public:
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
-        prevVolVarsVector_ = volVarsVector_;
+        prevVolVarsVector_ = curVolVarsVector_;
     }
 
     /*!
@@ -392,7 +392,7 @@ public:
         if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
         {
             uPrev_ = uCur_;
-            prevVolVarsVector_ = volVarsVector_;
+            prevVolVarsVector_ = curVolVarsVector_;
 
             updateBoundaryIndices_();
 
@@ -416,7 +416,7 @@ public:
     { }
 
     void updateVolVars()
-    { volVarsVector_.update(problem_(), curSol()); }
+    { curVolVarsVector_.update(problem_(), curSol()); }
 
     /*!
      * \brief Called by the update() method if it was
@@ -429,9 +429,7 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
-        volVarsVector_ = prevVolVarsVector_;
-
-        jacAsm_->reassembleAll();
+        curVolVarsVector_ = prevVolVarsVector_;
     }
 
     /*!
@@ -445,7 +443,7 @@ public:
     {
         // make the current solution the previous one.
         uPrev_ = uCur_;
-        prevVolVarsVector_ = volVarsVector_;
+        prevVolVarsVector_ = curVolVarsVector_;
     }
 
     /*!
@@ -757,11 +755,11 @@ public:
     const FluxVariables& fluxVars(unsigned int scvfIdx) const
     { return fluxVarsVector_[scvfIdx]; }
 
-    const VolumeVariables& volVars(const SubControlVolume& scv) const
-    { return volVarsVector_[scv.index()]; }
+    const VolumeVariables& curVolVars(const SubControlVolume& scv) const
+    { return curVolVarsVector_[scv.index()]; }
 
-    const VolumeVariables& volVars(unsigned int scvIdx) const
-    { return volVarsVector_[scvIdx]; }
+    const VolumeVariables& curVolVars(unsigned int scvIdx) const
+    { return curVolVarsVector_[scvIdx]; }
 
     const VolumeVariables& prevVolVars(const SubControlVolume& scv) const
     { return prevVolVarsVector_[scv.index()]; }
@@ -770,21 +768,27 @@ public:
     { return prevVolVarsVector_[scvIdx]; }
 
     const FVElementGeometryVector& fvGeometries() const
-    { return fvGeometries_; }
+    { return *fvGeometries_; }
+
+    const Stencils& stencils(const Element& element) const
+    { return stencilsVector_[elementMapper().index(element)]; }
+
+    const Stencils& stencils(unsigned int eIdx) const
+    { return stencilsVector_[eIdx]; }
 
     const FVElementGeometry& fvGeometries(const Element& element) const
-    { return fvGeometries_.fvGeometry(elementMapper().index(element)); }
+    { return fvGeometries_->fvGeometry(elementMapper().index(element)); }
 
     const FVElementGeometry& fvGeometries(unsigned int eIdx) const
-    { return fvGeometries_.fvGeometry(eIdx); }
+    { return fvGeometries_->fvGeometry(eIdx); }
 
 protected:
     // only to be called by friends and deriving classes
-    VolumeVariables& volVars_(const SubControlVolume& scv)
-    { return volVarsVector_[scv.index()]; }
+    VolumeVariables& curVolVars_(const SubControlVolume& scv)
+    { return curVolVarsVector_[scv.index()]; }
 
-    VolumeVariables& volVars_(unsigned int scvIdx)
-    { return volVarsVector_[scvIdx]; }
+    VolumeVariables& curVolVars_(unsigned int scvIdx)
+    { return curVolVarsVector_[scvIdx]; }
 
     VolumeVariables& prevVolVars_(const SubControlVolume& scv)
     { return prevVolVarsVector_[scv.index()]; }
@@ -940,7 +944,7 @@ protected:
     SolutionVector uPrev_;
 
     // the current and previous variables (primary and secondary variables)
-    VolumeVariablesVector volVarsVector_;
+    VolumeVariablesVector curVolVarsVector_;
     VolumeVariablesVector prevVolVarsVector_;
 
     // the flux variables vector
