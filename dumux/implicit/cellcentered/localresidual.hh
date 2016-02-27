@@ -55,98 +55,101 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-
-    // copying the local residual class is not a good idea
-    CCLocalResidual(const CCLocalResidual &);
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
 
 public:
-    CCLocalResidual() : ParentType()
-    { }
+    // copying the local residual class is not a good idea
+    CCLocalResidual(const CCLocalResidual &) = delete;
+
+    CCLocalResidual() : ParentType() {}
 
 protected:
+
+    PrimaryVariables computeFlux_(const SubControlVolumeFace &scvf)
+    {
+        if (!scvf.boundary() /*TODO: || GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
+        {
+            return this->asImp_().computeFlux(scvf);
+        }
+        else
+            return this->asImp_().evalBoundary_(scvf);
+    }
+
+    PrimaryVariables evalBoundary_(const SubControlVolumeFace &scvf)
+    {
+        PrimaryVariables flux = evalBoundaryFluxes_(scvf);
+
+        // additionally treat mixed D/N conditions in a strong sense
+        if (this->bcTypes_().hasDirichlet())
+            this->asImp_().evalDirichlet_(flux, scvf);
+
+        return flux;
+    }
 
     /*!
      * \brief Add all fluxes resulting from Neumann, outflow and pure Dirichlet
      *        boundary conditions to the local residual.
      */
-    void evalBoundaryFluxes_()
+    PrimaryVariables evalBoundaryFluxes_(const SubControlVolumeFace &scvf)
     {
-        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
-        {
-            if (intersection.boundary())
-            {
-                BoundaryTypes bcTypes;
-                this->problem_().boundaryTypes(bcTypes, intersection);
+        BoundaryTypes bcTypes = this->problem_().boundaryTypes(this->element_(), scvf);
 
-                // evaluate the Neumann conditions at the boundary face
-                if (bcTypes.hasNeumann())
-                    this->asImp_().evalNeumannSegment_(&intersection, bcTypes);
+        // evaluate the Neumann conditions at the boundary face
+        PrimaryVariables flux(0);
+        if (bcTypes.hasNeumann())
+            flux += this->asImp_().evalNeumannSegment_(scvf, bcTypes);
 
-                // evaluate the outflow conditions at the boundary face
-                if (bcTypes.hasOutflow())
-                    this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
+        // TODO: evaluate the outflow conditions at the boundary face
+        //if (bcTypes.hasOutflow())
+        //    flux += this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
 
-                // evaluate the pure Dirichlet conditions at the boundary face
-                if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                    this->asImp_().evalDirichletSegment_(&intersection, bcTypes);
-            }
-        }
+        // evaluate the pure Dirichlet conditions at the boundary face
+        if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
+            flux += this->asImp_().evalDirichletSegment_(scvf, bcTypes);
+
+        return flux;
     }
 
     /*!
      * \brief Evaluate Dirichlet conditions on faces that have mixed
      *        Dirichlet/Neumann boundary conditions.
      */
-    void evalDirichlet_()
+    void evalDirichlet_(PrimaryVariables &flux, const SubControlVolumeFace &scvf)
     {
-        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
-        {
-            if (intersection.boundary())
-            {
-                BoundaryTypes bcTypes;
-                this->problem_().boundaryTypes(bcTypes, intersection);
+        BoundaryTypes bcTypes = this->problem_().boundaryTypes(this->element_(), scvf);
 
-                if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
-                    this->asImp_().evalDirichletSegmentMixed_(&intersection, bcTypes);
-            }
-        }
+        if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
+            this->asImp_().evalDirichletSegmentMixed_(flux, scvf, bcTypes);
     }
 
     /*!
-     * \brief Add Neumann boundary conditions for a single intersection
+     * \brief Add Neumann boundary conditions for a single scv face
      */
-    template <class IntersectionIterator>
-    void evalNeumannSegment_(const IntersectionIterator &isIt,
-                             const BoundaryTypes &bcTypes)
+    PrimaryVariables evalNeumannSegment_(const SubControlVolumeFace &scvf,
+                                         const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the neumann boundary fluxes
-        PrimaryVariables values;
-        Valgrind::SetUndefined(values);
+        PrimaryVariables flux(0);
 
-        unsigned bfIdx = isIt->indexInInside();
-        this->problem_().solDependentNeumann(values,
-                                      this->element_(),
-                                      this->fvGeometry_(),
-                                      *isIt,
-                                      /*scvIdx=*/0,
-                                      bfIdx,
-                                      this->curVolVars_());
-        values *= isIt->geometry().volume()
-                 * this->curVolVars_(0).extrusionFactor();
+        auto neumannFluxes = this->problem_().neumann(this->element_(), scvf);
+
+        // multiply neumann fluxes with the area and the extrusion factor
+        const auto& scv = this->problem_().model().fvGeometries().subControlVolume(scvf.insideScvIdx());
+        neumannFluxes *= scvf.area()*this->problem_().model().curVolVars(scv).extrusionFactor();
 
         // add fluxes to the residual
-        Valgrind::CheckDefined(values);
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             if (bcTypes.isNeumann(eqIdx))
-                this->residual_[0][eqIdx] += values[eqIdx];
-        }
+                flux[eqIdx] += neumannFluxes[eqIdx];
+
+        return flux;
     }
 
     /*!
      * \brief Add outflow boundary conditions for a single intersection
      */
-    template <class IntersectionIterator>
+    /*template <class IntersectionIterator>
     void evalOutflowSegment_(const IntersectionIterator &isIt,
                              const BoundaryTypes &bcTypes)
     {
@@ -200,83 +203,54 @@ protected:
 
         // restore the pointer to the FVElementGeometry
         this->fvElemGeomPtr_ = oldFVGeometryPtr;
-    }
+    }*/
 
     /*!
      * \brief Treat Dirichlet boundary conditions in a weak sense for a single
      *        intersection that only has Dirichlet boundary conditions
      */
-    template <class IntersectionIterator>
-    void evalDirichletSegment_(const IntersectionIterator &isIt,
-                                   const BoundaryTypes &bcTypes)
+    PrimaryVariables evalDirichletSegment_(const SubControlVolumeFace &scvf,
+                                           const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet boundary fluxes
-        PrimaryVariables values;
-        Valgrind::SetUndefined(values);
+        PrimaryVariables flux(0);
 
-        unsigned bfIdx = isIt->indexInInside();
+        auto dirichletFlux = this->asImp_().computeFlux(scvf);
 
-        this->asImp_().computeFlux(values, bfIdx, true);
-        values *= this->curVolVars_(0).extrusionFactor();
+        // multiply dirichlet fluxes with the area and the extrusion factor
+        const auto& scv = this->problem_().model().fvGeometries().subControlVolume(scvf.insideScvIdx());
+        dirichletFlux *= scvf.area()*this->problem_().model().curVolVars(scv).extrusionFactor();
 
         // add fluxes to the residual
-        Valgrind::CheckDefined(values);
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
             if (bcTypes.isDirichlet(eqIdx))
-                this->residual_[0][eqIdx] += values[eqIdx];
-        }
+                flux[eqIdx] += dirichletFlux[eqIdx];
+
+        return flux;
     }
 
     /*!
      * \brief Treat Dirichlet boundary conditions in a strong sense for a
      *        single intersection that has mixed D/N boundary conditions
      */
-    template <class IntersectionIterator>
-    void evalDirichletSegmentMixed_(const IntersectionIterator &isIt,
+    void evalDirichletSegmentMixed_(PrimaryVariables &flux,
+                                    const SubControlVolumeFace &scvf,
                                     const BoundaryTypes &bcTypes)
     {
-        // temporary vector to store the Dirichlet boundary fluxes
-        PrimaryVariables values;
-        Valgrind::SetUndefined(values);
+        // temporary vector to store the Dirichlet values
+        PrimaryVariables dirichletValues = this->problem_().dirichlet(this->element_(), scvf);
 
-        this->problem_().dirichlet(values, *isIt);
-        Valgrind::CheckDefined(values);
+        // get the primary variables
+        const auto& priVars = this->problem_().model().curVolVars(scvf.insideVolVarsIdx()).priVars();
 
         // set Dirichlet conditions in a strong sense
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
         {
             if (bcTypes.isDirichlet(eqIdx))
             {
-                int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                this->residual_[0][eqIdx]
-                  = this->curPriVar_(0, pvIdx) - values[pvIdx];
-            }
-        }
-    }
-
-    /*!
-     * \brief Add the flux terms to the local residual of the current element
-     */
-    void evalFluxes_()
-    {
-        // calculate the mass flux over the faces and subtract
-        // it from the local rates
-        int fIdx = -1;
-        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
-        {
-            if (intersection.neighbor())
-            {
-                fIdx++;
-                PrimaryVariables flux;
-
-                Valgrind::SetUndefined(flux);
-                this->asImp_().computeFlux(flux, fIdx);
-                Valgrind::CheckDefined(flux);
-
-                flux *= this->curVolVars_(0).extrusionFactor();
-
-                this->residual_[0] += flux;
+                auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                this->residual_[0][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
+                flux[pvIdx] = 0;
             }
         }
     }
@@ -284,4 +258,4 @@ protected:
 
 }
 
-#endif
+#endif   // DUMUX_CC_LOCAL_RESIDUAL_HH
