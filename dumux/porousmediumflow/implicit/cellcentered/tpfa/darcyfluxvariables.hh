@@ -72,9 +72,9 @@ public:
     void update(const Problem &problem, const SubControlVolumeFace &scvFace)
     {
         problemPtr_ = &problem;
-        scvFace_ = &scvFace;
+        scvFacePtr_ = &scvFace;
 
-        updateTransmissivitesAndStencil_();
+        updateTransmissibilitiesAndStencil_();
     }
 
     /*!
@@ -83,12 +83,16 @@ public:
      * \param phaseIdx The index of the phase of which the flux is to be calculated
      * \param upwindFunction A function which does the upwinding
      */
-    template<FunctionType>
-    Scalar calculateFlux(const int phaseIdx, FunctionType upwindFunction)
+    template<typename FunctionType>
+    Scalar computeFlux(IndexType phaseIdx, FunctionType upwindFunction) const
     {
+        const auto insideScvIdx = scvFace_().insideScvIdx();
+        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+
         // Set the inside-/outside volume variables provisionally
-        const VolumeVariables &insideVolVars = problem_().model().curVolVars(stencil_[0]);
-        const VolumeVariables &outsideVolVars = insideVolVars;
+        const auto &insideVolVars = problem_().model().curVolVars(insideScv);
+        VolumeVariables tmp;
+        VolumeVariables& outsideVolVars = tmp;
 
         // calculate the piezometric heights in the two cells
         // and set the downstream volume variables
@@ -96,16 +100,14 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
         {
             // ask for the gravitational acceleration in the inside cell
-            const auto insideScvIdx = scvFace_.insideScvIdx();
-            const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
             GlobalPosition gInside(problem_().gravityAtPos(insideScv.center()));
             Scalar rhoInside = insideVolVars.density(phaseIdx);
 
-            hInside -= rhoInside*gInside*insideScv.center();
+            hInside -= rhoInside*(gInside*insideScv.center());
         }
 
         Scalar hOutside;
-        if (!scvFace_.boundary())
+        if (!scvFace_().boundary())
         {
             outsideVolVars = problem_().model().curVolVars(stencil_[1]);
             hOutside = outsideVolVars.pressure(phaseIdx);
@@ -113,126 +115,126 @@ public:
             // if switched on, ask for the gravitational acceleration in the outside cell
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
-                const auto outsideScvIdx = scvFace_.outsideScvIdx();
+                const auto outsideScvIdx = scvFace_().outsideScvIdx();
                 const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
                 GlobalPosition gOutside(problem_().gravityAtPos(outsideScv.center()));
                 Scalar rhoOutside = outsideVolVars.density(phaseIdx);
 
-                hOutside -= rhoOutside*gOutside*outsideScv.center();
+                hOutside -= rhoOutside*(gOutside*outsideScv.center());
             }
         }
         else
         {
             // if (complexBCTreatment)
-            // outsideVolVars = problem_().model().constructBoundaryVolumeVariables(scvFace_);
+            // outsideVolVars = problem_().model().constructBoundaryVolumeVariables(scvFace_());
             // else
             // {
-                PrimaryVariables dirichletPV = problem_().dirichlet(scvFace_);
-                const auto insideScvIdx = scvFace_.insideScvIdx();
-                const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-                outsideVolVars.update(dirichletPV, problem_(), outsideScv);
+                auto element = problem_().model().fvGeometries().element(insideScv);
+                auto dirichletPriVars = problem_().dirichlet(element, scvFace_());
+                outsideVolVars.update(dirichletPriVars, problem_(), element, insideScv);
             // }
-            h2 = outsideVolVars.pressure(phaseIdx);
+            hOutside = outsideVolVars.pressure(phaseIdx);
 
             // if switched on, ask for the gravitational acceleration in the outside cell
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
-                GlobalPosition gOutside(problem_().gravityAtPos(scvFace_.center()));
+                GlobalPosition gOutside(problem_().gravityAtPos(scvFace_().center()));
                 Scalar rhoOutside = outsideVolVars.density(phaseIdx);
 
-                hOutside += rhoOutside*gOutside*scvFace_.center();
+                hOutside -= rhoOutside*(gOutside*scvFace_().center());
             }
         }
 
-        volumeFlux_ = t_*(hOutside - hInside);
+        auto volumeFlux = tij_*(hInside - hOutside);
 
         if (volumeFlux > 0)
-            return volumeFlux_*upwindFunction(insideVolVars, outsideVolVars);
+            return volumeFlux*upwindFunction(insideVolVars, outsideVolVars);
         else
-            return volumeFlux_*upwindFunction(outsideVolVars, insideVolVars);
+            return volumeFlux*upwindFunction(outsideVolVars, insideVolVars);
     }
 
     std::set<IndexType> stencil() const
     {
-        return std::set<IndexType>(stencil_.begin(), stencil.end());
+        return std::set<IndexType>(stencil_.begin(), stencil_.end());
     }
 
 protected:
 
 
-    void updateTransmissivitesAndStencil_()
+    void updateTransmissibilitiesAndStencil_()
     {
-        if (!scvFace_.boundary())
+        if (!scvFace_().boundary())
         {
-            const auto insideScvIdx = scvFace_.insideScvIdx();
+            const auto insideScvIdx = scvFace_().insideScvIdx();
             const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
             const auto insideK = problem_().spatialParams().intrinsicPermeability(insideScv);
-            Scalar omega1 = calculateOmega_(insideK, insideScv);
+            Scalar ti = calculateOmega_(insideK, insideScv);
 
-            const auto outsideScvIdx = scvFace_.outsideScvIdx();
+            const auto outsideScvIdx = scvFace_().outsideScvIdx();
             const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
             const auto outsideK = problem_().spatialParams().intrinsicPermeability(outsideScv);
-            Scalar omega2 = calculateOmega_(outsideK, outsideScv);
+            Scalar tj = -1.0*calculateOmega_(outsideK, outsideScv);
 
-            t_ = omega1*omega2;
-            t_ /= omega1 - omega2;
-            t_ *= -1;
+            tij_ = scvFace_().area()*(ti * tj)/(ti + tj);
 
-            stencil_[0] = scvFace_.insideVolVarsIdx();
-            stencil_[1] = scvFace_.outsideVolVarsIdx();
+            // fill the stencil
+            stencil_= {scvFace_().insideVolVarsIdx(), scvFace_().outsideVolVarsIdx()};
         }
         else
         {
-            const auto insideScvIdx = scvFace_.insideScvIdx();
+            const auto insideScvIdx = scvFace_().insideScvIdx();
             const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
             const auto insideK = problem_().spatialParams().intrinsicPermeability(insideScv);
-            Scalar omega1 = calculateOmega_(insideK, insideScv);
+            Scalar ti = calculateOmega_(insideK, insideScv);
 
-            t_ = omega1;
+            tij_ = scvFace_().area()*ti;
 
-            stencil_[0] = scvFace_.insideVolVarsIdx();
+            // fill the stencil
+            stencil_ = {scvFace_().insideVolVarsIdx()};
         }
     }
 
     Scalar calculateOmega_(const DimWorldMatrix &K, const SubControlVolume &scv) const
     {
-        GlobalPosition connectVec = scvFace_.center();
-        connectVec -= scv.geometry().center();
-        connectVec /= connectVec.two_norm2();
+        GlobalPosition Knormal(0);
+        K.mv(scvFace_().unitOuterNormal(), Knormal);
 
-        GlobalPosition Kconnect(0);
-        K.mv(connectVec, Kconnect);
+        auto distanceVector = scvFace_().center();
+        distanceVector -= scv.center();
+        distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = Kconnect * scvFace_.normal();
-        omega *= scvFace_.area()*problem_().model().curVolVars(scv).extrusionFactor();
-        omega *= -1;
+        Scalar omega = Knormal * distanceVector;
+        omega *= problem_().model().curVolVars(scv).extrusionFactor();
 
         return omega;
     }
 
-    Scalar calculateOmega_(Scalar k, const SubControlVolume &scv) const
+    Scalar calculateOmega_(Scalar K, const SubControlVolume &scv) const
     {
-        GlobalPosition connectVec = scvFace_.center();
-        connectVec -= scv.geometry().center();
-        connectVec /= connectVec.two_norm2();
+        auto distanceVector = scvFace_().center();
+        distanceVector -= scv.center();
+        distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = connectVec * scvFace_.normal();
-        omega *= scvFace_.area()*problem_().model().curVolVars(scv).extrusionFactor();
-        omega *= k;
-        omega *= -1;
+        Scalar omega = K * (distanceVector * scvFace_().unitOuterNormal());
+        omega *= problem_().model().curVolVars(scv).extrusionFactor();
 
         return omega;
     }
 
-    const Problem &problem_()
+    const Problem &problem_() const
     {
         return *problemPtr_;
     }
 
-    const Problem *problem_;
-    const SubControlVolumeFace *scvFace_;       //!< Pointer to the sub control volume face for which the flux variables are created
-    Scalar t_;                                            //!< transmissivities for the flux calculation
-    std::array<IndexType, 2> stencil_;                       //!< Indices of the cells of which the pressure is needed for the flux calculation
+    const SubControlVolumeFace& scvFace_() const
+    {
+        return *scvFacePtr_;
+    }
+
+    const Problem *problemPtr_;
+    const SubControlVolumeFace *scvFacePtr_; //!< Pointer to the sub control volume face for which the flux variables are created
+    Scalar tij_;                             //!< transmissibility for the flux calculation
+    std::vector<IndexType> stencil_;         //!< Indices of the cells of which the pressure is needed for the flux calculation
 };
 
 } // end namespace
