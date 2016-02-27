@@ -37,12 +37,14 @@
 
 #include "properties.hh"
 #include "model.hh"
+#include "assembler.hh"
 #include "localjacobian.hh"
 #include "volumevariables.hh"
 #include "volumevariablesvector.hh"
-#include "fluxvariables"
+#include "fluxvariables.hh"
 #include "fluxvariablesvector.hh"
 #include "fvelementgeometry.hh"
+#include "stencilsvector.hh"
 
 namespace Dumux {
 
@@ -96,6 +98,9 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
+
+//! The global volume variables vector class
+SET_TYPE_PROP(ImplicitBase, StencilsVector, Dumux::StencilsVector<TypeTag>);
 
 //! Set darcy fluxes as the default fluxes to be considered
 SET_BOOL_PROP(ImplicitBase, DarcyFluxes, true);

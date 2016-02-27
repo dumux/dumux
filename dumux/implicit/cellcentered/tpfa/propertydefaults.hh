@@ -28,10 +28,10 @@
 #define DUMUX_CCTPFA_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/implicit/cellcentered/assembler.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
 #include <dumux/implicit/cellcentered/elementboundarytypes.hh>
+#include <dumux/implicit/cellcentered/stencils.hh>
 #include <dumux/implicit/cellcentered/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyfluxvariables.hh>
@@ -55,11 +55,8 @@ SET_TYPE_PROP(CCTpfaModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMap
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
 
-//! An array of secondary variable containers
-SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag>);
-
-//! Assembler for the global jacobian matrix
-SET_TYPE_PROP(CCTpfaModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
+//! The stencil container
+SET_TYPE_PROP(CCTpfaModel, Stencils, Dumux::CCStencils<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCTpfaModel, ImplicitIsBox, false);

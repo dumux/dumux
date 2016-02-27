@@ -51,13 +51,14 @@ class ImplicitModel
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariablesVector) VolumeVariablesVector;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesVector) FluxVariablesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, Stencils) Stencils;
+    typedef typename GET_PROP_TYPE(TypeTag, StencilsVector) StencilsVector;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
@@ -109,14 +110,21 @@ public:
         if (isBox)
             boxVolume_.resize(numDofs);
 
-        localJacobian_.init(problem_());
-        jacAsm_ = std::make_shared<JacobianAssembler>();
-        jacAsm_->init(problem_());
-
         asImp_().applyInitialSolution_();
 
         // update the volVars with the initial solution
-        volVarsVector_.update(problem_(), curSol());
+        curVolVarsVector_.update(problem_(), curSol());
+
+        // update the flux vars (precompute transmissibilities)
+        fluxVarsVector_.update(problem_());
+
+        // update stencils
+        stencilsVector_.update(problem_());
+
+        // initialize assembler and create matrix
+        localJacobian_.init(problem_());
+        jacAsm_ = std::make_shared<JacobianAssembler>();
+        jacAsm_->init(problem_());
 
         // also set the solution of the "previous" time step to the
         // initial solution.
@@ -937,6 +945,9 @@ protected:
 
     // the flux variables vector
     FluxVariablesVector fluxVarsVector_;
+
+    // the stencils vector
+    StencilsVector stencilsVector_;
 
     // the finite volume element geometries
     std::shared_ptr<FVElementGeometryVector> fvGeometries_;

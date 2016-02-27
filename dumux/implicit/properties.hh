@@ -86,6 +86,10 @@ NEW_PROP_TAG(DiffusionFluxVariables); //! The type that handles the calculation 
 NEW_PROP_TAG(EnergyFluxes); //! specifies if the model consideres heat transport phenomena
 NEW_PROP_TAG(EnergyFluxVariables); //! The type for the heat flux calculation
 
+// stencils
+NEW_PROP_TAG(Stencils); //! The stencils container type
+NEW_PROP_TAG(StencilsVector); //! The type of the global vector of stencils per element
+
 // high level simulation control
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method
