@@ -60,8 +60,8 @@ SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper)
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 
-//! An array of secondary variable containers
-SET_TYPE_PROP(CCModel, ElementVolumeVariables, CCElementVolumeVariables<TypeTag>);
+//! The stencil container
+SET_TYPE_PROP(CCModel, Stencils, CCStencils<TypeTag>);
 
 //! Assembler for the global jacobian matrix
 SET_TYPE_PROP(CCModel, JacobianAssembler, CCAssembler<TypeTag>);
