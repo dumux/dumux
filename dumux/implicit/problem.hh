@@ -179,7 +179,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param intersection The intersection for which the boundary type is set
      */
-    PrimaryVariables boundaryTypes(const Element &element,
+    BoundaryTypes boundaryTypes(const Element &element,
                                    const SubControlVolumeFace &scvFace) const
     {
         if (isBox)
@@ -197,7 +197,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position of the finite volume in global coordinates
      */
-    PrimaryVariables boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
