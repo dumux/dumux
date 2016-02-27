@@ -79,8 +79,6 @@ private:
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension,
-
-        Green = JacobianAssembler::Green
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -145,7 +143,7 @@ public:
         model_().updatePVWeights(fvElemGeom_());
 
         // get stencil informations
-        const auto& elementStencil = model_().stencils().elementStencil(element);
+        const auto& elementStencil = model_().stencils(element).elementStencil();
 
         // set size of local jacobian matrix
         const std::size_t numCols = elementStencil.size();
@@ -172,7 +170,7 @@ public:
         }
 
         // TODO: calculate derivatives in the case of an extended source stencil
-        // const auto& extendedSourceStencil = model_().stencils().extendedSourceStencil(element);
+        // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
         // for (auto&& globalJ : extendedSourceStencil)
         // {
         //     for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -184,23 +182,28 @@ public:
         //         }
         // }
 
+        if(problem_().elementMapper().index(element)==0)
+        {
+            printmatrix(std::cout, A_, "after derivative wrt myself", "");
+        }
+
         // for cellcentered methods, calculate the derivatives w.r.t cells in stencil
         if (!isBox)
         {
-            const auto& neighborStencil = model_().stencils().neighborStencil(element);
+            const auto& neighborStencil = model_().stencils(element).neighborStencil();
 
             // map each neighbor dof to a set of fluxVars that need to be recalculated
             // i.o.t calculate derivative w.r.t this neighbor
             std::map< unsigned int, std::set<unsigned int> > neighborToFluxVars;
 
             // loop over scvFaces/fluxVars of the element
-            for (auto&& scvFace : fvElemGeom_().scvf())
+            // make a map from dofIndex to a set of fluxVars that depend on that dof's values
+            for (auto&& scvFace : fvElemGeom_().scvfs())
             {
-                int fluxVarIdx = scvFace.index();
-                const auto& fluxVars = model_().fluxVars(fluxVarIdx);
+                auto fluxVarsIdx = scvFace.index();
                 for (auto&& globalJ : neighborStencil)
-                    if (fluxVars.stencil().count(globalJ))
-                        neighborToFluxVars[globalJ].insert(fluxVarIdx);
+                    if (model_().fluxVars(fluxVarsIdx).stencil().count(globalJ))
+                        neighborToFluxVars[globalJ].insert(fluxVarsIdx);
             }
 
             // loop over the neighbors and calculation of the change in flux
@@ -327,6 +330,12 @@ protected:
     { return problem_().model(); }
 
     /*!
+     * \brief Returns a reference to the model.
+     */
+    Model &model_()
+    { return problem_().model(); }
+
+    /*!
      * \brief Returns a reference to the jacobian assembler.
      */
     const JacobianAssembler &jacAsm_() const
@@ -391,10 +400,10 @@ protected:
                                 const SubControlVolume &scv,
                                 const int pvIdx)
     {
-        int dofIdxGlobal = scv.dofIndex();
+        auto dofIdxGlobal = scv.dofIndex();
 
-        auto priVars = model_().curSol()[dofIdxGlobal];
-        auto origVolVars = model_().curVolVars(scv);
+        PrimaryVariables priVars(model_().curSol()[dofIdxGlobal]);
+        VolumeVariables origVolVars(model_().curVolVars(scv));
 
         Scalar eps = asImp_().numericEpsilon(scv, pvIdx);
         Scalar delta = 0;
@@ -409,7 +418,7 @@ protected:
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars(scv).update(priVars, problem_(), element_(), scv);
+            model_().curVolVars_(scv).update(priVars, problem_(), element_(), scv);
 
             // calculate the residual with the deflected primary variables
             localResidual().eval(element_(), bcTypes_);
@@ -435,7 +444,7 @@ protected:
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars(scv).update(priVars, problem_(), element_(), scv);
+            model_().curVolVars_(scv).update(priVars, problem_(), element_(), scv);
 
             // calculate the residual with the deflected primary variables
             localResidual().eval(element_(), bcTypes_);
@@ -494,7 +503,7 @@ protected:
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
+            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
@@ -503,14 +512,14 @@ protected:
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // store the calculated flux
-            partialDeriv = deflectFlux;
+            partialDeriv[0] = deflectFlux;
         }
         else
         {
             // we are using backward differences, i.e. we don't need
             // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) flux f(x)
-            partialDeriv = PrimaryVariables;
+            partialDeriv[0] = origFlux;
         }
 
         if (numericDifferenceMethod_ <= 0)
@@ -523,23 +532,23 @@ protected:
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
+            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
             PrimaryVariables deflectFlux = 0.0;
             for (auto&& fluxVarIdx : fluxVarsJ)
-                PrimaryVariables += localResidual().evalFlux_(fluxVarIdx);
+                deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // subtract the residual from the derivative storage
-            partialDeriv -= deflectFlux;
+            partialDeriv[0] -= deflectFlux;
         }
         else
         {
             // we are using forward differences, i.e. we don't need to
             // calculate f(x - \epsilon) and we can recycle the
             // (already calculated) flux f(x)
-            partialDeriv -= origFlux;
+            partialDeriv[0] -= origFlux;
         }
 
         // divide difference in residuals by the magnitude of the
@@ -568,7 +577,7 @@ protected:
         {
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             {
-                int i = scv.indexInElement();
+                auto i = scv.indexInElement();
                 // A[i][col][eqIdx][pvIdx] is the rate of change of
                 // the residual of equation 'eqIdx' at dof 'i'
                 // depending on the primary variable 'pvIdx' at dof
