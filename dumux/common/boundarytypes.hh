@@ -59,14 +59,14 @@ public:
      */
     void resetEq(int eqIdx)
     {
-          boundaryInfo_[eqIdx].visited = 0;
+          boundaryInfo_[eqIdx].visited = false;
 
-          boundaryInfo_[eqIdx].isDirichlet = 0;
-          boundaryInfo_[eqIdx].isNeumann = 0;
-          boundaryInfo_[eqIdx].isOutflow = 0;
-          boundaryInfo_[eqIdx].isCouplingDirichlet = 0;
-          boundaryInfo_[eqIdx].isCouplingNeumann = 0;
-          boundaryInfo_[eqIdx].isCouplingMortar = 0;
+          boundaryInfo_[eqIdx].isDirichlet = false;
+          boundaryInfo_[eqIdx].isNeumann = false;
+          boundaryInfo_[eqIdx].isOutflow = false;
+          boundaryInfo_[eqIdx].isCouplingDirichlet = false;
+          boundaryInfo_[eqIdx].isCouplingNeumann = false;
+          boundaryInfo_[eqIdx].isCouplingMortar = false;
 
           eq2pvIdx_[eqIdx] = eqIdx;
           pv2eqIdx_[eqIdx] = eqIdx;
@@ -170,8 +170,8 @@ public:
     void setNeumann(int eqIdx)
     {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isNeumann = 1;
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isNeumann = true;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -188,8 +188,8 @@ public:
     void setDirichlet(int pvIdx, int eqIdx)
     {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 1;
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isDirichlet = true;
 
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
@@ -208,8 +208,8 @@ public:
     void setOutflow(int eqIdx)
     {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isOutflow = 1;
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isOutflow = true;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -221,8 +221,8 @@ public:
     void setCouplingDirichlet(int eqIdx)
     {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isCouplingDirichlet = 1;
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isCouplingDirichlet = true;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -234,8 +234,8 @@ public:
     void setCouplingNeumann(int eqIdx)
     {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isCouplingNeumann = 1;
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isCouplingNeumann = true;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -247,8 +247,8 @@ public:
     void setCouplingMortar(int eqIdx)
     {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isCouplingMortar = 1;
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isCouplingMortar = true;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -444,19 +444,18 @@ public:
     { return eq2pvIdx_[eqIdx]; }
 
 protected:
-    // this is a bitfield structure!
-    struct __attribute__((__packed__)) {
-        unsigned char visited : 1;
-        unsigned char isDirichlet : 1;
-        unsigned char isNeumann : 1;
-        unsigned char isOutflow : 1;
-        unsigned char isCouplingDirichlet : 1;
-        unsigned char isCouplingNeumann : 1;
-        unsigned char isCouplingMortar : 1;
-    } boundaryInfo_[numEq];
+    struct BoundaryInfo {
+        bool visited;
+        bool isDirichlet;
+        bool isNeumann;
+        bool isOutflow;
+        bool isCouplingDirichlet;
+        bool isCouplingNeumann;
+        bool isCouplingMortar;
+    };
 
-    unsigned char eq2pvIdx_[numEq];
-    unsigned char pv2eqIdx_[numEq];
+    std::array<BoundaryInfo, numEq> boundaryInfo_;
+    std::array<unsigned int, numEq> eq2pvIdx_, pv2eqIdx_;
 };
 
 }
