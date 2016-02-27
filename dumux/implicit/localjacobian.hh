@@ -178,8 +178,9 @@ public:
         //             evalPartialDerivativeSource_(partialDeriv, globalJ, pvIdx, neighborToFluxVars[globalJ]);
 
         //             // update the local stiffness matrix with the partial derivatives
-        //             updateLocalJacobian_(j++, pvIdx, partialDeriv);
+        //             updateLocalJacobian_(j, pvIdx, partialDeriv);
         //         }
+               // ++j;
         // }
 
         // for cellcentered methods, calculate the derivatives w.r.t cells in stencil
@@ -211,8 +212,10 @@ public:
                     evalPartialDerivativeFlux_(partialDeriv, globalJ, pvIdx, neighborToFluxVars[globalJ]);
 
                     // update the local stiffness matrix with the partial derivatives
-                    updateLocalJacobian_(j++, pvIdx, partialDeriv);
+                    updateLocalJacobian_(j, pvIdx, partialDeriv);
                 }
+
+                ++j;
             }
         }
     }
