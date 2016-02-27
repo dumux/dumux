@@ -168,20 +168,23 @@ protected:
     // assemble an interior element
     void assembleElement_(const Element &element)
     {
-        model_().lLocalJacobian().assemble(element);
+        model_().localJacobian().assemble(element);
 
         if (!isBox)
         {
-            int globalI = elementMapper_().index(element);
+            auto globalI = elementMapper_().index(element);
 
             // update the right hand side
             residual_[globalI] = model_().localJacobian().residual(0);
             for (int j = 0; j < residual_[globalI].dimension; ++j)
                 assert(std::isfinite(residual_[globalI][j]));
 
-            const auto& stencil = model_().stencils().elementStencil(element);
+            // diagonal entry
+            (*matrix_)[globalI][globalI] = model_().localJacobian().mat(0, 0);
 
-            int j = 0;
+            const auto& stencil = model_().stencils(element).neighborStencil();
+
+            unsigned int j = 1;
             for (auto&& globalJ : stencil)
                 (*matrix_)[globalI][globalJ] = model_().localJacobian().mat(0, j++);
         }
@@ -253,9 +256,10 @@ private:
             for (const auto& element : elements(gridView_()))
             {
                 // the global index of the element at hand
-                const auto elemIdx = elementMapper_().index(element);
-                const auto& stencil = model_().stencils().elementStencil(element);
-                matrix_->setrowsize(elemIdx, stencil.size());
+                const auto globalI = elementMapper_().index(element);
+                const auto& stencil = model_().stencils(element).elementStencil();
+
+                matrix_->setrowsize(globalI, stencil.size());
             }
             matrix_->endrowsizes();
         }
@@ -273,12 +277,13 @@ private:
             {
                 // the global index of the element at hand
                 const auto globalI = elementMapper_().index(element);
-                const auto& stencil = model_().stencils().elementStencil(element);
+                const auto& stencil = model_().stencils(element).elementStencil();
+
 
                 for (auto&& globalJ : stencil)
                     matrix_->addindex(globalI, globalJ);
             }
-            matrix_->endrowsizes();
+            matrix_->endindices();
         }
         else
         {
