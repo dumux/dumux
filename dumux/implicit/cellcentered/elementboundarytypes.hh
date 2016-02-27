@@ -36,7 +36,7 @@ namespace Dumux
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class TypeTag>
-class CCElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag, BoundaryTypes) >
+class CCElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>
 {
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef std::vector<BoundaryTypes> ParentType;
@@ -92,7 +92,7 @@ public:
             if (!problem.model().onBoundary(scv))
                 return;
 
-            for (const auto&& scvFace : fvGeometry.scvfs())
+            for (auto&& scvFace : fvGeometry.scvfs())
             {
                 if (!scvFace.boundary())
                     continue;
