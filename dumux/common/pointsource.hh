@@ -44,6 +44,7 @@ NEW_PROP_TAG(PrimaryVariables);
 NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(TimeManager);
+NEW_PROP_TAG(SubControlVolume);
 } // end namespace Properties
 
 // forward declarations
@@ -312,21 +313,20 @@ public:
                 if(isBox)
                 {
                     // check in which subcontrolvolume(s) we are
+                    // TODO mapper/problem in bboxtree would allow to make this much better
                     const auto element = boundingBoxTree.entity(eIdx);
-                    FVElementGeometry fvGeometry;
-                    fvGeometry.update(problem.gridView(), element);
+                    auto fvGeometry = problem.model().fvGeometries(element);
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
                     std::vector<unsigned int> scvs;
-                    for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                    for (auto&& scv : fvGeometry.scvs())
                     {
-                        auto geometry = fvGeometry.subContVolGeometries[scvIdx];
-                        if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(geometry, globalPos))
-                            scvs.push_back(scvIdx);
+                        if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(scv.geometry(), globalPos))
+                            scvs.push_back(scv.indexInElement());
                     }
                     // for all scvs that where tested positiv add the point sources
                     // to the element/scv to point source map
-                    for (unsigned int scvIdx : scvs)
+                    for (auto scvIdx : scvs)
                     {
                         const auto key = std::make_pair(eIdx, scvIdx);
                         if (pointSourceMap.count(key))
