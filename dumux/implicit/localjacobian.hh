@@ -182,11 +182,6 @@ public:
         //         }
         // }
 
-        if(problem_().elementMapper().index(element)==0)
-        {
-            printmatrix(std::cout, A_, "after derivative wrt myself", "");
-        }
-
         // for cellcentered methods, calculate the derivatives w.r.t cells in stencil
         if (!isBox)
         {
