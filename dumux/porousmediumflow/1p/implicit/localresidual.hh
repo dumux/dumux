@@ -109,7 +109,7 @@ public:
 
         auto upwindRule = [massWeight, mobWeight](const VolumeVariables& up, const VolumeVariables& dn)
                           { return (up.density(0)*massWeight + dn.density(0)*(1-massWeight))
-                                   *(up.mobility(0)*mobWeight + dn.density(0)*(1-mobWeight)); };
+                                   *(up.mobility(0)*mobWeight + dn.mobility(0)*(1-mobWeight)); };
 
         auto flux = fluxVars.darcyFluxVars().computeFlux(0, upwindRule);
 
