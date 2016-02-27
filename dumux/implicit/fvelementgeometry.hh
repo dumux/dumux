@@ -144,7 +144,7 @@ public:
     {}
 
     //! iterator range for sub control volumes
-    inline Dune::IteratorRange<ScvIterator> scvs()
+    inline Dune::IteratorRange<ScvIterator> scvs() const
     {
         return Dune::IteratorRange<ScvIterator>(ScvIterator(scvIndices_.begin(), fvGeometryVector_),
                                                 ScvIterator(scvIndices_.end(), fvGeometryVector_));
@@ -157,7 +157,7 @@ public:
     }
 
     //! iterator range for sub control volume faces
-    inline Dune::IteratorRange<ScvfIterator> scvfs()
+    inline Dune::IteratorRange<ScvfIterator> scvfs() const
     {
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(scvfIndices_.begin(), fvGeometryVector_),
                                                  ScvfIterator(scvfIndices_.end(), fvGeometryVector_));
