@@ -47,6 +47,7 @@ class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -64,20 +65,16 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        ParentType::update(priVars, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, scv, fluidState_);
         // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                         fvGeometry,
-                                                         scvIdx);
+        porosity_ = problem.spatialParams().porosity(scv);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, scv);
     };
 
     /*!
@@ -86,12 +83,10 @@ public:
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const int scvIdx,
+                                   const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                fvGeometry, scvIdx);
+        Scalar t = Implementation::temperature_(priVars, problem, element, scv);
         fluidState.setTemperature(t);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
@@ -173,12 +168,11 @@ public:
 
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int scvIdx)
+                               const Problem& problem,
+                               const Element &element,
+                               const SubControlVolume &scv)
     {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+        return problem.temperatureAtPos(scv.dofPosition());
     }
 
     template<class ParameterCache>
@@ -195,9 +189,7 @@ protected:
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       const bool isOldSol)
+                       const SubControlVolume& scv)
     { }
 
     FluidState fluidState_;

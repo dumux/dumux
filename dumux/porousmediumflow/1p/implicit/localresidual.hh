@@ -63,7 +63,8 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
+        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
+        mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
     }
 
     /*!
@@ -73,22 +74,20 @@ public:
      *        model.
      *
      * This function should not include the source and sink terms.
-     *  \param storage The phase mass within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *  \param scv The sub control volume
+     *  \param volVars The current or previous volVars
+     *
+     * The volVars can be different to allow computing the implicit euler time derivative here
      */
-    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
+    PrimaryVariables computeStorage(const SubControlVolume& scv,
+                                    const VolumeVariables& volVars) const
     {
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
+        PrimaryVariables storage(0);
 
         // partial time derivative of the wetting phase mass
-        storage[conti0EqIdx] =  volVars.density() * volVars.porosity();
+        storage[conti0EqIdx] = volVars.density() * volVars.porosity();
+
+        return storage;
     }
 
 
@@ -101,57 +100,26 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
+    PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace) const
     {
-        FluxVariables fluxVars;
-        fluxVars.update(this->problem_(),
-                        this->element_(),
-                        this->fvGeometry_(),
-                        fIdx,
-                        this->curVolVars_(),
-                        onBoundary);
+        const auto& fluxVars = this->model_().fluxVars(scvFace);
 
-        asImp_()->computeAdvectiveFlux(flux, fluxVars);
-        asImp_()->computeDiffusiveFlux(flux, fluxVars);
-    }
+        auto massWeight = massUpwindWeight_;
+        auto mobWeight = mobilityUpwindWeight_;
 
-    /*!
-     * \brief Evaluate the advective mass flux of all components over
-     *        a face of a sub-control volume.
-     *
-     * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
-     */
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(/*phaseIdx=*/0));
-        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(/*phaseIdx=*/0));
-        flux[conti0EqIdx] =
-            ((    upwindWeight_)*up.density()
-             +
-             (1 - upwindWeight_)*dn.density())
-            *
-            fluxVars.volumeFlux(/*phaseIdx=*/0);
-    }
+        auto upwindRule = [massWeight, mobWeight](const VolumeVariables& up, const VolumeVariables& dn)
+                          { return (up.density(0)*massWeight + dn.density(0)*(1-massWeight))
+                                   *(up.mobility(0)*mobWeight + dn.density(0)*(1-mobWeight)); };
 
-    /*!
-     * \brief Adds the diffusive mass flux of all components over
-     *        a face of a sub-control volume.
-     *
-     * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
-     */
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        // diffusive fluxes
-        flux += 0.0;
+        auto flux = fluxVars.darcyFluxVars().computeFlux(0, upwindRule);
+
+        return flux;
     }
 
     /*!
      * \brief Return the temperature given the solution vector of a
      *        finite volume.
      */
-    template <class PrimaryVariables>
     Scalar temperature(const PrimaryVariables &priVars)
     { return this->problem_.temperature(); /* constant temperature */ }
 
@@ -162,7 +130,8 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
 
-    Scalar upwindWeight_;
+    Scalar massUpwindWeight_;
+    Scalar mobilityUpwindWeight_;
 };
 
 }

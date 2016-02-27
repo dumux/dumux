@@ -59,9 +59,11 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef std::vector<Scalar> ScalarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
 
     enum {
         dim=GridView::dimension,
@@ -97,13 +99,9 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 const int scvIdx) const
+    Scalar intrinsicPermeability(const SubControlVolume &scv) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-
-        if (isInLens_(globalPos))
+        if (isInLens_(scv.dofPosition()))
         {
             if(randomField_)
                 return randomPermeability_[indexSet_.index(element.template subEntity<dim> (0))];
@@ -120,9 +118,7 @@ public:
    * \param fvGeometry The finite volume geometry
    * \param scvIdx The local index of the sub-control volume where
    */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    Scalar porosity(const SubControlVolume &scv) const
     { return 0.4; }
 
     /*!
@@ -160,7 +156,7 @@ private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
+            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
                 return false;
         }
         return true;
@@ -174,7 +170,9 @@ private:
     ScalarVector randomPermeability_;
 
     const IndexSet& indexSet_;
+    static const Scalar eps_ = 1.5e-7;
 };
-} // end namespace
-#endif
 
+} // end namespace
+
+#endif

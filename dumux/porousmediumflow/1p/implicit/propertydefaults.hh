@@ -40,7 +40,6 @@
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/material/spatialparams/implicit1p.hh>
-#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 namespace Dumux
@@ -62,9 +61,6 @@ SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(OneP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(OneP, Indices, OnePIndices);
@@ -132,9 +128,6 @@ SET_PROP(OnePNI, ThermalConductivityModel)
 
 // set isothermal Model
 SET_TYPE_PROP(OnePNI, IsothermalModel, OnePModel<TypeTag>);
-
-//set isothermal FluxVariables
-SET_TYPE_PROP(OnePNI, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
