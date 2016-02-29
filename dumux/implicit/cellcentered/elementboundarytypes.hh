@@ -110,7 +110,7 @@ public:
                 const Element &element)
     {
         const auto& fvGeometry = problem.model().fvGeometries(element);
-        update(problem, element);
+        update(problem, element, fvGeometry);
     }
 
     /*!
