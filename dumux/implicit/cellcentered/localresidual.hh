@@ -246,7 +246,7 @@ protected:
             {
                 auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                 this->residual_[0][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
-                flux[pvIdx] = 0;
+                flux[eqIdx] = 0;
             }
         }
     }
