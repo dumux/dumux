@@ -530,7 +530,8 @@ protected:
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
+            auto neighborJ = problem_().model().fvGeometries().element(scvJ);
+            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), neighborJ, scvJ);
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
