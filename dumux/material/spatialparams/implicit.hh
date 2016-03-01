@@ -78,7 +78,7 @@ public:
     const MaterialLawParams& materialLawParams(const Element &element,
                                                const SubControlVolume &scv) const
     {
-            return asImp_().materialLawParamsAtPos(element.geometry().center());
+            return asImp_().materialLawParamsAtPos(scv.dofPosition());
     }
 
     /*!
