@@ -126,7 +126,8 @@ public:
                           { return (up.density(phaseIdx)*massWeight + dn.density(phaseIdx)*(1-massWeight))
                                    *(up.mobility(phaseIdx)*mobWeight + dn.mobility(phaseIdx)*(1-mobWeight)); };
 
-            flux[phaseIdx] = fluxVars.darcyFluxVars().computeFlux(phaseIdx, upwindRule);
+            auto eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
+            flux[eqIdx] = fluxVars.darcyFluxVars().computeFlux(phaseIdx, upwindRule);
         }
 
         return flux;
