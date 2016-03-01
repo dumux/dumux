@@ -82,9 +82,11 @@ class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<CoordScalar,dimWorld,dimWorld> Tensor;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
 
 public:
     //get the material law from the property system
@@ -99,10 +101,10 @@ public:
     LensSpatialParams(const Problem& problem, const GridView& gridView)
     : ParentType(problem, gridView)
     {
-            lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[0];
-            lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[1];
-            lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[0];
-            lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[1];
+        lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[0];
+        lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[1];
+        lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[0];
+        lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[1];
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -128,9 +130,9 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
+    Scalar intrinsicPermeability (const SubControlVolume &scv) const
     {
-        if (isInLens_(globalPos))
+        if (isInLens_(scv.dofPosition()))
             return lensK_;
         return outerK_;
     }
