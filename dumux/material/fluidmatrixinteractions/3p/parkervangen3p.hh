@@ -100,7 +100,7 @@ public:
      */
     static Scalar pcgn(const Params &params, const Scalar ste)
     {
-        assert(0 <= swe && swe <= 1);
+        assert(0 <= ste && ste <= 1);
         return pc_(params,ste)/params.betaGn();
     }
 
