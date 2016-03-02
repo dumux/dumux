@@ -31,8 +31,8 @@
 
 namespace Dumux
 {
-/*
- * \brief Dimensionless Numbers
+/*!
+ * \brief Collection of functions which calculate dimensionless numbers.
  *
  *        Each number has it's own function.
  *        All the parameters for the calculation have to be handed over.

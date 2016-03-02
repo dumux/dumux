@@ -37,6 +37,9 @@
 
 namespace Dumux {
 
+/*!
+ * \brief The cell centered finite-volume method uses the elements of the grid as control volumes.
+ */
 // forward declarations
 template<class TypeTag> class CCModel;
 template<class TypeTag> class CCLocalResidual;

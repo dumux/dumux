@@ -36,6 +36,9 @@
 
 namespace Dumux {
 
+/*!
+ * \brief The box model combines the advantages of the finite-volume (FV) and finite-element (FE) methods on a dual grid
+ */
 // forward declarations
 template<class TypeTag> class BoxModel;
 template<class TypeTag> class BoxLocalResidual;

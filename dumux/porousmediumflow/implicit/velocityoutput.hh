@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief velocity output for implicit (porous media) models
+ * \brief Velocity output for implicit (porous media) models
  */
 #ifndef DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
 #define DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
@@ -40,6 +40,9 @@ namespace Properties
     NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 }
 
+/*!
+ * \brief Velocity output for implicit (porous media) models
+ */
 template<class TypeTag>
 class ImplicitVelocityOutput
 {
