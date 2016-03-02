@@ -2,17 +2,15 @@
 # Everything behind a '#' is a comment.
 # Type "./test_2pncmin --help" for more information.
 
-# Mandatory arguments
-
-
 [TimeManager]
 TEnd = 1e6                         # duration of the simulation [s]
 DtInitial = 10                      # initial time step size [s]
 MaxTimeStepSize = 50000             # maximum time step size
 
-
 [Grid]
-File = grids/test_2pncmin.dgf
+LowerLeft = 0 0
+UpperRight = 40 10
+Cells = 20 10
 
 [FluidSystem]
 NTemperature =  100                 # [-] number of tabularization entries
@@ -23,7 +21,7 @@ TemperatureLow = 273.15             # [Pa]low end for tabularization of fluid pr
 TemperatureHigh = 400.00            # [Pa]high end for tabularization of fluid properties
 
 [Problem]
-OutputName          = saltflushbox  # [-]  name for output files
+Name                = saltflush     # [-]  name for output files
 ReservoirPressure   = 11E6          # [Pa] Initial reservoir pressure
 reservoirSaturation = 0.4           # [-]  Initial saturation
 solidity            = 0.0           # [-]  Initial solid salt precipitate

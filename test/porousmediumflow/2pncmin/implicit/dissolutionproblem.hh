@@ -96,35 +96,35 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     enum {
 
-            pressureIdx = Indices::pressureIdx,
-            switchIdx = Indices::switchIdx, //Saturation
-            xlNaClIdx = FluidSystem::NaClIdx,
-            precipNaClIdx = FluidSystem::numComponents,
+        pressureIdx = Indices::pressureIdx,
+        switchIdx = Indices::switchIdx, //Saturation
+        xlNaClIdx = FluidSystem::NaClIdx,
+        precipNaClIdx = FluidSystem::numComponents,
 
-            //Indices of the components
-            wCompIdx = FluidSystem::H2OIdx,
-            nCompIdx = FluidSystem::AirIdx,
-            NaClIdx = FluidSystem::NaClIdx,
+        //Indices of the components
+        wCompIdx = FluidSystem::H2OIdx,
+        nCompIdx = FluidSystem::AirIdx,
+        NaClIdx = FluidSystem::NaClIdx,
 
-            //Indices of the phases
-            wPhaseIdx = FluidSystem::wPhaseIdx,
-            nPhaseIdx = FluidSystem::nPhaseIdx,
-            sPhaseIdx = FluidSystem::sPhaseIdx,
+        //Indices of the phases
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
+        sPhaseIdx = FluidSystem::sPhaseIdx,
 
-            //Index of the primary component of G and L phase
-            conti0EqIdx = Indices::conti0EqIdx,
-            contiTotalMassIdx = conti0EqIdx + FluidSystem::AirIdx,
-            precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
-            contiWEqIdx = conti0EqIdx + FluidSystem::H2OIdx,
+        //Index of the primary component of G and L phase
+        conti0EqIdx = Indices::conti0EqIdx,
+        contiTotalMassIdx = conti0EqIdx + FluidSystem::AirIdx,
+        precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
+        contiWEqIdx = conti0EqIdx + FluidSystem::H2OIdx,
 
-            // Phase State
-            wPhaseOnly = Indices::wPhaseOnly,
-            nPhaseOnly = Indices::nPhaseOnly,
-            bothPhases = Indices::bothPhases,
+        // Phase State
+        wPhaseOnly = Indices::wPhaseOnly,
+        nPhaseOnly = Indices::nPhaseOnly,
+        bothPhases = Indices::bothPhases,
 
-            // Grid and world dimension
-            dim = GridView::dimension,
-            dimWorld = GridView::dimensionworld,
+        // Grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
 
@@ -164,7 +164,7 @@ public:
         pressureHigh_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
         temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
         temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
-        name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
+        name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         freqMassOutput_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
         storageLastTimestep_    = 0.0;
         lastMassOutputTime_     = 0.0;
@@ -178,11 +178,6 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
-    }
-
-    void init()
-    {
-        ParentType::init();
     }
 
     ~DissolutionProblem()
@@ -228,10 +223,8 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypes &bcTypes, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition &globalPos) const
     {
-        auto globalPos = vertex.geometry().center();
-
         const Scalar rmax = this->bBoxMax()[0]; // outerRadius_;
         const Scalar rmin = this->bBoxMin()[0]; // well radius equal to the first value of the dgf grid file
 
@@ -253,10 +246,8 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        auto globalPos = vertex.geometry().center();
-
         const Scalar rmax = this->bBoxMax()[0];
         const Scalar rmin = this->bBoxMin()[0];
 
@@ -376,9 +367,9 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      */
-    int initialPhasePresence(const Vertex &vert,
-                             int globalIdx,
-                             const GlobalPosition &globalPos) const
+    int initialPhasePresence(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             int scvIdx) const
     {
         return bothPhases;
     }

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the two-phase n-component isothermal box model.
+ * \brief Test for the two-phase n-component isothermal cc model.
  */
 #include <config.h>
 #include "dissolutionproblem.hh"
@@ -50,6 +50,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(DissolutionBoxProblem) ProblemTypeTag;
+    typedef TTAG(DissolutionCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
