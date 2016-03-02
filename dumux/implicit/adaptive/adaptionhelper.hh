@@ -33,7 +33,6 @@
 
 namespace Dumux
 {
-
 namespace Properties
 {
 NEW_PROP_TAG(GridView);
@@ -43,6 +42,9 @@ NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(Scalar);
 }
 
+/*!
+ * \brief Base class holding the variables for implicit models.
+ */
 template<class TypeTag>
 class AdaptionHelper
 {

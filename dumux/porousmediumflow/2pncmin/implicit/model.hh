@@ -38,11 +38,12 @@ namespace Dumux
 /*!
  * \ingroup TwoPNCMinModel
  * \brief Adaption of the fully implicit scheme to the
- *        two-phase n-component fully implicit model.
+ *        two-phase n-component fully implicit model with additional solid/mineral phases.
  *
  * This model implements two-phase n-component flow of two compressible and
  * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the n components
- * \f$\kappa \in \{ w, a,\cdots \}\f$. The standard multiphase Darcy
+ * \f$\kappa \in \{ w, n,\cdots \}\f$ in combination with mineral precipitation and dissolution.
+ * The solid phases. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
@@ -52,7 +53,7 @@ namespace Dumux
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component
  * \f{eqnarray}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}
+ && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
  {\partial t}
  - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
  \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
@@ -62,6 +63,11 @@ namespace Dumux
  - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
  \alpha \in \{w, g\}
  \f}
+ *
+ * The solid or mineral phases are assumed to consist of a single component.
+ * Their mass balance consist only of a storage and a source term:
+ *  \f$\frac{\partial \varrho_\lambda \phi_\lambda )} {\partial t}
+ *  = q_\lambda\f$
  *
  * All equations are discretized using a vertex-centered finite volume (box)
  * or cell-centered finite volume scheme (this is not done for 2pnc approach yet, however possible) as
@@ -85,11 +91,20 @@ namespace Dumux
  * <ul>
  *  <li> Both phases are present: The saturation is used (either \f$S_n\f$ or \f$S_w\f$, dependent on the chosen <tt>Formulation</tt>),
  *      as long as \f$ 0 < S_\alpha < 1\f$</li>.
- *  <li> Only wetting phase is present: The mass fraction of, e.g., air in the wetting phase \f$X^a_w\f$ is used,
- *      as long as the maximum mass fraction is not exceeded (\f$X^a_w<X^a_{w,max}\f$)</li>
- *  <li> Only non-wetting phase is present: The mass fraction of, e.g., water in the non-wetting phase, \f$X^w_n\f$, is used,
- *      as long as the maximum mass fraction is not exceeded (\f$X^w_n<X^w_{n,max}\f$)</li>
+ *  <li> Only wetting phase is present: The mole fraction of, e.g., air in the wetting phase \f$x^a_w\f$ is used,
+ *      as long as the maximum mole fraction is not exceeded (\f$x^a_w<x^a_{w,max}\f$)</li>
+ *  <li> Only non-wetting phase is present: The mole fraction of, e.g., water in the non-wetting phase, \f$x^w_n\f$, is used,
+ *      as long as the maximum mole fraction is not exceeded (\f$x^w_n<x^w_{n,max}\f$)</li>
  * </ul>
+ *
+ * For the other components, the mole fraction \f$x^\kappa_w\f$ is the primary variable.
+ * The primary variable of the solid phases is the volume fraction \f$\phi_\lambda = \frac{V_\lambda}{V_{total}}\f$.
+ *
+ * The source an sink terms link the mass balances of the n-transported component to the solid phases.
+ * The porosity \f$\phi\f$ is updated according to the reduction of the initial (or solid-phase-free porous medium) porosity \f$\phi_0\f$
+ * by the accumulated volume fractions of the solid phases:
+ * \f$ \phi = \phi_0 - \sum (\phi_\lambda)\f$
+ * Additionally, the permeability is updated depending on the current porosity.
  */
 
 template<class TypeTag>
