@@ -129,7 +129,7 @@ protected:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        DimWorldMatrix K;
+        DimWorldMatrix K(0.0);
         const VolumeVariables &volVarsI = elemVolVars[this->face().i];
         const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 

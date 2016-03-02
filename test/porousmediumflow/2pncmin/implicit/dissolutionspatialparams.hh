@@ -43,13 +43,11 @@ SET_TYPE_PROP(DissolutionSpatialparams, SpatialParams, Dumux::DissolutionSpatial
 SET_PROP(DissolutionSpatialparams, MaterialLaw)
 {
 private:
-    // define the material law which is parameterized by effective
-    // saturations
+    // define the material law which is parameterized by effective saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffMaterialLaw> type;
+    typedef Dumux::EffToAbsLaw<Dumux::RegularizedBrooksCorey<Scalar> > type;
 };
 }
 
@@ -61,12 +59,11 @@ template<class TypeTag>
 class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename Grid::ctype CoordScalar;
+    typedef typename GridView::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
@@ -78,52 +75,28 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
         nPhaseIdx = FluidSystem::nPhaseIdx,
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    typedef std::vector<Scalar> PermeabilityType;
-    typedef std::vector<MaterialLawParams> MaterialLawParamsVector;
-
-    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-
 public:
     DissolutionSpatialparams(const GridView &gridView)
-        : ParentType(gridView),
-          K_(0)
+        : ParentType(gridView), K_(0.0)
     {
-        //set main diagonal entries of the permeability tensor to a value
-        //setting to one value means: isotropic, homogeneous
+        // set main diagonal entries of the permeability tensor to a value
+        // setting to one value means: isotropic, homogeneous
         for (int i = 0; i < dim; i++)
             K_[i][i] = 2.23e-14;
 
         // residual saturations
         materialParams_.setSwr(0.2);
-        materialParams_.setSnr(1E-3);
+        materialParams_.setSnr(1e-3);
 
-        //parameters of Brooks & Corey Law
+        // parameters of Brooks & Corey Law
         materialParams_.setPe(500);
         materialParams_.setLambda(2);
     }
-
-    ~DissolutionSpatialparams()
-    {}
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSolution The global solution vector
-     */
-    void update(const SolutionVector &globalSolution)
-    { };
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -136,9 +109,9 @@ public:
      *  could be defined, where globalPos is the vector including the global coordinates
      *  of the finite volume.
      */
-    const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element,
-                                                                     const FVElementGeometry &fvGeometry,
-                                                                     const int scvIdx) const
+    const Tensor& intrinsicPermeability(const Element &element,
+                                        const FVElementGeometry &fvGeometry,
+                                        const int scvIdx) const
     {
         return K_;
     }
@@ -151,7 +124,7 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    double porosityMin(const Element &element,
+    Scalar porosityMin(const Element &element,
                        const FVElementGeometry &fvGeometry,
                        int scvIdx) const
      {
@@ -166,30 +139,30 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    double porosity(const Element &element,
-                     const FVElementGeometry &fvGeometry,
-                     int scvIdx) const
+    Scalar porosity(const Element &element,
+                    const FVElementGeometry &fvGeometry,
+                    int scvIdx) const
      {
         return 0.11;
      }
 
 
-    double solidity(const Element &element,
+    Scalar solidity(const Element &element,
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
 
-        return 1 - 0.11;
+        return 1.0 - porosity(element, fvGeometry, scvIdx);
     }
 
-    double SolubilityLimit() const
+    Scalar SolubilityLimit() const
     {
         return 0.26;
     }
 
-    double theta(const Element &element,
-            const FVElementGeometry &fvGeometry,
-            int scvIdx) const
+    Scalar theta(const Element &element,
+                 const FVElementGeometry &fvGeometry,
+                 int scvIdx) const
     {
         return 10.0;
     }
@@ -197,14 +170,14 @@ public:
 
     // return the brooks-corey context depending on the position
     const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
+                                               const FVElementGeometry &fvGeometry,
+                                               int scvIdx) const
     {
         return materialParams_;
     }
 
 private:
-    Dune::FieldMatrix<Scalar, dim, dim> K_;
+    Tensor K_;
     MaterialLawParams materialParams_;
 };
 

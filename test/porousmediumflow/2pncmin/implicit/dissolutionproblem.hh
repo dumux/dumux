@@ -115,7 +115,7 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
             conti0EqIdx = Indices::conti0EqIdx,
             contiTotalMassIdx = conti0EqIdx + FluidSystem::AirIdx,
             precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
-            contiWEqIdx       = conti0EqIdx + FluidSystem::H2OIdx,
+            contiWEqIdx = conti0EqIdx + FluidSystem::H2OIdx,
 
             // Phase State
             wPhaseOnly = Indices::wPhaseOnly,
@@ -133,7 +133,6 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
@@ -141,17 +140,16 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    DissolutionProblem(TimeManager &timeManager,
-                       const GridView &gridView)
-        : ParentType(timeManager, GridCreator::grid().leafGridView())
+    DissolutionProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
 
         outerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterSalinity);
         temperature_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Temperature);
         reservoirPressure_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ReservoirPressure);
         initLiqSaturation_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidSaturation);
-        initPrecipitatedSalt1_   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt1);
-        initPrecipitatedSalt2_   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt2);
+        initPrecipitatedSalt1_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt1);
+        initPrecipitatedSalt2_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt2);
 
         outerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterLiqSaturation);
         innerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerLiqSaturation);
@@ -168,8 +166,8 @@ public:
         temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
         name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
         freqMassOutput_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
-        storageLastTimestep_    = Scalar(0);
-        lastMassOutputTime_     = Scalar(0);
+        storageLastTimestep_    = 0.0;
+        lastMassOutputTime_     = 0.0;
 
         outfile.open("evaporation.out");
         outfile << "time; evaporationRate" << std::endl;
@@ -194,10 +192,9 @@ public:
 
     bool shouldWriteOutput() const
     {
-        return
-            this->timeManager().timeStepIndex() % 1 == 0 ||
-            this->timeManager().episodeWillBeOver() ||
-            this->timeManager().willBeFinished();
+        return this->timeManager().timeStepIndex() % 1 == 0 ||
+               this->timeManager().episodeWillBeOver() ||
+               this->timeManager().willBeFinished();
     }
 
 
@@ -233,20 +230,19 @@ public:
      */
     void boundaryTypes(BoundaryTypes &bcTypes, const Vertex &vertex) const
     {
-        const GlobalPosition &globalPos = vertex.geometry().center();
+        auto globalPos = vertex.geometry().center();
 
-        Scalar rmax = this->bBoxMax()[0];           // outerRadius_;
-        Scalar rmin = this->bBoxMin()[0];           // well radius equal to the first value of the dgf grid file
+        const Scalar rmax = this->bBoxMax()[0]; // outerRadius_;
+        const Scalar rmin = this->bBoxMin()[0]; // well radius equal to the first value of the dgf grid file
 
-        //Neumann
+        // default to Neumann
         bcTypes.setAllNeumann();
 
-        //Constant pressure  at reservoir boundary (Dirichlet condition)
+        // Constant pressure  at reservoir boundary (Dirichlet condition)
         if(globalPos[0] > rmax - eps_)
             bcTypes.setAllDirichlet();
 
-        //Constant pressure at well (Dirichlet condition)
-
+        // Constant pressure at well (Dirichlet condition)
         if(globalPos[0] < rmin + eps_)
             bcTypes.setAllDirichlet();
     }
@@ -259,10 +255,10 @@ public:
      */
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
-        const GlobalPosition &globalPos = vertex.geometry().center();
+        auto globalPos = vertex.geometry().center();
 
-        Scalar rmax = this->bBoxMax()[0];
-        Scalar rmin = this->bBoxMin()[0];
+        const Scalar rmax = this->bBoxMax()[0];
+        const Scalar rmin = this->bBoxMin()[0];
 
         if(globalPos[0] > rmax - eps_)
         {
@@ -291,11 +287,11 @@ public:
      * influx.
      */
     void neumann(PrimaryVariables &values,
-                  const Element &element,
-                  const FVElementGeometry &fvGeometry,
-                  const Intersection &is,
-                  int scvIdx,
-                  int boundaryFaceIdx) const
+                 const Element &element,
+                 const FVElementGeometry &fvGeometry,
+                 const Intersection &is,
+                 int scvIdx,
+                 int boundaryFaceIdx) const
     {
         values = 0.0;
     }
@@ -307,16 +303,16 @@ public:
      * variables.
      */
     void initial(PrimaryVariables &values,
-            const Element &element,
-            const FVElementGeometry &fvGeometry,
-            int scvIdx) const
+                 const Element &element,
+                 const FVElementGeometry &fvGeometry,
+                 int scvIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+        auto globalPos = element.geometry().corner(scvIdx);
 
         values[pressureIdx] = reservoirPressure_;
         values[switchIdx]   = initLiqSaturation_;                 // Sl primary variable
         values[xlNaClIdx]   = massTomoleFrac_(outerSalinity_);     // mole fraction
-        if(globalPos[0]>5.0 && globalPos[0]< 20.0)
+        if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 20.0 - eps_)
             values[precipNaClIdx] = initPrecipitatedSalt2_; // [kg/m^3]
         else
             values[precipNaClIdx] = initPrecipitatedSalt1_; // [kg/m^3]
@@ -339,10 +335,11 @@ public:
     void solDependentSource(PrimaryVariables &source,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
-                            int scvIdx, const ElementVolumeVariables &elemVolVars) const
+                            int scvIdx,
+                            const ElementVolumeVariables &elemVolVars) const
     {
         source = 0;
-        const  VolumeVariables &volVars = elemVolVars[scvIdx];
+        const auto& volVars = elemVolVars[scvIdx];
         Scalar moleFracNaCl_lPhase = volVars.moleFraction(wPhaseIdx, NaClIdx);
         Scalar moleFracNaCl_gPhase = volVars.moleFraction(nPhaseIdx, NaClIdx);
         Scalar massFracNaCl_Max_lPhase = this->spatialParams().SolubilityLimit();
@@ -352,8 +349,8 @@ public:
 
         // liquid phase
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
-                                            * volVars.saturation(wPhaseIdx)
-                                            * pow(std::abs(moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase), 1.0);
+                                               * volVars.saturation(wPhaseIdx)
+                                               * std::abs(moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase);
 
         if (moleFracNaCl_lPhase < moleFracNaCl_Max_lPhase)
             precipSalt *= -1;
@@ -361,8 +358,8 @@ public:
         // gas phase
         if (moleFracNaCl_gPhase > moleFracNaCl_Max_gPhase)
             precipSalt += volVars.porosity() * volVars.molarDensity(nPhaseIdx)
-                                            * volVars.saturation(nPhaseIdx)
-                                            * pow(std::abs(moleFracNaCl_gPhase - moleFracNaCl_Max_gPhase), 1.0);
+                                             * volVars.saturation(nPhaseIdx)
+                                             * std::abs(moleFracNaCl_gPhase - moleFracNaCl_Max_gPhase);
 
         // make sure we don't disolve more salt than previously precipitated
         if (precipSalt*this->timeManager().timeStepSize() + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
@@ -380,21 +377,11 @@ public:
      * \brief Return the initial phase state inside a control volume.
      */
     int initialPhasePresence(const Vertex &vert,
-                             int &globalIdx,
+                             int globalIdx,
                              const GlobalPosition &globalPos) const
     {
         return bothPhases;
     }
-
-    void preTimeStep()
-    {}
-
-
-    void postTimeStep()
-    {}
-
-    void episodeEnd()
-    {}
 
 private:
 
@@ -410,7 +397,7 @@ private:
 
        const Scalar X_NaCl = XlNaCl;
        /* XlNaCl: conversion from mass fraction to mol fraction */
-       const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
+       auto xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
        return xlNaCl;
     }
 

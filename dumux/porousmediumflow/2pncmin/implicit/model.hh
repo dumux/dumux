@@ -393,10 +393,9 @@ public:
         for (unsigned i = 0; i < this->staticDat_.size(); ++i)
             this->staticDat_[i].visited = false;
 
-        FVElementGeometry fvGeometry;
-        static VolumeVariables volVars;
         for (const auto& element : elements(this->gridView_()))
         {
+            FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), element);
             for (int i = 0; i < fvGeometry.numScv; ++i)
             {
@@ -406,18 +405,20 @@ public:
                     continue;
 
                 this->staticDat_[globalIdx].visited = true;
+                VolumeVariables volVars;
                 volVars.update(curGlobalSol[globalIdx],
                                this->problem_(),
                                element,
                                fvGeometry,
                                i,
                                false);
-                const GlobalPosition &global = element.geometry().corner(i);
+                auto global = element.geometry().corner(i);
                 if (primaryVarSwitch_(curGlobalSol,
                                       volVars,
                                       globalIdx,
                                       global))
-                { wasSwitched = true;
+                {
+                    wasSwitched = true;
                 }
             }
         }
@@ -426,7 +427,7 @@ public:
         // other partition we will also set the switch flag
         // for our partition.
         if (this->gridView_().comm().size() > 1)
-        wasSwitched = this->gridView_().comm().max(wasSwitched);
+            wasSwitched = this->gridView_().comm().max(wasSwitched);
 
         setSwitched_(wasSwitched);
     }
@@ -488,39 +489,38 @@ protected:
                     newPhasePresence = wPhaseOnly;
 
                     //switch "Sl" to "xlN2"
-                    globalSol[globalIdx][switchIdx]
-                            = volVars.moleFraction(wPhaseIdx, nCompIdx /*N2*/);
+                    globalSol[globalIdx][switchIdx] = volVars.moleFraction(wPhaseIdx, nCompIdx /*N2*/);
                 }
             }
             else if (phasePresence == nPhaseOnly)
             {
-            Scalar sumxl = 0;
-            //Calculate sum of mole fractions (water and air) in the hypothetical liquid phase
-            for (int compIdx = 0; compIdx < numComponents; compIdx++)
+                Scalar sumxl = 0;
+                //Calculate sum of mole fractions (water and air) in the hypothetical liquid phase
+                for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
                     sumxl += volVars.moleFraction(wPhaseIdx, compIdx);
                 }
-                    Scalar xlmax = 1.0;
-                    if (sumxl > xlmax)
-                wouldSwitch = true;
-                    if (this->staticDat_[globalIdx].wasSwitched)
-                xlmax *=1.02;
+                Scalar xlmax = 1.0;
+                if (sumxl > xlmax)
+                    wouldSwitch = true;
+                if (this->staticDat_[globalIdx].wasSwitched)
+                    xlmax *=1.02;
 
-            //if the sum of the mole fractions would be larger than
-            //1, wetting phase appears
-                    if (sumxl/*sum of mole fractions*/ > xlmax/*1*/)
-                    {
-                        // liquid phase appears
-                        std::cout << "Liquid Phase appears at vertex " << globalIdx
-                                << ", coordinated: " << globalPos << ", sumxl: "
-                                << sumxl << std::endl;
-                        newPhasePresence = bothPhases;
-                        if (formulation == pgSl)
-                            globalSol[globalIdx][switchIdx] = 0.0;
-                        else if (formulation == plSg)
-                            globalSol[globalIdx][switchIdx] = 1.0;
+                //if the sum of the mole fractions would be larger than
+                //1, wetting phase appears
+                if (sumxl/*sum of mole fractions*/ > xlmax/*1*/)
+                {
+                    // liquid phase appears
+                    std::cout << "Liquid Phase appears at vertex " << globalIdx
+                              << ", coordinated: " << globalPos << ", sumxl: "
+                              << sumxl << std::endl;
+                    newPhasePresence = bothPhases;
+                    if (formulation == pgSl)
+                        globalSol[globalIdx][switchIdx] = 0.0;
+                    else if (formulation == plSg)
+                        globalSol[globalIdx][switchIdx] = 1.0;
                     //Here unlike 2pnc model we do not switch all components to to mole fraction in gas phase
-                    }
+                }
             }
             else if (phasePresence == wPhaseOnly)
             {
@@ -539,8 +539,8 @@ protected:
                 if (sumxg > xgmax)
                 {
                     std::cout << "Gas Phase appears at vertex " << globalIdx
-                            << ", coordinated: " << globalPos << ", sumxg: "
-                            << sumxg << std::endl;
+                              << ", coordinated: " << globalPos << ", sumxg: "
+                              << sumxg << std::endl;
                     newPhasePresence = bothPhases;
                     //saturation of the liquid phase set to 0.9999 (if formulation pgSl and vice versa)
                     if (formulation == pgSl)
