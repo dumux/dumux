@@ -337,13 +337,13 @@ public:
     }
 
     /*!
-     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
+     * \brief Given a phase's composition, temperature, pressure, and
+     *        the partial pressures of all components, return its
+     *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * If useComplexRelations == true, we apply
-     * Formula (2.6) from S.O.Ochs:
-     * "Development of a multiphase multicomponent
-     * model for PEMFC - Technical report: IRTG-NUPUS",
-     * University of Stuttgart, 2008
+     * If useComplexRelations == true, we apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the liquid density.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -369,7 +369,7 @@ public:
                 return H2O::liquidDensity(T, p);
             else
             {
-                // See: Ochs 2008
+                // See: Eq. (7) in Class et al. (2002a)
                 Scalar rholH2O = H2O::liquidDensity(T, p);
                 Scalar clH2O = rholH2O/H2O::molarMass();
 
@@ -392,8 +392,7 @@ public:
                 * fluidState.averageMolarMass(nPhaseIdx)
                 / std::max(1e-5, sumMoleFrac);
 
-        // assume ideal mixture: steam and nitrogen don't "see" each
-        // other
+        // assume ideal mixture: steam and nitrogen don't "see" each other
         Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
         Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, N2Idx));
         return (rho_gH2O + rho_gN2) / std::max(1e-5, sumMoleFrac);

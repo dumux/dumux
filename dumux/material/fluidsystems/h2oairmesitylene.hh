@@ -223,8 +223,14 @@ public:
     }
 
     /*!
-     * \brief Given all mole fractions in a phase, return the phase
+     * \brief Given a phase's composition, temperature, pressure, and
+     *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * We apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the water density.
+     *
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
@@ -233,8 +239,7 @@ public:
     static Scalar density(const FluidState &fluidState, int phaseIdx)
     {
         if (phaseIdx == wPhaseIdx) {
-            // See: Ochs 2008
-            // \todo: proper citation
+            // See: Eq. (7) in Class et al. (2002a)
             Scalar rholH2O = H2O::liquidDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
             Scalar clH2O = rholH2O/H2O::molarMass();
 

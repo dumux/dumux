@@ -371,12 +371,9 @@ public:
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * Formula (2.6)
-     * in
-     * S.O.Ochs: "Development of a multiphase multicomponent
-     * model for PEMFC - Technical report: IRTG-NUPUS",
-     * University of Stuttgart, 2008 \cite ochs2008 <BR>
-     *
+     * If useComplexRelations == true, we apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the liquid density.
      *
      * \param phaseIdx index of the phase
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
@@ -406,7 +403,7 @@ public:
                 return H2O::liquidDensity(T, p);
             else
             {
-                // See: Ochs 2008 (2.6)
+                // See: Eq. (7) in Class et al. (2002a)
                 const Scalar rholH2O = H2O::liquidDensity(T, p);
                 const Scalar clH2O = rholH2O/H2O::molarMass();
 
