@@ -127,7 +127,7 @@ public:
                                    *(up.mobility(phaseIdx)*mobWeight + dn.mobility(phaseIdx)*(1-mobWeight)); };
 
             auto eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
-            flux[eqIdx] = fluxVars.darcyFluxVars().computeFlux(phaseIdx, upwindRule);
+            flux[eqIdx] = fluxVars.advection().flux(phaseIdx, upwindRule);
         }
 
         return flux;

@@ -72,6 +72,15 @@ SET_TYPE_PROP(TwoP, Model, TwoPModel<TypeTag>);
 //! the VolumeVariables property
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 
+//! Enable advection
+SET_BOOL_PROP(TwoP, EnableAdvection, true);
+
+//! The two-phase model has no molecular diffusion
+SET_BOOL_PROP(TwoP, EnableMolecularDiffusion, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);
+
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(TwoP, ImplicitMassUpwindWeight, 1.0);
 

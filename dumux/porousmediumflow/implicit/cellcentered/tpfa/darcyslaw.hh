@@ -22,8 +22,8 @@
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
  *        of the Darcy approximation.
  */
-#ifndef DUMUX_CC_TPFA_DARCY_FLUX_VARIABLES_HH
-#define DUMUX_CC_TPFA_DARCY_FLUX_VARIABLES_HH
+#ifndef DUMUX_CC_TPFA_DARCYS_LAW_HH
+#define DUMUX_CC_TPFA_DARCYS_LAW_HH
 
 #include <dune/common/float_cmp.hh>
 
@@ -44,12 +44,12 @@ NEW_PROP_TAG(ProblemEnableGravity);
 }
 
 /*!
- * \ingroup ImplicitFluxVariables
+ * \ingroup CCTpfaDarcysLaw
  * \brief Evaluates the normal component of the Darcy velocity
  * on a (sub)control volume face.
  */
 template <class TypeTag>
-class CCTpfaImplicitDarcyFluxVariables
+class CCTpfaDarcysLaw
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -90,7 +90,7 @@ public:
      * \param upwindFunction A function which does the upwinding
      */
     template<typename FunctionType>
-    Scalar computeFlux(IndexType phaseIdx, FunctionType upwindFunction) const
+    Scalar flux(IndexType phaseIdx, FunctionType upwindFunction) const
     {
         const auto insideScvIdx = scvFace_().insideScvIdx();
         const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
@@ -249,4 +249,4 @@ protected:
 
 } // end namespace
 
-#endif // DUMUX_CC_TPFA_DARCY_FLUX_VARIABLES_HH
+#endif

@@ -62,6 +62,15 @@ SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
 //! the VolumeVariables property
 SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
+//! Enable advection
+SET_BOOL_PROP(OneP, EnableAdvection, true);
+
+//! The one-phase model has no molecular diffusion
+SET_BOOL_PROP(OneP, EnableMolecularDiffusion, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(OneP, EnableEnergyBalance, false);
+
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(OneP, Indices, OnePIndices);
 

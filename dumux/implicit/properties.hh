@@ -79,12 +79,12 @@ NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over bou
 
 // Specify the forms of fluxes that should be considered in the model
 // also, specify their corresponding flux variables
-NEW_PROP_TAG(DarcyFluxes); //! specifies if darcy fluxes are considered in the model
-NEW_PROP_TAG(DarcyFluxVariables); //! The type for the calculation of the darcy fluxes
-NEW_PROP_TAG(DiffusiveFluxes); //! specifies if diffusive fluxes are considered in the model
-NEW_PROP_TAG(DiffusionFluxVariables); //! The type that handles the calculation of the molecular diffusion fluxes
-NEW_PROP_TAG(EnergyFluxes); //! specifies if the model consideres heat transport phenomena
-NEW_PROP_TAG(EnergyFluxVariables); //! The type for the heat flux calculation
+NEW_PROP_TAG(EnableAdvection); //! specifies if advection is considered in the model
+NEW_PROP_TAG(AdvectionType); //! The type for the calculation the advective fluxes
+NEW_PROP_TAG(EnableMolecularDiffusion); //! specifies if molecular diffusive fluxes are considered in the model
+NEW_PROP_TAG(MolecularDiffusionType); //! The type for the calculation of the molecular diffusion fluxes
+NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy equation
+NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
 
 // stencils
 NEW_PROP_TAG(Stencils); //! The stencils container type

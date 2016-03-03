@@ -34,7 +34,7 @@
 #include <dumux/implicit/cellcentered/stencils.hh>
 #include <dumux/implicit/cellcentered/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyslaw.hh>
 
 namespace Dumux {
 
@@ -83,14 +83,14 @@ public:
 };
 
 //! The darcy flux variables
-SET_TYPE_PROP(CCTpfaModel, DarcyFluxVariables, Dumux::CCTpfaImplicitDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(CCTpfaModel, AdvectionType, Dumux::CCTpfaDarcysLaw<TypeTag>);
 
 // TODO: Actually implement the diffusion and energy flux variables
 //! The diffusion flux variables
-//SET_TYPE_PROP(CCTpfaModel, DiffusionFluxVariables, TODO);
+//SET_TYPE_PROP(CCTpfaModel, MolecularDiffusionType, CCTpfaFicksLaw);
 
 //! The energy flux variables
-//SET_TYPE_PROP(CCTpfaModel, EnergyFluxVariables, TODO);
+//SET_TYPE_PROP(CCTpfaModel, HeatConductionType, CCTpfaFouriersLaw);
 
 } // namespace Properties
 

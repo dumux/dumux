@@ -37,13 +37,13 @@ NEW_PROP_TAG(NumComponents);
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables
- *        specializations are provided for combinations of diffusion processes
+ *        specializations are provided for combinations of diffusion_ processes
  */
-template<class TypeTag, bool darcy, bool diffusion, bool energy>
+template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
 class FluxVariables {};
 
 
-// specialization for pure darcy flow
+// specialization for pure advective flow (e.g. one-phase darcy equation)
 template<class TypeTag>
 class FluxVariables<TypeTag, true, false, false>
 {
@@ -51,38 +51,38 @@ class FluxVariables<TypeTag, true, false, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using DarcyFluxVariables = typename GET_PROP_TYPE(TypeTag, DarcyFluxVariables);
     using Stencil = std::set<IndexType>;
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scv)
     {
-        darcyFluxVars_.update(problem, scv);
+        advection_.update(problem, scv);
     }
 
-    const DarcyFluxVariables& darcyFluxVars() const
+    const AdvectionType& advection() const
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
     Stencil stencil() const
     {
-        return darcyFluxVars().stencil();
+        return advection().stencil();
     }
 
 private:
-    DarcyFluxVariables darcyFluxVars_;
+    AdvectionType advection_;
 };
 
 
-// specialization for darcy flow with diffusion
+// specialization for isothermal advection diffusion_ equations
 template<class TypeTag>
 class FluxVariables<TypeTag, true, true, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using DarcyFluxVariables = typename GET_PROP_TYPE(TypeTag, DarcyFluxVariables);
-    using DiffusionFluxVariables = typename GET_PROP_TYPE(TypeTag, DiffusionFluxVariables);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     enum
     {
@@ -93,45 +93,45 @@ class FluxVariables<TypeTag, true, true, false>
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scv)
     {
-        darcyFluxVars_.update(problem, scv);
+        advection_.update(problem, scv);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusionFluxVariables_.update(problem, scv, phaseIdx, compIdx);
+                diffusion_.update(problem, scv, phaseIdx, compIdx);
     }
 
-    const DarcyFluxVariables& darcyFluxVars() const
+    const AdvectionType& advection() const
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
-    DarcyFluxVariables& darcyFluxVars()
+    AdvectionType& advection()
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
-    const DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
-    DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
 private:
-    DarcyFluxVariables darcyFluxVars_;
-    std::array< std::array<DiffusionFluxVariables, numComponents>, numPhases> diffusionFluxVariables_;
+    AdvectionType advection_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
 };
 
 
-// specialization for pure diffusion
+// specialization for pure diffusion_
 template<class TypeTag>
 class FluxVariables<TypeTag, false, true, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using DiffusionFluxVariables = typename GET_PROP_TYPE(TypeTag, DiffusionFluxVariables);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     enum
     {
@@ -144,75 +144,75 @@ public:
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusionFluxVariables_.update(problem, scv, phaseIdx, compIdx);
+                diffusion_.update(problem, scv, phaseIdx, compIdx);
     }
 
-    const DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
-    DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
 private:
-    std::array< std::array<DiffusionFluxVariables, numComponents>, numPhases> diffusionFluxVariables_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
 };
 
 
-// specialization for non-isothermal darcy flow
+// specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
 template<class TypeTag>
 class FluxVariables<TypeTag, true, false, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using DarcyFluxVariables = typename GET_PROP_TYPE(TypeTag, DarcyFluxVariables);
-    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scv)
     {
-        darcyFluxVars_.update(problem, scv);
-        energyFluxVars_.update(problem, scv);
+        advection_.update(problem, scv);
+        heatConduction_.update(problem, scv);
     }
 
-    const DarcyFluxVariables& darcyFluxVars() const
+    const AdvectionType& advection() const
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
-    DarcyFluxVariables& darcyFluxVars()
+    AdvectionType& advection()
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
-    const EnergyFluxVariables& energyFluxVars() const
+    const HeatConductionType& heatConduction() const
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
-    EnergyFluxVariables& energyFluxVars()
+    HeatConductionType& heatConduction()
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
 private:
-    DarcyFluxVariables darcyFluxVars_;
-    EnergyFluxVariables energyFluxVars_;
+    AdvectionType advection_;
+    HeatConductionType heatConduction_;
 };
 
 
-// specialization for non-isothermal darcy flow with diffusion
+// specialization for non-isothermal advection diffusion_ equations
 template<class TypeTag>
 class FluxVariables<TypeTag, true, true, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using DarcyFluxVariables = typename GET_PROP_TYPE(TypeTag, DarcyFluxVariables);
-    using DiffusionFluxVariables = typename GET_PROP_TYPE(TypeTag, DiffusionFluxVariables);
-    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
     enum
     {
@@ -223,58 +223,58 @@ class FluxVariables<TypeTag, true, true, true>
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scv)
     {
-        darcyFluxVars_.update(problem, scv);
+        advection_.update(problem, scv);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusionFluxVariables_.update(problem, scv, phaseIdx, compIdx);
-        energyFluxVars_.update(problem, scv);
+                diffusion_.update(problem, scv, phaseIdx, compIdx);
+        heatConduction_.update(problem, scv);
     }
 
-    const DarcyFluxVariables& darcyFluxVars() const
+    const AdvectionType& advection() const
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
-    DarcyFluxVariables& darcyFluxVars()
+    AdvectionType& advection()
     {
-        return darcyFluxVars_;
+        return advection_;
     }
 
-    const EnergyFluxVariables& energyFluxVars() const
+    const HeatConductionType& heatConduction() const
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
-    EnergyFluxVariables& energyFluxVars()
+    HeatConductionType& heatConduction()
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
-    const DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
-    DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
 private:
-    DarcyFluxVariables darcyFluxVars_;
-    std::array< std::array<DiffusionFluxVariables, numComponents>, numPhases> diffusionFluxVariables_;
-    EnergyFluxVariables energyFluxVars_;
+    AdvectionType advection_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
+    HeatConductionType heatConduction_;
 };
 
 
-// specialization for non-isothermal pure diffusion
+// specialization for non-isothermal diffusion_
 template<class TypeTag>
 class FluxVariables<TypeTag, false, true, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using DiffusionFluxVariables = typename GET_PROP_TYPE(TypeTag, DiffusionFluxVariables);
-    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
     enum
     {
@@ -287,63 +287,64 @@ public:
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusionFluxVariables_.update(problem, scv, phaseIdx, compIdx);
-        energyFluxVars_.update(problem, scv);
+                diffusion_.update(problem, scv, phaseIdx, compIdx);
+        heatConduction_.update(problem, scv);
     }
 
-    const EnergyFluxVariables& energyFluxVars() const
+    const HeatConductionType& heatConduction() const
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
-    EnergyFluxVariables& energyFluxVars()
+    HeatConductionType& heatConduction()
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
-    const DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
-    DiffusionFluxVariables& diffusionFluxVars(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusionFluxVariables_[phaseIdx][compIdx];
+        return diffusion_[phaseIdx][compIdx];
     }
 
 private:
-    std::array< std::array<DiffusionFluxVariables, numComponents>, numPhases> diffusionFluxVariables_;
-    EnergyFluxVariables energyFluxVars_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
+    HeatConductionType heatConduction_;
 };
 
 
-// specialization for pure heat transport
+// specialization for pure heat conduction (e.g. the heat equation)
 template<class TypeTag>
 class FluxVariables<TypeTag, false, false, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scv)
     {
-        energyFluxVars_.update(problem, scv);
+        heatConduction_.update(problem, scv);
     }
 
-    const EnergyFluxVariables& energyFluxVars() const
+    const HeatConductionType& heatConduction() const
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
-    EnergyFluxVariables& energyFluxVars()
+    HeatConductionType& heatConduction()
     {
-        return energyFluxVars_;
+        return heatConduction_;
     }
 
 private:
-    EnergyFluxVariables energyFluxVars_;
+    HeatConductionType heatConduction_;
 };
+
 } // end namespace
 
 #endif

@@ -102,31 +102,19 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, StencilsVector, Dumux::StencilsVector<TypeTag>);
 
-//! Set darcy fluxes as the default fluxes to be considered
-SET_BOOL_PROP(ImplicitBase, DarcyFluxes, true);
-
-//! By default diffusive fluxes are switched off
-SET_BOOL_PROP(ImplicitBase, DiffusiveFluxes, false);
-
-//! By default energy fluxes are not considered
-SET_BOOL_PROP(ImplicitBase, EnergyFluxes, false);
+//! The global volume variables vector class
+SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);
 
 // //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
 SET_PROP(ImplicitBase, FluxVariables)
 {
 private:
-  enum
-  {
-    darcy = GET_PROP_VALUE(TypeTag, DarcyFluxes),
-    diffusion = GET_PROP_VALUE(TypeTag, DiffusiveFluxes),
-    energy = GET_PROP_VALUE(TypeTag, EnergyFluxes)
-  };
+    static constexpr bool advection = GET_PROP_VALUE(TypeTag, EnableAdvection);
+    static constexpr bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
+    static constexpr bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
 public:
-  typedef FluxVariables<TypeTag, darcy, diffusion, energy> type;
+    typedef Dumux::FluxVariables<TypeTag, advection, diffusion, energy> type;
 };
-
-//! The global volume variables vector class
-SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);
 
 //! The local jacobian operator
 SET_TYPE_PROP(ImplicitBase, LocalJacobian, ImplicitLocalJacobian<TypeTag>);
