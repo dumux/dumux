@@ -28,8 +28,6 @@
 #include "parkervangen3p.hh"
 #include "regularizedparkervangen3pparams.hh"
 
-
-
 #include <dumux/common/spline.hh>
 
 namespace Dumux
@@ -94,27 +92,52 @@ public:
      */
     static Scalar pcgw(const Params &params, Scalar swe)
     {
-        const Scalar pcvgReg = params.thresholdSw();
-
-        /* regularization */
-        if (swe<0.0) swe=0.0;
-        if (swe>1.0) swe=1.0;
-
-        if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
+        //if specified, a constant value is used for regularization
+        if(params.constRegularization())
         {
-            return ParkerVanGen3P::pcgw(params, swe);
+            if(swe < 0.0)
+                swe = 0.0;
+            if(swe > 1.0)
+                swe = 1.0;
         }
-        else //use regularization
+
+        // retrieve the low and the high threshold saturations for the
+        // unregularized capillary pressure curve from the parameters
+        const Scalar swThLow = params.pcLowS();
+        const Scalar swThHigh = params.pcHighS();
+
+        // make sure that the capillary pressure observes a derivative
+        // != 0 for 'illegal' saturations. This is favourable for the
+        // newton solver (if the derivative is calculated numerically)
+        // in order to get the saturation moving to the right
+        // direction if it temporarily is in an 'illegal' range.
+        if (swe < swThLow)
         {
-            const Scalar seRegu = (swe<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
-
-            // value and derivative at regularization point
-            const Scalar pc = ParkerVanGen3P::pcgw(params, seRegu);
-            const Scalar slope = ParkerVanGen3P::dpcgw_dswe(params, seRegu);
-
-            //evaluate tangential
-            return (swe-seRegu)*slope+pc;
+            const Scalar mLow = ParkerVanGen3P::dpcgw_dswe(params, swThLow);
+            return ParkerVanGen3P::pcgw(params, swThLow) + mLow*(swe - swThLow);
         }
+        else if (swe > swThHigh)
+        {
+            Scalar yTh = ParkerVanGen3P::pcgw(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+
+            if (swe < 1.0) {
+                // use spline between threshold swe and 1.0
+                Scalar mTh = ParkerVanGen3P::dpcgw_dswe(params, swThHigh);
+                Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
+                                  yTh, 0, // y0, y1
+                                  mTh, m1); // m0, m1
+                return sp.eval(swe);
+            }
+            else {
+                // straight line for swe > 1.0
+                return m1*(swe - 1.0) + 0.0;
+            }
+        }
+
+        // if the effective saturation is in an 'reasonable'
+        // range, we use the real van genuchten law...
+        return ParkerVanGen3P::pcgw(params, swe);
     }
 
   /*!
@@ -124,27 +147,52 @@ public:
      */
     static Scalar pcnw(const Params &params, Scalar swe)
     {
-        const Scalar pcvgReg = params.thresholdSw();
-
-        /* regularization */
-        if (swe<0.0) swe=0.0;
-        if (swe>1.0) swe=1.0;
-
-        if (swe>pcvgReg && swe<1-pcvgReg) //use actual material law
+        //if specified, a constant value is used for regularization
+        if(params.constRegularization())
         {
-          return ParkerVanGen3P::pcnw(params, swe);
+            if(swe < 0.0)
+                swe = 0.0;
+            if(swe > 1.0)
+                swe = 1.0;
         }
-        else //use regularization
+
+        // retrieve the low and the high threshold saturations for the
+        // unregularized capillary pressure curve from the parameters
+        const Scalar swThLow = params.pcLowS();
+        const Scalar swThHigh = params.pcHighS();
+
+        // make sure that the capillary pressure observes a derivative
+        // != 0 for 'illegal' saturations. This is favourable for the
+        // newton solver (if the derivative is calculated numerically)
+        // in order to get the saturation moving to the right
+        // direction if it temporarily is in an 'illegal' range.
+        if (swe < swThLow)
         {
-            const Scalar seRegu = (swe<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
-
-            // value and derivative at regularization point
-           const Scalar pc = ParkerVanGen3P::pcnw(params, seRegu);
-           const Scalar slope = ParkerVanGen3P::dpcnw_dswe(params, seRegu);
-
-            //evaluate tangential
-            return (swe-seRegu)*slope + pc;
+            const Scalar mLow = ParkerVanGen3P::dpcnw_dswe(params, swThLow);
+            return ParkerVanGen3P::pcnw(params, swThLow) + mLow*(swe - swThLow);
         }
+        else if (swe > swThHigh)
+        {
+            Scalar yTh = ParkerVanGen3P::pcnw(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+
+            if (swe < 1.0) {
+                // use spline between threshold swe and 1.0
+                Scalar mTh = ParkerVanGen3P::dpcnw_dswe(params, swThHigh);
+                Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
+                                  yTh, 0, // y0, y1
+                                  mTh, m1); // m0, m1
+                return sp.eval(swe);
+            }
+            else {
+                // straight line for swe > 1.0
+                return m1*(swe - 1.0) + 0.0;
+            }
+        }
+
+        // if the effective saturation is in an 'reasonable'
+        // range, we use the real van genuchten law...
+        return ParkerVanGen3P::pcnw(params, swe);
     }
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
@@ -153,28 +201,52 @@ public:
      */
     static Scalar pcgn(const Params &params, Scalar ste)
     {
-        const Scalar pcvgReg = params.thresholdSw();
-
-        /* regularization */
-        if (ste<0.0) ste=0.0;
-        if (ste>1.0) ste=1.0;
-
-
-        if (ste>pcvgReg && ste<1-pcvgReg) //use actual material law
+        //if specified, a constant value is used for regularization
+        if(params.constRegularization())
         {
-          return ParkerVanGen3P::pcgn(params, ste);
+            if(ste < 0.0)
+                ste = 0.0;
+            if(ste > 1.0)
+                ste = 1.0;
         }
-        else //use regularization
+
+        // retrieve the low and the high threshold saturations for the
+        // unregularized capillary pressure curve from the parameters
+        const Scalar swThLow = params.pcLowS();
+        const Scalar swThHigh = params.pcHighS();
+
+        // make sure that the capillary pressure observes a derivative
+        // != 0 for 'illegal' saturations. This is favourable for the
+        // newton solver (if the derivative is calculated numerically)
+        // in order to get the saturation moving to the right
+        // direction if it temporarily is in an 'illegal' range.
+        if (ste < swThLow)
         {
-            const Scalar seRegu = (ste<=pcvgReg) ? pcvgReg : 1.0 - pcvgReg;
-
-            // value and derivative at regularization point
-            const Scalar pc = ParkerVanGen3P::pcgn(params, seRegu);
-            const Scalar slope = ParkerVanGen3P::dpcgn_dste(params, seRegu);
-
-            //evaluate tangential
-           return (ste-seRegu)*slope + pc;
+            const Scalar mLow = ParkerVanGen3P::dpcgn_dste(params, swThLow);
+            return ParkerVanGen3P::pcgn(params, swThLow) + mLow*(ste - swThLow);
         }
+        else if (ste > swThHigh)
+        {
+            Scalar yTh = ParkerVanGen3P::pcgn(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+
+            if (ste < 1.0) {
+                // use spline between threshold swe and 1.0
+                Scalar mTh = ParkerVanGen3P::dpcgn_dste(params, swThHigh);
+                Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
+                                  yTh, 0, // y0, y1
+                                  mTh, m1); // m0, m1
+                return sp.eval(ste);
+            }
+            else {
+                // straight line for swe > 1.0
+                return m1*(ste - 1.0) + 0.0;
+            }
+        }
+
+        // if the effective saturation is in an 'reasonable'
+        // range, we use the real van genuchten law...
+        return ParkerVanGen3P::pcgn(params, ste);
     }
 
     /*!
@@ -312,11 +384,24 @@ public:
     static Scalar krg(const Params &params, const Scalar ste)
     {
         //use regularization
-        if(ste > 1.0) return 0.0;
-        if(ste < 0.0) return 1.0;
+        if(ste > 1.0)
+            return 0.0;
+        if(ste < 0.0)
+            return 1.0;
+
+        //get the absolute gas phase saturation
+        const Scalar st = ste*(1 - params.swr()) + params.swr();
+        const Scalar sg = 1.0 - st;
+
+        // We use a scaling factor that decreases the gas phase permeability quite fast a very low gas phase
+        // saturations, thus making that phase virtually immobile.
+        // This prevents numerical issues related to the degeneration of the gas phase mass balance for the 3p3c model
+        // at very low gas phase saturations.
+        const Scalar scalFact = (sg > 0.1) ? 1.0 : std::max(0.0,
+                                                            (sg - params.sgr())/(0.1 - params.sgr()));
 
         //or use actual material law
-        return ParkerVanGen3P::krg(params, ste);
+        return scalFact * ParkerVanGen3P::krg(params, ste);
     }
 
     /*!

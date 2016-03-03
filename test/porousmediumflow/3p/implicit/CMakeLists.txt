@@ -5,14 +5,14 @@ add_dumux_test(test_box3p test_box3p test_box3p.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00010.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p")
 
 add_dumux_test(test_cc3p test_cc3p test_cc3p.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc-00010.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p")
 
 # non-isothermal tests
