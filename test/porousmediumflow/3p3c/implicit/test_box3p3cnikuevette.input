@@ -1,7 +1,8 @@
 [TimeManager]
 DtInitial = 1 # [s]
-TEnd = 200 # [s]
+TEnd = 2700 # [s]
 MaxTimeStepSize = 60 # [s]
+EpisodeLength = 1000 # [s]
 
 [Grid]
 File = ./grids/kuev_3p3cni.dgf

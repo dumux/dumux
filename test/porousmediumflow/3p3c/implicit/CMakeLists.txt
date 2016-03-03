@@ -34,14 +34,14 @@ add_dumux_test(test_box3p3cnikuevette test_box3p3cnikuevette test_box3p3cnikueve
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnibox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/kuevettebox-00012.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/kuevettebox-00005.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p3cnikuevette")
 
 add_dumux_test(test_cc3p3cnikuevette test_cc3p3cnikuevette test_cc3p3cnikuevette.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnicc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-00012.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-00005.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3cnikuevette")
 
 #install sources
