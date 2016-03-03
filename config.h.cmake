@@ -28,6 +28,19 @@
 
 /* end private */
 
+/* Define to the version of dumux */
+#define DUMUX_VERSION "${DUMUX_VERSION}"
+
+/* Define to the major version of dumux */
+#define DUMUX_VERSION_MAJOR ${DUMUX_VERSION_MAJOR}
+
+/* Define to the minor version of dumux */
+#define DUMUX_VERSION_MINOR ${DUMUX_VERSION_MINOR}
+
+/* Define to the revision of dumux */
+#define DUMUX_VERSION_REVISION ${DUMUX_VERSION_REVISION}
+
+
 /* Define to 1 if Valgrind was found */
 #cmakedefine HAVE_VALGRIND 1
 
