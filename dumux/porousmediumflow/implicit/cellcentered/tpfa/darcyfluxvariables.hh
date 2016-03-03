@@ -115,7 +115,7 @@ public:
         Scalar hOutside;
         if (!scvFace_().boundary())
         {
-            outsideVolVars = problem_().model().curVolVars(stencil_[1]);
+            outsideVolVars = problem_().model().curVolVars(scvFace_().outsideScvIdx());
             hOutside = outsideVolVars.pressure(phaseIdx);
 
             // if switched on, ask for the gravitational acceleration in the outside cell
@@ -153,10 +153,10 @@ public:
 
         auto volumeFlux = tij_*(hInside - hOutside);
 
-        if (volumeFlux > 0)
-            return volumeFlux*upwindFunction(insideVolVars, outsideVolVars);
-        else
+        if (std::signbit(volumeFlux))
             return volumeFlux*upwindFunction(outsideVolVars, insideVolVars);
+        else
+            return volumeFlux*upwindFunction(insideVolVars, outsideVolVars);
     }
 
     std::set<IndexType> stencil() const
@@ -206,7 +206,7 @@ protected:
 
     Scalar calculateOmega_(const DimWorldMatrix &K, const SubControlVolume &scv) const
     {
-        GlobalPosition Knormal(0);
+        GlobalPosition Knormal;
         K.mv(scvFace_().unitOuterNormal(), Knormal);
 
         auto distanceVector = scvFace_().center();
