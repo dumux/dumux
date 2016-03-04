@@ -315,7 +315,6 @@ public:
         return krn;
     }
 
-
     /*!
      * \brief The relative permeability for the non-wetting phase
      *        of the medium implied by van Genuchten's
@@ -330,9 +329,30 @@ public:
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
-//         if((1-ste) < params.sgr())
-//             return 0;
+        assert(0 <= ste && ste <= 1);
         return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability for the
+     *        gas phase in regard to the total liquid saturation of
+     *        the medium as implied by the van Genuchten
+     *        parameterization.
+     *
+     * \param ste The mobile total liquid saturation.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     */
+    static Scalar dkrg_dste(const Params &params, Scalar ste)
+    {
+        assert(0 < ste && ste <= 1);
+
+        const Scalar x = std::pow(ste, 1.0/params.vgm());
+        return
+            -std::pow(1.0 - x, 2*params.vgm())
+            *std::pow(1.0 - ste, -2.0/3)
+            *(1.0/3 + 2*x/ste);
     }
 
     /*!
