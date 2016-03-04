@@ -25,8 +25,8 @@
 #include <config.h>
 
 #include <dumux/material/constraintsolvers/ncpflash.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
-#include <dumux/material/fluidsystems/spe5fluidsystem.hh>
+#include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/fluidsystems/spe5.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 
 template <class Scalar, class FluidSystem, class FluidState>
