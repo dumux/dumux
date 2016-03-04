@@ -403,7 +403,7 @@ public:
      * \param eqIdx The index of the equation
      */
     DUNE_DEPRECATED_MSG("isCouplingInflow() is deprecated. Use isCouplingNeumann() instead.")
-    bool  flow(unsigned eqIdx) const
+    bool isCouplingInflow(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isCouplingNeumann; }
 
     /*!
