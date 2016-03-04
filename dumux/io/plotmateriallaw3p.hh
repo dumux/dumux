@@ -202,6 +202,7 @@ public:
     {
         std::vector<Scalar> sw(numIntervals_ + 1);
         std::vector<Scalar> krw(numIntervals_ + 1);
+        std::vector<Scalar> krn(numIntervals_ + 1);
         std::vector<Scalar> krg(numIntervals_ + 1);
         Scalar satInterval = upperSat - lowerSat;
         Scalar krMin = 1e100;
@@ -212,9 +213,10 @@ public:
         {
             sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             krw[i] = MaterialLaw::krw(params, sw[i], 0.0);
+            krn[i] = MaterialLaw::krn(params, sw[i], 1-sw[i]);
             krg[i] = MaterialLaw::krg(params, sw[i], 0.0);
-            krMin = std::min(krMin, std::min(krw[i], krg[i]));
-            krMax = std::max(krMax, std::max(krw[i], krg[i]));
+            krMin = std::min(krMin, std::min({krw[i], krn[i], krg[i]}));
+            krMax = std::max(krMax, std::max({krw[i], krn[i], krg[i]}));
         }
 
         gnuplotkr_.setXRange(lowerSat, upperSat);
@@ -222,6 +224,7 @@ public:
         gnuplotkr_.setXlabel("wetting phase saturation [-]");
         gnuplotkr_.setYlabel("relative permeability [-]");
         gnuplotkr_.addDataSetToPlot(sw, krw, plotName + "_krw");
+        gnuplotkr_.addDataSetToPlot(sw, krn, plotName + "_krn");
         gnuplotkr_.addDataSetToPlot(sw, krg, plotName + "_krg");
         gnuplotkr_.plot("kr");
     }
