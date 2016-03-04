@@ -222,7 +222,7 @@ public:
     static Scalar krn(const Params &params, const Scalar sw, const Scalar sn)
     {
         const Scalar st = sw+sn;
-        return EffLaw::krn(params, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st));
+        return EffLaw::krn(params, swToSwe(params, sw), sn, stToSte(params, st));
     }
 
      /*!
@@ -255,7 +255,7 @@ public:
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar sw, const Scalar sn, const Scalar sg)
     {
       const Scalar st = sw+sn;
-      return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), snToSne(params, sn), stToSte(params, st));
+      return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), sn, stToSte(params, st));
     }
 
     /*!

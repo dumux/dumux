@@ -351,10 +351,10 @@ public:
      *
      * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
+    static Scalar krn(const Params &params, Scalar swe, Scalar sn, Scalar ste)
     {
         swe = std::min(swe, 1.0);
         ste = std::min(ste, 1.0);
@@ -365,7 +365,7 @@ public:
         if(ste - swe <= 0.0) return 0.0;
 
         //or use actual material law
-        return ParkerVanGen3P::krn(params, swe, sne, ste);
+        return ParkerVanGen3P::krn(params, swe, sn, ste);
     }
 
 
@@ -409,17 +409,17 @@ public:
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         switch (phaseIdx)
         {
         case 0:
             return krw(params, swe);
         case 1:
-            return krn(params, swe, sne, ste);
+            return krn(params, swe, sn, ste);
         case 2:
             return krg(params, ste);
         }

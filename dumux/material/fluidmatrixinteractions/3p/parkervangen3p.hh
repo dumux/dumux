@@ -293,10 +293,10 @@ public:
      *
      * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar krn(const Params &params, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar krn(const Params &params, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         Scalar krn;
         krn = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
@@ -306,12 +306,11 @@ public:
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((sne - params.snr()/ (1-params.swr())), 1.0), 0.0);
+            Scalar resIncluded = std::max(std::min((sn - params.snr()/ (1-params.swr())), 1.0), 0.0);
             krn *= std::sqrt(resIncluded );
         }
         else
-            krn *= std::sqrt(sne / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
-
+            krn *= std::sqrt(sn / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
         return krn;
     }
@@ -341,17 +340,17 @@ public:
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         switch (phaseIdx)
         {
         case 0:
             return krw(params, swe);
         case 1:
-            return krn(params, swe, sne, ste);
+            return krn(params, swe, sn, ste);
         case 2:
             return krg(params, ste);
         }
