@@ -130,6 +130,9 @@ NEW_PROP_TAG(ImplicitMaxTimeStepDivisions);
 //! indicate whether discretization is box or not
 NEW_PROP_TAG(ImplicitIsBox);
 
+//! The type of primary variable switch for compositional models
+NEW_PROP_TAG(PrimaryVariableSwitch);
+
 //! the local fem space used for the AMG backend
 NEW_PROP_TAG(ImplicitLocalFemMap);
 

@@ -36,6 +36,7 @@
 #include "properties.hh"
 #include "newtoncontroller.hh"
 #include "localresidual.hh"
+#include "primaryvariableswitch.hh"
 
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -116,6 +117,9 @@ SET_TYPE_PROP(ThreePThreeC, NewtonController, ThreePThreeCNewtonController<TypeT
 
 //! the Model property
 SET_TYPE_PROP(ThreePThreeC, Model, ThreePThreeCModel<TypeTag>);
+
+//! The primary variable switch for the 3p3c model
+SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
