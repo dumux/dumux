@@ -35,6 +35,7 @@
 #include <dumux/implicit/cellcentered/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyslaw.hh>
+#include <dumux/porousmediumflow/implicit/cellcentered/tpfa/fickslaw.hh>
 
 namespace Dumux {
 
@@ -87,7 +88,7 @@ SET_TYPE_PROP(CCTpfaModel, AdvectionType, Dumux::CCTpfaDarcysLaw<TypeTag>);
 
 // TODO: Actually implement the diffusion and energy flux variables
 //! The diffusion flux variables
-//SET_TYPE_PROP(CCTpfaModel, MolecularDiffusionType, CCTpfaFicksLaw);
+SET_TYPE_PROP(CCTpfaModel, MolecularDiffusionType, Dumux::CCTpfaFicksLaw<TypeTag>);
 
 //! The energy flux variables
 //SET_TYPE_PROP(CCTpfaModel, HeatConductionType, CCTpfaFouriersLaw);

@@ -37,7 +37,7 @@ NEW_PROP_TAG(NumComponents);
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables
- *        specializations are provided for combinations of diffusion_ processes
+ *        specializations are provided for combinations of molecularDiffusion_ processes
  */
 template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
 class FluxVariables {};
@@ -50,14 +50,14 @@ class FluxVariables<TypeTag, true, false, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Stencil = std::set<IndexType>;
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        advection_.update(problem, scv);
+        advection_.update(problem, scvf);
     }
 
     const AdvectionType& advection() const
@@ -75,11 +75,14 @@ private:
 };
 
 
-// specialization for isothermal advection diffusion_ equations
+// specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
 class FluxVariables<TypeTag, true, true, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::set<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -91,13 +94,18 @@ class FluxVariables<TypeTag, true, true, false>
     };
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        advection_.update(problem, scv);
+        advection_.update(problem, scvf);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusion_.update(problem, scv, phaseIdx, compIdx);
+            {
+                if (phaseIdx != compIdx)
+                    molecularDiffusion(phaseIdx, compIdx).update(problem, scvf, phaseIdx, compIdx);
+            }
     }
+
+    // TODO update transmissibilities?
 
     const AdvectionType& advection() const
     {
@@ -109,27 +117,48 @@ public:
         return advection_;
     }
 
-    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusion_[phaseIdx][compIdx];
+        if (compIdx < phaseIdx)
+            return molecularDiffusion_[phaseIdx][compIdx];
+        else if (compIdx > phaseIdx)
+            return molecularDiffusion_[phaseIdx][compIdx-1];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion flux called for phaseIdx = compIdx");
     }
 
-    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusion_[phaseIdx][compIdx];
+        if (compIdx < phaseIdx)
+            return molecularDiffusion_[phaseIdx][compIdx];
+        else if (compIdx > phaseIdx)
+            return molecularDiffusion_[phaseIdx][compIdx-1];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion flux called for phaseIdx = compIdx");
+    }
+
+    Stencil stencil() const
+    {
+        // std::set<IndexType> stencil(advection().stencil().begin(), advection().stencil().end());
+        // TODO: insert all molecularDiffusion stencils of all components in all phases
+        // stencil.insert();
+        return advection().stencil();
     }
 
 private:
     AdvectionType advection_;
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
+    std::array< std::array<MolecularDiffusionType, numComponents-1>, numPhases> molecularDiffusion_;
 };
 
 
-// specialization for pure diffusion_
+// specialization for pure molecularDiffusion_
 template<class TypeTag>
 class FluxVariables<TypeTag, false, true, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::set<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
@@ -140,25 +169,25 @@ class FluxVariables<TypeTag, false, true, false>
     };
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusion_.update(problem, scv, phaseIdx, compIdx);
+                molecularDiffusion_.update(problem, scvf, phaseIdx, compIdx);
     }
 
-    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusion_[phaseIdx][compIdx];
+        return molecularDiffusion_[phaseIdx][compIdx];
     }
 
-    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusion_[phaseIdx][compIdx];
+        return molecularDiffusion_[phaseIdx][compIdx];
     }
 
 private:
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> molecularDiffusion_;
 };
 
 
@@ -167,15 +196,18 @@ template<class TypeTag>
 class FluxVariables<TypeTag, true, false, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::set<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        advection_.update(problem, scv);
-        heatConduction_.update(problem, scv);
+        advection_.update(problem, scvf);
+        heatConduction_.update(problem, scvf);
     }
 
     const AdvectionType& advection() const
@@ -204,11 +236,14 @@ private:
 };
 
 
-// specialization for non-isothermal advection diffusion_ equations
+// specialization for non-isothermal advection molecularDiffusion_ equations
 template<class TypeTag>
 class FluxVariables<TypeTag, true, true, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::set<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -221,13 +256,13 @@ class FluxVariables<TypeTag, true, true, true>
     };
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        advection_.update(problem, scv);
+        advection_.update(problem, scvf);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusion_.update(problem, scv, phaseIdx, compIdx);
-        heatConduction_.update(problem, scv);
+                molecularDiffusion_.update(problem, scvf, phaseIdx, compIdx);
+        heatConduction_.update(problem, scvf);
     }
 
     const AdvectionType& advection() const
@@ -250,28 +285,31 @@ public:
         return heatConduction_;
     }
 
-    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusion_[phaseIdx][compIdx];
+        return molecularDiffusion_[phaseIdx][compIdx];
     }
 
-    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusion_[phaseIdx][compIdx];
+        return molecularDiffusion_[phaseIdx][compIdx];
     }
 
 private:
     AdvectionType advection_;
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> molecularDiffusion_;
     HeatConductionType heatConduction_;
 };
 
 
-// specialization for non-isothermal diffusion_
+// specialization for non-isothermal molecularDiffusion_
 template<class TypeTag>
 class FluxVariables<TypeTag, false, true, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::set<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
@@ -283,12 +321,12 @@ class FluxVariables<TypeTag, false, true, true>
     };
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusion_.update(problem, scv, phaseIdx, compIdx);
-        heatConduction_.update(problem, scv);
+                molecularDiffusion_.update(problem, scvf, phaseIdx, compIdx);
+        heatConduction_.update(problem, scvf);
     }
 
     const HeatConductionType& heatConduction() const
@@ -301,18 +339,18 @@ public:
         return heatConduction_;
     }
 
-    const MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx) const
+    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
     {
-        return diffusion_[phaseIdx][compIdx];
+        return molecularDiffusion_[phaseIdx][compIdx];
     }
 
-    MolecularDiffusionType& diffusion(const int phaseIdx, const int compIdx)
+    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
     {
-        return diffusion_[phaseIdx][compIdx];
+        return molecularDiffusion_[phaseIdx][compIdx];
     }
 
 private:
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> diffusion_;
+    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> molecularDiffusion_;
     HeatConductionType heatConduction_;
 };
 
@@ -322,13 +360,16 @@ template<class TypeTag>
 class FluxVariables<TypeTag, false, false, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::set<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scv)
+    void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        heatConduction_.update(problem, scv);
+        heatConduction_.update(problem, scvf);
     }
 
     const HeatConductionType& heatConduction() const

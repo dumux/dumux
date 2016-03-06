@@ -43,6 +43,7 @@ template<class TypeTag>
 class ImplicitModel
 {
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    friend typename GET_PROP_TYPE(TypeTag, LocalResidual);
     typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -111,9 +112,12 @@ public:
         if (isBox)
             boxVolume_.resize(numDofs);
 
+        // apply initial solution
+        // for compositional models initial the phase presence herein
         asImp_().applyInitialSolution_();
 
-        // update the volVars with the initial solution
+        // resize and update the volVars with the initial solution
+        curVolVarsVector_.resize(fvGeometries().numScv());
         curVolVarsVector_.update(problem_(), curSol());
 
         // update the flux vars (precompute transmissibilities)
@@ -414,10 +418,13 @@ public:
      *        model can overload.
      */
     void updateSuccessful()
-    { }
+    {}
 
-    void updateVolVars()
-    { curVolVarsVector_.update(problem_(), curSol()); }
+    void newtonEndStep()
+    {
+        // TODO resize vector if grid was adapted
+        curVolVarsVector_.update(problem_(), curSol());
+    }
 
     /*!
      * \brief Called by the update() method if it was
@@ -796,6 +803,12 @@ protected:
 
     VolumeVariables& prevVolVars_(unsigned int scvIdx)
     { return prevVolVarsVector_[scvIdx]; }
+
+    FluxVariables& fluxVars_(const SubControlVolumeFace& scvf)
+    { return fluxVarsVector_[scvf.index()]; }
+
+    FluxVariables& fluxVars_(unsigned int scvfIdx)
+    { return fluxVarsVector_[scvfIdx]; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
