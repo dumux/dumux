@@ -55,21 +55,6 @@ public:
 
 
     /*!
-     * \brief Called after each Newton update
-     *
-     * \param uCurrentIter The current global solution vector
-     * \param uLastIter The previous global solution vector
-     */
-    void newtonEndStep(SolutionVector &uCurrentIter,
-                       const SolutionVector &uLastIter)
-    {
-        // call the method of the base class
-        this->method().model().updateStaticData(uCurrentIter, uLastIter);
-        ParentType::newtonEndStep(uCurrentIter, uLastIter);
-    }
-
-
-    /*!
      * \brief Returns true if the current solution can be considered to
      *        be accurate enough
      */

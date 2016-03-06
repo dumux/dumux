@@ -374,6 +374,14 @@ protected:
     { return problem_().model(); }
 
     /*!
+     * \brief Returns a reference to the model.
+     * There should be only a const version of this. This is a temporary hack
+     * To easily try flux vars computation for the 3p3c model.
+     */
+    Model &model_()
+    { return problem_().model(); }
+
+    /*!
      * \brief Returns a reference to the grid view.
      */
     const GridView &gridView_() const

@@ -50,7 +50,9 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -92,7 +94,8 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    static const Scalar R; // universial gas constant
+    // universial gas constant
+    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -107,27 +110,20 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(priVars, problem, element, scv);
 
         bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, scv);
 
-        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
+        // get the phase presence of the dof this scv is related too
+        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
 
-        Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
+        Scalar temp = Implementation::temperature_(priVars, problem, element, scv);
         fluidState_.setTemperature(temp);
 
         /* first the saturations */
@@ -167,7 +163,8 @@ public:
             sn_ = 0.;
             sg_ = 1. - sw_;
         }
-        else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        else
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         Valgrind::CheckDefined(sg_);
 
         fluidState_.setSaturation(wPhaseIdx, sw_);
@@ -515,7 +512,9 @@ public:
             }
         }
         else
-            assert(false); // unhandled phase state
+        {
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        }
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // Mobilities
@@ -538,50 +537,12 @@ public:
         bulkDensTimesAdsorpCoeff_ =
             MaterialLaw::bulkDensTimesAdsorpCoeff(materialParams);
 
-        /* ATTENTION: The conversion to effective diffusion parameters
-         *            for the porous media happens at another place!
-         */
-
-        // diffusivity coefficents
-        diffusionCoefficient_[gPhaseIdx][wCompIdx] =
-            FluidSystem::diffusionCoefficient(fluidState_,
-                                              paramCache,
-                                              gPhaseIdx,
-                                              wCompIdx);
-        diffusionCoefficient_[gPhaseIdx][nCompIdx] =
-            FluidSystem::diffusionCoefficient(fluidState_,
-                                              paramCache,
-                                              gPhaseIdx,
-                                              nCompIdx);
-        diffusionCoefficient_[gPhaseIdx][gCompIdx] = 0.0; // dummy, should not be used !
-
-        diffusionCoefficient_[wPhaseIdx][gCompIdx] =
-            FluidSystem::diffusionCoefficient(fluidState_,
-                                              paramCache,
-                                              wPhaseIdx,
-                                              gCompIdx);
-        diffusionCoefficient_[wPhaseIdx][nCompIdx] =
-            FluidSystem::diffusionCoefficient(fluidState_,
-                                              paramCache,
-                                              wPhaseIdx,
-                                              nCompIdx);
-        diffusionCoefficient_[wPhaseIdx][wCompIdx] = 0.0; // dummy, should not be used !
-
-        /* no diffusion in NAPL phase considered  at the moment */
-        diffusionCoefficient_[nPhaseIdx][nCompIdx] = 0.0;
-        diffusionCoefficient_[nPhaseIdx][wCompIdx] = 0.0;
-        diffusionCoefficient_[nPhaseIdx][gCompIdx] = 0.0;
-
-        Valgrind::CheckDefined(diffusionCoefficient_);
-
         // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                         fvGeometry,
-                                                         scvIdx);
+        porosity_ = problem.spatialParams().porosity(scv);
         Valgrind::CheckDefined(porosity_);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, scv);
         // compute and set the enthalpy
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -686,12 +647,6 @@ public:
     { return porosity_; }
 
     /*!
-     * \brief Returns the diffusivity coefficient matrix.
-     */
-    Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient() const
-    { return diffusionCoefficient_; }
-
-    /*!
      * \brief Returns the adsorption information.
      */
     Scalar bulkDensTimesAdsorpCoeff() const
@@ -699,26 +654,13 @@ public:
 
 
 protected:
-
     static Scalar temperature_(const PrimaryVariables &priVars,
-                               const Problem &problem,
+                               const Problem& problem,
                                const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               const int scvIdx)
+                               const SubControlVolume &scv)
     {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+        return problem.temperatureAtPos(scv.dofPosition());
     }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities
-     */
-    void updateEnergy_(const PrimaryVariables &priVars,
-                       const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       bool isOldSol)
-    { }
 
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
@@ -728,6 +670,15 @@ protected:
         return 0;
     }
 
+    /*!
+     * \brief Called by update() to compute the energy related quantities.
+     */
+    void updateEnergy_(const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const SubControlVolume& scv)
+    {}
+
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar moleFrac_[numPhases][numComponents];
@@ -736,9 +687,6 @@ protected:
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
-    /* We need a tensor here !! */
-    //!< Binary diffusion coefficients of the 3 components in the phases
-    Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient_;
     FluidState fluidState_;
 
 private:
@@ -748,10 +696,6 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
-
-template <class TypeTag>
-const typename ThreePThreeCVolumeVariables<TypeTag>::Scalar ThreePThreeCVolumeVariables<TypeTag>::R
-                 = Constants<typename GET_PROP_TYPE(TypeTag, Scalar)>::R;
 
 } // end namespace
 

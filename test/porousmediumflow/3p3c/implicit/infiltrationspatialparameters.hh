@@ -73,10 +73,11 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
     enum {
-    dim = GridView::dimension,
+        dim = GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
@@ -93,9 +94,9 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 
@@ -109,43 +110,29 @@ public:
      *
      * \param gridView The grid view
      */
-    InfiltrationSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    InfiltrationSpatialParams(const Problem& problem, const GridView &gridView)
+        : ParentType(problem, gridView)
     {
         // intrinsic permeabilities
         fineK_ = 1.e-11;
         coarseK_ = 1.e-11;
 
         // porosities
-        Porosity_ = 0.40;
+        porosity_ = 0.40;
 
         // residual saturations
-        MaterialParams_.setSwr(0.12);
-        MaterialParams_.setSnr(0.07);
-        MaterialParams_.setSgr(0.03);
+        materialParams_.setSwr(0.12);
+        materialParams_.setSnr(0.07);
+        materialParams_.setSgr(0.03);
 
         // parameters for the 3phase van Genuchten law
-        MaterialParams_.setVgAlpha(0.0005);
-        MaterialParams_.setVgn(4.);
-        MaterialParams_.setKrRegardsSnr(false);
+        materialParams_.setVgAlpha(0.0005);
+        materialParams_.setVgn(4.);
+        materialParams_.setKrRegardsSnr(false);
 
         // parameters for adsorption
-        MaterialParams_.setKdNAPL(0.);
-        MaterialParams_.setRhoBulk(1500.);
-    }
-
-    ~InfiltrationSpatialParams()
-    {}
-
-
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSolution The global solution vector
-     */
-    void update(const SolutionVector &globalSolution)
-    {
+        materialParams_.setKdNAPL(0.);
+        materialParams_.setRhoBulk(1500.);
     }
 
     /*!
@@ -156,29 +143,23 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       int scvIdx) const
+    Scalar intrinsicPermeability(const SubControlVolume &scv) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
+        if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
         return coarseK_;
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Returns the porosity \f$[-]\f$
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        return Porosity_;
+        return porosity_;
     }
 
 
@@ -189,63 +170,24 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeometry,
-                                               int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        return MaterialParams_;
-    }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
-    {
-        return 850; // specific heat capacity of sand [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return 2650; // density of sand [kg/m^3]
-    }
-
-    const MaterialLawParams& materialLawParams() const
-    {
-        return MaterialParams_;
+        return materialParams_;
     }
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     { return
-            70. <= globalPos[0] && globalPos[0] <= 85. &&
+            70.0 <= globalPos[0] && globalPos[0] <= 85.0 &&
             7.0 <= globalPos[1] && globalPos[1] <= 7.50;
     }
 
     Scalar fineK_;
     Scalar coarseK_;
 
-    Scalar Porosity_;
+    Scalar porosity_;
 
-    MaterialLawParams MaterialParams_;
+    MaterialLawParams materialParams_;
 };
 
 }

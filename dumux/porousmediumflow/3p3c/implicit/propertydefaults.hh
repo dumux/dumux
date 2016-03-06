@@ -31,7 +31,6 @@
 #include "indices.hh"
 
 #include "model.hh"
-#include "fluxvariables.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
@@ -112,6 +111,15 @@ SET_TYPE_PROP(ThreePThreeC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, M
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
+//! Enable advection
+SET_BOOL_PROP(ThreePThreeC, EnableAdvection, true);
+
+//! Enable molecular diffusion
+SET_BOOL_PROP(ThreePThreeC, EnableMolecularDiffusion, true);
+
+//! Isothermal model by default
+SET_BOOL_PROP(ThreePThreeC, EnableEnergyBalance, false);
+
 //! Use the 3p3c specific newton controller for the 3p3c model
 SET_TYPE_PROP(ThreePThreeC, NewtonController, ThreePThreeCNewtonController<TypeTag>);
 
@@ -123,12 +131,6 @@ SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSw
 
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(ThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>);
-
-//! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(ThreePThreeC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(ThreePThreeC, ImplicitMassUpwindWeight, 1.0);
@@ -194,9 +196,6 @@ SET_BOOL_PROP(ThreePThreeCNI, NiOutputLevel, 0);
 
 // set isothermal Model
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalModel, ThreePThreeCModel<TypeTag>);
-
-// set isothermal FluxVariables
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalFluxVariables, ThreePThreeCFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
