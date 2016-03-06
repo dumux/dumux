@@ -43,10 +43,7 @@ class VolumeVariablesVector : public std::vector<typename GET_PROP_TYPE(TypeTag,
 public:
     void update(const Problem& problem, const SolutionVector& sol)
     {
-        auto gridView = problem.gridView();
-
-        this->resize(problem.model().fvGeometries().numScv());
-        for (const auto& element : elements(gridView))
+        for (const auto& element : elements(problem.gridView()))
         {
             for (auto&& scv : problem.model().fvGeometries(element).scvs())
             {
