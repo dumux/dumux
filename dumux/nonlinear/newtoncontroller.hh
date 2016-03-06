@@ -459,9 +459,6 @@ public:
                 reduction_ /= initialResidual_;
             }
         }
-
-        this->model_().updateVolVars();
-
     }
 
     /*!
@@ -470,9 +467,12 @@ public:
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
-    void newtonEndStep(const SolutionVector &uCurrentIter,
+    void newtonEndStep(SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
     {
+        // Update the volume variables
+        this->model_().newtonEndStep();
+
         ++numSteps_;
 
         if (verbose())
