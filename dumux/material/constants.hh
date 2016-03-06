@@ -80,6 +80,7 @@ public:
      */
     static constexpr Scalar hRed = h / (2 * M_PI);
 };
-}
+
+} // end namespace Dumux
 
 #endif
