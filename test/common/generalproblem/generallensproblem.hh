@@ -35,7 +35,7 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 
-//decoupled model
+//sequential model
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
@@ -114,16 +114,16 @@ SET_TYPE_PROP(CCGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpatia
 // Deoupled model TypeTag
 //////////////////////////////////////////////////
 
-NEW_TYPE_TAG(DecoupledGeneralLensProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, GeneralLensProblem));
+NEW_TYPE_TAG(SequentialGeneralLensProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, GeneralLensProblem));
 
 // Set the problem property
-SET_TYPE_PROP(DecoupledGeneralLensProblem, ProblemBaseClass, Dumux::IMPESProblem2P<TypeTag>);
+SET_TYPE_PROP(SequentialGeneralLensProblem, ProblemBaseClass, Dumux::IMPESProblem2P<TypeTag>);
 
 // Set the problem property
-SET_TYPE_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass, Dumux::FVSpatialParams<TypeTag>);
+SET_TYPE_PROP(SequentialGeneralLensProblem, SpatialParamsBaseClass, Dumux::FVSpatialParams<TypeTag>);
 
-SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
-        DecoupledTwoPCommonIndices::pwsn);
+SET_INT_PROP(SequentialGeneralLensProblem, Formulation,
+        SequentialTwoPCommonIndices::pwsn);
 }
 
 /*!
@@ -160,7 +160,7 @@ SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
  * size is \f$t_{\text{inital}} = 250\;s\f$.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_generalproblem2p [-ModelType Box/Decoupled]</tt>
+ * <tt>./test_generalproblem2p [-ModelType Box/Sequential]</tt>
  */
 template <class TypeTag >
 class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, ProblemBaseClass)
@@ -261,7 +261,7 @@ public:
     /*!
     * \param globalPos The global coordinates
     *
-    * Only for decoupled model -> incompressible.
+    * Only for sequential model -> incompressible.
     */
     Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {

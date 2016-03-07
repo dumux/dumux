@@ -52,7 +52,7 @@ class TestDiffusion3DProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(DecoupledTwoP, TestDiffusionSpatialParams3d));
+NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(SequentialTwoP, TestDiffusionSpatialParams3d));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
@@ -102,7 +102,7 @@ NEW_TYPE_TAG(MimeticTestProblem, INHERITS_FROM(MimeticPressureTwoP, DiffusionTes
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup SequentialProblems
  *
  * \brief test problem for diffusion models from the FVCA6 benchmark.
  */

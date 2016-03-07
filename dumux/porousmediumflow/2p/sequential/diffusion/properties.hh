@@ -41,7 +41,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(PressureTwoP, INHERITS_FROM(Pressure, DecoupledTwoP));
+NEW_TYPE_TAG(PressureTwoP, INHERITS_FROM(Pressure, SequentialTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

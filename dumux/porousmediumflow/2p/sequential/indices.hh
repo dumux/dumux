@@ -20,10 +20,10 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the two-phase decoupled model.
+ * \brief Defines the indices required for the two-phase sequential model.
  */
-#ifndef DUMUX_DECOUPLED_2P_INDICES_HH
-#define DUMUX_DECOUPLED_2P_INDICES_HH
+#ifndef DUMUX_SEQUENTIAL_2P_INDICES_HH
+#define DUMUX_SEQUENTIAL_2P_INDICES_HH
 
 namespace Dumux
 {
@@ -35,7 +35,7 @@ namespace Dumux
 /*!
  * \brief The common indices for the isothermal two-phase model.
  */
-struct DecoupledTwoPCommonIndices
+struct SequentialTwoPCommonIndices
 {
     // Formulations
     static const int pwsn = 0; //!< pw and sn as primary variables
@@ -69,6 +69,9 @@ struct DecoupledTwoPCommonIndices
     static const int velocityTotal = 2; //!<  Indicates total velocity
 };
 
+struct DecoupledTwoPCommonIndices : public SequentialTwoPCommonIndices
+{} DUNE_DEPRECATED_MSG("Use SequentialTwoPCommonIndices instead.");
+
 /*!
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
@@ -76,8 +79,8 @@ struct DecoupledTwoPCommonIndices
  * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <int formulation = DecoupledTwoPCommonIndices::pwsn, int PVOffset = 0>
-struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
+template <int formulation = SequentialTwoPCommonIndices::pwsn, int PVOffset = 0>
+struct SequentialTwoPIndices : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
@@ -110,8 +113,8 @@ struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
-    : public DecoupledTwoPCommonIndices
+struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pnsw, PVOffset>
+    : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
@@ -145,8 +148,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwsw, PVOffset>
-    : public DecoupledTwoPCommonIndices
+struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pwsw, PVOffset>
+    : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
@@ -179,8 +182,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwsw, PVOffset>
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsn, PVOffset>
-    : public DecoupledTwoPCommonIndices
+struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pnsn, PVOffset>
+    : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
@@ -214,7 +217,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsn, PVOffset>
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSw, PVOffset> : public DecoupledTwoPCommonIndices
+struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSw, PVOffset> : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
@@ -245,8 +248,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSw, PVOffset> : p
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
-    : public DecoupledTwoPCommonIndices
+struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSn, PVOffset>
+    : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
@@ -269,6 +272,10 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
     static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
+
+template <int formulation = SequentialTwoPCommonIndices::pwsn, int PVOffset = 0>
+struct DecoupledTwoPIndices : public SequentialTwoPIndices<formulation, PVOffset>
+{} DUNE_DEPRECATED_MSG("Use SequentialTwoPIndices instead.");
 
 // \}
 } // namespace Dumux

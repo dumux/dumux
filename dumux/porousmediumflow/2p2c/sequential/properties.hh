@@ -23,7 +23,7 @@
  *
  * \file
  *
- * \brief Defines the properties required for the decoupled 2p2c models.
+ * \brief Defines the properties required for the sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CPROPERTIES_HH
 #define DUMUX_2P2CPROPERTIES_HH
@@ -47,7 +47,7 @@ template<class TypeTag>
 class TwoPTwoCFluidState;
 
 template <class TypeTag>
-struct DecoupledTwoPTwoCIndices;
+struct SequentialTwoPTwoCIndices;
 
 ////////////////////////////////
 // properties
@@ -59,7 +59,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tag for the compositional two-phase problems
-NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
+NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
+
+//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
+NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(SequentialTwoPTwoC));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -94,14 +97,14 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(DecoupledTwoPTwoC, Indices,DecoupledTwoPTwoCIndices<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, Indices,SequentialTwoPTwoCIndices<TypeTag>);
 
-SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 3);
+SET_INT_PROP(SequentialTwoPTwoC, NumEq, 3);
 
 // set fluid/component information
-SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model is 2
+SET_PROP(SequentialTwoPTwoC, NumPhases) //!< The number of phases in the 2p2c model is 2
 {
-    // the property is created in decoupledproperties.hh
+    // the property is declared in dumux/porousmediumflow/sequential/properties.hh
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
@@ -111,7 +114,7 @@ public:
                   "Only fluid systems with 2 phases are supported by the 2p2c model!");
 };
 
-SET_PROP(DecoupledTwoPTwoC, NumComponents) //!< The number of components in the 2p2c model is 2
+SET_PROP(SequentialTwoPTwoC, NumComponents) //!< The number of components in the 2p2c model is 2
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -123,19 +126,19 @@ public:
 };
 
 //! Set the default formulation
-SET_INT_PROP(DecoupledTwoPTwoC,
+SET_INT_PROP(SequentialTwoPTwoC,
         PressureFormulation,
         GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
-SET_INT_PROP(DecoupledTwoPTwoC,
+SET_INT_PROP(SequentialTwoPTwoC,
         SaturationFormulation,
         GET_PROP_TYPE(TypeTag, Indices)::saturationW);
 
-SET_INT_PROP(DecoupledTwoPTwoC,
+SET_INT_PROP(SequentialTwoPTwoC,
         VelocityFormulation,
         GET_PROP_TYPE(TypeTag, Indices)::velocityW);
 
-SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
+SET_PROP(SequentialTwoPTwoC, TransportSolutionType)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     //! type for vector of vector (of scalars)
@@ -143,34 +146,34 @@ SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 
 };
 
-SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
-SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
-SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
-SET_INT_PROP(DecoupledTwoPTwoC, VtkOutputLevel,2); //!< Default verbosity for VtkOutputLevel is 2 = pretty verbose
+SET_BOOL_PROP(SequentialTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
+SET_BOOL_PROP(SequentialTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
+SET_BOOL_PROP(SequentialTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
+SET_INT_PROP(SequentialTwoPTwoC, VtkOutputLevel,2); //!< Default verbosity for VtkOutputLevel is 2 = pretty verbose
 //! Restrict (no upwind) flux in transport step if direction reverses after pressure equation
-SET_INT_PROP(DecoupledTwoPTwoC, ImpetRestrictFluxInTransport, 0);
+SET_INT_PROP(SequentialTwoPTwoC, ImpetRestrictFluxInTransport, 0);
 
-SET_PROP(DecoupledTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.
-{    static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;};
+SET_PROP(SequentialTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.
+{    static const int value = SequentialTwoPTwoCIndices<TypeTag>::satDependent;};
 
-SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoC, CellData, CellData2P2C<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, Variables, VariableClass<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, CellData, CellData2P2C<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 
 
 //! The spatial parameters to be employed.
-SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
 //! Switch off permeability regularization at Dirichlet boundaries by default.
-SET_BOOL_PROP(DecoupledTwoPTwoC, RegulateBoundaryPermeability, false);
+SET_BOOL_PROP(SequentialTwoPTwoC, RegulateBoundaryPermeability, false);
 
-SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetEnableVolumeIntegral, true); //!< Regard volume integral in pressure equation
+SET_BOOL_PROP(SequentialTwoPTwoC, ImpetEnableVolumeIntegral, true); //!< Regard volume integral in pressure equation
 
-SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermFactor, 0.5); //!< Damping factor \f$ \alpha \f$ in pressure equation
-SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermLowerBound, 0.2); //!< Lower bound where error is not corrected
-SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermUpperBound, 0.9); //!< Upper bound for regularized error damping
+SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermFactor, 0.5); //!< Damping factor \f$ \alpha \f$ in pressure equation
+SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermLowerBound, 0.2); //!< Lower bound where error is not corrected
+SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermUpperBound, 0.9); //!< Upper bound for regularized error damping
 
 // enable gravity by default
-SET_BOOL_PROP(DecoupledTwoPTwoC, ProblemEnableGravity, true);
+SET_BOOL_PROP(SequentialTwoPTwoC, ProblemEnableGravity, true);
 }
 
 /*!
@@ -182,7 +185,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, ProblemEnableGravity, true);
  * special equation indices have to be provided for boundary conditions.
  */
 template <class TypeTag>
-struct DecoupledTwoPTwoCIndices : public DecoupledTwoPCommonIndices
+struct SequentialTwoPTwoCIndices : public SequentialTwoPCommonIndices
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -218,6 +221,10 @@ public:
     static const int satDependent = 0;
     static const int permDependent = 1;
 };
+
+template <class TypeTag>
+struct DecoupledTwoPTwoCIndices : public SequentialTwoPTwoCIndices<TypeTag>
+{} DUNE_DEPRECATED_MSG("Use SequentialTwoPTwoCIndices instead.");
 
 // \}
 

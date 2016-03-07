@@ -46,6 +46,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 // For is_base_of
 #include <type_traits>
 
@@ -1079,6 +1080,169 @@ const std::string getDiagnostic(std::string propTagName)
 };
 
 #endif // !defined NO_PROPERTY_INTROSPECTION
+
+
+template <class TypeTag, class Ancestor>
+class AncestorAdder;
+
+template <class TypeTag>
+class TypeTagAncestors
+{
+public:
+    typedef std::vector<std::vector<std::string>> AncestorMatrix;
+
+    static void addAncestors()
+    {
+        AncestorAdder<TypeTag, TypeTag>::add();
+    }
+
+    static AncestorMatrix& ancestors()
+    {
+        static AncestorMatrix ancestors_;
+        return ancestors_;
+    };
+
+    static int& row()
+    {
+        static int row_ = 0;
+        return row_;
+    }
+
+    static void print(std::ostream& os)
+    {
+        const auto& a = ancestors();
+
+        std::vector<size_t> colSizes;
+        for (size_t i = 0; i < a.size(); ++i)
+        {
+            auto numCols = a[i].size();
+            colSizes.resize(numCols);
+
+            std::vector<bool> bifurcation(numCols, false);
+            for (size_t j = 0; j < numCols; ++j)
+            {
+                for (int below = i+1; below < a.size(); ++below)
+                {
+                    if (j > 0 && a[below].size() > j && !a[below][j].empty())
+                    {
+                        if (a[below][j-1].empty())
+                        {
+                            bifurcation[j] = true;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                if (a[i][j].empty())
+                {
+                    if (bifurcation[j])
+                        os << " | ";
+                    else if (j > 0)
+                        os << "   ";
+                    os << std::string(colSizes[j], ' ');
+                }
+                else
+                {
+                    if (j > 0)
+                        os << " - ";
+                    os << a[i][j];
+                    colSizes[j] = a[i][j].size();
+                }
+            }
+            os << std::endl;
+
+            for (size_t j = 0; j < numCols; ++j)
+            {
+                if (bifurcation[j])
+                    os << " | ";
+                else if (j > 0)
+                    os << "   ";
+                os << std::string(colSizes[j], ' ');
+            }
+            os << std::endl;
+        }
+    }
+
+    static bool contains(const std::string& str)
+    {
+        const auto& a = ancestors();
+
+        for (size_t i = 0; i < a.size(); ++i)
+        {
+            for (size_t j = 0; j < a[i].size(); ++j)
+            {
+                auto found = a[i][j].find(str);
+                if (found != std::string::npos)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+};
+
+template <class TypeTag, class Ancestor>
+class AncestorAdder
+{
+    using TTAncestors = TypeTagAncestors<TypeTag>;
+
+public:
+    static void add(unsigned col = 0)
+    {
+        auto& ancestors = TTAncestors::ancestors();
+
+        auto ancestorFull = Dune::className<Ancestor>();
+        // 25 is the size of "Dumux::Properties::TTag"
+        auto ancestorName = ancestorFull.substr(25, ancestorFull.size() - 25);
+
+        if (ancestors.size() < TTAncestors::row()+1)
+        {
+            ancestors.resize(TTAncestors::row()+1);
+        }
+
+        if (ancestors[TTAncestors::row()].size() < col+1)
+        {
+            ancestors[TTAncestors::row()].resize(col+1);
+        }
+        ancestors[TTAncestors::row()][col] = ancestorName;
+
+        AncestorAdder<TypeTag, typename Ancestor::Child1>::add(++col);
+
+        if (Dune::className<typename Ancestor::Child2>() != "void")
+        {
+            TTAncestors::row()++;
+        }
+        AncestorAdder<TypeTag, typename Ancestor::Child2>::add(col);
+
+        if (Dune::className<typename Ancestor::Child3>() != "void")
+        {
+            TTAncestors::row()++;
+        }
+        AncestorAdder<TypeTag, typename Ancestor::Child3>::add(col);
+
+        if (Dune::className<typename Ancestor::Child4>() != "void")
+        {
+            TTAncestors::row()++;
+        }
+        AncestorAdder<TypeTag, typename Ancestor::Child4>::add(col);
+
+        if (Dune::className<typename Ancestor::Child5>() != "void")
+        {
+            TTAncestors::row()++;
+        }
+        AncestorAdder<TypeTag, typename Ancestor::Child5>::add(col);
+    }
+};
+
+template <class TypeTag>
+class AncestorAdder<TypeTag, void>
+{
+public:
+    static void add(unsigned col = 0){}
+};
 
 //! \endcond
 

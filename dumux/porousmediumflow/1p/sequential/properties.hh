@@ -52,7 +52,10 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the single-phase problem
-NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
+NEW_TYPE_TAG(SequentialOneP, INHERITS_FROM(SequentialModel));
+
+//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
+NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(SequentialOneP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -80,28 +83,28 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Set number of equations to 1 for isothermal one-phase models
-SET_INT_PROP(DecoupledOneP, NumEq, 1);
+SET_INT_PROP(SequentialOneP, NumEq, 1);
 
 //! Set number of phases to 1 for one-phase models
-SET_INT_PROP(DecoupledOneP, NumPhases, 1);
+SET_INT_PROP(SequentialOneP, NumPhases, 1);
 
 //! Each phase consists of 1 pure component
-SET_INT_PROP(DecoupledOneP, NumComponents, 1);
+SET_INT_PROP(SequentialOneP, NumComponents, 1);
 
 //! Chose the set of indices for the one-phase formulation
-SET_TYPE_PROP(DecoupledOneP, Indices, DecoupledOnePCommonIndices);
+SET_TYPE_PROP(SequentialOneP, Indices, SequentialOnePCommonIndices);
 
-//! Set general decoupled VariableClass as default
-SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
+//! Set general sequential VariableClass as default
+SET_TYPE_PROP(SequentialOneP, Variables, VariableClass<TypeTag>);
 
 //! Set standart CellData of immiscible one-phase models as default
-SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
+SET_TYPE_PROP(SequentialOneP, CellData, CellData1P<TypeTag>);
 
 //! The spatial parameters to be employed. Use BoxSpatialParams by default.
-SET_TYPE_PROP(DecoupledOneP, SpatialParams, FVSpatialParamsOneP<TypeTag>);
+SET_TYPE_PROP(SequentialOneP, SpatialParams, FVSpatialParamsOneP<TypeTag>);
 
 //! Enable gravity by default
-SET_BOOL_PROP(DecoupledOneP, ProblemEnableGravity, true);
+SET_BOOL_PROP(SequentialOneP, ProblemEnableGravity, true);
 }
 }
 #endif

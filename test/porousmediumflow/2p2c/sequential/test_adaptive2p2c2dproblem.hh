@@ -50,7 +50,7 @@ class Adaptive2p2c2d;
 
 namespace Properties
 {
-NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpatialParams));
+NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(SequentialTwoPTwoCAdaptive,Test2P2CSpatialParams));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID

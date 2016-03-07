@@ -140,8 +140,8 @@ public:
     typedef typename SolverTraits::Smoother Smoother;
 };
 
-//! Decoupled model: use the overlapping AMG
-SET_PROP(DecoupledModel, AmgTraits)
+//! Sequential model: use the overlapping AMG
+SET_PROP(SequentialModel, AmgTraits)
 {
 public:
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) JacobianMatrix;

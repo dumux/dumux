@@ -31,8 +31,11 @@
 #include <list>
 #include <sstream>
 #include <unordered_map>
+#include <tuple>
 
 #include <dune/common/parametertree.hh>
+#include <dune/common/classname.hh>
+#include <dune/common/dynmatrix.hh>
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/exceptions.hh>

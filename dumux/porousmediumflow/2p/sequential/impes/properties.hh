@@ -46,7 +46,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! TypeTag for the two-phase IMPES scheme
-NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, DecoupledTwoP));
+NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, SequentialTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

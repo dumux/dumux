@@ -41,7 +41,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for transport part of a decoupled two-phase model
-NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
+NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, SequentialTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

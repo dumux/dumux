@@ -472,6 +472,17 @@ int start_(int argc,
     if (printParams && mpiHelper.rank() == 0) {
         Dumux::Parameters::print<TypeTag>();
     }
+
+    // check if a deprecated TypeTag has been used
+    Properties::TypeTagAncestors<TypeTag>::addAncestors();
+    if (Properties::TypeTagAncestors<TypeTag>::contains("Decoupled"))
+    {
+        std::cout << "\nAt least one of the used TypeTags contains the "
+                  << "deprecated name \"Decoupled\":" << std::endl;
+        Properties::TypeTagAncestors<TypeTag>::print(std::cout);
+        std::cout << "Please use \"Sequential\" instead." << std::endl;
+    }
+
     return 0;
 }
 
