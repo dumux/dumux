@@ -30,6 +30,29 @@ createExternalDirectory()
     fi
 }
 
+installAluGrid()
+{
+    cd $TOPDIR
+
+    checkLocationForDuneModules dune-alugrid
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
+    if [ ! -e dune-alugrid ]; then
+        git clone -b releases/2.4 https://gitlab.dune-project.org/extensions/dune-alugrid.git
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf dune-alugrid
+        return
+    fi
+}
+
 installCornerpoint()
 {
     cd $TOPDIR
@@ -57,6 +80,29 @@ installCornerpoint()
     cd $TOPDIR/dune-cornerpoint
     patch -p1 < $TOPDIR/dumux/patches/dune-cornerpoint-2015.04.patch
     cd $TOPDIR
+}
+
+installFoamGrid()
+{
+    cd $TOPDIR
+
+    checkLocationForDuneModules dune-foamgrid
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
+    if [ ! -e dune-foamgrid ]; then
+        git clone -b releases/2.4 https://gitlab.dune-project.org/extensions/dune-foamgrid.git
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf dune-foamgrid
+        return
+    fi
 }
 
 installMETIS()
@@ -203,7 +249,7 @@ installPDELab()
     fi
 
     if [ ! -e dune-pdelab ]; then
-        git clone -b releases/2.0 http://git.dune-project.org/repositories/dune-pdelab
+        git clone -b releases/2.0 https://gitlab.dune-project.org/pdelab/dune-pdelab.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -228,7 +274,7 @@ installTypeTree()
     fi
 
     if [ ! -e dune-typetree ]; then
-        git clone -b releases/2.3 http://git.dune-project.org/repositories/dune-typetree
+        git clone -b releases/2.3 https://gitlab.dune-project.org/pdelab/dune-typetree.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -307,7 +353,9 @@ usage()
     echo ""
     echo "Where PACKAGES is one or more of the following"
     echo "  all              Install everything and the kitchen sink."
-    echo "  cornerpoint      Download dune-cornerpoint."
+    echo "  alugrid          Download dune-alugrid."
+    echo "  cornerpoint      Download and patch dune-cornerpoint."
+    echo "  foamgrid         Download dune-foamgrid."
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
@@ -375,7 +423,9 @@ for TMP in "$@"; do
         all)
             SOMETHING_DONE="y"
             createExternalDirectory
+            installAluGrid
             installCornerpoint
+            installFoamGrid
             installMETIS
             installMultidomain
             installMultidomainGrid
@@ -384,9 +434,17 @@ for TMP in "$@"; do
             installTypeTree
             installUG
             ;;
+        alugrid|dune-alugrid)
+            SOMETHING_DONE="y"
+            installAluGrid
+            ;;
         cornerpoint|dune-cornerpoint)
             SOMETHING_DONE="y"
             installCornerpoint
+            ;;
+        foamgrid|dune-foamgrid)
+            SOMETHING_DONE="y"
+            installFoamGrid
             ;;
         metis)
             SOMETHING_DONE="y"
