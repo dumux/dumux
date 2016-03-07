@@ -182,7 +182,6 @@
      * but they must provide a common interface to update the internal
      * parameters depending on the quantities which changed since the last
      * update.
-     *
      * All fluid systems must export a type for their __ParameterCache__
      * objects. Parameter caches can be used to cache parameter that are
      * expensive to compute and are required in multiple thermodynamic
@@ -193,14 +192,12 @@
      * made outside of their fluid system. Parameter cache objects provide a
      * well-defined set of methods to make them coherent with a given fluid
      * state, though.
-     *
      * Note, that the parameter cache interface only guarantees that if a
      * more specialized <tt>update()</tt> method is called, it is not slower
      * than the next more-general method (e.g. calling <tt>updateSingleMoleFraction()</tt>
      * may be as expensive as <tt>updateAll()}</tt>. It is thus advisable to
      * rather use a more general <tt>update()</tt> method once than multiple
      * calls to specialized <tt>update()</tt> methods.
-     *
      * To make usage of parameter caches easier for the case where all cached
      * quantities ought to be re-calculated if a quantity of a phase was changed,
      * it is possible to only define the <tt>updatePhase()</tt> method and
