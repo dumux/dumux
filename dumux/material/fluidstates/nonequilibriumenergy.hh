@@ -79,7 +79,7 @@ public:
     { return fugacity(0, compIdx); }
 
     /*!
-     * \brief The fugacity of a component in a phase \f$\mathrm{[Pa]}\f$
+     * @copydoc NonEquilibriumFluidState::fugacity()
     */
     Scalar fugacity(int phaseIdx, int compIdx) const
     {

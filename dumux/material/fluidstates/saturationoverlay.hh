@@ -78,102 +78,91 @@ public:
      * on thermodynamic equilibrium required)
      *****************************************************/
     /*!
-     * \brief Returns the saturation of a phase \f$\mathrm{[-]}\f$
+     *  @copydoc CompositionalFluidState::saturation()
      */
     Scalar saturation(int phaseIdx) const
     { return saturation_[phaseIdx]; }
 
     /*!
-     * \brief The mole fraction of a component in a phase \f$\mathrm{[-]}\f$
+     *  @copydoc CompositionalFluidState::moleFraction()
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     { return fs_->moleFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief The mass fraction of a component in a phase \f$\mathrm{[-]}\f$
+     *  @copydoc CompositionalFluidState::massFraction()
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     { return fs_->massFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief The average molar mass of a fluid phase \f$\mathrm{[kg/mol]}\f$
-     *
-     * The average mass is the mean molar mass of a molecule of the
-     * fluid at current composition. It is defined as the sum of the
-     * component's molar masses weighted by the current mole fraction:
-     * \f[ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa \f]
+     *  @copydoc CompositionalFluidState::averageMolarMass()
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return fs_->averageMolarMass(phaseIdx); }
 
     /*!
-     * \brief The molar concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$
-     *
-     * This quantity is usually called "molar concentration" or just
-     * "concentration", but there are many other (though less common)
-     * measures for concentration.
-     *
-     * http://en.wikipedia.org/wiki/Concentration
+     *  @copydoc CompositionalFluidState::molarity()
      */
     Scalar molarity(int phaseIdx, int compIdx) const
     { return fs_->molarity(phaseIdx, compIdx); }
 
     /*!
-     * \brief The fugacity of a component in a phase \f$\mathrm{[Pa]}\f$
+     *  @copydoc CompositionalFluidState::fugacity()
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
     { return fs_->fugacity(phaseIdx, compIdx); }
 
     /*!
-     * \brief The fugacity coefficient of a component in a phase \f$\mathrm{[-]}\f$
+     *  @copydoc CompositionalFluidState::fugacityCoefficient()
      */
     Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
     { return fs_->fugacityCoefficient(phaseIdx, compIdx); }
 
     /*!
-     * \brief The molar volume of a fluid phase \f$\mathrm{[m^3/mol]}\f$
+     *  @copydoc CompositionalFluidState::molarVolume()
      */
     Scalar molarVolume(int phaseIdx) const
     { return fs_->molarVolume(phaseIdx); }
 
     /*!
-     * \brief The mass density of a fluid phase \f$\mathrm{[kg/m^3]}\f$
+     *  @copydoc CompositionalFluidState::density()
      */
     Scalar density(int phaseIdx) const
     { return fs_->density(phaseIdx); }
 
     /*!
-     * \brief The molar density of a fluid phase \f$\mathrm{[mol/m^3]}\f$
+     *  @copydoc CompositionalFluidState::molarDensity()
      */
     Scalar molarDensity(int phaseIdx) const
     { return fs_->molarDensity(phaseIdx); }
 
     /*!
-     * \brief The temperature of a fluid phase \f$\mathrm{[K]}\f$
+     *  @copydoc CompositionalFluidState::temperature()
      */
     Scalar temperature(int phaseIdx) const
     { return fs_->temperature(phaseIdx); }
 
     /*!
-     * \brief The pressure of a fluid phase \f$\mathrm{[Pa]}\f$
+     *  @copydoc CompositionalFluidState::pressure()
      */
     Scalar pressure(int phaseIdx) const
     { return fs_->pressure(phaseIdx); }
 
     /*!
-     * \brief The specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$
+     *  @copydoc CompositionalFluidState::enthalpy()
      */
     Scalar enthalpy(int phaseIdx) const
     { return fs_->enthalpy(phaseIdx); }
 
     /*!
-     * \brief The specific internal energy of a fluid phase \f$\mathrm{[J/kg]}\f$
+     *  @copydoc CompositionalFluidState::internalEnergy()
      */
     Scalar internalEnergy(int phaseIdx) const
     { return fs_->internalEnergy(phaseIdx); }
 
     /*!
-     * \brief The dynamic viscosity of a fluid phase \f$\mathrm{[Pa s]}\f$
+     *  @copydoc CompositionalFluidState::viscosity()
      */
     Scalar viscosity(int phaseIdx) const
     { return fs_->viscosity(phaseIdx); }

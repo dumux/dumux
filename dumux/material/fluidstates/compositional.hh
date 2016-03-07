@@ -128,7 +128,7 @@ public:
      * The average molar mass is the mean mass of a mole of the
      * fluid at current composition. It is defined as the sum of the
      * component's molar masses weighted by the current mole fraction:
-     * \f[\mathrm{ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f]
+     * \f[\mathrm{ \overline M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f]
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return averageMolarMass_[phaseIdx]; }

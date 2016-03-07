@@ -94,19 +94,19 @@ public:
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
-    /*! @copydoc CompositionalFluidState::viscosity(int )
+    /*! @copydoc CompositionalFluidState::viscosity()
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }
 
-    /*! @copydoc CompositionalFluidState::partialPressure(int)
+    /*! @copydoc CompositionalFluidState::partialPressure()
      */
     Scalar partialPressure(int compIdx) const
     {
         return partialPressure(nPhaseIdx, compIdx);
     }
 
-    /*! @copydoc CompositionalFluidState::partialPressure(int)
+    /*! @copydoc CompositionalFluidState::partialPressure()
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
