@@ -1,0 +1,22 @@
+Index: tutorialproblem_implicit.hh
+===================================================================
+--- tutorialproblem_implicit.hh	(revision 15068)
++++ tutorialproblem_implicit.hh	(working copy)
+@@ -46,7 +46,7 @@
+ 
+ // The components that are used
+ #include <dumux/material/components/h2o.hh>
+-#include <dumux/material/components/lnapl.hh>
++#include "benzene.hh"
+ #include <dumux/io/cubegridcreator.hh>
+ 
+ namespace Dumux{
+@@ -83,7 +83,7 @@
+ SET_PROP(TutorialProblemImplicit, NonwettingPhase)
+ {
+ private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+-public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
++public: typedef Dumux::LiquidPhase<Scalar, Dumux::Benzene<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
+ }; /*@\label{tutorial-implicit:2p-system-end}@*/
+ 
+ SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-implicit:set-fluidsystem}@*/

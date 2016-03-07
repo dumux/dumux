@@ -41,7 +41,7 @@ After extracting the source code for all relevant \Dune modules, including \Dumu
 by the shell-command \texttt{dunecontrol} which is part of the \Dune build system.
 
 \subsection{Prerequisites} \label{sec:prerequisites}
-A reasonable recent C++ compiler (g++, clang++ or Intels ICC), CMake (version 2.8.6 or newer) and their
+A reasonable recent C++ compiler (g++ (4.8), clang++ (3.5), or Intels ICC), CMake (version 2.8.12 or newer) and their
 dependencies are required.
 For a list of prerequisite software packages to install see \cite{DUNE-WIKI-PREREQUISITE-SOFTWARE}.
 
@@ -78,7 +78,7 @@ The slightly old-fashionedly named tape-archive-file, shortly named tar file or
 tarball, is a common file format for distributing collections of files contained
 within these archives.
 The extraction from the tar files is done as follows:
-Download the tarballs from the respective \Dune (version 2.3) and \Dumux websites
+Download the tarballs from the respective \Dune (version 2.4.1) and \Dumux websites
 to a certain folder in your file system.
 Create the {\Dune} root directory, named \texttt{dune} in the example below.
 Then extract the content of the tar files, e.\,g. with the command-line program
@@ -91,14 +91,14 @@ After extraction, the actual name of the \emph{dumux root directory} is \texttt{
 \begin{lstlisting}[style=Bash]
 $ mkdir dune
 $ cd dune
-$ tar xzvf path_to_tarball_of/dune-common-2.3.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-geometry-2.3.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-grid-2.3.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-istl-2.3.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-localfunctions-2.3.1.tar.gz
+$ tar xzvf path_to_tarball_of/dune-common-2.4.1.tar.gz
+$ tar xzvf path_to_tarball_of/dune-geometry-2.4.1.tar.gz
+$ tar xzvf path_to_tarball_of/dune-grid-2.4.1.tar.gz
+$ tar xzvf path_to_tarball_of/dune-istl-2.4.1.tar.gz
+$ tar xzvf path_to_tarball_of/dune-localfunctions-2.4.1.tar.gz
 $ tar xzvf path_to_tarball_of/dune-pdelab-2.0.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-typetree-2.3.1.tar.gz
-$ tar xzvf path_to_tarball_of/dumux-2.7.tar.gz
+$ tar xzvf path_to_tarball_of/dune-typetree-2.4.1.tar.gz
+$ tar xzvf path_to_tarball_of/dumux-2.9.tar.gz
 \end{lstlisting}
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
@@ -139,7 +139,7 @@ $ git clone -b releases/2.0 https://gitlab.dune-project.org/PDELab/dune-pdelab.g
 
 The newest and maybe unstable developments are also provided in these repositories and is called \emph{master}.
 Please check the \Dune website \cite{DUNE-DOWNLOAD-GIT} for further information. However, the current \Dumux release
-is based on the stable 2.4 release and it might not compile without further adaptations using the the newest versions of \Dune.
+is based on the stable 2.4 release and it might not compile without further adaptations using the newest versions of \Dune.
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
 on the Dune grid interface, act similar.
