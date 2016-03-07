@@ -1,0 +1,26 @@
+Index: tutorialproblem_implicit.hh
+===================================================================
+--- tutorialproblem_implicit.hh	(revision 15068)
++++ tutorialproblem_implicit.hh	(working copy)
+@@ -160,7 +160,7 @@
+     void boundaryTypes(BoundaryTypes &bcTypes, const Vertex &vertex) const
+     {
+         const GlobalPosition &globalPos = vertex.geometry().center();
+-        if (globalPos[0] < eps_) // Dirichlet conditions on left boundary
++        if (globalPos[1] < eps_) // Dirichlet conditions on bottom boundary
+            bcTypes.setAllDirichlet();
+         else // neuman for the remaining boundaries
+            bcTypes.setAllNeumann();
+@@ -189,9 +189,9 @@
+     {
+         const GlobalPosition &globalPos =
+             fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
+-        Scalar right = this->bBoxMax()[0];
+-        // extraction of oil on the right boundary for approx. 1.e6 seconds
+-        if (globalPos[0] > right - eps_) {
++        Scalar top = this->bBoxMax()[1];
++        // extraction of oil on the top boundary for approx. 1.e6 seconds
++        if (globalPos[1] > top - eps_) {
+             // oil outflux of 30 g/(m * s) on the right boundary.
+             values[Indices::contiWEqIdx] = 0;
+             values[Indices::contiNEqIdx] = 3e-2;

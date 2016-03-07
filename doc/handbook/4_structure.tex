@@ -14,22 +14,18 @@
   \item \texttt{common}: general methods shared by all models, 
          like the \texttt{start.hh} or the time manager
 
-  \item \texttt{decoupled}: contains sequential models (pressure equation as part of
-         the fractional flow formulation). The general decoupled formulation can be found in
-         the subdirectory \texttt{common}. In each model folder, there are subdirectories
-         for the implicit pressure equation sorted by the employed discretization method,
-         and for the explicit transport equation.
-
   \item \texttt{freeflow}: single-phase free-flow models. All models are discretized
          fully implicitly using the box-method.
 
   \item \texttt{geomechanics}: models for solving rock mechanics and flow.
 
-  \item \texttt{implicit}: contains all fully implicit models. General methods shared
-         by all models are contained in \texttt{common}, together with specilized methods
-         for the two discretization types \texttt{box} and \texttt{cellcentered}. The
-         \texttt{adaptive} folder contains methods for grid adaption. Each of the other
-         subdirectories contain a derived specific numerical model.
+  \item \texttt{implicit}: contains the general methods shared
+         by all implicit models, together with specilized methods
+         for the two discretization types \texttt{box} and \texttt{cellcentered}. 
+         The \texttt{adaptive} folder contains methods for grid adaption. 
+         The specialized model files can be found 
+         at \texttt{porousmediumflow/model of interest/implicit/},
+         \texttt{freeflow/model of interest/}, or \texttt{geomechanics/model of interest/}.
 
   \item \texttt{io}: additional in-/output possibilities like restart files,
         gnuplot-interface and a VTKWriter.
@@ -43,14 +39,20 @@
         (e.g. viscosity, density).
         The folder \texttt{spatialparams} contains all spatially dependend variables, like permeability and porosity.
         The class in \texttt{implicitspatialparameters.hh} provides spatial averaging routines.
-        Constitutive relations are found in \texttt{fluidmatrixinteractions},.
+        Constitutive relations are found in \texttt{fluidmatrixinteractions}.
 
   \item \texttt{multidomain}: coupling handling and coupling conditions for connecting
         different model types in different subdomains.
 
   \item \texttt{nonlinear}: Newton's method.
 
-  \item \texttt{parallel}: helper files for parallel simulations
+  \item \texttt{parallel}: helper files for parallel simulations.
+  
+  \item \texttt{porousmediumflow}: contains all models for porous media setups.
+
+  \item \texttt{sequential}: contains the general methods shared
+         by all sequential models. The specialized model files can be found 
+         at \texttt{porousmediumflow/model of interest/sequential/}.
 \end{itemize}
 
 \item \texttt{test}: tests for each numerical model and some functionality.
@@ -101,24 +103,8 @@
   [.\node[FirstLevel] {common};
     \node[ThirdLevel] {
           Common files of the implicit (box and cell centered) models and the
-          decoupled models: time integration, start routine, the  property
+          sequential models: time integration, start routine, the  property
           system, ...};
-  ]
-  [.\node[FirstLevel] {decoupled};
-    [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {
-           Specific model definition for the decoupled formulation. In each model
-           folder are subdirectories for the implicit pressure  equation, sorted by
-           discretization method, and for the explicit transport.};
-    ]
-    [.\node[SecondLevel] {common};
-      \node[ThirdLevel] {Base classes and general files for the decoupled formulation.};
-    ]
-  ]
-  [.\node[FirstLevel] {geomechanics};
-    [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Specific model definition for coupled flow and geomechnics simulations.};
-    ]
   ]
   [.\node[FirstLevel] {freeflow};
     [.\node[SecondLevel] {\emph{models}};
@@ -126,25 +112,26 @@
                          and algebraic turbulence models.};
     ]
   ]
-  [.\node[FirstLevel] {implicit};
+  [.\node[FirstLevel] {geomechanics};
     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Model and problem definition: implementation of equations,
-                         model specific properties and indices.};
+      \node[ThirdLevel] {Specific model definition for coupled flow and geomechnics simulations.};
     ]
-    [.\node[SecondLevel] {box};
-      \node[ThirdLevel] {Specific files for gerenal fully implicit boxmethod:
-                         boxassembler, dual mesh geometry in boxfvelementgeometry.hh,
-                         base classes for model and problem definition.};
-    ]
-    [.\node[SecondLevel] {cellcentered};
-      \node[ThirdLevel] {Specific files for fully implicit cell centered method: ccassembler,
-                         mesh geometry in ccfvelementgeometry.hh, base classes for model and
-                         problem definition.};
-    ]
-    [.\node[SecondLevel] {common};
+  ]
+  [.\node[FirstLevel] {implicit};
+%     [.\node[SecondLevel] {\emph{models}};
       \node[ThirdLevel] {Common functionality of cell centered and box formulation:
                          assembling in implicitlocaljacobian.hh, evaluation of partial derivative
                          in implicitlocalresidual.hh, base classes for model and problem definition.};
+%     ]
+    [.\node[SecondLevel] {box};
+      \node[ThirdLevel] {Specific files for the gerenal fully implicit boxmethod:
+                         assembler, dual mesh geometry in fvelementgeometry.hh,
+                         base classes for model and problem definition.};
+    ]
+    [.\node[SecondLevel] {cellcentered};
+      \node[ThirdLevel] {Specific files for fully implicit cell centered method: assembler,
+                         mesh geometry in fvelementgeometry.hh, base classes for model and
+                         problem definition.};
     ]
   ]
   [.\node[FirstLevel] {io};
@@ -206,6 +193,20 @@
   ]
   [.\node[FirstLevel] {parallel};
     \node[ThirdLevel] {Files for parallel programming.};
+  ]    
+  [.\node[FirstLevel] {porousmediumflow};
+    [.\node[SecondLevel] {\emph{models}};
+    \node[ThirdLevel] {Specific model definition for porous medium flow simulations, 
+                       in both \emph{implicit} or \emph{sequential} formulation: 
+                       implementation of equations,
+                       model specific properties and indices.};
+    ]
+  ]
+  [.\node[FirstLevel] {sequential};
+%     [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {
+           General model definitions for the sequential formulation.};
+%     ]
   ]
 ]
 \end{tikzpicture}
