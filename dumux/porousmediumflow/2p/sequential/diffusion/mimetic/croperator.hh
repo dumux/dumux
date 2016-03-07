@@ -132,7 +132,7 @@ public:
         std::vector<bool> visited(size_, false);
 
         // LOOP 1 : Compute row sizes
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             int numFaces = element.subEntities(1);
 
@@ -159,7 +159,7 @@ public:
         visited.assign(size_, false);
 
         // LOOP 2 : insert the nonzeros
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             int numFaces = element.subEntities(1);
 
@@ -248,7 +248,7 @@ public:
         Dune::FieldVector<int, 2*dim> local2Global(0);
 
         // run over all leaf elements
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             unsigned int numFaces = element.subEntities(1);
 
@@ -285,7 +285,7 @@ public:
             }
         }
         // run over all leaf elements
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             unsigned int numFaces = element.subEntities(1);
 

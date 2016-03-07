@@ -69,7 +69,7 @@ void printUsage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if (HAVE_SUPERLU || HAVE_PARDISO)
-    typedef TTAG(TwoCStokesTwoPTwoCProblem) ProblemTypeTag;
+    typedef TTAG(TwoCStokesTwoPTwoCTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, printUsage);
 #else
 #warning "You need to have SuperLU or Pardiso installed to run this test."

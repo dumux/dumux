@@ -105,7 +105,7 @@ public:
                 this->resize(numNeighbors + numFaces);
 
                 // add volume variables for the boundary faces
-                for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+                for (const auto& intersection : intersections(problem.gridView(), element)) {
                     if (!intersection.boundary())
                         continue;
 

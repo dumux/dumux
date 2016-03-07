@@ -140,7 +140,7 @@ public:
         serializeSectionBegin(cookie);
 
         // write entity data
-        for (const auto& entity : Dune::entities(gridView, Dune::Codim<codim>())) {
+        for (const auto& entity : entities(gridView, Dune::Codim<codim>())) {
             serializer.serializeEntity(outStream_, entity);
             outStream_ << "\n";
         }
@@ -253,7 +253,7 @@ public:
         std::string curLine;
 
         // read entity data
-        for (const auto& entity : Dune::entities(gridView, Dune::Codim<codim>())) {
+        for (const auto& entity : entities(gridView, Dune::Codim<codim>())) {
             if (!inStream_.good()) {
                 DUNE_THROW(Dune::IOError,
                            "Restart file is corrupted");

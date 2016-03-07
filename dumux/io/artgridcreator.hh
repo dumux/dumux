@@ -30,6 +30,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/gridfactory.hh>
 
@@ -37,10 +38,6 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
-
-// plot the vertices, edges, elements
-#define PLOT 0
-// TODO: this is a verbosity level
 
 namespace Dumux
 {
@@ -77,7 +74,12 @@ public:
     {
         const std::string artFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
 
-        std::cout << "Opening " << artFileName << std::endl;
+        bool verbose = false;
+        try { verbose = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, Verbosity);}
+        catch (Dumux::ParameterException &e) { }
+
+        if (verbose)
+            std::cout << "Opening " << artFileName << std::endl;
         std::ifstream inFile(artFileName.c_str());
 
         std::string jump;
@@ -138,7 +140,8 @@ public:
             //jskip words until "z" from the line "% Vertices: x y z"
             if (jump == "z")
             {
-                std::cout << "Start reading the vertices" << std::endl;
+                if (verbose)
+                    std::cout << "Start reading the vertices" << std::endl;
                 break;
             }
         }
@@ -147,7 +150,8 @@ public:
         {
             if (jump == "$")
             {
-                std::cout << "Finished reading the vertices" << std::endl;
+                if (verbose)
+                    std::cout << "Finished reading the vertices" << std::endl;
                 break;
             }
             double dummy = atof(jump.c_str());
@@ -167,7 +171,8 @@ public:
             //jump over the characters until the ones with the edges
             if (jump == "Points):")
             {
-                std::cout << std::endl << "Start reading the edges" << std::endl;
+                if (verbose)
+                    std::cout << std::endl << "Start reading the edges" << std::endl;
                 break;
             }
         }
@@ -175,7 +180,8 @@ public:
         {
             if (jump == "$")
             {
-                std::cout << "Finished reading the edges" << std::endl;
+                if (verbose)
+                    std::cout << "Finished reading the edges" << std::endl;
                 break;
             }
             double dummy = atof(jump.c_str());
@@ -196,7 +202,8 @@ public:
             //jump over the characters until the ones with the edges
             if (jump == "Edges):")
             {
-                std::cout << std::endl << "Start reading the elements" << std::endl;
+                if (verbose)
+                    std::cout << std::endl << "Start reading the elements" << std::endl;
                 break;
             }
         }
@@ -204,7 +211,8 @@ public:
         {
             if (jump == "$")
             {
-                std::cout << "Finished reading the elements" << std::endl;
+                if (verbose)
+                    std::cout << "Finished reading the elements" << std::endl;
                 break;
             }
             double dummy = atof(jump.c_str());
@@ -223,20 +231,25 @@ public:
         Dune::FieldVector<double,2> position;
         Dune::GridFactory<Grid> factory;
 
-#if PLOT
         // Plot the vertices
-        std::cout << "*================*" << std::endl;
-        std::cout << "* Vertices" << std::endl;
-        std::cout << "*================*" << std::endl;
-#endif
+        if (verbose)
+        {
+            std::cout << "*================*" << std::endl;
+            std::cout << "* Vertices" << std::endl;
+            std::cout << "*================*" << std::endl;
+        }
+
         for (int k = 0; k < vertexNumber_; k++)
         {
-#if PLOT
-            // Printing the vertices vector
-            std::cout << vertices_[k][0] << "\t\t";
-            std::cout << vertices_[k][1] << "\t\t";
-            std::cout << vertices_[k][2] << std::endl;
-#endif
+
+            if (verbose)
+            {
+                // Printing the vertices vector
+                std::cout << vertices_[k][0] << "\t\t";
+                std::cout << vertices_[k][1] << "\t\t";
+                std::cout << vertices_[k][2] << std::endl;
+            }
+
             for (int i = 0; i < 2; i++)
             {
                 position[i] = vertices_[k][i];
@@ -244,29 +257,30 @@ public:
             factory.insertVertex(position);
         }
 
-#if PLOT
-        std::cout << "*================*" << std::endl;
-        std::cout << "* Edges" << std::endl;
-        std::cout << "*================*" << std::endl;
-        for (int k = 0; k < edgeNumber_; k++)
+        if (verbose)
         {
-            // Printing the Edge vector
-            std::cout << edges_[k][0] << "\t\t";
-            std::cout << edges_[k][1] << "\t";
-            std::cout << edges_[k][2] << std::endl;
-        }
+            std::cout << "*================*" << std::endl;
+            std::cout << "* Edges" << std::endl;
+            std::cout << "*================*" << std::endl;
+            for (int k = 0; k < edgeNumber_; k++)
+            {
+                // Printing the Edge vector
+                std::cout << edges_[k][0] << "\t\t";
+                std::cout << edges_[k][1] << "\t";
+                std::cout << edges_[k][2] << std::endl;
+            }
 
-        // Plot the Elements (Faces)
-        std::cout << "*================*" << std::endl;
-        std::cout << "* Faces" << std::endl;
-        std::cout << "*================*" << std::endl;
-        for (int k = 0; k < faceNumber_; k++)
-        {
-            std::cout << faces_[k][1] << "\t";
-            std::cout << faces_[k][2] << "\t";
-            std::cout << faces_[k][3] << std::endl;
+            // Plot the Elements (Faces)
+            std::cout << "*================*" << std::endl;
+            std::cout << "* Faces" << std::endl;
+            std::cout << "*================*" << std::endl;
+            for (int k = 0; k < faceNumber_; k++)
+            {
+                std::cout << faces_[k][1] << "\t";
+                std::cout << faces_[k][2] << "\t";
+                std::cout << faces_[k][3] << std::endl;
+            }
         }
-#endif
 
         //***********************************************************************//
         //Create the Elements in Dune::GridFactory //
@@ -276,11 +290,13 @@ public:
         {
             std::vector<unsigned int> vIdxGlobal(3);
             Dune::FieldVector<double,3> point(0);
-#if PLOT
-            std::cout << "=====================================" << std::endl;
-            std::cout << "eIdxGlobal " << i << std::endl;
-            std::cout << "=====================================" << std::endl;
-#endif
+            if (verbose)
+            {
+                std::cout << "=====================================" << std::endl;
+                std::cout << "eIdxGlobal " << i << std::endl;
+                std::cout << "=====================================" << std::endl;
+            }
+
             int edgeIdx = 0;
             //first node of the element - from first edge Node 1
             vIdxGlobal[0] = edges_[faces_[i][edgeIdx+1]][1];
@@ -318,21 +334,23 @@ public:
 
             factory.insertElement(Dune::GeometryType(Dune::GeometryType::simplex,2),
                     vIdxGlobal);
-#if PLOT
-            std::cout << "edges of the element "<< faces_[i] << std::endl;
-            std::cout << "nodes of the element " << vIdxGlobal[0]
-                      << ", " << vIdxGlobal[1] << ", "
-                      << vIdxGlobal[2] << std::endl;
-            std::cout << "1st " << vIdxGlobal[0]
-                      << "\t" << "2nd " << vIdxGlobal[1]
-                      << "\t" << "3rd " << vIdxGlobal[2]
-                      << std::endl;
-#endif
+
+            if (verbose)
+            {
+                std::cout << "edges of the element "<< faces_[i] << std::endl;
+                std::cout << "nodes of the element " << vIdxGlobal[0]
+                          << ", " << vIdxGlobal[1] << ", "
+                          << vIdxGlobal[2] << std::endl;
+                std::cout << "1st " << vIdxGlobal[0]
+                          << "\t" << "2nd " << vIdxGlobal[1]
+                          << "\t" << "3rd " << vIdxGlobal[2]
+                          << std::endl;
+            }
+
             if (vIdxGlobal[0] == vIdxGlobal[1] || vIdxGlobal[1] == vIdxGlobal[2]
                                          || vIdxGlobal[0] == vIdxGlobal[2])
             {
-                std::cout << "Error. The node index is identical in the element"
-                          << std::endl;
+                DUNE_THROW(Dune::InvalidStateException, "Two vertex indices of this element are identical");
             }
         }
 
@@ -525,7 +543,7 @@ public:
         fractureEdgesIdx_.resize(nEdges);
         std::fill(isDuneFractureEdge_.begin(), isDuneFractureEdge_.end(), false);
 
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
              Dune::GeometryType geomType = element.geometry().type();
 
@@ -565,10 +583,6 @@ public:
                       if ((nodeART_from == nodeDune_from && nodeART_to == nodeDune_to)
                           || (nodeART_from == nodeDune_to && nodeART_to == nodeDune_from))
                       {
-#if PLOT
-                        std::cout << " ART edge index is "<< j
-                                  << ", Dune edge is " << indexFace << std::endl;
-#endif
                         /* assigns a value 1 for the edges
                         * which are fractures */
                         if (GridCreator::edges()[j][0] < 0)
@@ -577,32 +591,11 @@ public:
                             fractureEdgesIdx_[indexFace]   = GridCreator::edges()[j][0];
                             isDuneFractureVertex_[indexVertex1]=true;
                             isDuneFractureVertex_[indexVertex2]=true;
-
-#if PLOT
-                            std::cout << "isDuneFractureEdge_ "
-                                      << isDuneFractureEdge_[indexFace] << "\t"
-                                      << "vertex1 " << indexVertex1 << "\t"
-                                      << "vertex2 " << indexVertex2 << "" << std::endl;
-#endif
                         }
                     }
                 }
             }
-         }
-
-#if PLOT
-        int i=0;
-        for (const auto& vertex : Dune::vertices(gridView_))
-        {
-            Dune::GeometryType geomType = vertex.type();
-            std::cout << "visiting " << geomType
-                      << " at " << vertex.geometry().corner(0)
-                      << "\t" << isDuneFractureVertex_[i]
-                      << std::endl;
-            i++;
         }
-#endif
-
     }
 
     bool isDuneFractureVertex(unsigned int i) const

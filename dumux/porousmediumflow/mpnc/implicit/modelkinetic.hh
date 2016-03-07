@@ -132,7 +132,7 @@ public:
         }
 
         // loop all elements
-        for (const auto& element : Dune::elements(this->gridView_())){
+        for (const auto& element : elements(this->gridView_())){
             //obtaining the elementVolumeVariables needed for the Fluxvariables
             FVElementGeometry fvGeometry;
             ElementVolumeVariables elemVolVars;
@@ -193,7 +193,7 @@ public:
 //    void checkPlausibility() const
 //    {
 //        // Looping over all elements of the domain
-//        for (const auto& element : Dune::elements(this->gridView_()))
+//        for (const auto& element : elements(this->gridView_()))
 //        {
 //            ElementVolumeVariables elemVolVars;
 //            FVElementGeometry fvGeometry;

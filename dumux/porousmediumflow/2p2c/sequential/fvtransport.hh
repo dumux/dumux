@@ -385,7 +385,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     ComponentVector entries(0.);
     EntryType timestepFlux(0.);
     // compute update vector
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get cell infos
         int eIdxGlobalI = problem().variables().index(element);
@@ -396,7 +396,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem().gridView(), element))
+        for (const auto& intersection : intersections(problem().gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -1183,7 +1183,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
     dt = std::numeric_limits<Scalar>::max();
 
     // update target time-step-sizes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
 #if HAVE_MPI
         if (element.partitionType() != Dune::InteriorEntity)
@@ -1202,7 +1202,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -1264,7 +1264,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(problem_.gridView(), element))
             {
                 if (intersection.neighbor())
                 {
@@ -1328,44 +1328,44 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                 if (verbosity_ > 0)
                     std::cout<<"    Sub-time-step size: "<<subDt<< std::endl;
 
-                    bool stopTimeStep = false;
-                    int size = problem_.gridView().size(0);
-                    for (int i = 0; i < size; i++)
+                bool stopTimeStep = false;
+                int size = problem_.gridView().size(0);
+                for (int i = 0; i < size; i++)
+                {
+                    EntryType newVal(0);
+                    int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
+                    for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
                     {
-                        EntryType newVal(0);
-                        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
-                        for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
-                        {
-                            newVal[eqNumber] = totalConcentration_[eqNumber][i];
-                            newVal[eqNumber] += updateVec[eqNumber][i] * subDt;
-                        }
-                        if (!asImp_().inPhysicalRange(newVal))
-                        {
-                            stopTimeStep = true;
-
-                            break;
-                        }
+                        newVal[eqNumber] = totalConcentration_[eqNumber][i];
+                        newVal[eqNumber] += updateVec[eqNumber][i] * subDt;
                     }
+                    if (!asImp_().inPhysicalRange(newVal))
+                    {
+                        stopTimeStep = true;
+
+                        break;
+                    }
+                }
 
 #if HAVE_MPI
-                    int rank = 0;
-                    if (stopTimeStep)
-                        rank = problem_.gridView().comm().rank();
+                int rank = 0;
+                if (stopTimeStep)
+                    rank = problem_.gridView().comm().rank();
 
-                    rank = problem_.gridView().comm().max(rank);
-                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
+                rank = problem_.gridView().comm().max(rank);
+                problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
 #endif
 
 
-                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
-                    {
-                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
-                        break;
-                    }
-                    else
-                    {
-                        asImp_().updateTransportedQuantity(updateVec, subDt);
-                    }
+                if (stopTimeStep && accumulatedDtOld > dtThreshold_)
+                {
+                    problem_.timeManager().setTimeStepSize(accumulatedDtOld);
+                    break;
+                }
+                else
+                {
+                    asImp_().updateTransportedQuantity(updateVec, subDt);
+                }
 
 
                 if (accumulatedDt_ >= realDt)

@@ -262,7 +262,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get the global index of the cell
         int eIdxGlobalI = problem().variables().index(element);
@@ -285,7 +285,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            for (const auto& intersection : Dune::intersections(problem().gridView(), element))
+            for (const auto& intersection : intersections(problem().gridView(), element))
             {
                 /************* handle interior face *****************/
                 if (intersection.neighbor())
@@ -781,7 +781,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
         nextSubdomain = -1;  // reduce complexity after first TS
 
     // Loop A) through leaf grid
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         // get global coordinate of cell center
         int eIdxGlobal = problem().variables().index(element);
@@ -805,7 +805,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
                 nextSubdomain[eIdxGlobal] = 2;
 
                 // mark neighbors
-                for (const auto& intersection : Dune::intersections(problem().gridView(), element))
+                for (const auto& intersection : intersections(problem().gridView(), element))
                 {
                     if (intersection.neighbor())
                     {
@@ -842,7 +842,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
 
     // Loop B) thorugh leaf grid
     // investigate cells that were "simple" in current TS
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         int eIdxGlobal = problem().variables().index(element);
         CellData& cellData = problem().variables().cellData(eIdxGlobal);

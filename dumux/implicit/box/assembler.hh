@@ -92,7 +92,7 @@ private:
         }
 
         // Mark all red elements
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
@@ -119,7 +119,7 @@ private:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] != ParentType::Red)
@@ -150,7 +150,7 @@ private:
                                 Dune::ForwardCommunication);
 
         // Mark yellow elements
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] == ParentType::Red) {
@@ -177,7 +177,7 @@ private:
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] != ParentType::Green)
@@ -231,7 +231,7 @@ private:
         // each vertex
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numVerticesGlobal);
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             int numVerticesLocal = element.subEntities(dim);
 
             // if the element is not in the interior or the process

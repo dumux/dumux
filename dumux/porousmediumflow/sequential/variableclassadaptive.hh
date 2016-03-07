@@ -94,7 +94,7 @@ public:
             //get grid view on level grid
             LevelGridView levelView = grid_.levelGridView(level);
 
-            for (const auto& element : Dune::elements(levelView))
+            for (const auto& element : elements(levelView))
             {
                 //get your map entry
                 AdaptedValues &adaptedValues = adaptationMap_[element];
@@ -144,7 +144,7 @@ public:
         {
             LevelGridView levelView = grid_.levelGridView(level);
 
-            for (const auto& element : Dune::elements(levelView))
+            for (const auto& element : elements(levelView))
             {
                 // only treat non-ghosts, ghost data is communicated afterwards
                 if (element.partitionType() == Dune::GhostEntity)

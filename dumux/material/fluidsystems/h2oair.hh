@@ -276,6 +276,7 @@ public:
     /*!
      * \brief Vapor pressure of a component \f$\mathrm{[Pa]}\f$.
      *
+     * \param fluidState The fluid state
      * \param compIdx The index of the component to consider
      */
     template <class FluidState>

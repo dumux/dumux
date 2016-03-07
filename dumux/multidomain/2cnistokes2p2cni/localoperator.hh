@@ -263,7 +263,7 @@ public:
 
                 // conductive energy flux
                 Scalar conductiveFlux = bfNormal1.two_norm()
-                                        * evalBoundaryLayerTemperatureGradient(cParams, vertInElem1)
+                                        * this->globalProblem().evalBoundaryLayerTemperatureGradient(cParams, vertInElem1)
                                         * (boundaryVars1.thermalConductivity()
                                            + boundaryVars1.thermalEddyConductivity());
 
@@ -275,11 +275,11 @@ public:
                     if (compIdx != phaseCompIdx1)
                     {
                         Scalar diffusiveFlux = bfNormal1.two_norm()
-                                               * ParentType::evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                               * this->globalProblem().evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
                                                * (boundaryVars1.diffusionCoeff(compIdx)
                                                   + boundaryVars1.eddyDiffusivity())
                                                * boundaryVars1.molarDensity()
-                                               * ParentType::evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
+                                               * this->globalProblem().evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
                         sumDiffusiveFluxes += diffusiveFlux;
                         sumDiffusiveEnergyFlux += diffusiveFlux
                                                   * boundaryVars1.componentEnthalpy(compIdx)
@@ -518,20 +518,14 @@ public:
     /*!
      * \brief Returns the temperature gradient through the boundary layer
      *
-     * \todo This function could be moved to a more model specific place, because
-     *       of its runtime parameters.
-     *
      * \param cParams a parameter container
-     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     * \param scvIdx The local index of the sub-control volume of the Stokes domain
      */
     template<typename CParams>
+    DUNE_DEPRECATED_MSG("evalBoundaryLayerTemperatureGradient() is deprecated.")
     Scalar evalBoundaryLayerTemperatureGradient(CParams cParams, const int scvIdx) const
     {
-        const Scalar temperatureOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-        Scalar normalTemperatureGrad = cParams.elemVolVarsCur1[scvIdx].temperature()
-                                       - temperatureOut;
-        return normalTemperatureGrad
-               / ParentType::evalBoundaryLayerModel(cParams, scvIdx).thermalBoundaryLayerThickness();
+        this->globalProblem().evalBoundaryLayerTemperatureGradient(cParams, scvIdx);
     }
 };
 } // end namespace Dumux

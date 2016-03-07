@@ -25,10 +25,18 @@
 #ifndef DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 #define DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 
+#include <dumux/common/basicproperties.hh>
 #include "newtoncontroller.hh"
 
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(NewtonController);
+NEW_PROP_TAG(SolutionVector);
+}
+
 /*!
  * \ingroup Newton
  * \brief Writes the intermediate solutions during

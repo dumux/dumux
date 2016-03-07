@@ -25,6 +25,7 @@
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
+#include <dumux/common/basicproperties.hh>
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
@@ -32,6 +33,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include "newtonconvergencewriter.hh"
+#include "newtonmethod.hh"
 
 namespace Dumux
 {
@@ -68,6 +70,11 @@ NEW_PROP_TAG(NewtonWriteConvergence);
 //! Specifies whether the Jacobian matrix should only be reassembled
 //! if the current solution deviates too much from the evaluation point
 NEW_PROP_TAG(ImplicitEnablePartialReassemble);
+
+//! Specify whether the jacobian matrix of the last iteration of a
+//! time step should be re-used as the jacobian of the first iteration
+//! of the next time step.
+NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
 
 /*!
  * \brief Specifies whether the update should be done using the line search
@@ -488,8 +495,8 @@ public:
         }
         endIterMsgStream_.str("");
 
-//         When the newton iterations is done: ask the model to check whether it makes sense.
-        model_().checkPlausibility() ;
+        // When the Newton iterations are done: ask the model to check whether it makes sense
+        model_().checkPlausibility();
     }
 
     /*!

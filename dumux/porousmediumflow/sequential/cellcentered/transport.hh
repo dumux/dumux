@@ -41,6 +41,7 @@ SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
 
 //! \ingroup IMPET
 /*!\brief The finite volume discretization of a transport equation
+ *
  *  Base class for finite volume (FV) implementations of an explicitly treated transport equation.
  *  The class provides a method to calculate the explicit update to get a new solution of the transported quantity:
  *  \f[
@@ -293,7 +294,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
     updateVec = 0.0;
 
     // compute update vector
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
 #if HAVE_MPI
         if (element.partitionType() != Dune::InteriorEntity)
@@ -323,7 +324,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         }
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();
             if (switchNormals_)
@@ -446,7 +447,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
     dt = std::numeric_limits<Scalar>::max();
 
     // update target time-step-sizes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
 #if HAVE_MPI
         if (element.partitionType() != Dune::InteriorEntity)
@@ -465,7 +466,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -527,7 +528,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(problem_.gridView(), element))
             {
                 if (intersection.neighbor())
                 {
@@ -590,41 +591,41 @@ void FVTransport<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                 if (verbosity_ > 0)
                     std::cout<<"    Sub-time-step size: "<<subDt<<"\n";
 
-                    TransportSolutionType transportedQuantity;
-                    asImp_().getTransportedQuantity(transportedQuantity);
+                TransportSolutionType transportedQuantity;
+                asImp_().getTransportedQuantity(transportedQuantity);
 
-                    bool stopTimeStep = false;
-                    int size = transportedQuantity.size();
-                    for (int i = 0; i < size; i++)
+                bool stopTimeStep = false;
+                int size = transportedQuantity.size();
+                for (int i = 0; i < size; i++)
+                {
+                    Scalar newVal = transportedQuantity[i] += updateVec[i] * subDt;
+                    if (!asImp_().inPhysicalRange(newVal))
                     {
-                        Scalar newVal = transportedQuantity[i] += updateVec[i] * subDt;
-                        if (!asImp_().inPhysicalRange(newVal))
-                        {
-                            stopTimeStep = true;
+                        stopTimeStep = true;
 
-                            break;
-                        }
+                        break;
                     }
+                }
 
 #if HAVE_MPI
-                    int rank = 0;
-                    if (stopTimeStep)
-                        rank = problem_.gridView().comm().rank();
+                int rank = 0;
+                if (stopTimeStep)
+                    rank = problem_.gridView().comm().rank();
 
-                    rank = problem_.gridView().comm().max(rank);
-                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
+                rank = problem_.gridView().comm().max(rank);
+                problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
 #endif
 
 
-                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
-                    {
-                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
-                        break;
-                    }
-                    else
-                    {
-                        asImp_().setTransportedQuantity(transportedQuantity);
-                    }
+                if (stopTimeStep && accumulatedDtOld > dtThreshold_)
+                {
+                    problem_.timeManager().setTimeStepSize(accumulatedDtOld);
+                    break;
+                }
+                else
+                {
+                    asImp_().setTransportedQuantity(transportedQuantity);
+                }
 
 
                 if (accumulatedDt_ >= realDt)

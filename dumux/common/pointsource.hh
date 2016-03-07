@@ -26,24 +26,24 @@
 #define DUMUX_POINTSOURCE_HH
 
 #include <dumux/common/boundingboxtree.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/propertysystem.hh>
 
 namespace Dumux
 {
 
 namespace Properties
 {
-
 // Property forward declarations
-NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(ElementVolumeVariables);
+NEW_PROP_TAG(FVElementGeometry);
 NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(ImplicitIsBox);
+NEW_PROP_TAG(PointSource);
 NEW_PROP_TAG(PrimaryVariables);
 NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(FVElementGeometry);
-NEW_PROP_TAG(ElementVolumeVariables);
-NEW_PROP_TAG(PointSource);
-NEW_PROP_TAG(ImplicitIsBox);
+NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(TimeManager);
-
 } // end namespace Properties
 
 // forward declarations

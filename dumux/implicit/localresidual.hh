@@ -247,7 +247,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param values The source/sink in the sub-control volume for each phase
+     * \param source The source/sink in the sub-control volume for each phase
      * \param scvIdx The index of the sub-control volume
      *
      */
@@ -389,7 +389,7 @@ protected:
             // \f$\frac{m}{\partial t}\f$ term if using implicit
             // euler as time discretization.
             //
-            // TODO (?): we might need a more explicit way for
+            // We might need a more explicit way for
             // doing the time discretization...
             Valgrind::SetUndefined(storageTerm_[scvIdx]);
             Valgrind::SetUndefined(values);

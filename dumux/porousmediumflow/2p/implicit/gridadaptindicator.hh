@@ -90,7 +90,7 @@ public:
 
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf-elements
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
@@ -122,7 +122,7 @@ public:
             globalMax = std::max(satI, globalMax);
 
             // calculate refinement indicator in all cells
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(problem_.gridView(), element))
             {
                 // Only consider internal intersections
                 if (intersection.neighbor())

@@ -19,6 +19,8 @@ IMAGE_PATH             = @srcdir@/images
 
 EXTRA_PACKAGES        += amsmath,amssymb,units
 
+ALIASES += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
+
 # enable client side searching
 SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = NO

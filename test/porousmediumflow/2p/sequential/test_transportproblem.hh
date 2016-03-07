@@ -137,7 +137,7 @@ public:
         vel[0] = 1e-5;
 
         // compute update vector
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             // cell index
             int eIdxGlobal = this->elementMapper().index(element);
@@ -145,7 +145,7 @@ public:
             CellData& cellData = this->variables().cellData(eIdxGlobal);
 
             // run through all intersections with neighbors and boundary
-            for (const auto& intersection : Dune::intersections(this->gridView(), element))
+            for (const auto& intersection : intersections(this->gridView(), element))
             {
                 // local number of facet
                 int indexInInside = intersection.indexInInside();

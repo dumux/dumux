@@ -23,16 +23,7 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKESTESTPROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKESTESTPROBLEM_HH
 
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#elif HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#else
-#warning UG or ALUGrid necessary for this test.
-#endif
-
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/io/file/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -50,13 +41,8 @@ namespace Dumux
     NEW_TYPE_TAG(NavierStokesTestProblem, INHERITS_FROM(BoxStokes));
 
     // Set the grid type
-#if HAVE_DUNE_ALUGRID
-    SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#elif HAVE_UG
-    SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::UGGrid<2>);
-#else
-    SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::YaspGrid<2>);
-#endif
+    SET_TYPE_PROP(NavierStokesTestProblem, Grid,
+                  Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
     // Set the problem property
     SET_TYPE_PROP(NavierStokesTestProblem, Problem, Dumux::NavierStokesTestProblem<TypeTag>);
@@ -68,9 +54,6 @@ namespace Dumux
     SET_TYPE_PROP(NavierStokesTestProblem, Fluid,
                   Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
                                   Dumux::Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
-
-    // Scalar is set to type double
-    SET_TYPE_PROP(BoxStokes, Scalar, double);
   }
 
   /*!

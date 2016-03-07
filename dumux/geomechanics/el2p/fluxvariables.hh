@@ -203,7 +203,7 @@ NEW_PROP_TAG(SpatialParams);
                     dU_[coordDir] = 0;
                     // subtract previous displacement value from current displacement value for each coordinate direction
                     // coordDir and for each node i and interpolate values at integration point via the shape function vShape.
-                    // TODO: evaluation of prevVolVars should also be possible--> check
+                    // TODO: Check if evaluation of prevVolVars is possible
                     for (size_t i = 0; i < dispSize; i++){
                         dU_[coordDir] += (elemVolVars[i].primaryVars()[(numEq - dim)+coordDir]
                                           - prevSolutionValues[scalarDispLFS.localIndex(i)])*vShape[i];

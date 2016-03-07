@@ -45,11 +45,6 @@ SET_TYPE_PROP(ZeroEq2cniSubProblem, Problem, Dumux::ZeroEq2cniSubProblem<TypeTag
 // Use the StokesncniCouplingLocalResidual for the computation of the local residual in the ZeroEq domain
 SET_TYPE_PROP(ZeroEq2cniSubProblem, LocalResidual, StokesncniCouplingLocalResidual<TypeTag>);
 
-// Set the property for the material parameters by extracting it from the material law.
-SET_TYPE_PROP(ZeroEq2cniSubProblem,
-              MaterialLawParams,
-              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 // Use the fluid system from the coupled problem
 SET_TYPE_PROP(ZeroEq2cniSubProblem,
               FluidSystem,

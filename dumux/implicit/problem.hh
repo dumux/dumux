@@ -109,7 +109,7 @@ public:
         , newtonCtl_(asImp_())
     {
         // calculate the bounding box of the local partition of the grid view
-        for (const auto& vertex : Dune::vertices(gridView)) {
+        for (const auto& vertex : vertices(gridView)) {
             for (int i=0; i<dimWorld; i++) {
                 bBoxMin_[i] = std::min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
                 bBoxMax_[i] = std::max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
@@ -496,7 +496,7 @@ public:
      * This is the method for the case where the point source is space dependent
      *
      * \param pointSource A single point source
-     * \param position The point source position in global coordinates
+     * \param globalPos The point source position in global coordinates
      *
      * For this method, the \a values() method of the point sources returns
      * the absolute conserved quantity rate generated or annihilate in
@@ -637,11 +637,29 @@ public:
                       << nextDt << " seconds\n";
         }
 
+        // if the simulation  run is about to abort, write restart files for the current and previous time steps:
+        // write restart file for the current time step
+        serialize();
+
+        //write restart file for the previous time step:
+        //set the time manager and the solution vector to the previous time step
+        const Scalar time = timeManager().time();
+        timeManager().setTime(time - timeManager().previousTimeStepSize());
+        const auto curSol = model_.curSol();
+        model_.curSol() = model_.prevSol();
+        //write restart file
+        serialize();
+        //reset time manager and solution vector
+        model_.curSol() = curSol;
+        timeManager().setTime(time);
+
         DUNE_THROW(Dune::MathError,
                    "Newton solver didn't converge after "
                    << maxFails
                    << " time-step divisions. dt="
-                   << timeManager().timeStepSize());
+                   << timeManager().timeStepSize()
+                   << ".\nThe solutions of the current and the previous time steps "
+                   << "have been saved to restart files.");
     }
 
     /*!
@@ -1054,7 +1072,6 @@ public:
                 // that can be overloaded in the actual problem class also achieving variable point sources.
                 // The first one is more convenient for simple function like a time dependent source.
                 // The second one might be more convenient for e.g. a solution dependent point source.
-                // TODO: Decide if one concept can / should be dropped in the future or not.
 
                 // we do an update e.g. used for TimeDependentPointSource
                 pointSource.update(asImp_(), element, fvGeometry, scvIdx, elemVolVars);

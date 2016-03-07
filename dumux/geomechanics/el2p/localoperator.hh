@@ -332,8 +332,8 @@ public:
 
              VolumeVariables volVars;
              // evaluate volume variables for this quadrature point
-             // TODO / NOTE:     this overwrites the entries of the volumevariables of node 0
-             //                 and can cause errors
+             // NOTE: this overwrites the entries of the volumevariables of node 0
+             //       and can cause errors
              volVars.update(primVars, model_.problem(), eg.entity(), fvGeometry, 0, false);
 
              // calculate the density difference for the gravity term
@@ -370,7 +370,7 @@ public:
         }
         // include boundary conditions
         // iterate over element intersections of codim dim-1
-        for (const auto& intersection : Dune::intersections(model_.problem().gridView(), eg.entity()))
+        for (const auto& intersection : intersections(model_.problem().gridView(), eg.entity()))
         {
             // handle only faces on the boundary
             if (!intersection.boundary())

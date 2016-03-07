@@ -511,7 +511,7 @@ public:
 
         const GridView& gridView = problem.gridView();
 
-        for (const auto& entity : Dune::entities(gridView, Dune::Codim<dofCodim>()))
+        for (const auto& entity : entities(gridView, Dune::Codim<dofCodim>()))
         {
             if (entity.partitionType() == Dune::BorderEntity)
             {
@@ -1016,6 +1016,7 @@ struct LinearAlgebraPreparator
     }
 };
 
+#if HAVE_MPI
 /*!
  * \brief Specialization for the parallel case.
  */
@@ -1069,7 +1070,7 @@ struct LinearAlgebraPreparator<TypeTag, true>
         }
     }
 };
-
+#endif
 
 } // end namespace Dumux
 

@@ -89,7 +89,7 @@ public:
         if (!problem.model().onBoundary(element))
             return;
 
-        for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+        for (const auto& intersection : intersections(problem.gridView(), element)) {
             if (!intersection.boundary())
                 continue;
 

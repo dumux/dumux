@@ -26,18 +26,11 @@
 #ifndef DUMUX_2PMINC_TEST_PROBLEM_HH
 #define DUMUX_2PMINC_TEST_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
-#include <dune/grid/yaspgrid.hh>
-
 #include <dumux/porousmediumflow/2pminc/implicit/model.hh>
 #include <dumux/porousmediumflow/2pminc/implicit/volumevariables.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/io/cubegridcreator.hh>
 
 #include "2pminctestspatialparams.hh"
 
@@ -56,18 +49,10 @@ NEW_TYPE_TAG(TwoPMincTestProblem, INHERITS_FROM(BoxTwoPMinc, TwoPMincSpatialPara
 NEW_TYPE_TAG(TwoPMincTestBoxProblem, INHERITS_FROM(BoxTwoPMinc, TwoPMincTestProblem));
 
 // Set the grid type
-#if HAVE_UG
-SET_TYPE_PROP(TwoPMincTestProblem, Grid, Dune::UGGrid<2>);
-#else
 SET_TYPE_PROP(TwoPMincTestProblem, Grid, Dune::YaspGrid<2>);
-#endif
 
 // Set the problem property
 SET_TYPE_PROP(TwoPMincTestProblem, Problem, Dumux::TwoPMincTestProblem<TypeTag>);
-
-#define BUFFERSIZE 700
-#define PROBLEM_OUTPUT_NAME "newMincProblem"
-#define PROBLEM_OUTPUT_NAME_I PROBLEM_OUTPUT_NAME NUM_CONT_CHAR
 
 // Set the wetting phase
 SET_PROP(TwoPMincTestProblem, WettingPhase)
@@ -87,30 +72,9 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
 
-// Set the grid creator
-SET_TYPE_PROP(TwoPMincTestProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
-
-// Set number of Continua
-SET_INT_PROP(TwoPMincTestProblem, NumContinua, 4);//here the number of continua can be set, default is 2
+// Set number of continua
+SET_INT_PROP(TwoPMincTestProblem, NumContinua, 4);
 SET_INT_PROP(TwoPMincTestProblem, NumEq, GET_PROP_VALUE(TypeTag, NumContinua) * 2);
-
-// Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(TwoPMincTestProblem, ImplicitEnablePartialReassemble, true);
-
-// Enable reuse of Jacobian matrices?
-SET_BOOL_PROP(TwoPMincTestProblem, ImplicitEnableJacobianRecycling, true);
-
-// Write the solutions of individual Newton iterations?
-SET_BOOL_PROP(TwoPMincTestProblem, NewtonWriteConvergence, false);
-
-// Use forward differences instead of central differences
-SET_INT_PROP(TwoPMincTestProblem, ImplicitNumericDifferenceMethod, +1);
-
-// Linear solver settings
-SET_TYPE_PROP(TwoPMincTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
-SET_INT_PROP(TwoPMincTestProblem, LinearSolverVerbosity, 0);
-SET_INT_PROP(TwoPMincTestProblem, LinearSolverPreconditionerIterations, 1);
-SET_SCALAR_PROP(TwoPMincTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
 // Enable gravity
 SET_BOOL_PROP(TwoPMincTestProblem, ProblemEnableGravity, true);
@@ -127,7 +91,7 @@ SET_TYPE_PROP(TwoPMincTestProblem, VolumeVariables, TwoPMincVolumeVariables<Type
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  *
- *  TODO reformulate the documentation according to the actual tested MINC problem
+ * \todo reformulate the documentation according to the actual tested MINC problem
  *
  * The domain is sized 6m times 4m and features a rectangular lens
  * with low permeability which spans from (1 m , 2 m) to (4 m, 3 m)
@@ -168,6 +132,7 @@ class TwoPMincTestProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
@@ -190,7 +155,8 @@ class TwoPMincTestProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
         fractureIdx = 0,
         matrixIdx = 1,
 
-        // world dimension
+        // grid and world dimension
+        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
@@ -200,7 +166,7 @@ class TwoPMincTestProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<int, dimWorld> GridResolution;
+    typedef Dune::FieldVector<unsigned int, dim> GridResolution;
 
 public:
     /*!
@@ -211,29 +177,15 @@ public:
      */
     TwoPMincTestProblem(TimeManager &timeManager,
                 const GridView &gridView)
-    : ParentType(timeManager, gridView),
-      res_(0.0)//
+    : ParentType(timeManager, gridView)
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                std::string,
-                Problem,
-                Name);
-        res_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                int,
-                Grid,
-                NumberOfCellsX);
-        res_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                int,
-                Grid,
-                NumberOfCellsY);
-        assert(res_[0] > 0);
-        assert(res_[1] > 0);
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        auto resolution = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GridResolution, Grid, Cells);
 
-        this->model().calculateMincGeometricParameters(res_, this->bBoxMin(), this->bBoxMax());
-        this->getMincProblemParameters(gridView, res_);
+        this->model().calculateMincGeometricParameters(resolution, this->bBoxMin(), this->bBoxMax());
     }
 
     /*!
@@ -241,21 +193,14 @@ public:
      */
     // \{
 
-    void getMincProblemParameters(const GridView &gridView, const GridResolution &res)
-    {
-        distNestedContinua=this->model().getDistNestedContinua();
-        volFraction=this->model().getVolFraction();
-        interfaceArea=this->model().getInterfaceArea();
-    }
-
     /*!
      * \brief The problem name.
      *
      * This is used as a prefix for files generated by the simulation.
      */
-    const char *name() const
+    const std::string name() const
     {
-        return name_.c_str();
+        return name_;
     }
 
     /*!
@@ -283,7 +228,7 @@ public:
 
 
     void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+                     const GlobalPosition &globalPos) const
     {
         values = 0.0;
     }
@@ -303,7 +248,7 @@ public:
      * \param globalPos The position of the center of the finite volume
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
-            const GlobalPosition &globalPos) const
+                            const GlobalPosition &globalPos) const
     {
         if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) {
             values.setAllDirichlet();
@@ -325,18 +270,18 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;//TODO what is this?
+        FluidState fluidState;
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
 
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+        const Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
-        Scalar depth = this->bBoxMax()[1] - globalPos[1];
-        Scalar alpha = 1 + 1.5/height;
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
-        Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
+        const Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
+        const Scalar depth = this->bBoxMax()[1] - globalPos[1];
+        const Scalar alpha = 1 + 1.5/height;
+        const Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        const Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha for fracture continua
         values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
@@ -381,14 +326,13 @@ public:
     void initialAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        FluidState fluidState;
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
 
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
-
-        Scalar depth = this->bBoxMax()[1] - globalPos[1];
+        const Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+        const Scalar depth = this->bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
@@ -426,21 +370,18 @@ private:
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
-        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
+        const Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        const Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
+        return (onUpperBoundary_(globalPos)
+                && 0.5 < lambda + eps_
+                && lambda < 2.0/3.0 + eps_);
     }
 
     Scalar temperature_;
     Scalar eps_;
     std::string name_;
-
-    GridResolution res_;
-public:
-    Dune::FieldVector <Scalar, numContinua> volFraction;
-    Dune::FieldVector <Scalar, numContinua> interfaceArea;
-    Dune::FieldVector <Scalar, numContinua> distNestedContinua; //distance between two nested continua d[nC+1]=pos[nC+1]-pos[nC]
 };
+
 } //end namespace
 
 #endif

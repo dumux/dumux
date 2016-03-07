@@ -316,7 +316,7 @@ public:
         Dune::BlockVector<Dune::FieldVector<double,1> > poro_(0.), perm_(0.);
         poro_.resize(size_); perm_.resize(size_);
         // iterate over all elements of domain
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             // get index
             int eIdxGlobal = problem_.variables().index(element);
@@ -335,7 +335,7 @@ public:
             Dune::BlockVector<Dune::FieldVector<double,1> > permY_(0.), permZ_(0.);
             permY_.resize(size_); permZ_.resize(size_);
             // iterate over all elements of domain
-            for (const auto& element : Dune::elements(problem_.gridView()))
+            for (const auto& element : elements(problem_.gridView()))
             {
                 // get index
                 int eIdxGlobal = problem_.variables().index(element);
@@ -525,7 +525,7 @@ template<class TypeTag>
 void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // get global coordinate of cell center
         GlobalPosition globalPos = element.geometry().center();
@@ -678,7 +678,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         if(!compositional)
         {
             // run through all intersections with neighbors
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(problem_.gridView(), element))
             {
                 cellData.perimeter()
                         += intersection.geometry().volume();
@@ -707,7 +707,7 @@ void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
 {
     Scalar maxError = 0.;
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem().gridView()))
+    for (const auto& element : elements(problem().gridView()))
     {
         int eIdxGlobal = problem().variables().index(element);
 

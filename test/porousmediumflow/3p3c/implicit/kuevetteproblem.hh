@@ -156,6 +156,8 @@ public:
         FluidSystem::init();
 
         name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
+        this->timeManager().startNextEpisode(episodeLength_);
     }
 
     /*!
@@ -299,7 +301,7 @@ public:
 
         FVElementGeometry fvGeometry;
 
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             fvGeometry.update(this->gridView(), element);
 
@@ -313,6 +315,22 @@ public:
         this->resultWriter().attachDofData(*Kxx, "permeability", isBox);
     }
 
+    bool shouldWriteOutput() const
+    {
+        return this->timeManager().timeStepIndex() == 0 ||
+               this->timeManager().episodeWillBeOver() ||
+               this->timeManager().willBeFinished();
+    }
+
+    void episodeEnd()
+    {
+        this->timeManager().startNextEpisode(episodeLength_);
+    }
+
+    bool shouldWriteRestartFile() const
+    {
+        return false;
+    }
 
 private:
     // checks, whether a point is located inside the contamination zone
@@ -342,6 +360,7 @@ private:
 
     const Scalar eps_;
     std::string name_;
+    Scalar episodeLength_;
 };
 } //end namespace
 

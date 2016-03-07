@@ -268,7 +268,7 @@ public:
         int eIdxGlobal = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
-        for (const auto& intersection : Dune::intersections(gridView_, element))
+        for (const auto& intersection : intersections(gridView_, element))
         {
             faceVol[intersection.indexInInside()] = intersection.geometry().volume();
         }
@@ -285,7 +285,7 @@ public:
         int eIdxGlobal = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
-        for (const auto& intersection : Dune::intersections(gridView_, element))
+        for (const auto& intersection : intersections(gridView_, element))
         {
             faceVol[intersection.indexInInside()] = intersection.geometry().volume();
         }
@@ -302,7 +302,7 @@ public:
         Dune::FieldVector<Scalar, 2 * dim> c(0);
         Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> Pi(0);
 
-        for (const auto& intersection : Dune::intersections(gridView_, element))
+        for (const auto& intersection : intersections(gridView_, element))
         {
             // local number of facet
             int idx = intersection.indexInInside();
@@ -471,7 +471,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
 
     Scalar gravPot = (problem_.bBoxMax() - centerGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
-    for (const auto& intersection : Dune::intersections(gridView_, element))
+    for (const auto& intersection : intersections(gridView_, element))
     {
         // local number of facet
         int fIdx = intersection.indexInInside();
@@ -606,7 +606,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
     //accumulate fluxes due to capillary potential (pc + gravity!)
-    for (const auto& intersection : Dune::intersections(gridView_, element))
+    for (const auto& intersection : intersections(gridView_, element))
     {
         int idx = intersection.indexInInside();
 
@@ -707,7 +707,7 @@ template<class TypeTag>
 void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int k)
 {
     // evaluate boundary conditions via intersection iterator
-    for (const auto& intersection : Dune::intersections(gridView_, element))
+    for (const auto& intersection : intersections(gridView_, element))
     {
         int faceIndex = intersection.indexInInside();
         if (intersection.boundary())

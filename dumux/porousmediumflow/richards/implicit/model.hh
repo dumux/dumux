@@ -138,7 +138,7 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
-        bool gravity =GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        bool gravity =GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
@@ -174,7 +174,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {

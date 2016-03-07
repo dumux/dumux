@@ -24,9 +24,6 @@
  *
  * The data sets for a specific window have to be passed by the addDataSet function
  * and then plotted by using the plot function.
- *
- * \todo the use of the plottingWindowNumber in each function could be replaced, but
- *       a new GnuplotInterface object has to be created for each plot
  */
 
 #ifndef DUMUX_GNUPLOT_INTERFACE_HH
@@ -93,6 +90,7 @@ public:
      *
      * \param title The name of the output file
      * \param plottingWindowNumber Change the number of the window in which the plot is shown
+     * \param terminalType Set the terminal type for the graphical output
      */
     void plot(const std::string &title, const unsigned int plottingWindowNumber = 0, const std::string& terminalType = "x11")
     {

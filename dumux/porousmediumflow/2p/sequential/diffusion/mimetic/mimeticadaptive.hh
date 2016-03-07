@@ -294,7 +294,7 @@ public:
         Dune::FieldVector<Scalar, 2*dim> faceVolumeReal(0.0);
 
         int idx = 0;
-        for (const auto& intersection : Dune::intersections(gridView_, element))
+        for (const auto& intersection : intersections(gridView_, element))
         {
             faceVol[idx] = intersection.geometry().volume();
             int indexInInside = intersection.indexInInside();
@@ -326,7 +326,7 @@ public:
         Dune::DynamicMatrix<Scalar> Pi(numFaces, numFaces);
 
         int idx = 0;
-        for (const auto& intersection : Dune::intersections(gridView_, element))
+        for (const auto& intersection : intersections(gridView_, element))
         {
             Scalar faceVol = intersection.geometry().volume();
 
@@ -403,7 +403,7 @@ private:
 
 private:
     Problem& problem_;
-    const GridView& gridView_;
+    const GridView gridView_;
     const IntersectionMapper& intersectionMapper_;
     Dune::DynamicVector<Scalar> rhs_;
     std::vector<Dune::DynamicMatrix<Scalar> > W_;
@@ -494,7 +494,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
                     * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
     int idx = 0;
-    for (const auto& intersection : Dune::intersections(gridView_, element))
+    for (const auto& intersection : intersections(gridView_, element))
     {
         // local number of facet
 
@@ -635,7 +635,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
 
     //accumulate fluxes due to capillary potential (pc + gravity!)
     idx = 0;
-    for (const auto& intersection : Dune::intersections(gridView_, element))
+    for (const auto& intersection : intersections(gridView_, element))
     {
             Scalar fracFlow = 0;
 
@@ -735,7 +735,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleBC(const Element& eleme
 {
     // evaluate boundary conditions via an intersection loop
     unsigned int faceIndex = 0;
-    for (const auto& intersection : Dune::intersections(gridView_, element))
+    for (const auto& intersection : intersections(gridView_, element))
     {
         if (intersection.neighbor())
         {

@@ -67,7 +67,7 @@ public:
         delta_ = delta;
         permeability_.resize(gridView_.size(0));
 
-        for(const auto& element : Dune::elements(gridView_))
+        for(const auto& element : elements(gridView_))
         {
             setPermeability_(permeability_[indexSet_.index(element)], element.geometry().center());
         }

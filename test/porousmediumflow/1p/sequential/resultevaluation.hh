@@ -98,7 +98,7 @@ public:
         double denominatorGrad = 0;
         double numeratorFlux = 0;
         double denominatorFlux = 0;
-        for (const auto& element : Dune::elements(gridView))
+        for (const auto& element : elements(gridView))
         {
             // element geometry
             const Geometry& geometry = element.geometry();
@@ -131,7 +131,7 @@ public:
             int isIdx = -1;
             Dune::FieldVector<Scalar,2*dim> fluxVector;
             Dune::FieldVector<Scalar,dim> exactGradient;
-            for (const auto& intersection : Dune::intersections(gridView, element))
+            for (const auto& intersection : intersections(gridView, element))
             {
                 // local number of facet
                 int fIdx = intersection.indexInInside();

@@ -42,11 +42,6 @@ NEW_TYPE_TAG(Stokes2cSubProblem,
 // Set the problem property
 SET_TYPE_PROP(Stokes2cSubProblem, Problem, Dumux::Stokes2cSubProblem<TypeTag>);
 
-// Set the property for the material parameters by extracting it from the material law.
-SET_TYPE_PROP(Stokes2cSubProblem,
-              MaterialLawParams,
-              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 // Use the local residual extended for the coupling the local residual extended for the coupling
 SET_TYPE_PROP(Stokes2cSubProblem, LocalResidual, StokesncCouplingLocalResidual<TypeTag>);
 

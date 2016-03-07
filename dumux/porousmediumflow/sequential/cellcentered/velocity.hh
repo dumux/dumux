@@ -95,7 +95,7 @@ private:
 template<class TypeTag, class Velocity>
 void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 {
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell information
         int globalIdxI = problem_.variables().index(element);
@@ -103,7 +103,7 @@ void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
+        for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             /************* handle interior face *****************/
             if (intersection.neighbor())

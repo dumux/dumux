@@ -55,7 +55,7 @@ public:
         const auto element = *gridView_.template begin<0>();
 
         int fIdx = 0;
-        for (const auto& intersection : Dune::intersections(gridView_, element))
+        for (const auto& intersection : intersections(gridView_, element))
         {
             int idxInInside = intersection.indexInInside();
 
@@ -96,7 +96,7 @@ public:
     /*!
      * \brief Map interface fIdx'th interface of element index to array index.
      *
-     * \param element Index of element.
+     * \param elemIdx Index of element.
      * \param fIdx Index of interface to map.
      * \return An index in the range 0 ... Max number of intersections in set - 1.
      */
@@ -114,7 +114,7 @@ public:
     /*!
      * \brief Map interface fIdx'th interface of element index to array index.
      *
-     * \param element Index of element.
+     * \param elemIdx Index of element.
      * \param fIdx Index of interface to map.
      * \return An index in the range 0 ... Max number of intersections in set - 1.
      */
@@ -198,13 +198,13 @@ public:
         intersectionMapLocal_.clear();
         intersectionMapLocal_.resize(elementMapper_.size());
 
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             int eIdxGlobal = index(element);
 
             int fIdx = 0;
             // run through all intersections with neighbors
-            for (const auto& intersection : Dune::intersections(gridView_, element))
+            for (const auto& intersection : intersections(gridView_, element))
             {
                 int indexInInside = intersection.indexInInside();
                 intersectionMapLocal_[eIdxGlobal][fIdx] = indexInInside;
@@ -214,13 +214,13 @@ public:
         }
 
         int globalIntersectionIdx = 0;
-        for (const auto& element : Dune::elements(gridView_))
+        for (const auto& element : elements(gridView_))
         {
             int eIdxGlobal = index(element);
 
             int fIdx = 0;
             // run through all intersections with neighbors
-            for (const auto& intersection : Dune::intersections(gridView_, element))
+            for (const auto& intersection : intersections(gridView_, element))
             {
                 if (intersection.neighbor())
                 {
@@ -237,7 +237,7 @@ public:
                         }
                         else
                         {
-                            for (const auto& intersectionNeighbor : Dune::intersections(gridView_, neighbor))
+                            for (const auto& intersectionNeighbor : intersections(gridView_, neighbor))
                             {
                                 if (intersectionNeighbor.neighbor())
                                 {
@@ -267,7 +267,7 @@ public:
     }
 
 protected:
-    const GridView& gridView_;
+    const GridView gridView_;
     ElementMapper elementMapper_;
     unsigned int size_;
     std::vector<std::unordered_map<int, int> > intersectionMapGlobal_;

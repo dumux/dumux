@@ -39,8 +39,6 @@ NEW_PROP_TAG(Scalar);
 
 /*!
  *\brief Interface for plotting the two-phase fluid-matrix-interaction laws
- *
- * TODO: add theta head pressure plot (porosity and density is needed)
  */
 template<class TypeTag>
 class PlotMaterialLaw

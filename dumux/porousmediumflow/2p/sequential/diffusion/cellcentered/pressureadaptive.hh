@@ -304,7 +304,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
         // Intersectioniterator around cell I
-        for (const auto& intersectionI : Dune::intersections(problem_.gridView(), elementI))
+        for (const auto& intersectionI : intersections(problem_.gridView(), elementI))
         {
             if (intersectionI.neighbor())
             {

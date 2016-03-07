@@ -846,10 +846,6 @@ public:
         }
 
         // fill sub control volume data use specialization for this
-        // \todo maybe it would be a good idea to migrate everything
-        // which is dependend of the grid's dimension to
-        // _BoxFVElemGeomHelper in order to benefit from more aggressive
-        // compiler optimizations...
         BoxFVElemGeomHelper::fillSubContVolData(*this, numScv, edgeCoordinates, faceCoordinates);
         subContVolGeometries.clear();
         BoxFVElemGeomHelper::template computeGeometries<BoxGeometry>(*this, numScv, edgeCoordinates, faceCoordinates);
@@ -951,7 +947,7 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        for (const auto& intersection : Dune::intersections(gridView, element))
+        for (const auto& intersection : intersections(gridView, element))
             if (intersection.boundary())
             {
                 int fIdx = intersection.indexInInside();

@@ -82,7 +82,7 @@ SET_BOOL_PROP(HeterogeneousNIProblem, UseMoles, false);
 
 
 /*!
- * \ingroup CO2NIModel
+ * \ingroup CO2Model
  * \ingroup ImplicitTestProblems
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  *
@@ -271,7 +271,7 @@ public:
             FVElementGeometry fvGeometry;
             VolumeVariables volVars;
 
-            for (const auto& element : Dune::elements(this->gridView()))
+            for (const auto& element : elements(this->gridView()))
             {
                 int eIdx = this->elementMapper().index(element);
                 (*rank)[eIdx] = this->gridView().comm().rank();

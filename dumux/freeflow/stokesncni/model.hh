@@ -139,7 +139,7 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             int idx = this->elementMapper().index(element);
 

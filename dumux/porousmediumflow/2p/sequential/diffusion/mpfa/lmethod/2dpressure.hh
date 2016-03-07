@@ -225,7 +225,7 @@ public:
      */
     void storePressureSolution()
     {
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             storePressureSolution(element);
         }
@@ -360,7 +360,7 @@ public:
             ScalarSolutionType *potentialSecond = writer.allocateManagedBuffer(size);
             ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
 
-            for (const auto& element : Dune::elements(problem_.gridView()))
+            for (const auto& element : elements(problem_.gridView()))
             {
                 int idx = problem_.variables().index(element);
                 CellData& cellData = problem_.variables().cellData(idx);
@@ -578,7 +578,7 @@ template<class TypeTag>
 void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 {
     // determine matrix row sizes
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell index
         int eIdxGlobalI = problem_.variables().index(element);
@@ -600,9 +600,9 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             if (intersection.neighbor() && nextIntersection.neighbor())
             {
                 for (const auto& innerIntersection
-                     : Dune::intersections(problem_.gridView(), intersection.outside()))
+                     : intersections(problem_.gridView(), intersection.outside()))
                     for (const auto& innerNextIntersection
-                         : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
+                         : intersections(problem_.gridView(), nextIntersection.outside()))
                     {
                         if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                         {
@@ -625,7 +625,7 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
     this->A_.endrowsizes();
 
     // determine position of matrix entries
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // cell index
         int eIdxGlobalI = problem_.variables().index(element);
@@ -653,9 +653,9 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             if (intersection.neighbor() && nextIntersection.neighbor())
             {
                 for (const auto& innerIntersection
-                     : Dune::intersections(problem_.gridView(), intersection.outside()))
+                     : intersections(problem_.gridView(), intersection.outside()))
                     for (const auto& innerNextIntersection
-                         : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
+                         : intersections(problem_.gridView(), nextIntersection.outside()))
                     {
                         if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                         {
@@ -707,7 +707,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
     BoundaryTypes bcType;
 
     // run through all elements
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         // get common geometry information for the following computation
 
@@ -843,12 +843,12 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                     GlobalPosition globalPosFace34(0);
 
                     for (const auto& intersection23
-                         : Dune::intersections(problem_.gridView(), element2))
+                         : intersections(problem_.gridView(), element2))
                     {
                         bool finished = false;
 
                         for (const auto& intersection43
-                             : Dune::intersections(problem_.gridView(), element4))
+                             : intersections(problem_.gridView(), element4))
                         {
                             if (intersection23.neighbor() && intersection43.neighbor())
                             {
@@ -946,7 +946,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                     bool finished = false;
 
                     for (const auto& intersection2
-                         : Dune::intersections(problem_.gridView(), element2))
+                         : intersections(problem_.gridView(), element2))
                     {
                         if (intersection2.boundary())
                         {
@@ -1077,7 +1077,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
                     for (const auto& intersection4
-                         : Dune::intersections(problem_.gridView(), element4))
+                         : intersections(problem_.gridView(), element4))
                     {
                         if (intersection4.boundary())
                         {
@@ -1164,7 +1164,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    for (const auto& vertex : Dune::vertices(problem_.gridView()))
+    for (const auto& vertex : vertices(problem_.gridView()))
     {
         int vIdxGlobal = problem_.variables().index(vertex);
 
@@ -1803,7 +1803,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
     if (problem_.gridView().comm().size() > 1)
     {
         // set ghost and overlap element entries
-        for (const auto& element : Dune::elements(problem_.gridView()))
+        for (const auto& element : elements(problem_.gridView()))
         {
             if (element.partitionType() == Dune::InteriorEntity)
                 continue;
@@ -1828,7 +1828,7 @@ template<class TypeTag>
 void FvMpfaL2dPressure2p<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    for (const auto& element : Dune::elements(problem_.gridView()))
+    for (const auto& element : elements(problem_.gridView()))
     {
         int eIdxGlobal = problem_.variables().index(element);
 

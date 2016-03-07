@@ -63,14 +63,13 @@ add_dumux_test(test_cc1pniconvection test_cc1pniconvection test_cc1pniconvection
                          ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconvection-00011.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconvection")
 
-# dim < dimWorld tests
+# dim < dimWorld tests with foamgrid
 add_dumux_test(test_box1p1d3d test_box1p1d3d test_box1p1d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox1d3d-reference.vtp
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox1d3d-00002.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p1d3d")
-add_dune_alberta_flags(test_box1p1d3d GRIDDIM 1 WORLDDIM 3)
 
 add_dumux_test(test_box1p2d3d test_box1p2d3d test_box1p2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -78,7 +77,6 @@ add_dumux_test(test_box1p2d3d test_box1p2d3d test_box1p2d3d.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox2d3d-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox2d3d-00002.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p2d3d")
-add_dune_alberta_flags(test_box1p2d3d GRIDDIM 2 WORLDDIM 3)
 
 add_dumux_test(test_cc1p1d3d test_cc1p1d3d test_cc1p1d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -86,7 +84,6 @@ add_dumux_test(test_cc1p1d3d test_cc1p1d3d test_cc1p1d3d.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc1d3d-reference.vtp
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc1d3d-00002.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p1d3d")
-add_dune_alberta_flags(test_cc1p1d3d GRIDDIM 1 WORLDDIM 3)
 
 add_dumux_test(test_cc1p2d3d test_cc1p2d3d test_cc1p2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -94,7 +91,6 @@ add_dumux_test(test_cc1p2d3d test_cc1p2d3d test_cc1p2d3d.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc2d3d-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc2d3d-00002.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2d3d")
-add_dune_alberta_flags(test_cc1p2d3d GRIDDIM 2 WORLDDIM 3)
 
 
 #install sources

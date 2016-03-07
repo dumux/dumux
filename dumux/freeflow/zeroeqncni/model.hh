@@ -173,7 +173,7 @@ public:
         FVElementGeometry fvGeometry;
         VolumeVariables volVars;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             int idx = this->elementMapper().index(element);
             rank[idx] = this->gridView_().comm().rank();
@@ -242,7 +242,7 @@ public:
         asImp_().writeFluxVarsHeader(fluxFile);
         fluxFile << std::endl;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             fvGeometry.update(this->gridView_(), element);
 
@@ -261,7 +261,7 @@ public:
             Scalar sumEddyDiffusivity = 0.0;
             Scalar sumEddyConducitivity = 0.0;
 
-            for (const auto& intersection : Dune::intersections(this->gridView_(), element))
+            for (const auto& intersection : intersections(this->gridView_(), element))
             {
                 int fIdx = intersection.indexInInside();
 

@@ -276,7 +276,7 @@ public:
 
     void initializePressure()
     {
-        for(const auto& vertex : Dune::vertices(gridView_))
+        for(const auto& vertex : vertices(gridView_))
         {
             int vIdxGlobal = this->vertexMapper().index(vertex);
             GlobalPosition globalPos = vertex.geometry().corner(0);
@@ -316,7 +316,7 @@ public:
 
         this->setInitializationRun(initializationRun_);
         std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
-        for(const auto& vertex : Dune::vertices(gridView_))
+        for(const auto& vertex : vertices(gridView_))
         {
             int vIdxGlobal = this->vertexMapper().index(vertex);
             pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
@@ -789,7 +789,7 @@ public:
             valueSet = false;
 
             // loop over all vertices
-            for (const auto& vertex : Dune::vertices(gridView_))
+            for (const auto& vertex : vertices(gridView_))
             {
                 // get global index of current vertex
                 int vIdxGlobal = vertexMapper_.index(vertex);
@@ -831,7 +831,7 @@ public:
         void setPressure(std::vector<Scalar> pInit)
         {
             std::cout << "InitialPressSat: setPressure function called" << std::endl;
-            for (const auto& vertex : Dune::vertices(gridView_))
+            for (const auto& vertex : vertices(gridView_))
             {
                 int vIdxGlobal = vertexMapper_.index(vertex);
                 pInit_[vIdxGlobal] = -pInit[vIdxGlobal];

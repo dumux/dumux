@@ -223,7 +223,7 @@ public:
     {
         residual = 0;
 
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             localResidual().eval(element);
 
             if (isBox)
@@ -268,7 +268,7 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : Dune::elements(gridView_()))
+        for (const auto& element : elements(gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
@@ -888,6 +888,9 @@ protected:
 
     /*!
      * \brief Applies the initial solution for all vertices of the grid.
+     *
+     * \todo the initial condition needs to be unique for
+     *       each vertex. we should think about the API...
      */
     void applyInitialSolution_()
     {
@@ -899,10 +902,7 @@ protected:
 
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume
-        //
-        // TODO: the initial condition needs to be unique for
-        // each vertex. we should think about the API...
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             // deal with the current element
             fvGeometry.update(gridView_(), element);
 
@@ -971,11 +971,11 @@ protected:
         boundaryIndices_.resize(numDofs());
         std::fill(boundaryIndices_.begin(), boundaryIndices_.end(), false);
 
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             Dune::GeometryType geomType = element.geometry().type();
             const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-            for (const auto& intersection : Dune::intersections(gridView_(), element)) {
+            for (const auto& intersection : intersections(gridView_(), element)) {
                 if (intersection.boundary()) {
                     if (isBox)
                     {

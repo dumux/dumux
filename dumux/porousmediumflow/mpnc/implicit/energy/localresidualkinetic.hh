@@ -204,11 +204,10 @@ public:
         const VolumeVariables & up = elemVolVars[upIdx];
         const VolumeVariables & dn = elemVolVars[dnIdx];
 
-        /* todo
-         * CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy?
-         * To be more precise this should be the components enthalpy.
-         * In the same vein: Counter current diffusion is not accounted for here.
-         */
+
+        // CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy?
+        // To be more precise this should be the components enthalpy.
+        // In the same vein: Counter current diffusion is not accounted for here.
         const Scalar transportedThingUp =  up.enthalpy(phaseIdx) ;
         const Scalar transportedThingDn =  dn.enthalpy(phaseIdx) ;
 
@@ -247,7 +246,7 @@ public:
 
         const Scalar ilambda        = iVolVar.thermalConductivity(phaseIdx);
         const Scalar klambda        = kVolVar.thermalConductivity(phaseIdx);
-        // todo which average?
+
         // Using a harmonic average is justified by its properties: if one phase does not conduct energy, there is no transfer
         const Scalar barLambda      = Dumux::harmonicMean(ilambda, klambda) ;
 
@@ -292,7 +291,6 @@ public:
         const  Scalar lambdaNonWetting  = volVars.thermalConductivity(nPhaseIdx);
         const  Scalar lambdaSolid       = volVars.thermalConductivity(sPhaseIdx);
 
-        // todo which average?
         // Using a harmonic average is justified by its properties: if one phase does not conduct energy, there is no transfer
         const Scalar lambdaWN      = Dumux::harmonicMean(lambdaWetting, lambdaNonWetting);
         const Scalar lambdaWS      = Dumux::harmonicMean(lambdaWetting, lambdaSolid);
@@ -571,9 +569,9 @@ public:
         const VolumeVariables & up = elemVolVars[upIdx];
         const VolumeVariables & dn = elemVolVars[dnIdx];
 
-        /* todo
-         * CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy? To be more precise this should be the components enthalpy. In the same vein: Counter current diffusion is not accounted for here.
-         */
+        // CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy?
+        // To be more precise this should be the components enthalpy.
+        // In the same vein: Counter current diffusion is not accounted for here.
         const Scalar transportedThingUp =  up.enthalpy(phaseIdx) ;
         const Scalar transportedThingDn =  dn.enthalpy(phaseIdx) ;
 

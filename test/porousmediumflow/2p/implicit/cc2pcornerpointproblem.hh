@@ -19,6 +19,7 @@
 #ifndef DUMUX_CC2P_CORNERPOINT_PROBLEM_HH
 #define DUMUX_CC2P_CORNERPOINT_PROBLEM_HH
 
+#if HAVE_DUNE_CORNERPOINT
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
@@ -313,7 +314,7 @@ public:
         ScalarField *permX = this->resultWriter().allocateManagedBuffer(numElements);
         ScalarField *permZ = this->resultWriter().allocateManagedBuffer(numElements);
 
-        for (const auto& element : Dune::elements(this->gridView()))
+        for (const auto& element : elements(this->gridView()))
         {
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView(), element);
@@ -339,5 +340,7 @@ private:
     Scalar injectionRate_;
 };
 } //end namespace
+
+#endif // HAVE_DUNE_CORNERPOINT
 
 #endif

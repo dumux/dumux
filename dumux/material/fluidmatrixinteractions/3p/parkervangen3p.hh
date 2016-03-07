@@ -73,32 +73,35 @@ public:
    /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
-     * \param sw wetting phase saturation or sum of wetting phase saturations
+     * \param swe Effective wetting phase saturation
      *
      */
     static Scalar pcgw(const Params &params, const Scalar swe)
     {
-        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGw();
+        assert(0 <= swe && swe <= 1);
+        return pc_(params, swe);
     }
 
   /*!
      * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
      * \param params Array of parameters
-     * \param sw wetting phase saturation or sum of wetting phase saturations
+     * \param swe Effective wetting phase saturation
      */
     static Scalar pcnw(const Params &params, const Scalar swe)
     {
-        return std::pow(std::pow(swe, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaNw();
+        assert(0 <= swe && swe <= 1);
+        return pc_(params, swe)/params.betaNw();
     }
 
     /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
-     * \param St sum of wetting (liquid) phase saturations
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar pcgn(const Params &params, const Scalar ste)
     {
-        return std::pow(std::pow(ste, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha()/params.betaGn();
+        assert(0 <= ste && ste <= 1);
+        return pc_(params,ste)/params.betaGn();
     }
 
      /*!
@@ -143,18 +146,42 @@ public:
      * \param params Array of parameters
      * \param sw Wetting liquid saturation
     */
-    static Scalar dpc_dsw(const Params &params, const Scalar sw)
+    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, const Scalar swe) is deprecated. Use dpc_dswe(const Params &params, const Scalar swe) instead.")
+    static Scalar dpc_dsw(const Params &params, const Scalar swe)
     {
-        DUNE_THROW(Dune::NotImplemented, "dpc/dsw for three phases not implemented! Do it yourself!");
+        return dpc_dswe(params, swe);
+    }
+
+    /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param sw Wetting liquid saturation
+    */
+    static Scalar dpc_dswe(const Params &params, const Scalar swe)
+    {
+        DUNE_THROW(Dune::NotImplemented, "dpc/dswe for three phases not implemented! Do it yourself!");
     }
 
      /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
-     * \param sw Wetting liquid saturation
+     * \param seRegu Effective wetting phase saturation for regularization
     */
+    DUNE_DEPRECATED_MSG("dpcgw_dsw(const Params &params, const Scalar seRegu) is deprecated. Use dpcgw_dswe(const Params &params, const Scalar seRegu) instead.")
     static Scalar dpcgw_dsw(const Params &params, const Scalar seRegu)
+    {
+        return dpcgw_dswe(params, seRegu);
+    }
+
+     /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param seRegu Effective wetting phase saturation for regularization
+    */
+    static Scalar dpcgw_dswe(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
@@ -165,28 +192,51 @@ public:
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
-     * \param sw Wetting liquid saturation
+     * \param seRegu Effective wetting phase saturation for regularization
     */
+    DUNE_DEPRECATED_MSG("dpcnw_dsw(const Params &params, const Scalar seRegu) is deprecated. Use dpcnw_dswe(const Params &params, const Scalar seRegu) instead.")
     static Scalar dpcnw_dsw(const Params &params, const Scalar seRegu)
+    {
+        return dpcnw_dswe(params, seRegu);
+    }
+
+     /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param seRegu Effective wetting phase saturation for regularization
+    */
+    static Scalar dpcnw_dswe(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSeRegu/seRegu/params.vgm()/params.betaNw();
     }
 
-         /*!
+    /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
-     * \param sw Wetting liquid saturation
+     * \param seRegu Effective wetting phase saturation for regularization
     */
+    DUNE_DEPRECATED_MSG("dpcgn_dst(const Params &params, const Scalar seRegu) is deprecated. Use dpcgn_dste(const Params &params, const Scalar seRegu) instead.")
     static Scalar dpcgn_dst(const Params &params, const Scalar seRegu)
+    {
+        return dpcgn_dste(params, seRegu);
+    }
+
+    /*!
+     * \brief Returns the partial derivative of the capillary
+     *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param seRegu Effective wetting phase saturation for regularization
+    */
+    static Scalar dpcgn_dste(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSeRegu/seRegu/params.vgm()/params.betaGn();
     }
-
 
     /*!
      * \brief Returns the partial derivative of the effective
@@ -194,9 +244,21 @@ public:
      * \param params Array of parameters
      * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
+    DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, const Scalar pc) is deprecated. Use dswe_dpc(const Params &params, const Scalar pc) instead.")
     static Scalar dsw_dpc(const Params &params, const Scalar pc)
     {
-        DUNE_THROW(Dune::NotImplemented, "dsw/dpc for three phases not implemented! Do it yourself!");
+        return dswe_dpc(params, pc);
+    }
+
+    /*!
+     * \brief Returns the partial derivative of the effective
+     *        saturation to the capillary pressure.
+     * \param params Array of parameters
+     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar dswe_dpc(const Params &params, const Scalar pc)
+    {
+        DUNE_THROW(Dune::NotImplemented, "dswe/dpc for three phases not implemented! Do it yourself!");
     }
 
     /*!
@@ -208,10 +270,8 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.) \cite delshad1989 <BR>
      *
-     * \param sn Non-wetting liquid saturation
-     * \param sg Gas saturation
-     * \param saturation wetting liquid saturation
      * \param params Array of parameters.
+     * \param swe Effective wetting phase saturation
      */
     static Scalar krw(const Params &params,  const Scalar swe)
     {
@@ -228,13 +288,13 @@ public:
      * or more comprehensive in
      * "Estimation of primary drainage three-phase relative permeability for organic
      * liquid transport in the vadose zone", Leonardo I. Oliveira, Avery H. Demond,
-     * Journal of Contaminant Hydrology 66 (2003), 261-285 \cite oloiveira2003 <BR>
+     * Journal of Contaminant Hydrology 66 (2003), 261-285 \cite oliveira2003 <BR>
      *
      *
-     * \param sw Wetting liquid saturation
-     * \param sg Gas saturation
-     * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
+     * \param swe Effective wetting phase saturation
+     * \param sne Effective non-wetting liquid saturation
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar krn(const Params &params, const Scalar swe, const Scalar sne, const Scalar ste)
     {
@@ -266,23 +326,23 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.) \cite delshad1989 <BR>
      *
-     * \param sw Wetting liquid saturation
-     * \param sn Non-wetting liquid saturation
-     * \param saturation Gas saturation
      * \param params Array of parameters.
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
+//         if((1-ste) < params.sgr())
+//             return 0;
         return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
     }
 
     /*!
      * \brief The relative permeability for a phase.
-     * \param sw Wetting liquid saturation
-     * \param sg Gas saturation
-     * \param sn Non-wetting liquid saturation
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
+     * \param swe Effective wetting phase saturation
+     * \param sne Effective non-wetting liquid saturation
+     * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
     {
@@ -307,6 +367,20 @@ public:
    {
       return params.rhoBulk() * params.KdNAPL();
    }
+
+private:
+
+    /*!
+     * \brief The standard van Genuchten two-phase pc-S relation either with respect to
+     *        the effective wetting phase saturation Swe or the effective total liquid saturation Ste.
+     * \param params Array of parameters.
+     * \param Se Effective wetting phase ortotal liquid  saturation
+     */
+    const static Scalar pc_(const Params &params, const Scalar se)
+    {
+        return std::pow(std::pow(se, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha();
+    }
+
 };
 }
 

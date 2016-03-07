@@ -32,7 +32,7 @@ namespace Dumux
 
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
+ * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
 template<class TypeTag>
 class ThermalConductivitySimpleFluidLumping

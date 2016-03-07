@@ -483,7 +483,7 @@ protected:
         greenElems_ = 0;
 
         // reassemble the elements...
-        for (const auto& element : Dune::elements(gridView_())) {
+        for (const auto& element : elements(gridView_())) {
             if (element.partitionType() == Dune::GhostEntity)
             {
                 asImp_().assembleGhostElement_(element);

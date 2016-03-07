@@ -25,7 +25,6 @@
 #ifndef DUMUX_ELASTIC2P_LOCAL_RESIDUAL_HH
 #define DUMUX_ELASTIC2P_LOCAL_RESIDUAL_HH
 
-#include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 #include <dumux/implicit/box/localresidual.hh>
 #include "properties.hh"
 
@@ -66,10 +65,6 @@ protected:
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
-    //TODO: delete this if not required
-    // only effective porosity update in element variables doesn't work
-    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
-    typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 
 public:
     /*!
@@ -122,83 +117,8 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int fIdx,
-            const bool onBoundary = false) const {
-        //TODO: delete this if not required
-        //      adapts the effective porosity node-wise for evaluation of derivatives.
-        //      At the moment computeFlux is called before computeStorage so effPorosity in
-        //      computeStorage should also be correct.
-
-//        if (fIdx == 0)
-//        {
-//           int numScv = this->element_().template count<dim> ();
-//
-//            LocalFunctionSpace localFunctionSpace(this->problem_().model().jacobianAssembler().gridFunctionSpace());
-//            localFunctionSpace.bind(this->element_());
-//            std::vector<Scalar> values;
-//            localFunctionSpace.vread(this->problem_().model().curSol(), values);
-//
-//
-//            typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
-//            const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();
-//            const unsigned int dispSize = displacementLFS.child(0).size();
-//
-//                    typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;
-//            typedef typename ScalarDispLFS::Traits::FiniteElementType::
-//                            Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
-//            typedef typename ScalarDispLFS::Traits::FiniteElementType::
-//                            Traits::LocalBasisType::Traits::RangeFieldType RF;
-//            typedef typename ScalarDispLFS::Traits::FiniteElementType::
-//                            Traits::LocalBasisType::Traits::DomainFieldType DF;
-//
-//           // calculate the divergence of the displacement
-//            for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
-//            {
-//                    const DimVector& scvCenter = this->fvGeometry_().subContVol[scvIdx].localCenter;
-//
-//                    // evaluate gradient of displacement shape functions
-//                    std::vector<JacobianType_V> vRefShapeGradient(dispSize);
-//                    displacementLFS.child(0).finiteElement().localBasis().evaluateJacobian(scvCenter, vRefShapeGradient);
-//
-//                    // transform gradient to physical element
-//                    const Dune::FieldMatrix<DF,dim,dim> jacInvT = this->element_().geometry().jacobianInverseTransposed(scvCenter);
-//                    std::vector<Dune::FieldVector<RF,dim> > vShapeGradient(dispSize);
-//                    for (size_t i = 0; i < dispSize; i++)
-//                    {
-//                            vShapeGradient[i] = 0.0;
-//                            jacInvT.umv(vRefShapeGradient[i][0],vShapeGradient[i]);
-//                    }
-//
-//                    // calculate gradient of current displacement
-//                    typedef Dune::FieldMatrix<RF, dim, dim> Tensor;
-//                    Tensor uGradient(0.0);
-//                    for(int comp = 0; comp < dim; ++comp){
-//                            const ScalarDispLFS & scalarDispLFS = displacementLFS.child(comp);
-//
-//                            for (size_t i = 0; i < 8; i++)
-//                                    uGradient[comp].axpy(this->curVolVars_()[i].displacement(comp), vShapeGradient[i]);
-//
-//                            for (size_t i = 8; i < scalarDispLFS.size(); i++)
-//                                    uGradient[comp].axpy(values[scalarDispLFS.localIndex(i)], vShapeGradient[i]);
-//                    }
-//
-//                    this->curVolVars_()[scvIdx].divU = 0.0;
-//                    for (int comp = 0; comp < dim; comp++)
-//                            this->curVolVars_()[scvIdx].divU += uGradient[comp][comp];
-//                    if(this->problem_().coupled() == true){
-//                        if (this->curVolVars_()[scvIdx].divU < - this->curVolVars_()[scvIdx].porosity()){
-//                            this->curVolVars_()[scvIdx].effPorosity = this->curVolVars_()[scvIdx].porosity();
-//                            std::cout<<"volume change too large"<<std::endl;
-//                            }
-//                        else{
-//                            this->curVolVars_()[scvIdx].effPorosity = (this->curVolVars_()[scvIdx].porosity()
-//                                            + this->curVolVars_()[scvIdx].divU)/(1.0 + this->curVolVars_()[scvIdx].divU);}
-//                    }
-//                    else
-//                        this->curVolVars_()[scvIdx].effPorosity = this->curVolVars_()[scvIdx].porosity();
-//            }
-//        }
-
+    void computeFlux(PrimaryVariables &flux, int fIdx, const bool onBoundary = false) const
+    {
         FluxVariables fluxVars(this->problem_(), this->element_(),
                 this->fvGeometry_(), fIdx, this->curVolVars_());
 

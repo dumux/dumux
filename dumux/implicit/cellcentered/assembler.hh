@@ -73,7 +73,7 @@ private:
         // mark the red elements and update the tolerance of the
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             int eIdx = this->elementMapper_().index(element);
 
             if (this->delta_[eIdx] > relTol)
@@ -91,7 +91,7 @@ private:
         }
 
         // mark the neighbors also red
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] == ParentType::Red)
@@ -100,7 +100,7 @@ private:
             if (this->delta_[eIdx] > relTol)
             {
                 // also mark the neighbors
-               for (const auto& intersection : Dune::intersections(this->gridView_(), element))
+               for (const auto& intersection : intersections(this->gridView_(), element))
                {
                    if (intersection.neighbor())
                    {
@@ -130,7 +130,7 @@ private:
         // each element
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numElements);
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
 
             int globalI = this->elementMapper_().index(element);
 
@@ -142,7 +142,7 @@ private:
             //    continue;
 
             // loop over all neighbors
-            for (const auto& intersection : Dune::intersections(this->gridView_(), element))
+            for (const auto& intersection : intersections(this->gridView_(), element))
             {
                 if (intersection.neighbor())
                 {
@@ -207,7 +207,7 @@ private:
         (*this->matrix_)[globalI][globalI] = this->model_().localJacobian().mat(0,0);
 
         int j = 0;
-        for (const auto& intersection : Dune::intersections(this->gridView_(), element))
+        for (const auto& intersection : intersections(this->gridView_(), element))
         {
             if (intersection.neighbor())
             {

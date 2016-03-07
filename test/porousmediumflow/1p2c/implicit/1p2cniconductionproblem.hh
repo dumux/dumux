@@ -77,7 +77,7 @@ SET_BOOL_PROP(OnePTwoCNIConductionProblem, ProblemEnableGravity, false);
 
 
 /*!
- * \ingroup OnePTwoCNIModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitTestProblems
  *
  * \brief Test for the OnePTwoCModel in combination with the NI model for a conduction problem:
@@ -215,7 +215,7 @@ public:
             Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
 
 
-            for (const auto& element : Dune::elements(this->gridView()))
+            for (const auto& element : elements(this->gridView()))
             {
                 fvGeometry.update(this->gridView(), element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)

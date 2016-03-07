@@ -33,7 +33,6 @@
 
 namespace Dumux
 {
-
 namespace Properties
 {
 NEW_PROP_TAG(GridView);
@@ -43,6 +42,9 @@ NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(Scalar);
 }
 
+/*!
+ * \brief Base class holding the variables for implicit models.
+ */
 template<class TypeTag>
 class AdaptionHelper
 {
@@ -125,7 +127,7 @@ public:
 
             if(!isBox)
             {
-                for (const auto& element : Dune::elements(levelView))
+                for (const auto& element : elements(levelView))
                 {
                     //get your map entry
                     AdaptedValues &adaptedValues = adaptionMap_[element];
@@ -152,7 +154,7 @@ public:
             }
             else
             {
-                for (const auto& entity : Dune::entities(levelView, Dune::Codim<dofCodim>()))
+                for (const auto& entity : entities(levelView, Dune::Codim<dofCodim>()))
                 {
                     //get your map entry
                     AdaptedValues &adaptedValues = adaptionMap_[entity];
@@ -190,7 +192,7 @@ public:
         {
             LevelGridView levelView = grid_.levelGridView(level);
 
-            for (const auto& element : Dune::elements(levelView))
+            for (const auto& element : elements(levelView))
             {
                 // only treat non-ghosts, ghost data is communicated afterwards
                 if (element.partitionType() == Dune::GhostEntity)

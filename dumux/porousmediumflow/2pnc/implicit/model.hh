@@ -40,7 +40,8 @@ namespace Dumux
  *
  * This model implements two-phase n-component flow of two compressible and
  * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the n components
- * \f$\kappa \in \{ w, a,\cdots \}\f$. The standard multiphase Darcy
+ * \f$\kappa \in \{ w, n,\cdots \}\f$ in combination with mineral precipitation and dissolution.
+ * The solid phases. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
@@ -50,7 +51,7 @@ namespace Dumux
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component
  * \f{eqnarray}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}
+ && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
  {\partial t}
  - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
  \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
@@ -60,6 +61,11 @@ namespace Dumux
  - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
  \alpha \in \{w, g\}
  \f}
+ *
+ * The solid or mineral phases are assumed to consist of a single component.
+ * Their mass balance consist only of a storage and a source term:
+ *  \f$\frac{\partial \varrho_\lambda \phi_\lambda )} {\partial t}
+ *  = q_\lambda\f$
  *
  * All equations are discretized using a vertex-centered finite volume (box)
  * or cell-centered finite volume scheme (this is not done for 2pnc approach yet, however possible) as
@@ -83,11 +89,13 @@ namespace Dumux
  * <ul>
  *  <li> Both phases are present: The saturation is used (either \f$S_n\f$ or \f$S_w\f$, dependent on the chosen <tt>Formulation</tt>),
  *      as long as \f$ 0 < S_\alpha < 1\f$</li>.
- *  <li> Only wetting phase is present: The mass fraction of, e.g., air in the wetting phase \f$X^a_w\f$ is used,
- *      as long as the maximum mass fraction is not exceeded (\f$X^a_w<X^a_{w,max}\f$)</li>
- *  <li> Only non-wetting phase is present: The mass fraction of, e.g., water in the non-wetting phase, \f$X^w_n\f$, is used,
- *      as long as the maximum mass fraction is not exceeded (\f$X^w_n<X^w_{n,max}\f$)</li>
+ *  <li> Only wetting phase is present: The mole fraction of, e.g., air in the wetting phase \f$x^a_w\f$ is used,
+ *      as long as the maximum mole fraction is not exceeded (\f$x^a_w<x^a_{w,max}\f$)</li>
+ *  <li> Only non-wetting phase is present: The mole fraction of, e.g., water in the non-wetting phase, \f$x^w_n\f$, is used,
+ *      as long as the maximum mole fraction is not exceeded (\f$x^w_n<x^w_{n,max}\f$)</li>
  * </ul>
+ *
+ * For the other components, the mole fraction \f$x^\kappa_w\f$ is the primary variable.
  */
 
 template<class TypeTag>
@@ -138,8 +146,6 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
-    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
-
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -166,7 +172,7 @@ public:
 
         setSwitched_(false);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if (!isBox) // i.e. cell-centered discretization
             {
@@ -186,7 +192,7 @@ public:
 
         if (isBox) // i.e. vertex-centered discretization
         {
-            for (const auto& vertex : Dune::vertices(this->gridView_()))
+            for (const auto& vertex : vertices(this->gridView_()))
             {
                 int dofIdxGlobal = this->dofMapper().index(vertex);
                 const GlobalPosition &globalPos = vertex.geometry().corner(0);
@@ -213,7 +219,7 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
@@ -343,7 +349,7 @@ public:
         VolumeVariables volVars;
         ElementVolumeVariables elemVolVars;
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             int eIdxGlobal = this->problem_().elementMapper().index(element);
             (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
@@ -510,7 +516,7 @@ public:
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             fvGeometry.update(this->gridView_(), element);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
@@ -609,8 +615,10 @@ protected:
         switchFlag_ = yesno;
     }
 
-    //  perform variable switch at a vertex; Returns true if a
-    //  variable switch was performed.
+    /*!
+     * \brief  perform variable switch at a vertex; Returns true if a
+     *         variable switch was performed.
+     */
     bool primaryVarSwitch_(SolutionVector &globalSol,
                            const VolumeVariables &volVars, int dofIdxGlobal,
                            const GlobalPosition &globalPos)

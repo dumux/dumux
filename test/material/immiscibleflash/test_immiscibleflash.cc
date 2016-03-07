@@ -32,9 +32,9 @@
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/immiscibleflash.hh>
 
-#include <dumux/material/fluidstates/immisciblefluidstate.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 
 #include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>

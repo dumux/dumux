@@ -275,7 +275,7 @@ void dumuxMessage_(bool start)
             std::cout << "" << std::endl;
             std::cout << "For more information visit dumux.org or contact the mailing list." << std::endl;
         break;
-        //TODO: If you add a case, you have to increase the modulus at the beginning of the function!
+        // Note: If you add a case, you have to increase the modulus at the beginning of this function!
 
         default:    // silence to delight Bernd
             return ;

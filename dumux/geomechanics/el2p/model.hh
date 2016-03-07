@@ -326,7 +326,7 @@ public:
         const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
         // initialize start and end of element iterator
         // loop over all elements (cells)
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             if(element.partitionType() == Dune::InteriorEntity)
             {
 
@@ -710,5 +710,5 @@ private:
 
 };
 }
-#include "el2ppropertydefaults.hh"
+#include "propertydefaults.hh"
 #endif

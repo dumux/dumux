@@ -26,6 +26,7 @@
 
 #include <dune/common/deprecated.hh>
 
+#include <dumux/porousmediumflow/2p2c/implicit/indices.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/localresidual.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
 
@@ -103,7 +104,7 @@ public:
                 continue;
 
             // evaluate boundary conditions for the intersections of the current element
-            for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
+            for (const auto& intersection : intersections(this->gridView_(), this->element_()))
             {
                 // handle only intersections on the boundary
                 if (!intersection.boundary())

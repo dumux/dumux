@@ -52,7 +52,7 @@ namespace Dumux
  *
  * See:
  *
- * R. Reid, et al. (1987, pp. 43-44) \cite reis1987 <BR>
+ * R. Reid, et al. (1987, pp. 43-44) \cite reid1987 <BR>
  *
  * and
  *

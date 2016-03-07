@@ -154,7 +154,7 @@ public:
         setSwitched_(false);
 
         // check, if velocity output can be used (works only for cubes so far)
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if (!isBox) // i.e. cell-centered discretization
             {
@@ -174,7 +174,7 @@ public:
 
         if (isBox) // i.e. vertex-centered discretization
         {
-            for (const auto& vertex : Dune::vertices(this->gridView_()))
+            for (const auto& vertex : vertices(this->gridView_()))
             {
                 int vIdxGlobal = this->dofMapper().index(vertex);
                 const GlobalPosition &globalPos = vertex.geometry().corner(0);
@@ -201,7 +201,7 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : Dune::elements(this->gridView_())) {
+        for (const auto& element : elements(this->gridView_())) {
             if(element.partitionType() == Dune::InteriorEntity)
             {
 
@@ -321,7 +321,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        for (const auto& element : Dune::elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_()))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
@@ -475,37 +475,38 @@ public:
     {
         bool wasSwitched = false;
         int succeeded;
-        try {
+        try
+        {
             for (unsigned i = 0; i < staticDat_.size(); ++i)
                 staticDat_[i].visited = false;
 
             FVElementGeometry fvGeometry;
             static VolumeVariables volVars;
-            for (const auto& element : Dune::elements(this->gridView_()))
+            for (const auto& element : elements(this->gridView_()))
             {
                 fvGeometry.update(this->gridView_(), element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
                     int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                    if (staticDat_[dofIdxGlobal].visited)
-                        continue;
-
-                    staticDat_[dofIdxGlobal].visited = true;
-                    volVars.update(curGlobalSol[dofIdxGlobal],
-                            this->problem_(),
-                            element,
-                            fvGeometry,
-                            scvIdx,
-                            false);
-                    const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-                    if (primaryVarSwitch_(curGlobalSol,
-                            volVars,
-                            dofIdxGlobal,
-                            globalPos))
+                    if (!staticDat_[dofIdxGlobal].visited)
                     {
-                        this->jacobianAssembler().markDofRed(dofIdxGlobal);
-                        wasSwitched = true;
+                        staticDat_[dofIdxGlobal].visited = true;
+                        volVars.update(curGlobalSol[dofIdxGlobal],
+                                      this->problem_(),
+                                      element,
+                                      fvGeometry,
+                                      scvIdx,
+                                      false);
+                        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+                        if (primaryVarSwitch_(curGlobalSol,
+                                              volVars,
+                                              dofIdxGlobal,
+                                              globalPos))
+                        {
+                            this->jacobianAssembler().markDofRed(dofIdxGlobal);
+                            wasSwitched = true;
+                        }
                     }
                 }
             }
@@ -523,10 +524,10 @@ public:
         if (this->gridView_().comm().size() > 1)
             succeeded = this->gridView_().comm().min(succeeded);
 
-        if (!succeeded) {
-                DUNE_THROW(NumericalProblem,
-                        "A process did not succeed in updating the static data.");
-            return;
+        if (!succeeded)
+        {
+            DUNE_THROW(NumericalProblem,
+                       "A process did not succeed in updating the static data.");
         }
 
         // make sure that if there was a variable switch in an

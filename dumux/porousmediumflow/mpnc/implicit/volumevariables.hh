@@ -297,6 +297,7 @@ public:
     /*!
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
+     * \param phaseIdx The phase index
      * \param compIdx The index of the component
      */
     Scalar molarity(const int phaseIdx, int compIdx) const
@@ -304,6 +305,8 @@ public:
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar molarDensity(const int phaseIdx) const
     { return fluidState_.molarDensity(phaseIdx);}
@@ -311,12 +314,16 @@ public:
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar pressure(const int phaseIdx) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar density(const int phaseIdx) const
     { return fluidState_.density(phaseIdx); }

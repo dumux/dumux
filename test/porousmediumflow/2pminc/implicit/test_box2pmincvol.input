@@ -3,12 +3,13 @@ DtInitial = 30 # [s]
 TEnd = 30000 # [s]
 
 [Grid]
-NumberOfCellsX = 48 # [-] resolution in x-direction
-NumberOfCellsY = 32 # [-] resolution in y-direction
-
-UpperRightX = 6 # [m] length of the domain
-UpperRightY = 4 # [m] height of the domain
+UpperRight = 6 4 # [m] upper right corner
+Cells = 48 32 # [-] number of cells
 
 [Problem]
 Name = box2pmincvol # name passed to the output routines
 InteractingContinuaType = 0 # how the continua interact
+
+[Implicit]
+EnablePartialReassemble = 1
+EnableJacobianRecycling = 1
