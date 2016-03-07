@@ -41,11 +41,19 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
   compiler will not print any warning if a deprecated property or parameter name
   is used. However, a run-time warning should appear in the summary lines after
   the corresponding run.
+  - The word "Decoupled" in the TypeTags has been replaced by "Sequential":
+    DecoupledModel -> SequentialModel
+    DecoupledOneP -> SequentialOneP
+    DecoupledTwoP -> SequentialTwoP
+    DecoupledTwoPTwoC -> SequentialTwoPTwoC
+    DecoupledTwoPTwoCAdaptive -> SequentialTwoPTwoCAdaptive
+
 
 * Deprecated CLASSES/FILES, to be removed after 2.9:
   - CubeGridCreator, functionality available in default GridCreator (since 2.8)
   - SimplexGridCreator, functionality available in default GridCreator (since 2.8)
   - DgfGridCreator, functionality available in default GridCreator (since 2.8)
+  - Decoupled...Indices -> Sequential...Indices (BEWARE: no compiler warnings)
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.9:
 

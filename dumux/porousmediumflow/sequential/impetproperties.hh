@@ -51,14 +51,14 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(IMPET, INHERITS_FROM(DecoupledModel));
+NEW_TYPE_TAG(IMPET, INHERITS_FROM(SequentialModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(ImpetCFLFactor);         //!< Scalar factor for additional scaling of the time step
-NEW_PROP_TAG( ImpetSubCFLFactor );//!< Scalar factor for scaling of local sub-time-step
+NEW_PROP_TAG(ImpetSubCFLFactor);//!< Scalar factor for scaling of local sub-time-step
 NEW_PROP_TAG(ImpetIterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
 NEW_PROP_TAG(ImpetIterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
 NEW_PROP_TAG(ImpetMaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags

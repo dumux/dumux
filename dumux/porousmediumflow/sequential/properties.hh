@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_DECOUPLED_PROPERTIES_HH
-#define DUMUX_DECOUPLED_PROPERTIES_HH
+#ifndef DUMUX_SEQUENTIAL_PROPERTIES_HH
+#define DUMUX_SEQUENTIAL_PROPERTIES_HH
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/basicproperties.hh>
@@ -29,7 +29,7 @@
  */
 /*!
  * \file
- * \brief Base file for properties related to sequential (decoupled) models
+ * \brief Base file for properties related to sequential models
  */
 namespace Dumux
 {
@@ -41,7 +41,10 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all decoupled models
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
+NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
+
+//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(SequentialModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -91,7 +94,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Use the leaf grid view if not defined otherwise
-SET_PROP(DecoupledModel, GridView)
+SET_PROP(SequentialModel, GridView)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -101,7 +104,7 @@ public:
 };
 
 //! Default number of intersections for quadrilaterals
-SET_PROP(DecoupledModel, MaxIntersections)
+SET_PROP(SequentialModel, MaxIntersections)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -118,7 +121,7 @@ public:
  *
  * This means shape functions, solution vectors, etc.
  */
-SET_PROP(DecoupledModel, SolutionTypes)
+SET_PROP(SequentialModel, SolutionTypes)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -165,17 +168,17 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;
 };
 
-SET_TYPE_PROP(DecoupledModel,  Variables, VariableClass<TypeTag>);
+SET_TYPE_PROP(SequentialModel,  Variables, VariableClass<TypeTag>);
 
-SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
+SET_TYPE_PROP(SequentialModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
 
 //! Set the default type for the time manager
-SET_TYPE_PROP(DecoupledModel, TimeManager, Dumux::TimeManager<TypeTag>);
+SET_TYPE_PROP(SequentialModel, TimeManager, Dumux::TimeManager<TypeTag>);
 
 /*!
  * \brief Boundary types at a single degree of freedom.
  */
-SET_PROP(DecoupledModel, BoundaryTypes)
+SET_PROP(SequentialModel, BoundaryTypes)
 { private:
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:

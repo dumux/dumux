@@ -43,7 +43,7 @@ void usage(const char *progName, const std::string &errorMsg)
                 "\t-Grid.Cells                    Number of cells in (x,y)-direction [-]\n"
                 "\t-Grid.UpperRight               Coordinates of upper right grid corner [m]\n";
         errorMessageOut += "\n\nThe Optional command line argument:\n"
-                "\t-ModelType                     Can be: box (2p box model, default), cc (2p cc model), decoupled (2p impes model)\n";
+                "\t-ModelType                     Can be: box (2p box model, default), cc (2p cc model), sequential (2p impes model)\n";
         std::cout << errorMessageOut << "\n";
     }
 }
@@ -67,16 +67,16 @@ int main(int argc, char** argv)
             typedef TTAG(CCGeneralLensProblem) ProblemTypeTag;
             return Dumux::start<ProblemTypeTag>(argc, argv, usage);
         }
-        else if (modelType == "decoupled")
+        else if (modelType == "sequential")
         {
-            typedef TTAG(DecoupledGeneralLensProblem) ProblemTypeTag;
+            typedef TTAG(SequentialGeneralLensProblem) ProblemTypeTag;
             return Dumux::start<ProblemTypeTag>(argc, argv, usage);
         }
         else
         {
             Dumux::ParameterException e("Unknown ModelType: " + modelType);
             std::cerr << e << ". Abort!" << std::endl
-                      << "ModelType can be: box (2p box model), cc (2p cc model), decoupled (2p impes model)" << std::endl;
+                      << "ModelType can be: box (2p box model), cc (2p cc model), sequential (2p impes model)" << std::endl;
             exit(1);
         }
     }

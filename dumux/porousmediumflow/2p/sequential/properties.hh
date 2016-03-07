@@ -27,8 +27,8 @@
  * \brief Defines the properties required for (immiscible) two-phase sequential models.
  */
 
-#ifndef DUMUX_2PPROPERTIES_DECOUPLED_HH
-#define DUMUX_2PPROPERTIES_DECOUPLED_HH
+#ifndef DUMUX_2PPROPERTIES_SEQUENTIAL_HH
+#define DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 
 //Dumux-includes
 #include <dumux/porousmediumflow/sequential/properties.hh>
@@ -52,8 +52,11 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The TypeTag for decoupled two-phase problems
-NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(DecoupledModel));
+//! The TypeTag for sequential two-phase problems
+NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
+
+//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
+NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(SequentialTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -96,54 +99,52 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 //! Set number of equations to 2 for isothermal two-phase models
-SET_INT_PROP(DecoupledTwoP, NumEq, 2);
+SET_INT_PROP(SequentialTwoP, NumEq, 2);
 
 //! Set number of phases to 2 for two-phase models
-SET_INT_PROP(DecoupledTwoP, NumPhases, 2);//!< The number of phases in the 2p model is 2
+SET_INT_PROP(SequentialTwoP, NumPhases, 2);//!< The number of phases in the 2p model is 2
 
 //! Set number of components to 1 for immiscible two-phase models
-SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
+SET_INT_PROP(SequentialTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
 //! Set \f$p_w\f$-\f$S_w\f$ formulation as default two-phase formulation
-SET_INT_PROP(DecoupledTwoP,
-    Formulation,
-    DecoupledTwoPCommonIndices::pwsw);
+SET_INT_PROP(SequentialTwoP, Formulation, DecoupledTwoPCommonIndices::pwsw);
 
 //! Chose the set of indices depending on the chosen formulation
-SET_PROP(DecoupledTwoP, Indices)
+SET_PROP(SequentialTwoP, Indices)
 {
 typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
 
 //! Set the default pressure formulation according to the chosen two-phase formulation
-SET_INT_PROP(DecoupledTwoP,
+SET_INT_PROP(SequentialTwoP,
     PressureFormulation,
     GET_PROP_TYPE(TypeTag, Indices)::pressureType);
 
 //! Set the default saturation formulation according to the chosen two-phase formulation
-SET_INT_PROP(DecoupledTwoP,
+SET_INT_PROP(SequentialTwoP,
     SaturationFormulation,
     GET_PROP_TYPE(TypeTag, Indices)::saturationType);
 
 //! Set the default velocity formulation according to the chosen two-phase formulation
-SET_INT_PROP(DecoupledTwoP,
+SET_INT_PROP(SequentialTwoP,
     VelocityFormulation,
     GET_PROP_TYPE(TypeTag, Indices)::velocityDefault);
 
 //! Disable compressibility by default
-SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
+SET_BOOL_PROP(SequentialTwoP, EnableCompressibility, false);
 
-//! Set general decoupled VariableClass as default
-SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass<TypeTag>);
+//! Set general sequential VariableClass as default
+SET_TYPE_PROP(SequentialTwoP, Variables, VariableClass<TypeTag>);
 
 //! Set standart CellData of immiscible two-phase models as default
-SET_TYPE_PROP(DecoupledTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
+SET_TYPE_PROP(SequentialTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
 
 //! Set default fluid system
-SET_TYPE_PROP(DecoupledTwoP, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);
+SET_TYPE_PROP(SequentialTwoP, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);
 
 //! Set default fluid state
-SET_PROP(DecoupledTwoP, FluidState)
+SET_PROP(SequentialTwoP, FluidState)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -153,13 +154,13 @@ public:
 };
 
 //! The spatial parameters to be employed. Use FVSpatialParams by default.
-SET_TYPE_PROP(DecoupledTwoP, SpatialParams, FVSpatialParams<TypeTag>);
+SET_TYPE_PROP(SequentialTwoP, SpatialParams, FVSpatialParams<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_PROP(DecoupledTwoP, MaterialLawParams)
+SET_PROP(SequentialTwoP, MaterialLawParams)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -169,14 +170,14 @@ public:
 };
 
 //! Default error term factor
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermFactor, 0.5);
+SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermFactor, 0.5);
 //! Default lower threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermLowerBound, 0.1);
+SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermLowerBound, 0.1);
 //! Default upper threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermUpperBound, 0.9);
+SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermUpperBound, 0.9);
 
 // enable gravity by default
-SET_BOOL_PROP(DecoupledTwoP, ProblemEnableGravity, true);
+SET_BOOL_PROP(SequentialTwoP, ProblemEnableGravity, true);
 // \}
 }
 

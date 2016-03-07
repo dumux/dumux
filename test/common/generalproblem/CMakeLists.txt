@@ -19,7 +19,7 @@ add_dumux_test(test_general_dec test_general test_generalproblem2p.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/generallens_decoupled-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/generallens_decoupled-00003.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_general -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_generalproblem2p_reference.input -ModelType decoupled")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_general -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_generalproblem2p_reference.input -ModelType sequential")
 
 #install sources
 install(FILES

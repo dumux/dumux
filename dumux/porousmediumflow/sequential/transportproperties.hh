@@ -41,16 +41,16 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Transport, INHERITS_FROM(DecoupledModel));
+NEW_TYPE_TAG(Transport, INHERITS_FROM(SequentialModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( TransportSolutionType);
-NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
-NEW_PROP_TAG( ImpetCFLFactor );
-NEW_PROP_TAG( ImpetSubCFLFactor );
-NEW_PROP_TAG( ImpetSwitchNormals );
+NEW_PROP_TAG(TransportSolutionType);
+NEW_PROP_TAG(EvalCflFluxFunction); //!< Type of the evaluation of the CFL-condition
+NEW_PROP_TAG(ImpetCFLFactor);
+NEW_PROP_TAG(ImpetSubCFLFactor);
+NEW_PROP_TAG(ImpetSwitchNormals);
 NEW_PROP_TAG(ImpetPorosityThreshold);
 NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);
 

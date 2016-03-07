@@ -45,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //!  TypeTag for grid-adaptive two-phase IMPES scheme
-NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, DecoupledTwoP));
+NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, SequentialTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

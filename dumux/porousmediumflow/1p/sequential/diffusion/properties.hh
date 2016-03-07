@@ -41,7 +41,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for 1p pressure models
-NEW_TYPE_TAG(PressureOneP, INHERITS_FROM(Pressure, DecoupledOneP));
+NEW_TYPE_TAG(PressureOneP, INHERITS_FROM(Pressure, SequentialOneP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

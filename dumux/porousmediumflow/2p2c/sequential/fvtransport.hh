@@ -41,7 +41,7 @@ namespace Properties
 {
 NEW_PROP_TAG( TimeManagerSubTimestepVerbosity );
 
-SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
+SET_INT_PROP(SequentialModel, TimeManagerSubTimestepVerbosity, 0);
 }
 
 //! Compositional transport step in a Finite Volume discretization

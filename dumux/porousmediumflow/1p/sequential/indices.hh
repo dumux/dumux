@@ -20,10 +20,10 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the decoupled one-phase model.
+ * \brief Defines the indices required for the sequential one-phase model.
  */
-#ifndef DUMUX_DECOUPLED_1P_INDICES_HH
-#define DUMUX_DECOUPLED_1P_INDICES_HH
+#ifndef DUMUX_SEQUENTIAL_1P_INDICES_HH
+#define DUMUX_SEQUENTIAL_1P_INDICES_HH
 
 namespace Dumux
 {
@@ -35,11 +35,13 @@ namespace Dumux
 /*!
  * \brief The common indices for the 1-p models.
  */
-struct DecoupledOnePCommonIndices
+struct SequentialOnePCommonIndices
 {
-    // Formulations
-    static const int pressureEqIdx = 0;//!< Index of the pressure equation
+   static const int pressureEqIdx = 0;//!< Index of the pressure equation
 };
+
+struct DecoupledOnePCommonIndices : public SequentialOnePCommonIndices
+{} DUNE_DEPRECATED_MSG("Use SequentialOnePCommonIndices instead.");
 
 // \}
 } // namespace Dumux

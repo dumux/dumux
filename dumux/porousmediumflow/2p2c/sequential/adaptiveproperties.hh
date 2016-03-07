@@ -24,7 +24,7 @@
  *
  * \file
  *
- * \brief Defines the properties required for the adaptive decoupled 2p2c models.
+ * \brief Defines the properties required for the adaptive sequential 2p2c models.
  */
 #ifndef DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 #define DUMUX_2P2CADAPTIVE_PROPERTIES_HH
@@ -37,7 +37,7 @@ namespace Dumux
 
 //****** forward declarations  ******//
 template<class TypeTag>
-struct DecoupledTwoPTwoCIndicesAdaptive;
+struct SequentialTwoPTwoCIndicesAdaptive;
 template<class TypeTag>
 class FV2dPressure2P2CAdaptive;
 template<class TypeTag>
@@ -53,7 +53,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tag for the compositional two-phase problems
-NEW_TYPE_TAG(DecoupledTwoPTwoCAdaptive, INHERITS_FROM(DecoupledTwoPTwoC));
+NEW_TYPE_TAG(SequentialTwoPTwoCAdaptive, INHERITS_FROM(SequentialTwoPTwoC));
+
+//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
+NEW_TYPE_TAG(DecoupledTwoPTwoCAdaptive, INHERITS_FROM(SequentialTwoPTwoCAdaptive));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -76,17 +79,17 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(DecoupledTwoPTwoCAdaptive, AdaptiveGrid, true);
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, GridTypeIndices, GridTypes); //! Property not used but default necessary for mpfa2p
-SET_BOOL_PROP(DecoupledTwoPTwoCAdaptive, GridAdaptEnableMultiPointFluxApproximation, true); //!< applies an mpfa method around hanging nodes
-SET_INT_PROP(DecoupledTwoPTwoCAdaptive, GridAdaptMaxInteractionVolumes, 4); //!< Uses up to 4 interaction regions as default
+SET_BOOL_PROP(SequentialTwoPTwoCAdaptive, AdaptiveGrid, true);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, GridTypeIndices, GridTypes); //! Property not used but default necessary for mpfa2p
+SET_BOOL_PROP(SequentialTwoPTwoCAdaptive, GridAdaptEnableMultiPointFluxApproximation, true); //!< applies an mpfa method around hanging nodes
+SET_INT_PROP(SequentialTwoPTwoCAdaptive, GridAdaptMaxInteractionVolumes, 4); //!< Uses up to 4 interaction regions as default
 
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, CellData, CellData2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, Variables, VariableClass2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, Indices, DecoupledTwoPTwoCIndicesAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, CellData, CellData2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, Variables, VariableClass2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, Indices, SequentialTwoPTwoCIndicesAdaptive<TypeTag>);
 // Set the model properties
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, PressureModel, FV2dPressure2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, PressureModel, FV2dPressure2P2CAdaptive<TypeTag>);
 }
 
 
@@ -99,13 +102,17 @@ SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, PressureModel, FV2dPressure2P2CAdaptive
  * errors in case those Indice are really applied somewhere.
  */
 template <class TypeTag>
-struct DecoupledTwoPTwoCIndicesAdaptive : public DecoupledTwoPTwoCIndices<TypeTag>
+struct SequentialTwoPTwoCIndicesAdaptive : public SequentialTwoPTwoCIndices<TypeTag>
 {
     static const int pressureIdx = 0;
     static const int saturationIdx = 0;
     static const int pressureEqIdx = 0;
     static const int satEqIdx = 0;
 };
+
+template <class TypeTag>
+struct DecoupledTwoPTwoCIndicesAdaptive : public SequentialTwoPTwoCIndicesAdaptive<TypeTag>
+{} DUNE_DEPRECATED_MSG("Use SequentialTwoPTwoCIndicesAdaptive instead.");
 
 // \}
 
