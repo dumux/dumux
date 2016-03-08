@@ -29,7 +29,7 @@
 #include <dumux/geomechanics/el1p2c/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include "el1p2cspatialparams.hh"
 #include <dumux/linear/amgbackend.hh>
 
@@ -53,7 +53,7 @@ namespace Dumux
     { private:
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     public:
-        typedef Dumux::FluidSystems::H2ON2LiquidPhase<Scalar, false> type;
+        typedef Dumux::FluidSystems::H2ON2<Scalar, false> type;
     };
 
     // Set the soil properties
