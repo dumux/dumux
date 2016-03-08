@@ -40,6 +40,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup ConstraintSolver
  * \brief Computes all quantities of a generic fluid state if a
  *        reference phase has been specified.
  *
@@ -48,21 +49,32 @@ namespace Dumux {
  * constraint solver assumes thermodynamic equilibrium. It assumes the
  * following quantities to be set:
  *
- * - composition (mole+mass fractions) of the *reference* phase
- * - temperature of the *reference* phase
- * - saturations of *all* phases
- * - pressures of *all* phases
+ * - composition (mole+mass fractions) of the *reference* phase \f$x^\kappa_\beta\f$
+ * - temperature of the *reference* phase \f$T_\beta\f$
+ * - saturations of *all* phases \f$S_\alpha\f$, \f$S_\beta\f$
+ * - pressures of *all* phases \f$p_\alpha\f$, \f$p_\beta\f$
+ *
+ *  \f$ f^\kappa_\beta = f^\kappa_\alpha = \Phi^\kappa_\alpha(\{x^\lambda_\alpha \}, T_\alpha, p_\alpha)  p_\alpha x^\kappa_\alpha\; \f$,
+ *
+ *  \f$ p_\alpha = p_\beta + p_{c\beta\alpha}\; \f$,
  *
  * after calling the solve() method the following quantities are
  * calculated in addition:
  *
- * - temperature of *all* phases
+ * - temperature of *all* phases \f$T_\alpha\f$, \f$T_\beta\f$
  * - density, molar density, molar volume of *all* phases
- * - composition in mole and mass fractions and molaries of *all* phases
- * - mean molar masses of *all* phases
+ *   \f$\rho_\alpha\f$, \f$\rho_\beta\f$, \f$\rho_{mol, \alpha}\f$, \f$\rho_{mol, \beta}\f$,
+ *   \f$V_{mol, \alpha}\f$, \f$V_{mol, \beta}\f$
+ * - composition in mole and mass fractions and molarities of *all* phases
+ *   \f$x^\kappa_\alpha\f$, \f$x^\kappa_\beta\f$, \f$X^\kappa_\alpha\f$, \f$X^\kappa_\beta\f$,
+ *   \f$c^\kappa_\alpha\f$, \f$c^\kappa_\beta\f$
+ * - mean molar masses of *all* phases \f$M_\alpha\f$, \f$M_\beta\f$
  * - fugacity coefficients of *all* components in *all* phases
+ *   \f$\Phi^\kappa_\alpha\f$, \f$\Phi^\kappa_\beta\f$
  * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
+ *   \f$\mu_\alpha\f$, \f$\mu_\beta\f$
  * - if the setEnthalpy parameter is true, also specific enthalpies and internal energies of *all* phases
+ *   \f$h_\alpha\f$, \f$h_\beta\f$, \f$u_\alpha\f$, \f$u_\beta\f$
  */
 template <class Scalar, class FluidSystem>
 class ComputeFromReferencePhase

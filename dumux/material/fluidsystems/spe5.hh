@@ -19,16 +19,7 @@
 /*!
  * \file
  *
- * \brief The mixing rule for the oil and the gas phases of the SPE5 problem.
- *
- * This problem comprises \f$\mathrm{H_2O}\f$, \f$\mathrm{C_1}\f$, \f$\mathrm{C_3}\f$, \f$\mathrm{C_6}\f$,
- * \f$\mathrm{C_10}\f$, \f$\mathrm{C_15}\f$ and \f$\mathrm{C_20}\f$ as components.
- *
- * See:
- *
- * J.E. Killough, et al.: Fifth Comparative Solution Project:
- * Evaluation of Miscible Flood Simulators, Ninth SPE Symposium on
- * Reservoir Simulation, 1987 \cite SPE5
+ * \brief @copybrief Dumux::FluidSystems::Spe5
  */
 #ifndef DUMUX_SPE5_FLUID_SYSTEM_HH
 #define DUMUX_SPE5_FLUID_SYSTEM_HH
@@ -46,8 +37,14 @@ namespace FluidSystems
  * \ingroup Fluidsystems
  * \brief The fluid system for the SPE-5 benchmark problem.
  *
- * This problem comprises \f$\mathrm{H_2O}\f$, \f$\mathrm{C_1}\f$, \f$\mathrm{C_3}\f$, \f$\mathrm{C_6}\f$,
- * \f$\mathrm{C_10}\f$, \f$\mathrm{C_15}\f$ and \f$\mathrm{C_20}\f$ as components.
+ * A three-phase fluid system featuring gas, oil and water as phases and the seven
+ * components distilled water, Methane \f$(\mathrm{C_1})\f$, Propane \f$(\mathrm{C_3})\f$,
+ * Pentane \f$(\mathrm{C_5})\f$, Heptane \f$(\mathrm{C_7})\f$, Decane
+ * \f$(\mathrm{C_{10}})\f$, Pentadecane \f$(\mathrm{C_{15}})\f$ and Icosane
+ * \f$(\mathrm{C_{20}})\f$. For the water phase the IAPWS-97 formulation is used as
+ * equation of state, while for the gas and oil phases a Peng-Robinson
+ * equation of state with slightly modified parameters is used. This fluid system is highly
+ * non-linear, and the gas and oil phases also cannot be considered ideal.
  *
  * See:
  *

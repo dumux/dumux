@@ -20,8 +20,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with a liquid and a gaseous phase and \f$\mathrm{H_2O}\f$ and \f$\mathrm{Air}\f$
- *        as components.
+ * \brief @copybrief Dumux::FluidSystems::H2OAir
  */
 #ifndef DUMUX_H2O_AIR_SYSTEM_HH
 #define DUMUX_H2O_AIR_SYSTEM_HH
@@ -55,8 +54,10 @@ namespace FluidSystems
  * \brief A compositional twophase fluid system with water and air as
  *        components in both, the liquid and the gas phase.
  *
- *  This fluidsystem is applied by default with the tabulated version of
- *  water of the IAPWS-formulation.
+ *  This fluidsystem features gas and liquid phases of distilled water
+ * \f$(\mathrm{H_2O})\f$) and air (Pseudo component composed of \f$\mathrm{79\%\;N_2}\f$,
+ * \f$\mathrm{20\%\;O_2}\f$ and \f$\mathrm{1\%\;Ar}\f$) as components. It is applied by
+ * default with the tabulated version of water of the IAPWS-formulation.
  *
  *  To change the component formulation (i.e. to use nontabulated or
  *  incompressible water), or to switch on verbosity of tabulation,

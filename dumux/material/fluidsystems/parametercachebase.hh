@@ -27,6 +27,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup ParameterCache
  * \brief The base class of the parameter cache classes for fluid systems
  */
 template <class Implementation>
@@ -43,6 +44,13 @@ public:
     ParameterCacheBase()
     {}
 
+    /*!
+     * \brief Update all cached quantities for all phases.
+     *
+     * The <tt>except</tt> argument contains a bit field of the  quantities
+     * which have not been modified since the last call to an <tt>update()</tt>
+     * method.
+     */
     template <class FluidState>
     void updateAll(const FluidState &fs, int exceptQuantities = None)
     {
@@ -50,7 +58,10 @@ public:
             asImp_().updatePhase(fs, phaseIdx);
     }
 
-
+    /*!
+     * \brief Update all cached quantities which depend on the pressure of any
+     * fluid phase.
+     */
     template <class FluidState>
     void updateAllPressures(const FluidState &fs)
     {
@@ -58,6 +69,10 @@ public:
             asImp_().updatePhase(fs, phaseIdx);
     }
 
+    /*!
+     * \brief Update all cached quantities which depend on the temperature of any
+     * fluid phase.
+     */
     template <class FluidState>
     void updateAllTemperatures(const FluidState &fs)
     {
@@ -68,6 +83,9 @@ public:
 
     /*!
      * \brief Update all cached parameters of a specific fluid phase
+     *
+     * The quantities specified by the <tt>except</tt> bit field have not been
+     * modified since since the last call to an <tt>update()</tt> method.
      */
     template <class FluidState>
     void updatePhase(const FluidState &fs, int phaseIdx, int exceptQuantities = None)

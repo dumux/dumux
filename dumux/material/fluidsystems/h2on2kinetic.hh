@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief @copybrief Dumux::FluidSystems::H2ON2Kinetic
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
@@ -43,7 +43,8 @@ namespace FluidSystems
 {
 /*!
  * \ingroup Fluidsystems
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase fluid system featuring gas and liquid phases and destilled
+ * water \f$(\mathrm{H_2O})\f$ and pure molecular Nitrogen \f$(\mathrm{N_2})\f$ as components.
  */
 template <class Scalar, bool useComplexRelations = true>
 class H2ON2Kinetic :

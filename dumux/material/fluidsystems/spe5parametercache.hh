@@ -37,6 +37,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Fluidsystems
+ * \ingroup ParameterCache
  * \brief Specifies the parameters required by the SPE5 problem which
  *        are dependend on the thermodynamic state.
  */

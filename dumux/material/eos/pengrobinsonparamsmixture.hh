@@ -44,6 +44,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup EOS
  * \brief The mixing rule for the oil and the gas phases of the SPE5 problem.
  *
  * This problem comprises \f$H_2O\f$, \f$C_1\f$, \f$C_3\f$, \f$C_6\f$,

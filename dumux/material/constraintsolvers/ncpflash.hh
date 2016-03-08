@@ -34,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup ConstraintSolver
  * \brief Determines the phase compositions, pressures and saturations
  *        given the total mass of all components.
  *
