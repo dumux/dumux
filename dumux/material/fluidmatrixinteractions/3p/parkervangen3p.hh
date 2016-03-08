@@ -293,10 +293,10 @@ public:
      *
      * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar krn(const Params &params, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar krn(const Params &params, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         Scalar krn;
         krn = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
@@ -306,16 +306,14 @@ public:
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((sne - params.snr()/ (1-params.swr())), 1.0), 0.0);
+            Scalar resIncluded = std::max(std::min((sn - params.snr()/ (1-params.swr())), 1.0), 0.0);
             krn *= std::sqrt(resIncluded );
         }
         else
-            krn *= std::sqrt(sne / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
-
+            krn *= std::sqrt(sn / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
         return krn;
     }
-
 
     /*!
      * \brief The relative permeability for the non-wetting phase
@@ -331,9 +329,30 @@ public:
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
-//         if((1-ste) < params.sgr())
-//             return 0;
+        assert(0 <= ste && ste <= 1);
         return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability for the
+     *        gas phase in regard to the total liquid saturation of
+     *        the medium as implied by the van Genuchten
+     *        parameterization.
+     *
+     * \param ste The mobile total liquid saturation.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     */
+    static Scalar dkrg_dste(const Params &params, Scalar ste)
+    {
+        assert(0 < ste && ste <= 1);
+
+        const Scalar x = std::pow(ste, 1.0/params.vgm());
+        return
+            -std::pow(1.0 - x, 2*params.vgm())
+            *std::pow(1.0 - ste, -2.0/3)
+            *(1.0/3 + 2*x/ste);
     }
 
     /*!
@@ -341,17 +360,17 @@ public:
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         switch (phaseIdx)
         {
         case 0:
             return krw(params, swe);
         case 1:
-            return krn(params, swe, sne, ste);
+            return krn(params, swe, sn, ste);
         case 2:
             return krg(params, ste);
         }

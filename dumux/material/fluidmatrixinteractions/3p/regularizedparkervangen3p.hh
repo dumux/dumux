@@ -351,21 +351,19 @@ public:
      *
      * \param params Array of parameters.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar krn(const Params &params, Scalar swe, Scalar sne, Scalar ste)
+    static Scalar krn(const Params &params, Scalar swe, Scalar sn, Scalar ste)
     {
-        swe = std::min(swe, 1.0);
-        ste = std::min(ste, 1.0);
+        swe = std::max(std::min(swe, 1.0), 0.0);
+        ste = std::max(std::min(ste, 1.0), 0.0);
 
-        //use regularization
-        if(swe <= 0.0) swe = 0.0;
-        if(ste <= 0.0) ste = 0.0;
-        if(ste - swe <= 0.0) return 0.0;
+        if(ste - swe <= 0.0)
+            return 0.0;
 
         //or use actual material law
-        return ParkerVanGen3P::krn(params, swe, sne, ste);
+        return ParkerVanGen3P::krn(params, swe, sn, ste);
     }
 
 
@@ -383,20 +381,30 @@ public:
      */
     static Scalar krg(const Params &params, const Scalar ste)
     {
-        //use regularization
+        //return 0 if there is no gas
         if(ste > 1.0)
             return 0.0;
-        if(ste < 0.0)
-            return 1.0;
 
-        //get the absolute gas phase saturation
-        const Scalar st = ste*(1 - params.swr()) + params.swr();
-        const Scalar sg = 1.0 - st;
+        // use linear regularization for very high gas saturations
+        // to avoid a kink in the curve and to maintain a slope for
+        // the Newton solver
+        const Scalar threshold = 1e-3;
+        if(ste <= threshold)
+        {
+            const Scalar mSwr = ParkerVanGen3P::dkrg_dste(params, threshold);
+            const Scalar ySwr = ParkerVanGen3P::krg(params, threshold);
+            return ySwr + mSwr*(ste - threshold);
+        }
 
+        // For very low gas saturations:
         // We use a scaling factor that decreases the gas phase permeability quite fast a very low gas phase
         // saturations, thus making that phase virtually immobile.
         // This prevents numerical issues related to the degeneration of the gas phase mass balance for the 3p3c model
         // at very low gas phase saturations.
+
+        //get the absolute gas phase saturation
+        const Scalar st = ste*(1 - params.swr()) + params.swr();
+        const Scalar sg = 1.0 - st;
         const Scalar scalFact = (sg > 0.1) ? 1.0 : std::max(0.0,
                                                             (sg - params.sgr())/(0.1 - params.sgr()));
 
@@ -409,17 +417,17 @@ public:
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
-     * \param sne Effective non-wetting liquid saturation
+     * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
      */
-    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sne, const Scalar ste)
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         switch (phaseIdx)
         {
         case 0:
             return krw(params, swe);
         case 1:
-            return krn(params, swe, sne, ste);
+            return krn(params, swe, sn, ste);
         case 2:
             return krg(params, ste);
         }
