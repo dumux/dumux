@@ -47,7 +47,6 @@ namespace FluidSystems
  * distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
  * \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_8H_{10}})\f$ as components. It assumes all phases to be ideal mixtures.
  */
- */
 template <class Scalar,
           class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
 class H2OAirXylene
