@@ -31,6 +31,7 @@
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/linear/amgbackend.hh>
 
 #include "richardslensspatialparams.hh"
 
@@ -65,6 +66,9 @@ public:
 
 // Enable gravity
 SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
+
+// Use the AMG backend to allow parallel computation
+SET_TYPE_PROP(RichardsLensProblem, LinearSolver, AMGBackend<TypeTag>);
 
 //! Use pressure [Pa] or pressure head [cm] formulation
 SET_BOOL_PROP(RichardsLensProblem, UseHead, false);
