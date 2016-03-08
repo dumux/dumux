@@ -404,7 +404,8 @@ public:
     }
 
     /*!
-     * \brief Set the fugacity of a component in a phase \f$\mathrm{[Pa]}\f$
+     * \brief Set the fugacity coefficient \f$\Phi^\kappa_\alpha\f$ of component \f$\kappa\f$
+     * in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$
      */
     void setFugacityCoefficient(int phaseIdx, int compIdx, Scalar value)
     { fugacityCoefficient_[phaseIdx][compIdx] = value; }
