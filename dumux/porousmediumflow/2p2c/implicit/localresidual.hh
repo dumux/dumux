@@ -195,12 +195,13 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      */
     void computeFlux(PrimaryVariables &flux, const int fIdx, bool onBoundary=false) const
     {
-        FluxVariables fluxVars(this->problem_(),
-                               this->element_(),
-                               this->fvGeometry_(),
-                               fIdx,
-                               this->curVolVars_(),
-                               onBoundary);
+        FluxVariables fluxVars;
+        fluxVars.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->curVolVars_(),
+                        onBoundary);
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, fluxVars);

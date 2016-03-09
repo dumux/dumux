@@ -46,6 +46,7 @@ namespace Dumux
 template <class TypeTag>
 class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
+    friend typename GET_PROP_TYPE(TypeTag, BaseFluxVariables); // be friends with base class
     typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -82,7 +83,7 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -91,14 +92,49 @@ public:
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ThreePThreeCFluxVariables(const Problem &problem,
                               const Element &element,
                               const FVElementGeometry &fvGeometry,
                               const int fIdx,
                               const ElementVolumeVariables &elemVolVars,
                               const bool onBoundary = false)
-    : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
+    : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ThreePThreeCFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
+        BaseFluxVariables::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
+        calculatePorousDiffCoeff_(problem, element, elemVolVars);
+    }
+
+private:
+    void calculateGradients_(const Problem &problem,
+                             const Element &element,
+                             const ElementVolumeVariables &elemVolVars)
+    {
+        // initialize to zero
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             density_[phaseIdx] = Scalar(0);
             molarDensity_[phaseIdx] = Scalar(0);
@@ -110,15 +146,8 @@ public:
             moleFractionCompGGrad_[phaseIdx] = Scalar(0);
         }
 
-        calculateGradients_(problem, element, elemVolVars);
-        calculatePorousDiffCoeff_(problem, element, elemVolVars);
-    };
+        BaseFluxVariables::calculateGradients_(problem, element, elemVolVars);
 
-private:
-    void calculateGradients_(const Problem &problem,
-                             const Element &element,
-                             const ElementVolumeVariables &elemVolVars)
-    {
         // calculate gradients
         GlobalPosition tmp(0.0);
         for (unsigned int idx = 0;
@@ -209,6 +238,7 @@ private:
         }
     }
 
+    DUNE_DEPRECATED_MSG("This method will be removed without replacement!")
     Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementVolumeVariables &elemVolVars)
     {
         static const Scalar eps = 1e-2;

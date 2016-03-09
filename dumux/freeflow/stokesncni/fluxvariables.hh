@@ -46,6 +46,8 @@ namespace Dumux
 template <class TypeTag>
 class StokesncniFluxVariables : public StokesncFluxVariables<TypeTag>
 {
+    friend class StokesFluxVariables<TypeTag>; // be friends with grandparent
+    friend class StokesncFluxVariables<TypeTag>; // be friends with parent
     typedef StokesncFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -66,16 +68,19 @@ class StokesncniFluxVariables : public StokesncFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
+    // old ctor
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     StokesncniFluxVariables(const Problem &problem,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
                             const int fIdx,
                             const ElementVolumeVariables &elemVolVars,
-                            const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-    {
-        calculateValues_(problem, element, elemVolVars);
-    }
+                            const bool onBoundary = false) {}
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    StokesncniFluxVariables() = default;
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the integration point.
@@ -120,6 +125,8 @@ protected:
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
+        ParentType::calculateValues_(problem, element, elemVolVars);
+
         temperature_ = Scalar(0);
         thermalConductivity_ = Scalar(0);
         heatCapacity_ = Scalar(0);
@@ -127,7 +134,7 @@ protected:
 
         // calculate gradients and secondary variables at IPs
         for (int scvIdx = 0;
-             scvIdx < this->fvGeometry_.numScv;
+             scvIdx < this->fvGeometry_().numScv;
              scvIdx++) // loop over vertices of the element
         {
             temperature_ += elemVolVars[scvIdx].temperature() *
@@ -152,7 +159,7 @@ protected:
         for (unsigned int i = 0; i < numComponents; ++i)
         {
             componentEnthalpy_[i] = Scalar(0.0);
-            for (int scvIdx = 0; scvIdx < this->fvGeometry_.numScv; scvIdx++) // loop over vertices of the element
+            for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; scvIdx++) // loop over vertices of the element
             {
                 componentEnthalpy_[i] += elemVolVars[scvIdx].componentEnthalpy(i)
                                          * this->face().shapeValue[scvIdx];

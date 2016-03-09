@@ -198,13 +198,13 @@ public:
     void computeFlux(PrimaryVariables &flux,
                      const unsigned int fIdx, const bool onBoundary=false) const
     {
-        FluxVariables fluxVars(this->problem_(),
-                               this->element_(),
-                               this->fvGeometry_(),
-                               fIdx,
-                               this->curVolVars_(),
-                               onBoundary);
-
+        FluxVariables fluxVars;
+        fluxVars.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->curVolVars_(),
+                        onBoundary);
         flux = 0.0;
         MassResid::computeFlux(flux, fluxVars, this->curVolVars_() );
         Valgrind::CheckDefined(flux);

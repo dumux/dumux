@@ -106,7 +106,6 @@ protected:
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::ctype CoordScalar;
 
-
 public:
     /*!
      * \brief Constructor. Sets the upwind weight.
@@ -164,35 +163,33 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
-                : this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
+        const auto& elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const auto& volVars = elemVolVars[scvIdx];
 
         // Compute storage term of all fluid components in the fluid phases
         storage = 0;
-        for (unsigned int phaseIdx = 0; phaseIdx < numPhases /*+ numSPhases*/; ++phaseIdx)
+
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            //if(phaseIdx< numPhases)
-            //{
-                for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx) //H2O, Air, Salt
+            for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                int eqIdx = conti0EqIdx + compIdx;
+                if (replaceCompEqIdx != eqIdx)
                 {
-                    int eqIdx = conti0EqIdx + compIdx;
-                    if (replaceCompEqIdx != eqIdx)
-                    {
-                        storage[eqIdx] += volVars.molarDensity(phaseIdx)
-                                        * volVars.saturation(phaseIdx)
-                                        * volVars.moleFraction(phaseIdx, compIdx)
-                                        * volVars.porosity();
-                    }
-                    else
-                    {
-                        storage[replaceCompEqIdx] += volVars.molarDensity(phaseIdx)
-                                                * volVars.saturation(phaseIdx)
-                                                * volVars.porosity();
-                    }
+                    storage[eqIdx] += volVars.molarDensity(phaseIdx)
+                                      * volVars.saturation(phaseIdx)
+                                      * volVars.moleFraction(phaseIdx, compIdx)
+                                      * volVars.porosity();
                 }
+                else
+                {
+                    storage[replaceCompEqIdx] += volVars.molarDensity(phaseIdx)
+                                                 * volVars.saturation(phaseIdx)
+                                                 * volVars.porosity();
+                }
+            }
         }
-         Valgrind::CheckDefined(storage);
+        Valgrind::CheckDefined(storage);
     }
     /*!
      * \brief Evaluates the total flux of all conservation quantities
@@ -204,15 +201,17 @@ public:
      */
     void computeFlux(PrimaryVariables &flux, const int fIdx, bool onBoundary = false) const
     {
-        FluxVariables fluxVars(this->problem_(),
-                      this->element_(),
-                      this->fvGeometry_(),
-                      fIdx,
-                      this->curVolVars_(),
-                      onBoundary);
+        FluxVariables fluxVars;
+        fluxVars.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->curVolVars_(),
+                        onBoundary);
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, fluxVars);
+        Valgrind::CheckDefined(flux);
         asImp_()->computeDiffusiveFlux(flux, fluxVars);
         Valgrind::CheckDefined(flux);
     }
@@ -225,59 +224,63 @@ public:
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
-        ////////
         // advective fluxes of all components in all phases
-        ////////
-        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-         // data attached to upstream and the downstream vertices
-         // of the current phase
-         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
-         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+            // data attached to upstream and the downstream vertices
+            // of the current phase
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
-         for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
-         {
-         // add advective flux of current component in current
-         // phase
-            unsigned int eqIdx = conti0EqIdx + compIdx;
+            for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                // add advective flux of current component in current phase
+                unsigned int eqIdx = conti0EqIdx + compIdx;
 
-         if (eqIdx != replaceCompEqIdx)
-         {
-            // upstream vertex
-            flux[eqIdx] += fluxVars.KmvpNormal(phaseIdx)
-                        * (massUpwindWeight_
-                            * up.mobility(phaseIdx)
+                if (eqIdx != replaceCompEqIdx)
+                {
+                    if (massUpwindWeight_ > 0.0)
+                        // upstream vertex
+                        flux[eqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * massUpwindWeight_
                             * up.molarDensity(phaseIdx)
-                            * up.moleFraction(phaseIdx, compIdx)
-                        +
-                            (1.0 - massUpwindWeight_)
-                            * dn.mobility(phaseIdx)
+                            * up.moleFraction(phaseIdx, compIdx);
+                    if (massUpwindWeight_ < 1.0)
+                        // downstream vertex
+                        flux[eqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * (1 - massUpwindWeight_)
                             * dn.molarDensity(phaseIdx)
-                            * dn.moleFraction(phaseIdx, compIdx));
+                            * dn.moleFraction(phaseIdx, compIdx);
 
-            Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
-            Valgrind::CheckDefined(up.molarDensity(phaseIdx));
-            Valgrind::CheckDefined(dn.molarDensity(phaseIdx));
-         }
-         else
-         {
-         flux[replaceCompEqIdx] += fluxVars.KmvpNormal(phaseIdx)
-                                * (massUpwindWeight_
-                                    * up.molarDensity(phaseIdx)
-                                    * up.mobility(phaseIdx)
-                                    +
-                                    (1.0 - massUpwindWeight_)
-                                    * dn.molarDensity(phaseIdx)
-                                    * dn.mobility(phaseIdx));
-
-
-         Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
-         Valgrind::CheckDefined(up.molarDensity(phaseIdx));
-         Valgrind::CheckDefined(dn.molarDensity(phaseIdx));
-         }
-         }
-       }
-     }
+                    Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
+                    Valgrind::CheckDefined(up.molarDensity(phaseIdx));
+                    Valgrind::CheckDefined(up.moleFraction(phaseIdx, compIdx));
+                    Valgrind::CheckDefined(dn.molarDensity(phaseIdx));
+                    Valgrind::CheckDefined(dn.moleFraction(phaseIdx, compIdx));
+                }
+                else
+                {
+                    // upstream vertex
+                    if (massUpwindWeight_ > 0.0)
+                        flux[replaceCompEqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * massUpwindWeight_
+                            * up.molarDensity(phaseIdx);
+                    // downstream vertex
+                    if (massUpwindWeight_ < 1.0)
+                        flux[replaceCompEqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * (1 - massUpwindWeight_)
+                            * dn.molarDensity(phaseIdx);
+                    Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
+                    Valgrind::CheckDefined(up.molarDensity(phaseIdx));
+                    Valgrind::CheckDefined(dn.molarDensity(phaseIdx));
+                }
+            }
+        }
+    }
 
     /*!
      * \brief Evaluates the diffusive mass flux of all components over
@@ -295,19 +298,19 @@ public:
         // are calculated in the same phase.
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 //add diffusive fluxes only to the component balances
                 if (replaceCompEqIdx != (conti0EqIdx + compIdx))
                 {
-                    Scalar diffCont = - fluxVars.porousDiffCoeff(phaseIdx ,compIdx)
-                                        * fluxVars.molarDensity(phaseIdx)
-                                        * (fluxVars.moleFractionGrad(phaseIdx, compIdx)
-                                            * fluxVars.face().normal);
+                    Scalar diffCont = - fluxVars.porousDiffCoeff(phaseIdx, compIdx)
+                                        * (fluxVars.concentrationGrad(phaseIdx, compIdx) * fluxVars.face().normal);
                     flux[conti0EqIdx + compIdx] += diffCont;
                     flux[conti0EqIdx + phaseIdx] -= diffCont;
                 }
             }
+        }
     }
 
 protected:
@@ -315,22 +318,22 @@ protected:
     void evalPhaseStorage_(int phaseIdx)
     {
         // evaluate the storage terms of a single phase
-        for (int i=0; i < this->fvGeometry_().numScv; i++)
+        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; scvIdx++)
         {
-            PrimaryVariables &result = this->residual_[i];
+            PrimaryVariables &result = this->residual_[scvIdx];
             const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-            const VolumeVariables &volVars = elemVolVars[i];
+            const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             // compute storage term of all fluid components within all phases
             result = 0;
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 result[conti0EqIdx + compIdx] += volVars.density(phaseIdx)
-                                * volVars.saturation(phaseIdx)
-                                * volVars.massFraction(phaseIdx, compIdx)
-                                * volVars.porosity();
+                                                    * volVars.saturation(phaseIdx)
+                                                    * volVars.massFraction(phaseIdx, compIdx)
+                                                    * volVars.porosity();
             }
-            result *= this->fvGeometry_().subContVol[i].volume;
+            result *= this->fvGeometry_().subContVol[scvIdx].volume;
         }
     }
 

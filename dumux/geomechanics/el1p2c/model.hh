@@ -303,10 +303,11 @@ public:
                 for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++) {
 
                     //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                    FluxVariables fluxVars(this->problem_(),
-                                        element, fvGeometry,
-                                        fIdx,
-                                        elemVolVars);
+                    FluxVariables fluxVars;
+                    fluxVars.update(this->problem_(),
+                                    element, fvGeometry,
+                                    fIdx,
+                                    elemVolVars);
 
                     // divide by number of scv-faces and sum up edge values
                     tmpEffPoro = fluxVars.effPorosity() / fvGeometry.numScvf;

@@ -20,6 +20,10 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 
   - You can now configure YaspGrid tensor grids via the input file.
 
+  - All flux variables are no default constructable. The non-trivial constructors
+    are deprecated. Model implementers need to make their flux variables default
+    constructable too.
+
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - For the multidomain models, the notation of the boundary condition types
     has changed. This is especially important for all momentum boundary
@@ -36,6 +40,11 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
   - The TypeTags "ImplicitModel" and "ExplicitModel" have been deleted. They
     haven't been used apart from one internal inheritance. See FS#304 for
     details.
+
+  - The flux variables don't contain a protected member variable const reference
+    to FVElementGeometry fvGeometry_ anymore. As flux variables are now default
+    constructable, the fvGeometry is stored as pointer and the base flux variables
+    have a protected return function member fvGeometry_().
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.9: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name

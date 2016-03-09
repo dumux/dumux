@@ -41,6 +41,7 @@ namespace Dumux
 template <class TypeTag>
 class NIFluxVariables : public GET_PROP_TYPE(TypeTag, IsothermalFluxVariables)
 {
+    friend typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables); // be friends with parent
     typedef typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -59,7 +60,7 @@ class NIFluxVariables : public GET_PROP_TYPE(TypeTag, IsothermalFluxVariables)
 public:
 
     /*!
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -68,14 +69,40 @@ public:
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary Distinguishes if we are on a sub-control-volume face or on a boundary face
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     NIFluxVariables(const Problem &problem,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
                             const int fIdx,
                             const ElementVolumeVariables &elemVolVars,
                             bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
+    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    NIFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
         calculateValues_(problem, element, elemVolVars);
     }
 
@@ -140,16 +167,16 @@ protected:
             lambdaI =
               ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i],
                                                                      problem.spatialParams(),
-                                                                     element, this->fvGeometry_, i);
+                                                                     element, this->fvGeometry_(), i);
 
             lambdaJ =
               ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j],
                                                                      problem.spatialParams(),
-                                                                     element, this->fvGeometry_, j);
+                                                                     element, this->fvGeometry_(), j);
         }
         else
         {
-            const Element& elementI = this->fvGeometry_.neighbors[i];
+            const Element& elementI = this->fvGeometry_().neighbors[i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
@@ -158,7 +185,7 @@ protected:
                                                                      problem.spatialParams(),
                                                                      elementI, fvGeometryI, 0);
 
-            const Element& elementJ = this->fvGeometry_.neighbors[j];
+            const Element& elementJ = this->fvGeometry_().neighbors[j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 

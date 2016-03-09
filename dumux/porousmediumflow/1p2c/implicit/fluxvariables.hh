@@ -28,6 +28,9 @@
 #ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
 #define DUMUX_1P2C_FLUX_VARIABLES_HH
 
+#include <dune/common/exceptions.hh>
+#include <dune/common/deprecated.hh>
+
 #include "properties.hh"
 
 #include <dumux/common/math.hh>
@@ -49,6 +52,7 @@ namespace Dumux
 template <class TypeTag>
 class OnePTwoCFluxVariables
 {
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -79,7 +83,7 @@ class OnePTwoCFluxVariables
 
 public:
     /*
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -89,30 +93,66 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     OnePTwoCFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvGeometry,
                           const int fIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
+        DUNE_THROW(Dune::InvalidStateException, "The FluxVariables now have to be default contructed. "
+                                                << "In case you have your own FluxVariables you have to make them default "
+                                                << " constructable too. All calls to the old constructor will throw this error. "
+                                                << "Everywhere you instantiate FluxVariables do this now by default constructing "
+                                                << "a FluxVariables object (FluxVariables fluxVars;) and then updating it where "
+                                                << "the update method has the same signature as the old constructor (fluxVars.update(...).)");
+    }
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    OnePTwoCFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     * \todo The fvGeometry should be better initialized, passed and stored as an std::shared_ptr
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        fvGeometryPtr_ = &fvGeometry;
+        onBoundary_ = onBoundary;
+        faceIdx_ = fIdx;
+
         mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
 
-        viscosity_ = Scalar(0);
-        molarDensity_ = Scalar(0);
-        density_ = Scalar(0);
-        potentialGrad_ = Scalar(0);
-        moleFractionGrad_ = Scalar(0);
+        viscosity_ = 0.0;
+        molarDensity_ = 0.0;
+        density_ = 0.0;
+        potentialGrad_ = 0.0;
+        moleFractionGrad_ = 0.0;
 
-        calculateGradients_(problem, element, elemVolVars);
-        calculateK_(problem, element, elemVolVars);
-        calculateVelocities_(problem, element, elemVolVars);
-        calculatePorousDiffCoeff_(problem, element, elemVolVars);
-        calculateDispersionTensor_(problem, element, elemVolVars);
-    };
+        asImp_().calculateGradients_(problem, element, elemVolVars);
+        asImp_().calculateK_(problem, element, elemVolVars);
+        asImp_().calculateVelocities_(problem, element, elemVolVars);
+        asImp_().calculatePorousDiffCoeff_(problem, element, elemVolVars);
+        asImp_().calculateDispersionTensor_(problem, element, elemVolVars);
+    }
 
-public:
     /*!
     * \brief Return the pressure potential multiplied with the
     *        intrinsic permeability  and the face normal which
@@ -142,9 +182,9 @@ public:
    const SCVFace &face() const
    {
        if (onBoundary_)
-           return fvGeometry_.boundaryFace[faceIdx_];
+           return fvGeometry_().boundaryFace[faceIdx_];
        else
-           return fvGeometry_.subContVolFace[faceIdx_];
+           return fvGeometry_().subContVolFace[faceIdx_];
    }
 
     /*!
@@ -278,6 +318,13 @@ public:
     }
 
 protected:
+    //! Returns the implementation of the flux variables (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
     /*!
      * \brief Calculation of the pressure and mole-/mass-fraction gradients.
@@ -359,19 +406,19 @@ protected:
         {
             sp.meanK(K_,
                      sp.intrinsicPermeability(element,
-                                              fvGeometry_,
+                                              fvGeometry_(),
                                               face().i),
                      sp.intrinsicPermeability(element,
-                                              fvGeometry_,
+                                              fvGeometry_(),
                                               face().j));
         }
         else
         {
-            const Element& elementI = fvGeometry_.neighbors[face().i];
+            const Element& elementI = fvGeometry_().neighbors[face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
-            const Element& elementJ = fvGeometry_.neighbors[face().j];
+            const Element& elementJ = fvGeometry_().neighbors[face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
@@ -484,9 +531,12 @@ protected:
             dispersionTensor_[i][i] += vNorm*dispersivity[1];
     }
 
-    const FVElementGeometry &fvGeometry_;
-    const int faceIdx_;
-    const bool onBoundary_;
+    // return const reference to fvGeometry
+    const FVElementGeometry& fvGeometry_() const
+    { return *fvGeometryPtr_; }
+
+    int faceIdx_;
+    bool onBoundary_;
 
     //! pressure potential gradient
     GlobalPosition potentialGrad_;
@@ -518,6 +568,9 @@ protected:
 
     Scalar volumeFlux_; //!< Velocity multiplied with normal (magnitude=area)
     Scalar mobilityUpwindWeight_; //!< Upwind weight for mobility. Set to one for full upstream weighting
+
+private:
+    const FVElementGeometry* fvGeometryPtr_; //!< Information about the geometry of discretization
 };
 
 } // end namespace

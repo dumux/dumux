@@ -140,12 +140,13 @@ public:
     void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
     {
         flux = 0;
-        FluxVariables fluxVars(this->problem_(),
-                               this->element_(),
-                               this->fvGeometry_(),
-                               fIdx,
-                               this->curVolVars_(),
-                               onBoundary);
+        FluxVariables fluxVars;
+        fluxVars.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->curVolVars_(),
+                        onBoundary);
 
         asImp_()->computeAdvectiveFlux(flux, fluxVars);
         asImp_()->computeDiffusiveFlux(flux, fluxVars);

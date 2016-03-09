@@ -119,8 +119,12 @@ public:
      */
     void computeFlux(PrimaryVariables &flux, int fIdx, const bool onBoundary = false) const
     {
-        FluxVariables fluxVars(this->problem_(), this->element_(),
-                this->fvGeometry_(), fIdx, this->curVolVars_());
+        FluxVariables fluxVars;
+        fluxVars.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->curVolVars_());
 
         flux = 0;
         this->computeAdvectiveFlux(flux, fluxVars);

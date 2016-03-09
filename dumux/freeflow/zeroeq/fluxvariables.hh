@@ -48,6 +48,7 @@ namespace Dumux
 template <class TypeTag>
 class ZeroEqFluxVariables : public GET_PROP_TYPE(TypeTag, BaseStokesFluxVariables)
 {
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, BaseStokesFluxVariables) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -62,18 +63,47 @@ class ZeroEqFluxVariables : public GET_PROP_TYPE(TypeTag, BaseStokesFluxVariable
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
+    //! \brief The old constructor
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ZeroEqFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const int fIdx,
                         const ElementVolumeVariables &elemVolVars,
                         const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-        , flowNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal))
-        , wallNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal))
-        , eddyViscosityModel_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel))
-        , karmanConstant_(GET_PROP_VALUE(TypeTag, KarmanConstant))
+        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ZeroEqFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
+
+        flowNormal_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal);
+        wallNormal_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal);
+        eddyViscosityModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel);
+        karmanConstant_= GET_PROP_VALUE(TypeTag, KarmanConstant);
+
         dynamicEddyViscosity_ = 0.0;
         mixingLength_ = 0.0;
         dynamicEddyViscosityInner_ = 0.0;
@@ -94,10 +124,18 @@ public:
 
         // calculation of an eddy viscosity only makes sense with Navier-Stokes equation
         if (GET_PROP_VALUE(TypeTag, EnableNavierStokes))
-            calculateEddyViscosity_(problem, element, elemVolVars);
+            asImp_().calculateEddyViscosity_(problem, element, elemVolVars);
     }
 
 protected:
+    //! Returns the implementation of the flux variables (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     /*!
      * \brief This function calculates the dynamic viscosity.
      *
@@ -287,10 +325,10 @@ public:
     { return karmanConstant_; }
 
 private:
-    const int flowNormal_;
-    const int wallNormal_;
-    const int eddyViscosityModel_;
-    const Scalar karmanConstant_;
+    int flowNormal_;
+    int wallNormal_;
+    int eddyViscosityModel_;
+    Scalar karmanConstant_;
 
     int wallIdx_;
     int posIdx_;

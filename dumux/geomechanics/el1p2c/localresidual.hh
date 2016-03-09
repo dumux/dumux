@@ -139,7 +139,8 @@ namespace Dumux
             void computeFlux(PrimaryVariables &flux, int fIdx, const bool onBoundary=false) const
             {
                 flux = 0;
-                FluxVariables fluxVars(this->problem_(),
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
                                 this->element_(),
                                 this->fvGeometry_(),
                                 fIdx,

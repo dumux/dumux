@@ -219,11 +219,12 @@ public:
         // it from the local rates
         for (int fIdx = 0; fIdx < numScv; fIdx++)
         {
-            FluxVariables fluxVars(this->problem_(),
-                                   this->element_(),
-                                   this->fvGeometry_(),
-                                   fIdx,
-                                   this->curVolVars_());
+            FluxVariables fluxVars;
+            fluxVars.update(this->problem_(),
+                            this->element_(),
+                            this->fvGeometry_(),
+                            fIdx,
+                            this->curVolVars_());
 
             int i = this->fvGeometry_().subContVolFace[fIdx].i;
             int j = this->fvGeometry_().subContVolFace[fIdx].j;

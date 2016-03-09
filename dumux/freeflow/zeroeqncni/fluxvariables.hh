@@ -67,17 +67,46 @@ class ZeroEqncniFluxVariables : public ZeroEqncFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
+    //! \brief The old constructor
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ZeroEqncniFluxVariables(const Problem &problem,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
                             const int fIdx,
                             const ElementVolumeVariables &elemVolVars,
                             const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
-        , flowNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal))
-        , wallNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal))
-        , eddyConductivityModel_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyConductivityModel))
+        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ZeroEqncniFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
     {
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
+
+        flowNormal_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal);
+        wallNormal_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal);
+        eddyConductivityModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyConductivityModel);
+
         globalPos_ = this->face().ipGlobal;
         posIdx_ = problem.model().getPosIdx(globalPos_);
         wallIdx_ = problem.model().getWallIdx(globalPos_, posIdx_);
@@ -92,7 +121,7 @@ public:
         // calculation of an eddy conductivity only makes sense with Navier-Stokes equation
         if (GET_PROP_VALUE(TypeTag, EnableNavierStokes))
             calculateEddyConductivity_(problem, element, elemVolVars);
-    };
+    }
 
 protected:
     /*!
@@ -202,19 +231,19 @@ public:
 
 
 private:
-        const int flowNormal_;
-        const int wallNormal_;
-        const int eddyConductivityModel_;
-        int posIdx_;
-        int wallIdx_;
+    int flowNormal_;
+    int wallNormal_;
+    int eddyConductivityModel_;
+    int posIdx_;
+    int wallIdx_;
 
-        Scalar velGrad_;
-        Scalar velGradWall_;
-        DimVector globalPos_;
-        Scalar yPlusReal_;
+    Scalar velGrad_;
+    Scalar velGradWall_;
+    DimVector globalPos_;
+    Scalar yPlusReal_;
 
-        Scalar temperatureEddyConductivity_;
-        Scalar mixingLengthConductivity_;
+    Scalar temperatureEddyConductivity_;
+    Scalar mixingLengthConductivity_;
 };
 
 } // end namespace

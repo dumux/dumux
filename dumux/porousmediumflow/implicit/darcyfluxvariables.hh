@@ -28,6 +28,9 @@
 
 #include <dune/common/float_cmp.hh>
 
+#include <dune/common/exceptions.hh>
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
@@ -54,6 +57,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
 template <class TypeTag>
 class ImplicitDarcyFluxVariables
 {
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -67,17 +71,15 @@ class ImplicitDarcyFluxVariables
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -87,20 +89,57 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ImplicitDarcyFluxVariables(const Problem &problem,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const int fIdx,
-                 const ElementVolumeVariables &elemVolVars,
-                 const bool onBoundary = false)
-    : fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
+                               const Element &element,
+                               const FVElementGeometry &fvGeometry,
+                               const int fIdx,
+                               const ElementVolumeVariables &elemVolVars,
+                               const bool onBoundary = false)
     {
-        mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
-        calculateGradients_(problem, element, elemVolVars);
-        calculateNormalVelocity_(problem, element, elemVolVars);
+        DUNE_THROW(Dune::InvalidStateException, "The FluxVariables now have to be default contructed. "
+                                                << "In case you have your own FluxVariables you have to make them default "
+                                                << " constructable too. All calls to the old constructor will throw this error. "
+                                                << "Everywhere you instantiate FluxVariables do this now by default constructing "
+                                                << "a FluxVariables object (FluxVariables fluxVars;) and then updating it where "
+                                                << "the update method has the same signature as the old constructor (fluxVars.update(...).)");
     }
 
-public:
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ImplicitDarcyFluxVariables() = default;
+
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     * \todo The fvGeometry should be better initialized, passed and stored as an std::shared_ptr
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        fvGeometryPtr_ = &fvGeometry;
+        onBoundary_ = onBoundary;
+        faceIdx_ = fIdx;
+
+        mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
+        asImp_().calculateGradients_(problem, element, elemVolVars);
+        asImp_().calculateNormalVelocity_(problem, element, elemVolVars);
+    }
+
+
     /*!
      * \brief Return the volumetric flux over a face of a given phase.
      *
@@ -160,12 +199,20 @@ public:
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvGeometry_.boundaryFace[faceIdx_];
+            return fvGeometry_().boundaryFace[faceIdx_];
         else
-            return fvGeometry_.subContVolFace[faceIdx_];
+            return fvGeometry_().subContVolFace[faceIdx_];
     }
 
 protected:
+
+    //! Returns the implementation of the flux variables (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
     /*!
      * \brief Calculation of the potential gradients
@@ -247,19 +294,19 @@ protected:
         {
             spatialParams.meanK(K,
                                 spatialParams.intrinsicPermeability(element,
-                                                                    fvGeometry_,
+                                                                    fvGeometry_(),
                                                                     face().i),
                                 spatialParams.intrinsicPermeability(element,
-                                                                    fvGeometry_,
+                                                                    fvGeometry_(),
                                                                     face().j));
         }
         else
         {
-            const Element& elementI = fvGeometry_.neighbors[face().i];
+            const Element& elementI = fvGeometry_().neighbors[face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
-            const Element& elementJ = fvGeometry_.neighbors[face().j];
+            const Element& elementJ = fvGeometry_().neighbors[face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
@@ -313,9 +360,12 @@ protected:
         }// loop all phases
     }
 
-    const FVElementGeometry &fvGeometry_;       //!< Information about the geometry of discretization
-    const unsigned int faceIdx_;                //!< The index of the sub control volume face
-    const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
+    // return const reference to the fvGeometry
+    const FVElementGeometry& fvGeometry_() const
+    { return *fvGeometryPtr_; }
+
+    unsigned int faceIdx_;                //!< The index of the sub control volume face
+    bool onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
     unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
     Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
     GlobalPosition  velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
@@ -323,6 +373,10 @@ protected:
     GlobalPosition  kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
     GlobalPosition  potentialGrad_[numPhases] ; //!< Gradient of potential, which drives flow
     Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
+
+private:
+    const FVElementGeometry* fvGeometryPtr_; //!< Information about the geometry of discretization
+
 };
 
 } // end namespace

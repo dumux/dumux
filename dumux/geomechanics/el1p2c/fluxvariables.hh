@@ -49,272 +49,303 @@ namespace Dumux
  * the integration point, etc.
  *
  */
-    template<class TypeTag>
-    class ElOnePTwoCFluxVariables: public ElasticFluxVariablesBase<TypeTag> ,
-                                   public OnePTwoCFluxVariables<TypeTag>
+template<class TypeTag>
+class ElOnePTwoCFluxVariables: public ElasticFluxVariablesBase<TypeTag> ,
+                               public OnePTwoCFluxVariables<TypeTag>
+{
+    friend class ElasticFluxVariablesBase<TypeTag>; // be friends with parents
+    friend class OnePTwoCFluxVariables<TypeTag>; // be friends with parents
+
+    typedef Dumux::ElasticFluxVariablesBase<TypeTag> ElasticBase;
+    typedef Dumux::OnePTwoCFluxVariables<TypeTag> OnePTwoCBase;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
+
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    enum
     {
-            typedef ElasticFluxVariablesBase<TypeTag> ElasticBase;
-            typedef OnePTwoCFluxVariables<TypeTag> OnePTwoCBase;
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
 
-            typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-            typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-            typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-            typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
+    typedef typename GridView::ctype CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<CoordScalar, dim> DimVector;
 
-            typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-            typedef typename GridView::template Codim<0>::Entity Element;
-            enum
-            {
-                dim = GridView::dimension,
-                dimWorld = GridView::dimensionworld
-            };
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-            typedef typename GridView::ctype CoordScalar;
-            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-            typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-            typedef Dune::FieldVector<CoordScalar, dim> DimVector;
+public:
+    /*
+     * \brief The old constructor
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
+    ElOnePTwoCFluxVariables(const Problem &problem,
+                    const Element &element,
+                    const FVElementGeometry &fvGeometry,
+                    int fIdx,
+                    const ElementVolumeVariables &elemVolVars,
+                    const bool onBoundary = false) {}
 
-            typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-            typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ElOnePTwoCFluxVariables() = default;
 
-        public:
-        /*
-         * \brief The constructor
-         *
-         * \param problem The problem
-         * \param element The finite element
-         * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-         * \param fIdx The local index of the SCV (sub-control-volume) face
-         * \param elemVolVars The volume variables of the current element
-         * \param onBoundary A boolean variable to specify whether the flux variables
-         * are calculated for interior SCV faces or boundary faces, default=false
-         */
-            ElOnePTwoCFluxVariables(const Problem &problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            int fIdx,
-                            const ElementVolumeVariables &elemVolVars,
-                            const bool onBoundary = false)
-                : ElasticBase(problem, element, fvGeometry, fIdx, elemVolVars),
-                  OnePTwoCBase(problem, element, fvGeometry, fIdx, elemVolVars),
-                  fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
-            {
-                dU_ = Scalar(0);
-                dGradP_ = Scalar(0);
-                porosity_ = 0;
-                effPorosity_ = 0;
-                pressure_ = 0;
-                timeDerivUNormal_ = 0;
+    /*!
+     * \brief Compute / update the flux variables
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param fIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        ElasticBase::update(problem, element, fvGeometry, fIdx, elemVolVars);
+        OnePTwoCBase::update(problem, element, fvGeometry, fIdx, elemVolVars);
 
-                elOnePTwoCGradients_(problem, element, elemVolVars);
-                calculateEffectiveValues_(problem, element, elemVolVars);
-                calculateDiffCoeffPM_(problem, element, elemVolVars);
-                calculateDDt_(problem, element, elemVolVars);
+        dU_ = 0.0;
+        dGradP_ = 0.0;
+        porosity_ = 0.0;
+        effPorosity_ = 0.0;
+        pressure_ = 0.0;
+        timeDerivUNormal_ = 0.0;
 
-            }
-            ;
+        elOnePTwoCGradients_(problem, element, elemVolVars);
+        calculateEffectiveValues_(problem, element, elemVolVars);
+        calculateDiffCoeffPM_(problem, element, elemVolVars);
+        calculateDDt_(problem, element, elemVolVars);
+    }
 
-        public:
-            /*!
-             * \brief Return porosity [-] at the integration point.
-             */
-            Scalar porosity() const
-            {
-                return porosity_;
-            }
+public:
+    /*!
+     * \brief Return porosity [-] at the integration point.
+     */
+    Scalar porosity() const
+    {
+        return porosity_;
+    }
 
-            /*!
-             * \brief Return effective porosity [-] at the integration point.
-             */
-            Scalar effPorosity() const
-            {
-                return effPorosity_;
-            }
+    /*!
+     * \brief Return effective porosity [-] at the integration point.
+     */
+    Scalar effPorosity() const
+    {
+        return effPorosity_;
+    }
 
-            /*!
-             * \brief Return pressure [Pa] at the integration
-             *        point.
-             */
-            Scalar pressure() const
-            {
-                return pressure_;
-            }
+    /*!
+     * \brief Return pressure [Pa] at the integration
+     *        point.
+     */
+    Scalar pressure() const
+    {
+        return pressure_;
+    }
 
-            /*!
-             * \brief Return change of pressure gradient with time [Pa/m] at
-             * integration point.
-             */
-            Scalar dGradP(int dimIdx) const
-            {
-                return dGradP_[dimIdx];
-            }
+    /*!
+     * \brief Return change of pressure gradient with time [Pa/m] at
+     * integration point.
+     */
+    Scalar dGradP(int dimIdx) const
+    {
+        return dGradP_[dimIdx];
+    }
 
-            /*!
-             * \brief Return gradient of time derivative of pressure [Pa].
-             */
-            Scalar timeDerivGradPNormal() const
-            {
-                return timeDerivGradPNormal_;
-            }
+    /*!
+     * \brief Return gradient of time derivative of pressure [Pa].
+     */
+    Scalar timeDerivGradPNormal() const
+    {
+        return timeDerivGradPNormal_;
+    }
 
-            /*!
-             * \brief Return change of u [m] with time at integration point
-             *        point.
-             */
-            Scalar dU(int dimIdx) const
-            {
-                return dU_[dimIdx];
-            }
+    /*!
+     * \brief Return change of u [m] with time at integration point
+     *        point.
+     */
+    Scalar dU(int dimIdx) const
+    {
+        return dU_[dimIdx];
+    }
 
-            /*!
-             * \brief Return time derivative of u [m/s] in normal direction at integration point
-             */
-            Scalar timeDerivUNormal() const
-            {
-                return timeDerivUNormal_;
-            }
+    /*!
+     * \brief Return time derivative of u [m/s] in normal direction at integration point
+     */
+    Scalar timeDerivUNormal() const
+    {
+        return timeDerivUNormal_;
+    }
 
-            /*!
-             * \brief Return porous medium diffusion coefficient [m^2]
-             */
-            Scalar diffCoeffPM() const
-            {
-                return diffCoeffPM_;
-            }
+    /*!
+     * \brief Return porous medium diffusion coefficient [m^2]
+     */
+    Scalar diffCoeffPM() const
+    {
+        return diffCoeffPM_;
+    }
 
-            const SCVFace &face() const
-            {
-                return fvGeometry_.subContVolFace[faceIdx_];
-            }
+    const SCVFace &face() const
+    {
+        return ElasticBase::face();
+    }
 
-        protected:
-            /*!
-             * \brief Calculation of the solid displacement and pressure gradients.
-             *
-             *        \param problem The considered problem file
-             *        \param element The considered element of the grid
-             *        \param elemVolVars The parameters stored in the considered element
-             */
-            void elOnePTwoCGradients_(const Problem &problem,
-                            const Element &element,
-                            const ElementVolumeVariables &elemVolVars)
-            {
-                // calculate gradients
-                GlobalPosition tmp(0.0);
-                for (int idx = 0; idx < fvGeometry_.numScv; idx++) // loop over adjacent vertices
-                {
-                    // FE gradient at vertex idx
-                    const DimVector &feGrad = face().grad[idx];
+protected:
+    // Overload the parent's methods to avoid ambiguous overloads due to multiple inheritance
+    // The elastic gradients are already computed in the elastic base class update
+    void calculateGradients_(const Problem &problem,
+                             const Element &element,
+                             const ElementVolumeVariables &elemVolVars)
+    {
+        OnePTwoCBase::calculateGradients_(problem, element, elemVolVars);
+    }
 
-                    // the gradient of the temporal pressure change (needed for stabilization term)
-                    tmp = feGrad;
-                    tmp *= elemVolVars[idx].dPressure();
-                    dGradP_ += tmp;
-
-                    // average the pressure at integration point
-                    pressure_ += elemVolVars[idx].pressure()
-                                    * face().shapeValue[idx];
-                    // average temporal displacement change at integration point (for calculation of solid displacement velocity)
-                    for (int i = 0; i < dim; ++i)
-                    dU_[i] += elemVolVars[idx].dU(i)
-                                        * face().shapeValue[idx];
-                    // average porosity at integration point
-                    porosity_ += elemVolVars[idx].porosity()
-                                    * face().shapeValue[idx];
-                }
-            }
-
-            /*!
-             * \brief Calculation of the effective porosity.
-             *
-             *        \param problem The considered problem file
-             *        \param element The considered element of the grid
-             *        \param elemVolVars The parameters stored in the considered element
-             */
-            void calculateEffectiveValues_(const Problem &problem,
-                            const Element &element,
-                            const ElementVolumeVariables &elemVolVars)
-            {
-
-                // the effective porosity is calculated as a function of solid displacement and initial porosity
-                // according to Han & Dusseault (2003)
-
-                // calculate effective porosity as a function of solid displacement and initial porosity
-                effPorosity_ = (porosity_ + this->divU())
-                                  / (1 + this->divU());
-            }
-
-            /*!
-             * \brief Calculation of the effective porous media diffusion coefficient.
-             *
-             *        \param problem The considered problem file
-             *        \param element The considered element of the grid
-             *        \param elemVolVars The parameters stored in the considered element
-             */
-            void calculateDiffCoeffPM_(const Problem &problem,
-                            const Element &element,
-                            const ElementVolumeVariables &elemVolVars)
-            {
-                const VolumeVariables &volVarsI = elemVolVars[face().i];
-                const VolumeVariables &volVarsJ = elemVolVars[face().j];
-
-                const Scalar diffCoeffI =
-                    EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
-                                                                    /*sat=*/1.0,
-                                                                    volVarsI.diffCoeff());
-
-                const Scalar diffCoeffJ =
-                    EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
-                                                                    /*sat=*/1.0,
-                                                                    volVarsJ.diffCoeff());
-
-                diffCoeffPM_ = harmonicMean(diffCoeffI, diffCoeffJ);
-            }
-
-            /*!
-             * \brief Calculation of the time derivative of solid displacement and pressure gradient
-             *        \param problem The considered problem file
-             *        \param element The considered element of the grid
-             *        \param elemVolVars The parameters stored in the considered element
-             */
-            void calculateDDt_(const Problem &problem,
+    /*!
+     * \brief Calculation of the solid displacement and pressure gradients.
+     *
+     *        \param problem The considered problem file
+     *        \param element The considered element of the grid
+     *        \param elemVolVars The parameters stored in the considered element
+     */
+    void elOnePTwoCGradients_(const Problem &problem,
                     const Element &element,
                     const ElementVolumeVariables &elemVolVars)
-            {
-                Scalar dt= problem.timeManager().timeStepSize();
-                DimVector tmp(0.0);
+    {
+        // calculate gradients
+        GlobalPosition tmp(0.0);
+        for (int idx = 0; idx < ElasticBase::fvGeometry_().numScv; idx++) // loop over adjacent vertices
+        {
+            // FE gradient at vertex idx
+            const DimVector &feGrad = face().grad[idx];
 
-                //time derivative of solid displacement times normal vector
-                for (int i = 0; i < dim; ++i)
-                    tmp[i] = dU_[i] / dt;
-                       timeDerivUNormal_ = tmp * face().normal;
-                    //time derivative of pressure gradient times normal vector
-                for (int i = 0; i < dim; ++i)
-                    tmp[i] = dGradP_[i] / dt;
-                      timeDerivGradPNormal_ = tmp * face().normal;
-            }
+            // the gradient of the temporal pressure change (needed for stabilization term)
+            tmp = feGrad;
+            tmp *= elemVolVars[idx].dPressure();
+            dGradP_ += tmp;
 
-            const FVElementGeometry &fvGeometry_;
-            int faceIdx_;
-            const bool onBoundary_;
+            // average the pressure at integration point
+            pressure_ += elemVolVars[idx].pressure()
+                            * face().shapeValue[idx];
+            // average temporal displacement change at integration point (for calculation of solid displacement velocity)
+            for (int i = 0; i < dim; ++i)
+            dU_[i] += elemVolVars[idx].dU(i)
+                                * face().shapeValue[idx];
+            // average porosity at integration point
+            porosity_ += elemVolVars[idx].porosity()
+                            * face().shapeValue[idx];
+        }
+    }
 
-            //! change of solid displacement with time at integration point
-            GlobalPosition dU_;
-            //! change of pressure gradient with time at integration point
-            GlobalPosition dGradP_;
-            //! porosity at integration point
-            Scalar porosity_;
-            //! effective porosity at integration point
-            Scalar effPorosity_;
-            //! pressure at integration point
-            Scalar pressure_;
-            //! time derivative of solid displacement times normal vector at integration point
-            Scalar timeDerivUNormal_;
-            //! time derivative of pressure gradient times normal vector at integration point
-            Scalar timeDerivGradPNormal_;
-            //! Parameters
-            Scalar diffCoeffPM_;
-    };
+    /*!
+     * \brief Calculation of the effective porosity.
+     *
+     *        \param problem The considered problem file
+     *        \param element The considered element of the grid
+     *        \param elemVolVars The parameters stored in the considered element
+     */
+    void calculateEffectiveValues_(const Problem &problem,
+                    const Element &element,
+                    const ElementVolumeVariables &elemVolVars)
+    {
+
+        // the effective porosity is calculated as a function of solid displacement and initial porosity
+        // according to Han & Dusseault (2003)
+
+        // calculate effective porosity as a function of solid displacement and initial porosity
+        effPorosity_ = (porosity_ + this->divU())
+                          / (1 + this->divU());
+    }
+
+    /*!
+     * \brief Calculation of the effective porous media diffusion coefficient.
+     *
+     *        \param problem The considered problem file
+     *        \param element The considered element of the grid
+     *        \param elemVolVars The parameters stored in the considered element
+     */
+    void calculateDiffCoeffPM_(const Problem &problem,
+                    const Element &element,
+                    const ElementVolumeVariables &elemVolVars)
+    {
+        const VolumeVariables &volVarsI = elemVolVars[face().i];
+        const VolumeVariables &volVarsJ = elemVolVars[face().j];
+
+        const Scalar diffCoeffI =
+            EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                            /*sat=*/1.0,
+                                                            volVarsI.diffCoeff());
+
+        const Scalar diffCoeffJ =
+            EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                            /*sat=*/1.0,
+                                                            volVarsJ.diffCoeff());
+
+        diffCoeffPM_ = harmonicMean(diffCoeffI, diffCoeffJ);
+    }
+
+    /*!
+     * \brief Calculation of the time derivative of solid displacement and pressure gradient
+     *        \param problem The considered problem file
+     *        \param element The considered element of the grid
+     *        \param elemVolVars The parameters stored in the considered element
+     */
+    void calculateDDt_(const Problem &problem,
+            const Element &element,
+            const ElementVolumeVariables &elemVolVars)
+    {
+        Scalar dt= problem.timeManager().timeStepSize();
+        DimVector tmp(0.0);
+
+        //time derivative of solid displacement times normal vector
+        for (int i = 0; i < dim; ++i)
+            tmp[i] = dU_[i] / dt;
+               timeDerivUNormal_ = tmp * face().normal;
+            //time derivative of pressure gradient times normal vector
+        for (int i = 0; i < dim; ++i)
+            tmp[i] = dGradP_[i] / dt;
+              timeDerivGradPNormal_ = tmp * face().normal;
+    }
+
+    //! change of solid displacement with time at integration point
+    GlobalPosition dU_;
+    //! change of pressure gradient with time at integration point
+    GlobalPosition dGradP_;
+    //! porosity at integration point
+    Scalar porosity_;
+    //! effective porosity at integration point
+    Scalar effPorosity_;
+    //! pressure at integration point
+    Scalar pressure_;
+    //! time derivative of solid displacement times normal vector at integration point
+    Scalar timeDerivUNormal_;
+    //! time derivative of pressure gradient times normal vector at integration point
+    Scalar timeDerivGradPNormal_;
+    //! Parameters
+    Scalar diffCoeffPM_;
+};
 
 } // end namespace
 

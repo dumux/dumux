@@ -35,7 +35,7 @@ namespace Dumux
  * \ingroup TwoPNCMinModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase n-component mineralization fully implicit box model.
+ *        using the two-phase n-component mineralization fully implicit model.
  *
  * This class is used to fill the gaps in ImplicitLocalResidual for the two-phase n-component flow.
  */
@@ -94,17 +94,6 @@ protected:
 
 public:
     /*!
-     * \brief Constructor. Sets the upwind weight.
-     */
-    TwoPNCMinLocalResidual()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        this->massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    };
-
-    /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
@@ -116,25 +105,25 @@ public:
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-  void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
-  {
-      //call parenttype function
-      ParentType::computeStorage(storage, scvIdx, usePrevSol);
-
-      const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
-      : this->curVolVars_();
-    const VolumeVariables &volVars = elemVolVars[scvIdx];
-
-    // Compute storage term of all solid (precipitated) phases (excluding the non-reactive matrix)
-    for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)
+    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
-      int eqIdx = conti0EqIdx + numComponents-numPhases + phaseIdx;
-      storage[eqIdx] += volVars.precipitateVolumeFraction(phaseIdx)*volVars.molarDensity(phaseIdx);
-    }
+        //call parenttype function
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
-      Valgrind::CheckDefined(storage);
-  }
+        const auto& elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
+
+        // Compute storage term of all solid (precipitated) phases (excluding the non-reactive matrix)
+        for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)
+        {
+            auto eqIdx = conti0EqIdx + numComponents-numPhases + phaseIdx;
+            storage[eqIdx] += volVars.precipitateVolumeFraction(phaseIdx)*volVars.molarDensity(phaseIdx);
+        }
+
+        Valgrind::CheckDefined(storage);
+    }
 };
+
 } // end namespace
 
 #endif

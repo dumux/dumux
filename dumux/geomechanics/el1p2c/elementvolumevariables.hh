@@ -114,11 +114,12 @@ public:
         for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++)
         {
             // evaluate the gradients at the IPs for each subcontrol volume face
-            FluxVariables fluxVars(problem,
-                               element,
-                               fvGeometry,
-                               fIdx,
-                               *this);
+            FluxVariables fluxVars;
+            fluxVars.update(problem,
+                            element,
+                            fvGeometry,
+                            fIdx,
+                            *this);
 
             numContributingFaces[fluxVars.face().i] += 1;
             numContributingFaces[fluxVars.face().j] += 1;

@@ -80,6 +80,8 @@ template <class TypeTag>
 class ImplicitForchheimerFluxVariables
     : public ImplicitDarcyFluxVariables<TypeTag>
 {
+    friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
+    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -99,7 +101,7 @@ class ImplicitForchheimerFluxVariables
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The old constructor
      *
      * \param problem The problem
      * \param element The finite element
@@ -109,21 +111,25 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
+    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
     ImplicitForchheimerFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const unsigned int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry,
-                                                fIdx, elemVolVars, onBoundary)
-    {
-        calculateNormalVelocity_(problem, element, elemVolVars);
-    }
+        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+
+    /*!
+     * \brief Default constructor
+     * \note This can be removed when the deprecated constructor is removed.
+     */
+    ImplicitForchheimerFluxVariables() = default;
 
 protected:
     /*!
      * \brief Function for calculation of velocities.
+     * \note this overloads the method of the darcy flux variables base class
      *
      * \param problem The problem
      * \param element The finite element
@@ -133,6 +139,9 @@ protected:
                                   const Element &element,
                                   const ElementVolumeVariables &elemVolVars)
     {
+        // for initial velocity guess calculate base class velocity
+        ParentType::calculateNormalVelocity_(problem, element, elemVolVars);
+
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
         DimWorldMatrix K;
@@ -140,19 +149,19 @@ protected:
         {
             spatialParams.meanK(K,
                                 spatialParams.intrinsicPermeability(element,
-                                                                    this->fvGeometry_,
+                                                                    this->fvGeometry_(),
                                                                     this->face().i),
                                 spatialParams.intrinsicPermeability(element,
-                                                                    this->fvGeometry_,
+                                                                    this->fvGeometry_(),
                                                                     this->face().j));
         }
         else
         {
-            const Element& elementI = this->fvGeometry_.neighbors[this->face().i];
+            const Element& elementI = this->fvGeometry_().neighbors[this->face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
-            const Element& elementJ = this->fvGeometry_.neighbors[this->face().j];
+            const Element& elementJ = this->fvGeometry_().neighbors[this->face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
@@ -163,7 +172,7 @@ protected:
 
         // obtain the Forchheimer coefficient from the spatial parameters
         const Scalar forchCoeff = spatialParams.forchCoeff(element,
-                                                          this->fvGeometry_,
+                                                          this->fvGeometry_(),
                                                           this->face().i);
 
         // Make sure the permeability matrix does not have off-diagonal entries
@@ -178,7 +187,7 @@ protected:
         {
             // initial guess of velocity: Darcy relation
             // first taken from base class, later overwritten in base class
-            GlobalPosition velocity = this-> velocity(phaseIdx);
+            GlobalPosition velocity = this->velocity(phaseIdx);
 
             GlobalPosition deltaV;           // the change in velocity between Newton iterations
             GlobalPosition residual(10e10);  // the residual (function value that is to be minimized)

@@ -249,8 +249,13 @@ public:
             {
                 int fIdx = intersection.indexInInside();
 
-                FluxVariables fluxVars(this->problem_(), element, fvGeometry,
-                                       fIdx, elemVolVars, false);
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element,
+                                fvGeometry,
+                                fIdx,
+                                elemVolVars,
+                                false);
 
                 asImp_().writeFluxVarsData(fluxFile, fluxVars);
                 fluxFile << std::endl;
