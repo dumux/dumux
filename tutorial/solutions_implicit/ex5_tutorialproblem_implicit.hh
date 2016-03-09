@@ -144,15 +144,15 @@ public:
     {
         const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
 
-        return
-            this->timeManager().timeStepIndex() > 0 &&
-            (this->timeManager().timeStepIndex() % 10 == 0) || time == (this->timeManager().endTime());
+        return (time == this->timeManager().endTime()
+                || (this->timeManager().timeStepIndex() > 0
+                    && (this->timeManager().timeStepIndex() % 10 == 0)));
     }
 
     //! Returns the temperature within a finite volume. We use constant
     //! 10 degrees Celsius.
     Scalar temperature() const
-    { return 283.15; };
+    { return 283.15; }
 
     //! Specifies which kind of boundary condition should be used for
     //! which equation for a finite volume on the boundary.

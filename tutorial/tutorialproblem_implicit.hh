@@ -144,14 +144,14 @@ public:
     bool shouldWriteOutput() const /*@\label{tutorial-implicit:output}@*/
     {
         return
-            this->timeManager().timeStepIndex() > 0 &&
-            (this->timeManager().timeStepIndex() % 1 == 0);
+            (this->timeManager().timeStepIndex() > 0
+             && (this->timeManager().timeStepIndex() % 1 == 0));
     }
 
     //! Returns the temperature within a finite volume. We use constant
     //! 10 degrees Celsius.
     Scalar temperature() const
-    { return 283.15; };
+    { return 283.15; }
 
     //! Specifies which kind of boundary condition should be used for
     //! which equation for a finite volume on the boundary.
