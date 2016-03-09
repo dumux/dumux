@@ -64,6 +64,7 @@ int main(int argc, char** argv)
 {
     typedef TTAG(CC2PCornerPointProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
+}
 #else
 int main(int argc, char** argv)
 {
