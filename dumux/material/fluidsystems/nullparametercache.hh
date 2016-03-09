@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief The a parameter cache which does nothing
+ * \brief @copybrief Dumux::FluidSystems::NullParameterCache
  */
 #ifndef DUMUX_NULL_PARAMETER_CACHE_HH
 #define DUMUX_NULL_PARAMETER_CACHE_HH

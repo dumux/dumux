@@ -20,8 +20,7 @@
 /*!
  * \file
  *
- * \brief A three-phase (phases water and air) fluid system
- * with water, nitrogen and oxygen as components.
+ * \brief @copybrief Dumux::FluidSystems::H2ON2O2
  */
 #ifndef DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
@@ -58,13 +57,13 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A two-phase (phases water and air) fluid system
- * with water, nitrogen and oxygen as components.
+ * \brief A two-phase (water and air) fluid system
+ *        with water, nitrogen and oxygen as components.
  *
- *  This fluidsystem uses tabulated version of water of the IAPWS-formulation.
+ * This fluidsystem uses tabulated version of water of the IAPWS-formulation.
  *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
+ * Also remember to initialize tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
  * additional namespace Dumux::FluidSystem::.
@@ -78,7 +77,6 @@ class H2ON2O2
     typedef H2ON2O2<Scalar, useComplexRelations> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
-    // convenience typedefs
     typedef Dumux::IdealGas<Scalar> IdealGas;
     typedef Dumux::Constants<Scalar> Constants;
     typedef Dumux::H2O<Scalar> IapwsH2O;
@@ -88,13 +86,9 @@ class H2ON2O2
 
     //! The components for pure water
     typedef TabulatedH2O H2O;
-    //typedef IapwsH2O H2O;
 
     //! The components for pure nitrogen
     typedef SimpleN2 N2;
-
-//    //! The components for pure oxygen
-//    typedef SimpleO2 O2;
 
 public:
     /****************************************
@@ -142,7 +136,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -711,8 +705,7 @@ public:
         // gas phase
         else if (phaseIdx == nPhaseIdx)
         {
-            // assume ideal mixture: Molecules of one component don't
-            // "see" the molecules of the other component, which means
+            // assume ideal mixture: which means
             // that the total specific enthalpy is the sum of the
             // "partial specific enthalpies" of the components.
             Scalar hH2O =
@@ -774,8 +767,6 @@ public:
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
                 Scalar lambdaN2 = xN2 * lambdaPureN2;
                 Scalar lambdaO2 = xO2 * lambdaPureO2;
-                // Assuming Raoult's, Daltons law and ideal gas
-                // in order to obtain the partial density of water in the air phase
                 Scalar partialPressure  = pressure * xH2O;
                 Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
                 return lambdaN2 + lambdaH2O + lambdaO2;
@@ -802,10 +793,6 @@ public:
                                            fluidState.pressure(phaseIdx));
         }
 
-        // for the gas phase, assume ideal mixture, i.e. molecules of
-        // one component don't "see" the molecules of the other
-        // component
-
         Scalar c_pN2;
         Scalar c_pO2;
         Scalar c_pH2O;
@@ -825,7 +812,7 @@ public:
         else {
             // assume an ideal gas for both components. See:
             //
-            // http://en.wikipedia.org/wiki/Heat_capacity
+            //http://en.wikipedia.org/wiki/Heat_capacity
             Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
             Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
 
@@ -853,9 +840,10 @@ public:
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase (water and air) fluid system
+ *        with water, nitrogen and oxygen as components.
  *
- * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
+ * This is an adapter to use Dumux::H2ON2O2<TypeTag>, as is
  * done with most other classes in Dumux.
  */
 template<class TypeTag>

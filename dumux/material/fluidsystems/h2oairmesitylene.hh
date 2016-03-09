@@ -46,8 +46,10 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  * \brief A three-phase fluid system featuring gas, NAPL and water as phases and
- * distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
- * \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_6H_3(CH_3)_3})\f$ as components. It assumes all phases to be ideal mixtures.
+ *        distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
+ *        \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_6H_3(CH_3)_3})\f$ as components.
+ *
+ * It assumes all phases to be ideal mixtures.
  */
 template <class Scalar,
           class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
@@ -142,7 +144,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -475,8 +477,7 @@ public:
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
-     */
-    /*!
+     *
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
@@ -508,7 +509,8 @@ public:
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
- /*!
+
+    /*!
      * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
@@ -521,7 +523,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::heatCapacity()");
     }
 
- /*!
+    /*!
      * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
@@ -593,17 +595,19 @@ namespace Properties {
  *  incompressible water), or to switch on verbosity of tabulation,
  *  use the property system and the property "Components":
  *
- *        // Select desired version of the component
- *        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
- *        {
- *            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ * \code{.cpp}
+ * // Select desired version of the component
+ * SET_PROP(TheSpecificProblemTypeTag, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ * {
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  *
- *        // Do not use the defaults !
- *        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     // Do not use the defaults !
+ *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
  *
- *        // Apply e.g. untabulated water:
- *        typedef Dumux::H2O<Scalar> H2O;
- *        };
+ *     // Apply e.g. untabulated water:
+ *     typedef Dumux::H2O<Scalar> H2O;
+ * };
+ * \endcode
  *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.

@@ -52,9 +52,8 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A two-phase fluid system featuring gas and liquid phases and destilled
- * water \f$(\mathrm{H_2O})\f$ and pure molecular Nitrogen \f$(\mathrm{N_2})\f$ as
- * components.
+ * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
+ *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models.
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
@@ -125,7 +124,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -624,8 +623,7 @@ public:
         }
         // gas phase
         else {
-            // assume ideal mixture: Molecules of one component don't
-            // "see" the molecules of the other component, which means
+            // assume ideal mixture: which means
             // that the total specific enthalpy is the sum of the
             // "partial specific enthalpies" of the components.
             Scalar hH2O =
@@ -667,9 +665,6 @@ public:
                 Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
                 Scalar lambdaN2 = xN2 * lambdaPureN2;
-
-                // Assuming Raoult's, Daltons law and ideal gas
-                // in order to obtain the partial density of water in the air phase
                 Scalar partialPressure  = pressure * xH2O;
 
                 Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
@@ -697,10 +692,7 @@ public:
                                            fluidState.pressure(phaseIdx));
         }
 
-        // for the gas phase, assume ideal mixture, i.e. molecules of
-        // one component don't "see" the molecules of the other
-        // component
-
+        // for the gas phase, assume ideal mixture
         Scalar c_pN2;
         Scalar c_pH2O;
         // let the water and nitrogen components do things their own way
@@ -715,7 +707,6 @@ public:
         }
         else {
             // assume an ideal gas for both components. See:
-            //
             // http://en.wikipedia.org/wiki/Heat_capacity
             Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
             Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
@@ -738,7 +729,7 @@ public:
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase fluid system with water and nitrogen as components.
  *
  * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.

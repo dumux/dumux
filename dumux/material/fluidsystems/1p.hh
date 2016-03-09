@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system for single phase models.
+ * \brief @copybrief Dumux::FluidSystems::OneP
  */
 #ifndef DUMUX_1P_FLUIDSYSTEM_HH
 #define DUMUX_1P_FLUIDSYSTEM_HH
@@ -98,7 +98,7 @@ public:
      * \brief Returns true if and only if a fluid phase is assumed to
      *        be compressible.
      *
-     * Compressible means. that the partial derivative of the density
+     * Compressible means that the partial derivative of the density
      * to the fluid pressure is always larger than zero.
      *
      * \param phaseIdx The index of the fluid phase to consider
@@ -117,7 +117,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if only a single component is involved. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times

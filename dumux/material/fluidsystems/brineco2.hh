@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with water and gas as phases and brine and CO2
- *        as components.
+ * \brief @copybrief Dumux::FluidSystems::BrineCO2
  */
 #ifndef DUMUX_BRINE_CO2_SYSTEM_HH
 #define DUMUX_BRINE_CO2_SYSTEM_HH
@@ -126,7 +125,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -542,9 +541,12 @@ public:
 
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
-     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note For the thermal conductivity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::thermalConductivity;
     template <class FluidState>
@@ -707,28 +709,30 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
  *  init routine), change the default components via the property "Components":
  *
  *
-     \verbatim
-        // Select other compoenents
-        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
-        {
-            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-                // Do not use the defaults that are the following
-                //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
-                //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> >  BrineRawComponent;
-                //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
-
-            // Apply the following component classes:
-            typedef Dumux::H2O<Scalar> H2O;
-            typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
-            typedef typename BrineRawComponent Brine;// all components have to be redefined,
-                                                     // the applied H2O and Brine implemementations.
-        };
-    \endverbatim.
-     Also remember to initialize all tabulated components (FluidSystem::init()), while this
-     is not necessary for non-tabularized ones.
+ * \code{.cpp}
+ * // Select other components
+ * SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ * {
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *     // Do not use the defaults that are the following
+ *     //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> >  BrineRawComponent;
+ *     //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
  *
- *   The desired material tables for CO2 can be defined via
+ *     // Apply the following component classes:
+ *     typedef Dumux::H2O<Scalar> H2O;
+ *     typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
+ *     typedef typename BrineRawComponent Brine;// all components have to be redefined,
+ *                                              // the applied H2O and Brine implemementations.
+ * };
+ * \endcode
+ * Also remember to initialize all tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
+ *
+ * The desired material tables for CO2 can be defined via
+ * \code{.cpp}
  *      SET_TYPE_PROP(myApplicationProperty, CO2Table, myCO2Tables);
+ * \endcode
  *   or use the default tables. Do not forget to include the tables.
  *   Salinity is specified via the appropriate property.
  */

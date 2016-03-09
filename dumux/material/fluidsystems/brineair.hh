@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with a liquid and a gaseous phase and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
- *
+ * \brief @copybrief Dumux::FluidSystems::BrineAir
  */
 #ifndef DUMUX_BRINE_AIR_SYSTEM_HH
 #define DUMUX_BRINE_AIR_SYSTEM_HH
@@ -52,7 +51,8 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A compositional two-phase fluid system with water, air and dissolved salt as components in both, the liquid and the gas phase.
+ * \brief A compositional two-phase fluid system with a liquid and a gaseous phase
+ *        and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
  *
  *  This fluidsystem is applied by default with the tabulated version of
  *  water of the IAPWS-formulation.
@@ -62,14 +62,16 @@ namespace FluidSystems
  *  specify the water formulation via template arguments or via the property
  *  system, as described in the TypeTag Adapter at the end of the file.
  *
-            // Select fluid system
-            SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
-            {
-                typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-                typedef Dumux::FluidSystems::BrineAir<Scalar, Dumux::SimpleH2O<Scalar>> type;
-            };
-
+ * \code{.cpp}
+ * // Select fluid system
+ * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
+ * {
+ *     // e.g. to use a simple version of H2O
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
+ * };
+ * \endcode
+ *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.
  *
@@ -153,7 +155,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -361,9 +363,9 @@ public:
      * \param fluidState the fluid state
      *
      * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002
+     * - Batzle & Wang (1992) \cite batzle1992
+     * - cited by: Bachu & Adams (2002)
+     *   "Equations of State for basin geofluids" \cite adams2002
      */
     using Base::density;
     template <class FluidState>
@@ -396,10 +398,9 @@ public:
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002
+     * \note For the viscosity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::viscosity;
     template <class FluidState>
@@ -559,7 +560,7 @@ public:
      * See:
      * Class 2000
      * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in NAPL-kontaminierten porösen Medien
-     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
+     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001
      *
      * Formula (2.42):
      * the specific enthalpy of a gas phase result from the sum of (enthalpies*mass fraction) of the components
@@ -636,7 +637,6 @@ public:
 
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
-     *
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -656,7 +656,6 @@ public:
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
-     *
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -682,7 +681,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
     /*!
-     * \brief Return the molality of NaCl salt \f$\mathrm{[mol/m^3]}\f$.
+     * \brief Return the molality of NaCl \f$\mathrm{[mol/m^3]}\f$.
      * \param fluidState An abitrary fluid state
      * \param paramCache parameter cache
      * \param salinity Salinity of brine

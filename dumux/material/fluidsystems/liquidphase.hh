@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A liquid phase consisting of a single component.
+ * \brief @copybrief Dumux::FluidSystems::LiquidPhase
  */
 #ifndef DUMUX_LIQUID_PHASE_HH
 #define DUMUX_LIQUID_PHASE_HH
@@ -98,7 +98,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if only a single component is involved. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times

@@ -51,7 +51,7 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A compositional twophase fluid system with water and air as
+ * \brief A compositional two-phase fluid system with water and air as
  *        components in both, the liquid and the gas phase.
  *
  *  This fluidsystem features gas and liquid phases of distilled water
@@ -61,16 +61,19 @@ namespace FluidSystems
  *
  *  To change the component formulation (i.e. to use nontabulated or
  *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the water formulation via template arguments or via the property
+ *  specify the \p H2O formulation via template arguments or via the property
  *  system, as described in the TypeTag Adapter at the end of the file.
  *
-            // Select fluid system
-            SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
-            {
-                typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-                typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
-            };
-
+ * \code{.cpp}
+ * // Select fluid system
+ * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
+ * {
+ *     // e.g. to use a simple version of H2O
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
+ * };
+ * \endcode
+ *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.
  *
@@ -79,6 +82,11 @@ namespace FluidSystems
  * additional namespace Dumux::FluidSystem::.
  * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
  * at the end of this file.
+ *
+ * The template argument \p useComplexRelations can be used to switch from a complex
+ * relation, in which compositional effects are considered for the gas phase and the
+ * density of the liquid phase, to a non-complex formulation in which compositional
+ * effects are not considered.
  */
 template <class Scalar,
           class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >,
@@ -775,7 +783,7 @@ NEW_PROP_TAG(Components);
 }
 
 /*!
- * \brief A twophase fluid system with water and air as components.
+ * \brief A two-phase fluid system with water and air as components.
  *
  * This is an adapter to use Dumux::H2OAirFluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
@@ -786,20 +794,21 @@ NEW_PROP_TAG(Components);
  *  incompressible water), or to switch on verbosity of tabulation,
  *  use the property system and the property "Components":
  *
-        // Select desired version of the component
-        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
-        {
-            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-        // Do not use the defaults !
-        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
-
-        // Apply e.g. untabulated water:
-        typedef Dumux::H2O<Scalar> H2O;
-        };
-
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
+ *  \code{.cpp}
+ * // Select desired version of the component
+ * SET_PROP(TheSpecificProblemTypeTag, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ * {
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *
+ *     // Do not use the defaults !
+ *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *
+ *     // Apply e.g. untabulated water:
+ *     typedef Dumux::H2O<Scalar> H2O;
+ * };
+ * \endcode
+ * Also remember to initialize tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
  */
 template<class TypeTag>
 class H2OAirFluidSystem

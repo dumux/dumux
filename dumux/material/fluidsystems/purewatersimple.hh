@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief @copybrief Dumux::FluidSystems::PureWaterSimpleFluidSystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
 #define DUMUX_PURE_WATER_FLUID_SYSTEM_HH
@@ -125,7 +125,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -561,7 +561,7 @@ public:
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase fluid system with water and nitrogen as components.
  *
  * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
