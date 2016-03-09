@@ -48,12 +48,6 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
 
 public:
     /*!
-     * \brief The constructor.
-     */
-    CCElementVolumeVariables()
-    { }
-
-    /*!
      * \brief Construct the volume variables for all of vertices of an element.
      *
      * \param problem The problem which needs to be simulated.
@@ -105,31 +99,32 @@ public:
                 this->resize(numNeighbors + element.subEntities(1));
 
                 // add volume variables for the boundary faces
-                for (const auto& intersection : intersections(problem.gridView(), element)) {
-                    if (!intersection.boundary())
-                        continue;
-
-                    BoundaryTypes bcTypes;
-                    problem.boundaryTypes(bcTypes, intersection);
-
-                    int fIdx = intersection.indexInInside();
-                    int indexInVariables = numNeighbors + fIdx;
-
-                    if (bcTypes.hasDirichlet())
+                for (const auto& intersection : intersections(problem.gridView(), element))
+                {
+                    if (intersection.boundary())
                     {
-                        PrimaryVariables dirichletValues;
-                        problem.dirichlet(dirichletValues, intersection);
+                        BoundaryTypes bcTypes;
+                        problem.boundaryTypes(bcTypes, intersection);
 
-                        (*this)[indexInVariables].update(dirichletValues,
-                                                         problem,
-                                                         element,
-                                                         fvGeometry,
-                                                         /*scvIdx=*/0,
-                                                         oldSol);
-                    }
-                    else
-                    {
-                        (*this)[indexInVariables] = (*this)[0];
+                        int fIdx = intersection.indexInInside();
+                        int indexInVariables = numNeighbors + fIdx;
+
+                        if (bcTypes.hasDirichlet())
+                        {
+                            PrimaryVariables dirichletValues;
+                            problem.dirichlet(dirichletValues, intersection);
+
+                            (*this)[indexInVariables].update(dirichletValues,
+                                                            problem,
+                                                            element,
+                                                            fvGeometry,
+                                                            /*scvIdx=*/0,
+                                                            oldSol);
+                        }
+                        else
+                        {
+                            (*this)[indexInVariables] = (*this)[0];
+                        }
                     }
                 }
             }

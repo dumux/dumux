@@ -74,24 +74,23 @@ protected:
     {
         for (const auto& intersection : intersections(this->gridView_(), this->element_()))
         {
-            // handle only faces on the boundary
-            if (!intersection.boundary())
-                continue;
+            if (intersection.boundary())
+            {
+                BoundaryTypes bcTypes;
+                this->problem_().boundaryTypes(bcTypes, intersection);
 
-            BoundaryTypes bcTypes;
-            this->problem_().boundaryTypes(bcTypes, intersection);
+                // evaluate the Neumann conditions at the boundary face
+                if (bcTypes.hasNeumann())
+                    this->asImp_().evalNeumannSegment_(&intersection, bcTypes);
 
-            // evaluate the Neumann conditions at the boundary face
-            if (bcTypes.hasNeumann())
-                this->asImp_().evalNeumannSegment_(&intersection, bcTypes);
+                // evaluate the outflow conditions at the boundary face
+                if (bcTypes.hasOutflow())
+                    this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
 
-            // evaluate the outflow conditions at the boundary face
-            if (bcTypes.hasOutflow())
-                this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
-
-            // evaluate the pure Dirichlet conditions at the boundary face
-            if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                this->asImp_().evalDirichletSegment_(&intersection, bcTypes);
+                // evaluate the pure Dirichlet conditions at the boundary face
+                if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
+                    this->asImp_().evalDirichletSegment_(&intersection, bcTypes);
+            }
         }
     }
 
@@ -103,15 +102,14 @@ protected:
     {
         for (const auto& intersection : intersections(this->gridView_(), this->element_()))
         {
-            // handle only faces on the boundary
-            if (!intersection.boundary())
-                continue;
+            if (intersection.boundary())
+            {
+                BoundaryTypes bcTypes;
+                this->problem_().boundaryTypes(bcTypes, intersection);
 
-            BoundaryTypes bcTypes;
-            this->problem_().boundaryTypes(bcTypes, intersection);
-
-            if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
-                this->asImp_().evalDirichletSegmentMixed_(&intersection, bcTypes);
+                if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
+                    this->asImp_().evalDirichletSegmentMixed_(&intersection, bcTypes);
+            }
         }
     }
 
@@ -265,20 +263,21 @@ protected:
         // calculate the mass flux over the faces and subtract
         // it from the local rates
         int fIdx = -1;
-        for (const auto& intersection : intersections(this->gridView_(), this->element_())) {
-            if (!intersection.neighbor())
-                continue;
+        for (const auto& intersection : intersections(this->gridView_(), this->element_()))
+        {
+            if (intersection.neighbor())
+            {
+                fIdx++;
+                PrimaryVariables flux;
 
-            fIdx++;
-            PrimaryVariables flux;
+                Valgrind::SetUndefined(flux);
+                this->asImp_().computeFlux(flux, fIdx);
+                Valgrind::CheckDefined(flux);
 
-            Valgrind::SetUndefined(flux);
-            this->asImp_().computeFlux(flux, fIdx);
-            Valgrind::CheckDefined(flux);
+                flux *= this->curVolVars_(0).extrusionFactor();
 
-            flux *= this->curVolVars_(0).extrusionFactor();
-
-            this->residual_[0] += flux;
+                this->residual_[0] += flux;
+            }
         }
     }
 };

@@ -28,6 +28,7 @@
 
 #include "../lensproblem.hh"
 
+#if HAVE_UG
 namespace Dumux
 {
 template <class TypeTag>
@@ -43,7 +44,7 @@ NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensProblemPointSource, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 SET_BOOL_PROP(LensProblemPointSource, AdaptiveGrid, true);
 SET_TYPE_PROP(LensProblemPointSource, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
-SET_TYPE_PROP(LensProblemPointSource,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+SET_TYPE_PROP(LensProblemPointSource, AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
 SET_TYPE_PROP(LensProblemPointSource, Grid, Dune::UGGrid<2>);
 SET_TYPE_PROP(LensProblemPointSource, Problem, LensProblemPointSource<TypeTag>);
 }
@@ -125,5 +126,7 @@ public:
 };
 
 } //end namespace
+
+#endif // HAVE_UG
 
 #endif

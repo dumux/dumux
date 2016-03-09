@@ -25,6 +25,8 @@
 #ifndef DUMUX_SEQUENTIAL_2P_INDICES_HH
 #define DUMUX_SEQUENTIAL_2P_INDICES_HH
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux
 {
 /*!
