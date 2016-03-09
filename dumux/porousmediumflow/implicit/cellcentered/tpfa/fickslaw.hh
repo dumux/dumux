@@ -140,9 +140,9 @@ protected:
     {
         const auto insideScvIdx = scvFace_().insideScvIdx();
         const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-        typename FluidSystem::ParameterCache insideParamCache;
         const auto& insideVolVars = problem_().model().curVolVars(insideScvIdx);
-        auto insideD = FluidSystem::diffusionCoefficient(insideVolVars.fluidState(), insideParamCache, phaseIdx_, compIdx_);
+
+        auto insideD = insideVolVars.diffusionCoefficient(phaseIdx_, compIdx_);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx_), insideD);
         Scalar ti = calculateOmega_(insideD, insideScv);
 
@@ -150,9 +150,9 @@ protected:
         {
             const auto outsideScvIdx = scvFace_().outsideScvIdx();
             const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
-            typename FluidSystem::ParameterCache outsideParamCache;
             const auto& outsideVolVars = problem_().model().curVolVars(outsideScvIdx);
-            auto outsideD = FluidSystem::diffusionCoefficient(outsideVolVars.fluidState(), outsideParamCache, phaseIdx_, compIdx_);
+
+            auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx_, compIdx_);
             outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx_), outsideD);
             Scalar tj = -1.0*calculateOmega_(outsideD, outsideScv);
 

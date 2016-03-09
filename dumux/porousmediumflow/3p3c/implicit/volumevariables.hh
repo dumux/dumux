@@ -537,6 +537,21 @@ public:
         bulkDensTimesAdsorpCoeff_ =
             MaterialLaw::bulkDensTimesAdsorpCoeff(materialParams);
 
+        /* compute the diffusion coefficient
+         * \note This is the part of the diffusion coefficient determined by the fluid state, e.g.
+         *       important if they are tabularized. In the diffusive flux computation (e.g. Fick's law)
+         *       this gets converted into an effecient coefficient depending on saturation and porosity.
+         *       We can then add a normalized tensorial component
+         *       e.g. obtained from DTI from the spatial params (currently not implemented)
+         */
+        setDiffusionCoefficient_(gPhaseIdx, wCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, gPhaseIdx, wCompIdx));
+        setDiffusionCoefficient_(gPhaseIdx, nCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, gPhaseIdx, nCompIdx));
+        setDiffusionCoefficient_(wPhaseIdx, gCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, wPhaseIdx, gCompIdx));
+        setDiffusionCoefficient_(wPhaseIdx, nCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, wPhaseIdx, nCompIdx));
+        // no diffusion in NAPL phase considered  at the moment
+        setDiffusionCoefficient_(nPhaseIdx, wCompIdx, 0.0);
+        setDiffusionCoefficient_(nPhaseIdx, gCompIdx, 0.0);
+
         // porosity
         porosity_ = problem.spatialParams().porosity(scv);
         Valgrind::CheckDefined(porosity_);
@@ -652,6 +667,19 @@ public:
     Scalar bulkDensTimesAdsorpCoeff() const
     { return bulkDensTimesAdsorpCoeff_; }
 
+    /*!
+     * \brief Returns the diffusion coeffiecient
+     */
+    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        if (compIdx < phaseIdx)
+            return diffCoefficient_[phaseIdx][compIdx];
+        else if (compIdx > phaseIdx)
+            return diffCoefficient_[phaseIdx][compIdx-1];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+    }
+
 
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
@@ -679,6 +707,16 @@ protected:
                        const SubControlVolume& scv)
     {}
 
+    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
+    {
+        if (compIdx < phaseIdx)
+            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
+        else if (compIdx > phaseIdx)
+            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
+    }
+
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar moleFrac_[numPhases][numComponents];
@@ -690,6 +728,8 @@ protected:
     FluidState fluidState_;
 
 private:
+    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
