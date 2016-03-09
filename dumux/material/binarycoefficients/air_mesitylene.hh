@@ -74,7 +74,7 @@ public:
         const Scalar sigma_a = 3.711;     // charact. length of air
         const Scalar T_scal_a = 78.6;     // [K] (molec. energy of attraction/Boltzmann constant)
         const Scalar V_B_m = 162.6;       // [cm^3/mol] LeBas molal volume of mesitylene
-        const Scalar sigma_m = 1.18*std::pow(V_B_m, 0.333);     // charact. length of mesitylene
+        const Scalar sigma_m = 1.18*std::cbrt(V_B_m);     // charact. length of mesitylene
         const Scalar sigma_am = 0.5*(sigma_a + sigma_m);
         const Scalar T_scal_m = 1.15*Tb_m;
         const Scalar T_scal_am = std::sqrt(T_scal_a*T_scal_m);
@@ -86,8 +86,8 @@ public:
             + 1.03587/std::exp(T_star*1.52996) + 1.76474/std::exp(T_star*3.89411);
         const Scalar B_ = 0.00217 - 0.0005*std::sqrt(1.0/M_a + 1.0/M_m);
         const Scalar Mr = (M_a + M_m)/(M_a*M_m);
-        const Scalar D_am = (B_*std::pow(temperature, 1.5) * std::sqrt(Mr))
-                           /(1e-5*pressure*std::pow(sigma_am, 2.0) * Omega); // [cm^2/s]
+        const Scalar D_am = (B_*std::sqrt(temperature*temperature*temperature*Mr))
+                           /(1e-5*pressure*std::pow(sigma_am, int(2)) * Omega); // [cm^2/s]
 
         return 1e-4*D_am; // [m^2/s]
     }
