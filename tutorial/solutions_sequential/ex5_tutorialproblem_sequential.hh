@@ -34,7 +34,7 @@
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh> /*@\label{tutorial-sequential:parent-problem}@*/
 
 // assign parameters dependent on space (e.g. spatial parameters)
-#include "ex5_tutorialspatialparams_decoupled.hh" /*@\label{tutorial-sequential:spatialparameters}@*/
+#include "ex5_tutorialspatialparams_sequential.hh" /*@\label{tutorial-sequential:spatialparameters}@*/
 
 // include cfl-criterion after coats: more suitable if the problem is not advection dominated
 #include<dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
