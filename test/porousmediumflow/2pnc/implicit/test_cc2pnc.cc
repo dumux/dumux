@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the 2pnc box model used for water management in PEM fuel cells.
+ * \brief Test for the 2pnc cc model used for water management in PEM fuel cells.
  */
 #include <config.h>
 #include "fuelcellproblem.hh"
@@ -50,6 +50,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(FuelCellBoxProblem) ProblemTypeTag;
+    typedef TTAG(FuelCellCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

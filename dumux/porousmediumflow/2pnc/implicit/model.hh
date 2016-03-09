@@ -19,7 +19,7 @@
 /*!
 * \file
 *
-* \brief Adaption of the fully implicit box scheme to the two-phase n-component flow model.
+* \brief Adaption of the fully implicit model to the two-phase n-component flow model.
 */
 
 #ifndef DUMUX_2PNC_MODEL_HH
@@ -68,7 +68,7 @@ namespace Dumux
  *  = q_\lambda\f$
  *
  * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme (this is not done for 2pnc approach yet, however possible) as
+ * or cell-centered finite volume scheme as
  * spatial and the implicit Euler method as time discretization.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
@@ -166,7 +166,7 @@ public:
     {
         ParentType::init(problem);
 
-        unsigned numDofs = this->numDofs();
+        auto numDofs = this->numDofs();
 
         staticDat_.resize(numDofs);
 
@@ -174,37 +174,14 @@ public:
 
         for (const auto& element : elements(this->gridView_()))
         {
-            if (!isBox) // i.e. cell-centered discretization
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+            for (unsigned int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->dofMapper().index(element);
-                const GlobalPosition &globalPos = element.geometry().center();
-
-                // initialize phase presence
-                staticDat_[dofIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(*(this->gridView_().template begin<dim>()),
-                                                            dofIdxGlobal, globalPos);
+                auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                staticDat_[dofIdxGlobal].phasePresence = this->problem_().initialPhasePresence(element, fvGeometry, scvIdx);
                 staticDat_[dofIdxGlobal].wasSwitched = false;
-
-                staticDat_[dofIdxGlobal].oldPhasePresence
-                    = staticDat_[dofIdxGlobal].phasePresence;
-            }
-        }
-
-        if (isBox) // i.e. vertex-centered discretization
-        {
-            for (const auto& vertex : vertices(this->gridView_()))
-            {
-                int dofIdxGlobal = this->dofMapper().index(vertex);
-                const GlobalPosition &globalPos = vertex.geometry().corner(0);
-
-                // initialize phase presence
-                staticDat_[dofIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(vertex, dofIdxGlobal,
-                                                            globalPos);
-                staticDat_[dofIdxGlobal].wasSwitched = false;
-
-                staticDat_[dofIdxGlobal].oldPhasePresence
-                    = staticDat_[dofIdxGlobal].phasePresence;
+                staticDat_[dofIdxGlobal].oldPhasePresence = staticDat_[dofIdxGlobal].phasePresence;
             }
         }
     }
@@ -271,15 +248,15 @@ public:
     }
 
     /*!
-     * \brief Returns the phase presence of the current or the old solution of a vertex.
+     * \brief Returns the phase presence of the current or the old solution
      *
-     * \param globalVertexIdx The global vertex index
+     * \param dofIdxGlobal The global DOF index
      * \param oldSol Evaluate function with solution of current or previous time step
      */
-    int phasePresence(int globalVertexIdx, bool oldSol) const
+    int phasePresence(int dofIdxGlobal, bool oldSol) const
     {
-        return oldSol ? staticDat_[globalVertexIdx].oldPhasePresence
-                : staticDat_[globalVertexIdx].phasePresence;
+        return oldSol ? staticDat_[dofIdxGlobal].oldPhasePresence
+                : staticDat_[dofIdxGlobal].phasePresence;
     }
 
     /*!
@@ -299,7 +276,7 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // get the number of degrees of freedom
-        unsigned numDofs = this->numDofs();
+        auto numDofs = this->numDofs();
 
         ScalarField *Sg            = writer.allocateManagedBuffer (numDofs);
         ScalarField *Sl            = writer.allocateManagedBuffer (numDofs);
@@ -312,7 +289,6 @@ public:
         ScalarField *mobG          = writer.allocateManagedBuffer (numDofs);
         ScalarField *temperature   = writer.allocateManagedBuffer (numDofs);
         ScalarField *poro          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *boxVolume     = writer.allocateManagedBuffer (numDofs);
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
         VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
@@ -340,21 +316,17 @@ public:
         for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
             Perm[j] = writer.allocateManagedBuffer(numDofs);
 
-        *boxVolume = 0;
-
-        unsigned numElements = this->gridView_().size(0);
+        auto numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
-
-        FVElementGeometry fvGeometry;
-        VolumeVariables volVars;
-        ElementVolumeVariables elemVolVars;
 
         for (const auto& element : elements(this->gridView_()))
         {
-            int eIdxGlobal = this->problem_().elementMapper().index(element);
+            auto eIdxGlobal = this->problem_().elementMapper().index(element);
             (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
+            FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), element);
 
+            ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
                                element,
                                fvGeometry,
@@ -362,14 +334,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                volVars.update(sol[dofIdxGlobal],
-                               this->problem_(),
-                               element,
-                               fvGeometry,
-                               scvIdx,
-                               false);
+                auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 GlobalPosition globalPos = fvGeometry.subContVol[scvIdx].global;
                 (*Sg)[dofIdxGlobal]             = elemVolVars[scvIdx].saturation(nPhaseIdx);
@@ -381,25 +346,20 @@ public:
                 (*rhoG)[dofIdxGlobal]           = elemVolVars[scvIdx].density(nPhaseIdx);
                 (*mobL)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(wPhaseIdx);
                 (*mobG)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                (*boxVolume)[dofIdxGlobal]     += fvGeometry.subContVol[scvIdx].volume;
                 (*poro)[dofIdxGlobal]           = elemVolVars[scvIdx].porosity();
                 (*temperature)[dofIdxGlobal]    = elemVolVars[scvIdx].temperature();
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    {
-                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= volVars.moleFraction(phaseIdx,compIdx);
-                        Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]);
-                    }
-                }
+                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].moleFraction(phaseIdx,compIdx);
+
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    (*molarity[compIdx])[dofIdxGlobal] = (volVars.molarity(wPhaseIdx, compIdx));
+                    (*molarity[compIdx])[dofIdxGlobal] = (elemVolVars[scvIdx].molarity(wPhaseIdx, compIdx));
 
                 Tensor K = perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
 
                 for (int j = 0; j<dim; ++j)
-                    (*Perm[j])[dofIdxGlobal] = K[j][j] /* volVars.permFactor()*/;
+                    (*Perm[j])[dofIdxGlobal] = K[j][j];
             };
 
             // velocity output
@@ -421,7 +381,6 @@ public:
         writer.attachDofData(*mobG, "mobG", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*temperature, "temperature", isBox);
-        writer.attachDofData(*boxVolume, "boxVolume", isBox);
         writer.attachDofData(*Perm[0], "Kxx", isBox);
         if (dim >= 2)
             writer.attachDofData(*Perm[1], "Kyy", isBox);
@@ -436,7 +395,7 @@ public:
                 oss << "x"
                     << FluidSystem::componentName(j)
                     << FluidSystem::phaseName(i);
-                writer.attachDofData(*moleFraction[i][j], oss.str().c_str(), isBox);
+                writer.attachDofData(*moleFraction[i][j], oss.str(), isBox);
             }
         }
 
@@ -469,10 +428,6 @@ public:
         // write primary variables
         ParentType::serializeEntity(outStream, entity);
         int dofIdxGlobal = this->dofMapper().index(entity);
-
-        if (!outStream.good())
-            DUNE_THROW(Dune::IOError, "Could not serialize vertex " << dofIdxGlobal);
-
         outStream << staticDat_[dofIdxGlobal].phasePresence << " ";
     }
 
@@ -490,14 +445,9 @@ public:
         ParentType::deserializeEntity(inStream, entity);
         int dofIdxGlobal = this->dofMapper().index(entity);
 
-        if (!inStream.good())
-            DUNE_THROW(Dune::IOError,
-                       "Could not deserialize vertex " << dofIdxGlobal);
-
         inStream >> staticDat_[dofIdxGlobal].phasePresence;
         staticDat_[dofIdxGlobal].oldPhasePresence
                 = staticDat_[dofIdxGlobal].phasePresence;
-
     }
 
     /*!
@@ -514,19 +464,19 @@ public:
         for (unsigned i = 0; i < staticDat_.size(); ++i)
             staticDat_[i].visited = false;
 
-        FVElementGeometry fvGeometry;
-        static VolumeVariables volVars;
         for (const auto& element : elements(this->gridView_()))
         {
+            FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), element);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
+                auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 if (staticDat_[dofIdxGlobal].visited)
                     continue;
 
                 staticDat_[dofIdxGlobal].visited = true;
+                VolumeVariables volVars;
                 volVars.update(curGlobalSol[dofIdxGlobal],
                                this->problem_(),
                                element,
@@ -542,7 +492,8 @@ public:
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag
         // for our partition.
-        wasSwitched = this->gridView_().comm().max(wasSwitched);
+        if (this->gridView_().comm().size() > 1)
+            wasSwitched = this->gridView_().comm().max(wasSwitched);
 
         setSwitched_(wasSwitched);
     }
@@ -583,8 +534,7 @@ protected:
      */
     void resetPhasePresence_()
     {
-        int numDofs = this->gridView_().size(dim);
-        for (int i = 0; i < numDofs; ++i)
+        for (int i = 0; i < this->numDofs(); ++i)
         {
             staticDat_[i].phasePresence
                     = staticDat_[i].oldPhasePresence;
@@ -597,8 +547,7 @@ protected:
      */
     void updateOldPhasePresence_()
     {
-        int numDofs = this->gridView_().size(dim);
-        for (int i = 0; i < numDofs; ++i)
+        for (int i = 0; i < this->numDofs(); ++i)
         {
             staticDat_[i].oldPhasePresence
                     = staticDat_[i].phasePresence;
@@ -620,7 +569,8 @@ protected:
      *         variable switch was performed.
      */
     bool primaryVarSwitch_(SolutionVector &globalSol,
-                           const VolumeVariables &volVars, int dofIdxGlobal,
+                           const VolumeVariables &volVars,
+                           int dofIdxGlobal,
                            const GlobalPosition &globalPos)
     {
 

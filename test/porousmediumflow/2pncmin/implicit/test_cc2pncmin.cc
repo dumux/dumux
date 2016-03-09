@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief Test for the 2pnc box model used for water management in PEM fuel cells.
+ * \brief Test for the two-phase n-component isothermal cc model.
  */
 #include <config.h>
-#include "fuelcellproblem.hh"
+#include "dissolutionproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -50,6 +50,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(FuelCellBoxProblem) ProblemTypeTag;
+    typedef TTAG(DissolutionCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

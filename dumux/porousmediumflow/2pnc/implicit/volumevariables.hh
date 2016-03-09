@@ -131,18 +131,18 @@ public:
         /////////////
         const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-    // Second instance of a parameter cache.
+        // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {// relative permeabilities
+        {
+            // relative permeabilities
             Scalar kr;
             if (phaseIdx == wPhaseIdx)
                 kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
-            else // ATTENTION: krn requires the liquid saturation
-                // as parameter!
+            else // ATTENTION: krn requires the liquid saturation // as parameter!
                 kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
 
             mobility_[phaseIdx] = kr / fluidState_.viscosity(phaseIdx);
@@ -181,12 +181,12 @@ public:
     * \param priVars The primary Variables
     */
     static void completeFluidState(const PrimaryVariables& priVars,
-                    const Problem& problem,
-                    const Element& element,
-                    const FVElementGeometry& fvGeometry,
-                    int scvIdx,
-                    FluidState& fluidState,
-                    bool isOldSol = false)
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   int scvIdx,
+                                   FluidState& fluidState,
+                                   bool isOldSol = false)
 
     {
         Scalar t = Implementation::temperature_(priVars, problem, element,

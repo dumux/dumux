@@ -22,8 +22,8 @@
  * \brief Electrochemical model for a fuel cell application.
  */
 
-#ifndef ELECTRO_CHEMNI_HH
-#define ELECTRO_CHEMNI_HH
+#ifndef DUMUX_ELECTROCHEMISTRY_NI_HH
+#define DUMUX_ELECTROCHEMISTRY_NI_HH
 
 #include <dumux/common/basicproperties.hh>
 #include <dumux/material/constants.hh>
@@ -52,6 +52,7 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
     typedef ElectroChemistry<TypeTag, electroChemistryModel> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -72,6 +73,12 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
             energyEqIdx = FluidSystem::numComponents, //energy equation
     };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? GridView::dimension : 0 };
+
+    using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using CellVector = typename Dune::FieldVector<Scalar, GridView::dimension>;
+
 public:
     /*!
     * \brief Calculates reaction sources with an electrochemical model approach.
@@ -82,42 +89,40 @@ public:
     * For this method, the \a values parameter stores source values
     */
     static void reactionSource(PrimaryVariables &values,
-                               const VolumeVariables &volVars)
+                               Scalar currentDensity)
     {
+        //correction to account for actually relevant reaction area
+        //current density has to be devided by the half length of the box
+        //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
+        static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
+        static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, CellVector, Grid.Cells)[1];
+
+        // Warning: This assumes the reaction layer is always just one cell (cell-centered) or half a box (box) thick
+        const auto lengthBox = gridYMax/nCellsY;
+        if (isBox)
+            currentDensity *= 2.0/lengthBox;
+        else
+            currentDensity *= 1.0/lengthBox;
+
         static Scalar transportNumberH2O = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransportNumberH20);
-        static Scalar maxIter = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.MaxIterations);
-        static Scalar gridYMin = 0.0;
-        static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
-        static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.NumberOfCellsY);
         static Scalar thermoneutralVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ThermoneutralVoltage);
         static Scalar cellVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.CellVoltage);
 
-        //initialise current density
-        Scalar currentDensity = 0.0;
-
-        //call internal method to calculate the current density
-        currentDensity = ParentType::calculateCurrentDensity_(volVars, maxIter);
-
-        //correction to account for actually relevant reaction area
-        //current density has to be devided by the half length of the box
-        Scalar lengthBox = (gridYMax - gridYMin)/nCellsY;
-
-        if(electroChemistryModel == ElectroChemistryModel::Acosta)
-            currentDensity = currentDensity/lengthBox;
-        else
-            currentDensity = currentDensity*2/lengthBox;
-
-        //conversion from [A/cm^2] to [A/m^2]
-        currentDensity = currentDensity*10000;
-
         //calculation of flux terms with faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer
-        values[contiH2OEqIdx] += currentDensity/Constant::F*transportNumberH2O; //osmotic term in membrane
+        values[contiH2OEqIdx] += currentDensity/Constant::F*transportNumberH2O;  //osmotic term in membrane
         values[contiO2EqIdx]  = -currentDensity/(4*Constant::F);                 //O2-equation
         values[energyEqIdx] = (thermoneutralVoltage - cellVoltage)*currentDensity; //energy equation
     }
+
+    DUNE_DEPRECATED_MSG("First compute the currentDensity with calculateCurrentDensity(const VolumeVariables&) and then use the method reactionSource(PrimaryVariables&, Scalar) instead")
+    static void reactionSource(PrimaryVariables &values,
+                               const VolumeVariables &volVars)
+    {
+        reactionSource(values, this->calculateCurrentDensity(volVars));
+    }
 };
+
 }// end namespace
+
 #endif
-
-

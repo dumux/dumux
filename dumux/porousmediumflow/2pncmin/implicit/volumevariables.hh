@@ -22,20 +22,21 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase, n-component mineralization model.
  */
-#ifndef DUMUX_2PNCMin_VOLUME_VARIABLES_HH
-#define DUMUX_2PNCMin_VOLUME_VARIABLES_HH
+#ifndef DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
+#define DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/model.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/common/math.hh>
 #include <vector>
 #include <iostream>
 
-#include "properties.hh"
-#include "indices.hh"
+#include <dumux/common/math.hh>
+#include <dumux/implicit/model.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase2pncmin.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/volumevariables.hh>
+
+#include "properties.hh"
+#include "indices.hh"
 
 namespace Dumux
 {
@@ -120,104 +121,96 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
-
+        ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState_, isOldSol);
 
-    /////////////
+        /////////////
         // calculate the remaining quantities
         /////////////
 
-    // porosity evaluation
-    initialPorosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
-    minimumPorosity_ = problem.spatialParams().porosityMin(element, fvGeometry, scvIdx);
+        // porosity evaluation
+        initialPorosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
+        minimumPorosity_ = problem.spatialParams().porosityMin(element, fvGeometry, scvIdx);
 
 
-    sumPrecipitates_ = 0.0;
-    for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
-    {
-       precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
-       sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
-    }
+        sumPrecipitates_ = 0.0;
+        for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
+        {
+           precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
+           sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
+        }
 
-//         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
-//     {
-//         Chemistry chemistry; // the non static functions can not be called without abject
-//         saturationIdx_[sPhaseIdx] = chemistry.omega(sPhaseIdx);
-//     }
-// TODO/FIXME: The salt crust porosity is not clearly defined. However form literature review it is
-//    found that the salt crust have porosity of approx. 10 %. Thus we restrict the decrease in porosity
-//    to this limit. Moreover in the Problem files the precipitation should also be made dependent on local
-//    porosity value, as the porous media media properties change related to salt precipitation will not be
-//    accounted otherwise.
+        // for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
+        // {
+        //     Chemistry chemistry; // the non static functions can not be called without abject
+        //     saturationIdx_[sPhaseIdx] = chemistry.omega(sPhaseIdx);
+        // }
+        // TODO/FIXME: The salt crust porosity is not clearly defined. However form literature review it is
+        // found that the salt crust have porosity of approx. 10 %. Thus we restrict the decrease in porosity
+        // to this limit. Moreover in the Problem files the precipitation should also be made dependent on local
+        // porosity value, as the porous media media properties change related to salt precipitation will not be
+        // accounted otherwise.
 
-//      this->porosity_ = initialPorosity_ - sumPrecipitates_;
+        // this->porosity_ = initialPorosity_ - sumPrecipitates_;
 
-     this->porosity_ = std::max(minimumPorosity_, std::max(0.0, initialPorosity_ - sumPrecipitates_));
+        this->porosity_ = std::max(minimumPorosity_, std::max(0.0, initialPorosity_ - sumPrecipitates_));
 
-   salinity_= 0.0;
-   moleFractionSalinity_ = 0.0;
-   for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
-   {
-       if(this->fluidState_.moleFraction(wPhaseIdx, compIdx)> 0)
-       {
-          salinity_+= this->fluidState_.massFraction(wPhaseIdx, compIdx);
-          moleFractionSalinity_ += this->fluidState_.moleFraction(wPhaseIdx, compIdx);
-       }
-    }
+        salinity_= 0.0;
+        moleFractionSalinity_ = 0.0;
+        for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
+        {
+            if(this->fluidState_.moleFraction(wPhaseIdx, compIdx)> 0)
+            {
+                salinity_+= this->fluidState_.massFraction(wPhaseIdx, compIdx);
+                moleFractionSalinity_ += this->fluidState_.moleFraction(wPhaseIdx, compIdx);
+            }
+        }
 
-// TODO/FIXME: Different relations for the porosoty-permeability changes are given here. We have to fins a way
-//    so that one can select the relation form the input file.
+        // TODO/FIXME: Different relations for the porosoty-permeability changes are given here. We have to fins a way
+        // so that one can select the relation form the input file.
 
-    // kozeny-Carman relation
-    permeabilityFactor_  =  std::pow(((1-initialPorosity_)/(1-this->porosity_)),2)
-            * std::pow((this->porosity_/initialPorosity_),3);
+        // kozeny-Carman relation
+        permeabilityFactor_  =  std::pow(((1-initialPorosity_)/(1-this->porosity_)), 2)
+                                * std::pow((this->porosity_/initialPorosity_), 3);
 
-    // Verma-Pruess relation
-//  permeabilityFactor_  =  100 * std::pow(((this->porosity_/initialPorosity_)-0.9),2);
+        // Verma-Pruess relation
+        // permeabilityFactor_  =  100 * std::pow(((this->porosity_/initialPorosity_)-0.9),2);
 
-    // Modified Fair-Hatch relation with final porosity set to 0.2 and E1=1
-//  permeabilityFactor_  =  std::pow((this->porosity_/initialPorosity_),3)
-//         * std::pow((std::pow((1 - initialPorosity_),2/3))+(std::pow((0.2 - initialPorosity_),2/3)),2)
-//         / std::pow((std::pow((1 -this->porosity_),2/3))+(std::pow((0.2 -this->porosity_),2/3)),2);
+        // Modified Fair-Hatch relation with final porosity set to 0.2 and E1=1
+        // permeabilityFactor_  =  std::pow((this->porosity_/initialPorosity_),3)
+        //                         * std::pow((std::pow((1 - initialPorosity_),2/3))+(std::pow((0.2 - initialPorosity_),2/3)),2)
+        //                         / std::pow((std::pow((1 -this->porosity_),2/3))+(std::pow((0.2 -this->porosity_),2/3)),2);
 
-    //Timur relation with residual water saturation set to 0.001
-//    permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (2000 * (std::pow(0.001,2)));
+        //Timur relation with residual water saturation set to 0.001
+        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (2000 * (std::pow(0.001,2)));
 
-    //Timur relation1 with residual water saturation set to 0.001
-//    permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (200000 * (std::pow(0.001,2)));
+        //Timur relation1 with residual water saturation set to 0.001
+        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (200000 * (std::pow(0.001,2)));
 
+        // Bern. relation
+        // permeabilityFactor_ = std::pow((this->porosity_/initialPorosity_),8);
 
-    //Bern. relation
-   // permeabilityFactor_ = std::pow((this->porosity_/initialPorosity_),8);
+        //Tixier relation with residual water saturation set to 0.001
+        // permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
 
-    //Tixier relation with residual water saturation set to 0.001
-    //permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
+        //Coates relation with residual water saturation set to 0.001
+        // permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
 
-    //Coates relation with residual water saturation set to 0.001
-    //permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
-
-
-    // energy related quantities not contained in the fluid state
-    //asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
+        // energy related quantities not contained in the fluid state
+        //asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
     }
 
    /*!
     * \copydoc ImplicitModel::completeFluidState
     * \param isOldSol Specifies whether this is the previous solution or the current one
     */
-  static void completeFluidState(const PrimaryVariables& priVars,
-                                 const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 int scvIdx,
-                                 FluidState& fluidState,
-                                 bool isOldSol = false)
+    static void completeFluidState(const PrimaryVariables& priVars,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   int scvIdx,
+                                   FluidState& fluidState,
+                                   bool isOldSol = false)
 
     {
         Scalar t = Implementation::temperature_(priVars, problem, element,fvGeometry, scvIdx);
@@ -232,18 +225,24 @@ public:
 
         Scalar Sg;
         if (phasePresence == nPhaseOnly)
+        {
             Sg = 1.0;
-        else if (phasePresence == wPhaseOnly) {
+        }
+        else if (phasePresence == wPhaseOnly)
+        {
             Sg = 0.0;
         }
-        else if (phasePresence == bothPhases) {
+        else if (phasePresence == bothPhases)
+        {
             if (formulation == plSg)
                 Sg = priVars[switchIdx];
             else if (formulation == pgSl)
                 Sg = 1.0 - priVars[switchIdx];
-            else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
-        else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        else
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         fluidState.setSaturation(nPhaseIdx, Sg);
         fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
 
@@ -270,10 +269,11 @@ public:
         // calculate the phase compositions
         /////////////
 
-    typename FluidSystem::ParameterCache paramCache;
+        typename FluidSystem::ParameterCache paramCache;
 
         // now comes the tricky part: calculate phase composition
-        if (phasePresence == bothPhases) {
+        if (phasePresence == bothPhases)
+        {
             // both phases are present, phase composition results from
             // the gas <-> liquid equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
@@ -292,8 +292,8 @@ public:
                                             /*setViscosity=*/true,
                                             /*setInternalEnergy=*/false);
         }
-        else if (phasePresence == nPhaseOnly){
-
+        else if (phasePresence == nPhaseOnly)
+        {
             Dune::FieldVector<Scalar, numComponents> moleFrac;
             Dune::FieldVector<Scalar, numComponents> fugCoeffL;
             Dune::FieldVector<Scalar, numComponents> fugCoeffG;
@@ -322,10 +322,6 @@ public:
             sumMoleFracNotGas += moleFrac[wCompIdx];
             moleFrac[nCompIdx] = 1 - sumMoleFracNotGas;
 
-//          typedef Dune::FieldMatrix<Scalar, numComponents, numComponents> Matrix;
-//          typedef Dune::FieldVector<Scalar, numComponents> Vector;
-
-
             // Set fluid state mole fractions
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
             {
@@ -343,11 +339,12 @@ public:
                                                     /*setInternalEnergy=*/false);
 
             }
-        else if (phasePresence == wPhaseOnly){
+        else if (phasePresence == wPhaseOnly)
+        {
 
-        // only the liquid phase is present, i.e. liquid phase
-        // composition is stored explicitly.
-        // extract _mass_ fractions in the gas phase
+            // only the liquid phase is present, i.e. liquid phase
+            // composition is stored explicitly.
+            // extract _mass_ fractions in the gas phase
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
@@ -363,15 +360,15 @@ public:
             sumMoleFracNotWater += moleFrac[nCompIdx];
             moleFrac[wCompIdx] = 1 -sumMoleFracNotWater;
 
-//             convert mass to mole fractions and set the fluid state
+            // convert mass to mole fractions and set the fluid state
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
             {
                 fluidState.setMoleFraction(wPhaseIdx, compIdx, moleFrac[compIdx]);
             }
 
-//             calculate the composition of the remaining phases (as
-//             well as the densities of all phases). this is the job
-//             of the "ComputeFromReferencePhase2pNc" constraint solver
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase2pNc" constraint solver
             ComputeFromReferencePhase2pNCMin::solve(fluidState,
                                                     paramCache,
                                                     wPhaseIdx,
@@ -472,7 +469,7 @@ public:
      * compIdx of the main component (solvent) in the
      * phase is equal to the phaseIdx
      */
-     Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
+    Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
     { return this->fluidState_.moleFraction(phaseIdx, compIdx)
                   /(fluidState_.moleFraction(phaseIdx, phaseIdx)
                   * FluidSystem::molarMass(phaseIdx));}
@@ -506,16 +503,15 @@ protected:
     * \param scvIdx The local index of the SCV (sub-control volume)
     * \param isOldSol Evaluate function with solution of current or previous time step
     */
-        void updateEnergy_(const PrimaryVariables &priVars,
-                           const Problem &problem,
-                           const Element &element,
-                           const FVElementGeometry &fvGeometry,
-                           const int scvIdx,
-                           bool isOldSol)
-        { };
+    void updateEnergy_(const PrimaryVariables &priVars,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &fvGeometry,
+                       const int scvIdx,
+                       bool isOldSol)
+    {};
 
     Scalar precipitateVolumeFraction_[numSPhases];
-//     Scalar saturationIdx_[numSPhases];
     Scalar permeabilityFactor_;
     Scalar initialPorosity_;
     Scalar initialPermeability_;

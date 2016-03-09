@@ -23,8 +23,6 @@
  */
 #include <config.h>
 #include "dissolutionproblem.hh"
-#include <dune/grid/io/file/dgfparser.hh>
-#include <iostream>
 #include <dumux/common/start.hh>
 
 /*!
@@ -43,19 +41,7 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                                        "\t-Grid.File                     Name of the file containing the grid \n"
-                                        "\t                               definition in DGF format\n"
-                                        "\t-FluidSystem.NTemperature      Number of tabularization entries [-] \n"
-                                        "\t-FluidSystem.NPressure         Number of tabularization entries [-] \n"
-                                        "\t-FluidSystem.PressureLow       Low end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.PressureHigh      High end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.TemperatureLow    Low end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.TemperatureHigh   High end for tabularization of fluid properties [Pa] \n"
-                                        "\t-SimulationControl.Name        The name of the output files [-] \n"
-                                        "\t-InitialConditions.Temperature Initial temperature in the reservoir [K] \n"
-                                        "\t-InitialConditions.DepthBOR    Depth below ground surface [m] \n";
+                                        "\t-ParameterFile Parameter file (Input file) \n";
 
         std::cout << errorMessageOut
                   << "\n";
