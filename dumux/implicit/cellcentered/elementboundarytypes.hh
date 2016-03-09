@@ -86,18 +86,19 @@ public:
 
         (*this)[0].reset();
 
-        if (!problem.model().onBoundary(element))
-            return;
+        if (problem.model().onBoundary(element))
+        {
+            for (const auto& intersection : intersections(problem.gridView(), element))
+            {
+                if (intersection.boundary())
+                {
+                    problem.boundaryTypes((*this)[0], intersection);
 
-        for (const auto& intersection : intersections(problem.gridView(), element)) {
-            if (!intersection.boundary())
-                continue;
-
-            problem.boundaryTypes((*this)[0], intersection);
-
-            hasDirichlet_ = hasDirichlet_ || (*this)[0].hasDirichlet();
-            hasNeumann_ = hasNeumann_ || (*this)[0].hasNeumann();
-            hasOutflow_ = hasOutflow_ || (*this)[0].hasOutflow();
+                    hasDirichlet_ = hasDirichlet_ || (*this)[0].hasDirichlet();
+                    hasNeumann_ = hasNeumann_ || (*this)[0].hasNeumann();
+                    hasOutflow_ = hasOutflow_ || (*this)[0].hasOutflow();
+                }
+            }
         }
     }
 
