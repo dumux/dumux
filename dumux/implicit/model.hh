@@ -479,9 +479,7 @@ public:
                           hintsUsable_.end(),
                           false);
             }
-
         }
-
     }
 
 
@@ -814,9 +812,9 @@ public:
     {
         if (isBox)
             return asImp_().onBoundary(vertexMapper().subIndex(element, vIdx, dim));
-        else
-            DUNE_THROW(Dune::InvalidStateException,
-                       "requested for cell-centered model");
+
+        DUNE_THROW(Dune::InvalidStateException,
+                   "requested for cell-centered model");
     }
 
 
@@ -832,9 +830,8 @@ public:
         if (!isBox)
             return asImp_().onBoundary(elementMapper().index(element));
 
-        else
-            DUNE_THROW(Dune::InvalidStateException,
-                       "requested for box model");
+        DUNE_THROW(Dune::InvalidStateException,
+                   "requested for box model");
     }
 
     /*!

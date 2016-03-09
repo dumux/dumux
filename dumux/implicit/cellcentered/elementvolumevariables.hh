@@ -48,12 +48,6 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
 
 public:
     /*!
-     * \brief The constructor.
-     */
-    CCElementVolumeVariables()
-    { }
-
-    /*!
      * \brief Construct the volume variables for all of vertices of an element.
      *
      * \param problem The problem which needs to be simulated.

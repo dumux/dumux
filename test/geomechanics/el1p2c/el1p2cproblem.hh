@@ -25,11 +25,6 @@
 #ifndef DUMUX_EL1P2CPROBLEM_HH
 #define DUMUX_EL1P2CPROBLEM_HH
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <iostream>
-
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/geomechanics/el1p2c/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
