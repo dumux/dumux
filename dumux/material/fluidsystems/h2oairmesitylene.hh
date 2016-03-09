@@ -361,50 +361,58 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        Scalar diffCont;
-
-        Scalar temperature = fluidState.temperature(phaseIdx);
-        Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx==gPhaseIdx) {
-            Scalar diffAC = BinaryCoeff::Air_Mesitylene::gasDiffCoeff(temperature, pressure);
-            Scalar diffWC = BinaryCoeff::H2O_Mesitylene::gasDiffCoeff(temperature, pressure);
-            Scalar diffAW = BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
-
-            const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
-            const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
-            const Scalar xgc = fluidState.moleFraction(gPhaseIdx, NAPLIdx);
-
-            if (compIdx==NAPLIdx) return (1.- xgw)/(xga/diffAW + xgc/diffWC);
-            else if (compIdx==H2OIdx) return (1.- xgc)/(xgw/diffWC + xga/diffAC);
-            else if (compIdx==airIdx) DUNE_THROW(Dune::InvalidStateException,
-                                                 "Diffusivity of air in the gas phase "
-                                                 "is constraint by sum of diffusive fluxes = 0 !\n");
-        } else if (phaseIdx==wPhaseIdx){
-            Scalar diffACl = BinaryCoeff::Air_Mesitylene::liquidDiffCoeff(temperature, pressure);
-            Scalar diffWCl = BinaryCoeff::H2O_Mesitylene::liquidDiffCoeff(temperature, pressure);
-            Scalar diffAWl = BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
-
-            Scalar xwa = fluidState.moleFraction(wPhaseIdx, airIdx);
-            Scalar xww = fluidState.moleFraction(wPhaseIdx, H2OIdx);
-            Scalar xwc = fluidState.moleFraction(wPhaseIdx, NAPLIdx);
-
-            switch (compIdx) {
-            case NAPLIdx:
-                diffCont = (1.- xww)/(xwa/diffAWl + xwc/diffWCl);
-                return diffCont;
-            case airIdx:
-                diffCont = (1.- xwc)/(xww/diffWCl + xwa/diffACl);
-                return diffCont;
-            case H2OIdx:
-                DUNE_THROW(Dune::InvalidStateException,
-                           "Diffusivity of water in the water phase "
-                           "is constraint by sum of diffusive fluxes = 0 !\n");
+        switch (phaseIdx)
+        {
+            case gPhaseIdx:
+            {
+                switch (compIdx)
+                {
+                    case NAPLIdx:
+                    {
+                        Scalar diffWC = BinaryCoeff::H2O_Mesitylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+                        Scalar diffAW = BinaryCoeff::H2O_Air::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+                        const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
+                        const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
+                        const Scalar xgc = fluidState.moleFraction(gPhaseIdx, NAPLIdx);
+                        return (1.- xgw)/(xga/diffAW + xgc/diffWC);
+                    }
+                    case H2OIdx:
+                    {
+                        Scalar diffAC = BinaryCoeff::Air_Mesitylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+                        Scalar diffWC = BinaryCoeff::H2O_Mesitylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+                        const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
+                        const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
+                        const Scalar xgc = fluidState.moleFraction(gPhaseIdx, NAPLIdx);
+                        return (1.- xgc)/(xgw/diffWC + xga/diffAC);
+                    }
+                    case airIdx:
+                        DUNE_THROW(Dune::InvalidStateException, "Diffusivity of air in the gas phase is constraint by sum of diffusive fluxes = 0 !");
+                }
             }
-        } else if (phaseIdx==nPhaseIdx) {
+            case wPhaseIdx:
+            {
+                Scalar diffACl = 1.e-9; // BinaryCoeff::Air_Mesitylene::liquidDiffCoeff(temperature, pressure);
+                Scalar diffWCl = 1.e-9; // BinaryCoeff::H2O_Mesitylene::liquidDiffCoeff(temperature, pressure);
+                Scalar diffAWl = 1.e-9; // BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
 
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Diffusion coefficients of "
-                       "substances in liquid phase are undefined!\n");
+                Scalar xwa = fluidState.moleFraction(wPhaseIdx, airIdx);
+                Scalar xww = fluidState.moleFraction(wPhaseIdx, H2OIdx);
+                Scalar xwc = fluidState.moleFraction(wPhaseIdx, NAPLIdx);
+
+                switch (compIdx)
+                {
+                    case NAPLIdx:
+                        return (1.- xww)/(xwa/diffAWl + xwc/diffWCl);
+                    case airIdx:
+                        return (1.- xwc)/(xww/diffWCl + xwa/diffACl);
+                    case H2OIdx:
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Diffusivity of water in the water phase "
+                                   "is constraint by sum of diffusive fluxes = 0 !\n");
+                }
+            }
+            case nPhaseIdx:
+                DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficients of substances in non-wetting liquid phase are undefined!\n");
         }
         return 0;
     }
