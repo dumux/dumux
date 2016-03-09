@@ -281,6 +281,10 @@ public:
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note For the viscosity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::viscosity;
     template <class FluidState>
@@ -293,11 +297,8 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
         Scalar result = 0;
 
-        if (phaseIdx == wPhaseIdx) {
-            // assume pure brine for the liquid phase. TODO: viscosity
-            // of mixture
+        if (phaseIdx == wPhaseIdx)
             result = Brine::liquidViscosity(temperature, pressure);
-            }
         else
             result = CO2::gasViscosity(temperature, pressure);
 
@@ -568,7 +569,7 @@ public:
      *
      * \note We employ the heat capacity of the pure phases.
      *
-     * \todo implement heat capacity for gaseous co2
+     * \todo Implement heat capacity for gaseous CO2
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider

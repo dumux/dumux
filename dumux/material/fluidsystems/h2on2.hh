@@ -597,7 +597,7 @@ public:
      * \brief Given a phase's composition, temperature, pressure and
      *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
      *
-     *  \todo This fluid system neglects the contribution of
+     *  \note This fluid system neglects the contribution of
      *        gas-molecules in the liquid phase. This contribution is
      *        probably not big. Somebody would have to find out the
      *        enthalpy of solution for this system. ...
@@ -617,7 +617,6 @@ public:
 
         // liquid phase
         if (phaseIdx == wPhaseIdx) {
-            // TODO: correct way to deal with the solutes???
             return H2O::liquidEnthalpy(T, p);
         }
         // gas phase

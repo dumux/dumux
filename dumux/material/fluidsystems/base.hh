@@ -31,6 +31,10 @@ namespace Dumux
 /*!
  * \ingroup Fluidsystems
  * \brief Fluid system base class.
+ *
+ * \note This fluid system neglects the contribution of gas-molecules on the
+ *       liquid phase. This contribution is probably not big, but somebody
+ *       has to find out its influence.
  */
 template <class Scalar, class Implementation>
 class BaseFluidSystem
@@ -148,11 +152,6 @@ public:
      * \param fluidState The fluid state
      * \param paramCache mutable parameters
      * \param phaseIdx Index of the fluid phase
-     *
-     *  \todo This fluid system neglects the contribution of
-     *        gas-molecules in the liquid phase. This contribution is
-     *        probably not big. Somebody would have to find out the
-     *        enthalpy of solution for this system. ...
      */
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,

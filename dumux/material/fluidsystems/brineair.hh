@@ -563,8 +563,9 @@ public:
      * the specific enthalpy of a gas phase result from the sum of (enthalpies*mass fraction) of the components
      * For the calculation of enthalpy of brine we refer to (Michaelides 1981)
      *
-     *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
-     *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
+     * \note For the phase enthalpy the contribution of gas-molecules in the liquid phase
+     *       is neglected. This contribution is probably not big. Somebody would have to
+     *       find out the enthalpy of solution for this system. ...
      */
     using Base::enthalpy;
     template <class FluidState>
@@ -636,13 +637,16 @@ public:
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note For the thermal conductivity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        // TODO way too simple!
         if (phaseIdx == lPhaseIdx)
             return  0.59848; // conductivity of water[W / (m K ) ]
 
@@ -655,6 +659,10 @@ public:
      *        \f$\mathrm{[J/(kg*K)}\f$.
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note The calculation of the isobaric heat capacity is preliminary. A better
+     *       description of the influence of the composition on the phase property
+     *       has to be found.
      */
     using Base::heatCapacity;
     template <class FluidState>
@@ -665,12 +673,10 @@ public:
         const Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
         {
-            // influence of air and dissolved salt is neglected here
             return H2O::liquidHeatCapacity(temperature, pressure);
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            //! \todo PRELIMINARY, right way to deal with solutes?
             return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, AirIdx)
                    + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, H2OIdx);
         }

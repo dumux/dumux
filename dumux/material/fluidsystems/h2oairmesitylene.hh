@@ -280,6 +280,7 @@ public:
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
+     * \todo Check the parameter phiCAW for the mesitylene case and give a physical meaningful name
      */
     using Base::viscosity;
     template <class FluidState>
@@ -478,7 +479,7 @@ public:
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      *
-     *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
+     *  \note This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
     using Base::enthalpy;

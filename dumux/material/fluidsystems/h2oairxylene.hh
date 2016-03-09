@@ -278,6 +278,7 @@ public:
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase to consider
+     * \todo Check the parameter phiCAW for the xylene case and give a physical meaningful name
      */
     using Base::viscosity;
     template <class FluidState>
@@ -330,9 +331,6 @@ public:
         Scalar MAW = (fluidState.moleFraction(gPhaseIdx, airIdx)*Air::molarMass()
                       + fluidState.moleFraction(gPhaseIdx, H2OIdx)*H2O::molarMass())
                      / xAW;
-
-            /* TODO, please check phiCAW for the Xylene case here */
-
 
         Scalar phiCAW = 0.3; // simplification for this particular system
         /* actually like this
@@ -479,7 +477,7 @@ public:
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase to consider
      *
-     *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
+     *  \note This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
     using Base::enthalpy;
