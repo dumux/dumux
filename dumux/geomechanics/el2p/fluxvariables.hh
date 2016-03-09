@@ -58,7 +58,7 @@ NEW_PROP_TAG(SpatialParams);
 template<class TypeTag>
 class ElTwoPFluxVariables: public ImplicitDarcyFluxVariables<TypeTag>
 {
-    friend class ImplicitFluxVariables<TypeTag>; // be friends with parent
+    friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
     typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
