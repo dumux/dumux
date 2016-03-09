@@ -474,18 +474,18 @@ protected:
     void evalPartialDerivativeFlux_(ElementSolutionVector &partialDeriv,
                                     const unsigned int globalJ,
                                     const int pvIdx,
-                                    const std::set<unsigned int> &fluxVarsJ)
+                                    std::set<unsigned int> fluxVarsJ)
     {
         if (isBox)
             DUNE_THROW(Dune::InvalidStateException, "Calling evalPartialDerivativeFlux_(...) for box method.");
 
-        auto&& scvJ = model_().fvGeometries().subControlVolume(globalJ);
-        auto priVarsJ = model_().curSol()[globalJ];
-        auto origVolVarsJ = model_().curVolVars(scvJ);
+        const auto& scvJ = model_().fvGeometries().subControlVolume(globalJ);
+        PrimaryVariables priVarsJ(model_().curSol()[globalJ]);
+        VolumeVariables origVolVarsJ(model_().curVolVars(scvJ));
 
         // calculate the flux in the undeflected state
         PrimaryVariables origFlux(0.0);
-        for (auto&& fluxVarIdx : fluxVarsJ)
+        for (auto fluxVarIdx : fluxVarsJ)
             origFlux += localResidual().evalFlux_(fluxVarIdx);
 
         Scalar eps = asImp_().numericEpsilon(scvJ, pvIdx);
@@ -501,12 +501,13 @@ protected:
             delta += eps;
 
             // update the volume variables
-            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), element_(), scvJ);
+            auto neighborJ = problem_().model().fvGeometries().element(scvJ);
+            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), neighborJ, scvJ);
 
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
             PrimaryVariables deflectFlux(0.0);
-            for (auto&& fluxVarIdx : fluxVarsJ)
+            for (auto fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // store the calculated flux
@@ -536,7 +537,7 @@ protected:
             // calculate the flux with the deflected primary variables
             // TODO: for solution dependent spatial params fluxVar update needed!
             PrimaryVariables deflectFlux(0.0);
-            for (auto&& fluxVarIdx : fluxVarsJ)
+            for (auto fluxVarIdx : fluxVarsJ)
                 deflectFlux += localResidual().evalFlux_(fluxVarIdx);
 
             // subtract the residual from the derivative storage
