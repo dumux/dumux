@@ -119,7 +119,7 @@ public:
     static void reactionSource(PrimaryVariables &values,
                                const VolumeVariables &volVars)
     {
-        reactionSource(values, this->calculateCurrentDensity(volVars));
+        reactionSource(values, ParentType::calculateCurrentDensity(volVars));
     }
 };
 
