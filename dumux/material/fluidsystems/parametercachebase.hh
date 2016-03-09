@@ -41,9 +41,6 @@ public:
         Composition = 4
     };
 
-    ParameterCacheBase()
-    {}
-
     /*!
      * \brief Update all cached quantities for all phases.
      *

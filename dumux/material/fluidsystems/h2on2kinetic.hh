@@ -298,7 +298,7 @@ public:
      */
     static Scalar henry(Scalar temperature)
     {
-        return Dumux::BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
+        return Dumux::BinaryCoeff::H2O_N2::henry(temperature);
     }
 
     /*!
@@ -307,7 +307,7 @@ public:
      */
     static Scalar vaporPressure(Scalar temperature)
     {
-        return ParentType::H2O::vaporPressure(temperature); // Pa // 1e-20 ; //
+        return ParentType::H2O::vaporPressure(temperature);
     }
 };
 }// end namespace Fluidsystem

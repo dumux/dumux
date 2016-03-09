@@ -199,7 +199,10 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar molarVolume(int phaseIdx) const
-    { assert(VmUpToDate_[phaseIdx]); return Vm_[phaseIdx]; }
+    {
+        assert(VmUpToDate_[phaseIdx]);
+        return Vm_[phaseIdx];
+    }
 
 
     /*!
@@ -256,9 +259,8 @@ protected:
 
         switch (phaseIdx)
         {
-        case oPhaseIdx: oilPhaseParams_.updatePure(T, p); break;
-        case gPhaseIdx: gasPhaseParams_.updatePure(T, p); break;
-            //case wPhaseIdx: waterPhaseParams_.updatePure(phaseIdx, temperature, pressure);break;
+            case oPhaseIdx: oilPhaseParams_.updatePure(T, p); break;
+            case gPhaseIdx: gasPhaseParams_.updatePure(T, p); break;
         }
     }
 

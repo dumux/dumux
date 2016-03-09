@@ -331,7 +331,7 @@ public:
 
         Scalar MAW = (fluidState.moleFraction(gPhaseIdx, airIdx)*Air::molarMass()
                       + fluidState.moleFraction(gPhaseIdx, H2OIdx)*H2O::molarMass())
-            / xAW;
+                     / xAW;
 
         Scalar phiCAW = 0.3; // simplification for this particular system
         /* actually like this

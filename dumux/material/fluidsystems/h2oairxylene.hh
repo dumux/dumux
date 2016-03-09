@@ -329,7 +329,7 @@ public:
 
         Scalar MAW = (fluidState.moleFraction(gPhaseIdx, airIdx)*Air::molarMass()
                       + fluidState.moleFraction(gPhaseIdx, H2OIdx)*H2O::molarMass())
-            / xAW;
+                     / xAW;
 
             /* TODO, please check phiCAW for the Xylene case here */
 

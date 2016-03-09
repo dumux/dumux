@@ -234,8 +234,8 @@ public:
     static Scalar criticalTemperature(int compIdx)
     {
         static const Scalar Tcrit[] = {
-            H2O::criticalTemperature(), // H2O
-            N2::criticalTemperature() // N2
+            H2O::criticalTemperature(),
+            N2::criticalTemperature()
         };
 
         assert(0 <= compIdx && compIdx < numComponents);
@@ -267,7 +267,6 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "H2ON2FluidSystem::criticalMolarVolume()");
-        return 0;
     }
 
     /*!
@@ -278,7 +277,7 @@ public:
     static Scalar acentricFactor(int compIdx)
     {
         static const Scalar accFac[] = {
-            H2O::acentricFactor(), // H2O (from Reid, et al.)
+            H2O::acentricFactor(),
             N2::acentricFactor()
         };
 
@@ -666,12 +665,11 @@ public:
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
                 Scalar lambdaN2 = xN2 * lambdaPureN2;
                 Scalar partialPressure  = pressure * xH2O;
-
                 Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
                 return lambdaN2 + lambdaH2O;
             }
             else
-                return lambdaPureN2; // conductivity of Nitrogen [W / (m K ) ]
+                return lambdaPureN2;
         }
     }
 

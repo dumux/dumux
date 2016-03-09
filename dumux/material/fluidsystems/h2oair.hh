@@ -317,7 +317,7 @@ public:
     static Scalar acentricFactor(int compIdx)
     {
         static const Scalar accFac[] = {
-            H2O::acentricFactor(), // H2O (from Reid, et al.)
+            H2O::acentricFactor(),
             Air::acentricFactor()
         };
 

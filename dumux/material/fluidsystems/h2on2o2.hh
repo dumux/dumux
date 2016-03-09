@@ -249,8 +249,8 @@ public:
     static Scalar criticalTemperature(int compIdx)
     {
         static const Scalar Tcrit[] = {
-            H2O::criticalTemperature(), // H2O
-            N2::criticalTemperature(), // N2
+            H2O::criticalTemperature(),
+            N2::criticalTemperature(),
             O2::criticalTemperature()
         };
 
@@ -284,7 +284,6 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "H2ON2O2FluidSystem::criticalMolarVolume()");
-        return 0;
     }
 
     /*!
@@ -295,7 +294,7 @@ public:
     static Scalar acentricFactor(int compIdx)
     {
         static const Scalar accFac[] = {
-            H2O::acentricFactor(), // H2O (from Reid, et al.)
+            H2O::acentricFactor(),
             N2::acentricFactor(),
             O2::acentricFactor()
         };
@@ -730,7 +729,7 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::NotImplemented, "Component enthalpies");
     }
 
     /*!
@@ -747,7 +746,6 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       const int phaseIdx)
     {
-
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         Scalar temperature  = fluidState.temperature(phaseIdx) ;
         Scalar pressure = fluidState.pressure(phaseIdx);
@@ -772,7 +770,7 @@ public:
                 return lambdaN2 + lambdaH2O + lambdaO2;
             }
             else
-                return lambdaPureN2; // conductivity of Nitrogen [W / (m K ) ]
+                return lambdaPureN2;
         }
     }
 

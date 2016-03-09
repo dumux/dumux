@@ -83,7 +83,7 @@ public:
 
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
     static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
-    static constexpr int sPhaseIdx = 2; // Index of the solid phase
+    static constexpr int sPhaseIdx = 2; // index of the solid phase
 
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar

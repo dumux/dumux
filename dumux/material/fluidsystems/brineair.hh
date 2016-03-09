@@ -412,25 +412,22 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
+        Scalar result = 0;
 
         if (phaseIdx == lPhaseIdx)
         {
-            // assume pure brine for the liquid phase. TODO: viscosity
-            // of mixture
-        Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
-            Scalar result = Brine::liquidViscosity(temperature, pressure, XNaCl);
-            Valgrind::CheckDefined(result);
-            return result;
+            Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
+            result = Brine::liquidViscosity(temperature, pressure, XNaCl);
         }
         else if (phaseIdx == gPhaseIdx)
         {
-            Scalar result = Air::gasViscosity(temperature, pressure);
-            Valgrind::CheckDefined(result);
-            return result;
+            result = Air::gasViscosity(temperature, pressure);
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
 
+        Valgrind::CheckDefined(result);
+        return result;
     }
 
     /*!
@@ -691,7 +688,7 @@ public:
                                const ParameterCache &paramCache,
                                Scalar salinity)
       {
-        return Brine_Air::molalityNaCl(salinity);// massfraction
+        return Brine_Air::molalityNaCl(salinity);
       }
 
 private:
