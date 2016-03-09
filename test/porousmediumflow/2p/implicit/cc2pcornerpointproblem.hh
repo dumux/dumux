@@ -76,9 +76,6 @@ private:
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
-
-// Linear solver settings
-SET_TYPE_PROP(CC2PCornerPointProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
 }
 
 template <class TypeTag >

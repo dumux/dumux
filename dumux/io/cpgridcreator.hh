@@ -27,6 +27,7 @@
 #if (HAVE_DUNE_CORNERPOINT && HAVE_OPM_PARSER)
 #include <dune/grid/CpGrid.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
+#include <opm/parser/eclipse/Parser/ParseMode.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
 #include <dumux/common/basicproperties.hh>
@@ -59,7 +60,8 @@ public:
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
 
         Opm::ParserPtr parser(new Opm::Parser());
-        deck() = *(new Opm::DeckConstPtr(parser->parseFile(fileName)));
+        Opm::ParseMode parseMode;
+        deck() = *(new Opm::DeckConstPtr(parser->parseFile(fileName, parseMode)));
 
         gridPtr() = std::make_shared<Grid>(*(new Grid()));
         gridPtr()->processEclipseFormat(deck(), 0.0, false, false);

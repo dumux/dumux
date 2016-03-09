@@ -180,7 +180,7 @@ protected:
         di -= elementI.geometry().center();
         auto ti = std::abs(di*kin*face().area/(2*di.two_norm2()));
 
-        auto tij = ti;
+        auto tij = 2*ti;
         if (!onBoundary_)
         {
             const Element& elementJ = fvGeometry_.neighbors[face().j];
