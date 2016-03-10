@@ -70,7 +70,7 @@ int main()
     typedef Dumux::FluidSystems::GasPhase<Scalar, N2> Gas;
 
     int success = 0;
-    std::string collectedExceptions;
+    std::vector<std::string> collectedExceptions;
 
     /////////////////////////
     // check all fluid states
@@ -83,39 +83,19 @@ int main()
 
         // CompositionalFluidState
         Dumux::CompositionalFluidState<Scalar, FluidSystem> compositionalFluidState;
-        collectedExceptions = Dumux::checkFluidState<Scalar>(compositionalFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::CompositionalFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(compositionalFluidState);
 
         // ImmiscibleFluidState
         Dumux::ImmiscibleFluidState<Scalar, FluidSystem> immiscibleFluidState;
-        collectedExceptions = Dumux::checkFluidState<Scalar>(immiscibleFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::ImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(immiscibleFluidState);
 
         // IsothermalImmiscibleFluidState
         Dumux::IsothermalImmiscibleFluidState<Scalar, FluidSystem> isothermalImmiscibleFluidState;
-        collectedExceptions = Dumux::checkFluidState<Scalar>(isothermalImmiscibleFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::IsothermalImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(isothermalImmiscibleFluidState);
 
         // NonEquilibriumFluidState
         Dumux::NonEquilibriumFluidState<Scalar, FluidSystem> nonEquilibriumFluidState;
-        collectedExceptions = Dumux::checkFluidState<Scalar>(nonEquilibriumFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::NonEquilibriumFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(nonEquilibriumFluidState);
 
         // NonEquilibriumEnergyFluidState uses TypeTag
 
@@ -123,30 +103,15 @@ int main()
 
         // PressureOverlayFluidState
         Dumux::PressureOverlayFluidState<Scalar, BaseFluidState> pressureOverlayFluidState(baseFs);
-        collectedExceptions = Dumux::checkFluidState<Scalar>(pressureOverlayFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::PressureOverlayFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(pressureOverlayFluidState);
 
         // SaturationOverlayFluidState
         Dumux::SaturationOverlayFluidState<Scalar, BaseFluidState> saturationOverlayFluidState(baseFs);
-        collectedExceptions = Dumux::checkFluidState<Scalar>(saturationOverlayFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::SaturationOverlayFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(saturationOverlayFluidState);
 
         // TemperatureOverlayFluidState
         Dumux::TemperatureOverlayFluidState<Scalar, BaseFluidState> temperatureOverlayFluidState(baseFs);
-        collectedExceptions = Dumux::checkFluidState<Scalar>(temperatureOverlayFluidState);
-        if (!collectedExceptions.empty())
-        {
-            std::cout<<"Dumux::TemperatureOverlayFluidState: \n"<<collectedExceptions<<"\n";
-            success++;
-        }
+        success += Dumux::checkFluidState<Scalar>(temperatureOverlayFluidState);
     }
 
 
@@ -170,31 +135,41 @@ int main()
     // base
 
     // Brine -- Air
-    {   const bool enableComplexRelations=false;
-        typedef Dumux::FluidSystems::BrineAir<Scalar, H2O, enableComplexRelations> FluidSystem;
+    {   typedef Dumux::SimpleH2O<Scalar> H2OType;
+        const bool enableComplexRelations=false;
+        typedef Dumux::FluidSystems::BrineAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   const bool enableComplexRelations=true;
-        typedef Dumux::FluidSystems::BrineAir<Scalar, H2O, enableComplexRelations> FluidSystem;
+    {   typedef Dumux::SimpleH2O<Scalar> H2OType;
+        const bool enableComplexRelations=true;
+        typedef Dumux::FluidSystems::BrineAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // Brine -- CO2
 
     // H2O -- Air
-    {   typedef Dumux::SimpleH2O<Scalar> H2O;
+    {   typedef Dumux::SimpleH2O<Scalar> H2OType;
         const bool enableComplexRelations=false;
-        typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
+        typedef Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   typedef Dumux::SimpleH2O<Scalar> H2O;
+    {   typedef Dumux::SimpleH2O<Scalar> H2OType;
         const bool enableComplexRelations=true;
-        typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
+        typedef Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   typedef Dumux::H2O<Scalar> H2O;
+    {   typedef Dumux::H2O<Scalar> H2OType;
         const bool enableComplexRelations=false;
-        typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
+        typedef Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   typedef Dumux::H2O<Scalar> H2O;
+    {   typedef Dumux::H2O<Scalar> H2OType;
         const bool enableComplexRelations=true;
-        typedef Dumux::FluidSystems::H2OAir<Scalar, H2O, enableComplexRelations> FluidSystem;
+        typedef Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
+        const bool enableComplexRelations=false;
+        typedef Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
+        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
+        const bool enableComplexRelations=true;
+        typedef Dumux::FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
@@ -230,7 +205,7 @@ int main()
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase
-    {   typedef Dumux::FluidSystems::LiquidPhase<Scalar, H2O> FluidSystem;
+    {   typedef Dumux::LiquidPhase<Scalar, H2O> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::LiquidPhase<Scalar, H2O> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
