@@ -73,8 +73,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
-SET_INT_PROP(TransportTestProblem, VelocityFormulation,
-        DecoupledTwoPCommonIndices::velocityTotal);
+SET_INT_PROP(TransportTestProblem, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);
 }
 
 /*!

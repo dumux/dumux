@@ -88,7 +88,7 @@ public:
 };
 
 #if PROBLEM == 1
-SET_INT_PROP(ThreeDTwoPTestProblem, Formulation, DecoupledTwoPCommonIndices::pnSw);
+SET_INT_PROP(ThreeDTwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnSw);
 #endif
 
 // Set the spatial parameters

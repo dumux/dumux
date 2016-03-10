@@ -108,7 +108,7 @@ public:
 #endif
 
 #if PROBLEM == 1
-SET_INT_PROP(MPFATwoPTestProblem, Formulation, DecoupledTwoPCommonIndices::pnsw);
+SET_INT_PROP(MPFATwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnsw);
 #endif
 
 #if PROBLEM == 2
