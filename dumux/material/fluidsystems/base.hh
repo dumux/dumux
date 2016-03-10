@@ -36,6 +36,10 @@ namespace Dumux
  *       liquid phase. This contribution is probably not big, but somebody
  *       has to find out its influence.
  */
+
+namespace FluidSystems
+{
+
 template <class Scalar, class Implementation>
 class BaseFluidSystem
 {
@@ -198,6 +202,7 @@ public:
     }
 };
 
+} // end namespace
 } // end namespace
 
 #endif

@@ -287,7 +287,7 @@ public:
      /*!
      * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
      *
-     * \param sPhaseIdx The index of the precipitated phase to consider
+     * \param phaseIdx The index of the precipitated phase to consider
      */
      static Scalar precipitateHeatCapacity(int phaseIdx)
     {

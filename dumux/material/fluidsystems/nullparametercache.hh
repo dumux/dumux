@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::NullParameterCache
+ * \brief @copybrief Dumux::NullParameterCache
  */
 #ifndef DUMUX_NULL_PARAMETER_CACHE_HH
 #define DUMUX_NULL_PARAMETER_CACHE_HH

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::Spe5ParameterCache
+ * \brief @copybrief Dumux::Spe5ParameterCache
  */
 #ifndef SPE5_PARAMETER_CACHE_HH
 #define SPE5_PARAMETER_CACHE_HH
