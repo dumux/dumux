@@ -223,7 +223,7 @@ void dumuxMessage_(bool start)
             std::cout << "             ###   #                @   @         @@ @@          @ " << std::endl;
             std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @" << std::endl;
             std::cout << "         ##          #              @   @  @   @  @   @  @   @     " << std::endl;
-            std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.8" << std::endl;
+            std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.9" << std::endl;
             std::cout << "       #               #                                           " << std::endl;
             std::cout << "      #                 #                                          " << std::endl;
             std::cout << "     #                   ##        %%%                             " << std::endl;
@@ -262,7 +262,7 @@ void dumuxMessage_(bool start)
             }
             else
             {
-                std::cout << "Chuck Norris has compiled DuMuX even two times in row!" << std::endl;
+                std::cout << "Chuck Norris has compiled DuMuX even two times in a row!" << std::endl;
             }
         break;
         case 12:
