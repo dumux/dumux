@@ -27,8 +27,8 @@
  * \brief Defines the properties required for finite volume pressure models
  */
 
-#ifndef DUMUX_FVPRESSUREVELOCITYPORPERTIES2P_DECOUPLED_HH
-#define DUMUX_FVPRESSUREVELOCITYPORPERTIES2P_DECOUPLED_HH
+#ifndef DUMUX_FVPRESSUREVELOCITYPORPERTIES2P_SEQUENTIAL_HH
+#define DUMUX_FVPRESSUREVELOCITYPORPERTIES2P_SEQUENTIAL_HH
 
 //Dumux-includes
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>

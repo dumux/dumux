@@ -27,8 +27,8 @@
  * \brief Defines the properties required for finite volume pressure models in a two-phase sequential model.
  */
 
-#ifndef DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_DECOUPLED_HH
-#define DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_DECOUPLED_HH
+#ifndef DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_SEQUENTIAL_HH
+#define DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_SEQUENTIAL_HH
 
 //Dumux-includes
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
