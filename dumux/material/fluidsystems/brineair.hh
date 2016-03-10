@@ -648,10 +648,11 @@ public:
                                       int phaseIdx)
     {
         if (phaseIdx == lPhaseIdx)
-            return  0.59848; // conductivity of water[W / (m K ) ]
-
-        else// gas phase
-        return 0.0255535; // conductivity of air [W / (m K ) ]
+            return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx),
+                                                  fluidState.pressure(phaseIdx));
+        else // gas phase
+            return Air::gasThermalConductivity(fluidState.temperature(phaseIdx),
+                                               fluidState.pressure(phaseIdx));
     }
 
     /*!
