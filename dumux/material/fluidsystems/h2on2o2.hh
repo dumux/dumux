@@ -470,6 +470,12 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
+     * Compositional effects in the gas phase are accounted by the Wilke method.
+     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * 4th edition, McGraw-Hill, 1987, 407-410
+     * 5th edition, McGraw-Hill, 20001, p. 9.21/22
+     * \note Compositional effects for a liquid mixture have to be implemented.
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -497,12 +503,7 @@ public:
         }
         else
         {
-            /* Wilke method. See:
-             *
-             * See: R. Reid, et al.: The Properties of Gases and Liquids,
-             * 4th edition, McGraw-Hill, 1987, 407-410
-             * 5th edition, McGraw-Hill, 2001, p. 9.21/22
-             */
+            // Wilke method (Reid et al.):
             Scalar muResult = 0;
             const Scalar mu[numComponents] = {
                 H2O::gasViscosity(T, H2O::vaporPressure(T)),

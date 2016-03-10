@@ -83,7 +83,7 @@ namespace FluidSystems
  * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
  * at the end of this file.
  *
- * The template argument \p useComplexRelations can be used to switch from a complex
+ * \note The template argument \p useComplexRelations can be used to switch from a complex
  * relation, in which compositional effects are considered for the gas phase and the
  * density of the liquid phase, to a non-complex formulation in which compositional
  * effects are not considered.
@@ -443,6 +443,12 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
+     * Compositional effects in the gas phase are accounted by the Wilke method.
+     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * 4th edition, McGraw-Hill, 1987, 407-410
+     * 5th edition, McGraw-Hill, 20001, p. 9.21/22
+     * \note Compositional effects for a liquid mixture have to be implemented.
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -459,8 +465,6 @@ public:
         if (phaseIdx == wPhaseIdx)
         {
             // assume pure water for the liquid phase
-            // TODO: viscosity of mixture
-            // couldn't find a way to solve the mixture problem
             return H2O::liquidViscosity(T, p);
         }
         else if (phaseIdx == nPhaseIdx)
@@ -470,14 +474,7 @@ public:
             }
             else //using a complicated version of this fluid system
             {
-                /* Wilke method. See:
-                 *
-                 * See: R. Reid, et al.: The Properties of Gases and Liquids,
-                 * 4th edition, McGraw-Hill, 1987, 407-410 or
-                 * 5th edition, McGraw-Hill, 2000, p. 9.21/22
-                 *
-                 */
-
+                // Wilke method (Reid et al.):
                 Scalar muResult = 0;
                 const Scalar mu[numComponents] = {
                     H2O::gasViscosity(T,
@@ -641,8 +638,7 @@ public:
      *
      * Formula (2.42):
      * the specifiv enthalpy of a gasphase result from the sum of (enthalpies*mass fraction) of the components
-     */
-    /*!
+     *
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
@@ -658,7 +654,6 @@ public:
 
         if (phaseIdx == wPhaseIdx)
         {
-            // TODO: correct way to deal with the solutes???
             return H2O::liquidEnthalpy(T, p);
         }
 
@@ -747,6 +742,9 @@ public:
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
      *
+     * \todo Check whether the gas phase enthalpy is a linear mixture of the component
+     *       enthalpies and the mole fractions is a good assumption.
+     *
      * \param params    mutable parameters
      * \param phaseIdx  for which phase to give back the heat capacity
      */
@@ -764,7 +762,6 @@ public:
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            //! \todo PRELIMINARY, right way to deal with solutes?
             return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, AirIdx)
                    + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, H2OIdx);
         }
