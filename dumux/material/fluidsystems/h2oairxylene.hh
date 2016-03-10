@@ -278,6 +278,7 @@ public:
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase to consider
+     *
      * \todo Check the parameter phiCAW for the xylene case and give a physical meaningful name
      */
     using Base::viscosity;
@@ -361,10 +362,12 @@ public:
     {
         Scalar diffCont;
 
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx==gPhaseIdx) {
-            Scalar diffAC = Dumux::BinaryCoeff::Air_Xylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-            Scalar diffWC = Dumux::BinaryCoeff::H2O_Xylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-            Scalar diffAW = Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+            Scalar diffAC = Dumux::BinaryCoeff::Air_Xylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffWC = Dumux::BinaryCoeff::H2O_Xylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffAW = Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
 
             const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
             const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
@@ -376,9 +379,9 @@ public:
                                                  "Diffusivity of air in the gas phase "
                                                  "is constraint by sum of diffusive fluxes = 0 !\n");
         } else if (phaseIdx==wPhaseIdx){
-            Scalar diffACl = 1.e-9; // BinaryCoeff::Air_Xylene::liquidDiffCoeff(temperature, pressure);
-            Scalar diffWCl = 1.e-9; // BinaryCoeff::H2O_Xylene::liquidDiffCoeff(temperature, pressure);
-            Scalar diffAWl = 1.e-9; // BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
+            Scalar diffACl = BinaryCoeff::Air_Xylene::liquidDiffCoeff(temperature, pressure);
+            Scalar diffWCl = BinaryCoeff::H2O_Xylene::liquidDiffCoeff(temperature, pressure);
+            Scalar diffAWl = BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
 
             Scalar xwa = fluidState.moleFraction(wPhaseIdx, airIdx);
             Scalar xww = fluidState.moleFraction(wPhaseIdx, H2OIdx);
