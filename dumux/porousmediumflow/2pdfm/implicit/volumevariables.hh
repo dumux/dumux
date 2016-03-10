@@ -107,9 +107,6 @@ public:
             MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(nPhaseIdx);
 
-        // porosity
-        porosityMatrix_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
-
         // energy related quantities not belonging to the fluid state
         asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
         asImp_().updateFracture(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
@@ -335,12 +332,6 @@ public:
     { return mobilityFracture_[phaseIdx]; }
 
     /*!
-     * \brief Returns the average porosity within the matrix control volume.
-     */
-    Scalar porosity() const
-    { return porosityMatrix_; }
-
-    /*!
      * \brief Returns the average porosity within the fracture.
      */
     Scalar porosityFracture() const
@@ -355,7 +346,6 @@ public:
 protected:
     FluidState fluidState_;
     FluidState fluidStateFracture_;
-    Scalar porosityMatrix_;
     Scalar porosityFracture_;
     Scalar permeability_;
     Scalar permeabilityFracture_;
