@@ -17,8 +17,8 @@ add_dumux_test(test_general_cc test_general test_generalproblem2p.cc
 add_dumux_test(test_general_dec test_general test_generalproblem2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/generallens_decoupled-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/generallens_decoupled-00003.vtu
+                 --files ${CMAKE_SOURCE_DIR}/test/references/generallens_sequential-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/generallens_sequential-00003.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_general -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_generalproblem2p_reference.input -ModelType sequential")
 
 #install sources
