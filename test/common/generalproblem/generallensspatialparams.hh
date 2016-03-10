@@ -20,7 +20,7 @@
  * \file
  *
  * \brief The spatial parameters for the GeneralLensProblem which uses the
- *        twophase box model or twophase decoupled model
+ *        twophase box model or twophase sequential model
  */
 #ifndef DUMUX_GENERALLENSSPATIALPARAMS_HH
 #define DUMUX_GENERALLENSSPATIALPARAMS_HH
@@ -65,7 +65,7 @@ public:
  * \ingroup IMPETtests
  *
  * \brief The spatial parameters for the LensProblem which uses the
- *        twophase box model or twophase decoupled model
+ *        twophase box model or twophase sequential model
  */
 template<class TypeTag>
 class GeneralLensSpatialParams : public GET_PROP_TYPE(TypeTag, SpatialParamsBaseClass)
