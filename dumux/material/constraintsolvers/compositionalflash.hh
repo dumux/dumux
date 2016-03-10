@@ -38,7 +38,7 @@ namespace Dumux
 {
 /*!
  * \ingroup ConstraintSolver
- * \brief Flash calculation routines for compositional decoupled models
+ * \brief Flash calculation routines for compositional sequential models
  *
  *        Routines for isothermal and isobaric 2p2c and 1p2c flash.
  *  \tparam TypeTag The property Type Tag
@@ -75,7 +75,7 @@ public:
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - comparison with Z1 to determine phase presence => phase mass fractions
      * - round off fluid properties
-     * \param fluidState The decoupled fluid State
+     * \param fluidState The sequential fluid State
      * \param Z1 Feed mass fraction: Mass of comp1 per total mass \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param porosity Porosity \f$\mathrm{[-]}\f$
@@ -184,7 +184,7 @@ public:
      * - Check if we are in single phase condition
      * - Assign total concentration to the present phase
      *
-     * \param fluidState The decoupled fluid state
+     * \param fluidState The sequential fluid state
      * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param presentPhaseIdx Subdomain Index = Indication which phase is present
@@ -255,7 +255,7 @@ public:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - round off fluid properties
-     * \param fluidState The decoupled fluid state
+     * \param fluidState The sequential fluid state
      * \param saturation Saturation of phase 1 \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param porosity Porosity \f$\mathrm{[-]}\f$

@@ -33,7 +33,7 @@ namespace Dumux
 {
 namespace Properties
 {
-//! Grid adaption type tag for all decoupled models.
+//! Grid adaption type tag for all sequential models.
 NEW_TYPE_TAG(GridAdaptTypeTag);
 
 //! Defines if the grid is h-adaptive

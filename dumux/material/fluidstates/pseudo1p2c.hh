@@ -36,7 +36,7 @@ namespace Dumux
  *  It is used in case of a multiphysics approach. For the non-present phase,
  *  no information is stored but 0-values are returned to allow for general output
  *  methods.
- *  The "flash" calculation routines are in the decoupled flash constrain solver, see
+ *  The "flash" calculation routines are in the sequential flash constrain solver, see
  *  Dumux::CompositionalFlash .
  *  \tparam TypeTag The property Type Tag
  */

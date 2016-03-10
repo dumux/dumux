@@ -350,7 +350,7 @@ public:
     /**
      * This methods stores reconstructed values into the cellData object, by
      * this setting a newly mapped solution to the storage container of the
-     * decoupled models.
+     * sequential models.
      *
      * \param adaptedValues Container for model-specific values to be adapted
      * \param u The variables to be stored

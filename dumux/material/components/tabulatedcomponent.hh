@@ -280,7 +280,7 @@ public:
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
      *        temperature.
      *
-     * The method is only called by the decoupled flash, so tabulating is omitted.
+     * The method is only called by the sequential flash, so tabulating is omitted.
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar vaporTemperature(Scalar pressure)

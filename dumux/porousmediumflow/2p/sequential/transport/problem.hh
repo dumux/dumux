@@ -43,7 +43,7 @@ SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
 /*!
  * \ingroup Saturation2p
  * \ingroup IMPETproblems
- * \brief  Base class for a decoupled two-phase transport problem
+ * \brief  Base class for a sequential two-phase transport problem
  *
  * \tparam TypeTag The problem Type Tag
  */

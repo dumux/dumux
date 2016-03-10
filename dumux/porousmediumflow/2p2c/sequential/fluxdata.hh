@@ -33,7 +33,7 @@ namespace Dumux
  */
 //! Class including the variables and data of discretized data of the constitutive relations.
 /*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored,
+ * Additionally, a velocity needed in the transport part of the sequential two-phase flow is stored,
  * as well as discretized data of constitutive relationships like mobilities, fractional flow functions
  * and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
  *

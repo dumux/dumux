@@ -131,7 +131,7 @@ public:
         ParentType(gridView), grid_(gridView.grid())
     {}
 
-    //! Resizes decoupled variable vectors
+    //! Resizes sequential variable vectors
     /*! Method that change the size of the vectors for h-adaptive simulations, and clears recently
      * stored transmissibility matrices for the newly adapted grid.
      *

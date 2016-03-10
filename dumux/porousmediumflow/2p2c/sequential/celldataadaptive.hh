@@ -173,7 +173,7 @@ public:
     /**
      * This methods stores reconstructed values into the cellData object, by
      * this setting a newly mapped solution to the storage container of the
-     * decoupled models.
+     * sequential models.
      * In new cells, update estimate does not give meaningful results. We therefore
      * copy volume derivatives from old time step, and indicate that those are already availabe.
      *
