@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#ifndef DUMUX_MIMETICPROPERTIES2P_DECOUPLED_HH
-#define DUMUX_MIMETICPROPERTIES2P_DECOUPLED_HH
+#ifndef DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
+#define DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
 
 /*!
  * \ingroup IMPES

@@ -108,12 +108,12 @@ SET_INT_PROP(SequentialTwoP, NumPhases, 2);//!< The number of phases in the 2p m
 SET_INT_PROP(SequentialTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
 //! Set \f$p_w\f$-\f$S_w\f$ formulation as default two-phase formulation
-SET_INT_PROP(SequentialTwoP, Formulation, DecoupledTwoPCommonIndices::pwsw);
+SET_INT_PROP(SequentialTwoP, Formulation, SequentialTwoPCommonIndices::pwsw);
 
 //! Chose the set of indices depending on the chosen formulation
 SET_PROP(SequentialTwoP, Indices)
 {
-typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
+    typedef SequentialTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
 
 //! Set the default pressure formulation according to the chosen two-phase formulation

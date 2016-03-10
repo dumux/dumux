@@ -1,7 +1,7 @@
-Index: tutorialproblem_decoupled.hh
+Index: tutorialproblem_sequential.hh
 ===================================================================
---- tutorialproblem_decoupled.hh	(revision 15068)
-+++ tutorialproblem_decoupled.hh	(working copy)
+--- tutorialproblem_sequential.hh	(revision 15068)
++++ tutorialproblem_sequential.hh	(working copy)
 @@ -135,8 +135,8 @@
      TutorialProblemSequential(TimeManager &timeManager, const GridView &gridView)
          : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-sequential:constructor-problem}@*/

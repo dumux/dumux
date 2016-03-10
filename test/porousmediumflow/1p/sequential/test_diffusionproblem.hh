@@ -139,7 +139,7 @@ SET_BOOL_PROP(MimeticPressure2PTestProblem, ProblemEnableGravity, false);
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup SequentialProblems
  *
  * \brief test problem for diffusion models from the FVCA5 benchmark.
  *

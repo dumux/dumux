@@ -130,4 +130,4 @@ test_mpfa2pspatialparams.hh
 test_transport.cc
 test_transportproblem.hh
 test_transportspatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/decoupled/2p)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/2p/sequential)

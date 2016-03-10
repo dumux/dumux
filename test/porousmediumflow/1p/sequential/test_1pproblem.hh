@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test problem for the decoupled one-phase model.
+ * \brief test problem for the sequential one-phase model.
  */
 #ifndef DUMUX_TEST_1P_PROBLEM_HH
 #define DUMUX_TEST_1P_PROBLEM_HH
@@ -74,7 +74,7 @@ SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TypeTag>);
 /*!
  * \ingroup IMPETtests
  *
- * \brief test problem for the decoupled one-phase model.
+ * \brief test problem for the sequential one-phase model.
  */
 template<class TypeTag>
 class TestProblemOneP: public DiffusionProblem1P<TypeTag >

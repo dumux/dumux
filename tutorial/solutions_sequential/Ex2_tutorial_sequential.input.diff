@@ -1,7 +1,7 @@
-Index: tutorial_decoupled.input
+Index: tutorial_sequential.input
 ===================================================================
---- tutorial_decoupled.input	(revision 15171)
-+++ tutorial_decoupled.input	(working copy)
+--- tutorial_sequential.input	(revision 15171)
++++ tutorial_sequential.input	(working copy)
 @@ -1,9 +1,9 @@
  [TimeManager]
 -TEnd = 100000 # duration of the simulation [s]

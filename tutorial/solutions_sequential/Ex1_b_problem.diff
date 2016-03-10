@@ -1,7 +1,7 @@
-Index: tutorialproblem_decoupled.hh
+Index: tutorialproblem_sequential.hh
 ===================================================================
---- tutorialproblem_decoupled.hh	(revision 15171)
-+++ tutorialproblem_decoupled.hh	(working copy)
+--- tutorialproblem_sequential.hh	(revision 15171)
++++ tutorialproblem_sequential.hh	(working copy)
 @@ -215,7 +215,7 @@
       */
      void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const /*@\label{tutorial-sequential:bctype}@*/

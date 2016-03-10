@@ -63,7 +63,7 @@ namespace Dumux
  *
  *  In the IMPES models the default setting is:
  *
- * formulation: \f$ p_w \f$ - \f$ S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwsw)
+ * formulation: \f$ p_w \f$ - \f$ S_w \f$ (Property: \a Formulation defined as \a SequentialTwoPCommonIndices::pwsw)
  *
  * compressibility: disabled (Property: \a EnableCompressibility set to \a false)
  *

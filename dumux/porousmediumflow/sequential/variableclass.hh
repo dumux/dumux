@@ -92,7 +92,7 @@ public:
         cellDataVector_.resize(gridView_.size(0));
     }
 
-    //! Resizes decoupled variable vectors
+    //! Resizes sequential variable vectors
     /*! Method that change the size of the vectors for h-adaptive simulations.
      *
      *\param size Size of the current (refined and coarsened) grid

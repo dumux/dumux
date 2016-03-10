@@ -1,7 +1,7 @@
-Index: tutorialspatialparams_decoupled.hh
+Index: tutorialspatialparams_sequential.hh
 ===================================================================
---- tutorialspatialparams_decoupled.hh	(revision 15068)
-+++ tutorialspatialparams_decoupled.hh	(working copy)
+--- tutorialspatialparams_sequential.hh	(revision 15068)
++++ tutorialspatialparams_sequential.hh	(working copy)
 @@ -103,7 +103,7 @@
       */
      double porosity(const Element& element) const

@@ -39,4 +39,4 @@ test_dec2p2cproblem.hh
 test_dec2p2c_spatialparams.hh
 test_multiphysics2p2c.cc
 test_multiphysics2p2cproblem.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/decoupled/2p2c)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/2p2c/sequential)

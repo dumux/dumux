@@ -58,7 +58,7 @@ public:
 };
 }
 
-//! Definition of the spatial parameters for the decoupled tutorial
+//! Definition of the spatial parameters for the sequential tutorial
 
 template<class TypeTag>
 class TutorialSpatialParamsSequential: public FVSpatialParams<TypeTag>

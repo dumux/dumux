@@ -33,7 +33,7 @@ namespace Dumux
  * \ingroup multiphysics multiphase
  */
 //! Storage container for discretized data of the constitutive relations for one element
-/*! This class stores all cell-centered (FV-Scheme) values for decoupled compositional two-phase flow
+/*! This class stores all cell-centered (FV-Scheme) values for sequential compositional two-phase flow
  * models that are used by both pressure and transport model. All fluid data are already stored in the
  * fluidstate, so the CellData contains the fluidstate object for the current element.
  * At the moment, the compositional model does not use fluxVariables that are stored on the interfaces.

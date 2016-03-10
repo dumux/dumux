@@ -20,7 +20,7 @@
  * \file
  *
  * \ingroup IMPETtests
- * \brief test for the decoupled one-phase model.
+ * \brief test for the sequential one-phase model.
  */
 #include <config.h>
 

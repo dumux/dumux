@@ -38,4 +38,4 @@ test_diffusionproblem3d.hh
 test_diffusionproblem.hh
 test_diffusionspatialparams3d.hh
 test_diffusionspatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/decoupled/1p)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/1p/sequential)

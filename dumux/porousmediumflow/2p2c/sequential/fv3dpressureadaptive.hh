@@ -46,8 +46,8 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, MPFAInteractionVolume, Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, Dumux::FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolume, Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, Dumux::FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
 }
 
 //! The finite volume model for the solution of the compositional pressure equation

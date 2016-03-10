@@ -73,16 +73,14 @@ SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::IMPESTestProblem<TypeTag>);
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_n-S_w formulation
 //
-//SET_INT_PROP(IMPESTestProblem, Formulation,
-//        DecoupledTwoPCommonIndices::pnsn);
+//SET_INT_PROP(IMPESTestProblem, Formulation, SequentialTwoPCommonIndices::pnsn);
 //
 ////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_global-S_w formulation
 //
-//SET_INT_PROP(IMPESTestProblem, Formulation,
-//        DecoupledTwoPCommonIndices::pGlobalSw);
+//SET_INT_PROP(IMPESTestProblem, Formulation, SequentialTwoPCommonIndices::pGlobalSw);
 //
 //Define the capillary pressure term in the transport equation -> only needed in case of a p_global-S_w formulation!
 //SET_TYPE_PROP(IMPESTestProblem, CapillaryFlux, CapillaryDiffusion<TypeTag>);

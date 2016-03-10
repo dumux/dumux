@@ -1,7 +1,7 @@
-Index: tutorialproblem_decoupled.hh
+Index: tutorialproblem_sequential.hh
 ===================================================================
---- tutorialproblem_decoupled.hh	(revision 15068)
-+++ tutorialproblem_decoupled.hh	(working copy)
+--- tutorialproblem_sequential.hh	(revision 15068)
++++ tutorialproblem_sequential.hh	(working copy)
 @@ -42,7 +42,8 @@
  // the components that are used
  #include <dumux/material/components/h2o.hh>

@@ -26,8 +26,8 @@
  * \brief Defines the basic properties required for a mimetic method.
  */
 
-#ifndef DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
-#define DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
+#ifndef DUMUX_MIMETICPROPERTIES_SEQUENTIAL_HH
+#define DUMUX_MIMETICPROPERTIES_SEQUENTIAL_HH
 
 //Dumux-includes
 #include <dumux/porousmediumflow/sequential/properties.hh>

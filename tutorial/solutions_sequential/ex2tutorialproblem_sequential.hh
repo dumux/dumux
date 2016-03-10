@@ -96,7 +96,7 @@ SET_BOOL_PROP(Ex2TutorialProblemSequential, ProblemEnableGravity, false); /*@\la
 } /*@\label{tutorial-sequential:propertysystem-end}@*/
 
 /*! \ingroup SequentialProblems
- * @brief Problem class for the decoupled tutorial
+ * @brief Problem class for the sequential tutorial
 */
 template<class TypeTag>
 class Ex2TutorialProblemSequential: public IMPESProblem2P<TypeTag> /*@\label{tutorial-sequential:def-problem}@*/
@@ -144,7 +144,7 @@ public:
     */
     const char *name() const    /*@\label{tutorial-sequential:name}@*/
     {
-        return "tutorial_decoupled";
+        return "tutorial_sequential";
     }
 
     //!  Returns true if a restart file should be written.
