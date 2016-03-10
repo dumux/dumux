@@ -1,7 +1,7 @@
-Index: tutorialspatialparams_decoupled.hh
+Index: tutorialspatialparams_sequential.hh
 ===================================================================
---- tutorialspatialparams_decoupled.hh	(revision 15068)
-+++ tutorialspatialparams_decoupled.hh	(working copy)
+--- tutorialspatialparams_sequential.hh	(revision 15068)
++++ tutorialspatialparams_sequential.hh	(working copy)
 @@ -88,10 +88,13 @@
       *  Alternatively, the function intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) could be
       *  defined, where globalPos is the vector including the global coordinates of the finite volume.

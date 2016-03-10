@@ -28,7 +28,7 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
 
-// dumux 2p-decoupled environment
+// dumux 2p-sequential environment
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh> /*@\label{tutorial-sequential:parent-problem}@*/
@@ -96,7 +96,7 @@ SET_BOOL_PROP(TutorialProblemSequential, ProblemEnableGravity, false); /*@\label
 } /*@\label{tutorial-sequential:propertysystem-end}@*/
 
 /*! \ingroup SequentialProblems
- * @brief Problem class for the decoupled tutorial
+ * @brief Problem class for the sequential tutorial
 */
 template<class TypeTag>
 class TutorialProblemSequential: public IMPESProblem2P<TypeTag> /*@\label{tutorial-sequential:def-problem}@*/
