@@ -28,7 +28,7 @@
 #define DUMUX_3P_PROPERTIES_HH
 
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
@@ -42,12 +42,12 @@ namespace Properties
 //! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(ThreeP);
 NEW_TYPE_TAG(BoxThreeP, INHERITS_FROM(BoxModel, ThreeP));
-NEW_TYPE_TAG(CCThreeP, INHERITS_FROM(CCModel, ThreeP));
+NEW_TYPE_TAG(CCThreeP, INHERITS_FROM(CCTpfaModel, ThreeP));
 
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
 NEW_TYPE_TAG(BoxThreePNI, INHERITS_FROM(BoxModel, ThreePNI));
-NEW_TYPE_TAG(CCThreePNI, INHERITS_FROM(CCModel, ThreePNI));
+NEW_TYPE_TAG(CCThreePNI, INHERITS_FROM(CCTpfaModel, ThreePNI));
 
 
 //////////////////////////////////////////////////////////////////
@@ -66,7 +66,6 @@ NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extrac
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter for the mobility
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 }

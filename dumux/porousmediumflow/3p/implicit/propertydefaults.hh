@@ -80,14 +80,20 @@ SET_TYPE_PROP(ThreeP, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, Materia
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreeP, LocalResidual, ThreePLocalResidual<TypeTag>);
 
+//! Enable advection
+SET_BOOL_PROP(ThreeP, EnableAdvection, true);
+
+//! disable molecular diffusion for the 3p model
+SET_BOOL_PROP(ThreeP, EnableMolecularDiffusion, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(ThreeP, EnableEnergyBalance, false);
+
 //! the Model property
 SET_TYPE_PROP(ThreeP, Model, ThreePModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(ThreeP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(ThreeP, ImplicitMassUpwindWeight, 1.0);
@@ -136,9 +142,6 @@ SET_BOOL_PROP(ThreePNI, NiOutputLevel, 0);
 
 // set isothermal Model
 SET_TYPE_PROP(ThreePNI, IsothermalModel, ThreePModel<TypeTag>);
-
-// set isothermal FluxVariables
-SET_TYPE_PROP(ThreePNI, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag>);
