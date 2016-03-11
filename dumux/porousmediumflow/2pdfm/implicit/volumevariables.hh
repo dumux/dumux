@@ -94,13 +94,25 @@ public:
                            scvIdx,
                            isOldSol);
 
+        // initially we set the matrix saturations to the actual solution
+        satNMatrix_  = priVars[saturationIdx];
+        satWMatrix_  = 1.0 - satNMatrix_;
+
+        // fracture variables are set to zero for the case that no fracture is present in the scv
+        satNFracture_ = 0.0;
+        satWFracture_ = 0.0;
+        porosityFracture_ = 0.0;
+        permeabilityFracture_ = 0.0;
+        mobilityFracture_[wPhaseIdx] = 0;
+        mobilityFracture_[nPhaseIdx] = 0;
+
         // calculate the matrix mobilities
         this->completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
         const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         mobilityMatrix_[wPhaseIdx] = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx)) / fluidState_.viscosity(wPhaseIdx);
         mobilityMatrix_[nPhaseIdx] = MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx)) / fluidState_.viscosity(nPhaseIdx);
 
-        // update the fracture if we are on a fracture vertex
+        // update the fracture if fracture is present in the scv
         if (problem.spatialParams().isVertexFracture(element, scvIdx))
             asImp_().updateFracture(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
@@ -122,12 +134,13 @@ public:
                         int scvIdx,
                         bool isOldSol)
     {
+        // the scv is on a fracture, the actual solution corresponds to the solution in the fracture
+        // the matrix saturation will be modified below if interface condition is used
+        satNFracture_ = priVars[saturationIdx];
+        satWFracture_ = 1.0 - satNFracture_;
+
         const MaterialLawParams &materialParamsMatrix =
                     problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-
-        // initially we set the matrix saturations equal to the fracture saturations
-        satNMatrix_  = priVars[saturationIdx];
-        satWMatrix_  = 1.0 - satNMatrix_;
 
         // the fluid state of the fracture
         this->completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidStateFracture_);
@@ -243,9 +256,9 @@ public:
     Scalar saturationFracture(int phaseIdx) const
     {
         if (phaseIdx == wPhaseIdx)
-            return 1.0 - this->priVar(saturationIdx);
+            return satWFracture_;
         else
-            return this->priVar(saturationIdx);
+            return satNFracture_;
     }
     Scalar saturationMatrix(int phaseIdx) const
     {
@@ -297,6 +310,9 @@ protected:
 
     Scalar satWMatrix_;
     Scalar satNMatrix_;
+
+    Scalar satWFracture_;
+    Scalar satNFracture_;
 
 private:
     Implementation &asImp_()
