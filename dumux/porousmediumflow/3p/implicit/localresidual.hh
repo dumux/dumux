@@ -42,8 +42,10 @@ class ThreePLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-
+    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -54,10 +56,12 @@ protected:
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
 public:
+    ThreePLocalResidual() : ParentType()
+    {
+        massWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
+    }
     /*!
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -69,28 +73,22 @@ public:
      *  \param scvIdx The SCV (sub-control volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
+    PrimaryVariables computeStorage(const SubControlVolume &scv,
+                                    const VolumeVariables &volVars) const
     {
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars =
-            usePrevSol
-            ? this->prevVolVars_()
-            : this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
+        PrimaryVariables storage(0.0);
 
         // compute storage term of all components within all phases
-        storage = 0;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            storage[conti0EqIdx + phaseIdx] +=
+            auto eqIdx = conti0EqIdx + phaseIdx;
+            storage[eqIdx] +=
                 volVars.porosity()
                 * volVars.saturation(phaseIdx)
                 * volVars.density(phaseIdx);
         }
+
+        return storage;
     }
 
     /*!
@@ -102,73 +100,29 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
+    PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace) const
     {
-        FluxVariables fluxVars;
-        fluxVars.update(this->problem_(),
-                        this->element_(),
-                        this->fvGeometry_(),
-                        fIdx,
-                        this->curVolVars_(),
-                        onBoundary);
+        auto& fluxVars = this->model_().fluxVars(scvFace);
 
-        flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, fluxVars);
-        asImp_()->computeDiffusiveFlux(flux, fluxVars);
-    }
+        // get upwind weights into local scope
+        auto massWeight = massWeight_;
+        PrimaryVariables flux(0.0);
 
-    /*!
-     * \brief Evaluates the advective mass flux of all components over
-     *        a face of a sub-control volume.
-     *
-     * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
-     */
-
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-
-        ////////
-        // advective fluxes of all components in all phases
-        ////////
+        // advective fluxes of all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // data attached to upstream and the downstream vertices
-            // of the current phase
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
+            auto upwindRule = [massWeight, phaseIdx](const VolumeVariables& up, const VolumeVariables& dn)
+            {
+                return (massWeight)*up.mobility(phaseIdx)*up.density(phaseIdx)
+                      +(1-massWeight)*dn.mobility(phaseIdx)*dn.density(phaseIdx);
+            };
 
             // add advective flux of current phase
-            // if alpha > 0 and alpha < 1 then both upstream and downstream
-            // nodes need their contribution
-            // if alpha == 1 (which is mostly the case) then, the downstream
-            // node is not evaluated
-            int eqIdx = conti0EqIdx + phaseIdx;
-            flux[eqIdx] += fluxVars.volumeFlux(phaseIdx)
-                * (massUpwindWeight
-                   * up.density(phaseIdx)
-                   +
-                   (1.0 - massUpwindWeight)
-                   * dn.density(phaseIdx));
+            auto eqIdx = conti0EqIdx + phaseIdx;
+            flux[eqIdx] += fluxVars.advection().flux(phaseIdx, upwindRule);
         }
-    }
 
-    /*!
-     * \brief Adds the diffusive flux to the flux vector over
-     *        the face of a sub-control volume.
-     *
-     * \param flux The diffusive flux over the sub-control-volume face for each phase
-     * \param fluxVars The flux variables at the current SCV
-     *
-     * It doesn't do anything in three-phase model but may be used by the
-     * non-isothermal three-phase models to calculate diffusive heat
-     * fluxes
-     */
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        // diffusive fluxes
-        flux += 0.0;
+        return flux;
     }
 
 protected:
@@ -181,6 +135,8 @@ protected:
     {
         return static_cast<const Implementation *> (this);
     }
+private:
+    Scalar massWeight_;
 };
 
 } // end namespace
