@@ -168,12 +168,6 @@ public:
         storageMatrix[nPhaseIdx]    = 0.0;
         //        const GlobalPosition &globalPos = geometry.corner(scvIdx);
 
-        Scalar dsm_dsf = volVars.dsm_dsf();
-        if (!this->problem_().useInterfaceCondition())
-        {
-            dsm_dsf = 1.0;
-        }
-
         if (isFracture)
         {
             for (int phaseIdx = 0; phaseIdx<2; phaseIdx++)
@@ -185,7 +179,6 @@ public:
                 storageMatrix[phaseIdx] = volVars.density(phaseIdx)
                                         * volVars.porosity()
                                         * wm
-                                        * dsm_dsf
                                         * volVars.saturationMatrix(phaseIdx);
             }
         }
