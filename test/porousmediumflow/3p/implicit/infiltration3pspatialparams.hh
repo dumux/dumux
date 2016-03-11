@@ -72,6 +72,7 @@ class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef ImplicitSpatialParams<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
@@ -82,6 +83,7 @@ class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 
@@ -95,8 +97,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InfiltrationThreePSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    InfiltrationThreePSpatialParams(const Problem& problem, const GridView &gridView)
+        : ParentType(problem, gridView)
     {
         // intrinsic permeabilities
         fineK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);
@@ -146,11 +148,9 @@ public:
      * \param scvIdx The index of the sub-control volume
      * \return Intrinsic permeability
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
-                                       int scvIdx) const
+    const Scalar intrinsicPermeability(const SubControlVolume& scv) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition &globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
@@ -164,9 +164,7 @@ public:
      * \param scvIdx The index of the sub-control volume
      * \return Porosity
      */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+    double porosity(const SubControlVolume& scv) const
     {
         return porosity_;
     }
@@ -181,8 +179,7 @@ public:
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvElemGeom,
-                                               int scvIdx) const
+                                               const SubControlVolume& scv) const
     {
         return materialParams_;
     }
