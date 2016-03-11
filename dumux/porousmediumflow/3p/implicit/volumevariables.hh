@@ -49,6 +49,7 @@ class ThreePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -87,22 +88,15 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(priVars, problem, element, scv);
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, scv);
 
-        Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
+        Scalar temp = Implementation::temperature_(priVars, problem, element, scv);
         fluidState_.setTemperature(temp);
 
         sw_ = priVars[swIdx];
@@ -158,20 +152,16 @@ public:
         }
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                         fvGeometry,
-                                                         scvIdx);
+        porosity_ = problem.spatialParams().porosity(scv);
         Valgrind::CheckDefined(porosity_);
 
         // permeability
-        permeability_ = problem.spatialParams().intrinsicPermeability(element,
-                                                                          fvGeometry,
-                                                                          scvIdx);
+        permeability_ = problem.spatialParams().intrinsicPermeability(scv);
         Valgrind::CheckDefined(permeability_);
 
         // energy related quantities not contained in the fluid state
         typename FluidSystem::ParameterCache paramCache;
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, scv);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // compute and set the enthalpy
             Scalar h = asImp_().enthalpy_(fluidState_, paramCache, phaseIdx);
@@ -256,10 +246,9 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem &problem,
                                const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               const int scvIdx)
+                               const SubControlVolume& scv)
     {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+        return problem.temperatureAtPos(scv.dofPosition());
     }
 
     template<class ParameterCache>
@@ -276,9 +265,7 @@ protected:
     void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       bool isOldSol)
+                       const SubControlVolume& scv)
     { }
 
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
