@@ -26,6 +26,7 @@
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
@@ -41,7 +42,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(InfiltrationThreePProblem, INHERITS_FROM(ThreeP, InfiltrationThreePSpatialParams));
 NEW_TYPE_TAG(InfiltrationThreePBoxProblem, INHERITS_FROM(BoxModel, InfiltrationThreePProblem));
-NEW_TYPE_TAG(InfiltrationThreePCCProblem, INHERITS_FROM(CCModel, InfiltrationThreePProblem));
+NEW_TYPE_TAG(InfiltrationThreePCCProblem, INHERITS_FROM(CCTpfaModel, InfiltrationThreePProblem));
 
 // Set the grid type
 SET_TYPE_PROP(InfiltrationThreePProblem, Grid, Dune::YaspGrid<2>);
@@ -122,6 +123,8 @@ class InfiltrationThreePProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -178,10 +181,9 @@ public:
      * \param values The source values for the primary variables
      * \param globalPos The position
      */
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0;
+        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -198,15 +200,18 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes values;
+
         if(globalPos[0] > 500. - eps_)
             values.setAllDirichlet();
         else if(globalPos[0] < eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
+
+        return values;
     }
 
     /*!
@@ -218,8 +223,10 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
+
         Scalar y = globalPos[1];
         Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
@@ -242,6 +249,8 @@ public:
             values[swIdx] = 1.-sgr;
             values[snIdx] = 0.;
         }
+
+        return values;
     }
 
     /*!
@@ -258,20 +267,13 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 int scvIdx,
-                 const int boundaryFaceIdx) const
+    PrimaryVariables neumann(const Element &element,
+                             const SubControlVolumeFace& scvf) const
     {
-        values = 0;
+        PrimaryVariables values(0.0);
 
-        GlobalPosition globalPos;
-        if (isBox)
-            globalPos = element.geometry().corner(scvIdx);
-        else
-            globalPos = intersection.geometry().center();
+        GlobalPosition globalPos = scvf.center();
+        // TODO: BOX??? FACES SHOULD HAVE INTEGRATION POINT
 
         // negative values for injection
         if (this->timeManager().time()<2592000.)
@@ -283,6 +285,8 @@ public:
                 values[Indices::contiGEqIdx] = -0.0;
             }
         }
+
+        return values;
     }
 
     // \}
@@ -301,9 +305,12 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
         initial_(values, globalPos);
+
+        return values;
     }
 
     /*!
