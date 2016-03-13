@@ -129,6 +129,12 @@ public:
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
+     * \brief Return the saturation
+     */
+    Scalar saturation(int phaseIdx = 0) const
+    { return 1.0; }
+
+    /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */

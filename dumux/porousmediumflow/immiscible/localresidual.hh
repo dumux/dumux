@@ -20,12 +20,10 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the one-phase fully implicit model.
+ *        using the n-phase immiscible fully implicit models.
  */
-#ifndef DUMUX_1P_LOCAL_RESIDUAL_HH
-#define DUMUX_1P_LOCAL_RESIDUAL_HH
-
-#include "properties.hh"
+#ifndef DUMUX_IMMISCIBLE_LOCAL_RESIDUAL_HH
+#define DUMUX_IMMISCIBLE_LOCAL_RESIDUAL_HH
 
 namespace Dumux
 {
@@ -33,10 +31,10 @@ namespace Dumux
  * \ingroup OnePModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the one-phase fully implicit model.
+ *        using the n-phase immiscible fully implicit models.
  */
 template<class TypeTag>
-class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
@@ -48,80 +46,77 @@ class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    //index of the mass balance equation
-    enum {
-        conti0EqIdx = Indices::conti0EqIdx //index for the mass balance
-    };
+    // first index for the mass balance
+    enum { conti0EqIdx = Indices::conti0EqIdx };
+
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
 public:
 
     /*!
-     * \brief Constructor. Sets the upwind weight.
+     * \brief Constructor. Gets the upwind weight.
      */
-    OnePLocalResidual()
+    ImmiscibleLocalResidual()
     {
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-        mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     /*!
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
-     *        volume of a finite volume element for the OneP
-     *        model.
-     *
-     * This function should not include the source and sink terms.
-     *  \param scv The sub control volume
-     *  \param volVars The current or previous volVars
-     *
-     * The volVars can be different to allow computing the implicit euler time derivative here
+     *        volume of a finite volume element for the immiscible models.
+     * \param scv The sub control volume
+     * \param volVars The current or previous volVars
+     * \note This function should not include the source and sink terms.
+     * \note The volVars can be different to allow computing
+     *       the implicit euler time derivative here
      */
     PrimaryVariables computeStorage(const SubControlVolume& scv,
                                     const VolumeVariables& volVars) const
     {
-        PrimaryVariables storage(0);
-
-        // partial time derivative of the wetting phase mass
-        storage[conti0EqIdx] = volVars.density() * volVars.porosity();
+        // partial time derivative of the phase mass
+        PrimaryVariables storage;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            auto eqIdx = conti0EqIdx + phaseIdx;
+            storage[eqIdx] = volVars.porosity()
+                             * volVars.density(phaseIdx)
+                             * volVars.saturation(phaseIdx);
+        }
 
         return storage;
     }
 
 
     /*!
-     * \brief Evaluate the mass flux over a face of a sub-control
-     *        volume.
-     *
-     * \param flux The flux over the SCV (sub-control-volume) face
-     * \param fIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
+     * \brief Evaluate the mass flux over a face of a sub control volume
+     * \param scvf The sub control volume face to compute the flux on
      */
-    PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace) const
+    PrimaryVariables computeFlux(const SubControlVolumeFace& scvf)
     {
-        const auto& fluxVars = this->model_().fluxVars(scvFace);
+        auto& fluxVars = this->model_().fluxVars_(scvf);
+        fluxVars.beginFluxComputation();
 
-        auto massWeight = massUpwindWeight_;
-        auto mobWeight = mobilityUpwindWeight_;
+        // copy weight to local scope for use in lambda expression
+        auto w = upwindWeight_;
 
-        auto upwindRule = [massWeight, mobWeight](const VolumeVariables& up, const VolumeVariables& dn)
-                          { return (up.density(0)*massWeight + dn.density(0)*(1-massWeight))
-                                   *(up.mobility(0)*mobWeight + dn.mobility(0)*(1-mobWeight)); };
+        PrimaryVariables flux;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // the upwinding scheme
+            auto upwindRule = [w, phaseIdx](const VolumeVariables& up, const VolumeVariables& dn)
+                              { return (up.density(phaseIdx)*up.mobility(phaseIdx))*(w)
+                                     + (dn.density(phaseIdx)*dn.mobility(phaseIdx))*(1-w); };
 
-        auto flux = fluxVars.advection().flux(0, upwindRule);
+            auto eqIdx = conti0EqIdx + phaseIdx;
+            flux[eqIdx] = fluxVars.advection().flux(phaseIdx, upwindRule);
+        }
 
         return flux;
     }
-
-    /*!
-     * \brief Return the temperature given the solution vector of a
-     *        finite volume.
-     */
-    Scalar temperature(const PrimaryVariables &priVars)
-    { return this->problem_.temperature(); /* constant temperature */ }
 
 private:
     Implementation *asImp_()
@@ -130,8 +125,7 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
 
-    Scalar massUpwindWeight_;
-    Scalar mobilityUpwindWeight_;
+    Scalar upwindWeight_;
 };
 
 }

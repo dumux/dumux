@@ -30,10 +30,10 @@
 #include "properties.hh"
 
 #include "model.hh"
-#include "localresidual.hh"
 #include "volumevariables.hh"
 #include "indices.hh"
 
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -54,7 +54,7 @@ SET_INT_PROP(OneP, NumEq, 1); //!< set the number of equations to 1
 SET_INT_PROP(OneP, NumPhases, 1); //!< The number of phases in the 1p model is 1
 
 //! The local residual function
-SET_TYPE_PROP(OneP, LocalResidual, OnePLocalResidual<TypeTag>);
+SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
@@ -142,7 +142,7 @@ SET_TYPE_PROP(OnePNI, IsothermalModel, OnePModel<TypeTag>);
 SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, OnePLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(OnePNI, IsothermalIndices, OnePIndices);

@@ -32,8 +32,8 @@
 #include "model.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "localresidual.hh"
 
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -64,7 +64,7 @@ SET_INT_PROP(TwoP,
 //! Use the 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(TwoP,
               LocalResidual,
-              TwoPLocalResidual<TypeTag>);
+              ImmiscibleLocalResidual<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(TwoP, Model, TwoPModel<TypeTag>);
@@ -176,7 +176,7 @@ SET_TYPE_PROP(TwoPNI, IsothermalModel, TwoPModel<TypeTag>);
 SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, TwoPLocalResidual<TypeTag>);
+SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_PROP(TwoPNI, IsothermalIndices)

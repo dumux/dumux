@@ -34,8 +34,8 @@
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
-#include "localresidual.hh"
 
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
@@ -78,7 +78,7 @@ SET_INT_PROP(ThreeP, NumEq, 3); //!< set the number of equations to 2
 SET_TYPE_PROP(ThreeP, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreeP, LocalResidual, ThreePLocalResidual<TypeTag>);
+SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //! Enable advection
 SET_BOOL_PROP(ThreeP, EnableAdvection, true);
@@ -147,7 +147,7 @@ SET_TYPE_PROP(ThreePNI, IsothermalModel, ThreePModel<TypeTag>);
 SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ThreePLocalResidual<TypeTag>);
+SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(ThreePNI, IsothermalIndices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
