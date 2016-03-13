@@ -70,7 +70,8 @@ class CCTpfaFicksLaw
 
 public:
 
-    void update(const Problem &problem, const SubControlVolumeFace &scvFace, int phaseIdx, int compIdx)
+    void update(const Problem &problem, const SubControlVolumeFace &scvFace,
+                int phaseIdx, int compIdx)
     {
         problemPtr_ = &problem;
         scvFacePtr_ = &scvFace;
@@ -83,54 +84,64 @@ public:
         // TODO for non solution dependent diffusion tensors...
     }
 
+    void update(const Problem &problem, const SubControlVolumeFace &scvFace,
+                int phaseIdx, int compIdx,
+                VolumeVariables* boundaryVolVars)
+    {
+        boundaryVolVars_ = boundaryVolVars;
+        update(problem, scvFace, phaseIdx, compIdx);
+    }
+
+    void beginFluxComputation(bool boundaryVolVarsUpdated = false)
+    {
+        // diffusion tensors are always solution dependent
+        updateTransmissibilities_();
+
+        // Get the inside volume variables
+        const auto insideScvIdx = scvFace_().insideScvIdx();
+        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto* insideVolVars = &problem_().model().curVolVars(insideScv);
+
+        // and the outside volume variables
+        const VolumeVariables* outsideVolVars;
+        if (!scvFace_().boundary())
+            outsideVolVars = &problem_().model().curVolVars(scvFace_().outsideScvIdx());
+        else
+        {
+            outsideVolVars = boundaryVolVars_;
+            if (!boundaryVolVarsUpdated)
+            {
+                // update the boudary volvars for Dirichlet boundaries
+                const auto element = problem_().model().fvGeometries().element(insideScv);
+                const auto dirichletPriVars = problem_().dirichlet(element, scvFace_());
+                boundaryVolVars_->update(dirichletPriVars, problem_(), element, insideScv);
+            }
+        }
+
+        // compute the diffusive flux
+        auto xInside = insideVolVars->moleFraction(phaseIdx_, compIdx_);
+        auto xOutside = outsideVolVars->moleFraction(phaseIdx_, compIdx_);
+        auto rho = 0.5*(insideVolVars->molarDensity(phaseIdx_) + outsideVolVars->molarDensity(phaseIdx_));
+
+        rhoDGradXNormal_ = rho*tij_*(xInside - xOutside);
+    }
+
+
+
     /*!
      * \brief A function to calculate the mass flux over a sub control volume face
      *
      * \param phaseIdx The index of the phase of which the flux is to be calculated
      * \param compIdx The index of the transported component
      */
-    Scalar flux()
+    Scalar flux() const
     {
-        // diffusion tensors are always solution dependent
-        updateTransmissibilities_();
-
-        const auto insideScvIdx = scvFace_().insideScvIdx();
-        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-
-        // Set the inside-/outside volume variables provisionally
-        const auto &insideVolVars = problem_().model().curVolVars(insideScv);
-        VolumeVariables tmp;
-        VolumeVariables& outsideVolVars = tmp;
-
-        // calculate the concentration in the inside cell
-        Scalar cInside = insideVolVars.molarDensity(phaseIdx_)*insideVolVars.moleFraction(phaseIdx_, compIdx_);
-
-
-        Scalar cOutside;
-        if (!scvFace_().boundary())
-        {
-            outsideVolVars = problem_().model().curVolVars(scvFace_().outsideScvIdx());
-            cOutside = outsideVolVars.molarDensity(phaseIdx_)*outsideVolVars.moleFraction(phaseIdx_, compIdx_);
-        }
-        else
-        {
-            // if (complexBCTreatment)
-            // outsideVolVars = problem_().model().constructBoundaryVolumeVariables(scvFace_());
-            // else
-            // {
-                auto element = problem_().model().fvGeometries().element(insideScv);
-                auto dirichletPriVars = problem_().dirichlet(element, scvFace_());
-                outsideVolVars.update(dirichletPriVars, problem_(), element, insideScv);
-            // }
-            cOutside = outsideVolVars.molarDensity(phaseIdx_)*outsideVolVars.moleFraction(phaseIdx_, compIdx_);
-        }
-
-        return tij_*(cInside - cOutside);
+        return rhoDGradXNormal_;
     }
 
     std::set<IndexType> stencil() const
     {
-        return std::set<IndexType>(stencil_.begin(), stencil_.end());
+        return stencil_;
     }
 
 protected:
@@ -168,10 +179,10 @@ protected:
     {
         // fill the stencil
         if (!scvFace_().boundary())
-            stencil_= {scvFace_().insideVolVarsIdx(), scvFace_().outsideVolVarsIdx()};
+            stencil_= {scvFace_().insideScvIdx(), scvFace_().outsideScvIdx()};
         else
             // fill the stencil
-            stencil_ = {scvFace_().insideVolVarsIdx()};
+            stencil_ = {scvFace_().insideScvIdx()};
     }
 
     Scalar calculateOmega_(const DimWorldMatrix &D, const SubControlVolume &scv) const
@@ -213,10 +224,16 @@ protected:
 
     const Problem *problemPtr_;
     const SubControlVolumeFace *scvFacePtr_; //!< Pointer to the sub control volume face for which the flux variables are created
-    Scalar tij_;                             //!< transmissibility for the flux calculation
-    std::vector<IndexType> stencil_;         //!< Indices of the cells of which the pressure is needed for the flux calculation
+    std::set<IndexType> stencil_;         //!< Indices of the cells of which the pressure is needed for the flux calculation
+
+    //! Boundary volume variables (they only get updated on Dirichlet boundaries)
+    VolumeVariables* boundaryVolVars_;
+
     IndexType phaseIdx_;
     IndexType compIdx_;
+    //! Precomputed values
+    Scalar tij_; //!< transmissibility for the flux calculation
+    Scalar rhoDGradXNormal_; //! rho*D(grad(x))*n
 };
 
 } // end namespace

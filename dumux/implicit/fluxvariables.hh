@@ -37,13 +37,13 @@ NEW_PROP_TAG(NumComponents);
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables
- *        specializations are provided for combinations of molecularDiffusion_ processes
+ *        specializations are provided for combinations of physical processes
  */
 template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
 class FluxVariables {};
 
 
-// specialization for pure advective flow (e.g. one-phase darcy equation)
+// specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
 template<class TypeTag>
 class FluxVariables<TypeTag, true, false, false>
 {
@@ -51,13 +51,28 @@ class FluxVariables<TypeTag, true, false, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::set<IndexType>;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        advection_.update(problem, scvf);
+        if (scvf.boundary())
+        {
+            if(!boundaryVolVars_)
+                boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
+            advection_.update(problem, scvf, boundaryVolVars_.get());
+        }
+        else
+        {
+            advection_.update(problem, scvf);
+        }
+    }
+
+    void beginFluxComputation()
+    {
+        advection_.beginFluxComputation();
     }
 
     const AdvectionType& advection() const
@@ -67,11 +82,13 @@ public:
 
     Stencil stencil() const
     {
-        return advection().stencil();
+        return advection_.stencil();
     }
 
 private:
     AdvectionType advection_;
+    // boundary volume variables in case of Dirichlet boundaries
+    std::unique_ptr<VolumeVariables> boundaryVolVars_;
 };
 
 
@@ -83,6 +100,7 @@ class FluxVariables<TypeTag, true, true, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::set<IndexType>;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -96,13 +114,42 @@ class FluxVariables<TypeTag, true, true, false>
 public:
     void update(const Problem& problem, const SubControlVolumeFace &scvf)
     {
-        advection_.update(problem, scvf);
+        if (scvf.boundary())
+        {
+            if(!boundaryVolVars_)
+                boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
+
+            advection_.update(problem, scvf, boundaryVolVars_.get());
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    if (phaseIdx != compIdx)
+                        molecularDiffusion(phaseIdx, compIdx).update(problem, scvf, phaseIdx, compIdx, boundaryVolVars_.get());
+                }
+        }
+        else
+        {
+            advection_.update(problem, scvf);
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    if (phaseIdx != compIdx)
+                        molecularDiffusion(phaseIdx, compIdx).update(problem, scvf, phaseIdx, compIdx);
+                }
+        }
+    }
+
+    void beginFluxComputation()
+    {
+        advection_.beginFluxComputation();
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 if (phaseIdx != compIdx)
-                    molecularDiffusion(phaseIdx, compIdx).update(problem, scvf, phaseIdx, compIdx);
+                    molecularDiffusion(phaseIdx, compIdx).beginFluxComputation(true);
             }
+        }
     }
 
     // TODO update transmissibilities?
@@ -148,6 +195,8 @@ public:
 private:
     AdvectionType advection_;
     std::array< std::array<MolecularDiffusionType, numComponents-1>, numPhases> molecularDiffusion_;
+    // boundary volume variables in case of Dirichlet boundaries
+    std::unique_ptr<VolumeVariables> boundaryVolVars_;
 };
 
 
