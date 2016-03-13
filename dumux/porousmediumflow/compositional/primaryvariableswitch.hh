@@ -45,6 +45,7 @@ class PrimaryVariableSwitch
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using VolumeVariablesVector = typename GET_PROP_TYPE(TypeTag, VolumeVariablesVector);
 
 public:
 
@@ -70,6 +71,11 @@ public:
     int phasePresence(IndexType dofIdxGlobal) const
     {
         return phasePresence_[dofIdxGlobal];
+    }
+
+    bool wasSwitched(IndexType dofIdxGlobal) const
+    {
+        return wasSwitched_[dofIdxGlobal];
     }
 
     void setPhasePresence(IndexType dofIdxGlobal, int phasePresence)
@@ -107,7 +113,8 @@ public:
      * \param problem The problem
      * \param curSol The current solution to be updated / modified
      */
-    bool update(const Problem& problem, SolutionVector& curSol)
+    bool update(const Problem& problem, SolutionVector& curSol,
+                VolumeVariablesVector& volVarsVector)
     {
         bool switched = false;
         visited_.assign(phasePresence_.size(), false);
@@ -124,11 +131,10 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    VolumeVariables volVars;
-                    volVars.update(curSol[dofIdxGlobal], problem, element, scv);
+                    volVarsVector[dofIdxGlobal].update(curSol[dofIdxGlobal], problem, element, scv);
                     const auto& globalPos = scv.dofPosition();
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, globalPos))
+                    if (asImp_().update_(curSol[dofIdxGlobal], volVarsVector[dofIdxGlobal], dofIdxGlobal, globalPos))
                         switched = true;
 
                 }

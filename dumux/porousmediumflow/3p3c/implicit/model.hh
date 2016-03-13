@@ -146,11 +146,33 @@ public:
      */
     void newtonEndStep()
     {
+        // \todo resize volvars vector if grid was adapted
+
         // update the variable switch
-        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol(),
+                                             this->curVolVars_());
 
         // update the secondary variables
-        ParentType::newtonEndStep();
+        // \note we only updated if phase presence changed as the volume variables
+        //       are already updated once by the switch
+        if (switchFlag_)
+        {
+            for (const auto& element : elements(this->problem_().gridView()))
+            {
+                for (auto&& scv : this->fvGeometries(element).scvs())
+                {
+                    auto dofIdxGlobal = scv.dofIndex();
+                    if (priVarSwitch_().wasSwitched(dofIdxGlobal))
+                    {
+                        this->curVolVars_(dofIdxGlobal).update(this->curSol()[dofIdxGlobal],
+                                                               this->problem_(),
+                                                               element,
+                                                               scv);
+                    }
+                }
+
+            }
+        }
     }
 
     /*!

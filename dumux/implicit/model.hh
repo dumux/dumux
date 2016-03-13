@@ -792,6 +792,10 @@ public:
 
 protected:
     // only to be called by friends and deriving classes
+    VolumeVariablesVector& curVolVars_()
+    { return curVolVarsVector_; }
+
+    // only to be called by friends and deriving classes
     VolumeVariables& curVolVars_(const SubControlVolume& scv)
     { return curVolVarsVector_[scv.index()]; }
 
