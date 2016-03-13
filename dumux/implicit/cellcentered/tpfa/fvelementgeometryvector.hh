@@ -141,9 +141,9 @@ public:
                 {
                     auto nIdx = problem.elementMapper().index(intersection.outside());
                     scvfs_.push_back(std::make_shared<SubControlVolumeFace>(intersection.geometry(),
+                                                                            intersection.geometry().center(),
                                                                             intersection.centerUnitOuterNormal(),
                                                                             scvfIdx,
-                                                                            std::vector<IndexType>({eIdx, nIdx}),
                                                                             std::vector<IndexType>({eIdx, nIdx}),
                                                                             false));
                     scvfsIndexSet.push_back(scvfIdx++);
@@ -151,9 +151,9 @@ public:
                 else
                 {
                     scvfs_.push_back(std::make_shared<SubControlVolumeFace>(intersection.geometry(),
+                                                                            intersection.geometry().center(),
                                                                             intersection.centerUnitOuterNormal(),
                                                                             scvfIdx,
-                                                                            std::vector<IndexType>({eIdx}),
                                                                             std::vector<IndexType>({eIdx}),
                                                                             true));
                     scvfsIndexSet.push_back(scvfIdx++);

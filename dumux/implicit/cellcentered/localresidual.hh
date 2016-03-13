@@ -237,7 +237,7 @@ protected:
         PrimaryVariables dirichletValues = this->problem_().dirichlet(this->element_(), scvf);
 
         // get the primary variables
-        const auto& priVars = this->problem_().model().curVolVars(scvf.insideVolVarsIdx()).priVars();
+        const auto& priVars = this->problem_().model().curVolVars(scvf.insideScvIdx()).priVars();
 
         // set Dirichlet conditions in a strong sense
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

@@ -43,22 +43,29 @@ class SubControlVolumeFace
 
 public:
     SubControlVolumeFace(const Geometry& geometry,
+                         const GlobalPosition& integrationPoint,
                          const GlobalPosition& unitOuterNormal,
                          IndexType scvfIndex,
                          const std::vector<IndexType>& scvIndices,
-                         const std::vector<IndexType>& volVarsIndices,
                          bool boundary = false)
     : geometry_(geometry),
+      integrationPoint_(integrationPoint),
       unitOuterNormal_(unitOuterNormal),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
-      volVarsIndices_(volVarsIndices),
       boundary_(boundary) {}
 
     //! The center of the sub control volume face
     GlobalPosition center() const
     {
         return geometry_.center();
+    }
+
+    //! The integration point for flux evaluations
+    GlobalPosition integrationPoint() const
+    {
+        // Return center for now
+        return integrationPoint_;
     }
 
     //! The area of the sub control volume face
@@ -90,24 +97,11 @@ public:
         return scvIndices_[0];
     }
 
-    //! index of the inside sub control volume for upwinding
-    IndexType insideVolVarsIdx() const
-    {
-        return volVarsIndices_[0];
-    }
-
     //! index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is false
     IndexType outsideScvIdx() const
     {
         return scvIndices_[1];
-    }
-
-    //! index of the outside sub control volume for upwinding
-    // This results in undefined behaviour if boundary is false
-    IndexType outsideVolVarsIdx() const
-    {
-        return volVarsIndices_[1];
     }
 
     //! The global index of this sub control volume face
@@ -118,9 +112,10 @@ public:
 
 private:
     Geometry geometry_;
+    GlobalPosition integrationPoint_;
     GlobalPosition unitOuterNormal_;
     IndexType scvfIndex_;
-    std::vector<IndexType> scvIndices_, volVarsIndices_;
+    std::vector<IndexType> scvIndices_;
     bool boundary_;
 };
 
