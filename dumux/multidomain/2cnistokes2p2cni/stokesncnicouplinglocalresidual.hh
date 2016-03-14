@@ -126,12 +126,13 @@ public:
                         continue;
 
                     const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
-                    const FluxVariables boundaryVars(this->problem_(),
-                                                      this->element_(),
-                                                      this->fvGeometry_(),
-                                                      boundaryFaceIdx,
-                                                      this->curVolVars_(),
-                                                      true);
+                    FluxVariables boundaryVars;
+                    boundaryVars.update(this->problem_(),
+                                        this->element_(),
+                                        this->fvGeometry_(),
+                                        boundaryFaceIdx,
+                                        this->curVolVars_(),
+                                        true);
                     const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
 

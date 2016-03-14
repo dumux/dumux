@@ -300,18 +300,20 @@ public:
             globalProblem_.sdProblem1().boundaryTypes(cParams.boundaryTypes1, vPtr1);
             globalProblem_.sdProblem2().boundaryTypes(cParams.boundaryTypes2, vPtr2);
 
-            const BoundaryVariables1 boundaryVars1(globalProblem_.sdProblem1(),
-                                                   sdElement1,
-                                                   cParams.fvGeometry1,
-                                                   boundaryFaceIdx1,
-                                                   cParams.elemVolVarsCur1,
-                                                   /*onBoundary=*/true);
-            const BoundaryVariables2 boundaryVars2(globalProblem_.sdProblem2(),
-                                                   sdElement2,
-                                                   cParams.fvGeometry2,
-                                                   boundaryFaceIdx2,
-                                                   cParams.elemVolVarsCur2,
-                                                   /*onBoundary=*/true);
+            BoundaryVariables1 boundaryVars1;
+            boundaryVars1.update(globalProblem_.sdProblem1(),
+                                 sdElement1,
+                                 cParams.fvGeometry1,
+                                 boundaryFaceIdx1,
+                                 cParams.elemVolVarsCur1,
+                                 /*onBoundary=*/true);
+            BoundaryVariables2 boundaryVars2;
+            boundaryVars2.update(globalProblem_.sdProblem2(),
+                                 sdElement2,
+                                 cParams.fvGeometry2,
+                                 boundaryFaceIdx2,
+                                 cParams.elemVolVarsCur2,
+                                 /*onBoundary=*/true);
 
             asImp_()->evalCoupling(lfsu1, lfsu2,
                                    vertInElem1, vertInElem2,
