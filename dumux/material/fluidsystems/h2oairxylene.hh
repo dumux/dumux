@@ -44,8 +44,10 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  * \brief A three-phase fluid system featuring gas, NAPL and water as phases and
- * distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
- * \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_8H_{10}})\f$ as components. It assumes all phases to be ideal mixtures.
+ *        distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
+ *        \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_8H_{10}})\f$ as components.
+ *
+ * \note This fluid system assumes all phases to be ideal mixtures.
  */
 template <class Scalar,
           class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
@@ -138,7 +140,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -221,18 +223,23 @@ public:
     }
 
     /*!
-     * \brief Given all mole fractions in a phase, return the phase
+     * \brief Given a phase's composition, temperature, pressure, and
+     *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * We apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the water density.
+     *
      * \param fluidState The fluid state
-     * \param phaseIdx The index of the phase to consider
+     * \param phaseIdx The index of the phase
      */
     using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState, int phaseIdx)
     {
         if (phaseIdx == wPhaseIdx) {
-            // See: Ochs 2008
-            // \todo: proper citation
+            // See: Eq. (7) in Class et al. (2002a)
             Scalar rholH2O = H2O::liquidDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
             Scalar clH2O = rholH2O/H2O::molarMass();
 
@@ -271,6 +278,8 @@ public:
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase to consider
+     *
+     * \todo Check the parameter phiCAW for the xylene case and give a physical meaningful name
      */
     using Base::viscosity;
     template <class FluidState>
@@ -322,10 +331,7 @@ public:
 
         Scalar MAW = (fluidState.moleFraction(gPhaseIdx, airIdx)*Air::molarMass()
                       + fluidState.moleFraction(gPhaseIdx, H2OIdx)*H2O::molarMass())
-            / xAW;
-
-            /* TODO, please check phiCAW for the Xylene case here */
-
+                     / xAW;
 
         Scalar phiCAW = 0.3; // simplification for this particular system
         /* actually like this
@@ -356,10 +362,12 @@ public:
     {
         Scalar diffCont;
 
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx==gPhaseIdx) {
-            Scalar diffAC = Dumux::BinaryCoeff::Air_Xylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-            Scalar diffWC = Dumux::BinaryCoeff::H2O_Xylene::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-            Scalar diffAW = Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+            Scalar diffAC = Dumux::BinaryCoeff::Air_Xylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffWC = Dumux::BinaryCoeff::H2O_Xylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffAW = Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
 
             const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
             const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
@@ -371,9 +379,9 @@ public:
                                                  "Diffusivity of air in the gas phase "
                                                  "is constraint by sum of diffusive fluxes = 0 !\n");
         } else if (phaseIdx==wPhaseIdx){
-            Scalar diffACl = 1.e-9; // BinaryCoeff::Air_Xylene::liquidDiffCoeff(temperature, pressure);
-            Scalar diffWCl = 1.e-9; // BinaryCoeff::H2O_Xylene::liquidDiffCoeff(temperature, pressure);
-            Scalar diffAWl = 1.e-9; // BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
+            Scalar diffACl = BinaryCoeff::Air_Xylene::liquidDiffCoeff(temperature, pressure);
+            Scalar diffWCl = BinaryCoeff::H2O_Xylene::liquidDiffCoeff(temperature, pressure);
+            Scalar diffAWl = BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
 
             Scalar xwa = fluidState.moleFraction(wPhaseIdx, airIdx);
             Scalar xww = fluidState.moleFraction(wPhaseIdx, H2OIdx);
@@ -471,9 +479,8 @@ public:
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase to consider
-     */
-    /*!
-     *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
+     *
+     *  \note This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
     using Base::enthalpy;
@@ -505,7 +512,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
- /*!
+    /*!
      * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
@@ -518,7 +525,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirXylene::heatCapacity()");
     }
 
- /*!
+    /*!
      * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
@@ -528,31 +535,19 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        if (phaseIdx == wPhaseIdx){
-            const Scalar temperature  = fluidState.temperature(phaseIdx) ;
-            const Scalar pressure = fluidState.pressure(phaseIdx);
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
             return H2O::liquidThermalConductivity(temperature, pressure);
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            //Thermal Conductivity of p-Xylene
-            //taken from the Dortmund Data Bank
-            //see http://www.ddbst.de/en/EED/PCP/TCN_C176.php
-            const Scalar lambdaPureXylene = 0.13;
-            return lambdaPureXylene; // conductivity of p-xylene [W/(m K)]
+            return NAPL::liquidThermalConductivity(temperature, pressure);
         }
         else if (phaseIdx == gPhaseIdx)
         {
-            //gPhaseIdx i.e. air
-            // Isobaric Properties for Nitrogen in: NIST Standard
-            // see http://webbook.nist.gov/chemistry/fluid/
-            // evaluated at p=.1 MPa, T=20°C
-            // Nitrogen: 0.025398
-            // Oxygen: 0.026105
-            // lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
-            const Scalar lambdaPureAir = 0.0255535;
-
-            return lambdaPureAir; // conductivity of pure air [W/(m K)]
+            return Air::gasThermalConductivity(temperature, pressure);
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -602,17 +597,19 @@ namespace Properties {
  *  incompressible water), or to switch on verbosity of tabulation,
  *  use the property system and the property "Components":
  *
- *        // Select desired version of the component
- *        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
- *        {
- *            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ * \code{.cpp}
+ * // Select desired version of the component
+ * SET_PROP(TheSpecificProblemTypeTag, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ * {
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  *
- *        // Do not use the defaults !
- *        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     // Do not use the defaults !
+ *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
  *
- *        // Apply e.g. untabulated water:
- *        typedef Dumux::H2O<Scalar> H2O;
- *        };
+ *     // Apply e.g. untabulated water:
+ *     typedef Dumux::H2O<Scalar> H2O;
+ * };
+ * \endcode
  *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.

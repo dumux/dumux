@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Fluid system base class.
+ * \brief @copybrief Dumux::FluidSystems::BaseFluidSystem
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
 #define DUMUX_BASE_FLUID_SYSTEM_HH
@@ -31,7 +31,15 @@ namespace Dumux
 /*!
  * \ingroup Fluidsystems
  * \brief Fluid system base class.
+ *
+ * \note This fluid system neglects the contribution of gas-molecules on the
+ *       liquid phase. This contribution is probably not big, but somebody
+ *       has to find out its influence.
  */
+
+namespace FluidSystems
+{
+
 template <class Scalar, class Implementation>
 class BaseFluidSystem
 {
@@ -42,8 +50,8 @@ public:
     /*!
      * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      */
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
@@ -57,8 +65,8 @@ public:
      * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
      *        component in a fluid phase
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      * \param compIdx Index of the component
      *
      * The fugacity coefficient \f$\mathrm{\phi_\kappa}\f$ is connected to the
@@ -79,8 +87,8 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
@@ -94,8 +102,8 @@ public:
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      * \param compIdx Index of the component
      * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
@@ -126,8 +134,8 @@ public:
      *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$\mathrm{i}\f$ and \f$\mathrm{j}\f$ in this phase.
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      * \param compIIdx Index of the component i
      * \param compJIdx Index of the component j
      */
@@ -146,13 +154,8 @@ public:
      * \brief Given a phase's composition, temperature, pressure and
      *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
-     *
-     *  \todo This fluid system neglects the contribution of
-     *        gas-molecules in the liquid phase. This contribution is
-     *        probably not big. Somebody would have to find out the
-     *        enthalpy of solution for this system. ...
+     * \param phaseIdx Index of the fluid phase
      */
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
@@ -165,21 +168,8 @@ public:
     /*!
      * \brief Thermal conductivity \f$\lambda_\alpha \f$ of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
      * \param paramCache mutable parameters
-     *
-     * Given a fluid state, an up-to-date parameter cache and a phase index,
-     * this method returns the thermal conductivity  \f$\lambda_\alpha \f$ of the fluid
-     * phase. The thermal conductivity is defined by means of the relation
-     *
-     * \f$ q = \lambda_\alpha \mathbf{grad}\;T_\alpha \; \f$,
-     *
-     * where \f$ q\f$ is the local heat flux density caused by the temperature gradient
-     * \f$\mathbf{grad}\;T_\alpha\f$.
-     *
-     * Use the conductivity of air and water as a first approximation.
-     * Source:
-     * http://en.wikipedia.org/wiki/List_of_thermal_conductivities
+     * \param phaseIdx Index of the fluid phase
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
@@ -192,9 +182,9 @@ public:
     /*!
      * \brief Specific isobaric heat capacity \f$c_{p,\alpha}\f$ of a fluid phase \f$\mathrm{[J/(kg*K)]}\f$.
      *
-     * \param paramCache mutable parameters
-     * \param phaseIdx  for which phase to give back the heat capacity
      * \param fluidState represents all relevant thermodynamic quantities of a fluid system
+     * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      *
      * Given a fluid state, an up-to-date parameter cache and a phase index, this method
      * computes the isobaric heat capacity \f$c_{p,\alpha}\f$ of the fluid phase. The isobaric
@@ -202,7 +192,6 @@ public:
      * to the fluid pressure \f$p_\alpha\f$:
      *
      * \f$ c_{p,\alpha} = \frac{\partial h_\alpha}{\partial p_\alpha} \f$
-     *
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
@@ -213,6 +202,7 @@ public:
     }
 };
 
+} // end namespace
 } // end namespace
 
 #endif

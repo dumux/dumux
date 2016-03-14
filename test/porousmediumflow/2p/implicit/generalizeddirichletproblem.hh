@@ -63,14 +63,14 @@ SET_TYPE_PROP(GeneralizedDirichletProblem, GridCreator, Dumux::CubeGridCreator<T
 SET_PROP(GeneralizedDirichletProblem, WettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type;
+public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
 SET_PROP(GeneralizedDirichletProblem, NonwettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type;
+public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type;
 };
 
 SET_INT_PROP(GeneralizedDirichletProblem, Formulation, TwoPFormulation::pnsw);

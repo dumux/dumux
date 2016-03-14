@@ -317,6 +317,19 @@ public:
         return (C6H5 + 3*CH3 - 2*H)/molarMass(); // J/(mol K) -> J/(kg K)
     }
 
+    /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of mesitylene
+     *
+     * see: http://pubs.acs.org/doi/pdf/10.1021/ci000139t
+     *
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidThermalConductivity( Scalar temperature,  Scalar pressure)
+    {
+        return 0.1351;
+    }
+
 protected:
     /*!
      * \brief The molar density of pure mesitylene at a given pressure and temperature

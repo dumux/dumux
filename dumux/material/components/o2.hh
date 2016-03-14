@@ -221,6 +221,22 @@ public:
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
     }
+
+    /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of nitrogen.
+     *
+     * Isobaric Properties for Nitrogen and Oxygen in: NIST Standard
+     * Reference Database Number 69, Eds. P.J. Linstrom and
+     * W.G. Mallard evaluated at p=.1 MPa, does not
+     * change dramatically with p and can be interpolated linearly with temperature
+     *
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+        return 8.044e-5 * (temperature - 273.15) + 0.024486;
+    }
 };
 
 } // end namespace

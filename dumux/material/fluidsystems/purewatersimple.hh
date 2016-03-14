@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief @copybrief Dumux::FluidSystems::PureWaterSimpleFluidSystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
 #define DUMUX_PURE_WATER_FLUID_SYSTEM_HH
@@ -83,7 +83,7 @@ public:
 
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
     static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
-    static constexpr int sPhaseIdx = 2; // Index of the solid phase
+    static constexpr int sPhaseIdx = 2; // index of the solid phase
 
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar
@@ -125,7 +125,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -264,9 +264,7 @@ public:
      */
     static Scalar criticalMolarVolume(int compIdx)
     {
-        DUNE_THROW(Dune::NotImplemented,
-                   "H2ON2FluidSystem::criticalMolarVolume()");
-        return 0;
+        DUNE_THROW(Dune::NotImplemented, "criticalMolarVolume()");
     }
 
     /*!
@@ -336,16 +334,15 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
-                return 1044.0 ;
+        if (phaseIdx == wPhaseIdx)
+        {
+            return 1044.0;
         }
         else if (phaseIdx == nPhaseIdx)// gas phase
         {
-            return
-                    1.679 ;
+            return 1.679;
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
 
     /*!
@@ -362,15 +359,15 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
-                return 2.694e-7 * density(fluidState, phaseIdx) ;
+        if (phaseIdx == wPhaseIdx)
+        {
+            return 2.694e-7 * density(fluidState, phaseIdx);
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
-            return 7.16e-6 * density(fluidState, phaseIdx) ;
+            return 7.16e-6 * density(fluidState, phaseIdx);
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
 
     /*!
@@ -384,9 +381,9 @@ public:
                                    const unsigned int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
-        Scalar pressure = fluidState.pressure(nPhaseIdx) ;
+        Scalar pressure = fluidState.pressure(nPhaseIdx);
 
-        return IAPWS::Region4<Scalar>::vaporTemperature( pressure ) ;
+        return IAPWS::Region4<Scalar>::vaporTemperature( pressure );
     }
 
     /*!
@@ -429,7 +426,8 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == wPhaseIdx)
+        {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
             return Dumux::BinaryCoeff::H2O_N2::henry(T)/p;
@@ -493,18 +491,18 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         Scalar temperature = fluidState.temperature(phaseIdx);
 
-        const Scalar cp = heatCapacity(fluidState, phaseIdx) ;
+        const Scalar cp = heatCapacity(fluidState, phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
-            return cp * (temperature -  373.15);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return cp * (temperature - 373.15);
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
             return cp * (temperature - 373.15) + 2.257e6;
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
 
     /*!
@@ -522,15 +520,15 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
-                 return 0.68 ;
+        if (phaseIdx == wPhaseIdx)
+        {
+            return 0.68;
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
             return 0.0248;
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
 
     /*!
@@ -547,15 +545,15 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
-                 return 4.217e3 ;
+        if (phaseIdx == wPhaseIdx)
+        {
+            return 4.217e3;
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
             return 2.029e3;
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
 };
 
@@ -563,7 +561,7 @@ public:
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase fluid system with water and nitrogen as components.
  *
  * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.

@@ -43,8 +43,8 @@ namespace FluidSystems
 {
 /*!
  * \ingroup Fluidsystems
- * \brief A two-phase fluid system featuring gas and liquid phases and destilled
- * water \f$(\mathrm{H_2O})\f$ and pure molecular Nitrogen \f$(\mathrm{N_2})\f$ as components.
+ * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
+ *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models.
  */
 template <class Scalar, bool useComplexRelations = true>
 class H2ON2Kinetic :
@@ -53,26 +53,13 @@ class H2ON2Kinetic :
 private:
     typedef FluidSystems::H2ON2<Scalar, useComplexRelations> ParentType;
 
-    // convenience typedefs
-//    typedef typename ParentType::StaticParameters SP;
     typedef Dumux::IdealGas<Scalar> IdealGas;
 public:
-//    typedef typename ParentType::ParameterCache MutableParameters;
     //! The type of parameter cache objects
     typedef Dumux::NullParameterCache ParameterCache;
 
     //! Index of the solid phase
     static constexpr int sPhaseIdx = 2;
-
-//    /*!
-//     * \brief Initialize the fluid system's static parameters
-//     */
-//    static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
-//                     Scalar pressMin, Scalar pressMax, unsigned nPress)
-//    {
-//        ParentType::init(tempMin, tempMax, nTemp,
-//                         pressMin, pressMax, nPress);
-//    }
 
     static const char *phaseName(int phaseIdx)
     {
@@ -83,7 +70,7 @@ public:
     }
 
     /*!
-     * \brief Give the enthalpy of a *component* in a phase.
+     * \brief Return the enthalpy of a component in a phase.
      * \param fluidState A container with the current (physical) state of the fluid
      * \param phaseIdx The index of the phase to consider
      * \param compIdx The index of the component to consider
@@ -306,21 +293,21 @@ public:
     }
 
     /*!
-     * \brief Give the Henry constant for a component in a phase. \f$\mathrm{[Pa]}\f$
+     * \brief Return the Henry constant for a component in a phase. \f$\mathrm{[Pa]}\f$
      * \param temperature The given temperature
      */
     static Scalar henry(Scalar temperature)
     {
-        return Dumux::BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
+        return Dumux::BinaryCoeff::H2O_N2::henry(temperature);
     }
 
     /*!
-     * \brief Give the vapor pressure of a component above one phase. \f$\mathrm{[Pa]}\f$
+     * \brief Return the vapor pressure of a component above one phase. \f$\mathrm{[Pa]}\f$
      * \param temperature The given temperature
      */
     static Scalar vaporPressure(Scalar temperature)
     {
-        return ParentType::H2O::vaporPressure(temperature); // Pa // 1e-20 ; //
+        return ParentType::H2O::vaporPressure(temperature);
     }
 };
 }// end namespace Fluidsystem

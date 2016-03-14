@@ -69,9 +69,26 @@ public:
     /*!
      * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of NaCl.
      */
+    DUNE_DEPRECATED_MSG("Density() is deprecated. Use density() instead.")
     static Scalar Density()
     {
+        return density();
+    }
+
+    /*!
+     * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of NaCl.
+     */
+    static Scalar density()
+    {
         return 2165.0;
+    }
+
+    /*!
+     * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of NaCl.
+     */
+    static Scalar heatCapacity()
+    {
+        return 50.50;
     }
 };
 

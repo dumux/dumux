@@ -52,8 +52,8 @@ namespace Dumux
 
     // Use nitrogen with a constant viscosity as gas phase
     SET_TYPE_PROP(NavierStokesTestProblem, Fluid,
-                  Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                  Dumux::Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+                  Dumux::FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                Dumux::Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
   }
 
   /*!

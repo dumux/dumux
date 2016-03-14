@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include "1p2cnispatialparams.hh"
 
@@ -57,7 +57,7 @@ SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Problem,
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCNIConvectionProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2ON2LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+              Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCNIConvectionProblem,

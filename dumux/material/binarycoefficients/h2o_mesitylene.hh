@@ -104,7 +104,7 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      *
-     * \todo This is just a rough guess. Needs improvement and proper reference!
+     * \note Returns just an order of magnitude.
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)

@@ -51,7 +51,7 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A compositional twophase fluid system with water and air as
+ * \brief A compositional two-phase fluid system with water and air as
  *        components in both, the liquid and the gas phase.
  *
  *  This fluidsystem features gas and liquid phases of distilled water
@@ -61,16 +61,19 @@ namespace FluidSystems
  *
  *  To change the component formulation (i.e. to use nontabulated or
  *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the water formulation via template arguments or via the property
+ *  specify the \p H2O formulation via template arguments or via the property
  *  system, as described in the TypeTag Adapter at the end of the file.
  *
-            // Select fluid system
-            SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
-            {
-                typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-                typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
-            };
-
+ * \code{.cpp}
+ * // Select fluid system
+ * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
+ * {
+ *     // e.g. to use a simple version of H2O
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
+ * };
+ * \endcode
+ *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.
  *
@@ -79,6 +82,11 @@ namespace FluidSystems
  * additional namespace Dumux::FluidSystem::.
  * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
  * at the end of this file.
+ *
+ * \note The template argument \p useComplexRelations can be used to switch from a complex
+ * relation, in which compositional effects are considered for the gas phase and the
+ * density of the liquid phase, to a non-complex formulation in which compositional
+ * effects are not considered.
  */
 template <class Scalar,
           class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >,
@@ -309,7 +317,7 @@ public:
     static Scalar acentricFactor(int compIdx)
     {
         static const Scalar accFac[] = {
-            H2O::acentricFactor(), // H2O (from Reid, et al.)
+            H2O::acentricFactor(),
             Air::acentricFactor()
         };
 
@@ -371,12 +379,9 @@ public:
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * Formula (2.6)
-     * in
-     * S.O.Ochs: "Development of a multiphase multicomponent
-     * model for PEMFC - Technical report: IRTG-NUPUS",
-     * University of Stuttgart, 2008 \cite ochs2008 <BR>
-     *
+     * If useComplexRelations == true, we apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the liquid density.
      *
      * \param phaseIdx index of the phase
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
@@ -406,7 +411,7 @@ public:
                 return H2O::liquidDensity(T, p);
             else
             {
-                // See: Ochs 2008 (2.6)
+                // See: Eq. (7) in Class et al. (2002a)
                 const Scalar rholH2O = H2O::liquidDensity(T, p);
                 const Scalar clH2O = rholH2O/H2O::molarMass();
 
@@ -438,6 +443,12 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
+     * Compositional effects in the gas phase are accounted by the Wilke method.
+     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * 4th edition, McGraw-Hill, 1987, 407-410
+     * 5th edition, McGraw-Hill, 20001, p. 9.21/22
+     * \note Compositional effects for a liquid mixture have to be implemented.
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -454,8 +465,6 @@ public:
         if (phaseIdx == wPhaseIdx)
         {
             // assume pure water for the liquid phase
-            // TODO: viscosity of mixture
-            // couldn't find a way to solve the mixture problem
             return H2O::liquidViscosity(T, p);
         }
         else if (phaseIdx == nPhaseIdx)
@@ -465,14 +474,7 @@ public:
             }
             else //using a complicated version of this fluid system
             {
-                /* Wilke method. See:
-                 *
-                 * See: R. Reid, et al.: The Properties of Gases and Liquids,
-                 * 4th edition, McGraw-Hill, 1987, 407-410 or
-                 * 5th edition, McGraw-Hill, 2000, p. 9.21/22
-                 *
-                 */
-
+                // Wilke method (Reid et al.):
                 Scalar muResult = 0;
                 const Scalar mu[numComponents] = {
                     H2O::gasViscosity(T,
@@ -636,8 +638,7 @@ public:
      *
      * Formula (2.42):
      * the specifiv enthalpy of a gasphase result from the sum of (enthalpies*mass fraction) of the components
-     */
-    /*!
+     *
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
@@ -653,7 +654,6 @@ public:
 
         if (phaseIdx == wPhaseIdx)
         {
-            // TODO: correct way to deal with the solutes???
             return H2O::liquidEnthalpy(T, p);
         }
 
@@ -722,36 +722,28 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        // PRELIMINARY, values for 293.15 K - has to be generalized
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                const Scalar temperature  = fluidState.temperature(phaseIdx) ;
-                const Scalar pressure = fluidState.pressure(phaseIdx);
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                // Database of National Institute of Standards and Technology
-                // Isobaric conductivity at 293.15 K
-                return 0.59848;   // conductivity of liquid water[W / (m K ) ]
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
-        else{// gas phase
-            // Isobaric Properties for Nitrogen in: NIST Standard
-            // see http://webbook.nist.gov/chemistry/fluid/
-            // evaluated at p=.1 MPa, T=20°C
-            // Nitrogen: 0.025398
-            // Oxygen: 0.026105
-            // lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
-            const Scalar lambdaPureAir = 0.0255535;
-
-            return lambdaPureAir; // conductivity of pure air [W/(m K)]
+        else if (phaseIdx == nPhaseIdx)
+        {
+            return Air::gasThermalConductivity(temperature, pressure);
         }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
+     *
+     * \todo Check whether the gas phase enthalpy is a linear mixture of the component
+     *       enthalpies and the mole fractions is a good assumption.
      *
      * \param params    mutable parameters
      * \param phaseIdx  for which phase to give back the heat capacity
@@ -770,7 +762,6 @@ public:
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            //! \todo PRELIMINARY, right way to deal with solutes?
             return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, AirIdx)
                    + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, H2OIdx);
         }
@@ -789,7 +780,7 @@ NEW_PROP_TAG(Components);
 }
 
 /*!
- * \brief A twophase fluid system with water and air as components.
+ * \brief A two-phase fluid system with water and air as components.
  *
  * This is an adapter to use Dumux::H2OAirFluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
@@ -800,20 +791,21 @@ NEW_PROP_TAG(Components);
  *  incompressible water), or to switch on verbosity of tabulation,
  *  use the property system and the property "Components":
  *
-        // Select desired version of the component
-        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
-        {
-            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-        // Do not use the defaults !
-        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
-
-        // Apply e.g. untabulated water:
-        typedef Dumux::H2O<Scalar> H2O;
-        };
-
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
+ *  \code{.cpp}
+ * // Select desired version of the component
+ * SET_PROP(TheSpecificProblemTypeTag, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ * {
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *
+ *     // Do not use the defaults !
+ *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *
+ *     // Apply e.g. untabulated water:
+ *     typedef Dumux::H2O<Scalar> H2O;
+ * };
+ * \endcode
+ * Also remember to initialize tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
  */
 template<class TypeTag>
 class H2OAirFluidSystem

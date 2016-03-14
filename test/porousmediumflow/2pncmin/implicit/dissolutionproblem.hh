@@ -226,7 +226,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition &globalPos) const
     {
         const Scalar rmax = this->bBoxMax()[0]; // outerRadius_;
-        const Scalar rmin = this->bBoxMin()[0]; // well radius equal to the first value of the dgf grid file
+        const Scalar rmin = this->bBoxMin()[0];
 
         // default to Neumann
         bcTypes.setAllNeumann();
@@ -293,13 +293,8 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 int scvIdx) const
+    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        auto globalPos = element.geometry().corner(scvIdx);
-
         values[pressureIdx] = reservoirPressure_;
         values[switchIdx]   = initLiqSaturation_;                 // Sl primary variable
         values[xlNaClIdx]   = massTomoleFrac_(outerSalinity_);     // mole fraction

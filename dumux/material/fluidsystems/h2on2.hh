@@ -52,9 +52,8 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A two-phase fluid system featuring gas and liquid phases and destilled
- * water \f$(\mathrm{H_2O})\f$ and pure molecular Nitrogen \f$(\mathrm{N_2})\f$ as
- * components.
+ * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
+ *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models.
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
@@ -125,7 +124,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -235,8 +234,8 @@ public:
     static Scalar criticalTemperature(int compIdx)
     {
         static const Scalar Tcrit[] = {
-            H2O::criticalTemperature(), // H2O
-            N2::criticalTemperature() // N2
+            H2O::criticalTemperature(),
+            N2::criticalTemperature()
         };
 
         assert(0 <= compIdx && compIdx < numComponents);
@@ -268,7 +267,6 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "H2ON2FluidSystem::criticalMolarVolume()");
-        return 0;
     }
 
     /*!
@@ -279,7 +277,7 @@ public:
     static Scalar acentricFactor(int compIdx)
     {
         static const Scalar accFac[] = {
-            H2O::acentricFactor(), // H2O (from Reid, et al.)
+            H2O::acentricFactor(),
             N2::acentricFactor()
         };
 
@@ -337,13 +335,13 @@ public:
     }
 
     /*!
-     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
+     * \brief Given a phase's composition, temperature, pressure, and
+     *        the partial pressures of all components, return its
+     *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * If useComplexRelations == true, we apply
-     * Formula (2.6) from S.O.Ochs:
-     * "Development of a multiphase multicomponent
-     * model for PEMFC - Technical report: IRTG-NUPUS",
-     * University of Stuttgart, 2008
+     * If useComplexRelations == true, we apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the liquid density.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -369,7 +367,7 @@ public:
                 return H2O::liquidDensity(T, p);
             else
             {
-                // See: Ochs 2008
+                // See: Eq. (7) in Class et al. (2002a)
                 Scalar rholH2O = H2O::liquidDensity(T, p);
                 Scalar clH2O = rholH2O/H2O::molarMass();
 
@@ -392,8 +390,7 @@ public:
                 * fluidState.averageMolarMass(nPhaseIdx)
                 / std::max(1e-5, sumMoleFrac);
 
-        // assume ideal mixture: steam and nitrogen don't "see" each
-        // other
+        // assume ideal mixture: steam and nitrogen don't "see" each other
         Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
         Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, N2Idx));
         return (rho_gH2O + rho_gN2) / std::max(1e-5, sumMoleFrac);
@@ -401,6 +398,12 @@ public:
 
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     *
+     * Compositional effects in the gas phase are accounted by the Wilke method.
+     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * 4th edition, McGraw-Hill, 1987, 407-410
+     * 5th edition, McGraw-Hill, 20001, p. 9.21/22
+     * \note Compositional effects for a liquid mixture have to be implemented.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -429,12 +432,7 @@ public:
         }
         else
         {
-            /* Wilke method. See:
-             *
-             * See: R. Reid, et al.: The Properties of Gases and Liquids,
-             * 4th edition, McGraw-Hill, 1987, 407-410
-             * 5th edition, McGraw-Hill, 20001, p. 9.21/22
-             */
+            // Wilke method (Reid et al.):
             Scalar muResult = 0;
             const Scalar mu[numComponents] = {
                 H2O::gasViscosity(T, H2O::vaporPressure(T)),
@@ -541,7 +539,6 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
@@ -601,7 +598,7 @@ public:
      * \brief Given a phase's composition, temperature, pressure and
      *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
      *
-     *  \todo This fluid system neglects the contribution of
+     *  \note This fluid system neglects the contribution of
      *        gas-molecules in the liquid phase. This contribution is
      *        probably not big. Somebody would have to find out the
      *        enthalpy of solution for this system. ...
@@ -621,13 +618,11 @@ public:
 
         // liquid phase
         if (phaseIdx == wPhaseIdx) {
-            // TODO: correct way to deal with the solutes???
             return H2O::liquidEnthalpy(T, p);
         }
         // gas phase
         else {
-            // assume ideal mixture: Molecules of one component don't
-            // "see" the molecules of the other component, which means
+            // assume ideal mixture: which means
             // that the total specific enthalpy is the sum of the
             // "partial specific enthalpies" of the components.
             Scalar hH2O =
@@ -655,40 +650,26 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                Scalar temperature  = fluidState.temperature(phaseIdx) ;
-                Scalar pressure = fluidState.pressure(phaseIdx);
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                return  0.578078;   // conductivity of water[W / (m K ) ] IAPWS evaluated at p=.1 MPa, T=8°C
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
-        else{// gas phase
-
-            // Isobaric Properties for Nitrogen in: NIST Standard
-            // Reference Database Number 69, Eds. P.J. Linstrom and
-            // W.G. Mallard evaluated at p=.1 MPa, T=8°C, does not
-            // change dramatically with p,T
-            Scalar lambdaPureN2 = 0.024572;
-            if (useComplexRelations){
+        else
+        {
+            Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
+            if (useComplexRelations)
+            {
                 Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
                 Scalar lambdaN2 = xN2 * lambdaPureN2;
-
-                // Assuming Raoult's, Daltons law and ideal gas
-                // in order to obtain the partial density of water in the air phase
-                Scalar temperature = fluidState.temperature(phaseIdx) ;
-                Scalar pressure = fluidState.pressure(phaseIdx);
                 Scalar partialPressure  = pressure * xH2O;
-
-                Scalar lambdaH2O =
-                    xH2O
-                    * H2O::gasThermalConductivity(temperature, partialPressure);
+                Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
                 return lambdaN2 + lambdaH2O;
             }
             else
-                return lambdaPureN2; // conductivity of Nitrogen [W / (m K ) ]
+                return lambdaPureN2;
         }
     }
 
@@ -709,10 +690,7 @@ public:
                                            fluidState.pressure(phaseIdx));
         }
 
-        // for the gas phase, assume ideal mixture, i.e. molecules of
-        // one component don't "see" the molecules of the other
-        // component
-
+        // for the gas phase, assume ideal mixture
         Scalar c_pN2;
         Scalar c_pH2O;
         // let the water and nitrogen components do things their own way
@@ -727,7 +705,6 @@ public:
         }
         else {
             // assume an ideal gas for both components. See:
-            //
             // http://en.wikipedia.org/wiki/Heat_capacity
             Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
             Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
@@ -750,7 +727,7 @@ public:
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase fluid system with water and nitrogen as components.
  *
  * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.

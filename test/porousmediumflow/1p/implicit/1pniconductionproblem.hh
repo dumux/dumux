@@ -54,10 +54,9 @@ SET_TYPE_PROP(OnePNIConductionProblem, Problem,
               Dumux::OnePNIConductionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(OnePNIConductionProblem,
-              Fluid,
-              Dumux::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                 Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+SET_TYPE_PROP(OnePNIConductionProblem, Fluid,
+              Dumux::FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                               Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConductionProblem,

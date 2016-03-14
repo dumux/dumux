@@ -20,8 +20,7 @@
 /*!
  * \file
  *
- * \brief A three-phase (phases water and air) fluid system
- * with water, nitrogen and oxygen as components.
+ * \brief @copybrief Dumux::FluidSystems::H2ON2O2
  */
 #ifndef DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
@@ -58,13 +57,13 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A two-phase (phases water and air) fluid system
- * with water, nitrogen and oxygen as components.
+ * \brief A two-phase (water and air) fluid system
+ *        with water, nitrogen and oxygen as components.
  *
- *  This fluidsystem uses tabulated version of water of the IAPWS-formulation.
+ * This fluidsystem uses tabulated version of water of the IAPWS-formulation.
  *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
+ * Also remember to initialize tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
  * additional namespace Dumux::FluidSystem::.
@@ -78,7 +77,6 @@ class H2ON2O2
     typedef H2ON2O2<Scalar, useComplexRelations> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
-    // convenience typedefs
     typedef Dumux::IdealGas<Scalar> IdealGas;
     typedef Dumux::Constants<Scalar> Constants;
     typedef Dumux::H2O<Scalar> IapwsH2O;
@@ -88,13 +86,9 @@ class H2ON2O2
 
     //! The components for pure water
     typedef TabulatedH2O H2O;
-    //typedef IapwsH2O H2O;
 
     //! The components for pure nitrogen
     typedef SimpleN2 N2;
-
-//    //! The components for pure oxygen
-//    typedef SimpleO2 O2;
 
 public:
     /****************************************
@@ -142,7 +136,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -255,8 +249,8 @@ public:
     static Scalar criticalTemperature(int compIdx)
     {
         static const Scalar Tcrit[] = {
-            H2O::criticalTemperature(), // H2O
-            N2::criticalTemperature(), // N2
+            H2O::criticalTemperature(),
+            N2::criticalTemperature(),
             O2::criticalTemperature()
         };
 
@@ -290,7 +284,6 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "H2ON2O2FluidSystem::criticalMolarVolume()");
-        return 0;
     }
 
     /*!
@@ -301,7 +294,7 @@ public:
     static Scalar acentricFactor(int compIdx)
     {
         static const Scalar accFac[] = {
-            H2O::acentricFactor(), // H2O (from Reid, et al.)
+            H2O::acentricFactor(),
             N2::acentricFactor(),
             O2::acentricFactor()
         };
@@ -408,16 +401,14 @@ public:
         }
     }
 
-
-
     /*!
-     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
+     * \brief Given a phase's composition, temperature, pressure, and
+     *        the partial pressures of all components, return its
+     *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * If useComplexRelations == true, we apply
-     * Formula (2.6) from S.O.Ochs:
-     * "Development of a multiphase multicomponent
-     * model for PEMFC - Technical report: IRTG-NUPUS",
-     * University of Stuttgart, 2008
+     * If useComplexRelations == true, we apply Eq. (7)
+     * in Class et al. (2002a) \cite A3:class:2002b <BR>
+     * for the liquid density.
      *
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -443,7 +434,7 @@ public:
                 return H2O::liquidDensity(T, p);
             else
             {
-                // See: Ochs 2008
+                // See: Eq. (7) in Class et al. (2002a)
                 Scalar rholH2O = H2O::liquidDensity(T,p);
                 Scalar clH2O = rholH2O/H2O::molarMass();
 
@@ -479,6 +470,12 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
+     * Compositional effects in the gas phase are accounted by the Wilke method.
+     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * 4th edition, McGraw-Hill, 1987, 407-410
+     * 5th edition, McGraw-Hill, 20001, p. 9.21/22
+     * \note Compositional effects for a liquid mixture have to be implemented.
+     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -506,12 +503,7 @@ public:
         }
         else
         {
-            /* Wilke method. See:
-             *
-             * See: R. Reid, et al.: The Properties of Gases and Liquids,
-             * 4th edition, McGraw-Hill, 1987, 407-410
-             * 5th edition, McGraw-Hill, 2001, p. 9.21/22
-             */
+            // Wilke method (Reid et al.):
             Scalar muResult = 0;
             const Scalar mu[numComponents] = {
                 H2O::gasViscosity(T, H2O::vaporPressure(T)),
@@ -687,7 +679,7 @@ public:
      * \brief Given a phase's composition, temperature, pressure and
      *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
      *
-     *  \todo This fluid system neglects the contribution of
+     *  \note This fluid system neglects the contribution of
      *        gas-molecules in the liquid phase. This contribution is
      *        probably not big. Somebody would have to find out the
      *        enthalpy of solution for this system. ...
@@ -707,14 +699,12 @@ public:
 
         // liquid phase
         if (phaseIdx == wPhaseIdx) {
-            // TODO: correct way to deal with the solutes???
             return H2O::liquidEnthalpy(T, p);
         }
         // gas phase
         else if (phaseIdx == nPhaseIdx)
         {
-            // assume ideal mixture: Molecules of one component don't
-            // "see" the molecules of the other component, which means
+            // assume ideal mixture: which means
             // that the total specific enthalpy is the sum of the
             // "partial specific enthalpies" of the components.
             Scalar hH2O =
@@ -739,7 +729,7 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::NotImplemented, "Component enthalpies");
     }
 
     /*!
@@ -756,45 +746,31 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       const int phaseIdx)
     {
-
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         Scalar temperature  = fluidState.temperature(phaseIdx) ;
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == wPhaseIdx){// liquid phase
-            if(useComplexRelations){
-                return H2O::liquidThermalConductivity(temperature, pressure);
-            }
-            else
-                // Database of National Institute of Standards and Technology
-                 // Isobaric conductivity at 293.15 K
-                 return 0.59848;   // conductivity of liquid water[W / (m K ) ]
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
         }
-        else{// gas phase
-
-            // Isobaric Properties for Nitrogen and Oxygen in: NIST Standard
-            // Reference Database Number 69, Eds. P.J. Linstrom and
-            // W.G. Mallard evaluated at p=.1 MPa, does not
-            // change dramatically with p
-            // and can be interpolated linearly with temperature
-            Scalar lambdaPureN2 = 6.525e-5 * temperature + 0.024031;
-            Scalar lambdaPureO2 = 8.044e-5 * temperature + 0.024486;
-            if (useComplexRelations){
+        else
+        {
+            Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
+            Scalar lambdaPureO2 = O2::gasThermalConductivity(temperature, pressure);
+            if (useComplexRelations)
+            {
                 Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
                 Scalar xO2 = fluidState.moleFraction(phaseIdx, O2Idx);
                 Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
                 Scalar lambdaN2 = xN2 * lambdaPureN2;
                 Scalar lambdaO2 = xO2 * lambdaPureO2;
-                // Assuming Raoult's, Daltons law and ideal gas
-                // in order to obtain the partial density of water in the air phase
                 Scalar partialPressure  = pressure * xH2O;
-                Scalar lambdaH2O =
-                    xH2O
-                    * H2O::gasThermalConductivity(temperature, partialPressure);
+                Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
                 return lambdaN2 + lambdaH2O + lambdaO2;
             }
             else
-                return lambdaPureN2; // conductivity of Nitrogen [W / (m K ) ]
+                return lambdaPureN2;
         }
     }
 
@@ -815,10 +791,6 @@ public:
                                            fluidState.pressure(phaseIdx));
         }
 
-        // for the gas phase, assume ideal mixture, i.e. molecules of
-        // one component don't "see" the molecules of the other
-        // component
-
         Scalar c_pN2;
         Scalar c_pO2;
         Scalar c_pH2O;
@@ -838,7 +810,7 @@ public:
         else {
             // assume an ideal gas for both components. See:
             //
-            // http://en.wikipedia.org/wiki/Heat_capacity
+            //http://en.wikipedia.org/wiki/Heat_capacity
             Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
             Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
 
@@ -849,7 +821,7 @@ public:
             Scalar c_pH2Omolar = Dumux::Constants<Scalar>::R + c_vH2Omolar;
 
             c_pN2 = c_pN2molar/molarMass(N2Idx);
-            c_pN2 = c_pO2molar/molarMass(O2Idx);
+            c_pO2 = c_pO2molar/molarMass(O2Idx);
             c_pH2O = c_pH2Omolar/molarMass(H2OIdx);
         }
 
@@ -866,9 +838,10 @@ public:
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
- * \brief A twophase fluid system with water and nitrogen as components.
+ * \brief A two-phase (water and air) fluid system
+ *        with water, nitrogen and oxygen as components.
  *
- * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
+ * This is an adapter to use Dumux::H2ON2O2<TypeTag>, as is
  * done with most other classes in Dumux.
  */
 template<class TypeTag>

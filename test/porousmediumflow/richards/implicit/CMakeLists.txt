@@ -38,7 +38,8 @@ add_dumux_test(test_boxrichardsniconvection test_boxrichardsniconvection test_bo
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection-00011.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection"
+                 --zeroThreshold {"velocity":1e-16})
 
 add_dumux_test(test_ccrichardsniconvection test_ccrichardsniconvection test_ccrichardsniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py

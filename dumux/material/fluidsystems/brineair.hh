@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with a liquid and a gaseous phase and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
- *
+ * \brief @copybrief Dumux::FluidSystems::BrineAir
  */
 #ifndef DUMUX_BRINE_AIR_SYSTEM_HH
 #define DUMUX_BRINE_AIR_SYSTEM_HH
@@ -29,7 +28,7 @@
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
-#include <dumux/material/components/brinevarsalinity.hh>
+#include <dumux/material/components/brine.hh>
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
@@ -52,7 +51,8 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  *
- * \brief A compositional two-phase fluid system with water, air and dissolved salt as components in both, the liquid and the gas phase.
+ * \brief A compositional two-phase fluid system with a liquid and a gaseous phase
+ *        and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
  *
  *  This fluidsystem is applied by default with the tabulated version of
  *  water of the IAPWS-formulation.
@@ -62,14 +62,16 @@ namespace FluidSystems
  *  specify the water formulation via template arguments or via the property
  *  system, as described in the TypeTag Adapter at the end of the file.
  *
-            // Select fluid system
-            SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
-            {
-                typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-                typedef Dumux::FluidSystems::BrineAir<Scalar, Dumux::SimpleH2O<Scalar>> type;
-            };
-
+ * \code{.cpp}
+ * // Select fluid system
+ * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
+ * {
+ *     // e.g. to use a simple version of H2O
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
+ * };
+ * \endcode
+ *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.
  *
@@ -96,7 +98,7 @@ public:
     typedef Dumux::BinaryCoeff::H2O_Air H2O_Air;
     typedef Dumux::Air<Scalar> Air;
     typedef Dumux::BinaryCoeff::Brine_Air<Scalar, Air> Brine_Air;
-    typedef Dumux::BrineVarSalinity<Scalar, H2Otype> Brine;
+    typedef Dumux::Brine<Scalar, H2Otype> Brine;
     typedef Dumux::NaCl<Scalar> NaCl;
 
     // the type of parameter cache objects. this fluid system does not
@@ -153,7 +155,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -243,19 +245,23 @@ public:
         {
         case H2OIdx: return H2O::molarMass();
         case AirIdx: return Air::molarMass();
-        case NaClIdx:return 35.453e-3 + 22.9898e-3;
+        case NaClIdx:return NaCl::molarMass();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
+
     /*!
      * \brief Return the mass density of the precipitate \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
-    static Scalar precipitateDensity(int phaseIdx) //Density of solid salt phase (kg/m3)
+    static Scalar precipitateDensity(int phaseIdx)
     {
-        return /*2165.0*/NaCl::Density();
+        if(phaseIdx != sPhaseIdx)
+            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << sPhaseIdx);
+        return NaCl::density();
     }
+
     /*!
      * \brief Return the saturation vapor pressure of the liquid phase \f$\mathrm{[Pa]}\f$.
      *
@@ -266,21 +272,34 @@ public:
      {
        return vaporPressure_(Temperature,salinity);
      }
+
      /*!
      * \brief Return the salt specific heat capacity \f$\mathrm{[J/(kg K)]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
+     DUNE_DEPRECATED_MSG("saltSpecificHeatCapacity(int phaseIdx) is deprecated. Use precipitateSpecificHeatCapacity(int sPhaseIdx) instead.")
      static Scalar saltSpecificHeatCapacity(int phaseIdx)//Specific heat capacity per unit mole of solid salt phase (J/Kkg)
     {
-    return 36.79/molarMass(phaseIdx);
+        return 36.79/molarMass(phaseIdx);
     }
+
+     /*!
+     * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
+     *
+     * \param phaseIdx The index of the precipitated phase to consider
+     */
+     static Scalar precipitateHeatCapacity(int phaseIdx)
+    {
+        return NaCl::heatCapacity();
+    }
+
     /*!
      * \brief Return the molar density of the precipitate \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
-    static Scalar precipitateMolarDensity(int phaseIdx)//Density of solid salt phase (mol/m3)
+    static Scalar precipitateMolarDensity(int phaseIdx)
      {
         return precipitateDensity(phaseIdx)/molarMass(phaseIdx);
      }
@@ -344,9 +363,9 @@ public:
      * \param fluidState the fluid state
      *
      * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002
+     * - Batzle & Wang (1992) \cite batzle1992
+     * - cited by: Bachu & Adams (2002)
+     *   "Equations of State for basin geofluids" \cite adams2002
      */
     using Base::density;
     template <class FluidState>
@@ -360,11 +379,9 @@ public:
 
         switch (phaseIdx) {
             case lPhaseIdx:
-                return liquidDensity_(temperature,
-                                pressure,
-                                fluidState.moleFraction(lPhaseIdx, AirIdx),
-                                fluidState.moleFraction(lPhaseIdx, H2OIdx),
-                                fluidState.massFraction(lPhaseIdx, NaClIdx));
+                return Brine::liquidDensity(temperature,
+                              pressure,
+                              fluidState.massFraction(lPhaseIdx, NaClIdx));
             case gPhaseIdx:
                 return gasDensity_(temperature,
                             pressure,
@@ -381,10 +398,9 @@ public:
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
-     * Equation given in:
-     *                         - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                         - cited by: Bachu & Adams (2002)
-     *                           "Equations of State for basin geofluids" \cite adams2002
+     * \note For the viscosity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::viscosity;
     template <class FluidState>
@@ -396,25 +412,22 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
+        Scalar result = 0;
 
         if (phaseIdx == lPhaseIdx)
         {
-            // assume pure brine for the liquid phase. TODO: viscosity
-            // of mixture
-        Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
-            Scalar result = Brine::liquidViscosity(temperature, pressure, XNaCl);
-            Valgrind::CheckDefined(result);
-            return result;
+            Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
+            result = Brine::liquidViscosity(temperature, pressure, XNaCl);
         }
         else if (phaseIdx == gPhaseIdx)
         {
-            Scalar result = Air::gasViscosity(temperature, pressure);
-            Valgrind::CheckDefined(result);
-            return result;
+            result = Air::gasViscosity(temperature, pressure);
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
 
+        Valgrind::CheckDefined(result);
+        return result;
     }
 
     /*!
@@ -458,7 +471,7 @@ public:
         else if (phaseIdx == lPhaseIdx)
         {
         if (compIdx == H2OIdx)
-            return vaporPressure_(T,fluidState.moleFraction(lPhaseIdx,NaClIdx))/p;
+            return Brine::vaporPressure(T)/p;
         else if (compIdx == AirIdx)
             return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
         else
@@ -544,14 +557,15 @@ public:
      * See:
      * Class 2000
      * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in NAPL-kontaminierten porösen Medien
-     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
+     * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001
      *
      * Formula (2.42):
      * the specific enthalpy of a gas phase result from the sum of (enthalpies*mass fraction) of the components
      * For the calculation of enthalpy of brine we refer to (Michaelides 1981)
      *
-     *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
-     *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
+     * \note For the phase enthalpy the contribution of gas-molecules in the liquid phase
+     *       is neglected. This contribution is probably not big. Somebody would have to
+     *       find out the enthalpy of solution for this system. ...
      */
     using Base::enthalpy;
     template <class FluidState>
@@ -566,7 +580,7 @@ public:
         if (phaseIdx == lPhaseIdx)
         {
             Scalar XlNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
-            Scalar result = liquidEnthalpyBrine_(T, p, XlNaCl);
+            Scalar result = Brine::liquidEnthalpy(T, p, XlNaCl);
                 Valgrind::CheckDefined(result);
                 return result;
         }
@@ -621,29 +635,35 @@ public:
 
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
-     *
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note For the thermal conductivity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        // TODO way too simple!
         if (phaseIdx == lPhaseIdx)
-            return  0.59848; // conductivity of water[W / (m K ) ]
-
-        else// gas phase
-        return 0.0255535; // conductivity of air [W / (m K ) ]
+            return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx),
+                                                  fluidState.pressure(phaseIdx));
+        else // gas phase
+            return Air::gasThermalConductivity(fluidState.temperature(phaseIdx),
+                                               fluidState.pressure(phaseIdx));
     }
 
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
-     *
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note The calculation of the isobaric heat capacity is preliminary. A better
+     *       description of the influence of the composition on the phase property
+     *       has to be found.
      */
     using Base::heatCapacity;
     template <class FluidState>
@@ -654,12 +674,10 @@ public:
         const Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
         {
-            // influence of air and dissolved salt is neglected here
             return H2O::liquidHeatCapacity(temperature, pressure);
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            //! \todo PRELIMINARY, right way to deal with solutes?
             return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, AirIdx)
                    + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, H2OIdx);
         }
@@ -667,7 +685,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
     /*!
-     * \brief Return the molality of NaCl salt \f$\mathrm{[mol/m^3]}\f$.
+     * \brief Return the molality of NaCl \f$\mathrm{[mol/m^3]}\f$.
      * \param fluidState An abitrary fluid state
      * \param paramCache parameter cache
      * \param salinity Salinity of brine
@@ -677,129 +695,19 @@ public:
                                const ParameterCache &paramCache,
                                Scalar salinity)
       {
-        return Brine_Air::molalityNaCl(salinity);// massfraction
+        return Brine_Air::molalityNaCl(salinity);
       }
 
 private:
-    static Scalar gasDensity_(Scalar T,
-                              Scalar pg,
-                              Scalar xgH2O)
+    static Scalar gasDensity_(Scalar T, Scalar pg, Scalar xgH2O)
     {
-        Scalar pH2O = xgH2O*pg; //Dalton' Law
-        Scalar pAir = pg - pH2O;
-        Scalar gasDensityAir = Air::gasDensity(T, pAir);
-        Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
-        Scalar gasDensity = gasDensityAir + gasDensityH2O;
+        //Dalton' Law
+        const Scalar pH2O = xgH2O*pg;
+        const Scalar pAir = pg - pH2O;
+        const Scalar gasDensityAir = Air::gasDensity(T, pAir);
+        const Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
+        const Scalar gasDensity = gasDensityAir + gasDensityH2O;
         return gasDensity;
-    }
-
-    /*!
-     * \brief The density of pure brine at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \warning The influence of dissolved air in Brine is neglected
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     * Equations given in:
-     *                        - Batzle & Wang (1992) \cite batzle1992 <BR>
-     *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271 \cite adams2002
-     */
-
-    static Scalar liquidDensity_(Scalar T,
-                                 Scalar pl,
-                                 Scalar xlAir,
-                                 Scalar xlH2O,
-                                 Scalar XlNaCl)
-    {
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(pl);
-        Valgrind::CheckDefined(XlNaCl);
-        Valgrind::CheckDefined(xlAir);
-
-        if(T < 273.15 || T > 623.15) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and Air is only "
-                       "defined between 273.15K and 623.15K (is " << T << ")");
-              }
-        if(pl >= 1.0e8) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and Air is only "
-                       "defined below 100MPa (is " << pl << ")");
-        }
-        return Brine::liquidDensity(T, pl, XlNaCl); // The influence of dissolved air in Brine is neglected
-    }
-
-    static Scalar liquidEnthalpyBrine_(Scalar T,
-                                       Scalar p,
-                                       Scalar XlNaCl)
-    {
-        /* XlAir : mass fraction of Air in brine */
-        /* same function as enthalpy_brine, only extended by Air content */
-        /*Numerical coefficents from PALLISER (The values for F [] are given in ADAMS and BACHO)*/
-
-        static const Scalar f[] =
-        {2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10};
-
-        /*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
-        static const Scalar a[4][3] =
-        {{ 9633.6, -4080.0, +286.49 },
-            { +166.58, +68.577, -4.6856 },
-            { -0.90963, -0.36524, +0.249667E-1 },
-            { +0.17965E-2, +0.71924E-3, -0.4900E-4 }};
-
-        Scalar theta, h_NaCl;
-        Scalar m, h_ls, d_h, hw;
-        Scalar S_lSAT, delta_h;
-        int i, j;
-        XlNaCl = std::abs(XlNaCl); // Added by Vishal
-
-        theta = T - 273.15;
-
-        S_lSAT = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta; // This is NaCl specific (S_lSAT = 0.265234)
-       // std::cout<<"saturation limit : " << S_lSAT<< std::endl;
-
-        /*Regularization*/
-        if (XlNaCl > S_lSAT) {
-            XlNaCl = S_lSAT;
-        }
-
-        hw = H2O::liquidEnthalpy(T, p) /1E3; /* kJ/kg */
-
-        /*DAUBERT and DANNER*/
-        /*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T // enthalpy of Halite (Confirm with Dr. Melani)
-                        +((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
-
-        m = (1E3/58.44)*(XlNaCl/(1-XlNaCl));
-        i = 0;
-        j = 0;
-        d_h = 0;
-
-        for (i = 0; i<=3; i++) {
-            for (j=0; j<=2; j++) {
-                d_h = d_h + a[i][j] * pow(theta, i) * pow(m, j);
-            }
-        }
-        /* heat of dissolution for halite according to Michaelides 1971 */
-        delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
-
-        /* Enthalpy of brine without Air */
-        h_ls = (1-XlNaCl)*hw + XlNaCl*h_NaCl + XlNaCl*delta_h; /* kJ/kg */
-        return (h_ls);
-    }
-
-    static Scalar vaporPressure_(Scalar T, Scalar x)
-    {
-     Scalar p_0 = H2O::vaporPressure(T);//Saturation vapor pressure for pure water
-     Scalar p_s = p_0; // modified saturation vapor pressure for saline water
-// #if SALINIZATION
-//     Scalar vw = 18.0e-6;//[m3/mol] volume per unit mole of water
-//     Scalar R = 8.314;//[j/K mol] universal gas constant
-//     Scalar pi = (R * T * std::log(1- x))/vw;
-//     if (x > 0.26) // here we have hard coaded the solubility limit for NaCl
-//      pi = (R * T * std::log(0.74))/vw;
-//     p_s = p_0 * std::exp((pi*vw)/(R*T));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
-// #endif
-      return p_s;
     }
 };
 

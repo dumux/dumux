@@ -32,7 +32,7 @@
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2liquidphase.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include "1p2coutflowspatialparams.hh"
 
 #define NONISOTHERMAL 0
@@ -68,7 +68,7 @@ SET_TYPE_PROP(OnePTwoCOutflowProblem, Problem, Dumux::OnePTwoCOutflowProblem<Typ
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCOutflowProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2ON2LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+              Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCOutflowProblem,

@@ -74,14 +74,14 @@ SET_TYPE_PROP(TutorialProblemImplicit, GridCreator, Dumux::CubeGridCreator<TypeT
 SET_PROP(TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
+public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
 };
 
 // Set the non-wetting phase
 SET_PROP(TutorialProblemImplicit, NonwettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
+public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
 }; /*@\label{tutorial-implicit:2p-system-end}@*/
 
 SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-implicit:set-fluidsystem}@*/

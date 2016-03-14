@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with water and gas as phases and brine and CO2
- *        as components.
+ * \brief @copybrief Dumux::FluidSystems::BrineCO2
  */
 #ifndef DUMUX_BRINE_CO2_SYSTEM_HH
 #define DUMUX_BRINE_CO2_SYSTEM_HH
@@ -76,17 +75,14 @@ class BrineCO2
 public:
     typedef Dumux::NullParameterCache ParameterCache;
     typedef H2Otype H2O;
-//    typedef Dumux::Brine<Scalar, H2O> BrineRawComponent; //salinity is stored into the raw brine component, wether tabulated or not.
     typedef Brinetype Brine;
     typedef typename Dumux::CO2<Scalar, CO2Table> CO2;
 
     static const int numComponents = 2;
     static const int numPhases = 2;
 
-    static const int lPhaseIdx = 0; // index of the liquid phase
-    static const int gPhaseIdx = 1; // index of the gas phase
-    static const int wPhaseIdx = lPhaseIdx;
-    static const int nPhaseIdx = gPhaseIdx;
+    static const int wPhaseIdx = 0; // index of the liquid phase
+    static const int nPhaseIdx = 1; // index of the gas phase
     static const int wCompIdx = 0;
     static const int nCompIdx = 1;
     static const int lCompIdx = wCompIdx;
@@ -120,7 +116,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        return phaseIdx != gPhaseIdx;
+        return phaseIdx != nPhaseIdx;
     }
 
     /*!
@@ -129,7 +125,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -213,7 +209,7 @@ public:
                                 startPressure, endPressure, pressureSteps);
         }
         // set the salinity of brine
-        BrineRawComponent::salinity = salinity;
+        BrineRawComponent::constantSalinity = salinity;
 
         if(Brine::isTabulated)
         {
@@ -241,12 +237,12 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
-            Scalar xlBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(lPhaseIdx, BrineIdx)));
-            Scalar xlCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(lPhaseIdx, CO2Idx)));
+            Scalar xlBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(wPhaseIdx, BrineIdx)));
+            Scalar xlCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(wPhaseIdx, CO2Idx)));
             Scalar sumx = xlBrine + xlCO2;
             xlBrine /= sumx;
             xlCO2 /= sumx;
@@ -260,13 +256,13 @@ public:
             return result;
         }
         else {
-            assert(phaseIdx == gPhaseIdx);
+            assert(phaseIdx == nPhaseIdx);
 
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
-            Scalar xgBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(gPhaseIdx, BrineIdx)));
-            Scalar xgCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(gPhaseIdx, CO2Idx)));
+            Scalar xgBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(nPhaseIdx, BrineIdx)));
+            Scalar xgCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(nPhaseIdx, CO2Idx)));
             Scalar sumx = xgBrine + xgCO2;
             xgBrine /= sumx;
             xgCO2 /= sumx;
@@ -285,6 +281,10 @@ public:
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note For the viscosity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::viscosity;
     template <class FluidState>
@@ -297,11 +297,8 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
         Scalar result = 0;
 
-        if (phaseIdx == lPhaseIdx) {
-            // assume pure brine for the liquid phase. TODO: viscosity
-            // of mixture
+        if (phaseIdx == wPhaseIdx)
             result = Brine::liquidViscosity(temperature, pressure);
-            }
         else
             result = CO2::gasViscosity(temperature, pressure);
 
@@ -344,7 +341,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (phaseIdx == gPhaseIdx)
+        if (phaseIdx == nPhaseIdx)
             // use the fugacity coefficients of an ideal gas. the
             // actual value of the fugacity is not relevant, as long
             // as the relative fluid compositions are observed,
@@ -411,12 +408,12 @@ public:
         // temperature and pressure.
         Brine_CO2::calculateMoleFractions(temperature,
                                                   pressure,
-                                                  BrineRawComponent::salinity,
+                                                  BrineRawComponent::constantSalinity,
                                                   /*knownPhaseIdx=*/-1,
                                                   xlCO2,
                                                   xgH2O);
 
-        if(phaseIdx == gPhaseIdx)
+        if(phaseIdx == nPhaseIdx)
         {
             return xgH2O;
         }
@@ -445,6 +442,8 @@ public:
      *
      * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
+     *
+     * Maybe see http://www.ddbst.de/en/EED/PCP/DIF_C1050.php
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -483,7 +482,7 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             assert(compIIdx == BrineIdx);
             assert(compJIdx == CO2Idx);
 
@@ -492,7 +491,7 @@ public:
             return result;
         }
         else {
-            assert(phaseIdx == gPhaseIdx);
+            assert(phaseIdx == nPhaseIdx);
             assert(compIIdx == BrineIdx);
             assert(compJIdx == CO2Idx);
 
@@ -518,12 +517,12 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             Scalar XlCO2 = fluidState.massFraction(phaseIdx, CO2Idx);
 
             Scalar result = liquidEnthalpyBrineCO2_(temperature,
                                                     pressure,
-                                                    BrineRawComponent::salinity,
+                                                    BrineRawComponent::constantSalinity,
                                                     XlCO2);
             Valgrind::CheckDefined(result);
             return result;
@@ -532,10 +531,10 @@ public:
             Scalar result = 0;
             result +=
                 Brine::gasEnthalpy(temperature, pressure) *
-                fluidState.massFraction(gPhaseIdx, BrineIdx);
+                fluidState.massFraction(nPhaseIdx, BrineIdx);
             result +=
                 CO2::gasEnthalpy(temperature, pressure) *
-                fluidState.massFraction(gPhaseIdx, CO2Idx);
+                fluidState.massFraction(nPhaseIdx, CO2Idx);
             Valgrind::CheckDefined(result);
             return result;
         }
@@ -543,28 +542,34 @@ public:
 
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
-     *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     *
+     * \note For the thermal conductivity of the phases the contribution of the minor
+     *       component is neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
      */
     using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        // TODO way too simple!
-        if (phaseIdx == lPhaseIdx)
-            return  0.6; // conductivity of water[W / (m K ) ]
-
-        // gas phase
-        return 0.025; // conductivity of air [W / (m K ) ]
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx),
+                                                  fluidState.pressure(phaseIdx));
+        }
+        else // gas phase
+            return CO2::gasThermalConductivity(fluidState.temperature(phaseIdx),
+                                               fluidState.pressure(phaseIdx));
     }
 
     /*!
      * \copydoc BaseFluidSystem::heatCapacity
      *
-     * We employ the heat capacity of the pure phases.
-     * Todo: Include compositional effects.
+     * \note We employ the heat capacity of the pure phases.
+     *
+     * \todo Implement heat capacity for gaseous CO2
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -579,7 +584,7 @@ public:
                                            fluidState.pressure(phaseIdx));
         else
             return CO2::liquidHeatCapacity(fluidState.temperature(phaseIdx),
-                                       fluidState.pressure(phaseIdx));
+                                           fluidState.pressure(phaseIdx));
     }
 
 private:
@@ -660,69 +665,22 @@ private:
     {
         /* X_CO2_w : mass fraction of CO2 in brine */
 
-        /* same function as enthalpy_brine, only extended by CO2 content */
-
-        /*Numerical coefficents from PALLISER*/
-        static const Scalar f[] = {
-            2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10
-        };
-
-        /*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
-        static const Scalar a[4][3] = {
-            { 9633.6, -4080.0, +286.49 },
-            { +166.58, +68.577, -4.6856 },
-            { -0.90963, -0.36524, +0.249667E-1 },
-            { +0.17965E-2, +0.71924E-3, -0.4900E-4 }
-        };
-
-        Scalar theta, h_NaCl;
-        Scalar m, h_ls, h_ls1, d_h;
-        Scalar S_lSAT, delta_h;
-        int i, j;
-        Scalar delta_hCO2, hg, hw;
-
-        theta = T - 273.15;
-
-        S_lSAT = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
-        /*Regularization*/
-        if (S>S_lSAT) {
-            S = S_lSAT;
-        }
-
-        hw = H2O::liquidEnthalpy(T, p) /1E3; /* kJ/kg */
-
-        /*DAUBERT and DANNER*/
-        /*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-                        +((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
-
-        m = (1E3/58.44)*(S/(1-S));
-        i = 0;
-        j = 0;
-        d_h = 0;
-
-        for (i = 0; i<=3; i++) {
-            for (j=0; j<=2; j++) {
-                d_h = d_h + a[i][j] * pow(theta, i) * pow(m, j);
-            }
-        }
-        /* heat of dissolution for halite according to Michaelides 1971 */
-        delta_h = (4.184/(1E3 + (58.44 * m)))*d_h;
-
-        /* Enthalpy of brine without CO2 */
-        h_ls1 =(1-S)*hw + S*h_NaCl + S*delta_h; /* kJ/kg */
+        const Scalar h_ls1 = BrineRawComponent::liquidEnthalpy(T, p, S)/1E3; /* J/kg */
 
         /* heat of dissolution for CO2 according to Fig. 6 in Duan and Sun 2003. (kJ/kg)
            In the relevant temperature ranges CO2 dissolution is
            exothermal */
-        delta_hCO2 = (-57.4375 + T * 0.1325) * 1000/44;
+        const Scalar delta_hCO2 = (-57.4375 + T * 0.1325) * 1000/44;
+
+        const Scalar hw = H2O::liquidEnthalpy(T, p) /1E3; /* kJ/kg */
 
         /* enthalpy contribution of CO2 (kJ/kg) */
-        hg = CO2::liquidEnthalpy(T, p)/1E3 + delta_hCO2;
+        const Scalar hg = CO2::liquidEnthalpy(T, p)/1E3 + delta_hCO2;
 
         /* Enthalpy of brine with dissolved CO2 */
-        h_ls = (h_ls1 - X_CO2_w*hw + hg*X_CO2_w)*1E3; /*J/kg*/
+        const Scalar h_ls = (h_ls1 - X_CO2_w*hw + hg*X_CO2_w)*1E3; /*J/kg*/
 
-        return (h_ls);
+        return h_ls;
     }
 };
 } // end namespace FluidSystems
@@ -752,28 +710,30 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
  *  init routine), change the default components via the property "Components":
  *
  *
-     \verbatim
-        // Select other compoenents
-        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
-        {
-            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-                // Do not use the defaults that are the following
-                //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
-                //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> >  BrineRawComponent;
-                //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
-
-            // Apply the following component classes:
-            typedef Dumux::H2O<Scalar> H2O;
-            typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
-            typedef typename BrineRawComponent Brine;// all components have to be redefined,
-                                                     // the applied H2O and Brine implemementations.
-        };
-    \endverbatim.
-     Also remember to initialize all tabulated components (FluidSystem::init()), while this
-     is not necessary for non-tabularized ones.
+ * \code{.cpp}
+ * // Select other components
+ * SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ * {
+ *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ *     // Do not use the defaults that are the following
+ *     //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> >  BrineRawComponent;
+ *     //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
  *
- *   The desired material tables for CO2 can be defined via
+ *     // Apply the following component classes:
+ *     typedef Dumux::H2O<Scalar> H2O;
+ *     typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
+ *     typedef typename BrineRawComponent Brine;// all components have to be redefined,
+ *                                              // the applied H2O and Brine implemementations.
+ * };
+ * \endcode
+ * Also remember to initialize all tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
+ *
+ * The desired material tables for CO2 can be defined via
+ * \code{.cpp}
  *      SET_TYPE_PROP(myApplicationProperty, CO2Table, myCO2Tables);
+ * \endcode
  *   or use the default tables. Do not forget to include the tables.
  *   Salinity is specified via the appropriate property.
  */

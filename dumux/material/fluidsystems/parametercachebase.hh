@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief The base class of the parameter cache classes for fluid systems
+ * \brief @copybrief Dumux::ParameterCacheBase
  */
 #ifndef DUMUX_PARAMETER_CACHE_BASE_HH
 #define DUMUX_PARAMETER_CACHE_BASE_HH
@@ -40,9 +40,6 @@ public:
         Pressure = 2,
         Composition = 4
     };
-
-    ParameterCacheBase()
-    {}
 
     /*!
      * \brief Update all cached quantities for all phases.
@@ -80,7 +77,6 @@ public:
             asImp_().updatePhase(fs, phaseIdx);
     }
 
-
     /*!
      * \brief Update all cached parameters of a specific fluid phase
      *
@@ -95,7 +91,7 @@ public:
      * \brief Update all cached parameters of a specific fluid phase
      *        which depend on temperature
      *
-     * *Only* use this method if only the temperature of a phase
+     * \b Only use this method if only the temperature of a phase
      * changed between two update*() calls. If more changed, call
      * updatePhase()!
      */
@@ -109,7 +105,7 @@ public:
      * \brief Update all cached parameters of a specific fluid phase
      *        which depend on pressure
      *
-     * *Only* use this method if only the pressure of a phase changed
+     * \b Only use this method if only the pressure of a phase changed
      * between two update*() calls. If more changed, call
      * updatePhase()!
      */
@@ -123,7 +119,7 @@ public:
      * \brief Update all cached parameters of a specific fluid phase
      *        which depend on composition
      *
-     * *Only* use this method if neither the pressure nor the
+     * \b Only use this method if neither the pressure nor the
      * temperature of the phase changed between two update*()
      * calls. If more changed, call updatePhase()!
      */
@@ -137,7 +133,7 @@ public:
      * \brief Update all cached parameters of a specific fluid phase
      *        which depend on the mole fraction of a single component
      *
-     * *Only* use this method if just a single component's
+     * \b Only use this method if just a single component's
      * concentration changed between two update*() calls. If more than
      * one concentration changed, call updatePhaseComposition() of
      * updatePhase()!

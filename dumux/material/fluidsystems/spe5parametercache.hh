@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief Specifies the parameters required by the SPE5 problem which
- *        are dependend on the thermodynamic state.
+ * \brief @copybrief Dumux::Spe5ParameterCache
  */
 #ifndef SPE5_PARAMETER_CACHE_HH
 #define SPE5_PARAMETER_CACHE_HH
@@ -39,7 +38,7 @@ namespace Dumux
  * \ingroup Fluidsystems
  * \ingroup ParameterCache
  * \brief Specifies the parameters required by the SPE5 problem which
- *        are dependend on the thermodynamic state.
+ *        are despondent on the thermodynamic state.
  */
 template <class Scalar, class FluidSystem>
 class Spe5ParameterCache
@@ -70,7 +69,7 @@ public:
             VmUpToDate_[phaseIdx] = false;
             Valgrind::SetUndefined(Vm_[phaseIdx]);
         }
-    };
+    }
 
     /*!
      * \brief Update all parameters required by the fluid system to
@@ -99,8 +98,8 @@ public:
      * \brief Update all cached parameters of a specific fluid phase
      *        which depend on the mole fraction of a single component
      *
-     * *Only* use this method if just a single component's
-     * concentration changed between two update*() calls. If more than
+     * \b Only use this method if just a single component's
+     * concentration changed between two \p update*() calls. If more than
      * one concentration changed, call updatePhaseComposition() of
      * updatePhase()!
 
@@ -140,7 +139,7 @@ public:
     }
 
     /*!
-     * \brief The Peng-Robinson covolume for a phase.
+     * \brief The Peng-Robinson co-volume for a phase.
      * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar b(int phaseIdx) const
@@ -177,7 +176,7 @@ public:
     }
 
     /*!
-     * \brief The Peng-Robinson covolume for a pure component given
+     * \brief The Peng-Robinson co-volume for a pure component given
      *        the same temperature and pressure of the phase.
      * \param compIdx The index of the component to consider
      * \param phaseIdx The index of the fluid phase to consider
@@ -200,7 +199,10 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar molarVolume(int phaseIdx) const
-    { assert(VmUpToDate_[phaseIdx]); return Vm_[phaseIdx]; }
+    {
+        assert(VmUpToDate_[phaseIdx]);
+        return Vm_[phaseIdx];
+    }
 
 
     /*!
@@ -257,9 +259,8 @@ protected:
 
         switch (phaseIdx)
         {
-        case oPhaseIdx: oilPhaseParams_.updatePure(T, p); break;
-        case gPhaseIdx: gasPhaseParams_.updatePure(T, p); break;
-            //case wPhaseIdx: waterPhaseParams_.updatePure(phaseIdx, temperature, pressure);break;
+            case oPhaseIdx: oilPhaseParams_.updatePure(T, p); break;
+            case gPhaseIdx: gasPhaseParams_.updatePure(T, p); break;
         }
     }
 

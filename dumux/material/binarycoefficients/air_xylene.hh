@@ -96,12 +96,13 @@ public:
      * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and xylene in liquid water.
      * \param temperature temperature in \f$\mathrm{[K]}\f$
      * \param pressure pressure in \f$\mathrm{[Pa]}\f$
+     *
+     * \note Returns just an order of magnitude.
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        DUNE_THROW(Dune::NotImplemented,
-                   "Binary liquid diffusion coefficients of air and xylene");
+        return 1e-9;
     }
 };
 

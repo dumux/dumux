@@ -47,8 +47,8 @@ namespace FluidSystems {
  * The fluid phases are completely specified by means of their
  * constituting components.
  * The wetting and the non-wetting phase can be defined individually
- * via Dumux::LiquidPhase<Component> and
- * Dumux::GasPhase<Component>. These phases consist of one pure
+ * via Dumux::FluidSystem::LiquidPhase<Component> and
+ * Dumux::FluidSystem::GasPhase<Component>. These phases consist of one pure
  * component. With the help of this adapter class, the phase
  * properties can be accessed. This is suitable for pure two-phase
  * systems without compositional effects.
@@ -59,7 +59,7 @@ template <class Scalar, class WettingPhase, class NonwettingPhase>
 class TwoPImmiscible
 : public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> >
 {
-    // do not try to instanciate this class, it has only static members!
+    // do not try to instantiate this class, it has only static members!
     TwoPImmiscible()
     {}
 
@@ -113,7 +113,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if immiscibility is assumed. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times

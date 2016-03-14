@@ -124,7 +124,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumtion is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -509,7 +509,8 @@ public:
                            const ParameterCache &paramCache,
                            int phaseIdx)
     { DUNE_THROW(Dune::NotImplemented, "Enthalpies"); }
-/*!
+
+    /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        calculate its thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState An arbitrary fluid state
@@ -521,7 +522,8 @@ public:
                                       const ParameterCache &paramCache,
                                       int phaseIdx)
     { DUNE_THROW(Dune::NotImplemented, "Thermal conductivities"); }
-/*!
+
+    /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        calculate its heat capacity \f$\mathrm{[J/(kg K)]}\f$.
      * \param fluidState An arbitrary fluid state

@@ -51,8 +51,8 @@ SET_TYPE_PROP(StokesTestProblem, Problem, Dumux::StokesTestProblem<TypeTag>);
 
 // Use nitrogen as gas phase
 SET_TYPE_PROP(StokesTestProblem, Fluid,
-              Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                              Dumux::N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              Dumux::FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                            Dumux::N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 /*!

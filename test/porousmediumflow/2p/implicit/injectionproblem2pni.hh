@@ -85,14 +85,14 @@ SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GE
 // Set the wetting phase
 SET_TYPE_PROP(InjectionProblem2PNI,
               WettingPhase,
-              Dumux::LiquidPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
-                                 Dumux::SimpleH2O<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
+              Dumux::FluidSystems::LiquidPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
+                                               Dumux::SimpleH2O<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 
 // Set the non-wetting phase
 SET_TYPE_PROP(InjectionProblem2PNI,
               NonwettingPhase,
-              Dumux::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
-                                 Dumux::N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
+              Dumux::FluidSystems::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
+                                            Dumux::N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 #endif
 }
 

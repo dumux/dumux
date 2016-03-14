@@ -354,6 +354,20 @@ public:
 
         return r; // [Pa s]
     }
+
+    /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of xylene
+     *
+     * Thermal Conductivity of p-Xylene taken from the Dortmund Data Bank, see:
+     * http://www.ddbst.de/en/EED/PCP/TCN_C176.php
+     *
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidThermalConductivity( Scalar temperature,  Scalar pressure)
+    {
+        return 0.13;
+    }
 };
 
 } // end namespace
