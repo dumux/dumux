@@ -119,9 +119,9 @@ public:
         }
 
         // compute the diffusive flux
-        auto xInside = insideVolVars->moleFraction(phaseIdx_, compIdx_);
-        auto xOutside = outsideVolVars->moleFraction(phaseIdx_, compIdx_);
-        auto rho = 0.5*(insideVolVars->molarDensity(phaseIdx_) + outsideVolVars->molarDensity(phaseIdx_));
+        const auto xInside = insideVolVars->moleFraction(phaseIdx_, compIdx_);
+        const auto xOutside = outsideVolVars->moleFraction(phaseIdx_, compIdx_);
+        const auto rho = 0.5*(insideVolVars->molarDensity(phaseIdx_) + outsideVolVars->molarDensity(phaseIdx_));
 
         rhoDGradXNormal_ = rho*tij_*(xInside - xOutside);
     }

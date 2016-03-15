@@ -124,20 +124,24 @@ public:
 
             if (enableGravity_)
             {
+                // do averaging for the density
+                const auto rhoInside = insideVolVars->density(phaseIdx);
+                const auto rhoOutide = outsideVolVars->density(phaseIdx);
+                const auto rho = (rhoInside + rhoOutide)*0.5;
+
+
                 // ask for the gravitational acceleration in the inside neighbor
                 const auto xInside = insideScv.center();
                 const auto gInside = problem_().gravityAtPos(xInside);
-                const auto rhoInside = insideVolVars->density(phaseIdx);
 
-                hInside -= rhoInside*(gInside*xInside);
+                hInside -= rho*(gInside*xInside);
 
                 // and the outside neighbor
-                auto rhoOutside = outsideVolVars->density(phaseIdx);
                 if (scvFace_().boundary())
                 {
                     const auto xOutside = scvFace_().center();
                     const auto gOutside = problem_().gravityAtPos(xOutside);
-                    hOutside -= rhoOutside*(gOutside*xOutside);
+                    hOutside -= rho*(gOutside*xOutside);
                 }
                 else
                 {
@@ -145,7 +149,7 @@ public:
                     const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
                     const auto xOutside = outsideScv.center();
                     const auto gOutside = problem_().gravityAtPos(xOutside);
-                    hOutside -= rhoOutside*(gOutside*xOutside);
+                    hOutside -= rho*(gOutside*xOutside);
                 }
             }
 
@@ -180,7 +184,7 @@ public:
         return kGradPNormal_[phaseIdx]*upwindFunction(upVolVars(phaseIdx), dnVolVars(phaseIdx));
     }
 
-    std::set<IndexType> stencil() const
+    const std::set<IndexType>& stencil() const
     {
         return stencil_;
     }
@@ -234,10 +238,10 @@ private:
     {
         // fill the stencil
         if (!scvFace_().boundary())
-            stencil_= {scvFace_().insideScvIdx(), scvFace_().outsideScvIdx()};
+            stencil_.insert({scvFace_().insideScvIdx(), scvFace_().outsideScvIdx()});
         else
             // fill the stencil
-            stencil_ = {scvFace_().insideScvIdx()};
+            stencil_.insert(scvFace_().insideScvIdx());
     }
 
     Scalar calculateOmega_(const DimWorldMatrix &K, const SubControlVolume &scv) const
