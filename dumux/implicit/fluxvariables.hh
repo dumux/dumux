@@ -80,7 +80,7 @@ public:
         return advection_;
     }
 
-    Stencil stencil() const
+    const Stencil& stencil() const
     {
         return advection_.stencil();
     }

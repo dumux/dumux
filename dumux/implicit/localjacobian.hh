@@ -175,7 +175,7 @@ public:
         // {
         //     for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
         //         {
-        //             evalPartialDerivativeSource_(partialDeriv, globalJ, pvIdx, neighborToFluxVars[globalJ]);
+        //             evalPartialDerivativeSource_(partialDeriv, globalJ, pvIdx, fluxVarIndices);
 
         //             // update the local stiffness matrix with the partial derivatives
         //             updateLocalJacobian_(j, pvIdx, partialDeriv);
@@ -188,28 +188,24 @@ public:
         {
             const auto& neighborStencil = model_().stencils(element).neighborStencil();
 
-            // map each neighbor dof to a set of fluxVars that need to be recalculated
-            // i.o.t calculate derivative w.r.t this neighbor
-            std::map< unsigned int, std::set<unsigned int> > neighborToFluxVars;
-
-            // loop over scvFaces/fluxVars of the element
-            // make a map from dofIndex to a set of fluxVars that depend on that dof's values
-            for (auto&& scvFace : fvElemGeom_().scvfs())
-            {
-                auto fluxVarsIdx = scvFace.index();
-                for (auto&& globalJ : neighborStencil)
-                    if (model_().fluxVars(fluxVarsIdx).stencil().count(globalJ))
-                        neighborToFluxVars[globalJ].insert(fluxVarsIdx);
-            }
-
             // loop over the neighbors and calculation of the change in flux
             // with a change in the primary variables at the neighboring dof
             int j = 1;
-            for (auto&& globalJ : neighborStencil)
+            for (auto globalJ : neighborStencil)
             {
+                // loop over scvFaces/fluxVars of the element
+                // make a map from dofIndex to a set of fluxVars that depend on that dof's values
+                std::set<unsigned int> fluxVarIndices;
+                for (auto&& scvFace : fvElemGeom_().scvfs())
+                {
+                    auto fluxVarsIdx = scvFace.index();
+                    if (model_().fluxVars(fluxVarsIdx).stencil().count(globalJ))
+                        fluxVarIndices.insert(fluxVarsIdx);
+                }
+
                 for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
                 {
-                    evalPartialDerivativeFlux_(partialDeriv, globalJ, pvIdx, neighborToFluxVars[globalJ]);
+                    evalPartialDerivativeFlux_(partialDeriv, globalJ, pvIdx, fluxVarIndices);
 
                     // update the local stiffness matrix with the partial derivatives
                     updateLocalJacobian_(j, pvIdx, partialDeriv);
@@ -474,7 +470,7 @@ protected:
     void evalPartialDerivativeFlux_(ElementSolutionVector &partialDeriv,
                                     const unsigned int globalJ,
                                     const int pvIdx,
-                                    std::set<unsigned int> fluxVarsJ)
+                                    const std::set<unsigned int>& fluxVarsJ)
     {
         if (isBox)
             DUNE_THROW(Dune::InvalidStateException, "Calling evalPartialDerivativeFlux_(...) for box method.");

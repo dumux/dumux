@@ -26,6 +26,7 @@
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/valgrind.hh>
+#include <dumux/common/capabilities.hh>
 
 #include "properties.hh"
 
@@ -314,11 +315,36 @@ protected:
     }
 
     /*!
+     * \brief Add the change the source term for stationary problems
+     *        to the local residual of all sub-control volumes of the
+     *        current element.
+     */
+    template<class P = Problem>
+    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
+    evalVolumeTerms_()
+    {
+        // evaluate the volume terms (storage + source terms)
+        for (auto&& scv : fvGeometry_().scvs())
+        {
+            auto scvIdx = scv.indexInElement();
+            auto curExtrusionFactor = model_().curVolVars(scv).extrusionFactor();
+
+            // subtract the source term from the local rate
+            PrimaryVariables source = asImp_().computeSource(scv);
+            source *= scv.volume()*curExtrusionFactor;
+
+            residual_[scvIdx] -= source;
+        }
+    }
+
+    /*!
      * \brief Add the change in the storage terms and the source term
      *        to the local residual of all sub-control volumes of the
      *        current element.
      */
-    void evalVolumeTerms_()
+    template<class P = Problem>
+    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
+    evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : fvGeometry_().scvs())

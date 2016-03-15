@@ -40,6 +40,13 @@ namespace Dumux
 template <class TypeTag>
 class OnePTestProblem;
 
+namespace Capabilities
+{
+    template<class TypeTag>
+    struct isStationary<OnePTestProblem<TypeTag>>
+    { static const bool value = true; };
+}
+
 namespace Properties
 {
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
