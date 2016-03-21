@@ -44,7 +44,6 @@
 #include "fluxvariables.hh"
 #include "fluxvariablesvector.hh"
 #include "fvelementgeometry.hh"
-#include "stencilsvector.hh"
 
 namespace Dumux {
 
@@ -98,9 +97,6 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
-
-//! The global volume variables vector class
-SET_TYPE_PROP(ImplicitBase, StencilsVector, Dumux::StencilsVector<TypeTag>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);

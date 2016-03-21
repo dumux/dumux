@@ -59,7 +59,6 @@ class ImplicitModel
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesVector) FluxVariablesVector;
-    typedef typename GET_PROP_TYPE(TypeTag, Stencils) Stencils;
     typedef typename GET_PROP_TYPE(TypeTag, StencilsVector) StencilsVector;
 
     enum {
@@ -778,12 +777,6 @@ public:
     const FVElementGeometryVector& fvGeometries() const
     { return *fvGeometries_; }
 
-    const Stencils& stencils(const Element& element) const
-    { return stencilsVector_[elementMapper().index(element)]; }
-
-    const Stencils& stencils(unsigned int eIdx) const
-    { return stencilsVector_[eIdx]; }
-
     const FVElementGeometry& fvGeometries(const Element& element) const
     { return fvGeometries_->fvGeometry(elementMapper().index(element)); }
 
@@ -975,6 +968,14 @@ protected:
     std::shared_ptr<FVElementGeometryVector> fvGeometries_;
 
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
+
+public:
+    //! Get stencils related to an entity of specified codimension
+    // Cell-centered discretizations typically only implement element stencils
+    // Vertex-centered discretizations both vertex and element stencils
+    template <class Entity>
+    auto stencils(const Entity& entity) const -> decltype(stencilsVector_.get(entity))
+    { return stencilsVector_.get(entity); }
 
 private:
     /*!

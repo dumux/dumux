@@ -87,7 +87,6 @@ NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy e
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
 
 // stencils
-NEW_PROP_TAG(Stencils); //! The stencils container type
 NEW_PROP_TAG(StencilsVector); //! The type of the global vector of stencils per element
 
 // high level simulation control

@@ -18,22 +18,25 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Implements the notion of stencils for cell-centered models
+ * \brief Implements the notion of stencils for vertex-centered models
  */
-#ifndef DUMUX_CC_STENCILS_HH
-#define DUMUX_CC_STENCILS_HH
+#ifndef DUMUX_BOX_STENCILS_HH
+#define DUMUX_BOX_STENCILS_HH
 
 #include <set>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/implicit/box/properties.hh>
 
 namespace Dumux
 {
+//forward declaration
+template<class TypeTag>
+class BoxStencilsVector;
 
 /*!
  * \brief Element-related stencils
  */
 template<class TypeTag>
-class CCElementStencils
+class BoxElementStencils
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -41,16 +44,13 @@ class CCElementStencils
     using Element = typename GridView::template Codim<0>::Entity;
     // TODO a separate stencil class all stencils can derive from?
     using Stencil = std::set<IndexType>;
+
+    static const int dim = GridView::dimension;
 public:
     void update(const Problem& problem, const Element& element)
     {
-        for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
-        {
-            auto&& fluxStencil = problem.model().fluxVars(scvf).stencil();
-            elementStencil_.insert(fluxStencil.begin(), fluxStencil.end());
-        }
-        neighborStencil_ = elementStencil_;
-        neighborStencil_.erase(problem.elementMapper().index(element));
+        for(int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
+            elementStencil_.insert(problem.vertexMapper().subIndex(element, vIdxLocal, dim));
     }
 
     //! The full element stencil (all element this element is interacting with)
@@ -59,49 +59,98 @@ public:
         return elementStencil_;
     }
 
-    //! //! The full element stencil without this element
-    const Stencil& neighborStencil() const
-    {
-        return neighborStencil_;
-    }
-
 private:
     Stencil elementStencil_;
-    Stencil neighborStencil_;
 };
 
 /*!
- * \ingroup CCModel
+ * \brief Vertex-related stencils
+ */
+template<class TypeTag>
+class BoxVertexStencils
+{
+    friend class BoxStencilsVector<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    // TODO a separate stencil class all stencils can derive from?
+    using Stencil = std::set<IndexType>;
+public:
+    //! The full vertex stencil (all vertices this vertex is interacting with)
+    const Stencil& vertexStencil() const
+    {
+        return vertexStencil_;
+    }
+
+private:
+    //! The full vertex stencil (all vertices this vertex is interacting with)
+    Stencil& vertexStencil()
+    {
+        return vertexStencil_;
+    }
+
+    Stencil vertexStencil_;
+};
+
+/*!
+ * \ingroup BoxModel
  * \brief The global stencil container class
  */
 template<class TypeTag>
-class CCStencilsVector
+class BoxStencilsVector
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    static const int dim = GridView::dimension;
 
 public:
     void update(const Problem& problem)
     {
         problemPtr_ = &problem;
         elementStencils_.resize(problem.gridView().size(0));
+        vertexStencils_.resize(problem.gridView().size(dim));
         for (const auto& element : elements(problem.gridView()))
         {
             auto eIdx = problem.elementMapper().index(element);
             elementStencils_[eIdx].update(problem, element);
+
+            for (int vIdxLocalI = 0; vIdxLocalI < element.subEntities(dim); ++vIdxLocalI)
+            {
+                auto globalI = problem.vertexMapper().subIndex(element, vIdxLocalI, dim);
+                for (int vIdxLocalJ = vIdxLocalI; vIdxLocalJ < element.subEntities(dim); ++vIdxLocalJ)
+                {
+                    auto globalJ = problem.vertexMapper().subIndex(element, vIdxLocalJ, dim);
+
+                    // make sure that vertex j is in the neighbor set
+                    // of vertex i and vice-versa
+                    vertexStencils_[globalI].vertexStencil().insert(globalJ);
+                    vertexStencils_[globalJ].vertexStencil().insert(globalI);
+                }
+            }
         }
     }
 
     //! overload for elements
     template <class Entity>
-    typename std::enable_if<Entity::codimension == 0, const CCElementStencils<TypeTag>&>::type
+    typename std::enable_if<Entity::codimension == 0, const BoxElementStencils<TypeTag>&>::type
     get(const Entity& entity) const
     {
         return elementStencils_[problemPtr_->elementMapper().index(entity)];
     }
 
+    //! overload for vertices
+    template <class Entity>
+    typename std::enable_if<Entity::codimension == Entity::dimension, const BoxVertexStencils<TypeTag>&>::type
+    get(const Entity& entity) const
+    {
+        return vertexStencils_[problemPtr_->vertexMapper().index(entity)];
+    }
+
 private:
-    std::vector<CCElementStencils<TypeTag>> elementStencils_;
+    std::vector<BoxElementStencils<TypeTag>> elementStencils_;
+    std::vector<BoxVertexStencils<TypeTag>> vertexStencils_;
     const Problem* problemPtr_;
 };
 
