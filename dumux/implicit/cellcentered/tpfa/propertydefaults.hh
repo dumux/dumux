@@ -30,9 +30,6 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
-#include <dumux/implicit/cellcentered/elementboundarytypes.hh>
-#include <dumux/implicit/cellcentered/stencils.hh>
-#include <dumux/implicit/cellcentered/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyslaw.hh>
 #include <dumux/porousmediumflow/implicit/cellcentered/tpfa/fickslaw.hh>
@@ -40,27 +37,11 @@
 namespace Dumux {
 
 // forward declarations
-template<class TypeTag> class CCLocalResidual;
 template<class TypeTag> class CCElementBoundaryTypes;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag>);
-
-//! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
-
-//! Mapper for the degrees of freedoms.
-SET_TYPE_PROP(CCTpfaModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
-
-//! Set the BaseLocalResidual to CCLocalResidual
-SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
-
-//! The stencil container
-SET_TYPE_PROP(CCTpfaModel, Stencils, Dumux::CCStencils<TypeTag>);
-
-//! indicate that this is no box discretization
-SET_BOOL_PROP(CCTpfaModel, ImplicitIsBox, false);
 
 //! The sub control volume
 SET_PROP(CCTpfaModel, SubControlVolume)

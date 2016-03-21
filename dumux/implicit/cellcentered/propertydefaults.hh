@@ -28,11 +28,8 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include "assembler.hh"
-#include "fvelementgeometry.hh"
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
-#include "elementvolumevariables.hh"
 #include "properties.hh"
 #include "stencils.hh"
 
@@ -42,8 +39,7 @@ namespace Dumux
 // forward declaration
 template<class TypeTag> class CCElementBoundaryTypes;
 template<class TypeTag> class CCLocalResidual;
-template<class TypeTag> class CCStencils;
-template<class TypeTag> class CCAssembler;
+template<class TypeTag> class CCStencilsVector;
 
 namespace Properties
 {
@@ -53,19 +49,16 @@ SET_TYPE_PROP(CCModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
 
+//! The stencil container
+SET_TYPE_PROP(CCModel, StencilsVector, CCStencilsVector<TypeTag>);
+
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
-
-//! The stencil container
-SET_TYPE_PROP(CCModel, Stencils, CCStencils<TypeTag>);
-
-//! Assembler for the global jacobian matrix
-SET_TYPE_PROP(CCModel, JacobianAssembler, CCAssembler<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
 
-} // namespace Properties
-} // namespace Dumux
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

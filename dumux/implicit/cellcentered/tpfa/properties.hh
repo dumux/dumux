@@ -20,6 +20,7 @@
 #define DUMUX_CC_TPFA_PROPERTIES_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/implicit/cellcentered/properties.hh>
 
 /*!
  * \ingroup Properties
@@ -41,7 +42,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the cell-centered two-point flux approximation scheme
-NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(ImplicitBase));
+NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(CCModel));
 }
 }
 
