@@ -38,18 +38,22 @@ template<class Geometry, typename IndexType>
 class SubControlVolumeFace
 {
     using Scalar = typename Geometry::ctype;
-    enum { dimworld = Geometry::coorddimension };
+    static const int dim = Geometry::mydimension;
+    static const int dimworld = Geometry::coorddimension;
+
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
     SubControlVolumeFace(const Geometry& geometry,
-                         const GlobalPosition& integrationPoint,
+                         const GlobalPosition& ipGlobal,
                          const GlobalPosition& unitOuterNormal,
                          IndexType scvfIndex,
                          const std::vector<IndexType>& scvIndices,
                          bool boundary = false)
     : geometry_(geometry),
-      integrationPoint_(integrationPoint),
+      ipGlobal_(ipGlobal),
+      ipLocal_(geometry.local(ipGlobal)),
       unitOuterNormal_(unitOuterNormal),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
@@ -61,11 +65,18 @@ public:
         return geometry_.center();
     }
 
-    //! The integration point for flux evaluations
-    GlobalPosition integrationPoint() const
+    //! The integration point for flux evaluations in global coordinates
+    GlobalPosition ipGlobal() const
     {
         // Return center for now
-        return integrationPoint_;
+        return ipGlobal_;
+    }
+
+    //! The integration point for flux evaluations in global coordinates
+    LocalPosition ipLocal() const
+    {
+        // Return center for now
+        return ipLocal_;
     }
 
     //! The area of the sub control volume face
@@ -112,7 +123,8 @@ public:
 
 private:
     Geometry geometry_;
-    GlobalPosition integrationPoint_;
+    GlobalPosition ipGlobal_;
+    LocalPosition ipLocal_;
     GlobalPosition unitOuterNormal_;
     IndexType scvfIndex_;
     std::vector<IndexType> scvIndices_;
