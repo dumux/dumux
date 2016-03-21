@@ -60,6 +60,7 @@ class CCTpfaFicksLaw
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IndexSet::IndexType IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -70,7 +71,9 @@ class CCTpfaFicksLaw
 
 public:
 
-    void update(const Problem &problem, const SubControlVolumeFace &scvFace,
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace &scvFace,
                 int phaseIdx, int compIdx)
     {
         problemPtr_ = &problem;
@@ -84,7 +87,9 @@ public:
         // TODO for non solution dependent diffusion tensors...
     }
 
-    void update(const Problem &problem, const SubControlVolumeFace &scvFace,
+    void update(const Problem &problem,
+                const Element &element,
+                const SubControlVolumeFace &scvFace,
                 int phaseIdx, int compIdx,
                 VolumeVariables* boundaryVolVars)
     {

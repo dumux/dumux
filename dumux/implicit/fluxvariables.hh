@@ -49,6 +49,7 @@ class FluxVariables<TypeTag, true, false, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::set<IndexType>;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -56,17 +57,19 @@ class FluxVariables<TypeTag, true, false, false>
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace &scvf)
     {
         if (scvf.boundary())
         {
             if(!boundaryVolVars_)
                 boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
-            advection_.update(problem, scvf, boundaryVolVars_.get());
+            advection_.update(problem, element, scvf, boundaryVolVars_.get());
         }
         else
         {
-            advection_.update(problem, scvf);
+            advection_.update(problem, element, scvf);
         }
     }
 
@@ -98,6 +101,7 @@ class FluxVariables<TypeTag, true, true, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::set<IndexType>;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -112,19 +116,21 @@ class FluxVariables<TypeTag, true, true, false>
     };
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace &scvf)
     {
         if (scvf.boundary())
         {
             if(!boundaryVolVars_)
                 boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
 
-            advection_.update(problem, scvf, boundaryVolVars_.get());
+            advection_.update(problem, element, scvf, boundaryVolVars_.get());
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
                     if (phaseIdx != compIdx)
-                        molecularDiffusion(phaseIdx, compIdx).update(problem, scvf, phaseIdx, compIdx, boundaryVolVars_.get());
+                        molecularDiffusion(phaseIdx, compIdx).update(problem, element, scvf, phaseIdx, compIdx, boundaryVolVars_.get());
                 }
         }
         else
@@ -134,7 +140,7 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
                     if (phaseIdx != compIdx)
-                        molecularDiffusion(phaseIdx, compIdx).update(problem, scvf, phaseIdx, compIdx);
+                        molecularDiffusion(phaseIdx, compIdx).update(problem, element, scvf, phaseIdx, compIdx);
                 }
         }
     }

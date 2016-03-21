@@ -49,21 +49,10 @@ public:
         {
             for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
             {
-                (*this)[scvf.index()].update(problem, scvf);
+                (*this)[scvf.index()].update(problem, element, scvf);
             }
 
         }
-    }
-
-    void update(const Problem& problem, const SubControlVolumeFace& scvf)
-    {
-        (*this)[scvf.index()].update(problem, scvf);
-    }
-
-    void update(const Problem& problem, const IndexType scvfIdx)
-    {
-        auto&& scvf = problem.model().fvGeometries().subControlVolumeFace(scvfIdx);
-        (*this)[scvf.index()].update(problem, scvf);
     }
 
     const FluxVariables& operator [](IndexType scvfIdx) const

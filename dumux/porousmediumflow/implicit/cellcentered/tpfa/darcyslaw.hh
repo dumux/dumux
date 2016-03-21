@@ -61,6 +61,7 @@ class CCTpfaDarcysLaw
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IndexSet::IndexType IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -71,7 +72,9 @@ class CCTpfaDarcysLaw
 
 public:
 
-    void update(const Problem &problem, const SubControlVolumeFace &scvFace)
+    void update(const Problem &problem,
+                const Element& element,
+                const SubControlVolumeFace &scvFace)
     {
         problemPtr_ = &problem;
         scvFacePtr_ = &scvFace;
@@ -81,11 +84,13 @@ public:
         updateStencil_();
     }
 
-    void update(const Problem& problem, const SubControlVolumeFace &scvFace,
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace &scvFace,
                 VolumeVariables* boundaryVolVars)
     {
         boundaryVolVars_ = boundaryVolVars;
-        update(problem, scvFace);
+        update(problem, element, scvFace);
     }
 
     void updateTransmissibilities(const Problem &problem, const SubControlVolumeFace &scvFace)
