@@ -165,32 +165,53 @@ protected:
         }
     }
 
-    // assemble an interior element
-    void assembleElement_(const Element &element)
+    // assemble an interior element for cell-centered models
+    template <class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    assembleElement_(const Element &element)
     {
         model_().localJacobian().assemble(element);
 
-        if (!isBox)
+        auto globalI = elementMapper_().index(element);
+
+        // update the right hand side
+        residual_[globalI] = model_().localJacobian().residual(0);
+        for (int j = 0; j < residual_[globalI].dimension; ++j)
+            assert(std::isfinite(residual_[globalI][j]));
+
+        // diagonal entry
+        (*matrix_)[globalI][globalI] = model_().localJacobian().mat(0, 0);
+
+        const auto& stencil = model_().stencils(element).neighborStencil();
+
+        unsigned int j = 1;
+        for (auto&& globalJ : stencil)
+            (*matrix_)[globalI][globalJ] = model_().localJacobian().mat(0, j++);
+    }
+
+    // assemble an interior element for box models
+    template <class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    assembleElement_(const Element &element)
+    {
+        model_().localJacobian().assemble(element);
+
+        auto globalI = elementMapper_().index(element);
+
+        for(int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
         {
-            auto globalI = elementMapper_().index(element);
+            auto globalI = vertexMapper_().subIndex(element, dim, vIdxLocal);
 
             // update the right hand side
-            residual_[globalI] = model_().localJacobian().residual(0);
+            residual_[globalI] += model_().localJacobian().residual(vIdxLocal);
             for (int j = 0; j < residual_[globalI].dimension; ++j)
                 assert(std::isfinite(residual_[globalI][j]));
 
-            // diagonal entry
-            (*matrix_)[globalI][globalI] = model_().localJacobian().mat(0, 0);
-
-            const auto& stencil = model_().stencils(element).neighborStencil();
+            const auto& stencil = model_().stencils(element).elementStencil();
 
             unsigned int j = 1;
             for (auto&& globalJ : stencil)
-                (*matrix_)[globalI][globalJ] = model_().localJacobian().mat(0, j++);
-        }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented, "Box assembly");
+                (*matrix_)[globalI][globalJ] += model_().localJacobian().mat(vIdxLocal, j++);
         }
     }
 
@@ -249,45 +270,71 @@ private:
         addIndices_();
     }
 
-    void setRowSizes_()
+    //! Set the row sizes for cell-centered methods
+    template <class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    setRowSizes_()
     {
-        if (!isBox)
+        for (const auto& element : elements(gridView_()))
         {
-            for (const auto& element : elements(gridView_()))
-            {
-                // the global index of the element at hand
-                const auto globalI = elementMapper_().index(element);
-                const auto& stencil = model_().stencils(element).elementStencil();
+            // the global index of the element at hand
+            const auto globalI = elementMapper_().index(element);
+            const auto& stencil = model_().stencils(element).elementStencil();
 
-                matrix_->setrowsize(globalI, stencil.size());
-            }
-            matrix_->endrowsizes();
+            matrix_->setrowsize(globalI, stencil.size());
         }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented, "Box Assmebly");
-        }
+        matrix_->endrowsizes();
     }
 
-    void addIndices_()
+    //! Add non-zero matrix entries for cell-centered methods
+    template <class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    addIndices_()
     {
-        if (!isBox)
+        for (const auto& element : elements(gridView_()))
         {
-            for (const auto& element : elements(gridView_()))
-            {
-                // the global index of the element at hand
-                const auto globalI = elementMapper_().index(element);
-                const auto& stencil = model_().stencils(element).elementStencil();
+            // the global index of the element at hand
+            const auto globalI = elementMapper_().index(element);
+            const auto& stencil = model_().stencils(element).elementStencil();
 
 
-                for (auto&& globalJ : stencil)
-                    matrix_->addindex(globalI, globalJ);
-            }
-            matrix_->endindices();
+            for (auto&& globalJ : stencil)
+                matrix_->addindex(globalI, globalJ);
         }
-        else
+        matrix_->endindices();
+    }
+
+    //! Set the row sizes for vertex-centered box method
+    template <class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    setRowSizes_()
+    {
+        for (const auto& vertex : vertices(gridView_()))
         {
-            DUNE_THROW(Dune::NotImplemented, "Box Assmebly");
+            // the global index of the element at hand
+            const auto globalI = vertexMapper_().index(vertex);
+            const auto& stencil = model_().stencils(vertex).vertexStencil();
+
+            matrix_->setrowsize(globalI, stencil.size());
+        }
+        matrix_->endrowsizes();
+    }
+
+    //! Add non-zero matrix entries for vertex-centered box method
+    template <class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    addIndices_()
+    {
+        for (const auto& vertex : vertices(gridView_()))
+        {
+            // the global index of the element at hand
+            const auto globalI = vertexMapper_().index(vertex);
+            const auto& stencil = model_().stencils(vertex).vertexStencil();
+
+            for (auto&& globalJ : stencil)
+                matrix_->addindex(globalI, globalJ);
+
+            matrix_->endindices();
         }
     }
 

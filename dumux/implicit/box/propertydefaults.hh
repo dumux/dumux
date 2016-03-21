@@ -27,12 +27,15 @@
 #define DUMUX_BOX_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include "assembler.hh"
-#include "fvelementgeometry.hh"
+#include <dumux/implicit/fvelementgeometry.hh>
+#include <dumux/implicit/box/fvelementgeometryvector.hh>
+#include <dumux/porousmediumflow/implicit/box/darcyslaw.hh>
+#include <dumux/porousmediumflow/implicit/box/fickslaw.hh>
+
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
-#include "elementvolumevariables.hh"
 #include "properties.hh"
+#include "stencils.hh"
 
 namespace Dumux {
 
@@ -40,20 +43,52 @@ namespace Dumux {
  * \brief The box model combines the advantages of the finite-volume (FV) and finite-element (FE) methods on a dual grid
  */
 // forward declarations
-template<class TypeTag> class BoxModel;
 template<class TypeTag> class BoxLocalResidual;
 template<class TypeTag> class BoxElementBoundaryTypes;
-template<class TypeTag> class BoxElementVolumeVariables;
-template<class TypeTag> class BoxFVElementGeometry;
+template<class TypeTag> class BoxFVElementGeometryVector;
+template<class TypeTag> class BoxStencilsVector;
 
 namespace Properties {
-//! Set the default for the FVElementGeometry
-SET_TYPE_PROP(BoxModel, FVElementGeometry, BoxFVElementGeometry<TypeTag>);
 
-//! Disable evaluation of shape function gradients at the sub-control volume center by default
-// The shape function gradients at the sub-control volume center are currently only
-// needed for the Stokes and the linear elastic models
-SET_BOOL_PROP(BoxModel, EvalGradientsAtSCVCenter, false);
+//! Set the default for the FVElementGeometry vector
+SET_TYPE_PROP(BoxModel, FVElementGeometryVector, BoxFVElementGeometryVector<TypeTag>);
+
+//! The sub control volume
+SET_PROP(BoxModel, SubControlVolume)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GridView::ctype;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    using ScvGeometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld>;
+    using IndexType = typename GridView::IndexSet::IndexType;
+public:
+    using type = SubControlVolume<ScvGeometry, IndexType, /*isBox=*/true>;
+};
+
+SET_PROP(BoxModel, SubControlVolumeFace)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GridView::ctype;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
+    using IndexType = typename GridView::IndexSet::IndexType;
+public:
+    using type = SubControlVolumeFace<ScvfGeometry, IndexType>;
+};
+
+//! The darcy flux variables
+SET_TYPE_PROP(BoxModel, AdvectionType, BoxDarcysLaw<TypeTag>);
+
+// TODO: Actually implement the diffusion and energy flux variables
+//! The diffusion flux variables
+SET_TYPE_PROP(BoxModel, MolecularDiffusionType, BoxFicksLaw<TypeTag>);
+
+//! The energy flux variables
+//SET_TYPE_PROP(BoxModel, HeatConductionType, BoxFouriersLaw);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
@@ -61,17 +96,11 @@ SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper));
 
+//! The stencil container
+SET_TYPE_PROP(BoxModel, StencilsVector, BoxStencilsVector<TypeTag>);
+
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);
-
-//! An array of secondary variable containers
-SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTag>);
-
-//! Assembler for the global jacobian matrix
-SET_TYPE_PROP(BoxModel, JacobianAssembler, BoxAssembler<TypeTag>);
-
-//! disable two-point-flux by default
-SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);
 
 //! indicate that this is a box discretization
 SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);

@@ -184,36 +184,7 @@ public:
         // }
 
         // for cellcentered methods, calculate the derivatives w.r.t cells in stencil
-        if (!isBox)
-        {
-            const auto& neighborStencil = model_().stencils(element).neighborStencil();
-
-            // loop over the neighbors and calculation of the change in flux
-            // with a change in the primary variables at the neighboring dof
-            int j = 1;
-            for (auto globalJ : neighborStencil)
-            {
-                // loop over scvFaces/fluxVars of the element
-                // make a map from dofIndex to a set of fluxVars that depend on that dof's values
-                std::set<unsigned int> fluxVarIndices;
-                for (auto&& scvFace : fvElemGeom_().scvfs())
-                {
-                    auto fluxVarsIdx = scvFace.index();
-                    if (model_().fluxVars(fluxVarsIdx).stencil().count(globalJ))
-                        fluxVarIndices.insert(fluxVarsIdx);
-                }
-
-                for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-                {
-                    evalPartialDerivativeFlux_(partialDeriv, globalJ, pvIdx, fluxVarIndices);
-
-                    // update the local stiffness matrix with the partial derivatives
-                    updateLocalJacobian_(j, pvIdx, partialDeriv);
-                }
-
-                ++j;
-            }
-        }
+        evalNeighborDerivatives_(element, partialDeriv);
     }
 
     /*!
@@ -346,6 +317,45 @@ protected:
      */
     void reset_()
     { A_ = 0.0; }
+
+    //! Evaluate the derivates wrt to the neighbors of this element
+    template <class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    evalNeighborDerivatives_(const Element& element, ElementSolutionVector& partialDeriv)
+    {
+        const auto& neighborStencil = model_().stencils(element).neighborStencil();
+
+        // loop over the neighbors and calculation of the change in flux
+        // with a change in the primary variables at the neighboring dof
+        int j = 1;
+        for (auto globalJ : neighborStencil)
+        {
+            // loop over scvFaces/fluxVars of the element
+            // make a map from dofIndex to a set of fluxVars that depend on that dof's values
+            std::set<unsigned int> fluxVarIndices;
+            for (auto&& scvFace : fvElemGeom_().scvfs())
+            {
+                auto fluxVarsIdx = scvFace.index();
+                if (model_().fluxVars(fluxVarsIdx).stencil().count(globalJ))
+                    fluxVarIndices.insert(fluxVarsIdx);
+            }
+
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                evalPartialDerivativeFlux_(partialDeriv, globalJ, pvIdx, fluxVarIndices);
+
+                // update the local stiffness matrix with the partial derivatives
+                updateLocalJacobian_(j, pvIdx, partialDeriv);
+            }
+
+            ++j;
+        }
+    }
+
+    //! nothing to do here: the box method assembly is element local
+    template <class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
+    evalNeighborDerivatives_(const Element& element, ElementSolutionVector& partialDeriv) {}
 
     /*!
      * \brief Compute the partial derivatives to a primary variable at

@@ -42,15 +42,6 @@ namespace Properties
 
 //! The type tag for models based on the box-scheme
 NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitBase));
-
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(EvalGradientsAtSCVCenter); //! Evaluate shape function gradients additionally at the sub-control volume center
-
-NEW_PROP_TAG(ImplicitUseTwoPointFlux); //! indicates whether two-point flux should be used
-
 }
 }
 
