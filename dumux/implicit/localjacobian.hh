@@ -69,40 +69,33 @@ class ImplicitLocalJacobian
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-
-    enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        dim = GridView::dimension,
-    };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
-    typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::IndexSet::IndexType IndexType;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-
-    // copying a local jacobian is not a good idea
-    ImplicitLocalJacobian(const ImplicitLocalJacobian &);
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
 public:
+    // copying a local jacobian is not a good idea
+    ImplicitLocalJacobian(const ImplicitLocalJacobian &) = delete;
+
     ImplicitLocalJacobian()
     {
-        numericDifferenceMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
         Valgrind::SetUndefined(problemPtr_);
     }
 
@@ -127,64 +120,9 @@ public:
      *
      * \param element The DUNE Codim<0> entity which we look at.
      */
-    void assemble(const Element &element)
+    void assemble(const Element& element, JacobianMatrix& matrix)
     {
-        // set the current grid element and update the element's
-        // finite volume geometry
-        elemPtr_ = &element;
-        reset_();
-
-        bcTypes_.update(problem_(), element_(), fvElemGeom_());
-
-        // calculate the local residual
-        localResidual().eval(element_(), bcTypes_);
-        residual_ = localResidual().residual();
-
-        model_().updatePVWeights(fvElemGeom_());
-
-        // get stencil informations
-        const auto& elementStencil = model_().stencils(element).elementStencil();
-
-        // set size of local jacobian matrix
-        const std::size_t numCols = elementStencil.size();
-        std::size_t numRows;
-
-        if (isBox)
-            numRows = numCols;
-        else
-            numRows = 1;
-
-        A_.setSize(numRows, numCols);
-
-        // calculate derivatives for the dofs inside the element
-        ElementSolutionVector partialDeriv(numRows);
-        for (auto&& scv : fvElemGeom_().scvs())
-        {
-            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-            {
-                asImp_().evalPartialDerivative_(partialDeriv, scv, pvIdx);
-
-                // update the local stiffness matrix with the current partial derivatives
-                updateLocalJacobian_(scv.indexInElement(), pvIdx, partialDeriv);
-            }
-        }
-
-        // TODO: calculate derivatives in the case of an extended source stencil
-        // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
-        // for (auto&& globalJ : extendedSourceStencil)
-        // {
-        //     for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-        //         {
-        //             evalPartialDerivativeSource_(partialDeriv, globalJ, pvIdx, fluxVarIndices);
-
-        //             // update the local stiffness matrix with the partial derivatives
-        //             updateLocalJacobian_(j, pvIdx, partialDeriv);
-        //         }
-               // ++j;
-        // }
-
-        // for cellcentered methods, calculate the derivatives w.r.t cells in stencil
-        evalNeighborDerivatives_(element, partialDeriv);
+        DUNE_THROW(Dune::NotImplemented, "Assemble routine not provided by the actual implementation of the local jacobian!");
     }
 
     /*!
@@ -202,18 +140,6 @@ public:
     { return localResidual_; }
 
     /*!
-     * \brief Returns the Jacobian of the equations at subcontrolvolume i
-     * to the primary variables at subcontrolvolume j.
-     *
-     * \param i The local subcontrolvolume index on which
-     *          the equations are defined
-     * \param j The local subcontrolvolume index which holds
-     *          primary variables
-     */
-    const MatrixBlock &mat(const int i, const int j) const
-    { return A_[i][j]; }
-
-    /*!
      * \brief Returns the residual of the equations at subcontrolvolume i.
      *
      * \param i The local subcontrolvolume index on which
@@ -222,32 +148,6 @@ public:
     const PrimaryVariables &residual(const int i) const
     { return residual_[i]; }
 
-    /*!
-     * \brief Returns the epsilon value which is added and removed
-     *        from the current solution.
-     *
-     * \param scvIdx     The local index of the element's subcontrolvolume for
-     *                   which the local derivative ought to be calculated.
-     * \param pvIdx      The index of the primary variable which gets varied
-     */
-    Scalar numericEpsilon(const SubControlVolume &scv,
-                          const int pvIdx) const
-    {
-        // define the base epsilon as the geometric mean of 1 and the
-        // resolution of the scalar type. E.g. for standard 64 bit
-        // floating point values, the resolution is about 10^-16 and
-        // the base epsilon is thus approximately 10^-8.
-        /*
-        static const Scalar baseEps
-            = geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-        */
-        static const Scalar baseEps = 1e-10;
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-        // the epsilon value used for the numeric differentiation is
-        // now scaled by the absolute value of the primary variable...
-        Scalar priVar = model_().curVolVars(scv).priVar(pvIdx);
-        return baseEps*(std::abs(priVar) + 1.0);
-    }
 
 protected:
     Implementation &asImp_()
@@ -280,15 +180,6 @@ protected:
     { return problem_().gridView(); }
 
     /*!
-     * \brief Returns a reference to the element.
-     */
-    const Element &element_() const
-    {
-        Valgrind::CheckDefined(elemPtr_);
-        return *elemPtr_;
-    }
-
-    /*!
      * \brief Returns a reference to the model.
      */
     const Model &model_() const
@@ -312,306 +203,54 @@ protected:
     const VertexMapper &vertexMapper_() const
     { return problem_().vertexMapper(); }
 
-    /*!
-     * \brief Reset the local jacobian matrix to 0
-     */
-    void reset_()
-    { A_ = 0.0; }
 
-    //! Evaluate the derivates wrt to the neighbors of this element
-    template <class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    evalNeighborDerivatives_(const Element& element, ElementSolutionVector& partialDeriv)
+    Scalar numericEpsilon(const SubControlVolume &scv,
+                          const int pvIdx) const
     {
-        const auto& neighborStencil = model_().stencils(element).neighborStencil();
-
-        // loop over the neighbors and calculation of the change in flux
-        // with a change in the primary variables at the neighboring dof
-        int j = 1;
-        for (auto globalJ : neighborStencil)
-        {
-            // loop over scvFaces/fluxVars of the element
-            // make a map from dofIndex to a set of fluxVars that depend on that dof's values
-            std::set<unsigned int> fluxVarIndices;
-            for (auto&& scvFace : fvElemGeom_().scvfs())
-            {
-                auto fluxVarsIdx = scvFace.index();
-                if (model_().fluxVars(fluxVarsIdx).stencil().count(globalJ))
-                    fluxVarIndices.insert(fluxVarsIdx);
-            }
-
-            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-            {
-                evalPartialDerivativeFlux_(partialDeriv, globalJ, pvIdx, fluxVarIndices);
-
-                // update the local stiffness matrix with the partial derivatives
-                updateLocalJacobian_(j, pvIdx, partialDeriv);
-            }
-
-            ++j;
-        }
-    }
-
-    //! nothing to do here: the box method assembly is element local
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    evalNeighborDerivatives_(const Element& element, ElementSolutionVector& partialDeriv) {}
-
-    /*!
-     * \brief Compute the partial derivatives to a primary variable at
-     *        an degree of freedom.
-     *
-     * This method can be overwritten by the implementation if a
-     * better scheme than numerical differentiation is available.
-     *
-     * The default implementation of this method uses numeric
-     * differentiation, i.e. forward or backward differences (2nd
-     * order), or central differences (3rd order). The method used is
-     * determined by the "NumericDifferenceMethod" property:
-     *
-     * - if the value of this property is smaller than 0, backward
-     *   differences are used, i.e.:
-     *   \f[
-         \frac{\partial f(x)}{\partial x} \approx \frac{f(x) - f(x - \epsilon)}{\epsilon}
-     *   \f]
-     *
-     * - if the value of this property is 0, central
-     *   differences are used, i.e.:
-     *   \f[
-           \frac{\partial f(x)}{\partial x} \approx \frac{f(x + \epsilon) - f(x - \epsilon)}{2 \epsilon}
-     *   \f]
-     *
-     * - if the value of this property is larger than 0, forward
-     *   differences are used, i.e.:
-     *   \f[
-           \frac{\partial f(x)}{\partial x} \approx \frac{f(x + \epsilon) - f(x)}{\epsilon}
-     *   \f]
-     *
-     * Here, \f$ f \f$ is the residual function for all equations, \f$x\f$
-     * is the value of a sub-control volume's primary variable at the
-     * evaluation point and \f$\epsilon\f$ is a small value larger than 0.
-     *
-     * \param partialDeriv The vector storing the partial derivatives of all
-     *              equations
-     * \param col The block column index of the degree of freedom
-     *            for which the partial derivative is calculated.
-     *            Box: a sub-control volume index.
-     *            Cell centered: a neighbor index.
-     * \param pvIdx The index of the primary variable
-     *              for which the partial derivative is calculated
-     */
-    void evalPartialDerivative_(ElementSolutionVector &partialDeriv,
-                                const SubControlVolume &scv,
-                                const int pvIdx)
-    {
-        auto dofIdxGlobal = scv.dofIndex();
-
-        PrimaryVariables priVars(model_().curSol()[dofIdxGlobal]);
-        VolumeVariables origVolVars(model_().curVolVars(scv));
-
-        Scalar eps = asImp_().numericEpsilon(scv, pvIdx);
-        Scalar delta = 0;
-
-        if (numericDifferenceMethod_ >= 0)
-        {
-            // we are not using backward differences, i.e. we need to
-            // calculate f(x + \epsilon)
-
-            // deflect primary variables
-            priVars[pvIdx] += eps;
-            delta += eps;
-
-            // update the volume variables
-            model_().curVolVars_(scv).update(priVars, problem_(), element_(), scv);
-
-            // calculate the residual with the deflected primary variables
-            localResidual().eval(element_(), bcTypes_);
-
-            // store the residual and the storage term
-            partialDeriv = localResidual().residual();
-        }
-        else
-        {
-            // we are using backward differences, i.e. we don't need
-            // to calculate f(x + \epsilon) and we can recycle the
-            // (already calculated) residual f(x)
-            partialDeriv = residual_;
-        }
-
-        if (numericDifferenceMethod_ <= 0)
-        {
-            // we are not using forward differences, i.e. we
-            // need to calculate f(x - \epsilon)
-
-            // deflect the primary variables
-            priVars[pvIdx] -= delta + eps;
-            delta += eps;
-
-            // update the volume variables
-            model_().curVolVars_(scv).update(priVars, problem_(), element_(), scv);
-
-            // calculate the residual with the deflected primary variables
-            localResidual().eval(element_(), bcTypes_);
-
-            // subtract the residual from the derivative storage
-            partialDeriv -= localResidual().residual();
-        }
-        else
-        {
-            // we are using forward differences, i.e. we don't need to
-            // calculate f(x - \epsilon) and we can recycle the
-            // (already calculated) residual f(x)
-            partialDeriv -= residual_;
-        }
-
-        // divide difference in residuals by the magnitude of the
-        // deflections between the two function evaluation
-        partialDeriv /= delta;
-
-        // restore the original state of the scv's volume variables
-        model_().curVolVars_(scv) = origVolVars;
-
-#if HAVE_VALGRIND
-        for (unsigned i = 0; i < partialDeriv.size(); ++i)
-            Valgrind::CheckDefined(partialDeriv[i]);
-#endif
-    }
-
-    void evalPartialDerivativeFlux_(ElementSolutionVector &partialDeriv,
-                                    const unsigned int globalJ,
-                                    const int pvIdx,
-                                    const std::set<unsigned int>& fluxVarsJ)
-    {
-        if (isBox)
-            DUNE_THROW(Dune::InvalidStateException, "Calling evalPartialDerivativeFlux_(...) for box method.");
-
-        const auto& scvJ = model_().fvGeometries().subControlVolume(globalJ);
-        PrimaryVariables priVarsJ(model_().curSol()[globalJ]);
-        VolumeVariables origVolVarsJ(model_().curVolVars(scvJ));
-
-        // calculate the flux in the undeflected state
-        PrimaryVariables origFlux(0.0);
-        for (auto fluxVarIdx : fluxVarsJ)
-            origFlux += localResidual().evalFlux_(fluxVarIdx);
-
-        Scalar eps = asImp_().numericEpsilon(scvJ, pvIdx);
-        Scalar delta = 0;
-
-        if (numericDifferenceMethod_ >= 0)
-        {
-            // we are not using backward differences, i.e. we need to
-            // calculate f(x + \epsilon)
-
-            // deflect primary variables
-            priVarsJ[pvIdx] += eps;
-            delta += eps;
-
-            // update the volume variables
-            auto neighborJ = problem_().model().fvGeometries().element(scvJ);
-            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), neighborJ, scvJ);
-
-            // calculate the flux with the deflected primary variables
-            // TODO: for solution dependent spatial params fluxVar update needed!
-            PrimaryVariables deflectFlux(0.0);
-            for (auto fluxVarIdx : fluxVarsJ)
-                deflectFlux += localResidual().evalFlux_(fluxVarIdx);
-
-            // store the calculated flux
-            partialDeriv[0] = deflectFlux;
-        }
-        else
-        {
-            // we are using backward differences, i.e. we don't need
-            // to calculate f(x + \epsilon) and we can recycle the
-            // (already calculated) flux f(x)
-            partialDeriv[0] = origFlux;
-        }
-
-        if (numericDifferenceMethod_ <= 0)
-        {
-            // we are not using forward differences, i.e. we
-            // need to calculate f(x - \epsilon)
-
-            // deflect the primary variables
-            priVarsJ[pvIdx] -= delta + eps;
-            delta += eps;
-
-            // update the volume variables
-            auto neighborJ = problem_().model().fvGeometries().element(scvJ);
-            model_().curVolVars_(scvJ).update(priVarsJ, problem_(), neighborJ, scvJ);
-
-            // calculate the flux with the deflected primary variables
-            // TODO: for solution dependent spatial params fluxVar update needed!
-            PrimaryVariables deflectFlux(0.0);
-            for (auto fluxVarIdx : fluxVarsJ)
-                deflectFlux += localResidual().evalFlux_(fluxVarIdx);
-
-            // subtract the residual from the derivative storage
-            partialDeriv[0] -= deflectFlux;
-        }
-        else
-        {
-            // we are using forward differences, i.e. we don't need to
-            // calculate f(x - \epsilon) and we can recycle the
-            // (already calculated) flux f(x)
-            partialDeriv[0] -= origFlux;
-        }
-
-        // divide difference in residuals by the magnitude of the
-        // deflections between the two function evaluation
-        partialDeriv /= delta;
-
-        // restore the original state of the scv's volume variables
-        model_().curVolVars_(scvJ) = origVolVarsJ;
-
-#if HAVE_VALGRIND
-        for (unsigned i = 0; i < partialDeriv.size(); ++i)
-            Valgrind::CheckDefined(partialDeriv[i]);
-#endif
+        // define the base epsilon as the geometric mean of 1 and the
+        // resolution of the scalar type. E.g. for standard 64 bit
+        // floating point values, the resolution is about 10^-16 and
+        // the base epsilon is thus approximately 10^-8.
+        /*
+        static const Scalar baseEps
+            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
+        */
+        static const Scalar baseEps = 1e-10;
+        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
+        // the epsilon value used for the numeric differentiation is
+        // now scaled by the absolute value of the primary variable...
+        Scalar priVar = model_().curVolVars(scv).priVar(pvIdx);
+        return baseEps*(std::abs(priVar) + 1.0);
     }
 
     /*!
-     * \brief Updates the current local Jacobian matrix with the
+     * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
      *        primary variable 'pvIdx' at dof 'col' .
      */
-    void updateLocalJacobian_(const int col,
-                              const int pvIdx,
-                              const ElementSolutionVector &partialDeriv)
+    void updateGlobalJacobian_(JacobianMatrix& matrix,
+                               const int globalI,
+                               const int globalJ,
+                               const int pvIdx,
+                               const PrimaryVariables &partialDeriv)
     {
-        for (auto&& scv : fvElemGeom_().scvs())
+        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
         {
-            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-            {
-                auto i = scv.indexInElement();
-                // A[i][col][eqIdx][pvIdx] is the rate of change of
-                // the residual of equation 'eqIdx' at dof 'i'
-                // depending on the primary variable 'pvIdx' at dof
-                // 'col'.
-                this->A_[i][col][eqIdx][pvIdx] = partialDeriv[i][eqIdx];
-                Valgrind::CheckDefined(this->A_[i][col][eqIdx][pvIdx]);
-            }
+            // A[i][col][eqIdx][pvIdx] is the rate of change of
+            // the residual of equation 'eqIdx' at dof 'i'
+            // depending on the primary variable 'pvIdx' at dof
+            // 'col'.
+            matrix[globalI][globalJ][eqIdx][pvIdx] = partialDeriv[eqIdx];
+            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
         }
     }
-
-    const FVElementGeometry& fvElemGeom_() const
-    {
-        return model_().fvGeometries(problem_().elementMapper().index(element_()));
-    }
-
-    const Element *elemPtr_;
-    ElementBoundaryTypes bcTypes_;
 
     // The problem we would like to solve
     Problem *problemPtr_;
 
     LocalResidual localResidual_;
 
-    LocalBlockMatrix A_;
-
     ElementSolutionVector residual_;
-
-    int numericDifferenceMethod_;
 };
 }
 

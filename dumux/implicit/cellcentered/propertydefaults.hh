@@ -32,6 +32,8 @@
 #include "localresidual.hh"
 #include "properties.hh"
 #include "stencils.hh"
+#include "localjacobian.hh"
+#include "assembler.hh"
 
 namespace Dumux
 {
@@ -48,6 +50,12 @@ SET_TYPE_PROP(CCModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
+
+//! The local jacobian operator
+SET_TYPE_PROP(CCModel, LocalJacobian, Dumux::CCLocalJacobian<TypeTag>);
+
+//! Assembler for the global jacobian matrix
+SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
 
 //! The stencil container
 SET_TYPE_PROP(CCModel, StencilsVector, CCStencilsVector<TypeTag>);

@@ -112,12 +112,6 @@ public:
     typedef Dumux::FluxVariables<TypeTag, advection, diffusion, energy> type;
 };
 
-//! The local jacobian operator
-SET_TYPE_PROP(ImplicitBase, LocalJacobian, ImplicitLocalJacobian<TypeTag>);
-
-//! Assembler for the global jacobian matrix
-SET_TYPE_PROP(ImplicitBase, JacobianAssembler, Dumux::ImplicitAssembler<TypeTag>);
-
 //! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,
               SolutionVector,

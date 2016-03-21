@@ -269,6 +269,21 @@ protected:
         }
     }
 
+    PrimaryVariables evalFlux_(const Element &element, const int scvfIdx)
+    {
+        const auto& scvf = model_().fvGeometries().subControlVolumeFace(scvfIdx);
+        elemPtr_ = &element;
+
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(problem_(), element, fvGeometry_());
+        bcTypesPtr_ = &bcTypes;
+
+        residual_.resize(fvGeometry_().numScv());
+        residual_ = 0;
+
+        return evalFlux_(scvf);
+    }
+
     PrimaryVariables evalFlux_(const int scvfIdx)
     {
         auto&& scvf = model_().fvGeometries().subControlVolumeFace(scvfIdx);

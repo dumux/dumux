@@ -150,7 +150,7 @@ protected:
     // linearize the whole system
     void assemble_()
     {
-        resetSystem_();
+        asImp_().resetSystem_();
 
         // reassemble the elements...
         for (const auto& element : elements(gridView_())) {
@@ -164,57 +164,6 @@ protected:
             }
         }
     }
-
-    // assemble an interior element for cell-centered models
-    template <class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    assembleElement_(const Element &element)
-    {
-        model_().localJacobian().assemble(element);
-
-        auto globalI = elementMapper_().index(element);
-
-        // update the right hand side
-        residual_[globalI] = model_().localJacobian().residual(0);
-        for (int j = 0; j < residual_[globalI].dimension; ++j)
-            assert(std::isfinite(residual_[globalI][j]));
-
-        // diagonal entry
-        (*matrix_)[globalI][globalI] = model_().localJacobian().mat(0, 0);
-
-        const auto& stencil = model_().stencils(element).neighborStencil();
-
-        unsigned int j = 1;
-        for (auto&& globalJ : stencil)
-            (*matrix_)[globalI][globalJ] = model_().localJacobian().mat(0, j++);
-    }
-
-    // assemble an interior element for box models
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    assembleElement_(const Element &element)
-    {
-        model_().localJacobian().assemble(element);
-
-        auto globalI = elementMapper_().index(element);
-
-        for(int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
-        {
-            auto globalI = vertexMapper_().subIndex(element, dim, vIdxLocal);
-
-            // update the right hand side
-            residual_[globalI] += model_().localJacobian().residual(vIdxLocal);
-            for (int j = 0; j < residual_[globalI].dimension; ++j)
-                assert(std::isfinite(residual_[globalI][j]));
-
-            const auto& stencil = model_().stencils(element).elementStencil();
-
-            unsigned int j = 1;
-            for (auto&& globalJ : stencil)
-                (*matrix_)[globalI][globalJ] += model_().localJacobian().mat(vIdxLocal, j++);
-        }
-    }
-
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &element)
     {
@@ -264,78 +213,21 @@ private:
         matrix_ = std::make_shared<JacobianMatrix>(numDofs, numDofs, JacobianMatrix::random);
 
         // set the row sizes
-        setRowSizes_();
+        asImp_().setRowSizes_();
 
         // set the indices
-        addIndices_();
+        asImp_().addIndices_();
     }
 
-    //! Set the row sizes for cell-centered methods
-    template <class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    setRowSizes_()
+    //! Set the row sizes
+    void setRowSizes_()
     {
-        for (const auto& element : elements(gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = elementMapper_().index(element);
-            const auto& stencil = model_().stencils(element).elementStencil();
-
-            matrix_->setrowsize(globalI, stencil.size());
-        }
-        matrix_->endrowsizes();
+        DUNE_THROW(Dune::NotImplemented, "Actual implementation does not provide a setRowSizes_() method!");
     }
 
-    //! Add non-zero matrix entries for cell-centered methods
-    template <class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    addIndices_()
+    void addIndices_()
     {
-        for (const auto& element : elements(gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = elementMapper_().index(element);
-            const auto& stencil = model_().stencils(element).elementStencil();
-
-
-            for (auto&& globalJ : stencil)
-                matrix_->addindex(globalI, globalJ);
-        }
-        matrix_->endindices();
-    }
-
-    //! Set the row sizes for vertex-centered box method
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    setRowSizes_()
-    {
-        for (const auto& vertex : vertices(gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = vertexMapper_().index(vertex);
-            const auto& stencil = model_().stencils(vertex).vertexStencil();
-
-            matrix_->setrowsize(globalI, stencil.size());
-        }
-        matrix_->endrowsizes();
-    }
-
-    //! Add non-zero matrix entries for vertex-centered box method
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), void>::type
-    addIndices_()
-    {
-        for (const auto& vertex : vertices(gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = vertexMapper_().index(vertex);
-            const auto& stencil = model_().stencils(vertex).vertexStencil();
-
-            for (auto&& globalJ : stencil)
-                matrix_->addindex(globalI, globalJ);
-
-            matrix_->endindices();
-        }
+        DUNE_THROW(Dune::NotImplemented, "Actual implementation does not provide a addIndices_() method!");
     }
 
     Implementation &asImp_()
