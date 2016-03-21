@@ -94,7 +94,7 @@ public:
                 VolumeVariables* boundaryVolVars)
     {
         boundaryVolVars_ = boundaryVolVars;
-        update(problem, scvFace, phaseIdx, compIdx);
+        update(problem, element, scvFace, phaseIdx, compIdx);
     }
 
     void beginFluxComputation(bool boundaryVolVarsUpdated = false)

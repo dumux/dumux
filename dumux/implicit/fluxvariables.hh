@@ -135,7 +135,7 @@ public:
         }
         else
         {
-            advection_.update(problem, scvf);
+            advection_.update(problem, element, scvf);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
