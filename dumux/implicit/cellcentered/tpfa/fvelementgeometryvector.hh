@@ -28,27 +28,10 @@
 #include <dumux/implicit/subcontrolvolume.hh>
 #include <dumux/implicit/subcontrolvolumeface.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
+#include <dumux/common/elementmap.hh>
 
 namespace Dumux
 {
-
-//! An index to element map
-template <class GridView>
-class ElementMap
-  : public std::vector<typename GridView::Traits::Grid::template Codim<0>::EntitySeed>
-{
-    using Grid = typename GridView::Traits::Grid;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-public:
-    ElementMap(const GridView& gridView_) : grid_(gridView_.grid()) {}
-
-    Element element(IndexType eIdx) const
-    { return grid_.entity((*this)[eIdx]); }
-
-private:
-    const Grid& grid_;
-};
 
 /*!
  * \ingroup ImplicitModel
