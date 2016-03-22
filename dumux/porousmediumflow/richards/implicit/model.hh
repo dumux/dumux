@@ -157,7 +157,7 @@ public:
         ScalarField *Te = writer.allocateManagedBuffer(numDofs);
         ScalarField *ph = writer.allocateManagedBuffer(numDofs);
         ScalarField *wc = writer.allocateManagedBuffer(numDofs);
-        ScalarField *source = writer.allocateManagedBuffer(numDofs);
+
 
         VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
@@ -195,12 +195,7 @@ public:
                 {
                     int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                    PrimaryVariables sourcevalues;
-                    this->problem_().solDependentSource(sourcevalues,
-                                                        element,
-                                                        fvGeometry,
-                                                        scvIdx,
-                                                        elemVolVars);
+
                     (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                     (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
                     (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
@@ -215,7 +210,7 @@ public:
                     if (gravity)
                         (*ph)[dofIdxGlobal] = elemVolVars[scvIdx].pressureHead(wPhaseIdx);
                     (*wc)[dofIdxGlobal] = elemVolVars[scvIdx].waterContent(wPhaseIdx);
-                    (*source)[dofIdxGlobal] = sourcevalues[0];
+
                 }
 
                 // velocity output
@@ -237,7 +232,7 @@ public:
         if (gravity)
             writer.attachDofData(*ph, "pressure head", isBox);
         writer.attachDofData(*wc, "water content", isBox);
-        writer.attachDofData(*source, "source", isBox);
+
 
         if (velocityOutput.enableOutput())
         {
