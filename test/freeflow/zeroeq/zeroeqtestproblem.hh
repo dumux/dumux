@@ -26,12 +26,6 @@
 #ifndef DUMUX_ZEROEQTESTPROBLEM_HH
 #define DUMUX_ZEROEQTESTPROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#else
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#endif
-
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 

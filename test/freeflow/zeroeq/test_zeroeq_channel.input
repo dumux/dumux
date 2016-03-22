@@ -3,7 +3,9 @@ DtInitial = 0.001 # [s]
 TEnd = 10 # [s]
 
 [Grid]
-File = grids/channel.dgf
+LowerLeft = 0 0
+UpperRight = 5.0 1.5
+Cells = 25 15
 
 [Problem]
 OutputName = "zeroeqchannel"
