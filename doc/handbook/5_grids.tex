@@ -27,7 +27,7 @@ the provided GUI, we refer to the Gmsh documentation (\url{http://geuz.org/gmsh/
 
 The MSH format can contain element and boundary markers defined in the grid. Thus, boundaries can be easily marked as e.g. inflow boundaries
 using Gmsh. Further, the format supports higher order elements. They can be used to create boundary parameterization supported by e.g. the grid
-manager \texttt{UGGrid}. 
+manager \texttt{UGGrid}.
 An example can be found in \texttt{dumux/test\allowbreak/io/gridcreator}.
 
 
@@ -68,9 +68,6 @@ ClosureType = None # or Green
 For all available parameters see the Doxygen documentation.
 
 \subsubsection{Structured grids}
-Be aware that the following feature is only (!) available when using \Dumux with \Dune 2.4. For constructing structured grids with \Dune 2.3
-please read the following section.
-
 If you want to construct a structured grid with the default grid creator instead of the \texttt{File} key supply
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
@@ -93,21 +90,6 @@ Cells = 10 10 20
 CellType = Cube # or Simplex
 \end{lstlisting}
 For all available parameters see the Doxygen documentation.
-
-\subsection[\texttt{CubeGridCreator} and \texttt{SimplexGridCreator}]{\texttt{CubeGridCreator} and \texttt{SimplexGridCreator}\footnote{Structured grid creation will be much simpler with \Dune 2.4, see previous section.}}
-As stated in the introduction to section~\ref{sec:gridhandling}, the grid creator is an exchangeable property. In order to
-use a structured grid generated from parameters in the input file, we have to change the grid creator for the problem to e.g.
-\begin{lstlisting}[style=DumuxCode]
-SET_TYPE_PROP(MyProblem, GridCreator, CubeGridCreator<TypeTag>);
-\end{lstlisting}
-Then, a two-dimensional quadrilateral structured grid with zero lower left corner can be constructed with the following input file
-\begin{lstlisting}[style=DumuxParameterFile]
-[Grid]
-UpperRightX = 1
-UpperRightY = 1
-CellsX = 10
-CellsY = 20
-\end{lstlisting}
 
 \subsection{Other grid formats and customized grid creators}
 Other grid formats than DGF and MSH have to be converted to DGF or MSH to be read into \Dumux. A second possiblity (advanced C++) is to write your own
