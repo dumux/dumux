@@ -6,5 +6,5 @@ TEnd = 1e4 # [s]
 EnableGravity = 0
 
 [Grid]
-File = grids/test_el1p2c.dgf
-
+UpperRight = 10 10 10
+Cells = 4 4 4
