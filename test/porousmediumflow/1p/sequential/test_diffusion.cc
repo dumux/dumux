@@ -27,7 +27,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/grid/utility/structuredgridfactory.hh>
 
 #include "test_diffusionproblem.hh"
 #include "resultevaluation.hh"
@@ -35,6 +34,7 @@
 ////////////////////////
 // the main function
 ////////////////////////
+
 void usage(const char *progname)
 {
     std::cout << "usage: " << progname << " #refine [delta]\n";
@@ -45,10 +45,6 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(FVVelocity2PTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        static const int dim = Grid::dimension;
-        typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -69,15 +65,10 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        std::array<unsigned int, dim> cellRes;
-        cellRes.fill(1);
-        GlobalPosition lowerLeft(0.0);
-        GlobalPosition upperRight(1.0);
-        static std::shared_ptr<Grid> grid
-            = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft,
-                                                                upperRight,
-                                                                cellRes);
-        grid->globalRefine(numRefine);
+        using GridCreator = GET_PROP_TYPE(TypeTag, GridCreator);
+        GridCreator::createGrid();
+        auto& grid = GridCreator::grid();
+        grid.globalRefine(numRefine);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
@@ -86,7 +77,7 @@ int main(int argc, char** argv)
         bool consecutiveNumbering = true;
 
         typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
-        FVProblem fvProblem(grid->leafGridView(), delta);
+        FVProblem fvProblem(grid.leafGridView(), delta);
         fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
@@ -94,27 +85,27 @@ int main(int argc, char** argv)
         double fvTime = timer.elapsed();
         fvProblem.writeOutput();
         Dumux::ResultEvaluation fvResult;
-        fvResult.evaluate(grid->leafGridView(), fvProblem, consecutiveNumbering);
+        fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
-        MPFAOProblem mpfaProblem(grid->leafGridView(), delta);
+        MPFAOProblem mpfaProblem(grid.leafGridView(), delta);
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
         mpfaProblem.init();
         double mpfaTime = timer.elapsed();
         mpfaProblem.writeOutput();
         Dumux::ResultEvaluation mpfaResult;
-        mpfaResult.evaluate(grid->leafGridView(), mpfaProblem, consecutiveNumbering);
+        mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
-        MimeticProblem mimeticProblem(grid->leafGridView(), delta);
+        MimeticProblem mimeticProblem(grid.leafGridView(), delta);
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();
         mimeticProblem.init();
         double mimeticTime = timer.elapsed();
         mimeticProblem.writeOutput();
         Dumux::ResultEvaluation mimeticResult;
-        mimeticResult.evaluate(grid->leafGridView(), mimeticProblem, consecutiveNumbering);
+        mimeticResult.evaluate(grid.leafGridView(), mimeticProblem, consecutiveNumbering);
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
         std::cout.precision(2);
