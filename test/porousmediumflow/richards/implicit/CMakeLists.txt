@@ -29,7 +29,7 @@ add_dumux_test(test_ccrichardsanalytical test_ccrichardsanalytical test_ccrichar
                  python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/richardsanalyticalcc-01002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/richardsanalyticalcc-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical")
 
 # non-isothermal tests

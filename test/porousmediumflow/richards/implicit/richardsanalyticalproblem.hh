@@ -390,6 +390,22 @@ public:
                   << std::endl;
     }
 
+    /*!
+     * \brief If we should write output
+     */
+    bool shouldWriteOutput()
+    {
+        return this->timeManager().willBeFinished();
+    }
+
+    /*!
+     * \brief If we should write output
+     */
+    bool shouldWriteRestartFile()
+    {
+        return false;
+    }
+
 private:
 
     // evalutates if global position is at lower boundary
