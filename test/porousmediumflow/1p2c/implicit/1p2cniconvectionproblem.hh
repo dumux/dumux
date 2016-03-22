@@ -26,8 +26,6 @@
 #ifndef DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/h2o.hh>

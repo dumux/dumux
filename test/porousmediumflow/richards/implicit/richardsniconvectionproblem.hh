@@ -27,7 +27,6 @@
 #define DUMUX_1PNI_CONVECTION_PROBLEM_HH
 
 #include <math.h>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/porousmediumflow/richards/implicit/model.hh>

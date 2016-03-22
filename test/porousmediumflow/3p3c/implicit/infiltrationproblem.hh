@@ -25,8 +25,6 @@
 #ifndef DUMUX_INFILTRATIONPROBLEM_HH
 #define DUMUX_INFILTRATIONPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
 #include <dumux/porousmediumflow/3p3c/implicit/model.hh>

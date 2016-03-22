@@ -24,8 +24,6 @@
 #ifndef DUMUX_THERMAL_CONDUCTIVITY_JOHANSEN_PROBLEM_HH
 #define DUMUX_THERMAL_CONDUCTIVITY_JOHANSEN_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/material/fluidsystems/h2on2.hh>
 
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>

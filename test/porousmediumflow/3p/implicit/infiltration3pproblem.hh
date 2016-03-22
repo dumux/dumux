@@ -25,8 +25,6 @@
 #ifndef DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
