@@ -3,7 +3,9 @@ DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-File = ./grids/test_2p2cni.dgf
+LowerLeft = 0 0
+UpperRight = 40 40
+Cells = 64 64
 
 [Problem]
 Name = wateraircc

@@ -3,7 +3,9 @@ DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-File = ./grids/test_2p2c.dgf
+LowerLeft = 0 0
+UpperRight = 60 40
+Cells = 24 16
 
 [Problem]
 Name = injectioncc # [-] the name of the output files
