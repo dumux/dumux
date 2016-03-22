@@ -3,7 +3,9 @@ DtInitial = .1 # [s]
 TEnd = 10 # [s]
 
 [Grid]
-File = grids/testpipe.dgf
+LowerLeft = 0 0
+UpperRight = 3 1
+Cells = 30 20
 
 [Problem]
 OutputName = "zeroeq2c"
