@@ -5,18 +5,9 @@
 
 - If the AMGBackend should be used without SuperLU as coarse grid solver, it can
   be benefitial to decrease the corresponding tolerance. To do so, apply the
-  patch istl-2.3.0.patch in your directory containing
-  dune-istl 2.3.0, e.g.:
-  patch -p1 <../dumux/patches/istl-2.3.0.patch
-
-- If UG has been installed for parallel usage, and you want to run a Dumux
-  multidomain model, you have to patch dune-grid. The patch will introduce
-  geometries for edges and faces in UG, which need to be present, otherwise the
-  compiler will complain. Apply the patch grid-2.3.1.patch in your directory
-  containing dune-grid 2.3.1 by, e.g.:
-  patch -p1 <../dumux/patches/grid-2.3.1.patch
-  If you want to use Dune 2.4, the missing functionality is already included,
-  so the patch is not needed.
+  patch istl-2.4.1.patch in your directory containing
+  dune-istl 2.4.1, e.g.:
+  patch -p1 <../dumux/patches/istl-2.4.1.patch
 
 - If dune-cornerpoint has to be used for, e.g., employing the CpGridCreator,
   and Opm is compiled from source, it might be necessary to patch opm-parser:
