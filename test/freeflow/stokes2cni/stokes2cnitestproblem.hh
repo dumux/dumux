@@ -23,8 +23,6 @@
 #ifndef DUMUX_STOKES2CNITESTPROBLEM_HH
 #define DUMUX_STOKES2CNITESTPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #if HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
 #endif
