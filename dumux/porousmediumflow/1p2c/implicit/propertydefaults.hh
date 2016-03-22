@@ -120,6 +120,18 @@ SET_BOOL_PROP(OnePTwoC, ProblemEnableGravity, true);
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(OnePTwoC, SpatialParamsForchCoeff, 0.55);
 
+//! set the minimum plausible values for pressure and mole/mass fraction
+SET_NUMEQARRAY_PROP(OnePTwoC, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0);
+
+//! set the maximum plausible values for pressure and mole/mass fraction
+SET_NUMEQARRAY_PROP(OnePTwoC, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1);
+
+//! threshold for minimum plausible values: allow 1e-6 for mole/mass fraction
+SET_NUMEQARRAY_PROP(OnePTwoC, ImplicitMinPlausibleValuesThresholds, 0, 1e-6);
+
+//! threshold for maximum plausible values: allow 1e-6 for mole/mass fraction
+SET_NUMEQARRAY_PROP(OnePTwoC, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6);
+
 //! average is used as default model to compute the effective thermal heat conductivity
 SET_PROP(OnePTwoCNI, ThermalConductivityModel)
 { private :
@@ -127,6 +139,18 @@ SET_PROP(OnePTwoCNI, ThermalConductivityModel)
   public:
     typedef ThermalConductivityAverage<Scalar> type;
 };
+
+//! non-isothermal model: set the minimum plausible values
+SET_NUMEQARRAY_PROP(OnePTwoCNI, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0, 0);
+
+//! non-isothermal model: set the maximum plausible values
+SET_NUMEQARRAY_PROP(OnePTwoCNI, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1, std::numeric_limits<Scalar>::max());
+
+//! non-isothermal model: threshold for minimum plausible values
+SET_NUMEQARRAY_PROP(OnePTwoCNI, ImplicitMinPlausibleValuesThresholds, 0, 1e-6, 0);
+
+//! non-isothermal model: threshold for maximum plausible values
+SET_NUMEQARRAY_PROP(OnePTwoCNI, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6, 0);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

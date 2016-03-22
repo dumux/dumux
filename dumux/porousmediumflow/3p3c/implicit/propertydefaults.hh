@@ -161,7 +161,19 @@ SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(ThreePThreeC, SpatialParamsForchCoeff, 0.55);
+
+//! set the minimum plausible values for pressure and switch variables
+SET_NUMEQARRAY_PROP(ThreePThreeC, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0, 0);
+
+//! set the maximum plausible values for pressure and switch variables
+SET_NUMEQARRAY_PROP(ThreePThreeC, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1, 1);
+
+//! threshold for minimum plausible values: allow 1e-6 for switch variables
+SET_NUMEQARRAY_PROP(ThreePThreeC, ImplicitMinPlausibleValuesThresholds, 0, 1e-6, 1e-6);
+
+//! threshold for maximum plausible values: allow 1e-6 for switch variables
+SET_NUMEQARRAY_PROP(ThreePThreeC, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6, 1e-6);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePThreeCNI, ThermalConductivityModel)
@@ -202,6 +214,18 @@ public:
 
 //set isothermal NumEq
 SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
+
+//! non-isothermal model: set the minimum plausible values
+SET_NUMEQARRAY_PROP(ThreePThreeCNI, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0, 0, 0);
+
+//! non-isothermal model: set the maximum plausible values
+SET_NUMEQARRAY_PROP(ThreePThreeCNI, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1, 1, std::numeric_limits<Scalar>::max());
+
+//! non-isothermal model: threshold for minimum plausible values
+SET_NUMEQARRAY_PROP(ThreePThreeCNI, ImplicitMinPlausibleValuesThresholds, 0, 1e-6, 1e-6, 0);
+
+//! non-isothermal model: threshold for maximum plausible values
+SET_NUMEQARRAY_PROP(ThreePThreeCNI, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6, 1e-6, 0);
 
 }
 

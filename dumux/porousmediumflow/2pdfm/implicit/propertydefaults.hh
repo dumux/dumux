@@ -139,6 +139,19 @@ SET_BOOL_PROP(TwoPDFM, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(TwoPDFM, ProblemEnableGravity, true);
+
+//! set the minimum plausible values for pressure and saturation
+SET_NUMEQARRAY_PROP(TwoPDFM, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0);
+
+//! set the maximum plausible values for pressure and saturation
+SET_NUMEQARRAY_PROP(TwoPDFM, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1);
+
+//! threshold for minimum plausible values: allow 1e-6 for saturation
+SET_NUMEQARRAY_PROP(TwoPDFM, ImplicitMinPlausibleValuesThresholds, 0, 1e-6);
+
+//! threshold for maximum plausible values: allow 1e-6 for saturation
+SET_NUMEQARRAY_PROP(TwoPDFM, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6);
+
 } // end namespace Properties
 } // end namespace Dumux
 

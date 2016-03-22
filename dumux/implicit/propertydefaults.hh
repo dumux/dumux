@@ -30,6 +30,8 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
+#include <limits>
+
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/common/boundarytypes.hh>
@@ -152,6 +154,18 @@ SET_INT_PROP(ImplicitBase, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq)
 
 //! set number of maximum timestep divisions to 10
 SET_INT_PROP(ImplicitBase, ImplicitMaxTimeStepDivisions, 10);
+
+//! minimum plausible values: allow everything for the general implicit model
+SET_NUMEQARRAY_PROP(ImplicitBase, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest());
+
+//! maximum plausible values: allow everything for the general implicit model
+SET_NUMEQARRAY_PROP(ImplicitBase, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max());
+
+//! thresholds for minimum plausible values: set all to zero
+SET_NUMEQARRAY_PROP(ImplicitBase, ImplicitMinPlausibleValuesThresholds, 0);
+
+//! thresholds for maximum plausible values: set all to zero
+SET_NUMEQARRAY_PROP(ImplicitBase, ImplicitMaxPlausibleValuesThresholds, 0);
 
 } // namespace Properties
 } // namespace Dumux

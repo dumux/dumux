@@ -129,6 +129,11 @@ NEW_PROP_TAG(ImplicitLocalFemMap);
 //! the PDELab backend used for the AMG backend
 NEW_PROP_TAG(ImplicitPDELabBackend);
 
+NEW_PROP_TAG(ImplicitMinPlausibleValues);
+NEW_PROP_TAG(ImplicitMaxPlausibleValues);
+NEW_PROP_TAG(ImplicitMinPlausibleValuesThresholds);
+NEW_PROP_TAG(ImplicitMaxPlausibleValuesThresholds);
+
 }
 }
 

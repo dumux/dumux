@@ -147,6 +147,18 @@ SET_BOOL_PROP(TwoP, ProblemEnableGravity, true);
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(TwoP, SpatialParamsForchCoeff, 0.55);
 
+//! set the minimum plausible values for pressure and saturation
+SET_NUMEQARRAY_PROP(TwoP, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0);
+
+//! set the maximum plausible values for pressure and saturation
+SET_NUMEQARRAY_PROP(TwoP, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1);
+
+//! threshold for minimum plausible values: allow 1e-6 for saturation
+SET_NUMEQARRAY_PROP(TwoP, ImplicitMinPlausibleValuesThresholds, 0, 1e-6);
+
+//! threshold for maximum plausible values: allow 1e-6 for saturation
+SET_NUMEQARRAY_PROP(TwoP, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6);
+
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNI, ThermalConductivityModel)
 {
@@ -159,6 +171,18 @@ public:
 
 //! temperature is already written by the isothermal model
 SET_BOOL_PROP(TwoPNI, NiOutputLevel, 0);
+
+//! non-isothermal model: set the minimum plausible values
+SET_NUMEQARRAY_PROP(TwoPNI, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0, 0);
+
+//! non-isothermal model: set the maximum plausible values
+SET_NUMEQARRAY_PROP(TwoPNI, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1, std::numeric_limits<Scalar>::max());
+
+//! non-isothermal model: threshold for minimum plausible values
+SET_NUMEQARRAY_PROP(TwoPNI, ImplicitMinPlausibleValuesThresholds, 0, 1e-6, 0);
+
+//! non-isothermal model: threshold for maximum plausible values
+SET_NUMEQARRAY_PROP(TwoPNI, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6, 0);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

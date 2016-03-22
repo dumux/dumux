@@ -28,11 +28,17 @@
 
 #include "properties.hh"
 #include <dumux/implicit/adaptive/gridadaptproperties.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 namespace Dumux
 {
+namespace Properties
+{
+NEW_PROP_TAG(NewtonEnableChop);
+SET_BOOL_PROP(ImplicitBase, NewtonEnableChop, false);
+}
 
 /*!
  * \ingroup ImplicitModel
@@ -441,13 +447,49 @@ public:
     /*!
      * \brief Check the plausibility of the current solution
      *
-     *        This has to be done by the actual model, it knows
-     *        best, what (ranges of) variables to check.
-     *        This is primarily a hook
-     *        which the actual model can overload.
+     * The minimum and maximum plausible values for each primary variable can be
+     * specified by the properties/parameters ImplicitMinPlausibleValues and
+     * ImplicitMaxPlausibleValues, respectively. Default values should be given
+     * for each model in its propertydefaults.hh, which can be overwritten by
+     * the input file at hand.
      */
     void checkPlausibility() const
-    { }
+    {
+        typedef PrintableArray<Scalar, numEq> Array;
+        auto minValues = GET_PARAM_FROM_GROUP(TypeTag, Array, Implicit, MinPlausibleValues);
+        auto maxValues = GET_PARAM_FROM_GROUP(TypeTag, Array, Implicit, MaxPlausibleValues);
+        auto minValuesThresholds = GET_PARAM_FROM_GROUP(TypeTag, Array, Implicit, MinPlausibleValuesThresholds);
+        auto maxValuesThresholds = GET_PARAM_FROM_GROUP(TypeTag, Array, Implicit, MaxPlausibleValuesThresholds);
+
+        for (const auto& priVars : curSol())
+        {
+            for (unsigned i = 0; i < numEq; ++i)
+            {
+                if (priVars[i] < minValues[i] - minValuesThresholds[i])
+                {
+                    std::ostringstream oss;
+                    oss << "priVars[" << i << "] = " << priVars[i]
+                        << " is less than the minimum allowed value "
+                        << minValues[i];
+                    if (minValuesThresholds[i] > 0)
+                        oss << " (minus a threshold of "
+                            << minValuesThresholds[i] << ")";
+                    DUNE_THROW(NumericalProblem, oss.str());
+                }
+                else if (priVars[i] > maxValues[i] + maxValuesThresholds[i])
+                {
+                    std::ostringstream oss;
+                    oss << "priVars[" << i << "] = " << priVars[i]
+                        << " is greater than the maximum allowed value "
+                        << maxValues[i];
+                    if (maxValuesThresholds[i] > 0)
+                        oss << " (plus a threshold of "
+                            << maxValuesThresholds[i] << ")";
+                    DUNE_THROW(NumericalProblem, oss.str());
+                }
+            }
+        }
+    }
 
     /*!
      * \brief Called by the update() method before it tries to

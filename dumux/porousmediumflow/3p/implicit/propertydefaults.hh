@@ -117,6 +117,18 @@ SET_BOOL_PROP(ThreeP, VtkAddVelocity, false);
 // enable gravity by default
 SET_BOOL_PROP(ThreeP, ProblemEnableGravity, true);
 
+//! set the minimum plausible values for pressure and saturations
+SET_NUMEQARRAY_PROP(ThreeP, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0, 0);
+
+//! set the maximum plausible values for pressure and saturations
+SET_NUMEQARRAY_PROP(ThreeP, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1, 1);
+
+//! threshold for minimum plausible values: allow 1e-6 for saturations
+SET_NUMEQARRAY_PROP(ThreeP, ImplicitMinPlausibleValuesThresholds, 0, 1e-6, 1e-6);
+
+//! threshold for maximum plausible values: allow 1e-6 for saturations
+SET_NUMEQARRAY_PROP(ThreeP, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6, 1e-6);
+
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePNI, ThermalConductivityModel)
 {
@@ -151,6 +163,18 @@ SET_TYPE_PROP(ThreePNI, IsothermalIndices, ThreePIndices<TypeTag,/*PVOffset=*/0>
 
 //set isothermal NumEq
 SET_INT_PROP(ThreePNI, IsothermalNumEq, 3);
+
+//! non-isothermal model: set the minimum plausible values
+SET_NUMEQARRAY_PROP(ThreePNI, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0, 0, 0);
+
+//! non-isothermal model: set the maximum plausible values
+SET_NUMEQARRAY_PROP(ThreePNI, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max(), 1, 1, std::numeric_limits<Scalar>::max());
+
+//! non-isothermal model: threshold for minimum plausible values
+SET_NUMEQARRAY_PROP(ThreePNI, ImplicitMinPlausibleValuesThresholds, 0, 1e-6, 1e-6, 0);
+
+//! non-isothermal model: threshold for maximum plausible values
+SET_NUMEQARRAY_PROP(ThreePNI, ImplicitMaxPlausibleValuesThresholds, 0, 1e-6, 1e-6, 0);
 
 }
 

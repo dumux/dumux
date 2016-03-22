@@ -126,6 +126,18 @@ SET_PROP(OnePNI, ThermalConductivityModel)
     typedef ThermalConductivityAverage<Scalar> type;
 };
 
+//! non-isothermal model: set the minimum plausible values
+SET_NUMEQARRAY_PROP(OnePNI, ImplicitMinPlausibleValues, std::numeric_limits<Scalar>::lowest(), 0);
+
+//! non-isothermal model: set the maximum plausible values
+SET_NUMEQARRAY_PROP(OnePNI, ImplicitMaxPlausibleValues, std::numeric_limits<Scalar>::max());
+
+//! non-isothermal model: thresholds for minimum plausible values
+SET_NUMEQARRAY_PROP(OnePNI, ImplicitMinPlausibleValuesThresholds, 0);
+
+//! non-isothermal model: thresholds for maximum plausible values
+SET_NUMEQARRAY_PROP(OnePNI, ImplicitMaxPlausibleValuesThresholds, 0);
+
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////

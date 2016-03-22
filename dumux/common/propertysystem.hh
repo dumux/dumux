@@ -52,6 +52,85 @@
 
 // Integral Constant Expressions
 #include <dune/common/classname.hh>
+#include <dune/common/parametertree.hh>
+
+namespace Dumux
+{
+// The following possibility for filling a constexpr array
+// is adapted from
+// http://stackoverflow.com/questions/23901394/
+template <std::size_t n>
+struct StaticFill
+{
+    template <typename T, typename ...Tn>
+    static constexpr auto apply(T v, Tn ...vs)
+        -> decltype(StaticFill<n-1>::apply(v, v, vs...))
+    {
+        return StaticFill<n-1>::apply(v, v, vs...);
+    }
+};
+
+template <>
+struct StaticFill<1>
+{
+    template <typename T, typename ...Tn>
+    static constexpr auto apply(T v, Tn ...vs)
+        -> std::array<T, sizeof...(vs) + 1>
+    {
+        return std::array<T, sizeof...(vs) + 1>{v, vs...};
+    }
+};
+
+template<class T, std::size_t n>
+class PrintableArray
+{
+public:
+    template <typename... Args>
+    constexpr PrintableArray(Args&&... args)
+    : data_({T(std::forward<Args>(args))...})
+    {}
+
+    constexpr PrintableArray(T&& value)
+    : data_(StaticFill<n>::apply(value))
+    {}
+
+    T& operator[](std::size_t i)
+    {
+        return data_[i];
+    }
+
+    const T& operator[](std::size_t i) const
+    {
+        return data_[i];
+    }
+
+private:
+    std::array<T, n> data_;
+};
+
+template<class T, std::size_t n>
+std::ostream& operator<<(std::ostream& out, PrintableArray<T, n>& a)
+{
+    for (std::size_t i = 0; i < n-1; ++i)
+        out << a[i] << ", ";
+    out << a[n-1];
+    return out;
+}
+
+}
+
+namespace Dune
+{
+template<typename T, std::size_t n>
+struct ParameterTree::Parser<Dumux::PrintableArray<T, n> > {
+    static Dumux::PrintableArray<T, n>
+    parse(const std::string& str) {
+        Dumux::PrintableArray<T, n> val;
+        parseRange(str, &val[0], &val[n]);
+        return val;
+    }
+};
+}
 
 namespace Dumux
 {
@@ -326,6 +405,41 @@ namespace Properties
     template <class TypeTag>                                            \
     const typename Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::type   \
     Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__)
+
+#define PP_NARG(...) PP_NARG_(__VA_ARGS__, PP_RSEQ_N())
+#define PP_NARG_(...) PP_ARG_N(__VA_ARGS__)
+#define PP_ARG_N(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,\
+                 _11,_12,_13,_14,_15,_16,_17,_18,_19,_20,\
+                 _21,_22,_23,_24,_25,_26,_27,_28,_29,_30,\
+                 _31,_32,_33,_34,_35,_36,_37,_38,_39,_40,\
+                 _41,_42,_43,_44,_45,_46,_47,_48,_49,_50,\
+                 _51,_52,_53,_54,_55,_56,_57,_58,_59,_60,\
+                 _61,_62,_63,N,...) N
+#define PP_RSEQ_N() 63,62,61,60,\
+                    59,58,57,56,55,54,53,52,51,50,\
+                    49,48,47,46,45,44,43,42,41,40,\
+                    39,38,37,36,35,34,33,32,31,30,\
+                    29,28,27,26,25,24,23,22,21,20,\
+                    19,18,17,16,15,14,13,12,11,10,\
+                    9,8,7,6,5,4,3,2,1,0
+
+/*!
+ * \brief Set a property which defines a type.
+ *
+ * The type can be accessed by the 'type' attribute.
+ */
+#define SET_NUMEQARRAY_PROP(EffTypeTagName, PropTagName, ...)  \
+    SET_PROP_(EffTypeTagName,                                           \
+              /*kind=*/"PrintableArray  ",                              \
+              PropTagName,                                              \
+              /*value=*/__VA_ARGS__)                                    \
+    {                                                                   \
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;         \
+        enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };                \
+    public:                                                             \
+        typedef PrintableArray<Scalar, numEq> type;                     \
+        static constexpr type value{__VA_ARGS__};                \
+    }
 
 /*!
  * \brief Set a property to a simple constant string value.

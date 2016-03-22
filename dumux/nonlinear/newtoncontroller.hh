@@ -494,9 +494,6 @@ public:
             std::cout << endIterMsg().str() << "\n";
         }
         endIterMsgStream_.str("");
-
-        // When the Newton iterations are done: ask the model to check whether it makes sense
-        model_().checkPlausibility();
     }
 
     /*!
@@ -507,6 +504,9 @@ public:
     {
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
             convergenceWriter_.endTimestep();
+
+        // ask the model if the values are plausible
+        model_().checkPlausibility();
     }
 
     /*!
