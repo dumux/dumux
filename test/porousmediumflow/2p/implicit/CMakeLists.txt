@@ -46,7 +46,7 @@ add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-simplex-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00008.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni -Grid.CellType Simplex")
 else()
 add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -62,7 +62,7 @@ add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-simplex-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00009.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni -Grid.CellType Simplex")
 else()
 add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
