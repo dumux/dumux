@@ -3,7 +3,9 @@ DtInitial = 250 # [s]
 TEnd = 3000 # [s]
 
 [Grid]
-File = ./grids/test_2p.dgf
+LowerLeft = 0 0
+UpperRight = 6 4
+Cells = 48 32
 
 [SpatialParams]
 LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner

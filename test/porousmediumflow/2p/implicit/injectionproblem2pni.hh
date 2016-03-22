@@ -27,12 +27,6 @@
 #ifndef DUMUX_INJECTION_PROBLEM_2PNI_HH
 #define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
-#include <dumux/io/simplexgridcreator.hh>
-#include <dumux/io/cubegridcreator.hh>
-
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
@@ -61,13 +55,6 @@ NEW_TYPE_TAG(InjectionBoxProblem2PNI, INHERITS_FROM(BoxModel, InjectionProblem2P
 NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCModel, InjectionProblem2PNI));
 #endif
 
-// set the GridCreator property
-#if HAVE_UG
-SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, Dumux::SimplexGridCreator<TypeTag>);
-#else
-SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, Dumux::CubeGridCreator<TypeTag>);
-#endif
-
 // Set the grid type
 #if HAVE_UG
 SET_TYPE_PROP(InjectionProblem2PNI, Grid, Dune::UGGrid<2>);
@@ -78,22 +65,21 @@ SET_TYPE_PROP(InjectionProblem2PNI, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(InjectionProblem2PNI, Problem, Dumux::InjectionProblem2PNI<TypeTag>);
 
-#if 1
 // Use the same fluid system as the 2p2c injection problem
 SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
-#else
+
+// Alternative: set phases separately
 // Set the wetting phase
-SET_TYPE_PROP(InjectionProblem2PNI,
-              WettingPhase,
-              Dumux::FluidSystems::LiquidPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
-                                               Dumux::SimpleH2O<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
+// SET_TYPE_PROP(InjectionProblem2PNI,
+//               WettingPhase,
+//               Dumux::FluidSystems::LiquidPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
+//                                                Dumux::SimpleH2O<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 
 // Set the non-wetting phase
-SET_TYPE_PROP(InjectionProblem2PNI,
-              NonwettingPhase,
-              Dumux::FluidSystems::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
-                                            Dumux::N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
-#endif
+// SET_TYPE_PROP(InjectionProblem2PNI,
+//               NonwettingPhase,
+//               Dumux::FluidSystems::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
+//                                             Dumux::N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 }
 
 /*!

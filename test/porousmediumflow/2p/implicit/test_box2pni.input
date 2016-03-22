@@ -3,11 +3,9 @@ DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-NumberOfCellsX = 24 # [-] resolution in x-direction
-NumberOfCellsY = 16 # [-] resolution in y-direction
-
-UpperRightX = 60 # [m] length of the domain
-UpperRightY = 40 # [m] height of the domain
+LowerLeft = 0 0
+UpperRight = 60 40
+Cells = 24 16
 
 [Problem]
 Name = injection2pnibox

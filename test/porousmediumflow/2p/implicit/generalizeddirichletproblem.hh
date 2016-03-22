@@ -30,16 +30,12 @@
 // The base porous media box problem
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-// The DUNE grid used
-#include <dune/grid/yaspgrid.hh>
-
 // Spatially dependent parameters
 #include "generalizeddirichletspatialparams.hh"
 
 // The components that are used
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/lnapl.hh>
-#include <dumux/io/cubegridcreator.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 namespace Dumux{
@@ -55,9 +51,8 @@ NEW_TYPE_TAG(GeneralizedDirichletProblem, INHERITS_FROM(BoxTwoP, GeneralizedDiri
 SET_PROP(GeneralizedDirichletProblem, Problem)
 { typedef Dumux::GeneralizedDirichletProblem<TypeTag> type;};
 
-// Set grid and the grid creator to be used
+// Set grid to be used
 SET_TYPE_PROP(GeneralizedDirichletProblem, Grid, Dune::YaspGrid<1>);
-SET_TYPE_PROP(GeneralizedDirichletProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(GeneralizedDirichletProblem, WettingPhase)

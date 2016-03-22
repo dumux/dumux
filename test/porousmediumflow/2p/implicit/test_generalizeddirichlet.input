@@ -6,5 +6,6 @@ DtInitial = 10 # initial time step size [s]
 Name = generalizeddirichlet # name passed to the output routines
 
 [Grid]
-UpperRightX = 300 # coordinate of the right corner of the grid [m]
-NumberOfCellsX = 100 # resolution of the grid
+LowerLeft = 0
+UpperRight = 300
+Cells = 100
