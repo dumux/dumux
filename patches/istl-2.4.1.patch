@@ -1,8 +1,8 @@
 diff --git a/dune/istl/paamg/amg.hh b/dune/istl/paamg/amg.hh
-index a224b2b..ee48857 100644
+index 56b1d8d..d672756 100644
 --- a/dune/istl/paamg/amg.hh
 +++ b/dune/istl/paamg/amg.hh
-@@ -527,13 +527,13 @@ namespace Dune
+@@ -526,13 +526,13 @@ namespace Dune
                // We are still participating on this level
                solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
                                                    *scalarProduct_,
