@@ -3,7 +3,8 @@ DtInitial = 86400 # [s]
 TEnd = 864000 # [s]
 
 [Grid]
-File = ./grids/test_3p3c_coarse.dgf
+UpperRight = 500 10
+Cells = 40 4
 
 [Problem]
 Name = cc3p3c

@@ -3,7 +3,8 @@ DtInitial = 60 # [s]
 TEnd = 864000 # [s]
 
 [Grid]
-File = ./grids/test_3p3c.dgf
+UpperRight = 500 10
+Cells = 250 10
 
 [Problem]
 Name = infiltrationcc
