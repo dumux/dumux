@@ -4,7 +4,8 @@ TEnd = 100 # [s]
 MaxTimeStepSize = 1e-1 # [s]
 
 [Grid]
-File = ./grids/richardsanalytical-1x64.dgf
+UpperRight = 6 4
+Cells = 1 512
 
 [Problem]
 Name = richardsanalyticalcc

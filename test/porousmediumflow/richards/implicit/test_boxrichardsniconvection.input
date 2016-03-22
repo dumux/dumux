@@ -4,7 +4,8 @@ TEnd = 3e4 # [s]
 MaxTimeStepSize = 1e3 # [s]
 
 [Grid]
-File = ./grids/test_richardsniconvection.dgf
+UpperRight = 20 1
+Cells = 80 1
 
 [Problem]
 Name = test_boxrichardsniconvection # name passed to the output routines
