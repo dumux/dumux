@@ -34,11 +34,6 @@
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG(NewtonEnableChop);
-SET_BOOL_PROP(ImplicitBase, NewtonEnableChop, false);
-}
 
 /*!
  * \ingroup ImplicitModel
