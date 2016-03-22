@@ -4,7 +4,9 @@ TEnd = 3e4 # [s]
 MaxTimeStepSize = 1e3
 
 [Grid]
-File = ./grids/test_1p2cniconvection.dgf
+LowerLeft = 0 0
+UpperRight = 20 1
+Cells = 80 1
 
 [Problem]
 Name = cc1p2cniconvection # name passed to the output routines
