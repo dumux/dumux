@@ -20,7 +20,7 @@ add_dumux_test(test_ccco2 test_ccco2 test_ccco2.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/heterogeneouscc-00019.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccco2")
 
-add_dumux_test(test_restartco2 test_ccco2 test_ccco2.cc
+add_dumux_test(test_restartco2 test_boxco2 test_boxco2.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/co2box-reference.vtu
@@ -29,7 +29,7 @@ add_dumux_test(test_restartco2 test_ccco2 test_ccco2.cc
                  --zeroThreshold {"porosity":1})
 
 # the restart test has to run after the test that produces the restart file
-set_tests_properties(test_restartco2 PROPERTIES DEPENDS test_ccco2)
+set_tests_properties(test_restartco2 PROPERTIES DEPENDS test_boxco2)
 
 # build target for the CO2 non-isothermal test problem
 add_dumux_test(test_boxco2ni test_boxco2ni test_boxco2ni.cc
