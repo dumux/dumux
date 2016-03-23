@@ -1,8 +1,0 @@
-#ifndef DUMUX_GRIDADAPTINITIALIZATIONINDICATORDEFAULT_HH_OLD
-#define DUMUX_GRIDADAPTINITIALIZATIONINDICATORDEFAULT_HH_OLD
-
-#warning this header is deprecated, use dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh instead
-
-#include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
-
-#endif
