@@ -55,6 +55,9 @@ class GridAdapt
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
 
+    typedef typename Grid::Traits::LocalIdSet IdSet;
+    typedef typename IdSet::IdType IdType;
+
 public:
     /*!
      * Constructor for h-adaptive simulations (adaptive grids)
@@ -206,9 +209,9 @@ public:
     template<class Indicator>
     void markElements(Indicator& indicator)
     {
-        typedef std::unordered_map<int, int> CoarsenMarkerType;
+        typedef std::unordered_map<IdType, IdType> CoarsenMarkerType;
         CoarsenMarkerType coarsenMarker;
-        const typename Grid::Traits::LocalIdSet& idSet(problem_.grid().localIdSet());
+        const IdSet& idSet(problem_.grid().localIdSet());
 
         for (const auto& element : elements(problem_.gridView()))
         {
@@ -227,11 +230,11 @@ public:
             }
             if (indicator.coarsen(element) && element.hasFather())
             {
-                int idx = idSet.id(element.father());
-                typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
+                IdType idx = idSet.id(element.father());
+                auto it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {
-                    it->second++;
+                    ++it->second;
                 }
                 else
                 {
@@ -248,8 +251,8 @@ public:
 
             if (indicator.coarsen(element) && element.level() > levelMin_)
             {
-                int idx = idSet.id(element.father());
-                typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
+                IdType idx = idSet.id(element.father());
+                auto it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {
                     if (problem_.grid().getMark(element) == 0
