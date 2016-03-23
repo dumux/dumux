@@ -287,12 +287,15 @@ protected:
     template <int dim, int dimworld>
     static void makeStructuredGrid(CellType cellType)
     {
-       // The required parameters
+        // The required parameters
         typedef Dune::FieldVector<typename Grid::ctype, dimworld> GlobalPosition;
-        const GlobalPosition lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft);
         const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
 
         // The optional parameters (they have a default)
+        GlobalPosition lowerLeft(0.0);
+        try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
+        catch (Dumux::ParameterException &e) { }
+
         typedef std::array<unsigned int, dim> CellArray;
         CellArray cells;
         std::fill(cells.begin(), cells.end(), 1);
@@ -531,10 +534,13 @@ public:
         try {
             // The required parameters
             typedef Dune::FieldVector<ct, dim> GlobalPosition;
-            const GlobalPosition lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft);
             const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
 
             // The optional parameters (they have a default)
+            GlobalPosition lowerLeft(0.0);
+            try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
+            catch (Dumux::ParameterException &e) { }
+
             typedef std::array<int, dim> CellArray;
             CellArray cells;
             std::fill(cells.begin(), cells.end(), 1);
@@ -575,8 +581,7 @@ public:
         }
         catch (Dumux::ParameterException &e) {
                 DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight, "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LowerLeft or a grid file in "
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
         catch (...) { throw; }
@@ -963,7 +968,7 @@ private:
 
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
- * - LowerLeft : lowerleft corner of a structured grid
+ * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
  * - CellType : "Cube" or "Simplex" to be used for structured grids
@@ -1004,7 +1009,7 @@ public:
             std::string cellType = "Cube";
             try { cellType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), CellType);
                 if (cellType != "Cube" && cellType != "Simplex")
-                    DUNE_THROW(Dune::IOError, "UGGrid only supports 'Cube' or 'Simplex' as closure type. Not '"<< cellType<<"'!");
+                    DUNE_THROW(Dune::IOError, "UGGrid only supports 'Cube' or 'Simplex' as cell type. Not '"<< cellType<<"'!");
             }
             catch (Dumux::ParameterException &e) {}
             catch (...) { throw; }
@@ -1018,8 +1023,7 @@ public:
         }
         catch (Dumux::ParameterException &e) {
                 DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight and "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LowerLeft or a grid file in "
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
         catch (...) { throw; }
@@ -1090,7 +1094,7 @@ private:
 
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
- * - LowerLeft : lowerleft corner of a structured grid
+ * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
  * - Refinement : the number of global refines to perform
@@ -1165,8 +1169,7 @@ public:
         }
         catch (Dumux::ParameterException &e) {
                 DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight and "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LowerLeft or a grid file in "
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
         catch (...) { throw; }
@@ -1186,7 +1189,7 @@ public:
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
  * - Verbosity : whether the grid construction should output to standard out
- * - LowerLeft : lowerleft corner of a structured grid
+ * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
  *
@@ -1221,8 +1224,7 @@ public:
         }
         catch (Dumux::ParameterException &e) {
                 DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight and "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LowerLeft or a grid file in "
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
         catch (...) { throw; }
@@ -1238,7 +1240,7 @@ public:
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
  * - Verbosity : whether the grid construction should output to standard out
- * - LowerLeft : lowerleft corner of a structured grid
+ * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
  *
@@ -1270,10 +1272,13 @@ public:
         try {
             // The required parameters
             typedef Dune::FieldVector<typename Grid::ctype, dimworld> GlobalPosition;
-            const GlobalPosition lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft);
             const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
 
             // The optional parameters (they have a default)
+            GlobalPosition lowerLeft(0.0);
+            try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
+            catch (Dumux::ParameterException &e) { }
+
             typedef std::array<unsigned int, 1> CellArray;
             CellArray cells;
             std::fill(cells.begin(), cells.end(), 1);
@@ -1302,8 +1307,7 @@ public:
         }
         catch (Dumux::ParameterException &e) {
                 DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight and "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LowerLeft or a grid file in "
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
         catch (...) { throw; }
