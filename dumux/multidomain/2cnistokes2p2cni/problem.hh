@@ -61,7 +61,7 @@ public:
      * \brief Returns the temperature gradient through the boundary layer
      *
      * \param cParams a parameter container
-     * \param scvIdx1 The local index of the sub-control volume of the Stokes domain
+     * \param scvIdx The local index of the sub-control volume of the Stokes domain
      */
     template<typename CParams>
     Scalar evalBoundaryLayerTemperatureGradient(CParams cParams, const int scvIdx) const

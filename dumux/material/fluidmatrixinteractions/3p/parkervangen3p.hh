@@ -144,7 +144,7 @@ public:
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
-     * \param sw Wetting liquid saturation
+     * \param swe Effective wetting liquid saturation
     */
     DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, const Scalar swe) is deprecated. Use dpc_dswe(const Params &params, const Scalar swe) instead.")
     static Scalar dpc_dsw(const Params &params, const Scalar swe)
@@ -156,7 +156,7 @@ public:
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
-     * \param sw Wetting liquid saturation
+     * \param swe Effective wetting liquid saturation
     */
     static Scalar dpc_dswe(const Params &params, const Scalar swe)
     {
