@@ -45,10 +45,13 @@
          * \ingroup TwoPModels
          * \defgroup IMPES Sequential
      *
+     * # Pressure
      * \copydetails Dumux::FVPressure2P
-     * <br><br><br>
+     * <br>
+     * # Velocity
      * \copydetails Dumux::FVVelocity2P
      * <br>
+     * # Saturation
      * \copydetails Dumux::FVSaturation2P
          */
     /*!
@@ -65,9 +68,11 @@
          * \ingroup TwoPTwoCModels
          * \defgroup IMPEC Sequential
      *
+     * # Pressure
      * \copydetails Dumux::FVPressure2P2C
-     * <br><br><br>
-     * \copydetails Dumux::FVTransport2PC
+     * <br>
+     * # Transport
+     * \copydetails Dumux::FVTransport2P2C
          */
     /*!
      * \ingroup Porousmediaflow
@@ -206,40 +211,58 @@
      * \ingroup Multidomain
      * \defgroup TwoPTwoCStokesTwoCModel 2cstokes2p2c (Stokes2c flow, coupled to two-phase, two-component Darcy flow)
      *
+     * # Coupling Conditions
      * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
-     * <br><br><br>
+     * <br>
+     * # Darcy 2p2c
      * \copydetails Dumux::TwoPTwoCModel
      * <br>
+     * # Stokes nc
      * \copydetails Dumux::StokesncModel
      */
     /*!
      * \ingroup Multidomain
      * \defgroup TwoPTwoCNIStokesTwoCNIModel 2cnistokes2p2cni (Stokes2c flow, coupled to two-phase, two-component Darcy flow, non-isothermal)
      *
+     * # Coupling Conditions
      * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
-     * <br><br><br>
-     * \copydetails Dumux::TwoPTwoCNIModel
      * <br>
+     * # Darcy 2p2c
+     * \copydetails Dumux::TwoPTwoCModel
+     * <br>
+     * # Darcy non-isothermal extension
+     * \copydetails Dumux::NIModel
+     * <br>
+     * # Stokes nc
      * \copydetails Dumux::StokesncniModel
      */
     /*!
      * \ingroup Multidomain
      * \defgroup TwoPTwoCZeroEqTwoCModel 2czeroeq2p2c (Stokes2c flow with zero-eq turbulence model, coupled to two-phase, two-component Darcy flow)
      *
+     * # Coupling Conditions
      * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
-     * <br><br><br>
+     * <br>
+     * # Darcy 2p2c
      * \copydetails Dumux::TwoPTwoCModel
      * <br>
+     * # Stokes nc
      * \copydetails Dumux::ZeroEqncModel
      */
     /*!
      * \ingroup Multidomain
      * \defgroup TwoPTwoCNIZeroEqTwoCNIModel 2cnizeroeq2p2cni (Stokes2c flow with zero-eq turbulence model, coupled to two-phase, two-component Darcy flow, non-isothermal)
      *
+     * # Coupling Conditions
      * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
-     * <br><br><br>
-     * \copydetails Dumux::TwoPTwoCNIModel
      * <br>
+     * # Darcy 2p2c
+     * \copydetails Dumux::TwoPTwoCModel
+     * <br>
+     * # Darcy non-isothermal extension
+     * \copydetails Dumux::NIModel
+     * <br>
+     * # Stokes nc
      * \copydetails Dumux::ZeroEqncniModel
      */
 
