@@ -2,7 +2,7 @@
  * \file
  *
  * \brief This file contains all module definitions for the doxygen documentation.
- * 
+ *
  */
 
 /* ***************** Porousmediaflow ******************/
@@ -22,8 +22,8 @@
         /*!
          * \ingroup OnePModels
          * \defgroup OnePhase Sequential
-         *         
-	 * \copydetails Dumux::FVPressure1P
+         *
+         * \copydetails Dumux::FVPressure1P
          */
     /*!
      * \ingroup Porousmediaflow
@@ -41,33 +41,33 @@
          *
          * \copydetails Dumux::TwoPModel
          */
-	/*!
+    /*!
          * \ingroup TwoPModels
          * \defgroup IMPES Sequential
-	 * 
-	 * \copydetails Dumux::FVPressure2P
-	 * <br><br><br>
-	 * \copydetails Dumux::FVVelocity2P
-	 * <br>
-	 * \copydetails Dumux::FVSaturation2P
+     *
+     * \copydetails Dumux::FVPressure2P
+     * <br><br><br>
+     * \copydetails Dumux::FVVelocity2P
+     * <br>
+     * \copydetails Dumux::FVSaturation2P
          */
     /*!
      * \ingroup Porousmediaflow
      * \defgroup TwoPTwoCModels 2p2c (two-phase, two-component Darcy flow)
-     */ 
+     */
         /*!
          * \ingroup TwoPTwoCModels
          * \defgroup TwoPTwoCModel Implicit
          *
          * \copydetails Dumux::TwoPTwoCModel
          */
-	/*!
+    /*!
          * \ingroup TwoPTwoCModels
          * \defgroup IMPEC Sequential
-	 * 
-	 * \copydetails Dumux::FVPressure2P2C
-	 * <br><br><br>
-	 * \copydetails Dumux::FVTransport2PC
+     *
+     * \copydetails Dumux::FVPressure2P2C
+     * <br><br><br>
+     * \copydetails Dumux::FVTransport2PC
          */
     /*!
      * \ingroup Porousmediaflow
@@ -129,7 +129,7 @@
      *
      * \copydetails Dumux::RichardsModel
      */
-    
+
 /* ***************** Geomechanics ******************/
 /*!
  * \defgroup Geomechanics Geomechanics (fully implicit)
@@ -152,7 +152,7 @@
      *
      * \copydetails Dumux::ElasticModel
      */
-    
+
 /* ***************** Freeflow ******************/
 /*!
  * \defgroup Freeflow Freeflow (fully implicit)
@@ -193,7 +193,7 @@
      *
      * \copydetails Dumux::ZeroEqncniModel
      */
-    
+
 /* ***************** Multidomain ******************/
 /*!
  * \defgroup Multidomain Multidomain (fully implicit)
@@ -242,7 +242,7 @@
      * <br>
      * \copydetails Dumux::ZeroEqncniModel
      */
-    
+
 /* ***************** Fully Implicit ******************/
 /*!
  * \defgroup ImplicitModel Fully Implicit Scheme
@@ -306,34 +306,34 @@
      */
 
 /* ***************** Material ******************/
-/*!   
+/*!
  * \defgroup Material Material and Fluid Framework
  * Short description of the most important concepts of the material and fluid framework:
  *
  *  - __Binary coefficient:__  @copydoc Binarycoefficients
- * 
- * 
+ *
+ *
  *  - __Component:__ @copydoc Components
- * 
- * 
+ *
+ *
  *  - __Constraint solver:__ @copydoc ConstraintSolver
- * 
- * 
+ *
+ *
  *  - __Equation of state:__ @copydoc EOS
- * 
- * 
+ *
+ *
  *  - __Fluid state:__ @copydoc FluidStates
- * 
- * 
+ *
+ *
  *  - __Fluid system:__ @copydoc Fluidsystems
- * 
- *   
+ *
+ *
  *  - __Fluid-Matrix Interactions:__ @copydoc fluidmatrixinteractions
- * 
- * 
+ *
+ *
  *  - __Parameter cache:__ @copydoc ParameterCache
- * 
- * 
+ *
+ *
  *  - __Spatial Parameters:__ @copydoc SpatialParameters
  */
     /*!
@@ -354,12 +354,12 @@
      *  is to provide a convenient way to access these quantities from
      *  full-fledged fluid systems. Components are not supposed to be used
      *  by models directly.
-     */ 
+     */
          /*!
          * \ingroup Components
          * \defgroup IAPWS IAPWS
          */
-     /*! 
+     /*!
      * \ingroup Material
      * \defgroup ConstraintSolver Constraint Solver
      * Constraint solvers are auxiliary tools to
@@ -372,17 +372,17 @@
      * states. Using them is not mandatory for models, but given the fact
      * that some thermodynamic constraints can be quite complex to solve,
      * sharing this code between models makes sense.
-     */   
+     */
     /*!
      * \ingroup Material
      * \defgroup EOS Equation of State
-     * 
+     *
      * Equations of state (EOS) are auxiliary
      * classes which provide relations between a fluid phase's temperature,
      * pressure, composition and density. Since these classes are only used
      * internally in fluid systems, their programming interface is
      * currently ad-hoc.
-     * 
+     *
      * \ingroup Material
      * \defgroup FluidStates Fluid States
      * Fluid states are responsible for representing the
@@ -420,7 +420,7 @@
          /*!
          * \ingroup fluidmatrixinteractions
          *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions
-         */  
+         */
     /*!
      * \ingroup Material
      * \defgroup ParameterCache Parameter Cache
@@ -458,7 +458,7 @@
      * All parameters which depend on the matrix and
      * therefore on the position within the model domain are defined as spatial
      * parameters. For example permeability, porosity etc.
-     * 
+     *
      */
 
 /* ***************** Common ******************/
