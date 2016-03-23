@@ -516,15 +516,15 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
 
         if (phaseIdx == lPhaseIdx) {
-            assert(compIIdx == H2OIdx);
-            assert(compJIdx == AirIdx || compJIdx == NaClIdx);
             Scalar result = 0.0;
             if(compJIdx == AirIdx)
                 result = Brine_Air::liquidDiffCoeff(temperature, pressure);
             else if (compJIdx == NaClIdx)
                 result = 0.12e-9; //http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.htm
             else
-                DUNE_THROW(Dune::NotImplemented, "Binary difussion coefficient : Incorrect compIdx");
+                DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
+                                                 << compIIdx << " and " << compJIdx
+                                                 << " in phase " << phaseIdx);
             Valgrind::CheckDefined(result);
             return result;
         }
@@ -534,15 +534,15 @@ public:
             if (compIIdx != AirIdx)
             std::swap(compIIdx, compJIdx);
 
-            assert(compIIdx == AirIdx);
-            assert(compJIdx == H2OIdx || compJIdx == NaClIdx);
             Scalar result = 0.0;
             if(compJIdx == H2OIdx)
                 result = Brine_Air::gasDiffCoeff(temperature, pressure);
             else if (compJIdx == NaClIdx)
                 result = 0.12e-9; //Just added to avoid numerical problem. does not have any physical significance
             else
-                DUNE_THROW(Dune::NotImplemented, "Binary difussion coefficient : Incorrect compIdx");
+                DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
+                                                 << compIIdx << " and " << compJIdx
+                                                 << " in phase " << phaseIdx);
             Valgrind::CheckDefined(result);
             return result;
         }

@@ -308,6 +308,7 @@ protected:
                                                  *this,
                                                  phaseIdx,
                                                  /*isGasPhase=*/true);
+            break;
         }
         case oPhaseIdx: {
             // calculate molar volumes for the given composition. although
@@ -320,7 +321,7 @@ protected:
                                                  *this,
                                                  phaseIdx,
                                                  /*isGasPhase=*/false);
-
+            break;
         }
         case wPhaseIdx: {
             // Density of water in the stock tank (i.e. atmospheric
@@ -335,7 +336,10 @@ protected:
 
             // convert water density [kg/m^3] to molar volume [m^3/mol]
             Vm_[wPhaseIdx] = fs.averageMolarMass(wPhaseIdx)/waterDensity;
+            break;
         }
+        default:
+            DUNE_THROW(Dune::InvalidStateException, "invalid phaseIdx " << phaseIdx);
         }
     }
 

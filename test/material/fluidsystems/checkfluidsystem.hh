@@ -86,6 +86,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             BaseFluidState::setSaturation(phaseIdx, 1.0 / numPhases);
+            BaseFluidState::setPressure(phaseIdx, 1e5);
             BaseFluidState::setDensity(phaseIdx, 1.0);
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -148,7 +149,7 @@ public:
     {
         if (!allowPressure_)
         {
-            std::cout << "Dune::InvalidStateException: pressure called but not allowed" << std::endl;
+            std::cout << "HairSplittingFluidState: pressure called but not allowed" << std::endl;
         }
         assert(restrictPhaseIdx_ < 0 || restrictPhaseIdx_ == phaseIdx);
         return BaseFluidState::pressure(phaseIdx);
@@ -636,7 +637,7 @@ int checkFluidSystem()
 //     std::cout << collectedWarnings;
     if (collectedErrors.empty()) // success
     {
-        std::cout << "... successfull" << std::endl;
+        std::cout << "... successful" << std::endl;
         std::cout << "----------------------------------" << std::endl;
         return 0;
     }
