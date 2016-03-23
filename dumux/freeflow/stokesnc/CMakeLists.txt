@@ -1,13 +1,6 @@
 
 #install headers
 install(FILES
-stokesncfluxvariables.hh
-stokesncindices.hh
-stokesnclocalresidual.hh
-stokesncmodel.hh
-stokesncproperties.hh
-stokesncpropertydefaults.hh
-stokesncvolumevariables.hh
 fluxvariables.hh
 indices.hh
 localresidual.hh

@@ -1,11 +1,6 @@
 
 #install headers
 install(FILES
-zeroeqncnifluxvariables.hh
-zeroeqncniindices.hh
-zeroeqncnimodel.hh
-zeroeqncniproperties.hh
-zeroeqncnipropertydefaults.hh
 fluxvariables.hh
 indices.hh
 model.hh
