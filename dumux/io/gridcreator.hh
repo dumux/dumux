@@ -78,6 +78,7 @@ NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridParameterGroup);
 NEW_PROP_TAG(AdaptiveGrid);
 NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(ImplicitIsBox);
 }
 
 
@@ -390,6 +391,47 @@ class GridCreator : public GridCreatorImpl<TypeTag, typename GET_PROP_TYPE(TypeT
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
+ * \brief Helper class for determining the default overlap in case of parallel yasp grids
+ */
+template <class TypeTag>
+class YaspOverlapHelper
+{
+public:
+    // trick to set overlap different for implicit models...
+    template<class T = TypeTag>
+    static typename std::enable_if<Properties::propertyDefined<T, T, PTAG_(ImplicitIsBox)>::value, int>::type
+    getOverlap()
+    {
+        // the default is dependent on the discretization:
+        // our box models only work with overlap 0
+        // our cc models only work with overlap > 0
+        static const int isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+        int overlap = isBox ? 0 : 1;
+        try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
+        catch (Dumux::ParameterException &e) { }
+
+        if (isBox && overlap != 0)
+            DUNE_THROW(Dune::NotImplemented, "Parallel overlapping grids for box models.");
+        if (!isBox && overlap < 1)
+            DUNE_THROW(Dune::NotImplemented, "Parallel non-overlapping grids for cc models.");
+
+        return overlap;
+    }
+
+    //... then for other models (e.g. sequential)
+    template<class T = TypeTag>
+    static typename std::enable_if<!Properties::propertyDefined<T, T, PTAG_(ImplicitIsBox)>::value, int>::type
+    getOverlap()
+    {
+        int overlap = 1;
+        try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
+        catch (Dumux::ParameterException &e) { }
+        return overlap;
+    }
+
+};
+
+/*!
  * \brief Provides a grid creator for YaspGrids
  *        from information in the input file
  *
@@ -413,7 +455,6 @@ class GridCreatorImpl<TypeTag, Dune::YaspGrid<dim, Dune::EquidistantCoordinates<
 public:
     typedef typename Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> > Grid;
     typedef GridCreatorBase<TypeTag, Grid> ParentType;
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
@@ -448,17 +489,8 @@ public:
             try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
             catch (Dumux::ParameterException &e) { }
 
-            // the default is dependent on the discretization:
-            // our box models only work with overlap 0
-            // our cc models only work with overlap > 0
-            int overlap = isBox ? 0 : 1;
-            try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
-            catch (Dumux::ParameterException &e) { }
-
-            if (isBox && overlap != 0)
-                DUNE_THROW(Dune::NotImplemented, "Parallel overlapping grids for box models.");
-            if (!isBox && overlap < 1)
-                DUNE_THROW(Dune::NotImplemented, "Parallel non-overlapping grids for cc models.");
+            // get the overlap dependent on some template parameters
+            int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
 
             bool default_lb = false;
             CellArray partitioning;
@@ -522,7 +554,6 @@ class GridCreatorImpl<TypeTag, Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordi
 public:
     typedef typename Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim> > Grid;
     typedef GridCreatorBase<TypeTag, Grid> ParentType;
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
@@ -552,17 +583,8 @@ public:
             try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
             catch (Dumux::ParameterException &e) { }
 
-            // the default is dependent on the discretization:
-            // our box models only work with overlap 0
-            // our cc models only work with overlap > 0
-            int overlap = isBox ? 0 : 1;
-            try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
-            catch (Dumux::ParameterException &e) { }
-
-            if (isBox && overlap != 0)
-                DUNE_THROW(Dune::NotImplemented, "Parallel overlapping grids for box models.");
-            if (!isBox && overlap < 1)
-                DUNE_THROW(Dune::NotImplemented, "Parallel non-overlapping grids for cc models.");
+            // the default is dependent on the discretization
+            int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
 
             bool default_lb = false;
             CellArray partitioning;
@@ -637,7 +659,6 @@ class GridCreatorImpl<TypeTag, Dune::YaspGrid<dim, Dune::TensorProductCoordinate
 public:
     typedef typename Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ct, dim> > Grid;
     typedef GridCreatorBase<TypeTag, Grid> ParentType;
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
@@ -691,17 +712,8 @@ public:
             try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
             catch (Dumux::ParameterException &e) { }
 
-            // the default is dependent on the discretization:
-            // our box models only work with overlap 0
-            // our cc models only work with overlap > 0
-            int overlap = isBox ? 0 : 1;
-            try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
-            catch (Dumux::ParameterException &e) { }
-
-            if (isBox && overlap != 0)
-                DUNE_THROW(Dune::NotImplemented, "Parallel overlapping grids for box models.");
-            if (!isBox && overlap < 1)
-                DUNE_THROW(Dune::NotImplemented, "Parallel non-overlapping grids for cc models.");
+            // the default is dependent on the discretization
+            int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
 
             bool default_lb = false;
             typedef std::array<int, dim> CellArray;
