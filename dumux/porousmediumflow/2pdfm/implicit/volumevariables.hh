@@ -179,7 +179,9 @@ public:
     /*!
      * \brief Extended capillary pressure saturation interface condition
      *
-     * \param materialParamsMatrix the material law o calculate the sw as inverse of capillary pressure function
+     * \param priVars Primary variables
+     * \param materialParamsMatrix the material law to calculate the sw as inverse of capillary pressure function
+     * \param materialParamsFracture the material law to calculate the sw as inverse of capillary pressure function
      *
      * This method is called by updateFracture
      */

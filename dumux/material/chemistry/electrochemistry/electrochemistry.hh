@@ -109,7 +109,7 @@ public:
     * \brief Calculates reaction sources with an electrochemical model approach.
     *
     * \param values The primary variable vector
-    * \param volVars The volume variables
+    * \param currentDensity The current density
     *
     * For this method, the \a values parameter stores source values
     */

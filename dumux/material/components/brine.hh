@@ -181,6 +181,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param salinity salinity in\f$\mathrm{[kg/kg]}\f$
      *
      * See:
      *
