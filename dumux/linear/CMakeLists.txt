@@ -4,21 +4,9 @@ install(FILES
 amgbackend.hh
 amgparallelhelpers.hh
 amgproperties.hh
-borderindex.hh
-boxlinearsolver.hh
-domesticoverlapfrombcrsmatrix.hh
-elementborderlistfromgrid.hh
-foreignoverlapfrombcrsmatrix.hh
-globalindices.hh
 impetbicgstabilu0solver.hh
 linearsolverproperties.hh
-overlappingbcrsmatrix.hh
-overlappingblockvector.hh
-overlappingoperator.hh
-overlappingpreconditioner.hh
-overlappingscalarproduct.hh
 pardisobackend.hh
 seqsolverbackend.hh
 vectorexchange.hh
-vertexborderlistfromgrid.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/linear)
