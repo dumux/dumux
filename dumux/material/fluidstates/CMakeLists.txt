@@ -1,15 +1,6 @@
 
 #install headers
 install(FILES
-compositionalfluidstate.hh
-immisciblefluidstate.hh
-isothermalimmisciblefluidstate.hh
-nonequilibriumenergyfluidstate.hh
-nonequilibriumfluidstate.hh
-nonequilibriummassfluidstate.hh
-pressureoverlayfluidstate.hh
-saturationoverlayfluidstate.hh
-temperatureoverlayfluidstate.hh
 compositional.hh
 immiscible.hh
 isothermalimmiscible.hh
