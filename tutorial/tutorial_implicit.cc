@@ -37,10 +37,8 @@ void usage(const char *progName, const std::string &errorMsg)  /*@\label{tutoria
         << "The list of mandatory arguments for this program is:\n"
         << "\t-TEnd                The end of the simulation [s]\n"
         << "\t-DtInitial           The initial timestep size [s]\n"
-        << "\t-Grid.UpperRightX    The x-coordinate of the grid's upper-right corner [m]\n"
-        << "\t-Grid.UpperRightY    The y-coordinate of the grid's upper-right corner [m]\n"
-        << "\t-Grid.NumberOfCellsX The grid's x-resolution\n"
-        << "\t-Grid.NumberOfCellsY The grid's y-resolution\n"
+        << "\t-Grid.UpperRight     The x-/y-coordinates of the grid's upper-right corner [m]\n"
+        << "\t-Grid.Cells          The grid's x-/y-resolution\n"
         << "\n";
 }
 

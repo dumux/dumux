@@ -3,7 +3,8 @@ DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-File = ./grids/obstacle_24x16.dgf
+UpperRight = 60 40
+Cells = 24 16
 
 [LinearSolver]
 ResidualReduction = 1e-12

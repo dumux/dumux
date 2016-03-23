@@ -24,9 +24,6 @@
 #ifndef DUMUX_TEST_1P_PROBLEM_HH
 #define DUMUX_TEST_1P_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/io/cubegridcreator.hh>
-
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
 
@@ -48,9 +45,6 @@ class TestProblemOneP;
 namespace Properties
 {
 NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP));
-
-// set the GridCreator property
-SET_TYPE_PROP(TestProblemOneP, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the grid type
 SET_TYPE_PROP(TestProblemOneP, Grid, Dune::YaspGrid<2>);

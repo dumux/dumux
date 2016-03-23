@@ -24,11 +24,6 @@
 #ifndef DUMUX_1P2C_OUTFLOW_PROBLEM_HH
 #define DUMUX_1P2C_OUTFLOW_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 

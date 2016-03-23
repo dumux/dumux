@@ -26,16 +26,6 @@
 #ifndef DUMUX_LENSPROBLEM_HH
 #define DUMUX_LENSPROBLEM_HH
 
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
-
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
-#include <dune/grid/yaspgrid.hh>
-
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>

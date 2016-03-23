@@ -31,7 +31,6 @@
 #include <cmath>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/quadraturerules.hh>
-#include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -388,6 +387,22 @@ public:
                   << std::scientific
                   << l2error
                   << std::endl;
+    }
+
+    /*!
+     * \brief If we should write output
+     */
+    bool shouldWriteOutput()
+    {
+        return this->timeManager().willBeFinished();
+    }
+
+    /*!
+     * \brief If we should write output
+     */
+    bool shouldWriteRestartFile()
+    {
+        return false;
     }
 
 private:

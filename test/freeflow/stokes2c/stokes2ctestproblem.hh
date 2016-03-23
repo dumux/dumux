@@ -23,8 +23,6 @@
 #ifndef DUMUX_STOKES2CTESTPROBLEM_HH
 #define DUMUX_STOKES2CTESTPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/freeflow/stokesnc/model.hh>

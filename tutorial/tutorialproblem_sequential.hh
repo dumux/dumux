@@ -67,9 +67,6 @@ SET_PROP(TutorialProblemSequential, Problem) /*@\label{tutorial-sequential:set-p
 // Set the grid type
 SET_TYPE_PROP(TutorialProblemSequential, Grid, Dune::YaspGrid<2>); /*@\label{tutorial-sequential:set-grid-type}@*/
 
-//Set the grid creator
-SET_TYPE_PROP(TutorialProblemSequential, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-sequential:set-gridcreator}@*/
-
 // Set the wetting phase
 SET_PROP(TutorialProblemSequential, WettingPhase) /*@\label{tutorial-sequential:2p-system-start}@*/
 {

@@ -24,8 +24,6 @@
 #ifndef DUMUX_ELASTICMATRIXPROBLEM_HH
 #define DUMUX_ELASTICMATRIXPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/geomechanics/elastic/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 

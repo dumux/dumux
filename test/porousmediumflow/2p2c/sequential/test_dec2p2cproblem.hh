@@ -24,9 +24,6 @@
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
 #define DUMUX_TEST_2P2C_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/io/cubegridcreator.hh>
-
 #include <dumux/porousmediumflow/2p2c/sequential/problem.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>
@@ -46,9 +43,6 @@ class TestDecTwoPTwoCProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
-
-// set the GridCreator property
-SET_TYPE_PROP(TestDecTwoPTwoCProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the grid type
 SET_TYPE_PROP(TestDecTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);

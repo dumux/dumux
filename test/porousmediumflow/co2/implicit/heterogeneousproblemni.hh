@@ -24,13 +24,6 @@
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_NI_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_NI_HH
 
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#else
-#warning ALUGrid is necessary for this test.
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#endif
-
 #include <dumux/porousmediumflow/co2/implicit/volumevariables.hh>
 #include <dumux/porousmediumflow/co2/implicit/model.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>

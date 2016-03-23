@@ -4,7 +4,8 @@ TEnd = 1e5 # [s]
 MaxTimeStepSize = 1e10 # [s]
 
 [Grid]
-File = ./grids/test_richardsniconduction.dgf
+UpperRight = 5 1
+Cells = 200 1
 
 [Problem]
 Name = test_boxrichardsniconduction # name passed to the output routines

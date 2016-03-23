@@ -24,12 +24,6 @@
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
-
-#include <dumux/io/cubegridcreator.hh>
-
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
@@ -68,12 +62,6 @@ NEW_TYPE_TAG(MPFATwoPTestProblem, INHERITS_FROM(Test2PSpatialParams));
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
-
-#if PROBLEM == 2
-//set the GridCreator property
-SET_TYPE_PROP(MPFATwoPTestProblem, GridCreator, CubeGridCreator<TypeTag>);
-#endif
-
 
 // Set the problem property
 SET_TYPE_PROP(MPFATwoPTestProblem, Problem, Dumux::MPFATwoPTestProblem<TypeTag>);

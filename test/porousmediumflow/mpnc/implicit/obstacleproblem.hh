@@ -27,8 +27,6 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/porousmediumflow/mpnc/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 

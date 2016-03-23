@@ -3,7 +3,8 @@ DtInitial = 100 # [s]
 TEnd = 3000 # [s]
 
 [Grid]
-File = ./grids/richardslens-24x16.dgf
+UpperRight = 6 4
+Cells = 24 16
 
 [Problem]
 Name = richardslenscc

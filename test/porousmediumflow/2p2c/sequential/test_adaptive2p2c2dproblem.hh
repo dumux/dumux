@@ -24,14 +24,6 @@
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
-#endif
-
-#include <dumux/io/cubegridcreator.hh>
-
 #include <dumux/common/math.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/adaptiveproperties.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/problem.hh>
@@ -58,9 +50,6 @@ SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::noncon
 #else
 SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::YaspGrid<2>);
 #endif
-
-// set the GridCreator property
-SET_TYPE_PROP(Adaptive2p2c2d, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
 SET_TYPE_PROP(Adaptive2p2c2d, Problem, Dumux::Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);

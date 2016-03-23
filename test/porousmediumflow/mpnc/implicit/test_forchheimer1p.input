@@ -3,7 +3,8 @@ DtInitial = 1e7 # [s]
 TEnd =     1e7 # [s]
 
 [Grid]
-File = ./grids/forchheimer1d.dgf
+UpperRight = 1
+Cells = 100
 
 [Problem]
 pMin 		= 1e5

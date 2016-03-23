@@ -47,12 +47,8 @@ void usage(const char *progName, const std::string &errorMsg)
                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
                                        "\t-Grid.File             Name of the file containing the grid \n"
                                        "\t                       definition in DGF format\n"
-                                       "\t-Grid.NumberOfCellsX   Resolution in x-direction [-]\n"
-                                       "\t-Grid.NumberOfCellsY   Resolution in y-direction [-]\n"
-                                       "\t-Grid.NumberOfCellsZ   Resolution in z-direction [-]\n"
-                                       "\t-Grid.UpperRightX      Length of the domain [m]\n"
-                                       "\t-Grid.UpperRightY      Width of the domain [m]\n"
-                                       "\t-Grid.UpperRightZ      Height of the domain [m]\n";
+                                       "\t-Grid.Cells   Resolution in x-, y- and z-direction [-]\n"
+                                       "\t-Grid.UpperRight      Length, width and height of the domain [m]\n";
         std::cout << errorMessageOut
                   << "\n";
     }

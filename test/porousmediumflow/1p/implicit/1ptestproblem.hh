@@ -25,15 +25,6 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#endif
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#include <dune/grid/io/file/gmshreader.hh>
-
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>

@@ -122,9 +122,8 @@ allocate grids in \Dune, \Dumux features the concept of grid creators.
 In this case the generic \texttt{CubeGridCreator} (line \ref{tutorial-sequential:set-gridcreator}) which creates a
 structured hexahedron grid of a specified size and resolution. For
 this grid creator the  physical domain of the grid is specified via the
-run-time parameters \texttt{Grid.upperRightX},
-\texttt{Grid.upperRightY}, \texttt{Grid.numberOfCellsX} and
-\texttt{Grid.numberOfCellsY}. These parameters can be specified via
+run-time parameters \texttt{Grid.UpperRight} and
+\texttt{Grid.Cells}. These parameters can be specified via
 the command-line or in a parameter file.
 For more information about the \Dune grid interface, the different grid types
 that are supported and the generation of different grids consult

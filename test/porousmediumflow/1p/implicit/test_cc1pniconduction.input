@@ -4,7 +4,9 @@ TEnd = 1e5 # [s]
 MaxTimeStepSize = 1e10
 
 [Grid]
-File = ./grids/test_1pniconduction.dgf
+LowerLeft = 0 0
+UpperRight = 5 1
+Cells = 200 1
 
 [Problem]
 Name = cc1pniconduction # name passed to the output routines

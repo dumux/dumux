@@ -24,8 +24,6 @@
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
@@ -123,7 +121,6 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -141,7 +138,7 @@ public:
      */
     InjectionProblem(TimeManager &timeManager,
                      const GridView &gridView)
-        : ParentType(timeManager, GridCreator::grid().leafGridView())
+        : ParentType(timeManager, gridView)
     {
             nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, Problem.NTemperature);
             nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, Problem.NPressure);

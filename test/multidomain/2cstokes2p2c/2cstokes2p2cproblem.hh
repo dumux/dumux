@@ -35,7 +35,6 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/multidomaingrid.hh>
-#include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/multidomain/2cstokes2p2c/localoperator.hh>

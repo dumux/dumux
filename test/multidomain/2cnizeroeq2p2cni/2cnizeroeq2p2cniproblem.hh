@@ -26,7 +26,6 @@
 
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/localoperator.hh>

@@ -3,7 +3,9 @@ DtInitial = 5 # [s]
 TEnd = 50 # [s]
 
 [Grid]
-File = grids/pipe.dgf
+LowerLeft = 0 0
+UpperRight = 10 0.2469
+Cells = 20 40
 
 [Problem]
 OutputName = "zeroeq"

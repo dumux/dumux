@@ -6,5 +6,5 @@ TEnd = 1 # [s]
 EnableGravity = 0
 
 [Grid]
-File = grids/test_elastic.dgf
-
+UpperRight = 10 1 10
+Cells = 10 10 10

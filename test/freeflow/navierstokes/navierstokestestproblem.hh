@@ -23,8 +23,6 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKESTESTPROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKESTESTPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 

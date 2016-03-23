@@ -3,10 +3,11 @@ DtInitial = 330 # [s]
 TEnd =     3e3 # [s]
 
 [Grid]
-File = ./grids/obstacle_24x16.dgf
+UpperRight = 60 40
+Cells = 24 16
 
 [Problem]
-pMin 		=    1e5
+pMin 		= 1e5
 pMax 		= 42e5
 outputName 	= test_forchheimer2p
 

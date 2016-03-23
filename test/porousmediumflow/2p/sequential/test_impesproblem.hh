@@ -24,10 +24,6 @@
 #ifndef DUMUX_TEST_IMPES_PROBLEM_HH
 #define DUMUX_TEST_IMPES_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/io/cubegridcreator.hh>
-#include <dumux/io/gridcreator.hh>
-
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
@@ -60,9 +56,6 @@ class IMPESTestProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
-
-// set the GridCreator property
-SET_TYPE_PROP(IMPESTestProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
 
 // Set the grid type
 SET_TYPE_PROP(IMPESTestProblem, Grid, Dune::YaspGrid<2>);

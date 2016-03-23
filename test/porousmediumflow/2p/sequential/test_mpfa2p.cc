@@ -42,10 +42,8 @@ void usage(const char *progName, const std::string &errorMsg)
         errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
                 "\t-TEnd                          The end of the simulation. [s] \n"
                 "\t-DtInitial                     The initial timestep size. [s] \n"
-                "\t-Grid.NumberOfCellsX           Resolution in x-direction [-]\n"
-                "\t-Grid.NumberOfCellsY           Resolution in y-direction [-]\n"
-                "\t-Grid.UpperRightX              Dimension of the grid [m]\n"
-                "\t-Grid.UpperRightY              Dimension of the grid [m]\n";
+                "\t-Grid.Cells           Resolution in x- and y-direction [-]\n"
+                "\t-Grid.UpperRight              Dimension of the grid [m]\n";
         errorMessageOut += "\n\nThe Optional command line argument:\n"
                 "\t-ModelType                     Can be: FV (standard finite volume), FVAdaptive (adaptive finite volume),\n"
                 "\t                     MPFAO (MPFA o-method), MPFAL (MPFA l-method), MPFALAdaptive (adaptive MPFA l-method)\n";

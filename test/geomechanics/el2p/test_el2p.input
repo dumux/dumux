@@ -5,8 +5,9 @@ DtInitial = 10       # [s]
 EpisodeLength = 1e6  # [s]
 
 [Grid]
-File = ./grids/test_el2p.dgf
-Refine = 0
+UpperRight = 1000 1000 1000
+Cells = 4 4 4
+Refinement = 0
 
 [Injection]
 DepthBOR = 2000     # Depth at the bottom of the scenario [m]

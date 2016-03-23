@@ -25,8 +25,6 @@
 #ifndef DUMUX_1P2CNI_CONDUCTION_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 

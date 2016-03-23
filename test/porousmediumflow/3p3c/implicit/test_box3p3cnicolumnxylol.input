@@ -3,7 +3,8 @@ DtInitial = 1 # [s]
 TEnd = 200 # [s]
 
 [Grid]
-File = ./grids/column.dgf
+UpperRight = 0.1 1.20
+Cells = 1 120
 
 [Problem]
 Name = columnxylolbox # name passed to the output routines
@@ -12,4 +13,4 @@ Name = columnxylolbox # name passed to the output routines
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
 
 [TimeManager]
-MaxTimeStepSize= 4. # Set the maximum time step
+MaxTimeStepSize= 4.0 # Set the maximum time step

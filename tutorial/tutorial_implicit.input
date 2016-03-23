@@ -3,7 +3,5 @@ TEnd = 500000 # duration of the simulation [s]
 DtInitial = 10 # initial time step size [s]
 
 [Grid]
-UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
-UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
-NumberOfCellsX = 100 # x-resolution of the grid
-NumberOfCellsY = 1 # y-resolution of the grid
+UpperRight = 300 60 # x-/y-coordinates of the upper-right corner of the grid [m]
+Cells = 100 1 # x-/y-resolution of the grid

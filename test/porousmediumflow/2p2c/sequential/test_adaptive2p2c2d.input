@@ -21,9 +21,7 @@ TEnd= 3e3
 DtInitial = 200
 
 [Grid]
-NumberOfCellsX = 10# [-] level 0 resolution in x-direction
-NumberOfCellsY = 10# [-] level 0 resolution in y-direction
+Cells = 10 10 # [-] level 0 resolution in x- and y-direction
 
-UpperRightX = 10# [m] dimension of the grid
-UpperRightY = 10# [m] dimension of the grid # 2D
+UpperRight = 10 10# [m] dimension of the grid
 

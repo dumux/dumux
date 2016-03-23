@@ -23,8 +23,6 @@
 #ifndef DUMUX_STOKESTESTPROBLEM_HH
 #define DUMUX_STOKESTESTPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 

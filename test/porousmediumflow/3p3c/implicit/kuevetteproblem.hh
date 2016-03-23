@@ -27,7 +27,6 @@
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
 #include <dune/common/float_cmp.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
