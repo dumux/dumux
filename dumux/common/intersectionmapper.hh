@@ -21,7 +21,6 @@
 #include <vector>
 #include <unordered_map>
 
-#include <dune/common/deprecated.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
@@ -70,12 +69,6 @@ public:
         return elementMapper_;
     }
 
-    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use index instead.")
-    int map(const Element& element) const
-    {
-        return elementMapper_.index(element);
-    }
-
     /*!
      * \brief Map element to array index.
      *
@@ -85,12 +78,6 @@ public:
     int index(const Element& element) const
     {
         return elementMapper_.index(element);
-    }
-
-    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
-    int map(int elemIdx, int fIdx)
-    {
-        return intersectionMapGlobal_[elemIdx][fIdx];
     }
 
     /*!
@@ -105,12 +92,6 @@ public:
         return intersectionMapGlobal_[elemIdx][fIdx];
     }
 
-    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
-    int map(int elemIdx, int fIdx) const
-    {
-        return (intersectionMapGlobal_[elemIdx].find(fIdx))->second;//use find() for const function!
-    }
-
     /*!
      * \brief Map interface fIdx'th interface of element index to array index.
      *
@@ -123,12 +104,6 @@ public:
         return (intersectionMapGlobal_[elemIdx].find(fIdx))->second;//use find() for const function!
     }
 
-    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
-    int map(const Element& element, int fIdx)
-    {
-        return intersectionMapGlobal_[index(element)][fIdx];
-    }
-
     /*!
      * \brief Map interface fIdx'th interface of element to array index.
      *
@@ -139,12 +114,6 @@ public:
     int subIndex(const Element& element, int fIdx)
     {
         return intersectionMapGlobal_[index(element)][fIdx];
-    }
-
-    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
-    int map(const Element& element, int fIdx) const
-    {
-        return intersectionMapGlobal_[index(element)].find(fIdx)->second;//use find() for const function!
     }
 
     int subIndex(const Element& element, int fIdx) const

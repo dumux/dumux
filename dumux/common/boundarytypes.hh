@@ -23,8 +23,6 @@
 #ifndef BOUNDARY_TYPES_HH
 #define BOUNDARY_TYPES_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
@@ -164,42 +162,6 @@ public:
     }
 
     /*!
-     * \brief Set all boundary conditions to coupling inflow.
-     */
-    DUNE_DEPRECATED_MSG("setAllCouplingInflow() is deprecated. Use setAllCouplingNeumann() instead.")
-    void setAllCouplingInflow()
-    {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
-            setCouplingNeumann(eqIdx);
-        }
-    }
-
-    /*!
-     * \brief Set all boundary conditions to coupling outflow.
-     */
-    DUNE_DEPRECATED_MSG("setAllCouplingOutflow() is deprecated. Use setAllCouplingDirichlet() instead.")
-    void setAllCouplingOutflow()
-    {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
-            setCouplingDirichlet(eqIdx);
-        }
-    }
-
-    /*!
-     * \brief Set all boundary conditions to mortar coupling.
-     */
-    DUNE_DEPRECATED_MSG("setAllMortarCoupling() is deprecated. Use setAllCouplingMortar() instead.")
-    void setAllMortarCoupling()
-    {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
-            setCouplingMortar(eqIdx);
-        }
-    }
-
-    /*!
      * \brief Set a Neumann boundary condition for a single a single
      *        equation.
      *
@@ -292,33 +254,6 @@ public:
     }
 
     /*!
-     * \brief Set a boundary condition for a single equation to coupling inflow.
-     */
-    DUNE_DEPRECATED_MSG("setCouplingInflow() is deprecated. Use setCouplingNeumann() instead.")
-    void setCouplingInflow(int eqIdx)
-    {
-        setCouplingNeumann(eqIdx);
-    }
-
-    /*!
-     * \brief Set a boundary condition for a single equation to coupling outflow.
-     */
-    DUNE_DEPRECATED_MSG("setCouplingOutflow() is deprecated. Use setCouplingDirichlet() instead.")
-    void setCouplingOutflow(int eqIdx)
-    {
-        setCouplingDirichlet(eqIdx);
-    }
-
-    /*!
-     * \brief Set a boundary condition for a single equation to mortar coupling.
-     */
-    DUNE_DEPRECATED_MSG("setMortarCoupling() is deprecated. Use setCouplingMortar() instead.")
-    void setMortarCoupling(int eqIdx)
-    {
-        setCouplingMortar(eqIdx);
-    }
-
-    /*!
      * \brief Set a Dirichlet boundary condition for a single primary
      *        variable.
      *
@@ -392,77 +327,6 @@ public:
     {
         for (int i = 0; i < numEq; ++i)
             if (boundaryInfo_[i].isOutflow)
-                return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify an
-     *        inflow coupling condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    DUNE_DEPRECATED_MSG("isCouplingInflow() is deprecated. Use isCouplingNeumann() instead.")
-    bool isCouplingInflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingNeumann; }
-
-    /*!
-     * \brief Returns true if some equation is used to specify an
-     *        inflow coupling condition.
-     */
-    DUNE_DEPRECATED_MSG("hasCouplingInflow() is deprecated. Use hasCouplingNeumann() instead.")
-    bool hasCouplingInflow() const
-    {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingNeumann)
-                return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify an
-     *        outflow coupling condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    DUNE_DEPRECATED_MSG("isCouplingOutflow() is deprecated. Use isCouplingDirichlet() instead.")
-    bool isCouplingOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingDirichlet; }
-
-    /*!
-     * \brief Returns true if some equation is used to specify an
-     *        outflow coupling condition.
-     */
-    DUNE_DEPRECATED_MSG("hasCouplingOutflow() is deprecated. Use hasCouplingDirichlet() instead.")
-    bool hasCouplingOutflow() const
-    {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingDirichlet)
-                return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify a
-     *        mortar coupling condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    DUNE_DEPRECATED_MSG("isMortarCoupling() is deprecated. Use isCouplingMortar() instead.")
-    bool isMortarCoupling(unsigned eqIdx) const
-    {
-        return boundaryInfo_[eqIdx].isCouplingMortar;
-    }
-
-    /*!
-     * \brief Returns true if some equation is used to specify a
-     *        mortar coupling condition.
-     */
-    DUNE_DEPRECATED_MSG("hasMortarCoupling() is deprecated. Use hasCouplingMortar() instead.")
-    bool hasMortarCoupling() const
-    {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingMortar)
                 return true;
         return false;
     }

@@ -26,7 +26,6 @@
 
 #include <cmath>
 
-#include <dune/common/deprecated.hh>
 #include <dumux/common/basicproperties.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/constants.hh>
@@ -137,13 +136,6 @@ public:
         values[contiO2EqIdx]  = -currentDensity/(4*Constant::F);                 //O2-equation
     }
 
-    DUNE_DEPRECATED_MSG("First compute the currentDensity with calculateCurrentDensity(const VolumeVariables&) and then use the method reactionSource(PrimaryVariables&, Scalar) instead")
-    static void reactionSource(PrimaryVariables &values,
-                               const VolumeVariables &volVars)
-    {
-        reactionSource(values, calculateCurrentDensity(volVars));
-    }
-
     /*!
     * \brief Newton solver for calculation of the current density.
     * \returns The current density in A/m^2
@@ -209,11 +201,6 @@ public:
         //conversion from [A/cm^2] to [A/m^2]
         return currentDensity*10000;
     }
-
-protected:
-    DUNE_DEPRECATED_MSG("This is now a public member function (the name lost the underscore postfix.)")
-    static Scalar calculateCurrentDensity_(const VolumeVariables &volVars)
-    { calculateCurrentDensity(volVars); }
 
 private:
 
