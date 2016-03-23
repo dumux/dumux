@@ -25,6 +25,7 @@
 #define DUMUX_TEST_2P_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/utility/structuredgridfactory.hh>
 
 #include <dumux/material/components/unit.hh>
 
@@ -38,6 +39,34 @@
 
 namespace Dumux
 {
+
+// A simple unit sqare grid creator
+template <class Grid>
+class UnitCubeGridCreator
+{
+public:
+    static Grid& grid()
+    {
+        return *gridPtr();
+    }
+
+    static void createGrid()
+    {
+        std::array<unsigned int, Grid::dimension> cellRes;
+        cellRes.fill(1);
+        using GlobalPosition = Dune::FieldVector<typename Grid::ctype, Grid::dimension>;
+        GlobalPosition lowerLeft(0.0);
+        GlobalPosition upperRight(1.0);
+        gridPtr() = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
+    }
+private:
+    static std::shared_ptr<Grid> &gridPtr()
+    {
+        static std::shared_ptr<Grid> gridPtr_;
+        return gridPtr_;
+    }
+};
+
 /*!
  * \ingroup IMPETtests
  */
@@ -55,6 +84,9 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<Type
 
 // Set the grid type
 SET_TYPE_PROP(FVVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
+
+SET_TYPE_PROP(FVVelocity2PTestProblem, GridCreator,
+    Dumux::UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
 
 // Set the wetting phase
 SET_PROP(FVVelocity2PTestProblem, WettingPhase)
@@ -87,6 +119,9 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem
 // Set the grid type
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, GridCreator,
+    Dumux::UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
+
 // Set the wetting phase
 SET_PROP(FVMPFAOVelocity2PTestProblem, WettingPhase)
 {
@@ -114,6 +149,10 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem
 
 // Set the grid type
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Grid, Dune::YaspGrid<2>);
+
+SET_TYPE_PROP(MimeticPressure2PTestProblem, GridCreator,
+    Dumux::UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
+
 
 // Set the wetting phase
 SET_PROP(MimeticPressure2PTestProblem, WettingPhase)
