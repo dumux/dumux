@@ -40,11 +40,7 @@ namespace Properties
 NEW_TYPE_TAG(ZeroEq2cniTestProblem, INHERITS_FROM(BoxZeroEqncni));
 
 // Set the grid type
-#if HAVE_UG
-SET_TYPE_PROP(ZeroEq2cniTestProblem, Grid, Dune::UGGrid<2>);
-#else
 SET_TYPE_PROP(ZeroEq2cniTestProblem, Grid, Dune::YaspGrid<2>);
-#endif
 
 //Set the problem property
 SET_TYPE_PROP(ZeroEq2cniTestProblem, Problem, Dumux::ZeroEq2cniTestProblem<TypeTag>);
