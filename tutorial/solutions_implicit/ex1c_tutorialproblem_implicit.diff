@@ -1,17 +1,8 @@
-Index: tutorialproblem_implicit.hh
-===================================================================
---- tutorialproblem_implicit.hh	(revision 15068)
-+++ tutorialproblem_implicit.hh	(working copy)
-@@ -47,7 +47,7 @@
- // The components that are used
- #include <dumux/material/components/h2o.hh>
- #include <dumux/material/components/lnapl.hh>
--#include <dumux/io/cubegridcreator.hh>
-+#include <dumux/io/simplexgridcreator.hh>
- 
- namespace Dumux{
- // Forward declaration of the problem class
-@@ -64,13 +64,13 @@
+diff --git a/tutorial/tutorialproblem_implicit.hh b/tutorial/tutorialproblem_implicit.hh
+index c2d5b13..190efa3 100644
+--- a/tutorial/tutorialproblem_implicit.hh
++++ b/tutorial/tutorialproblem_implicit.hh
+@@ -52,7 +52,7 @@ SET_PROP(TutorialProblemImplicit, Problem) /*@\label{tutorial-implicit:set-probl
  
  // Set grid and the grid creator to be used
  #if HAVE_DUNE_ALUGRID /*@\label{tutorial-implicit:set-grid}@*/
@@ -20,10 +11,3 @@ Index: tutorialproblem_implicit.hh
  #elif HAVE_UG
  SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::UGGrid<2>);
  #else
- SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::YaspGrid<2>);
- #endif // HAVE_DUNE_ALUGRID
--SET_TYPE_PROP(TutorialProblemImplicit, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-implicit:set-gridcreator}@*/
-+SET_TYPE_PROP(TutorialProblemImplicit, GridCreator, Dumux::SimplexGridCreator<TypeTag>); /*@\label{tutorial-implicit:set-gridcreator}@*/
- 
- // Set the wetting phase
- SET_PROP(TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/

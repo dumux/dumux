@@ -1,27 +1,28 @@
-Index: tutorial_sequential.input
-===================================================================
---- tutorial_sequential.input	(revision 15171)
-+++ tutorial_sequential.input	(working copy)
-@@ -1,3 +1,10 @@
+diff --git a/tutorial/tutorial_sequential.input b/tutorial/tutorial_sequential.input
+index c435ae2..50b982d 100644
+--- a/tutorial/tutorial_sequential.input
++++ b/tutorial/tutorial_sequential.input
+@@ -2,6 +2,23 @@
+ TEnd = 100000 # duration of the simulation [s]
+ DtInitial = 10 # initial time step size [s]
+ 
 +[Problem]
 +OutflowRateOil = 3e-2 # Rate of oil outflow for the Neumann boundary
 +OutputInterval = 5
-+ 
++
 +[SpatialParams]
 +Perm = 1e-8 # Peremeability
 +Porosity = 0.15
- [TimeManager]
- TEnd = 100000 # duration of the simulation [s]
- DtInitial = 10 # initial time step size [s]
-@@ -7,3 +14,11 @@
- UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
- NumberOfCellsX = 100 # x-resolution of the grid
- NumberOfCellsY = 1 # y-resolution of the grid
++
+ [Grid]
+ UpperRight = 300 60 # x-/y-coordinate of the upper-right corner of the grid [m]
+ Cells = 100 1 # x-/y-resolution of the grid
++
 +##########
 +# Tweaks
 +##########
 +[Impet]
 +CFLFactor = 0.8
-+ 
++
 +[Vtk]
 +OutputLevel = 3

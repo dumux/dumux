@@ -389,11 +389,7 @@ For the visualization of the results using ParaView, please refer to section \re
   simplex grids, like \texttt{ALUGrid} or \texttt{UGGrid}. If this is not the case,
   please skip this exercise.
   Change the types of elements used for discretizing the domain. In line
-  \ref{tutorial-implicit:set-gridcreator} of the problem
-  file  the type of gridcreator is chosen. By choosing a different grid creator
-  you can discretize the domain with different elements.
-  Hint: You can find gridcreators in \texttt{dumux/io/}, change for example from
-  \texttt{cubegridcreator.hh} to \texttt{simplexgridcreator.hh}.
+  \ref{tutorial-implicit:set-grid} of the problem file the grid is chosen.
   For ALUGrid you have to change the ALUGrid type in line \ref{tutorial-implicit:set-grid-ALU} from \texttt{Dune::cube}
   to \texttt{Dune::simplex}.
   The shape of the employed elements can be visualized in ParaView by choosing \texttt{Surface with Edges}.

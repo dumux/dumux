@@ -1,56 +1,48 @@
-Index: tutorialproblem_implicit.hh
-===================================================================
---- tutorialproblem_implicit.hh	(revision 15068)
-+++ tutorialproblem_implicit.hh	(working copy)
-@@ -44,6 +44,9 @@
+diff --git a/tutorial/tutorialproblem_implicit.hh b/tutorial/tutorialproblem_implicit.hh
+index c2d5b13..b3a7347 100644
+--- a/tutorial/tutorialproblem_implicit.hh
++++ b/tutorial/tutorialproblem_implicit.hh
+@@ -33,9 +33,8 @@
  // Spatially dependent parameters
  #include "tutorialspatialparams_implicit.hh"
  
+-// The components that are used
+-#include <dumux/material/components/h2o.hh>
+-#include <dumux/material/components/lnapl.hh>
 +// The fluidsystem
 +#include <dumux/material/fluidsystems/h2oair.hh>
-+
- // The components that are used
- #include <dumux/material/components/h2o.hh>
- #include <dumux/material/components/lnapl.hh>
-@@ -73,20 +76,20 @@
- SET_TYPE_PROP(TutorialProblemImplicit, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-implicit:set-gridcreator}@*/
  
- // Set the wetting phase
+ namespace Dumux{
+ // Forward declaration of the problem class
+@@ -59,21 +58,9 @@ SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::UGGrid<2>);
+ SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::YaspGrid<2>);
+ #endif // HAVE_DUNE_ALUGRID
+ 
+-// Set the wetting phase
 -SET_PROP(TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/
 -{
 -private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
--public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
+-public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
 -};
-+// SET_PROP(TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/
-+// {
-+// private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-+// public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
-+// };
-+// 
-+// // Set the non-wetting phase
-+// SET_PROP(TutorialProblemImplicit, NonwettingPhase)
-+// {
-+// private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-+// public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
-+// }; /*@\label{tutorial-implicit:2p-system-end}@*/
- 
+-
 -// Set the non-wetting phase
 -SET_PROP(TutorialProblemImplicit, NonwettingPhase)
 -{
 -private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
--public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
+-public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
 -}; /*@\label{tutorial-implicit:2p-system-end}@*/
--
--SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-implicit:set-fluidsystem}@*/
++// Set the fluidsystem
 +SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);/*@\label{tutorial-implicit:set-fluidsystem}@*/
+ 
+-SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-implicit:set-fluidsystem}@*/
  // Disable gravity
  SET_BOOL_PROP(TutorialProblemImplicit, ProblemEnableGravity, false); /*@\label{tutorial-implicit:gravity}@*/
  }
-@@ -127,6 +130,7 @@
-         : ParentType(timeManager, gridView)
-         , eps_(3e-6)
-     {
-+      GET_PROP_TYPE(TypeTag, FluidSystem)::init();
+@@ -117,6 +104,7 @@ public:
  #if !(HAVE_DUNE_ALUGRID || HAVE_UG)
        std::cout << "If you want to use simplices instead of cubes, install and use dune-ALUGrid or UGGrid." << std::endl;
  #endif // !(HAVE_DUNE_ALUGRID || HAVE_UG)
++      GET_PROP_TYPE(TypeTag, FluidSystem)::init();
+     }
+ 
+     //! Specifies the problem name. This is used as a prefix for files

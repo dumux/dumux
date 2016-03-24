@@ -24,10 +24,6 @@
 #ifndef DUMUX_EX5_TUTORIALPROBLEM_SEQUENTIAL_HH // guardian macro /*@\label{tutorial-sequential:guardian1}@*/
 #define DUMUX_EX5_TUTORIALPROBLEM_SEQUENTIAL_HH // guardian macro /*@\label{tutorial-sequential:guardian2}@*/
 
-// the grid includes
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/io/cubegridcreator.hh>
-
 // dumux 2p-sequential environment
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
@@ -67,9 +63,6 @@ SET_PROP(Ex5TutorialProblemSequential, Problem) /*@\label{tutorial-sequential:se
 
 // Set the grid type
 SET_TYPE_PROP(Ex5TutorialProblemSequential, Grid, Dune::YaspGrid<2>); /*@\label{tutorial-sequential:set-grid-type}@*/
-
-//Set the grid creator
-SET_TYPE_PROP(Ex5TutorialProblemSequential, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-sequential:set-gridcreator}@*/
 
 // Set the wetting phase
 SET_PROP(Ex5TutorialProblemSequential, WettingPhase) /*@\label{tutorial-sequential:2p-system-start}@*/
