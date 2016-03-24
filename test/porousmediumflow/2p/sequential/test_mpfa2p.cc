@@ -23,7 +23,7 @@
 
 #include <config.h>
 
-#if HAVE_DUNE_ALUGRID
+#if HAVE_UG
 
 #include "test_mpfa2pproblem.hh"
 #include <dumux/common/start.hh>
@@ -153,8 +153,8 @@ int main(int argc, char** argv)
 
 int main()
 {
-#warning You need to have dune-ALUGrid installed to run this test
-    std::cerr << "You need to have dune-ALUGrid installed to run this test\n";
+#warning You need to have UGGrid to run this test
+    std::cerr << "You need to have UGGrid to run this test\n";
     return 77;
 }
 #endif

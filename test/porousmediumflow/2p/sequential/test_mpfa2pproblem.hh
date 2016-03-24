@@ -59,9 +59,7 @@ namespace Properties
 NEW_TYPE_TAG(MPFATwoPTestProblem, INHERITS_FROM(Test2PSpatialParams));
 
 // Set the grid type
-#if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#endif
+SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::UGGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(MPFATwoPTestProblem, Problem, Dumux::MPFATwoPTestProblem<TypeTag>);

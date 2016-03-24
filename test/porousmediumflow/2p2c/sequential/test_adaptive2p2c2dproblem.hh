@@ -45,11 +45,7 @@ namespace Properties
 NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(SequentialTwoPTwoCAdaptive,Test2P2CSpatialParams));
 
 // Set the grid type
-#if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#else
-SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::YaspGrid<2>);
-#endif
+SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::UGGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(Adaptive2p2c2d, Problem, Dumux::Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
@@ -249,7 +245,7 @@ Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 }
 
 private:
-Grid grid_;
+//Grid grid_;
 Dumux::VtkMultiWriter<GridView> debugWriter_;
 };
 } //end namespace
