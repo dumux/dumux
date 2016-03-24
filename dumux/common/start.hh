@@ -223,7 +223,7 @@ void dumuxMessage_(bool start)
             std::cout << "             ###   #                @   @         @@ @@          @ " << std::endl;
             std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @" << std::endl;
             std::cout << "         ##          #              @   @  @   @  @   @  @   @     " << std::endl;
-            std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.9" << std::endl;
+            std::cout << "        #             #             @@@@    @@@   @   @   @@@  2.10" << std::endl;
             std::cout << "       #               #                                           " << std::endl;
             std::cout << "      #                 #                                          " << std::endl;
             std::cout << "     #                   ##        %%%                             " << std::endl;
