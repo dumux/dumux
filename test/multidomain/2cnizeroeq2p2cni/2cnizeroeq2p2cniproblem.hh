@@ -24,9 +24,6 @@
 #ifndef DUMUX_TWOCNIZEROEQTWOPTWOCNIPROBLEM_HH
 #define DUMUX_TWOCNIZEROEQTWOPTWOCNIPROBLEM_HH
 
-//! \todo required for multidomaingrid.hh and GCC 6, delete if fixed there
-#include <numeric>
-
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 
