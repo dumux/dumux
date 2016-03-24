@@ -1,18 +1,15 @@
-Index: tutorial_sequential.input
-===================================================================
---- tutorial_sequential.input	(revision 15171)
-+++ tutorial_sequential.input	(working copy)
-@@ -1,9 +1,9 @@
+diff --git a/tutorial/tutorial_sequential.input b/tutorial/tutorial_sequential.input
+index c435ae2..ec1abf2 100644
+--- a/tutorial/tutorial_sequential.input
++++ b/tutorial/tutorial_sequential.input
+@@ -1,7 +1,7 @@
  [TimeManager]
 -TEnd = 100000 # duration of the simulation [s]
 +TEnd = 20000 # duration of the simulation [s]
  DtInitial = 10 # initial time step size [s]
  
  [Grid]
- UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
--UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
--NumberOfCellsX = 100 # x-resolution of the grid
--NumberOfCellsY = 1 # y-resolution of the grid
-+UpperRightY = 300 # y-coordinate of the upper-right corner of the grid [m]
-+NumberOfCellsX = 15 # x-resolution of the grid
-+NumberOfCellsY = 30 # y-resolution of the grid
+-UpperRight = 300 60 # x-/y-coordinate of the upper-right corner of the grid [m]
+-Cells = 100 1 # x-/y-resolution of the grid
++UpperRight = 300 300 # x-/y-coordinate of the upper-right corner of the grid [m]
++Cells = 15 30 # x-/y-resolution of the grid
