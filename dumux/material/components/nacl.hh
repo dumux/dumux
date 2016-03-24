@@ -27,6 +27,7 @@
 #define DUMUX_NACL_HH
 
 #include <dumux/common/exceptions.hh>
+#include <dune/common/deprecated.hh>
 #include <dumux/material/components/component.hh>
 
 #include <cmath>
