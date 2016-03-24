@@ -48,6 +48,12 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
       find . -name '*.[ch][ch]' -exec bash ../dumux/bin/fix_includes.sh {} \;
       ```
       inside the folder that contains your files.
+
+      A patch is available to remove deprecated header files:
+      ```
+      patch -p1 < patches/dumux-2.9-no-deprecated-headers.patch
+      ```
+
       The benefits are hopefully:
         + A clearer structure in terms of the problems that you want to apply Dumux
           for. Three main application areas on the top level: `porousmediumflow`,
