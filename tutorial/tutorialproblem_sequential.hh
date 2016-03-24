@@ -24,10 +24,6 @@
 #ifndef DUMUX_TUTORIALPROBLEM_SEQUENTIAL_HH // guardian macro /*@\label{tutorial-sequential:guardian1}@*/
 #define DUMUX_TUTORIALPROBLEM_SEQUENTIAL_HH // guardian macro /*@\label{tutorial-sequential:guardian2}@*/
 
-// the grid includes
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/io/cubegridcreator.hh>
-
 // dumux 2p-sequential environment
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
