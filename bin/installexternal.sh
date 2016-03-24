@@ -63,7 +63,7 @@ installCornerpoint()
     fi
 
     if [ ! -e dune-cornerpoint ]; then
-        git clone -b release/2015.04 https://github.com/OPM/dune-cornerpoint
+        git clone -b release/2015.10 https://github.com/OPM/dune-cornerpoint
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -74,12 +74,6 @@ installCornerpoint()
         rm -rf dune-cornerpoint
         return
     fi
-
-    # apply patch
-    echo "Applying patch for dune-cornerpoint"
-    cd $TOPDIR/dune-cornerpoint
-    patch -p1 < $TOPDIR/dumux/patches/dune-cornerpoint-2015.04.patch
-    cd $TOPDIR
 }
 
 installFoamGrid()
@@ -180,16 +174,6 @@ installMultidomainGrid()
         rm -rf dune-multidomaingrid
         return
     fi
-
-    # apply patch for dune versions newer than 2.3
-    cd $TOPDIR/dune-common
-    DUNE_COMMON_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
-    if  [ "$DUNE_COMMON_VERSION" == "releases/2.4" ] || [ "$DUNE_COMMON_VERSION" == "master" ]; then
-        echo "Applying patch for dune-multidomaingrid"
-        cd $TOPDIR/dune-multidomaingrid
-        patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
-    fi
-
     cd $TOPDIR
 }
 
@@ -202,12 +186,20 @@ installOPM()
         return
     fi
 
+    if [ ! -e opm-common ]; then
+        git clone -b release/2015.10 https://github.com/OPM/opm-common
+    fi
+
     if [ ! -e opm-core ]; then
-        git clone -b release/2015.04 https://github.com/OPM/opm-core
+        git clone -b release/2015.10 https://github.com/OPM/opm-core
+    fi
+
+    if [ ! -e opm-material ]; then
+        git clone -b release/2015.10 https://github.com/OPM/opm-material
     fi
 
     if [ ! -e opm-parser ]; then
-        git clone -b release/2015.04 https://github.com/OPM/opm-parser
+        git clone -b release/2015.10 https://github.com/OPM/opm-parser
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -215,24 +207,25 @@ installOPM()
     fi
 
     if  test "$CLEANUP" == "y"; then
+        rm -rf opm-common
         rm -rf opm-core
+        rm -rf opm-material
         rm -rf opm-parser
         return
     fi
 
     # apply patches
-    echo "Applying patch for opm-core"
-    cd $TOPDIR/opm-core
-    patch -p1 < $TOPDIR/dumux/patches/opm-core-2015.04.patch
     echo "Applying patch for opm-parser"
     cd $TOPDIR/opm-parser
-    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2015.04.patch
+    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2015.10.patch
 
     # show additional information
-    echo "In addition to applying the patches, it is necessary to set manually some"
+    echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
     echo "  -Ddune-cornerpoint_PREFIX=/path/to/dune-cornerpoint \\"
+    echo "  -Dopm-common_PREFIX=/path/to/opm-common \\"
     echo "  -Dopm-core_PREFIX=/path/to/opm-core \\"
+    echo "  -Dopm-material_PREFIX=/path/to/opm-material \\"
     echo "  -Dopm-parser_PREFIX=/path/to/opm-parser \\"
     echo "  -DHAVE_DUNE_CORNERPOINT=1 \\"
 

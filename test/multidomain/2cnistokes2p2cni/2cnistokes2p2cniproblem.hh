@@ -32,6 +32,9 @@
 #ifndef DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 #define DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 
+//! \todo required for multidomaingrid.hh and GCC 6, delete if fixed there
+#include <numeric>
+
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/multidomaingrid.hh>
