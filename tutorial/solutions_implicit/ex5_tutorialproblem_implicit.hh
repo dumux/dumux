@@ -30,15 +30,6 @@
 // The base porous media box problem
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-// The DUNE grid used
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#elif HAVE_UG
-#include <dune/grid/uggrid.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
-#endif // HAVE_DUNE_ALUGRID, HAVE_UG
-
 // Spatially dependent parameters
 #include "ex5_tutorialspatialparams_implicit.hh"
 
@@ -67,9 +58,7 @@ SET_TYPE_PROP(Ex5TutorialProblemImplicit, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune
 SET_TYPE_PROP(Ex5TutorialProblemImplicit, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(Ex5TutorialProblemImplicit, Grid, Dune::YaspGrid<2>);
-#warning If you want to use adaptivity, install and use dune-ALUGrid.
 #endif // HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(Ex5TutorialProblemImplicit, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-implicit:set-gridcreator}@*/
 
 // Set the wetting phase
 SET_PROP(Ex5TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/
