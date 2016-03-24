@@ -2,67 +2,187 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 ===================================================
 
 * IMPORTANT NOTES:
-  - The support for the external grid library ALBERTA was dropped. Instead
-    we now offically support [dune-foamgrid](https://gitlab.dune-project.org/extensions/dune-foamgrid)
-    Dune-foamgrid supports 1d and 2d simplex grids embedded in an arbitrary dimension world space.
-    It features element parametrizations, runtime growth, runtime-movable vertices.
+    - DuMuX 2.9 is expected to run based on either Dune 2.4 or Dune 3.0. We will
+      try to keep the compatibility with Dune 3.0 as long as it is technically
+      feasible and our resources allow it. If you want to use Dumux multidomain
+      models, you have to stick with the Dune 2.4 core and specific versions of
+      other modules, see `test/multidomain/README` for details.
+
+    - The ALUGrid stand-alone library cannot be used any longer. Use the module
+      [dune-alugrid](https://gitlab.dune-project.org/extensions/dune-alugrid)
+      instead. Both the `releases/2.4` branch and the `master` should work.
+
+    - The above is not true if you like to run a sequential MPFA model on an
+      `ALUGrid`. Then, you currently have to use the `master-old` branch of
+      dune-alugrid. We will try to fix this as soon as possible. Alternatively,
+      `UGGrid` or `YaspGrid` can be chosen as grid managers.
+
+    - Instead of using AlbertaGrid for the tests where dim < dimWorld, we now
+      employ
+      [dune-foamgrid](https://gitlab.dune-project.org/extensions/dune-foamgrid).
+      Dune-foamgrid provides 1d and 2d simplex grids embedded in an arbitrary
+      dimension world space. It features element parametrizations, runtime growth,
+      runtime-movable vertices. You might still use AlbertaGrid, but it is not
+      supported by our GridCreator.
+
+    - If you like/have to use corner-point grids by means of the module
+      dune-cornerpoint, you have to use (and partially patch) the 2015.10 release
+      of [OPM](http://opm-project.org/?page_id=36). See `patches/README` for
+      details.
 
 * IMPROVEMENTS and ENHANCEMENTS:
-  - The multidomain models have been restructured. This aims at a reduction in
-    duplicated code portions, more consistent procedure in the isothermal
-    and non.isothermal models, reduction of split functions.
+    - The folder structure has been changed according to
+      [FS#250](http://www.dumux.org/flyspray/index.php?do=details&task_id=250).
+      This has been a rather massive change affecting more than 1000 files. Close
+      to 400 files have been moved and/or renamed.
+      We made everything backwards-compatible, the worst thing that should happen
+      after switching to Dumux 2.9, will be some warnings when including headers
+      from old destinations/names. You can fix the include statements and get rid
+      of the warnings by applying the bash script `bin/fix_includes.sh` to your
+      source files, for example by executing
+      ```
+      bash ../dumux/bin/fix_includes.sh file1 [file2 ...]
+      ```
+      or
+      ```
+      find . -name '*.[ch][ch]' -exec bash ../dumux/bin/fix_includes.sh {} \;
+      ```
+      inside the folder that contains your files.
+      The benefits are hopefully:
+        + A clearer structure in terms of the problems that you want to apply Dumux
+          for. Three main application areas on the top level: `porousmediumflow`,
+          `freeflow` and `geomechanics`. The different numerical treatments "fully
+          implicit" or "sequential" appear as discretization detail after the
+          choice of the physical model. That's of course currently rather wishful
+          thinking, but nevertheless where we are headed. The folder `implicit` on
+          the top level now only contains physics-agnostic classes that can be used
+          by any class of an application area.  Please note the change from
+          "decoupled" to "sequential" according to the related task
+          [FS#252](http://www.dumux.org/flyspray/index.php?do=details&task_id=252).
 
-  - The problem now have the possbility to specify point sources. A point source
-    is a source term specified at any point location in e.g. kg/s. Dumux will
-    compute the correct control volume the source belongs to for you. Point
-    sources can be e.g. solution and/or time-dependent. See tests
-    (1p/implicit/pointsources, 2p/implicit/pointsources) for examples.
+        + Nicer include statements due to relaxation of the naming conventions for
+          the header files. Compare the old
+          ```
+          #include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnilocaloperator.hh>
+          ```
+          with the new
+          ```
+          #include <dumux/multidomain/2cnistokes2p2cni/localoperator.hh> 
+          ```
+      The structure change is reflected in the `test` folder:
+        + The tests from`test/implicit/particular_model` have been moved to
+          `test/porousmediumflow/particular_model/implicit`. For example,
+          `test/implicit/2p` has been moved to `test/porousmediumflow/2p/implicit`.
 
-  - You can now configure YaspGrid tensor grids via the input file.
+        + Analogously, the tests from `test/decoupled/particular_model` have been
+          moved to `test/porousmediumflow/particular_model/sequential`.
 
-  - All flux variables are no default constructable. The non-trivial constructors
-    are deprecated. Model implementers need to make their flux variables default
-    constructable too.
+        + The subfolders `decoupled` and `implicit` of `test` have been removed.
+
+        + If you have cloned the Dumux Git repository and have local changes in the
+          folders `test/implicit` or `test/decoupled`, you can expect merge
+          conflicts for your next `git pull`. You can either deal with these
+          conflicts directly or create a patch, remove the local changes, pull, and
+          apply the patch afterwards with some care to respect the changed
+          structure.
+
+    - A two-phase multiple-interacting-continua (MINC) model has been added to
+      the Dumux model portfolio. See `test/porousmediumflow/2pminc/implicit` for
+      details.
+
+    - The multidomain models have been restructured. Duplicated code has been
+      reduced; isothermal and non-isothermal models are treated in a more
+      consistent manner.
+
+    - It is now possible to specify point sources for implicit models. A point
+      source is a source term specified at any point location in e.g. kg/s. Dumux
+      will compute the correct control volume the source belongs to for you. Point
+      sources can be e.g. solution and/or time-dependent. See tests
+      (1p/implicit/pointsources, 2p/implicit/pointsources) for examples.
+
+    - All tests use our standard `GridCreator` now. If it is possible to specify
+      the grid entirely in the input-file, the corresponding DGF files have been
+      deleted. In particular, a YaspGrid tensor grid can now also be specified via
+      the input file only.
+
+    - Several sections on our fluid/material framework have been moved from the
+      handbook to the Doxygen documentation.
+
+    - The three-phase constitutive relations from
+      `material/fluidmatrixinteractions` have been reworked to be consistent with
+      their two-phase analogues. In particular, an `EffToAbsLaw` and
+      regularization classes have been implemented.
+
+    - In case of a simulation stop due to too many timestep subdivisions, restart
+      files of both the current and the old solution are automatically generated.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
-  - For the multidomain models, the notation of the boundary condition types
-    has changed. This is especially important for all momentum boundary
-    conditions. In general:
+    - All flux variables are now default-constructible. While the non-trivial
+      constructors are deprecated, model implementers might be required to make
+      their flux variables default-constructible too. In particular, this affects
+      you if you develop your own flux variables that
+        + inherit from flux variables from dumux-stable, such as the 
+          `ImplicitDaryFluxVariables`,
+        + and/or are used in a local residual from dumux-stable.
+      See the
+      [mailing list](https://listserv.uni-stuttgart.de/pipermail/dumux/2016q1/001551.html)
+      for details.
 
-      couplingInflow  -> couplingNeumann
-      couplingOutflow -> couplingDirichlet
+    - For the multidomain models, the notation of the boundary condition types
+      has changed. This is especially important for all momentum boundary
+      conditions. In general:
+        + `couplingInflow`  -> `couplingNeumann`
+        + `couplingOutflow` -> `couplingDirichlet`
+    - But for the momentum balances:
+        + `couplingInflow`  -> `couplingDirichlet`
+        + `couplingOutflow` -> `couplingNeumann`
 
-    But for the momentum balances:
+    - Due to the change in the three-phase fluid-matrix-interactions, you might
+      have to adjust your spatial parameters. You should get a compiler warning
+      message that gives you more details.
 
-      couplingInflow  -> couplingDirichlet
-      couplingOutflow -> couplingNeumann
-
-  - The TypeTags "ImplicitModel" and "ExplicitModel" have been deleted. They
-    haven't been used apart from one internal inheritance. See FS#304 for
-    details.
-
-  - The flux variables don't contain a protected member variable const reference
-    to FVElementGeometry fvGeometry_ anymore. As flux variables are now default
-    constructable, the fvGeometry is stored as pointer and the base flux variables
-    have a protected return function member fvGeometry_().
+    - The TypeTags `ImplicitModel` and `ExplicitModel` have been deleted. They
+      haven't been used apart from one internal inheritance. See FS#304 for
+      details.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.9: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
   is used. However, a run-time warning should appear in the summary lines after
   the corresponding run.
-  - The word "Decoupled" in the TypeTags has been replaced by "Sequential":
-    DecoupledModel -> SequentialModel
-    DecoupledOneP -> SequentialOneP
-    DecoupledTwoP -> SequentialTwoP
-    DecoupledTwoPTwoC -> SequentialTwoPTwoC
-    DecoupledTwoPTwoCAdaptive -> SequentialTwoPTwoCAdaptive
+    - The word `Decoupled` in the TypeTags has been replaced by `Sequential`:
+        + `DecoupledModel` -> `SequentialModel`
+        + `DecoupledOneP` -> `SequentialOneP`
+        + `DecoupledTwoP` -> `SequentialTwoP`
+        + `DecoupledTwoPTwoC` -> `SequentialTwoPTwoC`
+        + `DecoupledTwoPTwoCAdaptive` -> `SequentialTwoPTwoCAdaptive`
 
 
 * Deprecated CLASSES/FILES, to be removed after 2.9:
-  - CubeGridCreator, functionality available in default GridCreator (since 2.8)
-  - SimplexGridCreator, functionality available in default GridCreator (since 2.8)
-  - DgfGridCreator, functionality available in default GridCreator (since 2.8)
-  - Decoupled...Indices -> Sequential...Indices (BEWARE: no compiler warnings)
+    - Self-written parallel linear solvers and corresponding infrastructure,
+      according to
+      [FS#293](http://www.dumux.org/flyspray/index.php?do=details&task_id=293).
+      For parallel runs, use the `AMGBackend` instead. For sequential runs,
+      direct replacements are:
+        + `BoxBiCGStabILU0Solver` -> `ILU0BiCGSTABBackend`
+        + `BoxBiCGStabSORSolver` -> `SORBiCGSTABBackend`
+        + `BoxBiCGStabSSORSolver` -> `SSORBiCGSTABBackend`
+        + `BoxBiCGStabJacSolver` -> `JacBiCGSTABBackend`
+        + `BoxBiCGStabGSSolver` -> `GSBiCGSTABBackend`
+        + `BoxCGILU0Solver` -> `ILUnCGBackend`
+        + `BoxCGSORSolver` -> `SORCGBackend`
+        + `BoxCGSSORSolver` -> `SSORCGBackend`
+        + `BoxCGJacSolver` -> `JacCGBackend`
+        + `BoxCGGSSolver` -> `GSCGBackend`
+        + `IMPETBiCGStabILU0Solver` -> `ILU0BiCGSTABBackend`
+
+    - `CubeGridCreator`, functionality available in default `GridCreator`
+
+    - `SimplexGridCreator`, functionality available in default `GridCreator`
+
+    - `DgfGridCreator`, functionality available in default `GridCreator` (since 2.8)
+
+    - `Decoupled...Indices` -> `Sequential...Indices` (BEWARE: maybe no compiler
+    warnings)
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.9:
 
@@ -72,7 +192,8 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 
 * DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.8:
-  - Everything listed as deprecated below has been removed.
+    - Everything listed as deprecated below has been removed.
+
 
 Differences Between DuMuX 2.7 and DuMuX 2.8
 ===================================================
