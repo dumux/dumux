@@ -36,7 +36,6 @@
 // The components that are used
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/lnapl.hh>
-#include <dumux/io/cubegridcreator.hh>
 
 namespace Dumux{
 // Forward declaration of the problem class
