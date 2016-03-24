@@ -1,27 +1,17 @@
 == Running the test cases in test/multidomain ==
 
-
--- Dune 2.3 --
 You need the following versions of the required Dune modules:
-Dune core modules, dune-typetree, dune-multidomaingrid: release (branch) 2.3
+Dune core modules: 2.4
+dune-typetree, dune-multidomaingrid: release (branch) 2.3
 Dune-PDELab, dune-multidomain: release (branch) 2.0
 
 The necessary modules and the correct versions can be obtained by using
 the script located in:
   bin/installexternal.sh
 
-  
--- Dune 2.4 --
-Alternatively, you can use version 2.4 of the Dune core modules
-(_not_ dune-typetree which stays at 2.3).
-
-
 -- Other external packages --
 Install the external grid manager UG and a direct linear solver like SuperLU
 or UMFPACK. You need Boost fusion for dune-multidomaingrid.
-
-If UG has been built for parallel usage, dune-grid has to be patched. See the
-patches directory for more information.
 
 On some machines, some compilers with full optimization -O3 might produce
 executables that yield segmentation faults (we encountered this behavior with
