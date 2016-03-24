@@ -174,6 +174,10 @@ installMultidomainGrid()
         rm -rf dune-multidomaingrid
         return
     fi
+
+    echo "Applying patch for dune-multidomaingrid"
+    cd $TOPDIR/dune-multidomaingrid
+    patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
     cd $TOPDIR
 }
 
