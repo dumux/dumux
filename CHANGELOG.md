@@ -1,3 +1,30 @@
+Differences Between DuMuX 2.9 and DuMuX 2.10
+===================================================
+
+* IMPORTANT NOTES:
+
+* IMPROVEMENTS and ENHANCEMENTS:
+
+* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+
+* Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.10: BEWARE: The
+  compiler will not print any warning if a deprecated property or parameter name
+  is used. However, a run-time warning should appear in the summary lines after
+  the corresponding run.
+
+* Deprecated CLASSES/FILES, to be removed after 2.10:
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.10:
+
+* Deprecated protected MEMBER VARIABLES, to be removed after 2.10: BEWARE: Older
+  compilers will not print any warning if a deprecated protected member variable
+  is used.
+
+* DELETED classes/files, property names, constants/enums,
+  member functions, which have been deprecated in DuMuX 2.9:
+    - Everything listed as deprecated below has been removed.
+
+
 Differences Between DuMuX 2.8 and DuMuX 2.9
 ===================================================
 
