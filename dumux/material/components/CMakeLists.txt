@@ -5,7 +5,6 @@ install(FILES
 air.hh
 benzene.hh
 brine.hh
-brinevarsalinity.hh
 ch4.hh
 co2.hh
 co2tables.inc

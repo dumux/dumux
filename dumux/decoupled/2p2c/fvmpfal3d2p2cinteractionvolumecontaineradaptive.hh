@@ -1,8 +1,0 @@
-#ifndef DUMUX_FVMPFAL3D_2P2CINTERACTIONVOLUMECONTAINER_ADAPTIVE_HH_OLD
-#define DUMUX_FVMPFAL3D_2P2CINTERACTIONVOLUMECONTAINER_ADAPTIVE_HH_OLD
-
-#warning this header is deprecated, use dumux/porousmediumflow/2p2c/sequential/fvmpfal3dinteractionvolumecontaineradaptive.hh instead
-
-#include <dumux/porousmediumflow/2p2c/sequential/fvmpfal3dinteractionvolumecontaineradaptive.hh>
-
-#endif

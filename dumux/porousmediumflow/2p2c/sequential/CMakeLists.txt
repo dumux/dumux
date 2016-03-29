@@ -2,7 +2,6 @@
 #install headers
 install(FILES
 adaptiveproperties.hh
-fluidstate.hh
 problem.hh
 properties.hh
 celldataadaptive.hh
@@ -19,6 +18,5 @@ fvpressuremultiphysics.hh
 fvpressurecompositional.hh
 fvtransport.hh
 fvtransportmultiphysics.hh
-pseudo1p2cfluidstate.hh
 variableclassadaptive.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p2c/sequential)
