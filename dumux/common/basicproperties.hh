@@ -79,6 +79,9 @@ NEW_PROP_TAG(Model);
 //! Property defining the type of point source used
 NEW_PROP_TAG(PointSource);
 
+//! Property defining the class that computes which sub control volume point sources belong to
+NEW_PROP_TAG(PointSourceHelper);
+
 /*!
  * \brief Specify the maximum size of a time integration [s].
  *
@@ -149,6 +152,9 @@ SET_TYPE_PROP(NumericModel, GridCreator, Dumux::GridCreator<TypeTag>);
 
 //! Use the minimal point source implementation as default
 SET_TYPE_PROP(NumericModel, PointSource, Dumux::PointSource<TypeTag>);
+
+//! Use the point source helper using the bounding box tree as a default
+SET_TYPE_PROP(NumericModel, PointSourceHelper, Dumux::BoundingBoxTreePointSourceHelper<TypeTag>);
 
 //! Set default output level to 0 -> only primary variables are added to output
 SET_INT_PROP(NumericModel, VtkOutputLevel, 0);

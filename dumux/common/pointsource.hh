@@ -68,8 +68,6 @@ class PointSource
     static const int dimworld = GridView::dimensionworld;
     typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
-    friend class Dumux::PointSourceHelper<TypeTag>;
-
 public:
     //! Constructor for constant point sources
     PointSource(GlobalPosition pos, PrimaryVariables values)
@@ -146,6 +144,18 @@ public:
                 const ElementVolumeVariables &elemVolVars)
     {}
 
+    //! set the number of embeddings for this point source
+    void setEmbeddings(std::size_t embeddings)
+    {
+        embeddings_ = embeddings;
+    }
+
+    //! get the number of embeddings for this point source
+    std::size_t embeddings() const
+    {
+        return embeddings_;
+    }
+
 protected:
     PrimaryVariables values_; //! value of the point source for each equation
 private:
@@ -181,6 +191,20 @@ public:
     //! return the sources identifier
     IdType id() const
     { return id_; }
+
+    //! Convenience = operator overload modifying only the values
+    IdPointSource& operator= (const PrimaryVariables& values)
+    {
+        ParentType::operator=(values);
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    IdPointSource& operator= (Scalar s)
+    {
+        ParentType::operator=(s);
+        return *this;
+    }
 
 private:
     IdType id_;
@@ -231,16 +255,32 @@ public:
                 const ElementVolumeVariables &elemVolVars)
     { this->values_ = valueFunction_(problem.timeManager(), this->position()); }
 
+    //! Convenience = operator overload modifying only the values
+    TimeDependentPointSource& operator= (const PrimaryVariables& values)
+    {
+        ParentType::operator=(values);
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    TimeDependentPointSource& operator= (Scalar s)
+    {
+        ParentType::operator=(s);
+        return *this;
+    }
+
 private:
     ValueFunction valueFunction_;
 };
 
 /*!
  * \ingroup Common
- * \brief A helper class calculating a DOF-index to point source map
+ * \brief A helper class calculating a sub control volume to point source map
+ * This class uses the bounding box tree implementation to indentify in which
+ * sub control volume(s) a point source falls.
  */
 template<class TypeTag>
-class PointSourceHelper
+class BoundingBoxTreePointSourceHelper
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -267,7 +307,7 @@ public:
             // compute in which elements the point source falls
             std::vector<unsigned int> entities = boundingBoxTree.computeEntityCollisions(source.position());
             // split the source values equally among all concerned entities
-            source.embeddings_ *= entities.size();
+            source.setEmbeddings(entities.size()*source.embeddings());
             // loop over all concernes elements
             for (unsigned int eIdx : entities)
             {
@@ -296,7 +336,8 @@ public:
                         else
                             pointSourceMap.insert({key, {source}});
                         // split equally on the number of matched scvs
-                        pointSourceMap.at(key).back().embeddings_ *= scvs.size();
+                        auto& s = pointSourceMap.at(key).back();
+                        s.setEmbeddings(scvs.size()*s.embeddings());
                     }
                 }
                 else
@@ -312,6 +353,27 @@ public:
         }
     }
 };
+
+template <class TypeTag>
+class PointSourceHelper : public BoundingBoxTreePointSourceHelper<TypeTag>
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
+    using ParentType = BoundingBoxTreePointSourceHelper<TypeTag>;
+    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
+
+public:
+    // this seems to be the only deprecation working. The compiler warning will be slightly misleading but the message should clear things up
+    DUNE_DEPRECATED_MSG("PointSourceHelper<TypeTag> will be removed after the 2.10 release. Use BoundingBoxTreePointSourceHelper<TypeTag> instead.")
+    static void computePointSourceMap(const Problem& problem,
+                                      const BoundingBoxTree& boundingBoxTree,
+                                      std::vector<PointSource>& sources,
+                                      std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
+    {
+        ParentType::computePointSourceMap(problem, boundingBoxTree, sources, pointSourceMap);
+    }
+} DUNE_DEPRECATED_MSG("PointSourceHelper<TypeTag> will be removed after the 2.10 release. Use BoundingBoxTreePointSourceHelper<TypeTag> instead.");
 
 } // end namespace Dumux
 
