@@ -192,6 +192,20 @@ public:
     IdType id() const
     { return id_; }
 
+    //! Convenience = operator overload modifying only the values
+    IdPointSource& operator= (const PrimaryVariables& values)
+    {
+        ParentType::operator=(values);
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    IdPointSource& operator= (Scalar s)
+    {
+        ParentType::operator=(s);
+        return *this;
+    }
+
 private:
     IdType id_;
 };
@@ -240,6 +254,20 @@ public:
                 const int scvIdx,
                 const ElementVolumeVariables &elemVolVars)
     { this->values_ = valueFunction_(problem.timeManager(), this->position()); }
+
+    //! Convenience = operator overload modifying only the values
+    TimeDependentPointSource& operator= (const PrimaryVariables& values)
+    {
+        ParentType::operator=(values);
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    TimeDependentPointSource& operator= (Scalar s)
+    {
+        ParentType::operator=(s);
+        return *this;
+    }
 
 private:
     ValueFunction valueFunction_;
