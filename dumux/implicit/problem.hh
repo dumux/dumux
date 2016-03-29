@@ -67,6 +67,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
+    typedef typename GET_PROP_TYPE(TypeTag, PointSourceHelper) PointSourceHelper;
 
     enum {
         dim = GridView::dimension,
@@ -157,10 +158,10 @@ public:
         {
             // calculate point source locations and save them in a map
             // this builds the bounding box tree if it doesn't exist yet
-            Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
-                                                                     this->boundingBoxTree(),
-                                                                     sources,
-                                                                     pointSourceMap_);
+            PointSourceHelper::computePointSourceMap(asImp_(),
+                                                     this->boundingBoxTree(),
+                                                     sources,
+                                                     pointSourceMap_);
         }
     }
 
@@ -607,10 +608,10 @@ public:
                 {
                     // calculate point source locations and save them in a map
                     pointSourceMap_.clear();
-                    Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
-                                                                             this->boundingBoxTree(),
-                                                                             sources,
-                                                                             pointSourceMap_);
+                    PointSourceHelper::computePointSourceMap(asImp_(),
+                                                             this->boundingBoxTree(),
+                                                             sources,
+                                                             pointSourceMap_);
                 }
             }
         }
