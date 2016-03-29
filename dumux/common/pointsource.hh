@@ -68,8 +68,6 @@ class PointSource
     static const int dimworld = GridView::dimensionworld;
     typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
-    friend class Dumux::PointSourceHelper<TypeTag>;
-
 public:
     //! Constructor for constant point sources
     PointSource(GlobalPosition pos, PrimaryVariables values)
@@ -145,6 +143,18 @@ public:
                 const int scvIdx,
                 const ElementVolumeVariables &elemVolVars)
     {}
+
+    //! set the number of embeddings for this point source
+    void setEmbeddings(std::size_t embeddings)
+    {
+        embeddings_ = embeddings;
+    }
+
+    //! get the number of embeddings for this point source
+    std::size_t embeddings() const
+    {
+        return embeddings_;
+    }
 
 protected:
     PrimaryVariables values_; //! value of the point source for each equation
@@ -267,7 +277,7 @@ public:
             // compute in which elements the point source falls
             std::vector<unsigned int> entities = boundingBoxTree.computeEntityCollisions(source.position());
             // split the source values equally among all concerned entities
-            source.embeddings_ *= entities.size();
+            source.setEmbeddings(entities.size()*source.embeddings());
             // loop over all concernes elements
             for (unsigned int eIdx : entities)
             {
@@ -296,7 +306,8 @@ public:
                         else
                             pointSourceMap.insert({key, {source}});
                         // split equally on the number of matched scvs
-                        pointSourceMap.at(key).back().embeddings_ *= scvs.size();
+                        auto& s = pointSourceMap.at(key).back();
+                        s.setEmbeddings(scvs.size()*s.embeddings());
                     }
                 }
                 else
