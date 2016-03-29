@@ -275,10 +275,12 @@ private:
 
 /*!
  * \ingroup Common
- * \brief A helper class calculating a DOF-index to point source map
+ * \brief A helper class calculating a sub control volume to point source map
+ * This class uses the bounding box tree implementation to indentify in which
+ * sub control volume(s) a point source falls.
  */
 template<class TypeTag>
-class PointSourceHelper
+class BoundingBoxTreePointSourceHelper
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -351,6 +353,27 @@ public:
         }
     }
 };
+
+template <class TypeTag>
+class PointSourceHelper : public BoundingBoxTreePointSourceHelper<TypeTag>
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
+    using ParentType = BoundingBoxTreePointSourceHelper<TypeTag>;
+    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
+
+public:
+    // this seems to be the only deprecation working. The compiler warning will be slightly misleading but the message should clear things up
+    DUNE_DEPRECATED_MSG("PointSourceHelper<TypeTag> will be removed after the 2.10 release. Use BoundingBoxTreePointSourceHelper<TypeTag> instead.")
+    static void computePointSourceMap(const Problem& problem,
+                                      const BoundingBoxTree& boundingBoxTree,
+                                      std::vector<PointSource>& sources,
+                                      std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
+    {
+        ParentType::computePointSourceMap(problem, boundingBoxTree, sources, pointSourceMap);
+    }
+} DUNE_DEPRECATED_MSG("PointSourceHelper<TypeTag> will be removed after the 2.10 release. Use BoundingBoxTreePointSourceHelper<TypeTag> instead.");
 
 } // end namespace Dumux
 
