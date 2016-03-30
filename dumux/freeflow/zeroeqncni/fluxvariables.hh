@@ -67,22 +67,6 @@ class ZeroEqncniFluxVariables : public ZeroEqncFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
-    //! \brief The old constructor
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    ZeroEqncniFluxVariables(const Problem &problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int fIdx,
-                            const ElementVolumeVariables &elemVolVars,
-                            const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    ZeroEqncniFluxVariables() = default;
-
     /*!
      * \brief Compute / update the flux variables
      *

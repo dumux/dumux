@@ -63,22 +63,6 @@ class ZeroEqFluxVariables : public GET_PROP_TYPE(TypeTag, BaseStokesFluxVariable
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
-    //! \brief The old constructor
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    ZeroEqFluxVariables(const Problem &problem,
-                        const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int fIdx,
-                        const ElementVolumeVariables &elemVolVars,
-                        const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    ZeroEqFluxVariables() = default;
-
     /*!
      * \brief Compute / update the flux variables
      *

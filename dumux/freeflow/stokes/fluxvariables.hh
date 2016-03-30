@@ -27,7 +27,6 @@
 #define DUMUX_STOKES_FLUX_VARIABLES_HH
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/deprecated.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/valgrind.hh>
@@ -67,29 +66,6 @@ class StokesFluxVariables
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
-    //! \brief The old constructor
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    StokesFluxVariables(const Problem &problem,
-                        const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int fIdx,
-                        const ElementVolumeVariables &elemVolVars,
-                        const bool onBoundary = false)
-    {
-        DUNE_THROW(Dune::InvalidStateException, "The FluxVariables now have to be default contructed. "
-                                                << "In case you have your own FluxVariables you have to make them default "
-                                                << " constructable too. All calls to the old constructor will throw this error. "
-                                                << "Everywhere you instantiate FluxVariables do this now by default constructing "
-                                                << "a FluxVariables object (FluxVariables fluxVars;) and then updating it where "
-                                                << "the update method has the same signature as the old constructor (fluxVars.update(...).)");
-    }
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    StokesFluxVariables() = default;
-
     /*!
      * \brief Compute / update the flux variables
      *

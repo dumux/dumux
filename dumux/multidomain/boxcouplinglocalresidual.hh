@@ -24,8 +24,6 @@
 #ifndef DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/implicit/box/localresidual.hh>
 
 namespace Dumux
@@ -67,78 +65,6 @@ public:
     //! \brief The constructor
     BoxCouplingLocalResidual()
     { }
-
-    /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero. Gets a solution vector computed by PDELab
-     *
-     * \tparam ElemSolVectorType The local solution for the element using PDELab ordering
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The element geometry
-     * \param elementSolVector The local solution for the element using PDELab ordering
-     * \param volVarsPrev Volume variables of the previous time step
-     * \param volVarsCur Volume variables of the current time step
-     */
-    template<typename ElemSolVectorType>
-    DUNE_DEPRECATED_MSG("evalPDELab() is deprecated.")
-    void evalPDELab(const Element &element,
-                    const FVElementGeometry& fvGeometry,
-                    const ElemSolVectorType& elementSolVector,
-                    ElementVolumeVariables& volVarsPrev,
-                    ElementVolumeVariables& volVarsCur)
-    {
-        this->elemPtr_ = &element;
-        this->fvElemGeomPtr_ = &fvGeometry;
-
-        volVarsPrev.update(this->problem_(),
-                           element,
-                           fvGeometry,
-                           true /* oldSol? */);
-        volVarsCur.updatePDELab(this->problem_(),
-                                element,
-                                fvGeometry,
-                                elementSolVector);
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(this->problem_(), element, fvGeometry);
-
-        asImp_().evalPDELab(element, fvGeometry, volVarsPrev, volVarsCur, bcTypes);
-    }
-
-    /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero without taking boundary conditions into account.
-     *        This is required for the flux calculation at the interface
-     *        (called from the coupled problem). Calls evalPDELab with the
-     *        required removal of the stabilization at the boundary (stokes).
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The element geometry
-     * \param volVarsPrev Volume variables of the previous time step
-     * \param volVarsCur Volume variables of the current time step
-     */
-    DUNE_DEPRECATED_MSG("evalNoBoundary() is deprecated.")
-    void evalNoBoundary(const Element &element,
-                        const FVElementGeometry fvGeometry,
-                        ElementVolumeVariables& volVarsPrev,
-                        ElementVolumeVariables& volVarsCur)
-    {
-        volVarsPrev.update(this->problem_(),
-                           element,
-                           fvGeometry,
-                           true /* oldSol? */);
-        volVarsCur.update(this->problem_(),
-                          element,
-                          fvGeometry,
-                          false /* oldSol? */);
-
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(this->problem_(), element, fvGeometry);
-
-        asImp_().evalPDELab(element, fvGeometry, volVarsPrev, volVarsCur, bcTypes);
-    }
 
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
