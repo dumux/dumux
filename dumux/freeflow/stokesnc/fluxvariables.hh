@@ -72,21 +72,6 @@ class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
-    // old constructor
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    StokesncFluxVariables(const Problem &problem,
-                          const Element &element,
-                          const FVElementGeometry &fvGeometry,
-                          const int fIdx,
-                          const ElementVolumeVariables &elemVolVars,
-                          const bool onBoundary = false) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    StokesncFluxVariables() = default;
-
     /*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */

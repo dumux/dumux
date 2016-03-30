@@ -25,8 +25,6 @@
 #ifndef DUMUX_MULTIDOMAIN_MODEL_HH
 #define DUMUX_MULTIDOMAIN_MODEL_HH
 
-#include <dune/common/deprecated.hh>
-
 #include "properties.hh"
 #include "propertydefaults.hh"
 #include "problem.hh"
@@ -291,15 +289,6 @@ public:
         sdProblem1().deserialize(res);
         sdProblem2().deserialize(res);
         wasRestarted_ = true;
-    }
-
-    /*!
-     * \brief Returns the number of global degrees of freedoms (DOFs)
-     */
-    DUNE_DEPRECATED_MSG("numDofs() is deprecated.")
-    size_t numDofs() const
-    {
-        return sdModel1().numDofs()*numEq1 + sdModel2().numDofs()*numEq2;
     }
 
     //! \copydoc Dumux::ImplicitModel::resetJacobianAssembler()

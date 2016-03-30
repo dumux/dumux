@@ -68,20 +68,6 @@ class StokesncniFluxVariables : public StokesncFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
-    // old ctor
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    StokesncniFluxVariables(const Problem &problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int fIdx,
-                            const ElementVolumeVariables &elemVolVars,
-                            const bool onBoundary = false) {}
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    StokesncniFluxVariables() = default;
-
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the integration point.
      */
