@@ -130,7 +130,10 @@ public:
                 }
 
                 // velocity output
-                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
+                if (velocityOutput.enableOutput())
+                {
+                    velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
+                }
             }
         }
 
