@@ -6,9 +6,6 @@
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           200000 182416 150000 117584 100000
         </DataArray>
-        <DataArray type="Float32" Name="K" NumberOfComponents="1" format="ascii">
-          1e-10 1e-12 1e-12 1e-12 1e-10
-        </DataArray>
       </PointData>
       <CellData Scalars="process rank">
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
