@@ -6,9 +6,6 @@
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           180435 167391 180435 167391 132609 119565 132609 119565
         </DataArray>
-        <DataArray type="Float32" Name="K" NumberOfComponents="1" format="ascii">
-          1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
-        </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0
         </DataArray>

@@ -85,7 +85,6 @@ public:
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
         ScalarField *p = writer.allocateManagedBuffer(numDofs);
-        ScalarField *K = writer.allocateManagedBuffer(numDofs);
         VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
@@ -120,22 +119,18 @@ public:
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
                     int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                    const SpatialParams &spatialParams = this->problem_().spatialParams();
-
                     (*p)[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
-                    (*K)[dofIdxGlobal] = spatialParams.intrinsicPermeability(element,
-                                                                         fvGeometry,
-                                                                         scvIdx);
                 }
 
                 // velocity output
-                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
+                if (velocityOutput.enableOutput())
+                {
+                    velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
+                }
             }
         }
 
         writer.attachDofData(*p, "p", isBox);
-        writer.attachDofData(*K, "K", isBox);
         if (velocityOutput.enableOutput())
         {
             writer.attachDofData(*velocity,  "velocity", isBox, dim);
