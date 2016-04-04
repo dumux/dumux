@@ -75,17 +75,19 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    enum
-    {
-        rhs = ParentType::rhs, matrix = ParentType::matrix
-    };
-
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
+protected:
+    //! \cond \private
     typedef typename ParentType::EntryType EntryType;
+    enum
+    {
+        rhs = ParentType::rhs, matrix = ParentType::matrix
+    };
+    //! \endcond
 
 public:
     // Function which calculates the flux entry
