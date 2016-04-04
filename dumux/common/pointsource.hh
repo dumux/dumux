@@ -186,7 +186,7 @@ public:
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     IdPointSource(GlobalPosition pos, IdType id)
-      : ParentType(pos, 0), id_(id) {}
+      : ParentType(pos, PrimaryVariables(0)), id_(id) {}
 
     //! return the sources identifier
     IdType id() const
@@ -243,7 +243,7 @@ public:
     // value known at the time of initialization
     TimeDependentPointSource(GlobalPosition pos,
                              ValueFunction valueFunction)
-      : ParentType(pos, 0), valueFunction_(valueFunction) {}
+      : ParentType(pos, PrimaryVariables(0)), valueFunction_(valueFunction) {}
 
     //! an update function called before adding the value
     // to the local residual in the problem in scvPointSources
