@@ -23,7 +23,6 @@
 
 // dumux environment
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
-#include <dumux/porousmediumflow/2p2c/sequential/pseudo1p2cfluidstate.hh>
 #include <dumux/linear/vectorexchange.hh>
 
 /**

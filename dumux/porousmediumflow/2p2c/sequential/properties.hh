@@ -90,7 +90,6 @@ NEW_PROP_TAG( RegulateBoundaryPermeability );
 //DUMUX includes
 #include <dumux/porousmediumflow/2p/sequential/indices.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/celldata.hh>
-#include <dumux/porousmediumflow/2p2c/sequential/fluidstate.hh>
 
 namespace Dumux {
 namespace Properties {
