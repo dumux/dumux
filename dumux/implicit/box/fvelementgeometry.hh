@@ -85,9 +85,9 @@ public:
                                    GlobalPosition *edgeCoord,
                                    GlobalPosition *faceCoord)
     {
-        std::vector<GlobalPosition> corners = {{edgeCoord[0], fvGeometry.elementGlobal}};
+        std::vector<GlobalPosition> corners = {edgeCoord[0], fvGeometry.elementGlobal};
         fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::GeometryType::cube, 1), corners));
-        corners = {{fvGeometry.elementGlobal, edgeCoord[1]}};
+        corners = {fvGeometry.elementGlobal, edgeCoord[1]};
         fvGeometry.subContVolGeometries.push_back(SCVGeometry(Dune::GeometryType(Dune::GeometryType::cube, 1), corners));
     }
 };
