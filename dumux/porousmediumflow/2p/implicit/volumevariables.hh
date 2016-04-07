@@ -84,8 +84,7 @@ public:
 
         completeFluidState(priVars, problem, element, scv, fluidState_);
 
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
@@ -114,8 +113,7 @@ public:
         Scalar t = Implementation::temperature_(priVars, problem, element, scv);
         fluidState.setTemperature(t);
 
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
 
         if (int(formulation) == pwsn) {
             Scalar sn = priVars[saturationIdx];
