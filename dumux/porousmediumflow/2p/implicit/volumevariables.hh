@@ -49,7 +49,6 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
@@ -91,7 +90,7 @@ public:
 
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
-        const MaterialLawParams &materialParams =
+        const auto& materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
         mobility_[wPhaseIdx] =
@@ -125,7 +124,7 @@ public:
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        const MaterialLawParams &materialParams =
+        const auto& materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
         if (int(formulation) == pwsn) {
@@ -149,7 +148,6 @@ public:
                                    pn - MaterialLaw::pc(materialParams, sw));
         }
 
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
 

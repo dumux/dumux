@@ -51,7 +51,6 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
@@ -130,17 +129,16 @@ public:
         /////////////
         // calculate the remaining quantities
         /////////////
-        const MaterialLawParams &materialParams =
-        problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        const auto& materialParams =
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-
-
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             // relative permeabilities
             Scalar kr;
             if (phaseIdx == wPhaseIdx)
@@ -214,8 +212,8 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const MaterialLawParams &materialParams =
-        problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        const auto& materialParams =
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
 
         if (formulation == pwsn) {
