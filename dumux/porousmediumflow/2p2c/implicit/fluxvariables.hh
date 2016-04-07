@@ -221,19 +221,19 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
             if (volVarsI.saturation(phaseIdx) <= 0 || volVarsJ.saturation(phaseIdx) <= 0)
             {
                 porousDiffCoeff_[phaseIdx] = 0.0;
-                continue;
             }
+            else
+            {
+                diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                             volVarsI.saturation(phaseIdx),
+                                                                             volVarsI.diffCoeff(phaseIdx));
 
-            diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
-                                                                         volVarsI.saturation(phaseIdx),
-                                                                         volVarsI.diffCoeff(phaseIdx));
+                diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                             volVarsJ.saturation(phaseIdx),
+                                                                             volVarsJ.diffCoeff(phaseIdx));
 
-            diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
-                                                                         volVarsJ.saturation(phaseIdx),
-                                                                         volVarsJ.diffCoeff(phaseIdx));
-
-            // -> harmonic mean
-            porousDiffCoeff_[phaseIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
+                porousDiffCoeff_[phaseIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
+            }
         }
     }
 
@@ -245,7 +245,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
      * \param phaseIdx The phase index
      */
     Scalar porousDiffCoeff(int phaseIdx) const
-    { return porousDiffCoeff_[phaseIdx]; };
+    { return porousDiffCoeff_[phaseIdx]; }
 
     /*!
      * \brief Returns the density \f$\mathrm{[kg/m^3]}\f$ of a phase.
@@ -270,7 +270,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
      * \param phaseIdx The phase index
      */
     const GlobalPosition &moleFractionGrad(int phaseIdx) const
-    { return moleFractionGrad_[phaseIdx]; };
+    { return moleFractionGrad_[phaseIdx]; }
 
  protected:
     // mole fraction gradients
