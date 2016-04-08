@@ -57,12 +57,12 @@ public:
      * \param diffCoeff The diffusion coefficient of the phase \f$\mathrm{[m^2/s]}\f$
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
-                                               const Scalar saturation,
-                                               const Scalar diffCoeff)
+                                       const Scalar saturation,
+                                       const Scalar diffCoeff)
 
     {
         Scalar tau = 1.0/(porosity * porosity) *
-                    pow(porosity * saturation, 7.0/3);
+                     std::pow(porosity * saturation, 7.0/3);
 
         return porosity * saturation * tau * diffCoeff;
     }

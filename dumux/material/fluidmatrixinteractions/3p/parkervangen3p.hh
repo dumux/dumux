@@ -25,20 +25,9 @@
 #ifndef PARKERVANGEN_3P_HH
 #define PARKERVANGEN_3P_HH
 
-
-#include "parkervangen3pparams.hh"
-
 #include <algorithm>
 
-#warning The Parker-VanGenchten 3P material law \
-         has been thoroughly revised. The conversion from \
-         absolute to effective saturations and regularization \
-         are now done in additional separate classes: \
-         <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh> and \
-         <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh> \
-         Make sure to use these classes in your spatialParams. \
-         This warning will be removed after the next release of DuMux.
-
+#include "parkervangen3pparams.hh"
 
 namespace Dumux
 {
@@ -146,33 +135,9 @@ public:
      * \param params Array of parameters
      * \param swe Effective wetting liquid saturation
     */
-    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, const Scalar swe) is deprecated. Use dpc_dswe(const Params &params, const Scalar swe) instead.")
-    static Scalar dpc_dsw(const Params &params, const Scalar swe)
-    {
-        return dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param swe Effective wetting liquid saturation
-    */
     static Scalar dpc_dswe(const Params &params, const Scalar swe)
     {
         DUNE_THROW(Dune::NotImplemented, "dpc/dswe for three phases not implemented! Do it yourself!");
-    }
-
-     /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param seRegu Effective wetting phase saturation for regularization
-    */
-    DUNE_DEPRECATED_MSG("dpcgw_dsw(const Params &params, const Scalar seRegu) is deprecated. Use dpcgw_dswe(const Params &params, const Scalar seRegu) instead.")
-    static Scalar dpcgw_dsw(const Params &params, const Scalar seRegu)
-    {
-        return dpcgw_dswe(params, seRegu);
     }
 
      /*!
@@ -194,18 +159,6 @@ public:
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
     */
-    DUNE_DEPRECATED_MSG("dpcnw_dsw(const Params &params, const Scalar seRegu) is deprecated. Use dpcnw_dswe(const Params &params, const Scalar seRegu) instead.")
-    static Scalar dpcnw_dsw(const Params &params, const Scalar seRegu)
-    {
-        return dpcnw_dswe(params, seRegu);
-    }
-
-     /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param seRegu Effective wetting phase saturation for regularization
-    */
     static Scalar dpcnw_dswe(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
@@ -219,35 +172,11 @@ public:
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
     */
-    DUNE_DEPRECATED_MSG("dpcgn_dst(const Params &params, const Scalar seRegu) is deprecated. Use dpcgn_dste(const Params &params, const Scalar seRegu) instead.")
-    static Scalar dpcgn_dst(const Params &params, const Scalar seRegu)
-    {
-        return dpcgn_dste(params, seRegu);
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
-     * \param seRegu Effective wetting phase saturation for regularization
-    */
     static Scalar dpcgn_dste(const Params &params, const Scalar seRegu)
     {
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSeRegu/seRegu/params.vgm()/params.betaGn();
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the effective
-     *        saturation to the capillary pressure.
-     * \param params Array of parameters
-     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
-     */
-    DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, const Scalar pc) is deprecated. Use dswe_dpc(const Params &params, const Scalar pc) instead.")
-    static Scalar dsw_dpc(const Params &params, const Scalar pc)
-    {
-        return dswe_dpc(params, pc);
     }
 
     /*!

@@ -70,9 +70,10 @@ public:
     Scalar saturation(int phaseIdx) const
     {
         if (phaseIdx == wPhaseIdx)
+        {
             return sw_;
-        else
-            return Scalar(1.0) - sw_;
+        }
+        return 1.0 - sw_;
     }
 
     /*! @copydoc CompositionalFluidState::massFraction()
@@ -155,8 +156,7 @@ public:
             nu_[nPhaseIdx] = 1. - nu_[wPhaseIdx];
             return nu_[phaseIdx];
         }
-        else
-            return nu_[phaseIdx];
+        return nu_[phaseIdx];
     }
     /*!
      * \brief Returns the phase mass fraction \f$ \nu \f$:
@@ -164,7 +164,7 @@ public:
      *
      * \param phaseIdx the index of the phase
      */
-    Scalar&  nu(int phaseIdx) const
+    Scalar& nu(int phaseIdx) const
     {
         return phaseMassFraction(phaseIdx);
     }
@@ -273,8 +273,6 @@ protected:
     Scalar viscosity_[numPhases];
     Scalar massFraction_[numPhases][numComponents];
     Scalar moleFraction_[numPhases][numComponents];
-    Dune::FieldMatrix<Scalar, numPhases, numComponents> equilRatio_;
-    Scalar averageMolarMass_[numPhases];
 };
 
 } // end namespace

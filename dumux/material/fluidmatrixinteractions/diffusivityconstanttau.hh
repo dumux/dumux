@@ -54,8 +54,8 @@ public:
      * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
-                                               const Scalar saturation,
-                                               const Scalar diffCoeff)
+                                       const Scalar saturation,
+                                       const Scalar diffCoeff)
 
     {
         Scalar tau = GET_RUNTIME_PARAM(TypeTag, Scalar, tau);
