@@ -300,9 +300,14 @@ public:
                     }
                 }
                 // 3D prism and pyramids
+                else if(geomType.isPrism()) {
+                    refVelocity[0] = scvfFluxes[0]/(dim + 1) - 2*scvfFluxes[1]/(dim + 1) + scvfFluxes[2]/(dim + 1);
+                    refVelocity[1] = -2*scvfFluxes[0]/(dim + 1) + scvfFluxes[1]/(dim + 1) + scvfFluxes[2]/(dim + 1);
+                    refVelocity[2] = -0.5*scvfFluxes[3] + 0.5*scvfFluxes[4];
+                }
                 else {
                     DUNE_THROW(Dune::NotImplemented,
-                               "velocity output for cell-centered and prism/pyramid");
+                               "velocity output for cell-centered and pyramid");
                 }
 
                 Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
