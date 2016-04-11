@@ -50,7 +50,7 @@ namespace Properties
  \f]
  Convert from reference to real coordinates using the transposed Jacobian:
  \f[
- \mathbf{v_{ref}(\xi)} = \sum_{i=0}^{dim} \mathbf{f_i} \mathbf{\phi_i(\xi)}
+ \mathbf{v_{ref}(x)}  = \mathbf{J}^T(\xi)\mathbf{v_{ref}(\xi)}
  \f]
  *
  *For 2D simplices, the base functions \f$\mathbf{\phi_i(r,s)}\f$ are:
@@ -59,7 +59,7 @@ namespace Properties
  *\f$\mathbf\mathbf{\phi_2(r,s)} =\begin{pmatrix}r\\s\end{pmatrix}\f$
  *
  *For 3D prisms, the base functions \f$\mathbf{\phi_i(r,s,t)}\f$ are:
- *\f$\mathbf\mathbf{\phi_0(r,s,t)} =\begin{pmatrix}r\\s-1\\0\end{pmatrix}\f$
+ *\f$\mathbf\mathbf{\phi_0(r,s,t)} =\begin{pmatrix}r\\s-1\\0\end{pmatrix}\f$,
  *\f$\mathbf\mathbf{\phi_1(r,s,t)} =\begin{pmatrix}r-1\\s\\0\end{pmatrix}\f$,
  *\f$\mathbf\mathbf{\phi_2(r,s,t)} =\begin{pmatrix}r\\s\\0\end{pmatrix}\f$,
  *\f$\mathbf\mathbf{\phi_3(r,s,t)} =\begin{pmatrix}0\\0\\t-1\end{pmatrix}\f$,
@@ -298,6 +298,20 @@ public:
                                 else if (geomType.isSimplex()) {
                                     scvfFluxes[fIdx] = 0;
                                 }
+                                // prisms
+                                else if (geomType.isPrism()) {
+                                    if(fIdx == 3 || fIdx == 4)
+                                    {
+                                        // bottom or top
+                                        int fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
+                                        scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+                                    }
+                                    else
+                                    {
+                                        // sides
+                                        scvfFluxes[fIdx] = 0;
+                                    }
+                                }
                             }
                         }
                     }
@@ -324,8 +338,8 @@ public:
                 }
                 // 3D prism
                 else if(geomType.isPrism()) {
-                    refVelocity[0] = scvfFluxes[0]/(dim + 1) - 2*scvfFluxes[1]/(dim + 1) + scvfFluxes[2]/(dim + 1);
-                    refVelocity[1] = -2*scvfFluxes[0]/(dim + 1) + scvfFluxes[1]/(dim + 1) + scvfFluxes[2]/(dim + 1);
+                    refVelocity[0] = scvfFluxes[0]/(dim) - 2*scvfFluxes[1]/(dim) + scvfFluxes[2]/(dim);
+                    refVelocity[1] = -2*scvfFluxes[0]/(dim) + scvfFluxes[1]/(dim) + scvfFluxes[2]/(dim);
                     refVelocity[2] = -0.5*scvfFluxes[3] + 0.5*scvfFluxes[4];
                 }
                 // pyramids
