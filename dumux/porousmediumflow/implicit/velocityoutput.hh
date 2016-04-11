@@ -42,6 +42,29 @@ namespace Properties
 
 /*!
  * \brief Velocity output for implicit (porous media) models
+ *
+ * For cell-centered discretizations, the velocity is reconstructed at the cell-center using Raviart-Thomas-0
+ * interpolation \cite chen2015 :
+ \f[
+ \mathbf{v_{ref}(\xi)} = \sum_{i=0}^{dim} \mathbf{f_i} \mathbf{\phi_i(\xi)}
+ \f]
+ Convert from reference to real coordinates using the transposed Jacobian:
+ \f[
+ \mathbf{v_{ref}(\xi)} = \sum_{i=0}^{dim} \mathbf{f_i} \mathbf{\phi_i(\xi)}
+ \f]
+ *
+ *For 2D simplices, the base functions \f$\mathbf{\phi_i(r,s)}\f$ are:
+ *\f$\mathbf\mathbf{\phi_0(r,s)} =\begin{pmatrix}r\\s-1\end{pmatrix}\f$,
+ *\f$\mathbf\mathbf{\phi_1(r,s)} =\begin{pmatrix}r-1\\s\end{pmatrix}\f$,
+ *\f$\mathbf\mathbf{\phi_2(r,s)} =\begin{pmatrix}r\\s\end{pmatrix}\f$
+ *
+ *For 3D prisms, the base functions \f$\mathbf{\phi_i(r,s,t)}\f$ are:
+ *\f$\mathbf\mathbf{\phi_0(r,s,t)} =\begin{pmatrix}r\\s-1\\0\end{pmatrix}\f$
+ *\f$\mathbf\mathbf{\phi_1(r,s,t)} =\begin{pmatrix}r-1\\s\\0\end{pmatrix}\f$,
+ *\f$\mathbf\mathbf{\phi_2(r,s,t)} =\begin{pmatrix}r\\s\\0\end{pmatrix}\f$,
+ *\f$\mathbf\mathbf{\phi_3(r,s,t)} =\begin{pmatrix}0\\0\\t-1\end{pmatrix}\f$,
+ *\f$\mathbf\mathbf{\phi_4(r,s,t)} =\begin{pmatrix}0\\0\\t\end{pmatrix}\f$
+ *
  */
 template<class TypeTag>
 class ImplicitVelocityOutput
@@ -299,12 +322,13 @@ public:
                          }
                     }
                 }
-                // 3D prism and pyramids
+                // 3D prism
                 else if(geomType.isPrism()) {
                     refVelocity[0] = scvfFluxes[0]/(dim + 1) - 2*scvfFluxes[1]/(dim + 1) + scvfFluxes[2]/(dim + 1);
                     refVelocity[1] = -2*scvfFluxes[0]/(dim + 1) + scvfFluxes[1]/(dim + 1) + scvfFluxes[2]/(dim + 1);
                     refVelocity[2] = -0.5*scvfFluxes[3] + 0.5*scvfFluxes[4];
                 }
+                // pyramids
                 else {
                     DUNE_THROW(Dune::NotImplemented,
                                "velocity output for cell-centered and pyramid");
