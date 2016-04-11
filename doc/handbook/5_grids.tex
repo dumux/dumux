@@ -14,7 +14,7 @@ and briefly mention how to customize and deal with common other grid formats.
 Most of our \Dumux tests and tutorials use the Dune Grid Format (DGF) to read in grids. A detailed description
 of the DGF format and some examples can be found in the \Dune doxygen documentation
 \textbf{(Modules $\rightarrow$ I/O $\rightarrow$ Dune Grid Format (DGF)}). To generate larger or more
-complex DGF files, we recommend to write your own scripts, e.g in C++, Matlab or Python.
+complex DGF files, we recommend to write your own scripts, e.g in \Cplusplus, Matlab or Python.
 
 The DGF format can also used to read in spatial parameters defined on the grid. These parameters can
 be defined on nodes as well as on the elements. An example for predefined parameters on a grid is
@@ -92,7 +92,7 @@ CellType = Cube # or Simplex
 For all available parameters see the Doxygen documentation.
 
 \subsection{Other grid formats and customized grid creators}
-Other grid formats than DGF and MSH have to be converted to DGF or MSH to be read into \Dumux. A second possiblity (advanced C++) is to write your own
+Other grid formats than DGF and MSH have to be converted to DGF or MSH to be read into \Dumux. A second possiblity (advanced \Cplusplus) is to write your own
 \texttt{GridCreator}. For examples have a look at the \texttt{CubeGridCreator} for a simple and the \texttt{ArtGridCreator} for a more complex example.
 It follows a (non-comprehensive) list of hints for some other common grid formats.
 

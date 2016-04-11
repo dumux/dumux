@@ -7,7 +7,7 @@
 
 /* ***************** Porousmediaflow ******************/
 /*!
- * \defgroup Porousmediaflow Porousmediumflow (fully implicit if not denoted otherwise)
+ * \defgroup Porousmediaflow Porous-Medium Flow (fully implicit if not denoted otherwise)
  */
     /*!
      * \ingroup Porousmediaflow
@@ -112,19 +112,19 @@
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup CO2Model CO2 (2-phase, 2-component Darcy flow)
+     * \defgroup CO2Model CO2 (two-phase, two-component Darcy flow)
      *
      * \copydetails Dumux::CO2Model
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup MPNCModel Mpnc (m-phase, n-component Darcy flow)
+     * \defgroup MPNCModel MpNc (m-phase, n-component Darcy flow)
      *
      * \copydetails Dumux::MPNCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup NIModel Nonisothermal (non-isothermal model)
+     * \defgroup NIModel Non-isothermal (energy equation, to be added to an isothermal model)
      *
      * \copydetails Dumux::NIModel
      */
@@ -160,11 +160,11 @@
 
 /* ***************** Freeflow ******************/
 /*!
- * \defgroup Freeflow Freeflow (fully implicit)
+ * \defgroup Freeflow Free Flow (fully implicit)
  */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxStokesModel Stokes (one-phase Stokes model)
+     * \defgroup BoxStokesModel Stokes (one-phase Stokes flow)
      *
      * \copydetails Dumux::StokesModel
      */
@@ -209,7 +209,7 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCStokesTwoCModel 2cstokes2p2c (Stokes2c flow, coupled to two-phase, two-component Darcy flow)
+     * \defgroup TwoPTwoCStokesTwoCModel 2cstokes2p2c (1p2c Stokes flow coupled to 2p2c Darcy flow)
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
@@ -222,7 +222,7 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCNIStokesTwoCNIModel 2cnistokes2p2cni (Stokes2c flow, coupled to two-phase, two-component Darcy flow, non-isothermal)
+     * \defgroup TwoPTwoCNIStokesTwoCNIModel 2cnistokes2p2cni (1p2cni Stokes flow coupled to 2p2cni Darcy flow)
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
@@ -238,7 +238,7 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCZeroEqTwoCModel 2czeroeq2p2c (Stokes2c flow with zero-eq turbulence model, coupled to two-phase, two-component Darcy flow)
+     * \defgroup TwoPTwoCZeroEqTwoCModel 2czeroeq2p2c (1p2c Stokes flow with zero-eq turbulence model coupled to 2p2c Darcy flow)
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
@@ -251,7 +251,7 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCNIZeroEqTwoCNIModel 2cnizeroeq2p2cni (Stokes2c flow with zero-eq turbulence model, coupled to two-phase, two-component Darcy flow, non-isothermal)
+     * \defgroup TwoPTwoCNIZeroEqTwoCNIModel 2cnizeroeq2p2cni (1p2cni Stokes flow with zero-eq turbulence model coupled to 2p2cni Darcy flow)
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
@@ -268,7 +268,7 @@
 
 /* ***************** Fully Implicit ******************/
 /*!
- * \defgroup ImplicitModel Fully Implicit Scheme
+ * \defgroup ImplicitModel Fully-Coupled Fully-Implicit Scheme
  */
     /*!
      * \ingroup ImplicitModel
@@ -280,11 +280,11 @@
      */
          /*!
          * \ingroup Discretizations
-         * \defgroup CCModel Fully implicit cell-centered discretization
+         * \defgroup CCModel Fully-implicit cell-centered discretization
          */
          /*!
          * \ingroup Discretizations
-         * \defgroup BoxModel Fully implicit box discretization
+         * \defgroup BoxModel Fully-implicit box discretization
          */
     /*!
      * \ingroup ImplicitModel
@@ -317,7 +317,7 @@
 
 /* ***************** Sequential ******************/
 /*!
- * \defgroup Sequential Sequential Scheme (Implicit Pressure Explicit Transport)
+ * \defgroup Sequential Sequential Scheme (Implicit Pressure, Explicit Transport)
  */
     /*!
      * \ingroup Sequential
@@ -405,7 +405,8 @@
      * pressure, composition and density. Since these classes are only used
      * internally in fluid systems, their programming interface is
      * currently ad-hoc.
-     *
+     */
+    /*!
      * \ingroup Material
      * \defgroup FluidStates Fluid States
      * Fluid states are responsible for representing the
