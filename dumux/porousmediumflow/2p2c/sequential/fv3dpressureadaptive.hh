@@ -404,13 +404,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                     // if mpfa is used, more entries might be needed if all interactionRegions are regarded
                     if (intersection.outside().level() > element.level()) //look from larger cell
                     {
-                        auto outerCorner = intersection.inside().template subEntity<dim>(0); //initialize with rubbish
-                        // prepare additional pointer to cells
-                        auto additional2 = intersection.inside(); //initialize with something wrong!
-                        auto additional3 = intersection.inside();
-
                         // Prepare MPFA
-                        /** get geometric Info, transmissibility matrix */
+                        /* get geometric Info, transmissibility matrix */
                         GlobalPosition globalPos3(0.);
                         int eIdxGlobal3=-1;
                         GlobalPosition globalPos4(0.);
@@ -565,7 +560,6 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
             }
         } //end second loop
     }
-    return;
 }
 
 //!Determine position of matrix entries
@@ -633,7 +627,6 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
             }
         }
     }
-    return;
 }
 
 //! \copydoc FV2dPressure2P2CAdaptive::assemble()
@@ -770,8 +763,6 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
             this->f_[eIdxGlobalI] = this->pressure()[eIdxGlobalI];
         }
     } // end grid traversal
-
-    return;
 }
 
 //! Compute flux through an irregular interface using a \a mpfa method
@@ -1305,7 +1296,6 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
             maxError = std::max(maxError, fabs(cellData.volumeError()));
         }
         this->maxError_ = maxError/problem().timeManager().timeStepSize();
-        return;
     }
     else
     {
