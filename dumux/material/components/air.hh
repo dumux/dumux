@@ -46,13 +46,13 @@ class Air : public Component<Scalar, Air<Scalar> >
 
 public:
     /*!
-     * \brief A human readable name for the \f$Air\f$.
+     * \brief A human readable name for Air.
      */
     static const char *name()
     { return "Air"; }
 
     /*!
-     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of \f$AIR\f$.
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of Air.
      *
      * Taken from constrelair.hh.
      */
@@ -60,19 +60,21 @@ public:
     { return 0.02896; /* [kg/mol] */ }
 
     /*!
-     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of \f$AIR\f$.
+     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of Air.
      */
     static Scalar criticalTemperature()
     { return 132.531 ; /* [K] */ }
 
     /*!
-     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of \f$AIR\f$.
+     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of Air.
      */
     static Scalar criticalPressure()
     { return 37.86e5; /* [Pa] */ }
 
     /*!
-     * \brief The density of \f$AIR\f$ at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of Air at a given pressure and temperature.
+     *
+     * Ideal gas is assumed.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
@@ -84,19 +86,21 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true, the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()
     { return true; }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
+     * \brief Returns true, the gas phase is assumed to be ideal
      */
     static bool gasIsIdeal()
     { return true; }
 
     /*!
-     * \brief The pressure of gaseous \f$AIR\f$ at a given density and temperature \f$\mathrm{[Pa]}\f$.
+     * \brief The pressure \f$\mathrm{[Pa]}\f$ of gaseous Air at a given density and temperature.
+     *
+     * Ideal gas is assumed.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
@@ -107,18 +111,18 @@ public:
         return IdealGas::pressure(temperature, density/molarMass());
     }
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$AIR\f$ at a given pressure and temperature. Criticial specific
-     * volume calculated by \f$V_c = (R*T_c)/p_c\f$.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * Criticial specific volume calculated by \f$V_c = (R*T_c)/p_c\f$.
      *
      * Reid et al. (1987, pp 396-397, 667) \cite reid1987 <BR>
      * Poling et al. (2001, pp 9.7-9.8) \cite poling2001 <BR>
      *
      * Accentric factor taken from: <BR>
-     * Adebiyi (2003) \cite adebiyi2003 
+     * Adebiyi (2003) \cite adebiyi2003
      *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -160,7 +164,7 @@ public:
     }
 
     /*!
-     * \brief Specific enthalpy of air \f$\mathrm{[J/kg]}\f$
+     * \brief Specific enthalpy of Air \f$\mathrm{[J/kg]}\f$
      *        with 273.15 \f$ K \f$ as basis. <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -174,7 +178,7 @@ public:
     }
 
     /*!
-     * \brief Specific internal energy of \f$AIR\f$ \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific internal energy of Air \f$\mathrm{[J/kg]}\f$.
      *
      * Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
      * Rearranging for internal energy yields: \f$u = h - pv\f$.
