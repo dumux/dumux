@@ -183,8 +183,8 @@ public:
     //! Number of components in the fluid system
     static constexpr int numComponents = 2;
 
-    static constexpr int H2OIdx = 0;
-    static constexpr int N2Idx = 1;
+    static constexpr int H2OIdx = wCompIdx;
+    static constexpr int N2Idx = nCompIdx;
 
     //! The components for pure water
     typedef TabulatedH2O H2O;

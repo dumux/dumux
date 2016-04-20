@@ -215,8 +215,8 @@ public:
     //! Number of components in the fluid system
     static constexpr int numComponents = 2;
 
-    static constexpr int H2OIdx = 0;
-    static constexpr int AirIdx = 1;
+    static constexpr int H2OIdx = wCompIdx;
+    static constexpr int AirIdx = nCompIdx;
 
     /*!
      * \brief Return the human readable name of a component
