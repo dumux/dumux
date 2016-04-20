@@ -72,7 +72,7 @@ public:
     { return 37.86e5; /* [Pa] */ }
 
     /*!
-     * \brief The density of Air at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of Air at a given pressure and temperature.
      *
      * Ideal gas is assumed.
      *
@@ -98,7 +98,7 @@ public:
     { return true; }
 
     /*!
-     * \brief The pressure of gaseous Air at a given density and temperature \f$\mathrm{[Pa]}\f$.
+     * \brief The pressure \f$\mathrm{[Pa]}\f$ of gaseous Air at a given density and temperature.
      *
      * Ideal gas is assumed.
      *
@@ -164,7 +164,7 @@ public:
     }
 
     /*!
-     * \brief Specific enthalpy of air \f$\mathrm{[J/kg]}\f$
+     * \brief Specific enthalpy of Air \f$\mathrm{[J/kg]}\f$
      *        with 273.15 \f$ K \f$ as basis. <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
