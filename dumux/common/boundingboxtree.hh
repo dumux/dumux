@@ -300,11 +300,10 @@ public:
     }
 
     // Check whether a point is in a bounding box
+    // \param b point to bounding box coordinates
     static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point,
-                                   const double* boundingBoxCoordinates,
-                                   unsigned int node)
+                                   const double* b)
     {
-        const double* b = boundingBoxCoordinates + 6*node;
         const double eps0 = eps_*(b[3] - b[0]);
         const double eps1 = eps_*(b[4] - b[1]);
         const double eps2 = eps_*(b[5] - b[2]);
@@ -531,11 +530,10 @@ public:
     }
 
     // Check whether a point is in a bounding box
+    // \param b point to bounding box coordinates
     static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point,
-                                   const double* boundingBoxCoordinates,
-                                   unsigned int node)
+                                   const double* b)
     {
-        const double* b = boundingBoxCoordinates + 4*node;
         const double eps0 = eps_*(b[2] - b[0]);
         const double eps1 = eps_*(b[3] - b[1]);
         return (b[0] - eps0 <= point[0] && point[0] <= b[2] + eps0 &&
@@ -669,11 +667,10 @@ public:
     }
 
     // Check whether a point is in a bounding box
+    // \param b point to bounding box coordinates
     static bool pointInBoundingBox(const GlobalPosition& point,
-                                   const double* boundingBoxCoordinates,
-                                   unsigned int node)
+                                   const double* b)
     {
-        const double* b = boundingBoxCoordinates + 2*node;
         const double eps0 = eps_*(b[1] - b[0]);
         return b[0] - eps0 <= point[0] && point[0] <= b[1] + eps0;
     }
@@ -908,7 +905,7 @@ private:
         const BoundingBox& bBox = getBoundingBox_(node);
 
         // if the point is not in the bounding box we can stop
-        if (!BoundingBoxTreeHelper<dimworld>::pointInBoundingBox(point, boundingBoxCoordinates_.data(), node))
+        if (!BoundingBoxTreeHelper<dimworld>::pointInBoundingBox(point, getBoundingBoxCoordinates_(node)))
             return;
 
         // We know now it's inside. If the box is a leaf add it.
@@ -951,6 +948,10 @@ private:
     // Get an existing bounding box for a given node
     inline const BoundingBox& getBoundingBox_(unsigned int node) const
     { return boundingBoxes_[node]; }
+
+    // Get an existing bounding box for a given node
+    const double* getBoundingBoxCoordinates_(unsigned int node) const
+    { return boundingBoxCoordinates_.data() + 2*dimworld*node; }
 
     // Get the number of bounding boxes currently in the tree
     inline std::size_t numBoundingBoxes_() const
