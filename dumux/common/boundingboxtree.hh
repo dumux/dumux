@@ -758,6 +758,10 @@ private:
 template <class GridView>
 class BoundingBoxTree
 {
+    // be friends with all other kinds bounding box trees so that
+    // they can call each others private methods
+    template <class OtherGridView> friend class BoundingBoxTree;
+
     static const int dim = GridView::dimension;
     static const int dimworld = GridView::dimensionworld;
     typedef typename GridView::template Codim<0>::Entity Element;
