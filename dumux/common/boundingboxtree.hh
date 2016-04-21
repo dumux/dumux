@@ -313,6 +313,19 @@ public:
                 b[2] - eps2 <= point[2] && point[2] <= b[5] + eps2);
     }
 
+    // Check whether bounding box (a - pointer to bounding box coordinates)
+    // collides with bounding box (b - pointer to bounding box coordinates)
+    static bool boundingBoxInBoundingBox(const double* a,
+                                         const double* b)
+    {
+      const double eps0 = eps_*(b[3] - b[0]);
+      const double eps1 = eps_*(b[4] - b[1]);
+      const double eps2 = eps_*(b[5] - b[2]);
+      return (b[0] - eps0 <= a[3] && a[0] <= b[3] + eps0 &&
+              b[1] - eps1 <= a[4] && a[1] <= b[4] + eps1 &&
+              b[2] - eps2 <= a[5] && a[2] <= b[5] + eps2);
+    }
+
     // Compute the bounding box of a vector of bounding boxes
     static void computeBBoxOfBBoxes(double* bBox,
                                     std::size_t& axis,
@@ -529,6 +542,17 @@ public:
                 b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
     }
 
+    // Check whether bounding box (a - pointer to bounding box coordinates)
+    // collides with bounding box (b - pointer to bounding box coordinates)
+    static bool boundingBoxInBoundingBox(const double* a,
+                                         const double* b)
+    {
+      const double eps0 = eps_*(b[2] - b[0]);
+      const double eps1 = eps_*(b[3] - b[1]);
+      return (b[0] - eps0 <= a[2] && a[0] <= b[2] + eps0 &&
+              b[1] - eps1 <= a[3] && a[1] <= b[3] + eps1);
+    }
+
     // Compute the bounding box of a vector of bounding boxes
     static void computeBBoxOfBBoxes(double* bBox,
                                     std::size_t& axis,
@@ -652,6 +676,15 @@ public:
         const double* b = boundingBoxCoordinates + 2*node;
         const double eps0 = eps_*(b[1] - b[0]);
         return b[0] - eps0 <= point[0] && point[0] <= b[1] + eps0;
+    }
+
+    // Check whether bounding box (a - pointer to bounding box coordinates)
+    // collides with bounding box (b - pointer to bounding box coordinates)
+    static bool boundingBoxInBoundingBox(const double* a,
+                                         const double* b)
+    {
+      const double eps0 = eps_*(b[1] - b[0]);
+      return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
     }
 
     // Compute the bounding box of a vector of bounding boxes
