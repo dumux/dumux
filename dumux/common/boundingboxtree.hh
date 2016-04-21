@@ -30,6 +30,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/geometrycollision.hh>
 
 namespace Dumux {
 
@@ -825,6 +826,28 @@ public:
         return entities;
     }
 
+    // Compute all intersections between entities and a point
+    template<class OtherGridView>
+    std::pair<std::vector<unsigned int>, std::vector<unsigned int>>
+    computeEntityCollisions(const Dumux::BoundingBoxTree<OtherGridView>& otherTree) const
+    {
+        // check if the world dimensions match
+        static_assert(dimworld == OtherGridView::dimensionworld, "Can only collide bounding box trees of same world dimension");
+
+        // Create data structure for return type
+        std::vector<unsigned int> myEntities;
+        std::vector<unsigned int> otherEntities;
+
+        // Call the recursive find function to find candidates
+        computeCollisions_(otherTree,
+                           this->numBoundingBoxes_() - 1,
+                           otherTree.numBoundingBoxes_() -1,
+                           myEntities,
+                           otherEntities);
+
+        return std::make_pair(myEntities, otherEntities);
+    }
+
     // Get an element from a global element index
     Element entity(unsigned int eIdx) const
     { return indexToElementMap_->entity(eIdx); }
@@ -927,6 +950,76 @@ private:
         {
             computeCollisions_(point, bBox.child_0, entities);
             computeCollisions_(point, bBox.child_1, entities);
+        }
+    }
+
+    // Compute collisions with other bounding box tree recursively
+    template <class OtherGridView>
+    void computeCollisions_(const Dumux::BoundingBoxTree<OtherGridView>& treeB,
+                            unsigned int nodeA,
+                            unsigned int nodeB,
+                            std::vector<unsigned int>& entitiesA,
+                            std::vector<unsigned int>& entitiesB) const
+    {
+        // get alias
+        const auto& treeA = *this;
+
+        // Get the bounding box for the current node
+        const auto& bBoxA = treeA.getBoundingBox_(nodeA);
+        const auto& bBoxB = treeB.getBoundingBox_(nodeB);
+
+        // if the two bounding boxes don't collide we can stop searching
+        if (!BoundingBoxTreeHelper<dimworld>::
+             boundingBoxInBoundingBox(treeA.getBoundingBoxCoordinates_(nodeA),
+                                      treeB.getBoundingBoxCoordinates_(nodeB)))
+            return;
+
+        // Check if we have a leaf in treeA or treeB
+        const bool isLeafA = treeA.isLeaf_(bBoxA, nodeA);
+        const bool isLeafB = treeB.isLeaf_(bBoxB, nodeB);
+
+        // If both boxes are leaves and collide add them
+        if (isLeafA && isLeafB)
+        {
+            const unsigned int eIdxA = bBoxA.child_1;
+            const unsigned int eIdxB = bBoxB.child_1;
+
+            auto geometryA = treeA.entity(eIdxA).geometry();
+            auto geometryB = treeB.entity(eIdxB).geometry();
+            if (Dumux::GeometryCollision<decltype(geometryA), decltype(geometryB)>::
+                collide(geometryA, geometryB))
+            {
+                // TODO think about data structure here
+                entitiesA.push_back(eIdxA);
+                entitiesB.push_back(eIdxB);
+            }
+        }
+
+        // if we reached the leaf in treeA, just continue in treeB
+        else if (isLeafA)
+        {
+            computeCollisions_(treeB, nodeA, bBoxB.child_0, entitiesA, entitiesB);
+            computeCollisions_(treeB, nodeA, bBoxB.child_1, entitiesA, entitiesB);
+        }
+
+        // if we reached the leaf in treeB, just continue in treeA
+        else if (isLeafB)
+        {
+            computeCollisions_(treeB, bBoxA.child_0, nodeB, entitiesA, entitiesB);
+            computeCollisions_(treeB, bBoxA.child_1, nodeB, entitiesA, entitiesB);
+        }
+
+        // we know now that both trees didn't reach the leaf yet so
+        // we continue with the larger tree first (bigger node number)
+        else if (nodeA > nodeB)
+        {
+            computeCollisions_(treeB, bBoxA.child_0, nodeB, entitiesA, entitiesB);
+            computeCollisions_(treeB, bBoxA.child_1, nodeB, entitiesA, entitiesB);
+        }
+        else
+        {
+            computeCollisions_(treeB, nodeA, bBoxB.child_0, entitiesA, entitiesB);
+            computeCollisions_(treeB, nodeA, bBoxB.child_1, entitiesA, entitiesB);
         }
     }
 
