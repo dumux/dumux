@@ -25,11 +25,30 @@
 #define DUMUX_CONSTANT_HH
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/basicproperties.hh>
 
 #include "component.hh"
 
 namespace Dumux
 {
+
+namespace Properties
+{
+// forward declaration of the needed properties
+NEW_PROP_TAG(ProblemMolarMass);
+NEW_PROP_TAG(ProblemLiquidDensity);
+NEW_PROP_TAG(ProblemLiquidKinematicViscosity);
+NEW_PROP_TAG(ProblemGasDensity);
+NEW_PROP_TAG(ProblemGasKinematicViscosity);
+
+// set default values
+SET_SCALAR_PROP(NumericModel, ProblemMolarMass, 1.0);
+SET_SCALAR_PROP(NumericModel, ProblemLiquidDensity, 1.0);
+SET_SCALAR_PROP(NumericModel, ProblemLiquidKinematicViscosity, 1.0);
+SET_SCALAR_PROP(NumericModel, ProblemGasDensity, 1.0);
+SET_SCALAR_PROP(NumericModel, ProblemGasKinematicViscosity, 1.0);
+} // end namespace Properties
+
 /*!
  * \ingroup Components
  *
@@ -50,6 +69,16 @@ public:
     { return "Constant"; }
 
     /*!
+     * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
+     */
+    static Scalar molarMass()
+    {
+        static const Scalar molarMass
+            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, MolarMass);
+        return molarMass;
+    }
+
+    /*!
      * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
@@ -64,7 +93,7 @@ public:
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
         static const Scalar density
-            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidDensity);
+            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidDensity);
         return density;
     }
 
@@ -80,7 +109,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         static const Scalar kinematicViscosity
-            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidKinematicViscosity);
+            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidKinematicViscosity);
         return kinematicViscosity * liquidDensity(temperature, pressure);
     }
 
@@ -100,7 +129,7 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         static const Scalar density
-            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasDensity);
+            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasDensity);
         return density;
     }
 
@@ -116,7 +145,7 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         static const Scalar kinematicViscosity
-            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasKinematicViscosity);
+            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasKinematicViscosity);
         return kinematicViscosity * gasDensity(temperature, pressure);
     }
 };
