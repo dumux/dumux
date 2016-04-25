@@ -87,9 +87,8 @@ public:
     static const int nCompIdx = 1;
     static const int lCompIdx = wCompIdx;
     static const int gCompIdx = nCompIdx;
-
-    static const int BrineIdx = 0;
-    static const int CO2Idx = 1;
+    static const int BrineIdx = wCompIdx;
+    static const int CO2Idx = nCompIdx;
 
     /*!
      * \brief Return the human readable name of a fluid phase
