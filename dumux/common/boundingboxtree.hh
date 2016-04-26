@@ -733,6 +733,32 @@ public:
     };
 };
 
+//! An intersection object resulting from the collision of two bounding box tree primitives
+template<class GridView1, class GridView2>
+class BoundingBoxTreeIntersection
+{
+    const static int dimworld = GridView1::dimensionworld;
+    using Scalar = typename GridView1::ctype;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+
+public:
+    BoundingBoxTreeIntersection(unsigned int a, unsigned int b, std::vector<GlobalPosition>&& c)
+    : a_(a), b_(b), corners_(c) {}
+
+    inline unsigned int first() const
+    { return a_; }
+
+    inline unsigned int second() const
+    { return b_; }
+
+    inline std::vector<GlobalPosition> corners() const
+    { return corners_; }
+
+private:
+    unsigned int a_, b_;
+    std::vector<GlobalPosition> corners_;
+};
+
 //! An index to element map
 template <class GridView>
 class IndexToElementMap
@@ -762,22 +788,19 @@ class BoundingBoxTree
 
     static const int dim = GridView::dimension;
     static const int dimworld = GridView::dimensionworld;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename Dune::ReferenceElements<double, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<double, dim> ReferenceElement;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    // Default Constructor
+    //! Default Constructor
     BoundingBoxTree() {}
 
-    // Constructor with gridView
+    //! Constructor with gridView
     BoundingBoxTree(const GridView& leafGridView)
     { build(leafGridView); }
 
-    // Destructor
-    ~BoundingBoxTree() {}
-
-    // Build up bounding box tree for a grid
+    //! Build up bounding box tree for a grid
     void build(const GridView& leafGridView)
     {
         // clear data if any
@@ -817,7 +840,7 @@ public:
                   << timer.stop() << " seconds." << std::endl;
     }
 
-    // Compute all intersections between entities and a point
+    //! Compute all intersections between entities and a point
     std::vector<unsigned int> computeEntityCollisions(const Dune::FieldVector<double, dimworld>& point) const
     {
         // Call the recursive find function to find candidates
@@ -826,29 +849,27 @@ public:
         return entities;
     }
 
-    // Compute all intersections between entities and a point
+    //! Compute all intersections between entities and a point
     template<class OtherGridView>
-    std::pair<std::vector<unsigned int>, std::vector<unsigned int>>
+    std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>>
     computeEntityCollisions(const Dumux::BoundingBoxTree<OtherGridView>& otherTree) const
     {
         // check if the world dimensions match
         static_assert(dimworld == OtherGridView::dimensionworld, "Can only collide bounding box trees of same world dimension");
 
         // Create data structure for return type
-        std::vector<unsigned int> myEntities;
-        std::vector<unsigned int> otherEntities;
+        std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>> intersections;
 
         // Call the recursive find function to find candidates
         computeCollisions_(otherTree,
                            this->numBoundingBoxes_() - 1,
                            otherTree.numBoundingBoxes_() -1,
-                           myEntities,
-                           otherEntities);
+                           intersections);
 
-        return std::make_pair(myEntities, otherEntities);
+        return intersections;
     }
 
-    // Get an element from a global element index
+    //! Get an element from a global element index
     Element entity(unsigned int eIdx) const
     { return indexToElementMap_->entity(eIdx); }
 
@@ -958,8 +979,7 @@ private:
     void computeCollisions_(const Dumux::BoundingBoxTree<OtherGridView>& treeB,
                             unsigned int nodeA,
                             unsigned int nodeB,
-                            std::vector<unsigned int>& entitiesA,
-                            std::vector<unsigned int>& entitiesB) const
+                            std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>>& intersections) const
     {
         // get alias
         const auto& treeA = *this;
@@ -986,40 +1006,38 @@ private:
 
             auto geometryA = treeA.entity(eIdxA).geometry();
             auto geometryB = treeB.entity(eIdxB).geometry();
-            if (Dumux::GeometryCollision<decltype(geometryA), decltype(geometryB)>::
-                collide(geometryA, geometryB))
-            {
-                // TODO think about data structure here
-                entitiesA.push_back(eIdxA);
-                entitiesB.push_back(eIdxB);
-            }
+
+            using CollisionType = Dumux::GeometryCollision<decltype(geometryA), decltype(geometryB)>;
+            std::vector<GlobalPosition> intersection;
+            if (CollisionType::collide(geometryA, geometryB, intersection))
+                intersections.emplace_back(eIdxA, eIdxB, std::move(intersection));
         }
 
         // if we reached the leaf in treeA, just continue in treeB
         else if (isLeafA)
         {
-            computeCollisions_(treeB, nodeA, bBoxB.child_0, entitiesA, entitiesB);
-            computeCollisions_(treeB, nodeA, bBoxB.child_1, entitiesA, entitiesB);
+            computeCollisions_(treeB, nodeA, bBoxB.child_0, intersections);
+            computeCollisions_(treeB, nodeA, bBoxB.child_1, intersections);
         }
 
         // if we reached the leaf in treeB, just continue in treeA
         else if (isLeafB)
         {
-            computeCollisions_(treeB, bBoxA.child_0, nodeB, entitiesA, entitiesB);
-            computeCollisions_(treeB, bBoxA.child_1, nodeB, entitiesA, entitiesB);
+            computeCollisions_(treeB, bBoxA.child_0, nodeB, intersections);
+            computeCollisions_(treeB, bBoxA.child_1, nodeB, intersections);
         }
 
         // we know now that both trees didn't reach the leaf yet so
         // we continue with the larger tree first (bigger node number)
         else if (nodeA > nodeB)
         {
-            computeCollisions_(treeB, bBoxA.child_0, nodeB, entitiesA, entitiesB);
-            computeCollisions_(treeB, bBoxA.child_1, nodeB, entitiesA, entitiesB);
+            computeCollisions_(treeB, bBoxA.child_0, nodeB, intersections);
+            computeCollisions_(treeB, bBoxA.child_1, nodeB, intersections);
         }
         else
         {
-            computeCollisions_(treeB, nodeA, bBoxB.child_0, entitiesA, entitiesB);
-            computeCollisions_(treeB, nodeA, bBoxB.child_1, entitiesA, entitiesB);
+            computeCollisions_(treeB, nodeA, bBoxB.child_0, intersections);
+            computeCollisions_(treeB, nodeA, bBoxB.child_1, intersections);
         }
     }
 
