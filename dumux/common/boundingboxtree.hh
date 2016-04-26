@@ -211,13 +211,14 @@ public:
             const GlobalPosition v3 = *p[(i + 3)%4] - *p[i];
             const GlobalPosition v = point - *p[i];
             // compute the normal to the facet (cross product)
-            const GlobalPosition n1 = Dumux::crossProduct(v1, v2);
+            GlobalPosition n1 = Dumux::crossProduct(v1, v2);
+            n1 /= n1.two_norm();
             // find out on which side of the plane v and v3 are
             const double t1 = n1.dot(v);
             const double t2 = n1.dot(v3);
             // If the point is not exactly on the plane the
             // points have to be on the same side
-            const double eps = eps_ * v.two_norm();
+            const double eps = eps_ * v1.two_norm();
             if ((t1 > eps || t1 < -eps) && std::signbit(t1) != std::signbit(t2))
                 return false;
         }
