@@ -31,7 +31,11 @@
 namespace Dumux
 {
 
-//! A class for geometry collision detection and intersection calculation
+/*!
+ * \brief A class for geometry collision detection and intersection calculation
+ * The class can be specialized for combinations of dimworld, dim1, dim2, where
+ * dimworld is the world dimension embedding a grid of dim1 and a grid of dim2.
+ */
 template
 <class Geometry1, class Geometry2,
   int dimworld = Geometry1::coorddimension,
@@ -72,7 +76,8 @@ public:
      *  \note Algorithm from "Real-Time Collision Detection" by Christer Ericson
      *        Basis is the theorem that for any two non-intersecting convex polyhedrons
      *        a separating plane exists.
-     *  \param intersection If the geometries collide intersection holds the corner points of
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection If the geometries collide intersection holds the corner points of
      *        the intersection object in global coordinates.
      */
     static bool collide(const Geometry1& geo1, const Geometry2& geo2, std::vector<GlobalPosition>& intersection)
