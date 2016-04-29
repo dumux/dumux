@@ -86,11 +86,8 @@ public:
             bool add = true;
             for (const auto& i : map[is.second()])
             {
-                if (intersectionsEqual(is.corners(), i))
-                {
-                    add = false;
-                    break;
-                }
+                add = !is.cornersMatch(i);
+                if (!add) break;
             }
             if(add)
             {
