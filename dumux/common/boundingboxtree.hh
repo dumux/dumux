@@ -755,6 +755,19 @@ public:
     inline std::vector<GlobalPosition> corners() const
     { return corners_; }
 
+    bool cornersMatch(const std::vector<GlobalPosition>& corners) const
+    {
+        if (corners.size() != corners_.size())
+            return false;
+
+        const auto eps = 1.5e-7*(corners_[1] - corners_[0]).two_norm();
+        for (int i = 0; i < corners_.size(); ++i)
+            if ((corners[0] - corners[1]).two_norm() > eps)
+                return false;
+
+        return true;
+    }
+
 private:
     unsigned int a_, b_;
     std::vector<GlobalPosition> corners_;
