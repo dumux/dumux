@@ -67,8 +67,7 @@ public:
      */
     static bool isValid(Scalar temperature, Scalar pressure)
     {
-        return
-            temperature <= 623.15 && pressure <= 100e6;
+        return temperature <= 623.15 && pressure <= 100e6;
 
         // actually this is:
         /*

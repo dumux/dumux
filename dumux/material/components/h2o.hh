@@ -137,6 +137,7 @@ public:
 
         return Region4::saturationPressure(T);
     }
+
     /*!
      * \brief The vapor temperature in \f$\mathrm{[K]}\f$ of pure water
      *        at a given pressure.
@@ -280,8 +281,7 @@ public:
         if (pressure > pv) {
             // the pressure is too high, in this case we use the heat
             // cap at the vapor pressure to regularize
-            return
-                heatCap_p_Region2_(temperature, pv);
+            return heatCap_p_Region2_(temperature, pv);
         }
         return heatCap_p_Region2_(temperature, pressure);
     }
@@ -312,8 +312,7 @@ public:
         Scalar pv = vaporPressure(temperature);
         if (pressure < pv) {
             // the pressure is too low, in this case we use the heat cap at the vapor pressure to regularize
-            return
-                heatCap_p_Region1_(temperature, pv);
+            return heatCap_p_Region1_(temperature, pv);
         }
 
         return heatCap_p_Region1_(temperature, pressure);

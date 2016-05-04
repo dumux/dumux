@@ -54,15 +54,15 @@ namespace FluidSystems
  * \brief A compositional two-phase fluid system with water and air as
  *        components in both, the liquid and the gas phase.
  *
- *  This fluidsystem features gas and liquid phases of distilled water
+ * This fluidsystem features gas and liquid phases of distilled water
  * \f$(\mathrm{H_2O})\f$) and air (Pseudo component composed of \f$\mathrm{79\%\;N_2}\f$,
  * \f$\mathrm{20\%\;O_2}\f$ and \f$\mathrm{1\%\;Ar}\f$) as components. It is applied by
  * default with the tabulated version of water of the IAPWS-formulation.
  *
- *  To change the component formulation (i.e. to use nontabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the \p H2O formulation via template arguments or via the property
- *  system, as described in the TypeTag Adapter at the end of the file.
+ * To change the component formulation (i.e. to use nontabulated or
+ * incompressible water), or to switch on verbosity of tabulation,
+ * specify the \p H2O formulation via template arguments or via the property
+ * system, as described in the TypeTag Adapter at the end of the file.
  *
  * \code{.cpp}
  * // Select fluid system
@@ -74,8 +74,8 @@ namespace FluidSystems
  * };
  * \endcode
  *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
+ * Also remember to initialize tabulated components (FluidSystem::init()), while this
+ * is not necessary for non-tabularized ones.
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
