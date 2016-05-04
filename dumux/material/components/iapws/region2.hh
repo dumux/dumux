@@ -65,10 +65,9 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static bool isValid(Scalar temperature, Scalar pressure)
+    static constexpr bool isValid(Scalar temperature, Scalar pressure)
     {
-        return
-            temperature <= 623.15 && pressure <= 100e6;
+        return temperature <= 623.15 && pressure <= 100e6;
 
         // actually this is:
         /*
@@ -84,7 +83,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar tau(Scalar temperature)
+    static constexpr Scalar tau(Scalar temperature)
     { return 540.0 / temperature; }
 
     /*!
@@ -93,7 +92,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar dTau_dt(Scalar temperature)
+    static constexpr Scalar dTau_dt(Scalar temperature)
     { return - 540.0 / (temperature*temperature); }
 
     /*!
@@ -101,7 +100,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar pi(Scalar pressure)
+    static constexpr Scalar pi(Scalar pressure)
     { return pressure / 1e6; }
 
     /*!
@@ -110,7 +109,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dPi_dp(Scalar pressure)
+    static constexpr Scalar dPi_dp(Scalar pressure)
     { return 1.0 / 1e6; }
 
     /*!
@@ -119,7 +118,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dp_dPi(Scalar pressure)
+    static constexpr Scalar dp_dPi(Scalar pressure)
     { return 1e6; }
 
     /*!
@@ -333,7 +332,7 @@ public:
 private:
     static Scalar n_g(int i)
     {
-        static const Scalar n[9] = {
+        constexpr const Scalar n[9] = {
             -0.96927686500217e1, 0.10086655968018e2, -0.56087911283020e-2,
             0.71452738081455e-1, -0.40710498223928, 0.14240819171444e1,
             -0.43839511319450e1, -0.28408632460772, 0.21268463753307e-1
@@ -343,7 +342,7 @@ private:
 
     static Scalar n_r(int i)
     {
-        static const Scalar n[43] = {
+        constexpr const Scalar n[43] = {
             -0.17731742473213e-2, -0.17834862292358e-1, -0.45996013696365e-1,
             -0.57581259083432e-1, -0.50325278727930e-1, -0.33032641670203e-4,
             -0.18948987516315e-3, -0.39392777243355e-2, -0.43797295650573e-1,
@@ -365,7 +364,7 @@ private:
 
     static Scalar I_r(int i)
     {
-        static const short int I[43] = {
+        constexpr const short int I[43] = {
             1, 1, 1,
             1, 1, 2,
             2, 2, 2,
@@ -387,7 +386,7 @@ private:
 
     static Scalar J_g(int i)
     {
-        static const short int J[9] = {
+        constexpr const short int J[9] = {
             0, 1, -5,
             -4, -3, -2,
             -1, 2, 3
@@ -397,7 +396,7 @@ private:
 
     static Scalar J_r(int i)
     {
-        static const short int J[43] = {
+        constexpr const short int J[43] = {
             0, 1, 2,
             3, 6, 1,
             2, 4, 7,

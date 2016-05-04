@@ -63,31 +63,31 @@ class Common
 {
 public:
     //! The molar mass of water \f$\mathrm{[kg/mol]}\f$
-    static const Scalar molarMass;
+    static constexpr Scalar molarMass = 18.01518e-3;
 
     //! Specific gas constant of water \f$\mathrm{[J/(kg*K)]}\f$
-    static const Scalar Rs;
+    static constexpr Scalar Rs = Dumux::Constants<Scalar>::R / molarMass;
 
     //! Critical temperature of water \f$\mathrm{[K]}\f$
-    static const Scalar criticalTemperature;
+    static constexpr Scalar criticalTemperature = 647.096;
 
     //! Critical pressure of water \f$\mathrm{[Pa]}\f$
-    static const Scalar criticalPressure;
+    static constexpr Scalar criticalPressure = 22.064e6;
 
     //! Critical molar volume of water \f$\mathrm{[m^3/mol]}\f$
-    static const Scalar criticalMolarVolume;
+    static constexpr Scalar criticalMolarVolume = molarMass / 322.0;
 
     //! The acentric factor of water \f$\mathrm{[-]}\f$
-    static const Scalar acentricFactor;
+    static constexpr Scalar acentricFactor = 0.344;
 
     //! Density of water at the critical point \f$\mathrm{[kg/m^3]}\f$
-    static const Scalar criticalDensity;
+    static constexpr Scalar criticalDensity = 322;
 
     //! Triple temperature of water \f$\mathrm{[K]}\f$
-    static const Scalar tripleTemperature;
+    static constexpr Scalar tripleTemperature = 273.16;
 
     //! Triple pressure of water \f$\mathrm{[Pa]}\f$
-    static const Scalar triplePressure;
+    static constexpr Scalar triplePressure = 611.657;
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
@@ -109,7 +109,7 @@ public:
         Scalar TBar = temperature/criticalTemperature;
 
         // muBar = muBar_1
-        const Scalar Hij[6][7] = {
+        constexpr Scalar Hij[6][7] = {
             { 5.20094e-1, 2.22531e-1,-2.81378e-1, 1.61913e-1,-3.25372e-2, 0, 0 },
             { 8.50895e-2, 9.99115e-1,-9.06851e-1, 2.57399e-1, 0, 0, 0 },
             {-1.08374 , 1.88797 ,-7.72479e-1, 0, 0, 0, 0 },
@@ -135,7 +135,7 @@ public:
 
         // muBar *= muBar_0
         muBar  *= 100*std::sqrt(TBar);
-        const Scalar H[4] = {
+        constexpr Scalar H[4] = {
             1.67752, 2.20462, 0.6366564, -0.241605
         };
 
@@ -164,29 +164,29 @@ public:
     */
     static Scalar thermalConductivityIAPWS(const Scalar T, const Scalar rho)
     {
-        static constexpr Scalar thcond_tstar   = 647.26 ;
-        static constexpr Scalar thcond_rhostar = 317.7 ;
+        Scalar thcond_tstar   = 647.26 ;
+        Scalar thcond_rhostar = 317.7 ;
         /*static constexpr Scalar thcond_kstar   = 1.0 ;*/
 
-        static constexpr Scalar thcond_b0      = -0.397070 ;
-        static constexpr Scalar thcond_b1      = 0.400302 ;
-        static constexpr Scalar thcond_b2      = 1.060000 ;
-        static constexpr Scalar thcond_B1      = -0.171587 ;
-        static constexpr Scalar thcond_B2      = 2.392190 ;
+        Scalar thcond_b0      = -0.397070 ;
+        Scalar thcond_b1      = 0.400302 ;
+        Scalar thcond_b2      = 1.060000 ;
+        Scalar thcond_B1      = -0.171587 ;
+        Scalar thcond_B2      = 2.392190 ;
 
-        static constexpr Scalar thcond_c1      = 0.642857 ;
-        static constexpr Scalar thcond_c2      = -4.11717 ;
-        static constexpr Scalar thcond_c3      = -6.17937 ;
-        static constexpr Scalar thcond_c4      = 0.00308976 ;
-        static constexpr Scalar thcond_c5      = 0.0822994 ;
-        static constexpr Scalar thcond_c6      = 10.0932 ;
+        Scalar thcond_c1      = 0.642857 ;
+        Scalar thcond_c2      = -4.11717 ;
+        Scalar thcond_c3      = -6.17937 ;
+        Scalar thcond_c4      = 0.00308976 ;
+        Scalar thcond_c5      = 0.0822994 ;
+        Scalar thcond_c6      = 10.0932 ;
 
-        static constexpr Scalar thcond_d1      = 0.0701309 ;
-        static constexpr Scalar thcond_d2      = 0.0118520 ;
-        static constexpr Scalar thcond_d3      = 0.00169937 ;
-        static constexpr Scalar thcond_d4      = -1.0200 ;
-        static constexpr int    thcond_a_count = 4;
-        static constexpr Scalar thcond_a[thcond_a_count] = {
+        Scalar thcond_d1      = 0.0701309 ;
+        Scalar thcond_d2      = 0.0118520 ;
+        Scalar thcond_d3      = 0.00169937 ;
+        Scalar thcond_d4      = -1.0200 ;
+        constexpr unsigned int thcond_a_count = 4;
+        Scalar thcond_a[thcond_a_count] = {
             0.0102811
             ,0.0299621
             ,0.0156146
@@ -234,25 +234,6 @@ public:
         return /*thcond_kstar * */ lam;
     }
 };
-
-template <class Scalar>
-const Scalar Common<Scalar>::molarMass = 18.01518e-3;
-template <class Scalar>
-const Scalar Common<Scalar>::Rs = Dumux::Constants<Scalar>::R/Common<Scalar>::molarMass;
-template <class Scalar>
-const Scalar Common<Scalar>::criticalTemperature = 647.096;
-template <class Scalar>
-const Scalar Common<Scalar>::criticalPressure = 22.064e6;
-template <class Scalar>
-const Scalar Common<Scalar>::criticalMolarVolume = Common<Scalar>::molarMass/322.0;
-template <class Scalar>
-const Scalar Common<Scalar>::acentricFactor = 0.344;
-template <class Scalar>
-const Scalar Common<Scalar>::criticalDensity = 322;
-template <class Scalar>
-const Scalar Common<Scalar>::tripleTemperature = 273.16;
-template <class Scalar>
-const Scalar Common<Scalar>::triplePressure = 611.657;
 
 } // end namespace IAPWS
 } // end namespace Dune

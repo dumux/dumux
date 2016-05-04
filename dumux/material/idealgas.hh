@@ -37,7 +37,7 @@ class IdealGas
 {
 public:
     //! The ideal gas constant \f$\mathrm{[J/mol/K]}\f$
-    static const Scalar R;
+    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
 
     /*!
      * \brief The density of the gas in \f$\mathrm{[kg/m^3]}\f$, depending on
@@ -46,9 +46,9 @@ public:
      * \param temperature The temperature of the gas
      * \param pressure The pressure of the gas
      */
-    static Scalar density(Scalar avgMolarMass,
-                          Scalar temperature,
-                          Scalar pressure)
+    static constexpr Scalar density(Scalar avgMolarMass,
+                                    Scalar temperature,
+                                    Scalar pressure)
     { return pressure*avgMolarMass/(R*temperature); }
 
     /*!
@@ -57,8 +57,8 @@ public:
      * \param temperature The temperature of the gas
      * \param rhoMolar The molar density of the gas
      */
-    static Scalar pressure(Scalar temperature,
-                           Scalar rhoMolar)
+    static constexpr Scalar pressure(Scalar temperature,
+                                     Scalar rhoMolar)
     { return R*temperature*rhoMolar; }
 
     /*!
@@ -67,14 +67,10 @@ public:
      * \param temperature The temperature of the gas
      * \param pressure The pressure of the gas
      */
-    static Scalar molarDensity(Scalar temperature,
-                                Scalar pressure)
+    static constexpr Scalar molarDensity(Scalar temperature,
+                                         Scalar pressure)
     { return pressure/(R*temperature); }
 };
-
-template <class Scalar>
-const Scalar IdealGas<Scalar>::R = Dumux::Constants<Scalar>::R;
-
 } // end namespace
 
 #endif

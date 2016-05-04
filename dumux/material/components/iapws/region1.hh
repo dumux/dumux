@@ -63,7 +63,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static bool isValid(Scalar temperature, Scalar pressure)
+    static constexpr bool isValid(Scalar temperature, Scalar pressure)
     {
         return
             temperature <= 623.15 &&
@@ -86,7 +86,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar tau(Scalar temperature)
+    static constexpr Scalar tau(Scalar temperature)
     { return 1386.0 / temperature; }
 
     /*!
@@ -95,7 +95,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar dTau_dt(Scalar temperature)
+    static constexpr Scalar dTau_dt(Scalar temperature)
     { return - 1386.0 / (temperature*temperature); }
 
     /*!
@@ -103,7 +103,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar pi(Scalar pressure)
+    static constexpr Scalar pi(Scalar pressure)
     { return pressure / 16.53e6; }
 
     /*!
@@ -112,7 +112,7 @@ public:
      *
      * \param pressure temperature of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dPi_dp(Scalar pressure)
+    static constexpr Scalar dPi_dp(Scalar pressure)
     { return 1.0 / 16.53e6; }
 
     /*!
@@ -121,7 +121,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dp_dPi(Scalar pressure)
+    static constexpr Scalar dp_dPi(Scalar pressure)
     { return 16.53e6; }
 
     /*!
@@ -296,7 +296,7 @@ public:
 private:
     static Scalar n(int i)
     {
-        static const Scalar n[34] = {
+        constexpr Scalar n[34] = {
             0.14632971213167, -0.84548187169114, -0.37563603672040e1,
             0.33855169168385e1, -0.95791963387872, 0.15772038513228,
            -0.16616417199501e-1, 0.81214629983568e-3, 0.28319080123804e-3,
@@ -315,7 +315,7 @@ private:
 
     static short int I(int i)
     {
-        static const short int I[34] = {
+        constexpr short int I[34] = {
             0, 0, 0,
             0, 0, 0,
             0, 0, 1,
@@ -334,7 +334,7 @@ private:
 
     static short int J(int i)
     {
-        static const short int J[34] = {
+        constexpr short int J[34] = {
              -2, -1, 0,
               1, 2, 3,
               4, 5, -9,
