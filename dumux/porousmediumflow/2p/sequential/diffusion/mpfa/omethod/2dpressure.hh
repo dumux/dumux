@@ -1550,7 +1550,7 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
                 pcFluxReal[2] *= fracFlow34;
                 pcFluxReal[3] *= fracFlow14;
 
-//                if (isnan(pcFluxReal.two_norm()))
+//                if (std::isnan(pcFluxReal.two_norm()))
 //                                std::cout<<"pcFlux = "<<pcFlux<<"\n";
 
                 switch (pressureType_)

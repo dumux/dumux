@@ -398,7 +398,7 @@ public:
 
             for (int i = 0; i < dim; i++)
                 {
-                    if (isnan(eigenValues[i]))
+                    if (std::isnan(eigenValues[i]))
                         eigenValues[i] = 0.0;
                 }
 

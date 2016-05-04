@@ -957,7 +957,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
 
     transmissibility = D;
 
-    if (isnan(transmissibility.frobenius_norm()))
+    if (std::isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"idx: "<<idx1<<idx2<<idx3<<idx5<<"\n";
 
@@ -1352,7 +1352,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
 
     transmissibility = D;
 
-    if (isnan(transmissibility.frobenius_norm()))
+    if (std::isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"idx: "<<idx1<<idx2<<idx4<<idx6<<"\n";
 
@@ -1748,7 +1748,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
 
     transmissibility = D;
 
-    if (isnan(transmissibility.frobenius_norm()))
+    if (std::isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"case 3: transmissibility = "<<transmissibility<<"\n";
         std::cout<<"globalPos1 = "<<globalPos1<<"\n";
@@ -2145,7 +2145,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseFour(
 
     transmissibility = D;
 
-    if (isnan(transmissibility.frobenius_norm()))
+    if (std::isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"case 4: transmissibility = "<<transmissibility<<"\n";
 
