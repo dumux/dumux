@@ -36,66 +36,50 @@ namespace Dumux
  */
 template<class Scalar>
 class Constants
-{ public:
+{
+public:
     /*!
      * \brief The ideal gas constant \f$\mathrm{[J/(mol K)]}\f$
      */
-    static const Scalar R;
+    static constexpr Scalar R = 8.314472;
 
     /*!
      * \brief The Avogadro constant \f$\mathrm{[1/mol]}\f$
      */
-    static const Scalar Na;
+    static constexpr Scalar Na = 6.02214179e23;
 
     /*!
      * \brief The Boltzmann constant \f$\mathrm{[J/K]}\f$
      */
-    static const Scalar kb;
+    static constexpr Scalar kb = R / Na;
 
     /*!
      * \brief Speed of light in vacuum \f$\mathrm{[m/s]}\f$
      */
-    static const Scalar c;
+    static constexpr Scalar c = 299792458;
 
     /*!
      * \brief Faraday constant \f$\mathrm{[C/mol]}\f$
      *
      * Source: CODATA 2010
      */
-    static const Scalar F;
+    static constexpr Scalar F = 96485.3365;
 
     /*!
      * \brief Newtonian constant of gravitation \f$\mathrm{[m^3/(kg s^2)]}\f$
      */
-    static const Scalar G;
+    static constexpr Scalar G = 6.67428e-11;
 
     /*!
      * \brief Planck constant \f$\mathrm{[J s]}\f$
      */
-    static const Scalar h;
+    static constexpr Scalar h = 6.62606896e-34;
 
     /*!
      * \brief Reduced Planck constant \f$\mathrm{[J s]}\f$
      */
-    static const Scalar hRed;
+    static constexpr Scalar hRed = h / (2 * M_PI);
 };
-
-template<class Scalar>
-const Scalar Constants<Scalar>::R = 8.314472;
-template<class Scalar>
-const Scalar Constants<Scalar>::Na = 6.02214179e23;
-template<class Scalar>
-const Scalar Constants<Scalar>::kb = Constants<Scalar>::R/Constants<Scalar>::Na;
-template<class Scalar>
-const Scalar Constants<Scalar>::c = 299792458;
-template<class Scalar>
-const Scalar Constants<Scalar>::G = 6.67428e-11;
-template<class Scalar>
-const Scalar Constants<Scalar>::h = 6.62606896e-34;
-template<class Scalar>
-const Scalar Constants<Scalar>::hRed = Constants<Scalar>::h / (2 * M_PI);
-template<class Scalar>
-const Scalar Constants<Scalar>::F = 96485.3365;
 }
 
 #endif

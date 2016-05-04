@@ -31,8 +31,8 @@ namespace Dumux
 
 struct SomertonIndices
 {
-    static const int wPhaseIdx = 0;
-    static const int nPhaseIdx = 1;
+    static constexpr int wPhaseIdx = 0;
+    static constexpr int nPhaseIdx = 1;
 };
 
 /*!
