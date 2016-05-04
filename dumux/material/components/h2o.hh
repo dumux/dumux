@@ -130,10 +130,8 @@ public:
      */
     static Scalar vaporPressure(Scalar T)
     {
-        if (T > criticalTemperature())
-            T = criticalTemperature();
-        if (T < tripleTemperature())
-            T = tripleTemperature();
+        T = std::min(T, criticalTemperature());
+        T = std::max(T,tripleTemperature());
 
         return Region4::saturationPressure(T);
     }
@@ -152,10 +150,8 @@ public:
      */
     static Scalar vaporTemperature(Scalar pressure)
     {
-        if (pressure > criticalPressure())
-            pressure = criticalPressure();
-        if (pressure < triplePressure())
-            pressure = triplePressure();
+        pressure = std::min(pressure, criticalPressure());
+        pressure = std::max(pressure, triplePressure());
 
         return Region4::vaporTemperature(pressure);
     }
@@ -879,9 +875,9 @@ private:
     // the unregularized specific isochoric heat capacity
     static Scalar heatCap_v_Region1_(Scalar temperature, Scalar pressure)
     {
-        double tau = Region1::tau(temperature);
-        double num = Region1::dGamma_dPi(temperature, pressure) - tau * Region1::ddGamma_dTaudPi(temperature, pressure);
-        double diff = pow(num, 2) / Region1::ddGamma_ddPi(temperature, pressure);
+        Scalar tau = Region1::tau(temperature);
+        Scalar num = Region1::dGamma_dPi(temperature, pressure) - tau * Region1::ddGamma_dTaudPi(temperature, pressure);
+        Scalar diff = pow(num, 2) / Region1::ddGamma_ddPi(temperature, pressure);
 
         return
             - pow(tau, 2 ) *
@@ -937,10 +933,10 @@ private:
     // the unregularized specific isochoric heat capacity
     static Scalar heatCap_v_Region2_(Scalar temperature, Scalar pressure)
     {
-        double tau = Region2::tau(temperature);
-        double pi = Region2::pi(pressure);
-        double num = 1 + pi * Region2::dGamma_dPi(temperature, pressure) + tau * pi * Region2::ddGamma_dTaudPi(temperature, pressure);
-        double diff = num * num / (1 - pi * pi * Region2::ddGamma_ddPi(temperature, pressure));
+        Scalar tau = Region2::tau(temperature);
+        Scalar pi = Region2::pi(pressure);
+        Scalar num = 1 + pi * Region2::dGamma_dPi(temperature, pressure) + tau * pi * Region2::ddGamma_dTaudPi(temperature, pressure);
+        Scalar diff = num * num / (1 - pi * pi * Region2::ddGamma_ddPi(temperature, pressure));
         return
             - pow(tau, 2 ) *
             Region2::ddGamma_ddTau(temperature, pressure) * Rs
