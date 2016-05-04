@@ -57,31 +57,31 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular oxygen.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 32e-3; }
 
     /*!
      * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of molecular oxygen.
      */
-    static Scalar criticalTemperature()
+    static constexpr Scalar criticalTemperature()
     { return 154.581; /* [K] */ }
 
     /*!
      * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of molecular oxygen.
      */
-    static Scalar criticalPressure()
+    static constexpr Scalar criticalPressure()
     { return 5.0804e6; /* [N/m^2] */ }
 
     /*!
      * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at molecular oxygen's triple point.
      */
-    static Scalar tripleTemperature()
+    static constexpr Scalar tripleTemperature()
     { return 54.359; /* [K] */ }
 
     /*!
      * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at molecular oxygen's triple point.
      */
-    static Scalar triplePressure()
+    static constexpr Scalar triplePressure()
     { return 148.0; /* [N/m^2] */ }
 
     /*!
@@ -94,7 +94,7 @@ public:
      *
      * R. Prydz (1972, pp. 1-4) \cite prydz1972
      */
-    static Scalar vaporPressure(Scalar T)
+    static constexpr Scalar vaporPressure(Scalar T)
     {
         if (T > criticalTemperature())
             return criticalPressure();
@@ -123,7 +123,7 @@ public:
     /*!
      * \brief Returns true iff the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
@@ -134,7 +134,7 @@ public:
      *
      * \todo: density liquid oxygen
      */
-    static Scalar gasDensity(Scalar temperature, Scalar pressure)
+    static constexpr Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
         return IdealGas::density(molarMass(), temperature, pressure);
@@ -143,7 +143,7 @@ public:
     /*!
      * \brief Returns true iff the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!
@@ -152,7 +152,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
      */
-    static Scalar gasPressure(Scalar temperature, Scalar density)
+    static constexpr Scalar gasPressure(Scalar temperature, Scalar density)
     {
         // Assume an ideal gas
         return IdealGas::pressure(temperature, density/molarMass());
@@ -166,7 +166,7 @@ public:
      *
      * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
-    static const Scalar gasEnthalpy(Scalar T,
+    static constexpr Scalar gasEnthalpy(Scalar T,
                                     Scalar pressure)
     {
         // method of Joback
@@ -198,7 +198,7 @@ public:
      *
      * See: R. Reid, et al. (1987, pp 396-397, 664) \cite reid1987
      */
-    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    static constexpr Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         const Scalar Tc = criticalTemperature();
         const Scalar Vc = 73.4; // critical specific volume [cm^3/mol]
@@ -233,7 +233,7 @@ public:
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
+    static constexpr Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
     {
         return 8.044e-5 * (temperature - 273.15) + 0.024486;
     }

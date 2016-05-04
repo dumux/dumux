@@ -77,43 +77,43 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of water.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return Common::molarMass; }
 
     /*!
      * \brief The acentric factor \f$\mathrm{[-]}\f$ of water.
      */
-    static Scalar acentricFactor()
+    static constexpr Scalar acentricFactor()
     { return Common::acentricFactor; }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of water
      */
-    static Scalar criticalTemperature()
+    static constexpr Scalar criticalTemperature()
     { return Common::criticalTemperature; }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of water.
      */
-    static Scalar criticalPressure()
+    static constexpr Scalar criticalPressure()
     { return Common::criticalPressure; }
 
     /*!
      * \brief Returns the molar volume \f$\mathrm{[m^3/mol]}\f$ of water at the critical point
      */
-    static Scalar criticalMolarVolume()
+    static constexpr Scalar criticalMolarVolume()
     { return Common::criticalMolarVolume; }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at water's triple point.
      */
-    static Scalar tripleTemperature()
+    static constexpr Scalar tripleTemperature()
     { return Common::tripleTemperature; }
 
     /*!
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at water's triple point.
      */
-    static Scalar triplePressure()
+    static constexpr Scalar triplePressure()
     { return Common::triplePressure; }
 
     /*!
@@ -515,13 +515,13 @@ public:
     /*!
      * \brief Returns true iff the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
      * \brief Returns true iff the liquid phase is assumed to be compressible
      */
-    static bool liquidIsCompressible()
+    static constexpr bool liquidIsCompressible()
     { return true; }
 
     /*!
@@ -599,7 +599,7 @@ public:
     /*!
      * \brief Returns true iff the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return false; }
 
     /*!
@@ -855,7 +855,7 @@ public:
 
 private:
     // the unregularized specific enthalpy for liquid water
-    static Scalar enthalpyRegion1_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar enthalpyRegion1_(Scalar temperature, Scalar pressure)
     {
         return
             Region1::tau(temperature) *
@@ -864,7 +864,7 @@ private:
     }
 
     // the unregularized specific isobaric heat capacity
-    static Scalar heatCap_p_Region1_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar heatCap_p_Region1_(Scalar temperature, Scalar pressure)
     {
         return
             - pow(Region1::tau(temperature), 2 ) *
@@ -886,7 +886,7 @@ private:
     }
 
     // the unregularized specific internal energy for liquid water
-    static Scalar internalEnergyRegion1_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar internalEnergyRegion1_(Scalar temperature, Scalar pressure)
     {
         return
             Rs * temperature *
@@ -895,7 +895,7 @@ private:
     }
 
     // the unregularized specific volume for liquid water
-    static Scalar volumeRegion1_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar volumeRegion1_(Scalar temperature, Scalar pressure)
     {
         return
             Region1::pi(pressure)*
@@ -904,7 +904,7 @@ private:
     }
 
     // the unregularized specific enthalpy for steam
-    static Scalar enthalpyRegion2_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar enthalpyRegion2_(Scalar temperature, Scalar pressure)
     {
         return
             Region2::tau(temperature) *
@@ -913,7 +913,7 @@ private:
     }
 
     // the unregularized specific internal energy for steam
-    static Scalar internalEnergyRegion2_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar internalEnergyRegion2_(Scalar temperature, Scalar pressure)
     {
         return
             Rs * temperature *
@@ -922,7 +922,7 @@ private:
     }
 
     // the unregularized specific isobaric heat capacity
-    static Scalar heatCap_p_Region2_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar heatCap_p_Region2_(Scalar temperature, Scalar pressure)
     {
         return
             - pow(Region2::tau(temperature), 2 ) *
@@ -944,7 +944,7 @@ private:
     }
 
     // the unregularized specific volume for steam
-    static Scalar volumeRegion2_(Scalar temperature, Scalar pressure)
+    static constexpr Scalar volumeRegion2_(Scalar temperature, Scalar pressure)
     {
         return
             Region2::pi(pressure)*
