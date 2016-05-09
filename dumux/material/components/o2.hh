@@ -94,7 +94,7 @@ public:
      *
      * R. Prydz (1972, pp. 1-4) \cite prydz1972
      */
-    static constexpr Scalar vaporPressure(Scalar T)
+    static Scalar vaporPressure(Scalar T)
     {
         if (T > criticalTemperature())
             return criticalPressure();
@@ -166,7 +166,7 @@ public:
      *
      * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
-    static constexpr Scalar gasEnthalpy(Scalar T,
+    static Scalar gasEnthalpy(Scalar T,
                                     Scalar pressure)
     {
         // method of Joback
@@ -198,7 +198,7 @@ public:
      *
      * See: R. Reid, et al. (1987, pp 396-397, 664) \cite reid1987
      */
-    static constexpr Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         const Scalar Tc = criticalTemperature();
         const Scalar Vc = 73.4; // critical specific volume [cm^3/mol]
