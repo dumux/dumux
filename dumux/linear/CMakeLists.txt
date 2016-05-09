@@ -4,7 +4,6 @@ install(FILES
 amgbackend.hh
 amgparallelhelpers.hh
 amgproperties.hh
-impetbicgstabilu0solver.hh
 linearsolverproperties.hh
 pardisobackend.hh
 seqsolverbackend.hh
