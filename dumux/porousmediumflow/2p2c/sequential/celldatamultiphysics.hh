@@ -19,6 +19,7 @@
 #ifndef DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 #define DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 
+#include <dumux/material/fluidstates/pseudo1p2c.hh>
 #include "properties.hh"
 #include "celldata.hh"
 

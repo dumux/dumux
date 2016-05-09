@@ -51,8 +51,10 @@ NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(SequentialTwoP, TestDiffusionSp
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
-#else
+#elif HAVE_UG
 SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::UGGrid<3>);
+#else
+SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::YaspGrid<3>);
 #endif
 
 SET_TYPE_PROP(DiffusionTestProblem, Problem, Dumux::TestDiffusion3DProblem<TypeTag>);

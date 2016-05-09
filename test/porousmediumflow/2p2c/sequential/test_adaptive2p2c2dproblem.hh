@@ -45,7 +45,11 @@ namespace Properties
 NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(SequentialTwoPTwoCAdaptive,Test2P2CSpatialParams));
 
 // Set the grid type
+#if HAVE_UG
 SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::UGGrid<2>);
+#else
+SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::YaspGrid<3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(Adaptive2p2c2d, Problem, Dumux::Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
