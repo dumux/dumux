@@ -296,7 +296,7 @@ public:
             neighborDeriv /= delta;
 
             // restore the original state of the scv's volume variables
-            this->model_().curVolVars_(scv) = origVolVars;
+            this->model_().curVolVars_(scv) = std::move(origVolVars);
 
 #if HAVE_VALGRIND
             for (unsigned i = 0; i < partialDeriv.size(); ++i)
