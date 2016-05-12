@@ -40,17 +40,29 @@ class CCElementStencils
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     // TODO a separate stencil class all stencils can derive from?
-    using Stencil = std::set<IndexType>;
+    using Stencil = std::vector<IndexType>;
 public:
     void update(const Problem& problem, const Element& element)
     {
+        elementStencil_.clear();
         for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
         {
             auto&& fluxStencil = problem.model().fluxVars(scvf).stencil();
-            elementStencil_.insert(fluxStencil.begin(), fluxStencil.end());
+            elementStencil_.insert(elementStencil_.end(), fluxStencil.begin(), fluxStencil.end());
         }
+        // make values in elementstencil unique
+        std::sort(elementStencil_.begin(), elementStencil_.end());
+        elementStencil_.erase(std::unique(elementStencil_.begin(), elementStencil_.end()), elementStencil_.end());
+
         neighborStencil_ = elementStencil_;
-        neighborStencil_.erase(problem.elementMapper().index(element));
+        for (auto it = neighborStencil_.begin(); it != neighborStencil_.end(); ++it)
+        {
+            if (*it == problem.elementMapper().index(element))
+            {
+                neighborStencil_.erase(it);
+                break;
+            }
+        }
     }
 
     //! The full element stencil (all element this element is interacting with)

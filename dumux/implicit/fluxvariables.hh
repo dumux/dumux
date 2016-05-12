@@ -51,7 +51,8 @@ class FluxVariables<TypeTag, true, false, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Stencil = std::vector<IndexType>;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
@@ -103,7 +104,8 @@ class FluxVariables<TypeTag, true, true, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Stencil = std::vector<IndexType>;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
