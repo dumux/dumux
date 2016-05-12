@@ -60,39 +60,66 @@ class FluxVariables<TypeTag, true, false, false>
 public:
     void update(const Problem& problem,
                 const Element& element,
-                const SubControlVolumeFace &scvf)
+                const SubControlVolumeFace &scvFace)
     {
-        if (scvf.boundary())
+        problemPtr_ = &problem;
+        scvFacePtr_ = &scvFace;
+
+        if (scvFace.boundary())
         {
             if(!boundaryVolVars_)
                 boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
-            advection_.update(problem, element, scvf, boundaryVolVars_.get());
         }
-        else
-        {
-            advection_.update(problem, element, scvf);
-        }
+
+        stencil_ = AdvectionType::stencil(*scvFacePtr_);
     }
 
     void beginFluxComputation()
     {
-        advection_.beginFluxComputation();
+        // TODO if constant BC, do not set to false
+        boundaryVolVarsUpdated_ = false;
     }
 
-    const AdvectionType& advection() const
+    void endFluxComputation() {}
+
+    template<typename FunctionType>
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        return advection_;
+        Scalar flux = AdvectionType::flux(*problemPtr_, *scvFacePtr_, phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+
+        const auto* insideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->insideScvIdx());
+        const VolumeVariables* outsideVolVars;
+
+        if (scvFacePtr_->boundary())
+            outsideVolVars = boundaryVolVars_.get();
+        else
+            outsideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->outsideScvIdx());
+
+        if (std::signbit(flux))
+            return flux*upwindFunction(*outsideVolVars, *insideVolVars);
+        else
+            return flux*upwindFunction(*insideVolVars, *outsideVolVars);
+
+        // we are sure the boundary vol vars have been updated at this point (if existing)
+        boundaryVolVarsUpdated_ = true;
+
+        return flux;
     }
 
     const Stencil& stencil() const
     {
-        return advection_.stencil();
+        return stencil_;
     }
 
 private:
-    AdvectionType advection_;
+    const Problem *problemPtr_;              //! Pointer to the problem
+    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
+
     // boundary volume variables in case of Dirichlet boundaries
     std::unique_ptr<VolumeVariables> boundaryVolVars_;
+    bool boundaryVolVarsUpdated_;
+    // the flux stencil
+    Stencil stencil_;
 };
 
 
@@ -118,93 +145,88 @@ class FluxVariables<TypeTag, true, true, false>
     };
 
 public:
+
+    FluxVariables()
+    {}
+
     void update(const Problem& problem,
                 const Element& element,
-                const SubControlVolumeFace &scvf)
+                const SubControlVolumeFace &scvFace)
     {
-        if (scvf.boundary())
+        problemPtr_ = &problem;
+        scvFacePtr_ = &scvFace;
+
+        if (scvFace.boundary())
         {
             if(!boundaryVolVars_)
                 boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
+        }
 
-            advection_.update(problem, element, scvf, boundaryVolVars_.get());
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    if (phaseIdx != compIdx)
-                        molecularDiffusion(phaseIdx, compIdx).update(problem, element, scvf, phaseIdx, compIdx, boundaryVolVars_.get());
-                }
-        }
-        else
-        {
-            advection_.update(problem, element, scvf);
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    if (phaseIdx != compIdx)
-                        molecularDiffusion(phaseIdx, compIdx).update(problem, element, scvf, phaseIdx, compIdx);
-                }
-        }
+        boundaryVolVarsUpdated_ = false;
+
+        // TODO compute stencil as unity of advective and diffusive flux stencils
+        stencil_ = AdvectionType::stencil(*scvFacePtr_);
     }
 
     void beginFluxComputation()
     {
-        advection_.beginFluxComputation();
+        // TODO if constant BC, do not set to false
+        boundaryVolVarsUpdated_ = false;
+
+        // calculate advective fluxes and store them
+        advectiveVolFluxes_ = new std::array<Scalar, numPhases>();
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                if (phaseIdx != compIdx)
-                    molecularDiffusion(phaseIdx, compIdx).beginFluxComputation(true);
-            }
+            (*advectiveVolFluxes_)[phaseIdx] = AdvectionType::flux(*problemPtr_, *scvFacePtr_, phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+            boundaryVolVarsUpdated_ = true;
         }
     }
 
-    // TODO update transmissibilities?
-
-    const AdvectionType& advection() const
+    void endFluxComputation()
     {
-        return advection_;
+        delete advectiveVolFluxes_;
     }
 
-    AdvectionType& advection()
+    template<typename FunctionType>
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        return advection_;
-    }
+        const auto* insideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->insideScvIdx());
+        const VolumeVariables* outsideVolVars;
 
-    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
-    {
-        if (compIdx < phaseIdx)
-            return molecularDiffusion_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return molecularDiffusion_[phaseIdx][compIdx-1];
+        if (scvFacePtr_->boundary())
+            outsideVolVars = boundaryVolVars_.get();
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion flux called for phaseIdx = compIdx");
-    }
+            outsideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->outsideScvIdx());
 
-    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
-    {
-        if (compIdx < phaseIdx)
-            return molecularDiffusion_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return molecularDiffusion_[phaseIdx][compIdx-1];
+        if (std::signbit((*advectiveVolFluxes_)[phaseIdx]))
+            return (*advectiveVolFluxes_)[phaseIdx]*upwindFunction(*outsideVolVars, *insideVolVars);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion flux called for phaseIdx = compIdx");
+            return (*advectiveVolFluxes_)[phaseIdx]*upwindFunction(*insideVolVars, *outsideVolVars);
     }
 
-    Stencil stencil() const
+    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
     {
-        // std::set<IndexType> stencil(advection().stencil().begin(), advection().stencil().end());
-        // TODO: insert all molecularDiffusion stencils of all components in all phases
-        // stencil.insert();
-        return advection().stencil();
+        Scalar flux = MolecularDiffusionType::flux(*problemPtr_, *scvFacePtr_, phaseIdx, compIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+        boundaryVolVarsUpdated_ = true;
+        return flux;
+    }
+
+    const Stencil& stencil() const
+    {
+        return stencil_;
     }
 
 private:
-    AdvectionType advection_;
-    std::array< std::array<MolecularDiffusionType, numComponents-1>, numPhases> molecularDiffusion_;
+    const Problem *problemPtr_;              //! Pointer to the problem
+    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
+
+    // storage for calculated advective fluxes to not having to calculate them again
+    std::array<Scalar, numPhases>* advectiveVolFluxes_;
     // boundary volume variables in case of Dirichlet boundaries
     std::unique_ptr<VolumeVariables> boundaryVolVars_;
+    bool boundaryVolVarsUpdated_;
+    // the flux stencil
+    Stencil stencil_;
 };
 
 
