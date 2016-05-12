@@ -129,8 +129,8 @@ public:
 
                     // if globalI is in flux var stencil, add to list
                     const auto& fluxStencil = this->model_().fluxVars(fluxVarsIdx).stencil();
-                    for (auto it = fluxStencil.begin(); it != fluxStencil.end(); ++it)
-                        if (*it == globalI)
+                    for (auto globalIdx : fluxStencil)
+                        if (globalIdx == globalI)
                             fluxVarIndices.push_back(fluxVarsIdx);
                 }
 
