@@ -72,234 +72,141 @@ class CCTpfaDarcysLaw
 
 public:
 
-    void update(const Problem &problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace)
+    static Scalar flux(const Problem& problem,
+                       const SubControlVolumeFace& scvFace,
+                       const IndexType phaseIdx,
+                       VolumeVariables* boundaryVolVars,
+                       const bool boundaryVolVarsUpdated)
     {
-        problemPtr_ = &problem;
-        scvFacePtr_ = &scvFace;
-        enableGravity_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        Scalar tij = calculateTransmissibility_(problem, scvFace);
 
-        updateTransmissibilities_();
-        updateStencil_();
-    }
-
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace,
-                VolumeVariables* boundaryVolVars)
-    {
-        boundaryVolVars_ = boundaryVolVars;
-        update(problem, element, scvFace);
-    }
-
-    void updateTransmissibilities(const Problem &problem, const SubControlVolumeFace &scvFace)
-    {
-        updateTransmissibilities_();
-    }
-
-    void beginFluxComputation(bool boundaryVolVarsUpdated = false)
-    {
         // Get the inside volume variables
-        const auto insideScvIdx = scvFace_().insideScvIdx();
-        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto* insideVolVars = &problem_().model().curVolVars(insideScv);
+        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto* insideVolVars = &problem.model().curVolVars(insideScv);
 
         // and the outside volume variables
         const VolumeVariables* outsideVolVars;
-        if (!scvFace_().boundary())
-            outsideVolVars = &problem_().model().curVolVars(scvFace_().outsideScvIdx());
+        if (!scvFace.boundary())
+            outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
         else
         {
-            outsideVolVars = boundaryVolVars_;
             if (!boundaryVolVarsUpdated)
             {
                 // update the boudary volvars for Dirichlet boundaries
-                const auto element = problem_().model().fvGeometries().element(insideScv);
-                const auto dirichletPriVars = problem_().dirichlet(element, scvFace_());
-                boundaryVolVars_->update(dirichletPriVars, problem_(), element, insideScv);
+                const auto element = problem.model().fvGeometries().element(insideScv);
+                const auto dirichletPriVars = problem.dirichlet(element, scvFace);
+                boundaryVolVars->update(dirichletPriVars, problem, element, insideScv);
             }
+            outsideVolVars = boundaryVolVars;
         }
 
-        // loop over all phases to compute the volume flux
-        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+        auto hInside = insideVolVars->pressure(phaseIdx);
+        auto hOutside = outsideVolVars->pressure(phaseIdx);
+
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
         {
-            auto hInside = insideVolVars->pressure(phaseIdx);
-            auto hOutside = outsideVolVars->pressure(phaseIdx);
+            // do averaging for the density
+            const auto rhoInside = insideVolVars->density(phaseIdx);
+            const auto rhoOutide = outsideVolVars->density(phaseIdx);
+            const auto rho = (rhoInside + rhoOutide)*0.5;
 
-            if (enableGravity_)
+
+            // ask for the gravitational acceleration in the inside neighbor
+            const auto xInside = insideScv.center();
+            const auto gInside = problem.gravityAtPos(xInside);
+
+            hInside -= rho*(gInside*xInside);
+
+            // and the outside neighbor
+            if (scvFace.boundary())
             {
-                // do averaging for the density
-                const auto rhoInside = insideVolVars->density(phaseIdx);
-                const auto rhoOutide = outsideVolVars->density(phaseIdx);
-                const auto rho = (rhoInside + rhoOutide)*0.5;
-
-
-                // ask for the gravitational acceleration in the inside neighbor
-                const auto xInside = insideScv.center();
-                const auto gInside = problem_().gravityAtPos(xInside);
-
-                hInside -= rho*(gInside*xInside);
-
-                // and the outside neighbor
-                if (scvFace_().boundary())
-                {
-                    const auto xOutside = scvFace_().center();
-                    const auto gOutside = problem_().gravityAtPos(xOutside);
-                    hOutside -= rho*(gOutside*xOutside);
-                }
-                else
-                {
-                    const auto outsideScvIdx = scvFace_().outsideScvIdx();
-                    const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
-                    const auto xOutside = outsideScv.center();
-                    const auto gOutside = problem_().gravityAtPos(xOutside);
-                    hOutside -= rho*(gOutside*xOutside);
-                }
-            }
-
-            kGradPNormal_[phaseIdx] = tij_*(hInside - hOutside);
-
-            if (std::signbit(kGradPNormal_[phaseIdx]))
-            {
-                if (scvFace_().boundary())
-                    upWindIndices_[phaseIdx] = std::make_pair(-1, scvFace_().insideScvIdx());
-                else
-                    upWindIndices_[phaseIdx] = std::make_pair(scvFace_().outsideScvIdx(), scvFace_().insideScvIdx());
+                const auto xOutside = scvFace.center();
+                const auto gOutside = problem.gravityAtPos(xOutside);
+                hOutside -= rho*(gOutside*xOutside);
             }
             else
             {
-                if (scvFace_().boundary())
-                    upWindIndices_[phaseIdx] = std::make_pair(scvFace_().insideScvIdx(), -1);
-                else
-                    upWindIndices_[phaseIdx] = std::make_pair(scvFace_().insideScvIdx(), scvFace_().outsideScvIdx());
+                const auto outsideScvIdx = scvFace.outsideScvIdx();
+                const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
+                const auto xOutside = outsideScv.center();
+                const auto gOutside = problem.gravityAtPos(xOutside);
+                hOutside -= rho*(gOutside*xOutside);
             }
         }
+
+        return tij*(hInside - hOutside);
     }
 
-    /*!
-     * \brief A function to calculate the mass flux over a sub control volume face
-     *
-     * \param phaseIdx The index of the phase of which the flux is to be calculated
-     * \param upwindFunction A function which does the upwinding
-     */
-    template<typename FunctionType>
-    Scalar flux(IndexType phaseIdx, FunctionType upwindFunction) const
+    static std::vector<IndexType> stencil(const SubControlVolumeFace& scvFace)
     {
-        return kGradPNormal_[phaseIdx]*upwindFunction(upVolVars(phaseIdx), dnVolVars(phaseIdx));
-    }
-
-    const std::set<IndexType>& stencil() const
-    {
-        return stencil_;
-    }
-
-    const VolumeVariables& upVolVars(IndexType phaseIdx) const
-    {
-        if(upWindIndices_[phaseIdx].first != -1)
-            return problem_().model().curVolVars(upWindIndices_[phaseIdx].first);
+        std::vector<IndexType> stencil;
+        stencil.clear();
+        if (!scvFace.boundary())
+        {
+            stencil.push_back(scvFace.insideScvIdx());
+            stencil.push_back(scvFace.outsideScvIdx());
+        }
         else
-            return *boundaryVolVars_;
-    }
+            stencil.push_back(scvFace.insideScvIdx());
 
-    const VolumeVariables& dnVolVars(IndexType phaseIdx) const
-    {
-        if(upWindIndices_[phaseIdx].second != -1)
-            return problem_().model().curVolVars(upWindIndices_[phaseIdx].second);
-        else
-            return *boundaryVolVars_;
+        return stencil;
     }
 
 private:
 
-    void updateTransmissibilities_()
+    static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
-        if (!scvFace_().boundary())
+        Scalar tij;
+
+        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv);
+        Scalar ti = calculateOmega_(problem, scvFace, insideK, insideScv);
+
+        if (!scvFace.boundary())
         {
-            const auto insideScvIdx = scvFace_().insideScvIdx();
-            const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-            const auto insideK = problem_().spatialParams().intrinsicPermeability(insideScv);
-            Scalar ti = calculateOmega_(insideK, insideScv);
+            const auto outsideScvIdx = scvFace.outsideScvIdx();
+            const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
+            const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv);
+            Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideScv);
 
-            const auto outsideScvIdx = scvFace_().outsideScvIdx();
-            const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
-            const auto outsideK = problem_().spatialParams().intrinsicPermeability(outsideScv);
-            Scalar tj = -1.0*calculateOmega_(outsideK, outsideScv);
-
-            tij_ = scvFace_().area()*(ti * tj)/(ti + tj);
+            tij = scvFace.area()*(ti * tj)/(ti + tj);
         }
         else
         {
-            const auto insideScvIdx = scvFace_().insideScvIdx();
-            const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-            const auto insideK = problem_().spatialParams().intrinsicPermeability(insideScv);
-            Scalar ti = calculateOmega_(insideK, insideScv);
-
-            tij_ = scvFace_().area()*ti;
+            tij = scvFace.area()*ti;
         }
+
+        return tij;
     }
 
-    void updateStencil_()
-    {
-        // fill the stencil
-        if (!scvFace_().boundary())
-            stencil_.insert({scvFace_().insideScvIdx(), scvFace_().outsideScvIdx()});
-        else
-            // fill the stencil
-            stencil_.insert(scvFace_().insideScvIdx());
-    }
-
-    Scalar calculateOmega_(const DimWorldMatrix &K, const SubControlVolume &scv) const
+    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &K, const SubControlVolume &scv)
     {
         GlobalPosition Knormal;
-        K.mv(scvFace_().unitOuterNormal(), Knormal);
+        K.mv(scvFace.unitOuterNormal(), Knormal);
 
-        auto distanceVector = scvFace_().center();
+        auto distanceVector = scvFace.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = Knormal * distanceVector;
-        omega *= problem_().model().curVolVars(scv).extrusionFactor();
+        omega *= problem.model().curVolVars(scv).extrusionFactor();
 
         return omega;
     }
 
-    Scalar calculateOmega_(Scalar K, const SubControlVolume &scv) const
+    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, Scalar K, const SubControlVolume &scv)
     {
-        auto distanceVector = scvFace_().center();
+        auto distanceVector = scvFace.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = K * (distanceVector * scvFace_().unitOuterNormal());
-        omega *= problem_().model().curVolVars(scv).extrusionFactor();
+        Scalar omega = K * (distanceVector * scvFace.unitOuterNormal());
+        omega *= problem.model().curVolVars(scv).extrusionFactor();
 
         return omega;
     }
-
-    const Problem &problem_() const
-    {
-        return *problemPtr_;
-    }
-
-    const SubControlVolumeFace& scvFace_() const
-    {
-        return *scvFacePtr_;
-    }
-
-    const Problem *problemPtr_;              //! Pointer to the problem
-    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
-    bool enableGravity_;                     //! If we have a problem considering gravitational effects
-    std::set<IndexType> stencil_;         //! Indices of the cells of which the pressure is needed for the flux calculation
-
-    //! Boundary volume variables (they only get updated on Dirichlet boundaries)
-    VolumeVariables* boundaryVolVars_;
-
-    //! The upstream (first) and downstream (second) volume variable indices
-    std::array<std::pair<IndexType, IndexType>, numPhases> upWindIndices_;
-
-    //! Precomputed values
-    Scalar tij_; //! transmissibility for the flux calculation tij(ui - uj)
-    std::array<Scalar, numPhases> kGradPNormal_; //! K(grad(p) - rho*g)*n
 };
 
 } // end namespace
