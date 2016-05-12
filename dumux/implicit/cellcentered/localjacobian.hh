@@ -128,8 +128,10 @@ public:
                     auto fluxVarsIdx = scvFaceJ.index();
 
                     // if globalI is in flux var stencil, add to list
-                    if (this->model_().fluxVars(fluxVarsIdx).stencil().count(globalI))
-                        fluxVarIndices.push_back(fluxVarsIdx);
+                    const auto& fluxStencil = this->model_().fluxVars(fluxVarsIdx).stencil();
+                    for (auto it = fluxStencil.begin(); it != fluxStencil.end(); ++it)
+                        if (*it == globalI)
+                            fluxVarIndices.push_back(fluxVarsIdx);
                 }
 
                 assemblyMap_[globalI].emplace_back(std::move(fluxVarIndices));
