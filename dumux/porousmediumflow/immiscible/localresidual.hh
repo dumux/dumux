@@ -112,8 +112,9 @@ public:
                                      + (dn.density(phaseIdx)*dn.mobility(phaseIdx))*(1-w); };
 
             auto eqIdx = conti0EqIdx + phaseIdx;
-            flux[eqIdx] = fluxVars.advection().flux(phaseIdx, upwindRule);
+            flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindRule);
         }
+        fluxVars.endFluxComputation();
 
         return flux;
     }
