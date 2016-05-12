@@ -141,17 +141,17 @@ public:
 
                 // get equation index
                 auto eqIdx = conti0EqIdx + compIdx;
-                flux[eqIdx] += fluxVars.advection().flux(phaseIdx, upwindRule);
+                flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRule);
             }
         }
 
         // diffusive fluxes
-        Scalar jGW = fluxVars.molecularDiffusion(wPhaseIdx, gCompIdx).flux();
-        Scalar jNW = fluxVars.molecularDiffusion(wPhaseIdx, nCompIdx).flux();
+        Scalar jGW = fluxVars.molecularDiffusionFlux(wPhaseIdx, gCompIdx);
+        Scalar jNW = fluxVars.molecularDiffusionFlux(wPhaseIdx, nCompIdx);
         Scalar jWW = -(jGW+jNW);
 
-        Scalar jWG = fluxVars.molecularDiffusion(gPhaseIdx, wCompIdx).flux();
-        Scalar jNG = fluxVars.molecularDiffusion(gPhaseIdx, nCompIdx).flux();
+        Scalar jWG = fluxVars.molecularDiffusionFlux(gPhaseIdx, wCompIdx);
+        Scalar jNG = fluxVars.molecularDiffusionFlux(gPhaseIdx, nCompIdx);
         Scalar jGG = -(jWG+jNG);
 
         // Scalar jWN = fluxVars.molecularDiffusion().flux(nPhaseIdx, wCompIdx);
@@ -166,6 +166,8 @@ public:
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
         flux[conti2EqIdx] += jGW+jGG+jGN;
+
+        fluxVars.endFluxComputation();
 
         return flux;
     }
