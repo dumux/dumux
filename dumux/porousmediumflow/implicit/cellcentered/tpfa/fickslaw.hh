@@ -71,56 +71,35 @@ class CCTpfaFicksLaw
 
 public:
 
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace,
-                int phaseIdx, int compIdx)
-    {
-        problemPtr_ = &problem;
-        scvFacePtr_ = &scvFace;
-
-        phaseIdx_ = phaseIdx;
-        compIdx_ = compIdx;
-
-        updateStencil_();
-
-        // TODO for non solution dependent diffusion tensors...
-    }
-
-    void update(const Problem &problem,
-                const Element &element,
-                const SubControlVolumeFace &scvFace,
-                int phaseIdx, int compIdx,
-                VolumeVariables* boundaryVolVars)
-    {
-        boundaryVolVars_ = boundaryVolVars;
-        update(problem, element, scvFace, phaseIdx, compIdx);
-    }
-
-    void beginFluxComputation(bool boundaryVolVarsUpdated = false)
+    static Scalar flux(const Problem& problem,
+                       const SubControlVolumeFace& scvFace,
+                       const int phaseIdx_,
+                       const int compIdx_,
+                       VolumeVariables* boundaryVolVars,
+                       bool boundaryVolVarsUpdated)
     {
         // diffusion tensors are always solution dependent
-        updateTransmissibilities_();
+        Scalar tij = calculateTransmissibility_(problem, scvFace, phaseIdx_, compIdx_);
 
         // Get the inside volume variables
-        const auto insideScvIdx = scvFace_().insideScvIdx();
-        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto* insideVolVars = &problem_().model().curVolVars(insideScv);
+        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto* insideVolVars = &problem.model().curVolVars(insideScv);
 
         // and the outside volume variables
         const VolumeVariables* outsideVolVars;
-        if (!scvFace_().boundary())
-            outsideVolVars = &problem_().model().curVolVars(scvFace_().outsideScvIdx());
+        if (!scvFace.boundary())
+            outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
         else
         {
-            outsideVolVars = boundaryVolVars_;
             if (!boundaryVolVarsUpdated)
             {
                 // update the boudary volvars for Dirichlet boundaries
-                const auto element = problem_().model().fvGeometries().element(insideScv);
-                const auto dirichletPriVars = problem_().dirichlet(element, scvFace_());
-                boundaryVolVars_->update(dirichletPriVars, problem_(), element, insideScv);
+                const auto element = problem.model().fvGeometries().element(insideScv);
+                const auto dirichletPriVars = problem.dirichlet(element, scvFace);
+                boundaryVolVars->update(dirichletPriVars, problem, element, insideScv);
             }
+            outsideVolVars = boundaryVolVars;
         }
 
         // compute the diffusive flux
@@ -128,117 +107,85 @@ public:
         const auto xOutside = outsideVolVars->moleFraction(phaseIdx_, compIdx_);
         const auto rho = 0.5*(insideVolVars->molarDensity(phaseIdx_) + outsideVolVars->molarDensity(phaseIdx_));
 
-        rhoDGradXNormal_ = rho*tij_*(xInside - xOutside);
+        return rho*tij*(xInside - xOutside);
     }
 
-
-
-    /*!
-     * \brief A function to calculate the mass flux over a sub control volume face
-     *
-     * \param phaseIdx The index of the phase of which the flux is to be calculated
-     * \param compIdx The index of the transported component
-     */
-    Scalar flux() const
+    static std::vector<IndexType> stencil(const SubControlVolumeFace& scvFace)
     {
-        return rhoDGradXNormal_;
-    }
+        std::vector<IndexType> stencil;
+        stencil.clear();
+        if (!scvFace.boundary())
+        {
+            stencil.push_back(scvFace.insideScvIdx());
+            stencil.push_back(scvFace.outsideScvIdx());
+        }
+        else
+            stencil.push_back(scvFace.insideScvIdx());
 
-    std::set<IndexType> stencil() const
-    {
-        return stencil_;
+        return stencil;
     }
 
 protected:
 
 
-    void updateTransmissibilities_()
+    static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace, const int phaseIdx_, const int compIdx_)
     {
-        const auto insideScvIdx = scvFace_().insideScvIdx();
-        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto& insideVolVars = problem_().model().curVolVars(insideScvIdx);
+        Scalar tij;
+
+        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto& insideVolVars = problem.model().curVolVars(insideScvIdx);
 
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx_, compIdx_);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx_), insideD);
-        Scalar ti = calculateOmega_(insideD, insideScv);
+        Scalar ti = calculateOmega_(problem, scvFace, insideD, insideScv);
 
-        if (!scvFace_().boundary())
+        if (!scvFace.boundary())
         {
-            const auto outsideScvIdx = scvFace_().outsideScvIdx();
-            const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
-            const auto& outsideVolVars = problem_().model().curVolVars(outsideScvIdx);
+            const auto outsideScvIdx = scvFace.outsideScvIdx();
+            const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
+            const auto& outsideVolVars = problem.model().curVolVars(outsideScvIdx);
 
             auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx_, compIdx_);
             outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx_), outsideD);
-            Scalar tj = -1.0*calculateOmega_(outsideD, outsideScv);
+            Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideD, outsideScv);
 
-            tij_ = scvFace_().area()*(ti * tj)/(ti + tj);
+            tij = scvFace.area()*(ti * tj)/(ti + tj);
         }
         else
         {
-            tij_ = scvFace_().area()*ti;
+            tij = scvFace.area()*ti;
         }
+
+        return tij;
     }
 
-    void updateStencil_()
-    {
-        // fill the stencil
-        if (!scvFace_().boundary())
-            stencil_= {scvFace_().insideScvIdx(), scvFace_().outsideScvIdx()};
-        else
-            // fill the stencil
-            stencil_ = {scvFace_().insideScvIdx()};
-    }
-
-    Scalar calculateOmega_(const DimWorldMatrix &D, const SubControlVolume &scv) const
+    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &D, const SubControlVolume &scv)
     {
         GlobalPosition Dnormal;
-        D.mv(scvFace_().unitOuterNormal(), Dnormal);
+        D.mv(scvFace.unitOuterNormal(), Dnormal);
 
-        auto distanceVector = scvFace_().center();
+        auto distanceVector = scvFace.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = Dnormal * distanceVector;
-        omega *= problem_().model().curVolVars(scv).extrusionFactor();
+        omega *= problem.model().curVolVars(scv).extrusionFactor();
 
         return omega;
     }
 
-    Scalar calculateOmega_(Scalar D, const SubControlVolume &scv) const
+    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, Scalar D, const SubControlVolume &scv)
     {
-        auto distanceVector = scvFace_().center();
+        auto distanceVector = scvFace.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = D * (distanceVector * scvFace_().unitOuterNormal());
-        omega *= problem_().model().curVolVars(scv).extrusionFactor();
+        Scalar omega = D * (distanceVector * scvFace.unitOuterNormal());
+        omega *= problem.model().curVolVars(scv).extrusionFactor();
 
         return omega;
     }
-
-    const Problem &problem_() const
-    {
-        return *problemPtr_;
-    }
-
-    const SubControlVolumeFace& scvFace_() const
-    {
-        return *scvFacePtr_;
-    }
-
-    const Problem *problemPtr_;
-    const SubControlVolumeFace *scvFacePtr_; //!< Pointer to the sub control volume face for which the flux variables are created
-    std::set<IndexType> stencil_;         //!< Indices of the cells of which the pressure is needed for the flux calculation
-
-    //! Boundary volume variables (they only get updated on Dirichlet boundaries)
-    VolumeVariables* boundaryVolVars_;
-
-    IndexType phaseIdx_;
-    IndexType compIdx_;
-    //! Precomputed values
-    Scalar tij_; //!< transmissibility for the flux calculation
-    Scalar rhoDGradXNormal_; //! rho*D(grad(x))*n
 };
 
 } // end namespace
