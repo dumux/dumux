@@ -71,7 +71,7 @@ public:
                 boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
         }
 
-        stencil_ = AdvectionType::stencil(*scvFacePtr_);
+        stencil_ = AdvectionType::stencil(scvFace);
     }
 
     void beginFluxComputation()
@@ -85,15 +85,15 @@ public:
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        Scalar flux = AdvectionType::flux(*problemPtr_, *scvFacePtr_, phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+        Scalar flux = AdvectionType::flux(problem(), scvFace(), phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
 
-        const auto* insideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->insideScvIdx());
+        const auto* insideVolVars = &problem().model().curVolVars(scvFace().insideScvIdx());
         const VolumeVariables* outsideVolVars;
 
-        if (scvFacePtr_->boundary())
+        if (scvFace().boundary())
             outsideVolVars = boundaryVolVars_.get();
         else
-            outsideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->outsideScvIdx());
+            outsideVolVars = &problem().model().curVolVars(scvFace().outsideScvIdx());
 
         if (std::signbit(flux))
             return flux*upwindFunction(*outsideVolVars, *insideVolVars);
@@ -109,6 +109,16 @@ public:
     const Stencil& stencil() const
     {
         return stencil_;
+    }
+
+    const Problem& problem() const
+    {
+        return *problemPtr_;
+    }
+
+    const SubControlVolumeFace& scvFace() const
+    {
+        return *scvFacePtr_;
     }
 
 private:
@@ -165,7 +175,7 @@ public:
         boundaryVolVarsUpdated_ = false;
 
         // TODO compute stencil as unity of advective and diffusive flux stencils
-        stencil_ = AdvectionType::stencil(*scvFacePtr_);
+        stencil_ = AdvectionType::stencil(scvFace);
     }
 
     void beginFluxComputation()
@@ -177,7 +187,7 @@ public:
         advectiveVolFluxes_ = new std::array<Scalar, numPhases>();
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            (*advectiveVolFluxes_)[phaseIdx] = AdvectionType::flux(*problemPtr_, *scvFacePtr_, phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+            (*advectiveVolFluxes_)[phaseIdx] = AdvectionType::flux(problem(), scvFace(), phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
             boundaryVolVarsUpdated_ = true;
         }
     }
@@ -190,13 +200,13 @@ public:
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        const auto* insideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->insideScvIdx());
+        const auto* insideVolVars = &problem().model().curVolVars(scvFace().insideScvIdx());
         const VolumeVariables* outsideVolVars;
 
-        if (scvFacePtr_->boundary())
+        if (scvFace().boundary())
             outsideVolVars = boundaryVolVars_.get();
         else
-            outsideVolVars = &problemPtr_->model().curVolVars(scvFacePtr_->outsideScvIdx());
+            outsideVolVars = &problem().model().curVolVars(scvFace().outsideScvIdx());
 
         if (std::signbit((*advectiveVolFluxes_)[phaseIdx]))
             return (*advectiveVolFluxes_)[phaseIdx]*upwindFunction(*outsideVolVars, *insideVolVars);
@@ -206,7 +216,7 @@ public:
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
     {
-        Scalar flux = MolecularDiffusionType::flux(*problemPtr_, *scvFacePtr_, phaseIdx, compIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+        Scalar flux = MolecularDiffusionType::flux(problem(), scvFace(), phaseIdx, compIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
         boundaryVolVarsUpdated_ = true;
         return flux;
     }
@@ -214,6 +224,16 @@ public:
     const Stencil& stencil() const
     {
         return stencil_;
+    }
+
+    const Problem& problem() const
+    {
+        return *problemPtr_;
+    }
+
+    const SubControlVolumeFace& scvFace() const
+    {
+        return *scvFacePtr_;
     }
 
 private:
