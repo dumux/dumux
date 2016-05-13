@@ -54,15 +54,9 @@ public:
         std::sort(elementStencil_.begin(), elementStencil_.end());
         elementStencil_.erase(std::unique(elementStencil_.begin(), elementStencil_.end()), elementStencil_.end());
 
+        auto globalI = problem.elementMapper().index(element);
         neighborStencil_ = elementStencil_;
-        for (auto it = neighborStencil_.begin(); it != neighborStencil_.end(); ++it)
-        {
-            if (*it == problem.elementMapper().index(element))
-            {
-                neighborStencil_.erase(it);
-                break;
-            }
-        }
+        neighborStencil_.erase(std::remove(neighborStencil_.begin(), neighborStencil_.end(), globalI), neighborStencil_.end());
     }
 
     //! The full element stencil (all element this element is interacting with)
