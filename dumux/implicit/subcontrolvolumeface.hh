@@ -109,7 +109,7 @@ public:
     }
 
     //! index of the outside sub control volume for spatial param evaluation
-    // This results in undefined behaviour if boundary is false
+    // This results in undefined behaviour if boundary is true
     IndexType outsideScvIdx() const
     {
         return scvIndices_[1];
