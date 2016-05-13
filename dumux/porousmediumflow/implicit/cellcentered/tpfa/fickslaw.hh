@@ -125,7 +125,7 @@ public:
         return stencil;
     }
 
-protected:
+private:
 
 
     static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace, const int phaseIdx_, const int compIdx_)
