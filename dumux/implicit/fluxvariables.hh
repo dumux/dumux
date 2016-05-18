@@ -84,7 +84,7 @@ public:
 
         // boundary vol vars only need to be handled at boundaries for cc methods
         if (scvFace.boundary() && !isBox)
-            setBoundaryVolumeVariables(problem, element, scvFace);
+            setBoundaryVolumeVariables_(problem, element, scvFace);
 
         // update the stencil if needed
         if (!enableFluxVarsCache && stencil_.empty())
@@ -160,63 +160,43 @@ public:
         return *scvFacePtr_;
     }
 
-    // when caching is enabled, get the stencil from the cache class
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil() const
-    {
-        if (problemPtr_ == nullptr || scvFacePtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "Calling the stencil() method before update of the FluxVariables object.");
-        return problem().model().fluxVarsCache(scvFace()).stencil();
-    }
-
-    // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil()
-    {
-        if (stencil_.empty())
-            DUNE_THROW(Dune::InvalidStateException, "Calling the stencil() method before update of the FluxVariables object.");
-        return stencil_;
-    }
-
     Stencil computeFluxStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     { return AdvectionType::stencil(problem, scvFace); }
 
+protected:
 
     // if flux variables caching is enabled, we use the boundary volume variables stored in the cache class
     template <typename T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache) && GET_PROP_VALUE(T, ConstantBoundaryConditions)>::type
-    setBoundaryVolumeVariables(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
-        boundaryVolVars_ = &problem.model().fluxVarsCache(scvFace).boundaryVolumeVariables();
+        boundaryVolVars_ = std::shared_ptr<VolumeVariables>(problem.model().fluxVarsCache(scvFace).boundaryVolumeVariables());
     }
 
     // if flux variables caching is disabled, we update the boundary volume variables
     template <typename T = TypeTag>
     typename std::enable_if<!GET_PROP_VALUE(T, ConstantBoundaryConditions) || !GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type
-    setBoundaryVolumeVariables(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
-        VolumeVariables tmp;
-
-        const auto dirichletPriVars = problem.dirichlet(element, scvFace);
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-        tmp.update(dirichletPriVars, problem, element, insideScv);
-
-        boundaryVolVars_ = new VolumeVariables(std::move(tmp));
+        boundaryVolVars_ = std::make_shared<VolumeVariables>(std::move(computeBoundaryVolumeVariables(problem, element, scvFace)));
     }
+
+    std::shared_ptr<VolumeVariables> boundaryVolVars_; //! boundary volume variables in case of Dirichlet boundaries
+    // the flux stencil
+    Stencil stencil_;
+
+private:
 
     const Problem *problemPtr_;              //! Pointer to the problem
     const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
-    const VolumeVariables* boundaryVolVars_; //! boundary volume variables in case of Dirichlet boundaries
-    // the flux stencil
-    Stencil stencil_;
 };
 
 
 // specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
-class FluxVariables<TypeTag, true, true, false>
+class FluxVariables<TypeTag, true, true, false> : public FluxVariables<TypeTag, true, false, false>
 {
+    using ParentType = FluxVariables<TypeTag, true, false, false>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
