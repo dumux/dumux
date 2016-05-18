@@ -47,6 +47,7 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
@@ -117,8 +118,8 @@ public:
      */
     PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace)
     {
-        auto& fluxVars = this->model_().fluxVars_(scvFace);
-        fluxVars.beginFluxComputation();
+        FluxVariables fluxVars;
+        fluxVars.update(asImp_()->problem_(), this->element_(), scvFace);
 
         // get upwind weights into local scope
         auto massWeight = massWeight_;
@@ -166,8 +167,6 @@ public:
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
         flux[conti2EqIdx] += jGW+jGG+jGN;
-
-        fluxVars.endFluxComputation();
 
         return flux;
     }
