@@ -60,6 +60,8 @@ class CCTpfaFicksLaw
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IndexSet::IndexType IndexType;
+    typedef typename std::vector<IndexType> Stencil;
+
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension} ;
@@ -75,8 +77,7 @@ public:
                        const SubControlVolumeFace& scvFace,
                        const int phaseIdx_,
                        const int compIdx_,
-                       VolumeVariables* boundaryVolVars,
-                       bool boundaryVolVarsUpdated)
+                       std::shared_ptr<VolumeVariables> boundaryVolVars)
     {
         // diffusion tensors are always solution dependent
         Scalar tij = calculateTransmissibility_(problem, scvFace, phaseIdx_, compIdx_);
@@ -92,14 +93,9 @@ public:
             outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
         else
         {
-            if (!boundaryVolVarsUpdated)
-            {
-                // update the boudary volvars for Dirichlet boundaries
-                const auto element = problem.model().fvGeometries().element(insideScv);
-                const auto dirichletPriVars = problem.dirichlet(element, scvFace);
-                boundaryVolVars->update(dirichletPriVars, problem, element, insideScv);
-            }
-            outsideVolVars = boundaryVolVars;
+            if (!boundaryVolVars)
+                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
+            outsideVolVars = boundaryVolVars.get();
         }
 
         // compute the diffusive flux
@@ -110,7 +106,7 @@ public:
         return rho*tij*(xInside - xOutside);
     }
 
-    static std::vector<IndexType> stencil(const SubControlVolumeFace& scvFace)
+    static Stencil stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         std::vector<IndexType> stencil;
         stencil.clear();

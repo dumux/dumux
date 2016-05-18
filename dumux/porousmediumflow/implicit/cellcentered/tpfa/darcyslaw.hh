@@ -78,7 +78,7 @@ public:
     static Scalar flux(const Problem& problem,
                        const SubControlVolumeFace& scvFace,
                        const IndexType phaseIdx,
-                       const VolumeVariables* boundaryVolVars)
+                       std::shared_ptr<VolumeVariables> boundaryVolVars)
     {
         const auto& tij = getTransmissibilities(problem, scvFace);
 
@@ -93,9 +93,9 @@ public:
             outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
         else
         {
-            if (boundaryVolVars == nullptr)
+            if (!boundaryVolVars)
                 DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
-            outsideVolVars = boundaryVolVars;
+            outsideVolVars = boundaryVolVars.get();
         }
 
         auto hInside = insideVolVars->pressure(phaseIdx);
