@@ -67,7 +67,7 @@ public:
         return elementStencil_;
     }
 
-    //! //! The full element stencil without this element
+    //! The full element stencil without this element
     const Stencil& neighborStencil() const
     {
         return neighborStencil_;
