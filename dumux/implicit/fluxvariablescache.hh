@@ -103,18 +103,18 @@ public:
         FluxVariables fluxVars;
         stencil_ = fluxVars.computeFluxStencil(problem, scvFace);
         if (GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions))
-            boundaryVolVars_ = std::make_unique<VolumeVariables>(std::move(fluxVars.getBoundaryVolumeVariables(problem, element, scvFace)));
+            boundaryVolVars_ = std::make_shared<VolumeVariables>(std::move(fluxVars.computeBoundaryVolumeVariables(problem, element, scvFace)));
     }
 
     const Stencil& stencil() const
     { return stencil_; }
 
-    const VolumeVariables& boundaryVolumeVariables() const
-    { return *boundaryVolVars_.get(); }
+    std::shared_ptr<VolumeVariables> boundaryVolumeVariables() const
+    { return boundaryVolVars_; }
 
 private:
     Stencil stencil_;
-    std::unique_ptr<VolumeVariables> boundaryVolVars_;
+    std::shared_ptr<VolumeVariables> boundaryVolVars_;
 };
 
 } // end namespace
