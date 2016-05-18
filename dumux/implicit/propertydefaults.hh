@@ -42,7 +42,8 @@
 #include "volumevariables.hh"
 #include "volumevariablesvector.hh"
 #include "fluxvariables.hh"
-#include "fluxvariablesvector.hh"
+#include "fluxvariablescache.hh"
+#include "fluxvariablescachevector.hh"
 #include "fvelementgeometry.hh"
 
 namespace Dumux {
@@ -98,8 +99,17 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
 
-//! The global volume variables vector class
-SET_TYPE_PROP(ImplicitBase, FluxVariablesVector, Dumux::FluxVariablesVector<TypeTag>);
+//! The flux variables cache class
+SET_PROP(ImplicitBase, FluxVariablesCache)
+{
+private:
+    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+  public:
+    typedef typename Dumux::FluxVariablesCache<TypeTag, isBox> type;
+};
+
+//! The global flux variables cache vector class
+SET_TYPE_PROP(ImplicitBase, FluxVariablesCacheVector, Dumux::FluxVariablesCacheVector<TypeTag>);
 
 // //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
 SET_PROP(ImplicitBase, FluxVariables)
@@ -141,6 +151,12 @@ SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 
 //! disable partial reassembling by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
+
+//! disable flux variables data caching by default
+SET_BOOL_PROP(ImplicitBase, EnableFluxVariablesCache, false);
+
+//! boundary conditions are not stationary by default
+SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);
 
 //! Set the type of a global jacobian matrix from the solution types
 SET_PROP(ImplicitBase, JacobianMatrix)

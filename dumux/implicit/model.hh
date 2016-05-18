@@ -57,8 +57,8 @@ class ImplicitModel
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesVector) FluxVariablesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesCache) FluxVariablesCache;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector) FluxVariablesCacheVector;
     typedef typename GET_PROP_TYPE(TypeTag, StencilsVector) StencilsVector;
 
     enum {
@@ -119,8 +119,8 @@ public:
         curVolVarsVector_.resize(fvGeometries().numScv());
         curVolVarsVector_.update(problem_(), curSol());
 
-        // update the flux vars (precompute transmissibilities)
-        fluxVarsVector_.update(problem_());
+        // update the flux variables caches
+        fluxVarsCacheVector_.update(problem_());
 
         // update stencils
         stencilsVector_.update(problem_());
@@ -727,7 +727,7 @@ public:
      */
     bool onBoundary(const SubControlVolume &scv) const
     {
-        return asImp_().onBoundary(onBoundary(scv.dofIndex()));
+        return asImp_().onBoundary(scv.dofIndex());
     }
 
     /*!
@@ -756,11 +756,11 @@ public:
     //                                         fvGeometry, scvIdx, fluidState);
     // }
 
-    const FluxVariables& fluxVars(const SubControlVolumeFace& scvf) const
-    { return fluxVarsVector_[scvf.index()]; }
+    const FluxVariablesCache& fluxVarsCache(const SubControlVolumeFace& scvf) const
+    { return fluxVarsCacheVector_[scvf.index()]; }
 
-    const FluxVariables& fluxVars(unsigned int scvfIdx) const
-    { return fluxVarsVector_[scvfIdx]; }
+    const FluxVariablesCache& fluxVarsCache(unsigned int scvfIdx) const
+    { return fluxVarsCacheVector_[scvfIdx]; }
 
     const VolumeVariables& curVolVars(const SubControlVolume& scv) const
     { return curVolVarsVector_[scv.index()]; }
@@ -801,11 +801,11 @@ protected:
     VolumeVariables& prevVolVars_(unsigned int scvIdx)
     { return prevVolVarsVector_[scvIdx]; }
 
-    FluxVariables& fluxVars_(const SubControlVolumeFace& scvf)
-    { return fluxVarsVector_[scvf.index()]; }
+    FluxVariablesCache& fluxVarsCache_(const SubControlVolumeFace& scvf)
+    { return fluxVarsCacheVector_[scvf.index()]; }
 
-    FluxVariables& fluxVars_(unsigned int scvfIdx)
-    { return fluxVarsVector_[scvfIdx]; }
+    FluxVariablesCache& fluxVarsCache_(unsigned int scvfIdx)
+    { return fluxVarsCacheVector_[scvfIdx]; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -958,8 +958,8 @@ protected:
     VolumeVariablesVector curVolVarsVector_;
     VolumeVariablesVector prevVolVarsVector_;
 
-    // the flux variables vector
-    FluxVariablesVector fluxVarsVector_;
+    // the flux variables cache vector vector
+    FluxVariablesCacheVector fluxVarsCacheVector_;
 
     // the stencils vector
     StencilsVector stencilsVector_;

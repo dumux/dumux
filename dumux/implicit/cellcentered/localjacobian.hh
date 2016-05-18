@@ -80,6 +80,7 @@ class CCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
 
@@ -128,7 +129,8 @@ public:
                     auto fluxVarsIdx = scvFaceJ.index();
 
                     // if globalI is in flux var stencil, add to list
-                    const auto& fluxStencil = this->model_().fluxVars(fluxVarsIdx).stencil();
+                    FluxVariables fluxVars;
+                    const auto& fluxStencil = fluxVars.stencil(problem, scvFaceJ);
                     for (auto globalIdx : fluxStencil)
                         if (globalIdx == globalI)
                             fluxVarIndices.push_back(fluxVarsIdx);

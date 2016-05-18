@@ -37,6 +37,7 @@ class CCElementStencils
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     // TODO a separate stencil class all stencils can derive from?
@@ -47,8 +48,9 @@ public:
         elementStencil_.clear();
         for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
         {
-            auto&& fluxStencil = problem.model().fluxVars(scvf).stencil();
-            elementStencil_.insert(elementStencil_.end(), fluxStencil.begin(), fluxStencil.end());
+            FluxVariables fluxVars;
+            auto&& stencil = fluxVars.stencil(problem, scvf);
+            elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
         }
         // make values in elementstencil unique
         std::sort(elementStencil_.begin(), elementStencil_.end());

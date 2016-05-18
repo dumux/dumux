@@ -97,8 +97,8 @@ public:
      */
     PrimaryVariables computeFlux(const SubControlVolumeFace& scvf)
     {
-        auto& fluxVars = this->model_().fluxVars_(scvf);
-        fluxVars.beginFluxComputation();
+        FluxVariables fluxVars;
+        fluxVars.update(asImp_()->problem_(), this->element_(), scvf);
 
         // copy weight to local scope for use in lambda expression
         auto w = upwindWeight_;
@@ -114,7 +114,6 @@ public:
             auto eqIdx = conti0EqIdx + phaseIdx;
             flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindRule);
         }
-        fluxVars.endFluxComputation();
 
         return flux;
     }
