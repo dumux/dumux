@@ -68,6 +68,13 @@ public:
     FluxVariables() : problemPtr_(nullptr), scvFacePtr_(nullptr), boundaryVolVars_(nullptr)
     {}
 
+    // if flux variables caching is disabled, we need to delete an eventually allocated boundaryVolVars_ pointer
+    ~FluxVariables()
+    {
+        if (boundaryVolVars_ != nullptr)
+            delete boundaryVolVars_;
+    }
+
     void update(const Problem& problem,
                 const Element& element,
                 const SubControlVolumeFace &scvFace)
