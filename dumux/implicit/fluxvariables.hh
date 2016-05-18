@@ -57,7 +57,17 @@ class FluxVariables<TypeTag, true, false, false>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
+    enum
+    {
+        isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox),
+        enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableFluxVariablesCache),
+        constantBC = GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions)
+    };
+
 public:
+    FluxVariables() : problemPtr_(nullptr), scvFacePtr_(nullptr), boundaryVolVars_(nullptr)
+    {}
+
     void update(const Problem& problem,
                 const Element& element,
                 const SubControlVolumeFace &scvFace)
@@ -65,33 +75,31 @@ public:
         problemPtr_ = &problem;
         scvFacePtr_ = &scvFace;
 
-        if (scvFace.boundary())
-        {
-            if(!boundaryVolVars_)
-                boundaryVolVars_ = Dune::Std::make_unique<VolumeVariables>();
-        }
+        // boundary vol vars only need to be handled at boundaries for cc methods
+        if (scvFace.boundary() && !isBox)
+            setBoundaryVolumeVariables_(problem, element, scvFace);
 
-        stencil_ = AdvectionType::stencil(scvFace);
+        // update the stencil if needed
+        if (!enableFluxVarsCache && stencil_.empty())
+            stencil_ = stencil(problem, scvFace);
     }
 
-    void beginFluxComputation()
-    {
-        // TODO if constant BC, do not set to false
-        boundaryVolVarsUpdated_ = false;
-    }
 
-    void endFluxComputation() {}
 
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        Scalar flux = AdvectionType::flux(problem(), scvFace(), phaseIdx, boundaryVolVars_.get(), boundaryVolVarsUpdated_);
+        Scalar flux = AdvectionType::flux(problem(), scvFace(), phaseIdx, boundaryVolVars_);
 
         const auto* insideVolVars = &problem().model().curVolVars(scvFace().insideScvIdx());
         const VolumeVariables* outsideVolVars;
 
         if (scvFace().boundary())
-            outsideVolVars = boundaryVolVars_.get();
+        {
+            if (boundaryVolVars_ == nullptr)
+                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
+            outsideVolVars = boundaryVolVars_;
+        }
         else
             outsideVolVars = &problem().model().curVolVars(scvFace().outsideScvIdx());
 
@@ -100,34 +108,100 @@ public:
         else
             return flux*upwindFunction(*insideVolVars, *outsideVolVars);
 
-        // we are sure the boundary vol vars have been updated at this point (if existing)
-        boundaryVolVarsUpdated_ = true;
-
         return flux;
     }
 
-    const Stencil& stencil() const
+    // interface allowing for stencil information without having to update the flux vars.
+    // this becomes useful when the element is not at hand for a call to update(...), e.g. during the assembly - localjacobian.hh
+    template <typename T = TypeTag>
+    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil(const Problem& problem, const SubControlVolumeFace& scvFace) const
+    { return problem.model().fluxVarsCache(scvFace).stencil(); }
+
+    // provide interface in case caching is disabled
+    template <typename T = TypeTag>
+    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
+        if (stencil_.empty())
+            stencil_ = computeFluxStencil(problem, scvFace);
         return stencil_;
+    }
+
+    // returns the boundary vol vars belonging to this flux variables object
+    VolumeVariables getBoundaryVolumeVariables(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    {
+        VolumeVariables boundaryVolVars;
+
+        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto dirichletPriVars = problem.dirichlet(element, scvFace);
+        boundaryVolVars.update(dirichletPriVars, problem, element, insideScv);
+
+        return boundaryVolVars;
     }
 
     const Problem& problem() const
     {
+        if (problemPtr_ == nullptr)
+            DUNE_THROW(Dune::InvalidStateException, "Problem pointer not valid. Call update before using the flux variables class.");
         return *problemPtr_;
     }
 
     const SubControlVolumeFace& scvFace() const
     {
+        if (scvFacePtr_ == nullptr)
+            DUNE_THROW(Dune::InvalidStateException, "Scv face pointer not valid. Call update before using the flux variables class.");
         return *scvFacePtr_;
     }
 
+    // when caching is enabled, get the stencil from the cache class
+    template <typename T = TypeTag>
+    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil() const
+    {
+        if (problemPtr_ == nullptr || scvFacePtr_ == nullptr)
+            DUNE_THROW(Dune::InvalidStateException, "Calling the stencil() method before update of the FluxVariables object.");
+        return problem().model().fluxVarsCache(scvFace()).stencil();
+    }
+
+    // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
+    template <typename T = TypeTag>
+    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil()
+    {
+        if (stencil_.empty())
+            DUNE_THROW(Dune::InvalidStateException, "Calling the stencil() method before update of the FluxVariables object.");
+        return stencil_;
+    }
+
+    Stencil computeFluxStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
+    { return AdvectionType::stencil(problem, scvFace); }
+
 private:
+
+    // if flux variables caching is enabled, we use the boundary volume variables stored in the cache class
+    template <typename T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache) && GET_PROP_VALUE(T, ConstantBoundaryConditions)>::type
+    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    {
+        boundaryVolVars_ = &problem.model().fluxVarsCache(scvFace).boundaryVolumeVariables();
+    }
+
+    // if flux variables caching is disabled, we update the boundary volume variables
+    template <typename T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ConstantBoundaryConditions) || !GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type
+    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    {
+        VolumeVariables tmp;
+
+        const auto dirichletPriVars = problem.dirichlet(element, scvFace);
+        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        tmp.update(dirichletPriVars, problem, element, insideScv);
+
+        boundaryVolVars_ = new VolumeVariables(std::move(tmp));
+    }
+
     const Problem *problemPtr_;              //! Pointer to the problem
     const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
-
-    // boundary volume variables in case of Dirichlet boundaries
-    std::unique_ptr<VolumeVariables> boundaryVolVars_;
-    bool boundaryVolVarsUpdated_;
+    const VolumeVariables* boundaryVolVars_; //! boundary volume variables in case of Dirichlet boundaries
     // the flux stencil
     Stencil stencil_;
 };
