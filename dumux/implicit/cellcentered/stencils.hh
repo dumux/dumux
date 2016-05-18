@@ -87,6 +87,7 @@ class CCStencilsVector
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using StencilType = CCElementStencils<TypeTag>;
 
 public:
     void update(const Problem& problem)
@@ -102,7 +103,7 @@ public:
 
     //! overload for elements
     template <class Entity>
-    typename std::enable_if<Entity::codimension == 0, const CCElementStencils<TypeTag>&>::type
+    typename std::enable_if<Entity::codimension == 0, const StencilType&>::type
     get(const Entity& entity) const
     {
         return elementStencils_[problemPtr_->elementMapper().index(entity)];
