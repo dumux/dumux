@@ -84,7 +84,7 @@ public:
 
         // boundary vol vars only need to be handled at boundaries for cc methods
         if (scvFace.boundary() && !isBox)
-            setBoundaryVolumeVariables_(problem, element, scvFace);
+            setBoundaryVolumeVariables(problem, element, scvFace);
 
         // update the stencil if needed
         if (!enableFluxVarsCache && stencil_.empty())
@@ -181,12 +181,11 @@ public:
     Stencil computeFluxStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     { return AdvectionType::stencil(problem, scvFace); }
 
-private:
 
     // if flux variables caching is enabled, we use the boundary volume variables stored in the cache class
     template <typename T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache) && GET_PROP_VALUE(T, ConstantBoundaryConditions)>::type
-    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    setBoundaryVolumeVariables(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
         boundaryVolVars_ = &problem.model().fluxVarsCache(scvFace).boundaryVolumeVariables();
     }
@@ -194,7 +193,7 @@ private:
     // if flux variables caching is disabled, we update the boundary volume variables
     template <typename T = TypeTag>
     typename std::enable_if<!GET_PROP_VALUE(T, ConstantBoundaryConditions) || !GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type
-    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    setBoundaryVolumeVariables(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
         VolumeVariables tmp;
 
