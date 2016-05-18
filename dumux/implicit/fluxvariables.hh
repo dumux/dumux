@@ -68,10 +68,10 @@ public:
     FluxVariables() : problemPtr_(nullptr), scvFacePtr_(nullptr), boundaryVolVars_(nullptr)
     {}
 
-    // if flux variables caching is disabled, we need to delete an eventually allocated boundaryVolVars_ pointer
+    // if boundary volume variables have been allocated previously, we need to delete an allocated memory
     ~FluxVariables()
     {
-        if (boundaryVolVars_ != nullptr)
+        if (boundaryVolVars_ != nullptr && (!constantBC || !enableFluxVarsCache))
             delete boundaryVolVars_;
     }
 
