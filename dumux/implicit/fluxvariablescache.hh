@@ -102,7 +102,8 @@ public:
         ParentType::update(problem, element, scvFace);
         FluxVariables fluxVars;
         stencil_ = fluxVars.computeFluxStencil(problem, scvFace);
-        boundaryVolVars_ = std::make_unique<VolumeVariables>(std::move(fluxVars.getBoundaryVolumeVariables(problem, element, scvFace)));
+        if (GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions))
+            boundaryVolVars_ = std::make_unique<VolumeVariables>(std::move(fluxVars.getBoundaryVolumeVariables(problem, element, scvFace)));
     }
 
     const Stencil& stencil() const
