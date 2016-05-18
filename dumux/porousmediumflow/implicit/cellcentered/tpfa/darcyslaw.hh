@@ -53,16 +53,19 @@ NEW_PROP_TAG(ProblemEnableGravity);
 template <class TypeTag>
 class CCTpfaDarcysLaw
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::IndexSet::IndexType IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
 
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GridView::IndexSet::IndexType IndexType;
+    typedef std::vector<Scalar> TransmissivityVector;
+    typedef std::vector<IndexType> Stencil;
+
+    using Element = typename GridView::template Codim<0>::Entity;
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
@@ -75,10 +78,9 @@ public:
     static Scalar flux(const Problem& problem,
                        const SubControlVolumeFace& scvFace,
                        const IndexType phaseIdx,
-                       VolumeVariables* boundaryVolVars,
-                       const bool boundaryVolVarsUpdated)
+                       const VolumeVariables* boundaryVolVars)
     {
-        Scalar tij = calculateTransmissibility_(problem, scvFace);
+        const auto& tij = getTransmissibilities(problem, scvFace);
 
         // Get the inside volume variables
         const auto insideScvIdx = scvFace.insideScvIdx();
@@ -91,13 +93,8 @@ public:
             outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
         else
         {
-            if (!boundaryVolVarsUpdated)
-            {
-                // update the boudary volvars for Dirichlet boundaries
-                const auto element = problem.model().fvGeometries().element(insideScv);
-                const auto dirichletPriVars = problem.dirichlet(element, scvFace);
-                boundaryVolVars->update(dirichletPriVars, problem, element, insideScv);
-            }
+            if (boundaryVolVars == nullptr)
+                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
             outsideVolVars = boundaryVolVars;
         }
 
@@ -135,10 +132,10 @@ public:
             }
         }
 
-        return tij*(hInside - hOutside);
+        return tij[0]*(hInside - hOutside);
     }
 
-    static std::vector<IndexType> stencil(const SubControlVolumeFace& scvFace)
+    static Stencil stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         std::vector<IndexType> stencil;
         stencil.clear();
@@ -153,9 +150,19 @@ public:
         return stencil;
     }
 
-private:
+    template <typename T = TypeTag>
+    static const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), TransmissivityVector>::type& getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
+    {
+        return problem.model().fluxVarsCache(scvFace).tij();
+    }
 
-    static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace)
+    template <typename T = TypeTag>
+    static const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), TransmissivityVector>::type getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
+    {
+        return calculateTransmissibilities(problem, scvFace);
+    }
+
+    static TransmissivityVector calculateTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         Scalar tij;
 
@@ -178,8 +185,10 @@ private:
             tij = scvFace.area()*ti;
         }
 
-        return tij;
+        return TransmissivityVector(1, tij);
     }
+
+private:
 
     static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &K, const SubControlVolume &scv)
     {
