@@ -49,7 +49,8 @@ public:
         for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
         {
             FluxVariables fluxVars;
-            auto&& stencil = fluxVars.stencil(problem, scvf);
+            fluxVars.update(problem, element, scvf, false);
+            auto&& stencil = fluxVars.stencil();
             elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
         }
         // make values in elementstencil unique

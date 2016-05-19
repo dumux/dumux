@@ -127,10 +127,12 @@ public:
                 for (auto&& scvFaceJ : this->model_().fvGeometries(globalJ).scvfs())
                 {
                     auto fluxVarsIdx = scvFaceJ.index();
+                    const auto& elementJ = this->model_().fvGeometries().element(globalJ);
 
                     // if globalI is in flux var stencil, add to list
                     FluxVariables fluxVars;
-                    const auto& fluxStencil = fluxVars.stencil(problem, scvFaceJ);
+                    fluxVars.update(problem, elementJ, scvFaceJ, false);
+                    const auto& fluxStencil = fluxVars.stencil();
                     for (auto globalIdx : fluxStencil)
                         if (globalIdx == globalI)
                             fluxVarIndices.push_back(fluxVarsIdx);
