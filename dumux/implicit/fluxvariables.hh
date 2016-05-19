@@ -71,32 +71,18 @@ public:
     // when caching is enabled, get the stencil from the cache class
     template <typename T = TypeTag>
     const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil() const
-    {
-        if (problemPtr_ == nullptr || scvFacePtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
-        return problem().model().fluxVarsCache(scvFace()).stencil();
-    }
+    { return problem().model().fluxVarsCache(scvFace()).stencil(); }
 
     // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
     template <typename T = TypeTag>
     const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil()
-    {
-        if (stencil_.empty())
-            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
-        return stencil_;
-    }
+    { return stencil_; }
 
     const Problem& problem() const
-    {
-        if (problemPtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
-        return *problemPtr_;
-    }
+    { return *problemPtr_; }
 
     const SubControlVolumeFace& scvFace() const
     {
-        if (scvFacePtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
         return *scvFacePtr_;
     }
 
