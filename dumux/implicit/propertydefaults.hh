@@ -99,15 +99,6 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 //! The global volume variables vector class
 SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
 
-//! The flux variables cache class
-SET_PROP(ImplicitBase, FluxVariablesCache)
-{
-private:
-    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-  public:
-    typedef typename Dumux::FluxVariablesCache<TypeTag, isBox> type;
-};
-
 //! The global flux variables cache vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesCacheVector, Dumux::FluxVariablesCacheVector<TypeTag>);
 

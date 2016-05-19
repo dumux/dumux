@@ -60,7 +60,6 @@ class CCTpfaDarcysLaw
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::IndexSet::IndexType IndexType;
-    typedef std::vector<Scalar> TransmissivityVector;
     typedef std::vector<IndexType> Stencil;
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -121,13 +120,12 @@ public:
             }
         }
 
-        return tij[0]*(hInside - hOutside);
+        return tij*(hInside - hOutside);
     }
 
     static Stencil stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         std::vector<IndexType> stencil;
-        stencil.clear();
         if (!scvFace.boundary())
         {
             stencil.push_back(scvFace.insideScvIdx());
@@ -140,18 +138,18 @@ public:
     }
 
     template <typename T = TypeTag>
-    static const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), TransmissivityVector>::type& getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
+    static const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Scalar>::type& getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         return problem.model().fluxVarsCache(scvFace).tij();
     }
 
     template <typename T = TypeTag>
-    static const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), TransmissivityVector>::type getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
+    static const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Scalar>::type getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         return calculateTransmissibilities(problem, scvFace);
     }
 
-    static TransmissivityVector calculateTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
+    static Scalar calculateTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
     {
         Scalar tij;
 
@@ -174,7 +172,7 @@ public:
             tij = scvFace.area()*ti;
         }
 
-        return TransmissivityVector(1, tij);
+        return tij;
     }
 
 private:

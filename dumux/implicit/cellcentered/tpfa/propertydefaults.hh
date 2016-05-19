@@ -29,6 +29,7 @@
 
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
+ #include <dumux/implicit/fluxvariablescache.hh>
 #include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyslaw.hh>
@@ -63,6 +64,9 @@ private:
 public:
     typedef Dumux::SubControlVolumeFace<ScvfGeometry, IndexType> type;
 };
+
+//! The flux variables cache class
+SET_TYPE_PROP(CCTpfaModel, FluxVariablesCache, Dumux::CCTpfaFluxVariablesCache<TypeTag>);
 
 //! The darcy flux variables
 SET_TYPE_PROP(CCTpfaModel, AdvectionType, Dumux::CCTpfaDarcysLaw<TypeTag>);

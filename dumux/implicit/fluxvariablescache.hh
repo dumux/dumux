@@ -36,16 +36,12 @@ NEW_PROP_TAG(NumComponents);
 
 /*!
  * \ingroup ImplicitModel
- * \brief The flux variables cache class
- *        stores the transmissibilities and stencils for the darcy flux calculation on a scv face
+ * \brief The flux variables cache classes
+ *        stores the transmissibilities and stencils
  */
-template<class TypeTag, bool isBox>
-class FluxVariablesCache
-{};
-
 // specialization for the Box Method
 template<class TypeTag>
-class FluxVariablesCache<TypeTag, true>
+class BoxFluxVariablesCache
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -55,41 +51,43 @@ class FluxVariablesCache<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
-    using TransmissibilityVector = std::vector<Scalar>;
+    using TransmissibilityVector = std::vector<IndexType>;
 
 public:
     void update(const Problem& problem,
                 const Element& element,
                 const SubControlVolumeFace &scvFace)
     {
-        darcyStencil_ = AdvectionType::stencil(problem, scvFace);
+        stencil_ = AdvectionType::stencil(problem, scvFace);
+        volVarsStencil_ = AdvectionType::volVarsStencil(problem, element, scvFace);
         tij_ = AdvectionType::calculateTransmissibilities(problem, scvFace);
     }
 
     const Stencil& stencil() const
-    { return darcyStencil_; }
+    { return stencil_; }
 
     const Stencil& darcyStencil() const
-    { return darcyStencil_; }
+    { return volVarsStencil_; }
 
     const TransmissibilityVector& tij() const
     { return tij_; }
 
 private:
-    Stencil darcyStencil_;
+    Stencil volVarsStencil_;
+    Stencil stencil_;
     TransmissibilityVector tij_;
 };
 
-// specialization for cell centered methods
+// specialization for the cell centered tpfa method
 template<class TypeTag>
-class FluxVariablesCache<TypeTag, false> : public FluxVariablesCache<TypeTag, true>
+class CCTpfaFluxVariablesCache
 {
-    using ParentType = FluxVariablesCache<TypeTag, true>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
@@ -99,16 +97,20 @@ public:
                 const Element& element,
                 const SubControlVolumeFace &scvFace)
     {
-        ParentType::update(problem, element, scvFace);
         FluxVariables fluxVars;
         stencil_ = fluxVars.computeStencil(problem, scvFace);
+        tij_ = AdvectionType::calculateTransmissibilities(problem, scvFace);
     }
 
     const Stencil& stencil() const
     { return stencil_; }
 
+    const Scalar& tij() const
+    { return tij_; }
+
 private:
     Stencil stencil_;
+    Scalar tij_;
 };
 
 } // end namespace
