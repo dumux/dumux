@@ -37,6 +37,96 @@ NEW_PROP_TAG(NumComponents);
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables
+ *        Actual flux variables inherit from this class
+ */
+template<class TypeTag, class Implementation>
+class FluxVariablesBase
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Stencil = std::vector<IndexType>;
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+
+    enum{ enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableFluxVariablesCache) };
+
+public:
+    FluxVariablesBase() : problemPtr_(nullptr), scvFacePtr_(nullptr)
+    {}
+
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace &scvFace)
+    {
+        problemPtr_ = &problem;
+        scvFacePtr_ = &scvFace;
+
+        // update the stencil if needed
+        if (!enableFluxVarsCache)
+            stencil_ = asImp_().computeStencil(problem, scvFace);
+    }
+
+    // when caching is enabled, get the stencil from the cache class
+    template <typename T = TypeTag>
+    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil() const
+    {
+        if (problemPtr_ == nullptr || scvFacePtr_ == nullptr)
+            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
+        return problem().model().fluxVarsCache(scvFace()).stencil();
+    }
+
+    // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
+    template <typename T = TypeTag>
+    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil()
+    {
+        if (stencil_.empty())
+            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
+        return stencil_;
+    }
+
+    const Problem& problem() const
+    {
+        if (problemPtr_ == nullptr)
+            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
+        return *problemPtr_;
+    }
+
+    const SubControlVolumeFace& scvFace() const
+    {
+        if (scvFacePtr_ == nullptr)
+            DUNE_THROW(Dune::InvalidStateException, "FluxVariables object has not been properly initialized. Call the update(...) method before using it.");
+        return *scvFacePtr_;
+    }
+
+    Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
+    { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
+
+private:
+
+    Implementation &asImp_()
+    {
+        assert(static_cast<Implementation*>(this) != 0);
+        return *static_cast<Implementation*>(this);
+    }
+
+    const Implementation &asImp_() const
+    {
+        assert(static_cast<const Implementation*>(this) != 0);
+        return *static_cast<const Implementation*>(this);
+    }
+
+    const Problem *problemPtr_;              //! Pointer to the problem
+    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
+    Stencil stencil_;                        //! The flux stencil
+};
+
+
+
+/*!
+ * \ingroup ImplicitModel
+ * \brief the flux variables class
  *        specializations are provided for combinations of physical processes
  */
 template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
@@ -45,15 +135,15 @@ class FluxVariables {};
 
 // specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
 template<class TypeTag>
-class FluxVariables<TypeTag, true, false, false>
+class FluxVariables<TypeTag, true, false, false> : public FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, false, false>>
 {
+    using ParentType = FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, false, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Stencil = std::vector<IndexType>;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
@@ -65,149 +155,41 @@ class FluxVariables<TypeTag, true, false, false>
     };
 
 public:
-    FluxVariables() : problemPtr_(nullptr), scvFacePtr_(nullptr)
+    FluxVariables()
     {}
 
     void update(const Problem& problem,
                 const Element& element,
-                const SubControlVolumeFace &scvFace)
+                const SubControlVolumeFace &scvFace,
+                const bool preComputation = true)
     {
-        problemPtr_ = &problem;
-        scvFacePtr_ = &scvFace;
-
-        // boundary vol vars only need to be handled at boundaries for cc methods
-        if (scvFace.boundary() && !isBox)
-            setBoundaryVolumeVariables_(problem, element, scvFace);
-
-        // update the stencil if needed
-        if (!enableFluxVarsCache && stencil_.empty())
-            stencil_ = stencil(problem, scvFace);
+        ParentType::update(problem, element, scvFace);
     }
-
-
 
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        Scalar flux = AdvectionType::flux(problem(), scvFace(), phaseIdx, boundaryVolVars_);
+        Scalar flux = AdvectionType::flux(this->problem(), this->scvFace(), phaseIdx);
 
-        const auto* insideVolVars = &problem().model().curVolVars(scvFace().insideScvIdx());
-        const VolumeVariables* outsideVolVars;
-
-        if (scvFace().boundary())
-        {
-            if (!boundaryVolVars_)
-                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
-            outsideVolVars = boundaryVolVars_.get();
-        }
-        else
-            outsideVolVars = &problem().model().curVolVars(scvFace().outsideScvIdx());
+        const auto& insideVolVars = this->problem().model().curVolVars(this->scvFace().insideScvIdx());
+        const auto& outsideVolVars = this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
 
         if (std::signbit(flux))
-            return flux*upwindFunction(*outsideVolVars, *insideVolVars);
+            return flux*upwindFunction(outsideVolVars, insideVolVars);
         else
-            return flux*upwindFunction(*insideVolVars, *outsideVolVars);
-
-        return flux;
+            return flux*upwindFunction(insideVolVars, outsideVolVars);
     }
 
-    // interface allowing for stencil information without having to update the flux vars.
-    // this becomes useful when the element is not at hand for a call to update(...), e.g. during the assembly - localjacobian.hh
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil(const Problem& problem, const SubControlVolumeFace& scvFace) const
-    { return problem.model().fluxVarsCache(scvFace).stencil(); }
-
-    // provide interface in case caching is disabled
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
-    {
-        if (stencil_.empty())
-            stencil_ = computeFluxStencil(problem, scvFace);
-        return stencil_;
-    }
-
-    // when caching is enabled, get the stencil from the cache class
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil() const
-    {
-        if (problemPtr_ == nullptr || scvFacePtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "Calling the stencil() method before update of the FluxVariables object.");
-        return problem().model().fluxVarsCache(scvFace()).stencil();
-    }
-
-    // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil()
-    {
-        if (stencil_.empty())
-            DUNE_THROW(Dune::InvalidStateException, "Calling the stencil() method before update of the FluxVariables object.");
-        return stencil_;
-    }
-
-    // returns the boundary vol vars belonging to this flux variables object
-    VolumeVariables computeBoundaryVolumeVariables(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
-    {
-        VolumeVariables boundaryVolVars;
-
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto dirichletPriVars = problem.dirichlet(element, scvFace);
-        boundaryVolVars.update(dirichletPriVars, problem, element, insideScv);
-
-        return boundaryVolVars;
-    }
-
-    const Problem& problem() const
-    {
-        if (problemPtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "Problem pointer not valid. Call update before using the flux variables class.");
-        return *problemPtr_;
-    }
-
-    const SubControlVolumeFace& scvFace() const
-    {
-        if (scvFacePtr_ == nullptr)
-            DUNE_THROW(Dune::InvalidStateException, "Scv face pointer not valid. Call update before using the flux variables class.");
-        return *scvFacePtr_;
-    }
-
-    Stencil computeFluxStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
+    Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
     { return AdvectionType::stencil(problem, scvFace); }
-
-protected:
-
-    // if flux variables caching is enabled, we use the boundary volume variables stored in the cache class
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache) && GET_PROP_VALUE(T, ConstantBoundaryConditions)>::type
-    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
-    {
-        boundaryVolVars_ = std::shared_ptr<VolumeVariables>(problem.model().fluxVarsCache(scvFace).boundaryVolumeVariables());
-    }
-
-    // if flux variables caching is disabled, we update the boundary volume variables
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ConstantBoundaryConditions) || !GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type
-    setBoundaryVolumeVariables_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
-    {
-        boundaryVolVars_ = std::make_shared<VolumeVariables>(std::move(computeBoundaryVolumeVariables(problem, element, scvFace)));
-    }
-
-    std::shared_ptr<VolumeVariables> boundaryVolVars_; //! boundary volume variables in case of Dirichlet boundaries
-    // the flux stencil
-    Stencil stencil_;
-
-private:
-
-    const Problem *problemPtr_;              //! Pointer to the problem
-    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
 };
 
 
 // specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
-class FluxVariables<TypeTag, true, true, false> : public FluxVariables<TypeTag, true, false, false>
+class FluxVariables<TypeTag, true, true, false> : public FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, true, false>>
 {
-    using ParentType = FluxVariables<TypeTag, true, false, false>;
+    using ParentType = FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, true, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -232,51 +214,47 @@ public:
 
     void update(const Problem& problem,
                 const Element& element,
-                const SubControlVolumeFace &scvFace)
+                const SubControlVolumeFace &scvFace,
+                const bool preComputation = true)
     {
         ParentType::update(problem, element, scvFace);
 
-        // Stencil calculated in the base class is only the stencil for the advective flux.
-        // get stencil of the diffusive flux calculation
-        Stencil diffStencil = diffusionStencil(problem, scvFace);
-        // this has to be united with the diffusion stencil now
-        Stencil& stencil = this->stencil_;
-        stencil.insert(stencil.end(), diffStencil.begin(), diffStencil.end());
+        // precompute advective volume fluxes
+        if (preComputation)
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                advectiveVolumeFluxes_[phaseIdx] = AdvectionType::flux(problem, scvFace, phaseIdx);
+        }
+    }
+
+    Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
+    {
+        // unifiy advective and diffusive stencil
+        Stencil stencil = AdvectionType::stencil(problem, scvFace);
+        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, scvFace);
+
+        stencil.insert(stencil.end(), diffusionStencil.begin(), diffusionStencil.end());
         std::sort(stencil.begin(), stencil.end());
         stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
 
-        // precompute advective volume fluxes
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            advectiveVolumeFluxes_[phaseIdx] = AdvectionType::flux(problem, scvFace, phaseIdx, this->boundaryVolVars_);
+        return stencil;
     }
-
-    Stencil diffusionStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
-    { return MolecularDiffusionType::stencil(problem, scvFace); }
 
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        const auto* insideVolVars = &this->problem().model().curVolVars(this->scvFace().insideScvIdx());
-        const VolumeVariables* outsideVolVars;
-
-        if (this->scvFace().boundary())
-        {
-            if (!this->boundaryVolVars_)
-                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
-            outsideVolVars = this->boundaryVolVars_.get();
-        }
-        else
-            outsideVolVars = &this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
+        const auto& insideVolVars = this->problem().model().curVolVars(this->scvFace().insideScvIdx());
+        const auto& outsideVolVars = this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
 
         if (std::signbit(advectiveVolumeFluxes_[phaseIdx]))
-            return advectiveVolumeFluxes_[phaseIdx]*upwindFunction(*outsideVolVars, *insideVolVars);
+            return advectiveVolumeFluxes_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
         else
-            return advectiveVolumeFluxes_[phaseIdx]*upwindFunction(*insideVolVars, *outsideVolVars);
+            return advectiveVolumeFluxes_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
     {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(), this->scvFace(), phaseIdx, compIdx, this->boundaryVolVars_);
+        Scalar flux = MolecularDiffusionType::flux(this->problem(), this->scvFace(), phaseIdx, compIdx);
         return flux;
     }
 
