@@ -221,10 +221,10 @@ public:
         const auto& insideVolVars = this->problem().model().curVolVars(this->scvFace().insideScvIdx());
         const auto& outsideVolVars = this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
 
-        if (std::signbit(advectiveVolumeFluxes_[phaseIdx]))
-            return advectiveVolumeFluxes_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
+        if (std::signbit(advectiveFluxes_[phaseIdx]))
+            return advectiveFluxes_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
         else
-            return advectiveVolumeFluxes_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
+            return advectiveFluxes_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
@@ -235,7 +235,7 @@ public:
 
 private:
     // storage for calculated advective fluxes to not having to calculate them again
-    std::array<Scalar, numPhases> advectiveVolumeFluxes_;
+    std::array<Scalar, numPhases> advectiveFluxes_;
 };
 
 
