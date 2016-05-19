@@ -101,20 +101,14 @@ public:
     {
         ParentType::update(problem, element, scvFace);
         FluxVariables fluxVars;
-        stencil_ = fluxVars.computeFluxStencil(problem, scvFace);
-        if (GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions))
-            boundaryVolVars_ = std::make_shared<VolumeVariables>(std::move(fluxVars.computeBoundaryVolumeVariables(problem, element, scvFace)));
+        stencil_ = fluxVars.computeStencil(problem, scvFace);
     }
 
     const Stencil& stencil() const
     { return stencil_; }
 
-    std::shared_ptr<VolumeVariables> boundaryVolumeVariables() const
-    { return boundaryVolVars_; }
-
 private:
     Stencil stencil_;
-    std::shared_ptr<VolumeVariables> boundaryVolVars_;
 };
 
 } // end namespace
