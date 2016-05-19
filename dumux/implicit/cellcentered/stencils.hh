@@ -49,7 +49,7 @@ public:
         for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
         {
             FluxVariables fluxVars;
-            fluxVars.update(problem, element, scvf, false);
+            fluxVars.init(problem, element, scvf);
             auto&& stencil = fluxVars.stencil();
             elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
         }

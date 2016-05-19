@@ -56,9 +56,9 @@ public:
     FluxVariablesBase() : problemPtr_(nullptr), scvFacePtr_(nullptr)
     {}
 
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace)
+    void init(const Problem& problem,
+              const Element& element,
+              const SubControlVolumeFace &scvFace)
     {
         problemPtr_ = &problem;
         scvFacePtr_ = &scvFace;
@@ -155,15 +155,12 @@ class FluxVariables<TypeTag, true, false, false> : public FluxVariablesBase<Type
     };
 
 public:
-    FluxVariables()
-    {}
 
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace,
-                const bool preComputation = true)
+    void initAndComputeFluxes(const Problem& problem,
+                              const Element& element,
+                              const SubControlVolumeFace &scvFace)
     {
-        ParentType::update(problem, element, scvFace);
+        ParentType::init(problem, element, scvFace);
     }
 
     template<typename FunctionType>
@@ -209,22 +206,14 @@ class FluxVariables<TypeTag, true, true, false> : public FluxVariablesBase<TypeT
 
 public:
 
-    FluxVariables()
-    {}
-
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace,
-                const bool preComputation = true)
+    void initAndComputeFluxes(const Problem& problem,
+                              const Element& element,
+                              const SubControlVolumeFace &scvFace)
     {
-        ParentType::update(problem, element, scvFace);
+        ParentType::init(problem, element, scvFace);
 
-        // precompute advective volume fluxes
-        if (preComputation)
-        {
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                advectiveVolumeFluxes_[phaseIdx] = AdvectionType::flux(problem, scvFace, phaseIdx);
-        }
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            advectiveFluxes_[phaseIdx] = AdvectionType::flux(problem, scvFace, phaseIdx);
     }
 
     Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)

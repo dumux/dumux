@@ -119,7 +119,7 @@ public:
     PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace)
     {
         FluxVariables fluxVars;
-        fluxVars.update(asImp_()->problem_(), this->element_(), scvFace);
+        fluxVars.initAndComputeFluxes(asImp_()->problem_(), this->element_(), scvFace);
 
         // get upwind weights into local scope
         auto massWeight = massWeight_;
