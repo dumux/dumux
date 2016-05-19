@@ -34,6 +34,10 @@
 namespace Dumux
 {
 
+// forward declaration of the friend localresidual classes
+template <class TypeTag> class CCLocalResidual;
+template <class TypeTag> class BoxLocalResidual;
+
 /*!
  * \ingroup ImplicitModel
  * \brief The base class for the vertex centered finite volume
@@ -43,7 +47,8 @@ template<class TypeTag>
 class ImplicitModel
 {
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-    friend typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    friend CCLocalResidual<TypeTag>;
+    friend BoxLocalResidual<TypeTag>;
     typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -116,7 +121,6 @@ public:
         asImp_().applyInitialSolution_();
 
         // resize and update the volVars with the initial solution
-        curVolVarsVector_.resize(fvGeometries().numScv());
         curVolVarsVector_.update(problem_(), curSol());
 
         // update the flux variables caches
