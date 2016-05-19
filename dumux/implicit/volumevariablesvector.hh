@@ -70,7 +70,13 @@ public:
             {
                 for (auto&& scvFace : problem.model().fvGeometries(element).scvfs())
                 {
+                    // if we are not on a boundary, skip the rest
                     if (!scvFace.boundary())
+                        continue;
+
+                    // When complex boundary handling is inactive, we only use BC vol vars on pure Dirichlet boundaries
+                    auto bcTypes = problem.boundaryTypes(element, scvFace);
+                    if (/*TODO !GET_PROP_VALUE(TypeTag, BoundaryReconstruction) && */!(bcTypes.hasDirichlet() && !bcTypes.hasNeumann()))
                         continue;
 
                     const auto insideScvIdx = scvFace.insideScvIdx();

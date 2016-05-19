@@ -71,23 +71,9 @@ protected:
     PrimaryVariables computeFlux_(const SubControlVolumeFace &scvf)
     {
         if (!scvf.boundary() /*TODO: || GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
-        {
             return this->asImp_().computeFlux(scvf);
-        }
         else
-        {
-            if (!constantBC)
-            {
-                // update corresponding boundary volume variables before flux calculation
-                const auto insideScvIdx = scvf.insideScvIdx();
-                const auto& insideScv = this->problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-                const auto dirichletPriVars = this->problem_().dirichlet(this->element_(), scvf);
-
-                this->model_().curVolVars_(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), this->element_(), insideScv);
-            }
-
             return this->asImp_().evalBoundary_(scvf);
-        }
     }
 
     PrimaryVariables evalBoundary_(const SubControlVolumeFace &scvf)
@@ -228,6 +214,15 @@ protected:
     {
         // temporary vector to store the Dirichlet boundary fluxes
         PrimaryVariables flux(0);
+
+        if (!constantBC)
+        {
+            // update corresponding boundary volume variables before flux calculation
+            const auto insideScvIdx = scvf.insideScvIdx();
+            const auto& insideScv = this->problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+            const auto dirichletPriVars = this->problem_().dirichlet(this->element_(), scvf);
+            this->model_().curVolVars_(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), this->element_(), insideScv);
+        }
 
         auto dirichletFlux = this->asImp_().computeFlux(scvf);
 
