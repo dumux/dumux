@@ -56,8 +56,6 @@ class CCTpfaDarcysLaw
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -77,35 +75,26 @@ public:
 
     static Scalar flux(const Problem& problem,
                        const SubControlVolumeFace& scvFace,
-                       const IndexType phaseIdx,
-                       std::shared_ptr<VolumeVariables> boundaryVolVars)
+                       const IndexType phaseIdx)
     {
         const auto& tij = getTransmissibilities(problem, scvFace);
 
         // Get the inside volume variables
         const auto insideScvIdx = scvFace.insideScvIdx();
         const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto* insideVolVars = &problem.model().curVolVars(insideScv);
+        const auto& insideVolVars = problem.model().curVolVars(insideScv);
 
         // and the outside volume variables
-        const VolumeVariables* outsideVolVars;
-        if (!scvFace.boundary())
-            outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
-        else
-        {
-            if (!boundaryVolVars)
-                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
-            outsideVolVars = boundaryVolVars.get();
-        }
+        const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
 
-        auto hInside = insideVolVars->pressure(phaseIdx);
-        auto hOutside = outsideVolVars->pressure(phaseIdx);
+        auto hInside = insideVolVars.pressure(phaseIdx);
+        auto hOutside = outsideVolVars.pressure(phaseIdx);
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
         {
             // do averaging for the density
-            const auto rhoInside = insideVolVars->density(phaseIdx);
-            const auto rhoOutide = outsideVolVars->density(phaseIdx);
+            const auto rhoInside = insideVolVars.density(phaseIdx);
+            const auto rhoOutide = outsideVolVars.density(phaseIdx);
             const auto rho = (rhoInside + rhoOutide)*0.5;
 
 

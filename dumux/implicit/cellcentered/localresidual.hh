@@ -51,6 +51,8 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
         numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
+    enum { constantBC = GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions) };
+
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -73,7 +75,19 @@ protected:
             return this->asImp_().computeFlux(scvf);
         }
         else
+        {
+            if (!constantBC)
+            {
+                // update corresponding boundary volume variables before flux calculation
+                const auto insideScvIdx = scvf.insideScvIdx();
+                const auto& insideScv = this->problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+                const auto dirichletPriVars = this->problem_().dirichlet(this->element_(), scvf);
+
+                this->model_().curVolVars_(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), this->element_(), insideScv);
+            }
+
             return this->asImp_().evalBoundary_(scvf);
+        }
     }
 
     PrimaryVariables evalBoundary_(const SubControlVolumeFace &scvf)

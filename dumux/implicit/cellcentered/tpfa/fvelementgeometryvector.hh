@@ -82,10 +82,16 @@ public:
         return scvs_.size();
     }
 
-    //! The total number of sun control volume faces
+    //! The total number of sub control volume faces
     std::size_t numScvf() const
     {
         return scvfs_.size();
+    }
+
+    //! The total number of boundary sub control volume faces
+    std::size_t numBoundaryScvf() const
+    {
+        return numBoundaryScvf_;
     }
 
     // Get an element from a sub control volume contained in it
@@ -106,6 +112,7 @@ public:
 
         // Build the SCV and SCV faces
         IndexType scvfIdx = 0;
+        numBoundaryScvf_ = 0;
         elementMap_.resize(gridView_.size(0));
         scvs_.resize(gridView_.size(0));
         for (const auto& element : elements(gridView_))
@@ -137,7 +144,7 @@ public:
                                                                             intersection.geometry().center(),
                                                                             intersection.centerUnitOuterNormal(),
                                                                             scvfIdx,
-                                                                            std::vector<IndexType>({eIdx}),
+                                                                            std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
                                                                             true));
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -154,6 +161,7 @@ private:
     std::vector<std::shared_ptr<SubControlVolume>> scvs_;
     std::vector<std::shared_ptr<SubControlVolumeFace>> scvfs_;
     std::vector<FVElementGeometry> fvGeometries_;
+    IndexType numBoundaryScvf_;
 };
 
 } // end namespace

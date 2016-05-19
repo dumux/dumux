@@ -56,8 +56,6 @@ class CCTpfaFicksLaw
     typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffDiffModel;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IndexSet::IndexType IndexType;
     typedef typename std::vector<IndexType> Stencil;
@@ -75,33 +73,24 @@ public:
 
     static Scalar flux(const Problem& problem,
                        const SubControlVolumeFace& scvFace,
-                       const int phaseIdx_,
-                       const int compIdx_,
-                       std::shared_ptr<VolumeVariables> boundaryVolVars)
+                       const int phaseIdx,
+                       const int compIdx)
     {
         // diffusion tensors are always solution dependent
-        Scalar tij = calculateTransmissibility_(problem, scvFace, phaseIdx_, compIdx_);
+        Scalar tij = calculateTransmissibility_(problem, scvFace, phaseIdx, compIdx);
 
         // Get the inside volume variables
         const auto insideScvIdx = scvFace.insideScvIdx();
         const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto* insideVolVars = &problem.model().curVolVars(insideScv);
+        const auto& insideVolVars = problem.model().curVolVars(insideScv);
 
         // and the outside volume variables
-        const VolumeVariables* outsideVolVars;
-        if (!scvFace.boundary())
-            outsideVolVars = &problem.model().curVolVars(scvFace.outsideScvIdx());
-        else
-        {
-            if (!boundaryVolVars)
-                DUNE_THROW(Dune::InvalidStateException, "Trying to access invalid boundary volume variables.");
-            outsideVolVars = boundaryVolVars.get();
-        }
+        const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
 
         // compute the diffusive flux
-        const auto xInside = insideVolVars->moleFraction(phaseIdx_, compIdx_);
-        const auto xOutside = outsideVolVars->moleFraction(phaseIdx_, compIdx_);
-        const auto rho = 0.5*(insideVolVars->molarDensity(phaseIdx_) + outsideVolVars->molarDensity(phaseIdx_));
+        const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
+        const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
+        const auto rho = 0.5*(insideVolVars.molarDensity(phaseIdx) + outsideVolVars.molarDensity(phaseIdx));
 
         return rho*tij*(xInside - xOutside);
     }
@@ -124,7 +113,7 @@ public:
 private:
 
 
-    static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace, const int phaseIdx_, const int compIdx_)
+    static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace, const int phaseIdx, const int compIdx)
     {
         Scalar tij;
 
@@ -132,8 +121,8 @@ private:
         const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
         const auto& insideVolVars = problem.model().curVolVars(insideScvIdx);
 
-        auto insideD = insideVolVars.diffusionCoefficient(phaseIdx_, compIdx_);
-        insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx_), insideD);
+        auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
+        insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
         Scalar ti = calculateOmega_(problem, scvFace, insideD, insideScv);
 
         if (!scvFace.boundary())
@@ -142,8 +131,8 @@ private:
             const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
             const auto& outsideVolVars = problem.model().curVolVars(outsideScvIdx);
 
-            auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx_, compIdx_);
-            outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx_), outsideD);
+            auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
+            outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
             Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideD, outsideScv);
 
             tij = scvFace.area()*(ti * tj)/(ti + tj);
