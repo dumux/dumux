@@ -221,7 +221,7 @@ protected:
         {
             // update corresponding boundary volume variables before flux calculation
             const auto insideScvIdx = scvf.insideScvIdx();
-            const auto& insideScv = this->problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+            const auto& insideScv = this->model_().fvGeometries().subControlVolume(insideScvIdx);
             const auto dirichletPriVars = this->problem_().dirichlet(this->element_(), scvf);
             this->model_().curVolVars_(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), this->element_(), insideScv);
         }
@@ -248,7 +248,7 @@ protected:
         PrimaryVariables dirichletValues = this->problem_().dirichlet(this->element_(), scvf);
 
         // get the primary variables
-        const auto& priVars = this->problem_().model().curVolVars(scvf.insideScvIdx()).priVars();
+        const auto& priVars = this->model_().curVolVars(scvf.insideScvIdx()).priVars();
 
         // set Dirichlet conditions in a strong sense
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
