@@ -266,7 +266,8 @@ protected:
     void evalFluxes_()
     {
         // calculate the mass flux over the scv faces and subtract
-        for (auto&& scvf : fvGeometry_().scvfs())
+        const auto& fvGeometry = fvGeometry_();
+        for (const auto& scvf : fvGeometry.scvfs())
         {
             auto flux = asImp_().computeFlux_(scvf);
 
@@ -322,7 +323,8 @@ protected:
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
-        for (auto&& scv : fvGeometry_().scvs())
+        const auto& fvGeometry = fvGeometry_();
+        for (const auto& scv : fvGeometry.scvs())
         {
             auto scvIdx = scv.indexInElement();
 
@@ -334,7 +336,8 @@ protected:
     PrimaryVariables evalSource_()
     {
         PrimaryVariables source(0);
-        for (auto&& scv : fvGeometry_().scvs())
+        const auto& fvGeometry = fvGeometry_();
+        for (const auto& scv : fvGeometry)
         {
             source += this->problem_().source(element_(), scv);
 
@@ -355,7 +358,8 @@ protected:
     evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (auto&& scv : fvGeometry_().scvs())
+        const auto& fvGeometry = fvGeometry_();
+        for (const auto& scv : fvGeometry.scvs())
         {
             auto scvIdx = scv.indexInElement();
             auto curExtrusionFactor = model_().curVolVars(scv).extrusionFactor();
@@ -378,7 +382,8 @@ protected:
     evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (auto&& scv : fvGeometry_().scvs())
+        const auto& fvGeometry = fvGeometry_();
+        for (const auto& scv : fvGeometry.scvs())
         {
             auto scvIdx = scv.indexInElement();
             auto prevExtrusionFactor = model_().prevVolVars(scv).extrusionFactor();

@@ -46,11 +46,14 @@ public:
     void update(const Problem& problem, const Element& element)
     {
         elementStencil_.clear();
-        for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
+
+        const auto& fvGeometry = problem.model().fvGeometries(element);
+        // loop over sub control faces
+        for (const auto& scvf : fvGeometry.scvfs())
         {
             FluxVariables fluxVars;
-            fluxVars.init(problem, element, scvf);
-            auto&& stencil = fluxVars.stencil();
+            const auto& stencil = fluxVars.computeStencil(problem, scvf);
+
             elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
         }
         // make values in elementstencil unique

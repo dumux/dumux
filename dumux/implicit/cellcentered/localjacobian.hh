@@ -122,12 +122,13 @@ public:
             const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
 
             assemblyMap_[globalI].reserve(neighborStencil.size());
-
-            for (auto&& globalJ : neighborStencil)
+            for (auto globalJ : neighborStencil)
             {
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
-                for (auto&& scvFaceJ : this->model_().fvGeometries(globalJ).scvfs())
+
+                const auto& fvGeometry = this->model_().fvGeometries(globalJ);
+                for (const auto& scvFaceJ : fvGeometry.scvfs())
                 {
                     auto fluxVarsIdx = scvFaceJ.index();
                     const auto& elementJ = this->model_().fvGeometries().element(globalJ);
