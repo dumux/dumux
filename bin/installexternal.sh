@@ -99,6 +99,32 @@ installFoamGrid()
     fi
 }
 
+installGStat()
+{
+    cd $EXTDIR
+    rm -rf gstat* standalone
+
+    if [ ! -e gstat.tar.gz ]; then
+        wget http://gstat.org/gstat.tar.gz
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    mkdir gstat
+    tar zxvf gstat.tar.gz --strip-components=1 -C gstat
+    cd gstat
+
+    sed -i 's# doc/tex/makefile##g' configure
+    ./configure
+    make
+
+    if [ -e $PWD/src/gstat ]; then
+        echo "Successfully installed gstat."
+    fi
+}
+
 installMETIS()
 {
     cd $EXTDIR
@@ -353,6 +379,7 @@ usage()
     echo "  alugrid          Download dune-alugrid."
     echo "  cornerpoint      Download and patch dune-cornerpoint."
     echo "  foamgrid         Download dune-foamgrid."
+    echo "  gstat            Download and install gstat."
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
@@ -423,6 +450,7 @@ for TMP in "$@"; do
             installAluGrid
             installCornerpoint
             installFoamGrid
+            installGStat
             installMETIS
             installMultidomain
             installMultidomainGrid
@@ -442,6 +470,11 @@ for TMP in "$@"; do
         foamgrid|dune-foamgrid)
             SOMETHING_DONE="y"
             installFoamGrid
+            ;;
+        gstat)
+            SOMETHING_DONE="y"
+            createExternalDirectory
+            installGStat
             ;;
         metis)
             SOMETHING_DONE="y"
