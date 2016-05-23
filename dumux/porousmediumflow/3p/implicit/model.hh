@@ -143,9 +143,35 @@ public:
             const auto& fvGeometry = this->fvGeometries(element);
             for (const auto& scv : fvGeometry.scvs())
             {
-                (*saturation[phaseIdx])[dofIdxGlobal] = volVars.saturation(phaseIdx);
-                (*pressure[phaseIdx])[dofIdxGlobal] = volVars.pressure(phaseIdx);
-                (*density[phaseIdx])[dofIdxGlobal] = volVars.density(phaseIdx);
+                // make sure FVElementGeometry & vol vars are bound to the element
+                this->fvGeometries_().bindElement(element);
+                this->curVolVars_().bindElement(element);
+
+                const auto& fvGeometry = this->fvGeometries(element);
+                for (const auto& scv : fvGeometry.scvs())
+                {
+                    auto eIdx = scv.elementIndex();
+                    auto dofIdxGlobal = scv.dofIndex();
+                    (*rank)[eIdx] = this->gridView_().comm().rank();
+
+                    const auto& volVars = this->curVolVars(scv);
+
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
+                    {
+                        (*saturation[phaseIdx])[dofIdxGlobal] = volVars.saturation(phaseIdx);
+                        (*pressure[phaseIdx])[dofIdxGlobal] = volVars.pressure(phaseIdx);
+                        (*density[phaseIdx])[dofIdxGlobal] = volVars.density(phaseIdx);
+                    }
+
+                    (*poro)[dofIdxGlobal] = volVars.porosity();
+                    (*perm)[dofIdxGlobal] = volVars.permeability();
+                    (*temperature)[dofIdxGlobal] = volVars.temperature();
+
+                    // velocity output
+                    // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                    // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                    // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
+                }
             }
 
             (*poro)[dofIdxGlobal] = volVars.porosity();

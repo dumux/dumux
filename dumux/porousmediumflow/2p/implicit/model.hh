@@ -157,6 +157,8 @@ public:
                 int eIdx = this->elementMapper().index(element);
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
+                // make sure FVElementGeometry & vol vars are bound to the element
+                this->fvGeometries_().bindElement(element);
                 this->curVolVars_().bindElement(element);
 
                 const auto& fvGeometry = this->fvGeometries(element);

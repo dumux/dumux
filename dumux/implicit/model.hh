@@ -119,8 +119,8 @@ public:
 
         updateBoundaryIndices_();
 
-        fvGeometries_ = std::make_shared<FVElementGeometryVector>(gridView_());
-        fvGeometries_->update(problem_());
+        fvGeometryVector_ = std::make_shared<FVElementGeometryVector>(gridView_());
+        fvGeometryVector_->update(problem_());
 
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
@@ -790,13 +790,13 @@ public:
     { return prevVolVarsVector_[scvIdx]; }
 
     const FVElementGeometryVector& fvGeometries() const
-    { return *fvGeometries_; }
+    { return *fvGeometryVector_; }
 
     const FVElementGeometry& fvGeometries(const Element& element) const
-    { return fvGeometries_->fvGeometry(elementMapper().index(element)); }
+    { return fvGeometryVector_->fvGeometry(elementMapper().index(element)); }
 
     const FVElementGeometry& fvGeometries(unsigned int eIdx) const
-    { return fvGeometries_->fvGeometry(eIdx); }
+    { return fvGeometryVector_->fvGeometry(eIdx); }
 
 protected:
 
@@ -823,6 +823,9 @@ protected:
 
     FluxVariablesCache& fluxVarsCache_(unsigned int scvfIdx)
     { return fluxVarsCacheVector_[scvfIdx]; }
+
+    FVElementGeometryVector& fvGeometries_()
+    { return *fvGeometryVector_; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -863,8 +866,12 @@ protected:
         // condition at the center of each sub control volume
         for (const auto& element : elements(gridView_()))
         {
-            // deal with the current element
-            for(auto&& scv : fvGeometries(element).scvs())
+            // deal with the current element, bind FVGeometry to it
+            fvGeometries_().bindElement(element);
+            const auto& fvGeometry = fvGeometries(element);
+
+            // loop over sub control volumes
+            for(const auto& scv : fvGeometry.scvs())
             {
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
@@ -982,7 +989,7 @@ protected:
     StencilsVector stencilsVector_;
 
     // the finite volume element geometries
-    std::shared_ptr<FVElementGeometryVector> fvGeometries_;
+    std::shared_ptr<FVElementGeometryVector> fvGeometryVector_;
 
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 

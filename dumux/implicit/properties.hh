@@ -61,6 +61,7 @@ NEW_PROP_TAG(SubControlVolume);//!< The type of the sub control volume
 NEW_PROP_TAG(SubControlVolumeFace); //!< The type of the sub control volume face
 NEW_PROP_TAG(FVElementGeometry); //!< The type of the finite volume geometry (iterators over scvs, scvfs)
 NEW_PROP_TAG(FVElementGeometryVector); //!< The type of the finite volume geometry vector
+NEW_PROP_TAG(EnableFVElementGeometryCache); //! specifies if geometric data is be saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(JacobianAssembler); //!< Assembles the global jacobian matrix
 NEW_PROP_TAG(JacobianMatrix); //!< Type of the global jacobian matrix

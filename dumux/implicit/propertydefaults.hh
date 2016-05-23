@@ -146,6 +146,9 @@ SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 //! disable partial reassembling by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
 
+//! We do not store the FVGeometry by default
+SET_BOOL_PROP(ImplicitBase, EnableFVElementGeometryCache, false);
+
 //! We do not store the volume variables by default
 SET_BOOL_PROP(ImplicitBase, EnableVolumeVariablesCache, false);
 

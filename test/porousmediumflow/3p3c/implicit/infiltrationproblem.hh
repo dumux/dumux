@@ -343,8 +343,11 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = this->model().fvGeometries(element);
-            for (auto&& scv : fvGeometry.scvs())
+            // make sure the FVElementGeometry is bound to the element
+            this->model().fvGeometries_().bindElement(element);
+            const auto& fvGeometry = this->model().fvGeometries(element);
+
+            for (const auto& scv : fvGeometry.scvs())
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(scv);

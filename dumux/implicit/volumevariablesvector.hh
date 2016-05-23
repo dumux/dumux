@@ -79,7 +79,9 @@ public:
         boundaryVolumeVariables_.resize(numBoundaryScvs_);
         for (const auto& element : elements(problem.gridView()))
         {
-            for (auto&& scv : problem.model().fvGeometries(element).scvs())
+            problem.model().fvGeometries_().bind(element);
+            const auto& fvGeometry = problem.model().fvGeometries(element);
+            for (const auto& scv : fvGeometry.scvs())
             {
                 (*this)[scv.index()].update(sol[scv.dofIndex()],
                                             problem,
@@ -89,14 +91,14 @@ public:
 
             if (!isBox)
             {
-                for (auto&& scvFace : problem.model().fvGeometries(element).scvfs())
+                for (const auto& scvFace : fvGeometry.scvfs())
                 {
                     // if we are not on a boundary, skip the rest
                     if (!scvFace.boundary())
                         continue;
 
                     // When complex boundary handling is inactive, we only use BC vol vars on pure Dirichlet boundaries
-                    auto bcTypes = problem.boundaryTypes(element, scvFace);
+                    const auto bcTypes = problem.boundaryTypes(element, scvFace);
                     if (/*TODO !GET_PROP_VALUE(TypeTag, BoundaryReconstruction) && */!(bcTypes.hasDirichlet() && !bcTypes.hasNeumann()))
                         continue;
 
@@ -190,6 +192,8 @@ public:
 
         eIdxBound_ = eIdx;
 
+        // make sure the FVElementGeometry is bound to the element
+        problem_().model().fvGeometries_().bind(element);
         const auto& fvGeometry = problem_().model().fvGeometries(eIdx);
 
         // get stencil information
@@ -254,6 +258,9 @@ public:
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
         eIdxBound_ = eIdx;
+
+        // make sure the FVElementGeometry is bound to the element
+        problem_().model().fvGeometries_().bindElement(element);
 
         // update the volume variables of the element at hand
         const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdx);
@@ -346,6 +353,9 @@ public:
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
         eIdxBound_ = eIdx;
+
+        // make sure FVElementGeometry is bound to the element
+        problem_().model().fvGeometries_().bindElement(element);
 
         // update the volume variables of the element at hand
         const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdx);

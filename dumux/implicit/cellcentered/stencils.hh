@@ -91,12 +91,15 @@ class CCStencilsVector
     using StencilType = CCElementStencils<TypeTag>;
 
 public:
-    void update(const Problem& problem)
+    void update(Problem& problem)
     {
         problemPtr_ = &problem;
         elementStencils_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
+            // bind the FvGeometry to the element before using it
+            problem.model().fvGeometries_().bind(element);
+
             auto eIdx = problem.elementMapper().index(element);
             elementStencils_[eIdx].update(problem, element);
         }

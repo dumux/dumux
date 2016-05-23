@@ -57,6 +57,9 @@ public:
 
         for (const auto& element : elements(problem.gridView()))
         {
+            // make sure FVElementGeometry is bound to the element
+            problem.model().fvGeometries_().bindElement(element);
+
             const auto& fvGeometry = problem.model().fvGeometries(element);
             for (auto&& scv : fvGeometry.scvs())
             {
@@ -120,6 +123,8 @@ public:
         visited_.assign(phasePresence_.size(), false);
         for (const auto& element : elements(problem.gridView()))
         {
+            // make sure FVElementGeometry is bound to the element
+            problem.model().fvGeometries_().bindElement(element);
             volVarsVector.bindElement(element);
 
             const auto& fvGeometry = problem.model().fvGeometries(element);

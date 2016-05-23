@@ -115,6 +115,9 @@ public:
         assemblyMap_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
+            // bind FVGeometry to the element to prepare all the geometries of the stencil
+            problem.model().fvGeometries_().bind(element);
+
             auto globalI = problem.elementMapper().index(element);
             const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
 
@@ -151,6 +154,8 @@ public:
      */
     void assemble(const Element& element, JacobianMatrix& matrix)
     {
+        // prepare the volvars/fvGeometries in case caching is disabled
+        this->model_().fvGeometries_().bind(element);
         this->model_().curVolVars_().bind(element);
         this->model_().prevVolVars_().bindElement(element);
 
@@ -158,13 +163,14 @@ public:
         // finite volume geometry
         globalI_ = this->problem_().elementMapper().index(element);
 
-        bcTypes_.update(this->problem_(), element, fvElemGeom_());
+        const auto& fvGeometry = fvElemGeom_();
+        bcTypes_.update(this->problem_(), element, fvGeometry);
 
         // calculate the local residual
         this->localResidual().eval(element, bcTypes_);
         this->residual_ = this->localResidual().residual();
 
-        this->model_().updatePVWeights(fvElemGeom_());
+        this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
         evalPartialDerivatives_(element, matrix);

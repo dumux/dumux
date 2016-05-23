@@ -42,7 +42,7 @@ template<class TypeTag> class CCElementBoundaryTypes;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag>);
+SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVElementGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(CCTpfaModel, SubControlVolume)

@@ -159,6 +159,8 @@ public:
         {
             for (const auto& element : elements(this->problem_().gridView()))
             {
+                // make sure FVElementGeometry & vol vars are bound to the element
+                this->fvGeometries_().bindElement(element);
                 this->curVolVars_().bindElement(element);
 
                 const auto& fvGeometry = this->fvGeometries(element);
@@ -299,6 +301,8 @@ public:
             int eIdx = this->problem_().elementMapper().index(element);
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
+            // make sure FVElementGeometry & vol vars are bound to the element
+            this->fvGeometries_().bindElement(element);
             this->curVolVars_().bindElement(element);
 
             const auto& fvGeometry = this->fvGeometries(element);

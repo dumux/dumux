@@ -92,6 +92,7 @@ public:
     void eval(const Element &element)
     {
         // make sure FVElementGeometry and volume variables are bound to the element
+        model_().fvGeometries_().bind(element);
         model_().curVolVars_().bind(element);
         model_().prevVolVars_().bindElement(element);
 
@@ -115,6 +116,7 @@ public:
         elemPtr_ = &element;
 
         // make sure FVElementGeometry and volume variables are bound to the element
+        model_().fvGeometries_().bindElement(element);
         model_().curVolVars_().bindElement(element);
         model_().prevVolVars_().bindElement(element);
 
@@ -138,6 +140,7 @@ public:
         elemPtr_ = &element;
 
         // make sure FVElementGeometry and volume variables are bound to the element
+        model_().fvGeometries_().bind(element);
         model_().curVolVars_().bind(element);
         model_().prevVolVars_().bindElement(element);
 
@@ -170,6 +173,7 @@ public:
     void eval(const Element &element,
               const ElementBoundaryTypes &bcTypes)
     {
+        // At this point the fv geometry has to be bound already
         elemPtr_ = &element;
         bcTypesPtr_ = &bcTypes;
 
@@ -451,7 +455,7 @@ protected:
      * \brief Returns a reference to the current element's finite
      *        volume geometry.
      */
-    const FVElementGeometry &fvGeometry_() const
+    const FVElementGeometry& fvGeometry_() const
     {
         return model_().fvGeometries(element_());
     }
