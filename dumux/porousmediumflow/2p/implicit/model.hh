@@ -157,7 +157,10 @@ public:
                 int eIdx = this->elementMapper().index(element);
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
-                for (auto&& scv : this->fvGeometries(element).scvs())
+                this->curVolVars_().bindElement(element);
+
+                const auto& fvGeometry = this->fvGeometries(element);
+                for (const auto& scv : fvGeometry.scvs())
                 {
                     auto dofIdxGlobal = scv.dofIndex();
                     const auto& volVars = this->curVolVars(scv);

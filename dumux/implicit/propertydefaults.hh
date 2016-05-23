@@ -96,8 +96,11 @@ SET_TYPE_PROP(ImplicitBase, FVElementGeometry, Dumux::FVElementGeometry<TypeTag>
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
-//! The global volume variables vector class
-SET_TYPE_PROP(ImplicitBase, VolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag>);
+//! The global current volume variables vector class
+SET_TYPE_PROP(ImplicitBase, CurrentVolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag, false, GET_PROP_VALUE(TypeTag, EnableVolumeVariablesCache)>);
+
+//! The global previous volume variables vector class
+SET_TYPE_PROP(ImplicitBase, PreviousVolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesCacheVector, Dumux::FluxVariablesCacheVector<TypeTag>);
@@ -142,6 +145,9 @@ SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 
 //! disable partial reassembling by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
+
+//! We do not store the volume variables by default
+SET_BOOL_PROP(ImplicitBase, EnableVolumeVariablesCache, false);
 
 //! disable flux variables data caching by default
 SET_BOOL_PROP(ImplicitBase, EnableFluxVariablesCache, false);

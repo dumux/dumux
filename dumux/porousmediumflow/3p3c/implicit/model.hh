@@ -159,7 +159,10 @@ public:
         {
             for (const auto& element : elements(this->problem_().gridView()))
             {
-                for (auto&& scv : this->fvGeometries(element).scvs())
+                this->curVolVars_().bindElement(element);
+
+                const auto& fvGeometry = this->fvGeometries(element);
+                for (const auto& scv : fvGeometry.scvs())
                 {
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
@@ -296,9 +299,10 @@ public:
             int eIdx = this->problem_().elementMapper().index(element);
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
-            const auto& fvGeometry = this->fvGeometries(element);
+            this->curVolVars_().bindElement(element);
 
-            for (auto&& scv : fvGeometry.scvs())
+            const auto& fvGeometry = this->fvGeometries(element);
+            for (const auto& scv : fvGeometry.scvs())
             {
                 const auto& volVars = this->curVolVars(scv);
                 int dofIdxGlobal = scv.dofIndex();

@@ -27,9 +27,11 @@
 #include <dune/istl/bvector.hh>
 
 #include "properties.hh"
+#include "localresidual.hh"
 #include <dumux/implicit/adaptive/gridadaptproperties.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
+ #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux
 {
@@ -46,9 +48,17 @@ template <class TypeTag> class BoxLocalResidual;
 template<class TypeTag>
 class ImplicitModel
 {
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     friend CCLocalResidual<TypeTag>;
     friend BoxLocalResidual<TypeTag>;
+    friend ImplicitLocalResidual<TypeTag>;
+    friend PrimaryVariableSwitch<TypeTag>;
+    friend typename GET_PROP_TYPE(TypeTag, Problem);
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    friend typename GET_PROP_TYPE(TypeTag, StencilsVector);
+    friend typename GET_PROP_TYPE(TypeTag, CurrentVolumeVariablesVector);
+    friend typename GET_PROP_TYPE(TypeTag, PreviousVolumeVariablesVector);
+    friend typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector);
+
     typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -58,7 +68,8 @@ class ImplicitModel
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariablesVector) VolumeVariablesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, CurrentVolumeVariablesVector) CurrentVolumeVariablesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PreviousVolumeVariablesVector) PreviousVolumeVariablesVector;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
@@ -123,11 +134,11 @@ public:
         // resize and update the volVars with the initial solution
         curVolVarsVector_.update(problem_(), curSol());
 
-        // update the flux variables caches
-        fluxVarsCacheVector_.update(problem_());
-
         // update stencils
         stencilsVector_.update(problem_());
+
+        // update the flux variables caches
+        fluxVarsCacheVector_.update(problem_());
 
         // initialize assembler and create matrix
         localJacobian_.init(problem_());
@@ -788,16 +799,18 @@ public:
     { return fvGeometries_->fvGeometry(eIdx); }
 
 protected:
-    // only to be called by friends and deriving classes
-    VolumeVariablesVector& curVolVars_()
+
+    CurrentVolumeVariablesVector& curVolVars_()
     { return curVolVarsVector_; }
 
-    // only to be called by friends and deriving classes
     VolumeVariables& curVolVars_(const SubControlVolume& scv)
     { return curVolVarsVector_[scv.index()]; }
 
     VolumeVariables& curVolVars_(unsigned int scvIdx)
     { return curVolVarsVector_[scvIdx]; }
+
+    PreviousVolumeVariablesVector& prevVolVars_()
+    { return prevVolVarsVector_; }
 
     VolumeVariables& prevVolVars_(const SubControlVolume& scv)
     { return prevVolVarsVector_[scv.index()]; }
@@ -959,8 +972,8 @@ protected:
     SolutionVector uPrev_;
 
     // the current and previous variables (primary and secondary variables)
-    VolumeVariablesVector curVolVarsVector_;
-    VolumeVariablesVector prevVolVarsVector_;
+    CurrentVolumeVariablesVector curVolVarsVector_;
+    PreviousVolumeVariablesVector prevVolVarsVector_;
 
     // the flux variables cache vector vector
     FluxVariablesCacheVector fluxVarsCacheVector_;

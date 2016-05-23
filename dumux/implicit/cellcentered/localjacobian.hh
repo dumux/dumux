@@ -151,6 +151,9 @@ public:
      */
     void assemble(const Element& element, JacobianMatrix& matrix)
     {
+        this->model_().curVolVars_().bind(element);
+        this->model_().prevVolVars_().bindElement(element);
+
         // set the current grid element and update the element's
         // finite volume geometry
         globalI_ = this->problem_().elementMapper().index(element);

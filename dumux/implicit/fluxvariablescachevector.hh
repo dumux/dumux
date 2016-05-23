@@ -43,12 +43,17 @@ class FluxVariablesCacheVector
 
 public:
     template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type update(const Problem& problem)
+    typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type update(Problem& problem)
     {
         fluxVarsCache_.resize(problem.model().fvGeometries().numScvf());
         for (const auto& element : elements(problem.gridView()))
         {
-            for (auto&& scvf : problem.model().fvGeometries(element).scvfs())
+            // bind the geometries and volume variables to the element (all the elements in stencil)
+            problem.model().fvGeometries_().bind(element);
+            problem.model().curVolVars_().bind(element);
+
+            const auto& fvGeometry = problem.model().fvGeometries(element);
+            for (const auto& scvf : fvGeometry.scvfs())
             {
                 (*this)[scvf.index()].update(problem, element, scvf);
             }
@@ -56,7 +61,7 @@ public:
     }
 
     template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type update(const Problem& problem)
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache)>::type update(Problem& problem)
     {}
 
     template <typename T = TypeTag>

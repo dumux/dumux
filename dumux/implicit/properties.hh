@@ -71,8 +71,10 @@ NEW_PROP_TAG(PrimaryVariables); //!< A vector of primary variables within a sub-
 NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
 
+NEW_PROP_TAG(EnableVolumeVariablesCache); //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(VolumeVariablesVector);  //!< The type for a container of volume variables
+NEW_PROP_TAG(CurrentVolumeVariablesVector);  //!< The type for a container of current volume variables
+NEW_PROP_TAG(PreviousVolumeVariablesVector);  //!< The type for a container of previous volume variables
 NEW_PROP_TAG(FluxVariables); //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache); //!< Stores data associated with flux vars (if enabled)
 NEW_PROP_TAG(FluxVariablesCacheVector); //!< The global vector of flux variable containers

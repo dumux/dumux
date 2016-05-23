@@ -45,11 +45,11 @@ class PrimaryVariableSwitch
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using VolumeVariablesVector = typename GET_PROP_TYPE(TypeTag, VolumeVariablesVector);
+    using CurrentVolumeVariablesVector = typename GET_PROP_TYPE(TypeTag, CurrentVolumeVariablesVector);
 
 public:
 
-    void init(const Problem& problem)
+    void init(Problem& problem)
     {
         auto numDofs = problem.model().numDofs();
         phasePresence_.resize(numDofs);
@@ -113,15 +113,17 @@ public:
      * \param problem The problem
      * \param curSol The current solution to be updated / modified
      */
-    bool update(const Problem& problem, SolutionVector& curSol,
-                VolumeVariablesVector& volVarsVector)
+    bool update(Problem& problem, SolutionVector& curSol,
+                CurrentVolumeVariablesVector& volVarsVector)
     {
         bool switched = false;
         visited_.assign(phasePresence_.size(), false);
         for (const auto& element : elements(problem.gridView()))
         {
+            volVarsVector.bindElement(element);
+
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (auto&& scv : fvGeometry.scvs())
+            for (const auto& scv : fvGeometry.scvs())
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 if (!visited_[dofIdxGlobal])

@@ -53,6 +53,8 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
 
     enum { constantBC = GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions) };
 
+    enum { enableVolVarsCache = GET_PROP_VALUE(TypeTag, EnableVolumeVariablesCache) };
+
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -215,7 +217,7 @@ protected:
         // temporary vector to store the Dirichlet boundary fluxes
         PrimaryVariables flux(0);
 
-        if (!constantBC)
+        if (!constantBC || !enableVolVarsCache)
         {
             // update corresponding boundary volume variables before flux calculation
             const auto insideScvIdx = scvf.insideScvIdx();

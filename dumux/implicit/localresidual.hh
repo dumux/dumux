@@ -91,6 +91,10 @@ public:
      */
     void eval(const Element &element)
     {
+        // make sure FVElementGeometry and volume variables are bound to the element
+        model_().curVolVars_().bind(element);
+        model_().prevVolVars_().bindElement(element);
+
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
@@ -110,6 +114,10 @@ public:
     {
         elemPtr_ = &element;
 
+        // make sure FVElementGeometry and volume variables are bound to the element
+        model_().curVolVars_().bindElement(element);
+        model_().prevVolVars_().bindElement(element);
+
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
         bcTypesPtr_ = &bcTypes;
@@ -128,6 +136,10 @@ public:
     void evalFluxes(const Element &element)
     {
         elemPtr_ = &element;
+
+        // make sure FVElementGeometry and volume variables are bound to the element
+        model_().curVolVars_().bind(element);
+        model_().prevVolVars_().bindElement(element);
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
