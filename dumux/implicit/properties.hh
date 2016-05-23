@@ -79,12 +79,12 @@ NEW_PROP_TAG(PreviousVolumeVariablesVector);  //!< The type for a container of p
 NEW_PROP_TAG(FluxVariables); //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache); //!< Stores data associated with flux vars (if enabled)
 NEW_PROP_TAG(FluxVariablesCacheVector); //!< The global vector of flux variable containers
+NEW_PROP_TAG(EnableFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
 NEW_PROP_TAG(ConstantBoundaryConditions); //!< boundary data is stored in case the BC are constant
 
 // Specify the forms of fluxes that should be considered in the model
 // also, specify their corresponding flux variables
-NEW_PROP_TAG(EnableFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(EnableAdvection); //! specifies if advection is considered in the model
 NEW_PROP_TAG(AdvectionType); //! The type for the calculation the advective fluxes
 NEW_PROP_TAG(EnableMolecularDiffusion); //! specifies if molecular diffusive fluxes are considered in the model
