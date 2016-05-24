@@ -24,18 +24,10 @@
 #ifndef DUMUX_GSTAT_RANDOM_FIELD_HH
 #define DUMUX_GSTAT_RANDOM_FIELD_HH
 
-#if !HAVE_GSTAT
-#warning Gstat has not been found by CMake, please set the variable GSTAT_EXECUTABLE manually.
-// #define GSTAT_EXECUTABLE PATH
-#endif
-
 #include <iostream>
 
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/grid/io/file/vtk/common.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/geometry/referenceelements.hh>
-#include <dune/istl/bvector.hh>
+#include <dune/grid/io/file/vtk.hh>
 
 namespace Dumux
 {
@@ -52,19 +44,17 @@ namespace Dumux
 template<class GridView, class Scalar>
 class GstatRandomField
 {
-    enum { dim = GridView::dimension,
-           dimWorld = GridView::dimensionworld};
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
 
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > DataVector;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using DataVector = std::vector<Scalar>;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
 
 public:
+    // Add field types if you want to implement e.g. tensor permeabilities.
+    enum FieldType { scalar, log10 };
+
     /*!\brief Constructor.
      *
      * Creates a new field with random variables, if desired.
@@ -83,33 +73,29 @@ public:
      * \param gstatOutputFile name of the gstat output file
      * \param createNew set true to create a new field
      */
-    GstatRandomField(const GridView& gridView,
-                     const std::string gstatControlFile,
-                     const std::string gstatInputFile = "gstatInput.txt",
-                     const std::string gstatOutputFile = "permeab.dat",
-                     const bool createNew = true)
-    : gridView_(gridView),
-      data_(gridView.size(0)),
-      powField_(false),
-      elementMapper_(gridView)
-    {
-        ElementIterator eItEnd = gridView_.template end<0>();
+    GstatRandomField(const GridView& gridView)
+    : gridView_(gridView), elementMapper_(gridView),
+      data_(gridView.size(0)) {}
 
-#if HAVE_GSTAT
+    void create(const std::string& gstatControlFile,
+                const std::string& gstatInputFile = "gstatInput.txt",
+                const std::string& gstatOutputFile = "permeab.dat",
+                FieldType fieldType = FieldType::scalar,
+                bool createNew = true)
+    {
+        fieldType_ = fieldType;
         if (createNew)
         {
+#if !HAVE_GSTAT
+            DUNE_THROW(Dune::InvalidStateException, "Requested data field generation with gstat"
+              << " but gstat was not found on your system. Set GSTAT_ROOT to the path where gstat "
+              << " is installed and pass it to CMake, e.g. through an opts file.");
+#else
             std::ofstream gstatInput(gstatInputFile);
-            for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eItEnd; ++eIt)
-            {
+            for (const auto& element : elements(gridView_))
                 // get global coordinates of cell centers
-                const GlobalPosition& globalPos = eIt->geometry().center();
+                gstatInput << element.geometry().center() << std::endl;
 
-                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-                {
-                    gstatInput << globalPos[dimIdx] << " " << std::flush;
-                }
-                gstatInput << std::endl;
-            }
             gstatInput.close();
 
             std::string syscom;
@@ -119,51 +105,48 @@ public:
 
             if (!gstatInput.good())
             {
-                DUNE_THROW(Dune::IOError,
-                           "Reading the gstat control file: " << gstatControlFile << " failed." << std::endl);
+                DUNE_THROW(Dune::IOError, "Reading the gstat control file: "
+                             << gstatControlFile << " failed." << std::endl);
             }
 
             if (system(syscom.c_str()))
             {
                 DUNE_THROW(Dune::IOError, "Executing gstat failed.");
             }
-        }
 #endif
+        }
 
         std::ifstream gstatOutput(gstatOutputFile);
         if (!gstatOutput.good())
         {
-            DUNE_THROW(Dune::IOError,
-                        "Reading from file: " << gstatOutputFile << " failed." << std::endl);
+            DUNE_THROW(Dune::IOError, "Reading from file: "
+                         << gstatOutputFile << " failed." << std::endl);
         }
 
         std::string line;
         std::getline(gstatOutput, line);
 
-        Scalar dummy1, dummy2, dummy3, dataValue;
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eItEnd; ++eIt)
+        Scalar trash, dataValue;
+        for (const auto& element : elements(gridView_))
         {
             std::getline(gstatOutput, line);
             std::istringstream curLine(line);
             if (dim == 1)
-                curLine >> dummy1 >> dataValue;
+                curLine >> trash >> dataValue;
             else if (dim == 2)
-                curLine >> dummy1 >> dummy2 >> dataValue;
-            else // dim = 3
-                curLine >> dummy1 >> dummy2 >> dummy3 >> dataValue;
-            data_[elementMapper_.index(*eIt)] = dataValue;
+                curLine >> trash >> trash >> dataValue;
+            else if (dim == 3)
+                curLine >> trash >> trash >> trash >> dataValue;
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Invalid dimension " << dim);
+
+            data_[elementMapper_.index(element)] = dataValue;
         }
         gstatOutput.close();
-    }
 
-    //! \brief Use the input as an exponent
-    void createPowField()
-    {
-        for (unsigned int i = 0; i < data_.size(); ++i)
-        {
-            data_[i] = std::pow(10.0, data_[i]);
-        }
-        powField_ = true;
+        // post processing
+        if (fieldType_ == FieldType::log10)
+          std::for_each(data_.begin(), data_.end(), [](Scalar& s){ s = std::pow(10.0, s); });
     }
 
     //! \brief Return an entry of the data vector
@@ -173,29 +156,27 @@ public:
     }
 
     //! \brief Write the data to a vtk file
-    void writeVtk(const std::string vtkName,
-                  const std::string dataName = "data") const
+    void writeVtk(const std::string& vtkName,
+                  const std::string& dataName = "data") const
     {
         Dune::VTKWriter<GridView> vtkwriter(gridView_);
         vtkwriter.addCellData(data_, dataName);
 
-        DataVector logPerm(data_.size());
-        if (powField_)
+        DataVector logPerm;
+        if (fieldType_ == FieldType::log10)
         {
-            for (unsigned int i = 0; i < data_.size(); ++i)
-            {
-                logPerm[i] = std::log10(data_[i]);
-            }
-            vtkwriter.addCellData(logPerm, "logarithm of " + dataName);
+            logPerm = data_;
+            std::for_each(logPerm.begin(), logPerm.end(), [](Scalar& s){ s = std::log10(s); });
+            vtkwriter.addCellData(logPerm, "log10 of " + dataName);
         }
         vtkwriter.write(vtkName, Dune::VTK::OutputType::ascii);
     }
 
 private:
-    const GridView& gridView_;
-    DataVector data_;
-    bool powField_;
+    GridView gridView_;
     ElementMapper elementMapper_;
+    DataVector data_;
+    FieldType fieldType_;
 };
 
 }

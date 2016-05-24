@@ -137,21 +137,22 @@ public:
         std::string outputFilePrefix = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, OutputFilePrefix);
 
         // create random permeability object
-        GstatRandomField<GridView, Scalar> randomPermeabilityField(gridView,
-                                                                   gStatControlFile,
-                                                                   gStatInputFile,
-                                                                   outputFilePrefix + ".dat",
-                                                                   true);
-        randomPermeabilityField.createPowField();
+        GstatRandomField<GridView, Scalar> randomPermeabilityField(gridView);
+        randomPermeabilityField.create(gStatControlFile,
+                                       gStatInputFile,
+                                       outputFilePrefix + ".dat",
+                                       GstatRandomField<GridView, Scalar>::FieldType::log10,
+                                       true);
         randomPermeability_.resize(gridView.size(dim), 0.0);
 
-        ElementIterator eItEnd = gridView.template end<0> ();
-        for (ElementIterator eIt = gridView.template begin<0> (); eIt != eItEnd; ++eIt)
+        // copy vector from the temporary gstat object
+        for (const auto& element : elements(gridView))
         {
-            randomPermeability_[indexSet_.index(eIt->template subEntity<dim> (0/*scvIdx*/))]
-                = randomPermeabilityField.data(*eIt);;
+            auto index = indexSet_.index(element.template subEntity<dim> (/*scvIdx=*/0));
+            randomPermeability_[index] = randomPermeabilityField.data(element);
         }
 
+        // output the random field to vtk
         randomPermeabilityField.writeVtk(outputFilePrefix, "absolute permeability");
     }
 
