@@ -41,7 +41,7 @@ class OnePTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
 NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCModel, OnePTestProblem));
 
