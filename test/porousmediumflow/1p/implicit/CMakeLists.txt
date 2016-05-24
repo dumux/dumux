@@ -33,7 +33,7 @@ add_dumux_test(test_cc1pwithamg test_cc1pwithamg test_cc1pwithamg.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pwithamg")
 
 add_dumux_test(test_cc1pwithgstat test_cc1pwithgstat test_cc1pwithgstat.cc
-               ./test_cc1pwithamg)
+               ./test_cc1pwithgstat)
 
 # non-isothermal tests
 add_dumux_test(test_box1pniconduction test_box1pniconduction test_box1pniconduction.cc
