@@ -50,6 +50,12 @@
 /* Define path to gnuplot executable */
 #cmakedefine GNUPLOT_EXECUTABLE "@GNUPLOT_EXECUTABLE@"
 
+/* Define to 1 if gstat was found */
+#cmakedefine HAVE_GSTAT 1
+
+/* Define path to gstat executable */
+#cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
+
 /* end dumux
    Everything below here will be overwritten
 */

@@ -4,6 +4,7 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
 * IMPORTANT NOTES:
 
 * IMPROVEMENTS and ENHANCEMENTS:
+    - Integrated geostatistical tool gstat for generating random fields
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 

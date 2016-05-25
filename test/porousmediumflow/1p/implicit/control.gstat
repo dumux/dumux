@@ -1,0 +1,24 @@
+# For more info see the gstat manual on www.gstat.org !
+#
+# unconditional Gaussian simulation (random field)
+# "perm" is the name of the data field.
+data(perm): dummy, sk_mean=-9.5, max=100;    # dummy = no data for conditioning
+                                            # sk_mean = mean value
+                                            # higher max -> simulation more accurate and slower
+#
+#Sph:spherical, Gau:Gauss
+variogram(perm): 1.0000 Gau(0.05, 90, 1.0); # variogram definition: the first value is the variance
+                                            # Then specification of the model
+                                            # Brackets: 1: correlation length in main direction
+                                            #           2: zenith specifying the main direction
+                                            #           3: azimuth specifying the main direction
+                                            #           4: rotation of domain around main direction
+                                            #           5: the correlation length ratios in second direction
+                                            #           6: the correlation length ratios in second direction
+#
+set zero=1e-10;                             # higher values stabilize the simulation
+method: gs;                                 # gaussian simulation
+data(): 'gstatInput.txt', x=1, y=2;         # specification of simulation points: filename and order of data
+set output='permeability.dat';              # specification of output location
+set n_uk = 500;                             # higher n_uk -> simulation more accurate and slower.
+#

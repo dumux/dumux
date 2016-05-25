@@ -1,6 +1,7 @@
 add_subdirectory(pointsources)
 
 add_input_file_links()
+add_gstat_file_links()
 
 # isothermal tests
 add_dumux_test(test_box1p test_box1p test_box1p.cc
@@ -30,6 +31,9 @@ add_dumux_test(test_cc1pwithamg test_cc1pwithamg test_cc1pwithamg.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestccwithamg-00002.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pwithamg")
+
+add_dumux_test(test_cc1pwithgstat test_cc1pwithgstat test_cc1pwithgstat.cc
+               ./test_cc1pwithgstat)
 
 # non-isothermal tests
 add_dumux_test(test_box1pniconduction test_box1pniconduction test_box1pniconduction.cc
