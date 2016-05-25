@@ -19,6 +19,7 @@
 /*!
  * \file
  *
+ * \ingroup SpatialParameters
  * \brief Creating random fields using gstat
  */
 #ifndef DUMUX_GSTAT_RANDOM_FIELD_HH
@@ -33,13 +34,16 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup SpatialParameters
  * \brief Creating random fields using gstat
  *
  * gstat is an open source software tool which can (among other things) generate
- * geostatistical random fields (see <a href="www.gstat.org">www.gstat.org</a>).
+ * geostatistical random fields (see <a href="http://www.gstat.org">http://www.gstat.org</a>).
  *
- * To use this class, unpack and install the zipped gstat tarball from the website
- * or use the script installexternal.sh provided with dumux.
+ * To use this class, execute the installexternal.sh from your DuMuX root
+ * directory or donwload, unpack and install the tarball from the gstat-website.
+ * Then rerun cmake (in the second case set GSTAT_ROOT in your input file to the
+ * path where gstat is installed).
  */
 template<class GridView, class Scalar>
 class GstatRandomField
@@ -55,7 +59,8 @@ public:
     // Add field types if you want to implement e.g. tensor permeabilities.
     enum FieldType { scalar, log10 };
 
-    /*!\brief Constructor.
+    /*!
+     * \brief Constructor.
      *
      * Creates a new field with random variables, if desired.
      * Otherwise creates a data field from already available data.
