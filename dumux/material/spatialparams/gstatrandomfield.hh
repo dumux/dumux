@@ -65,12 +65,12 @@ public:
      * Creates a new field with random variables, if desired.
      * Otherwise creates a data field from already available data.
      *
-     * For the a rand field generation three files are necessary.
+     * For the random field generation three files are necessary.
      * A \a gstatControlFile in which all commands and in/output files for gstat are specified.
      * A \a gstatInputFile contains all coordinates (cell centers) of the grid, so that
      * gstat can perform its random realization. The filename must be same as in the gstatControlFile.
      * A \a gstatOutputFile in which gstat writes the random values to this file.
-     * The filename must be same as in the gstatControlFile.
+     * The filename must be the same as in the gstatControlFile.
      *
      * \param gridView the used gridView
      * \param gstatControlFile name of control file for gstat
