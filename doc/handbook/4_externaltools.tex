@@ -1,6 +1,17 @@
 \section{External Tools}
 \label{sc_externaltools}
 
+\subsection{Eclipse}
+There is an Eclipse style file which can be used for \Dumux.
+\begin{enumerate}
+  \item open in eclipse: \texttt{Window} $\rightarrow$ \texttt{Preferences} $\rightarrow$
+        \texttt{C/C++}  $\rightarrow$ \texttt{Code Style} $\rightarrow$ \texttt{Formatter}
+  \item press the \texttt{Import} button
+  \item choose the file \texttt{eclipse\_profile.xml} from your dumux-devel directory
+  \item make sure that now \Dumux is chosen in \texttt{Select a profile}
+\end{enumerate}
+
+
 \subsection{Git}
 Git is a version control tool which we use.
 The basic Git commands are:
@@ -17,15 +28,20 @@ The basic Git commands are:
   a commit
 \end{itemize}
 
-\subsection{Eclipse}
-There is an Eclipse style file which can be used for \Dumux.
-\begin{enumerate}
-  \item open in eclipse: \texttt{Window} $\rightarrow$ \texttt{Preferences} $\rightarrow$
-        \texttt{C/C++}  $\rightarrow$ \texttt{Code Style} $\rightarrow$ \texttt{Formatter}
-  \item press the \texttt{Import} button
-  \item choose the file \texttt{eclipse\_profile.xml} from your dumux-devel directory
-  \item make sure that that now \Dumux is chosen in \texttt{Select a profile}
-\end{enumerate}
+
+\subsection{Gnuplot}
+A gnuplot interface is available to plot or visualize results during a simulation run.
+This is achieved with the help of the class provided in \texttt{io/gnuplotinterface.hh}.
+Have a look at tests including this header for examples how to use this interface.
+
+
+\subsection{Gstat}
+Gstat is an open source software tool which generates geostatistical random fields (see \url{www.gstat.org}).
+In order to use gstat, execute the \texttt{bin/installexternal.sh} from your \Dumux root
+directory or donwload, unpack and install the tarball from the gstat-website.
+Then rerun cmake (in the second case set \texttt{GSTAT\_ROOT} in your input file to the
+path where gstat is installed).
+
 
 \subsection{Kate}
 For kate there is syntax highlighting style for \Dumux input files. Simply
@@ -33,11 +49,12 @@ copy the file \texttt{dumux-devel/dumux\-InputFiles.xml} to the \texttt{syntax} 
 your kate configuration directory (e.g.
 \texttt{HOME/.kde4/share/apps\-/katepart/syntax/dumuxInputFiles.xml}).
 
+
 \subsection{ParaView}
 \paragraph{Reload Button:}
 There are scripts to reload \texttt{*.pvd} or series of {\texttt{*.vtu} files since ParaView 4.2.
 The scripts can be found
-\href{http://markmail.org/message/exxynsgishbvtngg#query:+page:1+mid:rxlwxs7uqrfgibyv+state:results}{\texttt{under this lin}}.
+\href{http://markmail.org/message/exxynsgishbvtngg#query:+page:1+mid:rxlwxs7uqrfgibyv+state:results}{\texttt{under this link}}.
 Just save the specific code portion in a file and load it via \texttt{Macros} $\rightarrow$ \texttt{Add new macro}.
 
 \paragraph{Guide:}
