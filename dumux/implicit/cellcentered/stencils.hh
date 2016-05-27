@@ -62,7 +62,17 @@ public:
 
         auto globalI = problem.elementMapper().index(element);
         neighborStencil_ = elementStencil_;
-        neighborStencil_.erase(std::remove(neighborStencil_.begin(), neighborStencil_.end(), globalI), neighborStencil_.end());
+
+        //remove the element itself and possible ghost neighbors from the stencil
+        auto pred = [&problem, globalI](const int i) -> bool
+        {
+            if (i == globalI)
+                return true;
+            if (problem.model().fvGeometries().element(i).partitionType() == Dune::GhostEntity)
+                return true;
+            return false;
+        };
+        neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(), pred), neighborStencil_.end());
     }
 
     //! The full element stencil (all element this element is interacting with)

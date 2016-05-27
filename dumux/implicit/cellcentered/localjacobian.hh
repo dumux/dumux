@@ -124,14 +124,14 @@ public:
             assemblyMap_[globalI].reserve(neighborStencil.size());
             for (auto globalJ : neighborStencil)
             {
+                const auto& fvGeometry = this->model_().fvGeometries(globalJ);
+                const auto& elementJ = this->model_().fvGeometries().element(globalJ);
+
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
-
-                const auto& fvGeometry = this->model_().fvGeometries(globalJ);
                 for (const auto& scvFaceJ : fvGeometry.scvfs())
                 {
                     auto fluxVarsIdx = scvFaceJ.index();
-                    const auto& elementJ = this->model_().fvGeometries().element(globalJ);
 
                     // if globalI is in flux var stencil, add to list
                     FluxVariables fluxVars;
@@ -155,6 +155,8 @@ public:
      */
     void assemble(const Element& element, JacobianMatrix& matrix)
     {
+        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
+
         // prepare the volvars/fvGeometries in case caching is disabled
         this->model_().fvGeometries_().bind(element);
         this->model_().curVolVars_().bind(element);
@@ -168,13 +170,20 @@ public:
         bcTypes_.update(this->problem_(), element, fvGeometry);
 
         // calculate the local residual
-        this->localResidual().eval(element, bcTypes_);
-        this->residual_ = this->localResidual().residual();
+        if (isGhost)
+        {
+            this->residual_ = 0.0;
+        }
+        else
+        {
+            this->localResidual().eval(element, bcTypes_);
+            this->residual_ = this->localResidual().residual();
+        }
 
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, matrix);
+        evalPartialDerivatives_(element, matrix, isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
         // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
@@ -191,14 +200,14 @@ public:
         // }
     }
 
-    void evalPartialDerivatives_(const Element& element, JacobianMatrix& matrix)
+    void evalPartialDerivatives_(const Element& element, JacobianMatrix& matrix, const bool isGhost)
     {
         // get stencil informations
         const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
         const auto numNeighbors = neighborStencil.size();
 
         // derivatives in the element and the neighbors
-        PrimaryVariables partialDeriv(0.0);
+        PrimaryVariables partialDeriv(isGhost ? 1.0 : 0.0);
         Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
 
         // the localresidual class used for the flux calculations
@@ -248,11 +257,14 @@ public:
                 // update the volume variables
                 this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
 
-                // calculate the residual with the deflected primary variables
-                this->localResidual().eval(element, bcTypes_);
+                if (!isGhost)
+                {
+                    // calculate the residual with the deflected primary variables
+                    this->localResidual().eval(element, bcTypes_);
 
-                // store the residual and the storage term
-                partialDeriv = this->localResidual().residual(0);
+                    // store the residual and the storage term
+                    partialDeriv = this->localResidual().residual(0);
+                }
 
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
@@ -266,7 +278,8 @@ public:
                 // we are using backward differences, i.e. we don't need
                 // to calculate f(x + \epsilon) and we can recycle the
                 // (already calculated) residual f(x)
-                partialDeriv = this->residual_[0];
+                if (!isGhost)
+                    partialDeriv = this->residual_[0];
                 neighborDeriv = origFlux;
             }
 
@@ -282,11 +295,14 @@ public:
                 // update the volume variables
                 this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
 
-                // calculate the residual with the deflected primary variables
-                this->localResidual().eval(element, bcTypes_);
+                if (!isGhost)
+                {
+                    // calculate the residual with the deflected primary variables
+                    this->localResidual().eval(element, bcTypes_);
 
-                // subtract the residual from the derivative storage
-                partialDeriv -= this->localResidual().residual(0);
+                    // subtract the residual from the derivative storage
+                    partialDeriv -= this->localResidual().residual(0);
+                }
 
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
@@ -300,25 +316,19 @@ public:
                 // we are using forward differences, i.e. we don't need to
                 // calculate f(x - \epsilon) and we can recycle the
                 // (already calculated) residual f(x)
-                partialDeriv -= this->residual_[0];
+                if (!isGhost)
+                    partialDeriv -= this->residual_[0];
                 neighborDeriv -= origFlux;
             }
 
             // divide difference in residuals by the magnitude of the
             // deflections between the two function evaluation
-            partialDeriv /= delta;
+            if (!isGhost)
+                partialDeriv /= delta;
             neighborDeriv /= delta;
 
             // restore the original state of the scv's volume variables
             this->model_().curVolVars_(scv) = std::move(origVolVars);
-
-#if HAVE_VALGRIND
-            for (unsigned i = 0; i < partialDeriv.size(); ++i)
-                Valgrind::CheckDefined(partialDeriv[i]);
-            for (int i = 0; i < neighborDeriv.size(); ++idx)
-                for(unsigned k = 0; k < neighborDeriv[i].size(); ++k)
-                    Valgrind::CheckDefined(neighborDeriv[i][k]);
-#endif
 
             // update the global jacobian matrix with the current partial derivatives
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);

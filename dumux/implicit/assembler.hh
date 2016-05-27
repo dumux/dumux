@@ -152,31 +152,9 @@ protected:
     {
         asImp_().resetSystem_();
 
-        // reassemble the elements...
-        for (const auto& element : elements(gridView_())) {
-            if (element.partitionType() == Dune::GhostEntity)
-            {
-                asImp_().assembleGhostElement_(element);
-            }
-            else
-            {
-                asImp_().assembleElement_(element);
-            }
-        }
-    }
-    // "assemble" a ghost element
-    void assembleGhostElement_(const Element &element)
-    {
-        int globalI = elementMapper_().index(element);
-
-        // update the right hand side
-        residual_[globalI] = 0.0;
-
-        // update the diagonal entry
-        typedef typename JacobianMatrix::block_type BlockType;
-        BlockType &J = (*matrix_)[globalI][globalI];
-        for (int j = 0; j < BlockType::rows; ++j)
-            J[j][j] = 1.0;
+        // assemble the elements...
+        for (const auto& element : elements(gridView_()))
+            asImp_().assembleElement_(element);
     }
 
 protected:

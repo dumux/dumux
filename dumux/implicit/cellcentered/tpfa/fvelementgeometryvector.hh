@@ -132,7 +132,8 @@ public:
             std::vector<IndexType> scvfsIndexSet;
             for (const auto& intersection : intersections(gridView_, element))
             {
-                if (!intersection.boundary())
+                // inner sub control volume faces
+                if (intersection.neighbor())
                 {
                     auto nIdx = problem.elementMapper().index(intersection.outside());
                     scvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
@@ -143,7 +144,8 @@ public:
                                                           false));
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
-                else
+                // boundary sub control volume faces
+                else if (intersection.boundary())
                 {
                     scvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
                                                           intersection.geometry().center(),
@@ -270,15 +272,21 @@ public:
             std::vector<IndexType> neighborVolVarIndexSet;
             for (const auto& intersection : intersections(gridView_, element))
             {
-                scvFaceToElementMap_.push_back(eIdx);
-                scvfsIndexSet.push_back(numScvf_++);
-                if (!intersection.boundary())
+                // inner sub control volume faces
+                if (intersection.neighbor())
                 {
+                    scvFaceToElementMap_.push_back(eIdx);
+                    scvfsIndexSet.push_back(numScvf_++);
                     auto nIdx = problem.elementMapper().index(intersection.outside());
                     neighborVolVarIndexSet.push_back(nIdx);
                 }
-                else
+                // boundary sub control volume faces
+                else if (intersection.boundary())
+                {
+                    scvFaceToElementMap_.push_back(eIdx);
+                    scvfsIndexSet.push_back(numScvf_++);
                     neighborVolVarIndexSet.push_back(numScvs_ + numBoundaryScvf_++);
+                }
             }
 
             // store the sets of indices in the data container
