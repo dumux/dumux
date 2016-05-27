@@ -309,7 +309,7 @@ public:
         makeElementGeometries_(element);
         for (const auto& intersection : intersections(gridView_, element))
         {
-            if (!intersection.boundary())
+            if (intersection.neighbor())
                 makeElementGeometries_(intersection.outside());
         }
     }
@@ -353,15 +353,18 @@ private:
         int scvfCounter = 0;
         for (const auto& intersection : intersections(gridView_, element))
         {
-            stencilScvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
-                                                         intersection.geometry().center(),
-                                                         intersection.centerUnitOuterNormal(),
-                                                         scvFaceIndices[scvfCounter],
-                                                         std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]}),
-                                                         intersection.boundary()));
+            if (intersection.neighbor() || intersection.boundary())
+            {
+                stencilScvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
+                                                             intersection.geometry().center(),
+                                                             intersection.centerUnitOuterNormal(),
+                                                             scvFaceIndices[scvfCounter],
+                                                             std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]}),
+                                                             intersection.boundary()));
 
-            stencilScvFaceIndices_.push_back(scvFaceIndices[scvfCounter]);
-            scvfCounter++;
+                stencilScvFaceIndices_.push_back(scvFaceIndices[scvfCounter]);
+                scvfCounter++;
+            }
         }
 
         // Compute the finite volume element geometries
