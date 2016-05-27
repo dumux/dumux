@@ -79,7 +79,7 @@ public:
         boundaryVolumeVariables_.resize(numBoundaryScvs_);
         for (const auto& element : elements(problem.gridView()))
         {
-            problem.model().fvGeometries_().bind(element);
+            problem.model().fvGeometries_().bindElement(element);
             const auto& fvGeometry = problem.model().fvGeometries(element);
             for (const auto& scv : fvGeometry.scvs())
             {
