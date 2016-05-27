@@ -186,19 +186,7 @@ public:
         storageTerm_ = 0.0;
 
         asImp_().evalFluxes_();
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numScv; i++)
-            Valgrind::CheckDefined(residual_[i]);
-#endif // HAVE_VALGRIND
-
-       asImp_().evalVolumeTerms_();
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numScv; i++) {
-            Valgrind::CheckDefined(residual_[i]);
-        }
-#endif // HAVE_VALGRIND
+        asImp_().evalVolumeTerms_();
     }
 
     /*!
