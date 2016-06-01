@@ -220,13 +220,18 @@ public:
                                                      /*setInternalEnergy=*/false);
             }
             // ... or calculated explicitly this way ...
+            // please note that we experienced some problems with un-regularized
+            // partial pressures due to their calculation from fugacity coefficients -
+            // that's why they are regularized below "within physically meaningful bounds"
             else {
                 Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState_,
                                                                       wPhaseIdx,
                                                                       wCompIdx) * pw_;
+                if (partPressH2O > pg_) partPressH2O = pg_;
                 Scalar partPressNAPL = FluidSystem::fugacityCoefficient(fluidState_,
                                                                        nPhaseIdx,
                                                                        nCompIdx) * pn_;
+                if (partPressNAPL > pg_) partPressNAPL = pg_;
                 Scalar partPressAir = pg_ - partPressH2O - partPressNAPL;
 
                 Scalar xgn = partPressNAPL/pg_;
@@ -341,6 +346,7 @@ public:
             // and temperature and the mole fraction of water in
             // the gas phase
             Scalar partPressNAPL = fluidState_.fugacityCoefficient(nPhaseIdx, nCompIdx)*pn_;
+            if (partPressNAPL > pg_) partPressNAPL = pg_;
 
             Scalar xgw = priVars[switch1Idx];
             Scalar xgn = partPressNAPL/pg_;
@@ -362,11 +368,12 @@ public:
         }
         else if (phasePresence == wnPhaseOnly) {
             // only water and NAPL phases are present
-            Scalar pPartialC = fluidState_.fugacityCoefficient(nPhaseIdx,nCompIdx)*pn_;
+            Scalar partPressNAPL = fluidState_.fugacityCoefficient(nPhaseIdx,nCompIdx)*pn_;
+            if (partPressNAPL > pg_) partPressNAPL = pg_;
             Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,nCompIdx)*pw_;
 
             Scalar xwg = priVars[switch1Idx];
-            Scalar xwn = pPartialC/henryC;
+            Scalar xwn = partPressNAPL/henryC;
             Scalar xww = 1.-xwg-xwn;
 
             // write mole fractions in the fluid state
@@ -448,6 +455,7 @@ public:
             // only water and gas phases are present
             Scalar xgn = priVars[switch2Idx];
             Scalar partPressH2O = fluidState_.fugacityCoefficient(wPhaseIdx, wCompIdx)*pw_;
+            if (partPressH2O > pg_) partPressH2O = pg_;
 
             Scalar xgw = partPressH2O/pg_;
             Scalar xgg = 1.-xgn-xgw;
