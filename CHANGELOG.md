@@ -5,6 +5,7 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
 
 * IMPROVEMENTS and ENHANCEMENTS:
     - Integrated geostatistical tool gstat for generating random fields
+    - multidomain should now work with all compilers (optimzed ) without segfault
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 
