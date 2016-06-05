@@ -28,6 +28,7 @@
 #include "properties.hh"
 
 #include <dumux/implicit/volumevariables.hh>
+#include "vertixtoelemneighbormapper.hh"
 
 #include <dune/common/fvector.hh>
 
@@ -51,6 +52,10 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+
+    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
+    typedef Dumux::VertIdxToElemNeighborMapper<GridView> VertIdxToElemNeighborMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -61,11 +66,12 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        formulation = GET_PROP_VALUE(TypeTag, Formulation),
+        dim = GridView::dimension
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
 public:
     // export type of fluid state for non-isothermal models
@@ -88,7 +94,10 @@ public:
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
+        if (true)
+            completeFluidStateSaturationUpdate(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
+        else
+            completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
         const auto& materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
@@ -122,10 +131,10 @@ public:
     {
         Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
-        fluidState.setTemperature(t);
-
-        const auto& materialParams =
+         const auto& materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+
+        fluidState.setTemperature(t);
 
         if (int(formulation) == pwsn) {
             Scalar sn = priVars[saturationIdx];
@@ -139,6 +148,90 @@ public:
         }
         else if (int(formulation) == pnsw) {
             Scalar sw = priVars[saturationIdx];
+            fluidState.setSaturation(wPhaseIdx, sw);
+            fluidState.setSaturation(nPhaseIdx, 1 - sw);
+
+            Scalar pn = priVars[pressureIdx];
+            fluidState.setPressure(nPhaseIdx, pn);
+            fluidState.setPressure(wPhaseIdx,
+                                   pn - MaterialLaw::pc(materialParams, sw));
+        }
+
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState);
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            // compute and set the viscosity
+            Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            fluidState.setViscosity(phaseIdx, mu);
+
+            // compute and set the density
+            Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            fluidState.setDensity(phaseIdx, rho);
+
+            // compute and set the enthalpy
+            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+            fluidState.setEnthalpy(phaseIdx, h);
+        }
+    }
+
+    static void completeFluidStateSaturationUpdate(const PrimaryVariables& priVars,
+                                                   const Problem& problem,
+                                                   const Element& element,
+                                                   const FVElementGeometry& fvGeometry,
+                                                   int scvIdx,
+                                                   FluidState& fluidState)
+    {
+        Scalar t = Implementation::temperature_(priVars, problem, element,
+                                                fvGeometry, scvIdx);
+
+        fluidState.setTemperature(t);
+        Scalar sw = 0;
+        Scalar sn = 0;
+
+        if (int(formulation) == pwsn) {
+            sn = priVars[saturationIdx];
+            sw = 1 - priVars[saturationIdx];
+        }
+        else if (int(formulation) == pnsw) {
+            sw = priVars[saturationIdx];
+            sn = 1 - priVars[saturationIdx];
+        }
+
+        const VertexMapper &vertexMapper = problem.vertexMapper();
+        const VertIdxToElemNeighborMapper &vertIdxToElemScvMapper = problem.vertexElementScvMapper();
+        int globalIdx = vertexMapper.subIndex(element, scvIdx, dim);
+        auto& materialParams = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        Scalar pc = MaterialLaw::pc(materialParams, sw);
+        Scalar pe = MaterialLaw::pc(materialParams, 1);
+        Scalar pcmin = pc;
+        int neighborScvIdx = 0;
+        // loops over neighbored subcontrolvolumes to calculate minimum capillary pressure
+        for (int neighborIdx = 0; neighborIdx < vertIdxToElemScvMapper.size(globalIdx); neighborIdx++) {
+            neighborScvIdx = vertIdxToElemScvMapper.vertexElementsScvIdx(globalIdx, neighborIdx);
+            ElementPointer elem = vertIdxToElemScvMapper.vertexElementPointer(globalIdx, neighborIdx);
+            auto& neighborMaterialParams = problem.spatialParams().materialLawParams(elem, fvGeometry, neighborScvIdx);
+            if (MaterialLaw::pc(neighborMaterialParams, sw) < pcmin)
+                pcmin = MaterialLaw::pc(neighborMaterialParams, sw);
+        }
+        // update saturation
+        if (pc == pcmin){
+            sn = sn;}
+        else if (pcmin < pe){
+            sn = 0;}
+        else{
+            sn = 1 - MaterialLaw::sw(materialParams, pcmin);}
+
+        if (int(formulation) == pwsn) {
+            fluidState.setSaturation(nPhaseIdx, sn);
+            fluidState.setSaturation(wPhaseIdx, 1 - sn);
+
+            Scalar pw = priVars[pressureIdx];
+            fluidState.setPressure(wPhaseIdx, pw);
+            fluidState.setPressure(nPhaseIdx,
+                                   pw + MaterialLaw::pc(materialParams, 1 - sn));
+        }
+        else if (int(formulation) == pnsw) {
             fluidState.setSaturation(wPhaseIdx, sw);
             fluidState.setSaturation(nPhaseIdx, 1 - sw);
 
@@ -231,6 +324,7 @@ public:
      */
     Scalar porosity() const
     { return porosity_; }
+
 
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,

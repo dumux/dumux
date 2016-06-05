@@ -79,6 +79,7 @@ public:
         int numVertices = element.subEntities(dim);
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
+
             const PrimaryVariables &priVars
                 = globalSol[vertexMapper.subIndex(element, scvIdx, dim)];
 
