@@ -194,14 +194,16 @@ public:
         return ( ((this->timeManager().timeStepIndex() > 0)
                   && (this->timeManager().timeStepIndex() % freqRestart_ == 0))
                 // also write a restart file at the end of each episode
-                || this->timeManager().episodeWillBeOver());
+                || this->timeManager().episodeWillBeOver()
+                || this->timeManager().willBeFinished());
     }
 
     //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     {
         return (this->timeManager().timeStepIndex() % freqOutput_ == 0
-                || this->timeManager().episodeWillBeOver());
+                || this->timeManager().episodeWillBeOver()
+                || this->timeManager().willBeFinished());
     }
 
 private:
