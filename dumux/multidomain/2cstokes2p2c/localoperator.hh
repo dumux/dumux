@@ -258,12 +258,16 @@ public:
                         const LFSU2& lfsu2, const X& unknowns2, const LFSV2& lfsv2,
                         RES& couplingRes1, RES& couplingRes2) const
     {
-        const MDElement& mdElement1 = intersectionGeometry.inside();
-        const MDElement& mdElement2 = intersectionGeometry.outside();
+        const std::shared_ptr<MDElement> mdElement1
+            = std::make_shared<MDElement>(intersectionGeometry.inside());
+        const std::shared_ptr<MDElement> mdElement2
+            = std::make_shared<MDElement>(intersectionGeometry.inside());
 
-        // the subodmain elements
-        const SDElement1& sdElement1 = globalProblem_.sdElementPointer1(mdElement1);
-        const SDElement2& sdElement2 = globalProblem_.sdElementPointer2(mdElement2);
+        // the subdomain elements
+        const std::shared_ptr<SDElement1> sdElement1
+            = std::make_shared<SDElement1>(globalProblem_.sdElementPointer1(*mdElement1));
+        const std::shared_ptr<SDElement2> sdElement2
+            = std::make_shared<SDElement2>(globalProblem_.sdElementPointer2(*mdElement2));
 
         // a container for the parameters on each side of the coupling interface (see below)
         CParams cParams;
@@ -271,19 +275,19 @@ public:
         // update fvElementGeometry and the element volume variables
         updateElemVolVars(lfsu1, lfsu2,
                           unknowns1, unknowns2,
-                          sdElement1, sdElement2,
+                          *sdElement1, *sdElement2,
                           cParams);
 
         // first element
         const int faceIdx1 = intersectionGeometry.indexInInside();
         const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement1 =
-            Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement1.type());
+            Dune::ReferenceElements<typename MDGrid::ctype,dim>::general((*mdElement1).type());
         const int numVerticesOfFace = referenceElement1.size(faceIdx1, 1, dim);
 
         // second element
         const int faceIdx2 = intersectionGeometry.indexInOutside();
         const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =
-            Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement2.type());
+            Dune::ReferenceElements<typename MDGrid::ctype,dim>::general((*mdElement2).type());
 
         for (int vertexInFace = 0; vertexInFace < numVerticesOfFace; ++vertexInFace)
         {
@@ -294,22 +298,22 @@ public:
             const int boundaryFaceIdx2 = cParams.fvGeometry2.boundaryFaceIndex(faceIdx2, vertexInFace);
 
             // obtain the boundary types
-            const VertexPointer1 vPtr1 = sdElement1.template subEntity<dim>(vertInElem1);
-            const VertexPointer2 vPtr2 = sdElement2.template subEntity<dim>(vertInElem2);
+            const VertexPointer1 vPtr1 = (*sdElement1).template subEntity<dim>(vertInElem1);
+            const VertexPointer2 vPtr2 = (*sdElement2).template subEntity<dim>(vertInElem2);
 
             globalProblem_.sdProblem1().boundaryTypes(cParams.boundaryTypes1, vPtr1);
             globalProblem_.sdProblem2().boundaryTypes(cParams.boundaryTypes2, vPtr2);
 
             BoundaryVariables1 boundaryVars1;
             boundaryVars1.update(globalProblem_.sdProblem1(),
-                                 sdElement1,
+                                 *sdElement1,
                                  cParams.fvGeometry1,
                                  boundaryFaceIdx1,
                                  cParams.elemVolVarsCur1,
                                  /*onBoundary=*/true);
             BoundaryVariables2 boundaryVars2;
             boundaryVars2.update(globalProblem_.sdProblem2(),
-                                 sdElement2,
+                                 *sdElement2,
                                  cParams.fvGeometry2,
                                  boundaryFaceIdx2,
                                  cParams.elemVolVarsCur2,
@@ -317,7 +321,7 @@ public:
 
             asImp_()->evalCoupling(lfsu1, lfsu2,
                                    vertInElem1, vertInElem2,
-                                   sdElement1, sdElement2,
+                                   *sdElement1, *sdElement2,
                                    boundaryVars1, boundaryVars2,
                                    cParams,
                                    couplingRes1, couplingRes2);
