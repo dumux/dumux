@@ -2,10 +2,16 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
 ===================================================
 
 * IMPORTANT NOTES:
+    - DuMuX 2.10 is expected to run based on either Dune 2.4.1 or Dune 3.0. We
+      will try to keep the compatibility with Dune 3.0 as long as it is
+      technically feasible and our resources allow it. If you want to use Dumux
+      multidomain models, you have to stick with the Dune 2.4 core and specific
+      versions of other modules, see `test/multidomain/README` for details.
+    - DuMux 2.10 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
 * IMPROVEMENTS and ENHANCEMENTS:
     - Integrated geostatistical tool gstat for generating random fields
-    - multidomain should now work with all compilers (optimzed ) without segfault
+    - multidomain should now work with all compilers (optimzed) without segfaults
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 
