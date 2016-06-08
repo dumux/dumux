@@ -24,6 +24,8 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
@@ -91,19 +93,24 @@ public:
                   Scalar upperSat = 1.0,
                   std::string plotName = "")
     {
-        std::vector<Scalar> sw(numIntervals_+1);
-        std::vector<Scalar> pc(numIntervals_+1);
+        std::vector<Scalar> sw;
+        std::vector<Scalar> pc;
         Scalar satInterval = upperSat - lowerSat;
         Scalar pcMin = 0.0;
         Scalar pcMax = -1e100;
-        checkEffectiveSaturation(params, lowerSat, upperSat, plotName);
 
+        Scalar swTemp, pcTemp = 0.0;
         for (int i = 0; i <= numIntervals_; i++)
         {
-            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            pc[i] = MaterialLaw::pcgw(params, sw[i]);
-            pcMin = std::min(pcMin, pc[i]);
-            pcMax = std::max(pcMax, pc[i]);
+            swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            pcTemp = MaterialLaw::pcgw(params, swTemp);
+            if (checkValues(swTemp, pcTemp))
+            {
+                sw.push_back(swTemp);
+                pc.push_back(pcTemp);
+                pcMin = std::min(pcMin, pcTemp);
+                pcMax = std::max(pcMax, pcTemp);
+            }
         }
 
         gnuplotpc_.setXRange(lowerSat, upperSat);
@@ -127,19 +134,24 @@ public:
                   Scalar upperSat = 1.0,
                   std::string plotName = "")
     {
-        std::vector<Scalar> sw(numIntervals_+1);
-        std::vector<Scalar> pc(numIntervals_+1);
+        std::vector<Scalar> sw;
+        std::vector<Scalar> pc;
         Scalar satInterval = upperSat - lowerSat;
         Scalar pcMin = 0.0;
         Scalar pcMax = -1e100;
-        checkEffectiveSaturation(params, lowerSat, upperSat, plotName);
 
+        Scalar swTemp, pcTemp = 0.0;
         for (int i = 0; i <= numIntervals_; i++)
         {
-            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            pc[i] = MaterialLaw::pcnw(params, sw[i]);
-            pcMin = std::min(pcMin, pc[i]);
-            pcMax = std::max(pcMax, pc[i]);
+            swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            pcTemp = MaterialLaw::pcnw(params, swTemp);
+            if (checkValues(swTemp, pcTemp))
+            {
+                sw.push_back(swTemp);
+                pc.push_back(pcTemp);
+                pcMin = std::min(pcMin, pcTemp);
+                pcMax = std::max(pcMax, pcTemp);
+            }
         }
 
         gnuplotpc_.setXRange(lowerSat, upperSat);
@@ -163,19 +175,24 @@ public:
                   Scalar upperSat = 1.0,
                   std::string plotName = "")
     {
-        std::vector<Scalar> st(numIntervals_+1);
-        std::vector<Scalar> pc(numIntervals_+1);
+        std::vector<Scalar> st;
+        std::vector<Scalar> pc;
         Scalar satInterval = upperSat - lowerSat;
         Scalar pcMin = 0.0;
         Scalar pcMax = -1e100;
-        checkEffectiveSaturation(params, lowerSat, upperSat, plotName);
 
+        Scalar stTemp, pcTemp = 0.0;
         for (int i = 0; i <= numIntervals_; i++)
         {
-            st[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            pc[i] = MaterialLaw::pcgn(params, st[i]);
-            pcMin = std::min(pcMin, pc[i]);
-            pcMax = std::max(pcMax, pc[i]);
+            stTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            pcTemp = MaterialLaw::pcgn(params, stTemp);
+            if (checkValues(stTemp, pcTemp))
+            {
+                st.push_back(stTemp);
+                pc.push_back(pcTemp);
+                pcMin = std::min(pcMin, pcTemp);
+                pcMax = std::max(pcMax, pcTemp);
+            }
         }
 
         gnuplotpc_.setXRange(lowerSat, upperSat);
@@ -207,16 +224,25 @@ public:
         Scalar satInterval = upperSat - lowerSat;
         Scalar krMin = 1e100;
         Scalar krMax = -1e100;
-        checkEffectiveSaturation(params, lowerSat, upperSat, plotName + "_kr");
 
+        Scalar swTemp, krwTemp, krnTemp, krgTemp = 0.0;
         for (int i = 0; i <= numIntervals_; i++)
         {
-            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            krw[i] = MaterialLaw::krw(params, sw[i], 0.0);
-            krn[i] = MaterialLaw::krn(params, sw[i], 1-sw[i]);
-            krg[i] = MaterialLaw::krg(params, sw[i], 0.0);
-            krMin = std::min(krMin, std::min({krw[i], krn[i], krg[i]}));
-            krMax = std::max(krMax, std::max({krw[i], krn[i], krg[i]}));
+            swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            krwTemp = MaterialLaw::krw(params, swTemp);
+            krnTemp = MaterialLaw::krn(params, swTemp);
+            krgTemp = MaterialLaw::krg(params, swTemp);
+            if (checkValues(swTemp, krwTemp)
+                && checkValues(swTemp, krnTemp)
+                && checkValues(swTemp, krgTemp))
+            {
+                sw.push_back(swTemp);
+                krw.push_back(krwTemp);
+                krn.push_back(krnTemp);
+                krn.push_back(krgTemp);
+                krMin = std::min({krMin, krwTemp, krnTemp, krgTemp});
+                krMax = std::max({krMax, krwTemp, krnTemp, krgTemp});
+            }
         }
 
         gnuplotkr_.setXRange(lowerSat, upperSat);
@@ -247,14 +273,19 @@ public:
         Scalar satInterval = upperSat - lowerSat;
         Scalar alphaMin = -2;
         Scalar alphaMax = 2;
-        checkEffectiveSaturation(params, lowerSat, upperSat, plotName);
 
+        Scalar snTemp, alphaTemp = 0.0;
         for (int i = 0; i <= numIntervals_; i++)
         {
-            sn[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            alpha[i] = MaterialLaw::pcAlpha(params, sn[i]);
-            alphaMin = std::min(alphaMin, alpha[i]);
-            alphaMax = std::max(alphaMax, alpha[i]);
+            snTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            alphaTemp = MaterialLaw::pcAlpha(params, snTemp);
+            if (checkValues(snTemp, alphaTemp))
+            {
+                sn.push_back(snTemp);
+                alpha.push_back(alphaTemp);
+                alphaMin = std::min(alphaMin, alphaTemp);
+                alphaMax = std::max(alphaMax, alphaTemp);
+            }
         }
 
         gnuplotpcAlpha_.setXRange(lowerSat, upperSat);
@@ -265,6 +296,7 @@ public:
         gnuplotpcAlpha_.plot("alpha");
     }
 
+private:
     /*!
      * \brief Check the validity range for wetting saturation, to avoid an
      *        assert of the used material laws
@@ -274,6 +306,7 @@ public:
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
      */
+    DUNE_DEPRECATED_MSG("checkEffectiveSaturation is deprecated.")
     void checkEffectiveSaturation(const MaterialLawParams &params,
                                   Scalar lowerSat,
                                   Scalar upperSat,
@@ -285,7 +318,18 @@ public:
             Dune::dwarn << "warning: fluid-matrix law " << plotName << " can only be plotted for sw < 1.0 - snr" << std::endl;
     }
 
-private:
+    /*!
+     * \brief Check the values for occurrences of nan and inf
+     *
+     * \param value1 A data point value
+     * \param value2 An other data point value
+     */
+    bool checkValues(Scalar value1, Scalar value2)
+    {
+        return !std::isnan(value1) && !std::isinf(value1)
+               && !std::isnan(value2) && !std::isinf(value2);
+    }
+
     int numIntervals_;
     GnuplotInterface<Scalar> gnuplotpc_;
     GnuplotInterface<Scalar> gnuplotpcAlpha_;
