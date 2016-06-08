@@ -229,9 +229,9 @@ public:
         for (int i = 0; i <= numIntervals_; i++)
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            krwTemp = MaterialLaw::krw(params, swTemp);
-            krnTemp = MaterialLaw::krn(params, swTemp);
-            krgTemp = MaterialLaw::krg(params, swTemp);
+            krwTemp = MaterialLaw::krw(params, swTemp, 0.0);
+            krnTemp = MaterialLaw::krn(params, swTemp, 1.0 - swTemp);
+            krgTemp = MaterialLaw::krg(params, swTemp, 0.0);
             if (checkValues(swTemp, krwTemp)
                 && checkValues(swTemp, krnTemp)
                 && checkValues(swTemp, krgTemp))
@@ -239,7 +239,7 @@ public:
                 sw.push_back(swTemp);
                 krw.push_back(krwTemp);
                 krn.push_back(krnTemp);
-                krn.push_back(krgTemp);
+                krg.push_back(krgTemp);
                 krMin = std::min({krMin, krwTemp, krnTemp, krgTemp});
                 krMax = std::max({krMax, krwTemp, krnTemp, krgTemp});
             }
