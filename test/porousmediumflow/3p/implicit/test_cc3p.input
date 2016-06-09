@@ -15,3 +15,6 @@ porosity = 0.40
 vanGenuchtenAlpha = 0.0005
 vanGenuchtenN = 4.0
 
+[Output]
+PlotFluidMatrixInteractions = false
+

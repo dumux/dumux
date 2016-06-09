@@ -143,6 +143,8 @@ public:
         FluidSystem::init(282.15, 284.15, 3, 8e4, 3e5, 200);
 
         name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+
+        this->spatialParams().plotMaterialLaw();
     }
 
     /*!
