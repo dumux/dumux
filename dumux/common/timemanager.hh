@@ -36,7 +36,6 @@ namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 }
 
 /*!
