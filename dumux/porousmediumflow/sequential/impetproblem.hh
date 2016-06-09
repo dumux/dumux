@@ -132,6 +132,7 @@ public:
 
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
         dtVariationRestrictionFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, DtVariationRestrictionFactor);
+        maxTimeStepSize_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
     }
 
     /*!
@@ -385,14 +386,11 @@ public:
             dt = std::min(dt, timeManager().timeStepSize());
         }
 
-        // check maximum allowed time step size
-        dt = std::min(dt, asImp_().maxTimeStepSize());
-
         //make sure the right time-step is used by all processes in the parallel case
         if (this->gridView().comm().size() > 1)
             dt = this->gridView().comm().min(dt);
 
-        //assign next tiestep size
+        // check maximum allowed time step size
         timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
@@ -444,7 +442,7 @@ public:
      * By default this the time step size is unrestricted.
      */
     Scalar maxTimeStepSize() const
-    { return std::numeric_limits<Scalar>::infinity(); }
+    { return maxTimeStepSize_; }
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -850,6 +848,7 @@ private:
     GlobalPosition bBoxMax_;
 
     TimeManager *timeManager_;
+    Scalar maxTimeStepSize_;
 
     Variables variables_;
 

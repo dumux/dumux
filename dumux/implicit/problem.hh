@@ -126,6 +126,7 @@ public:
 
         // set a default name for the problem
         simName_ = "sim";
+        maxTimeStepSize_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
 
         // if we are calculating on an adaptive grid get the grid adapt model
         if (adaptiveGrid)
@@ -724,6 +725,16 @@ public:
     bool shouldWriteOutput() const
     { return true; }
 
+     /*!
+     * \brief Returns the user specified maximum time step size
+     *
+     * Overload in problem for custom needs.
+     */
+    Scalar maxTimeStepSize() const
+    {
+        return maxTimeStepSize_;
+    }
+
     /*!
      * \brief Called by the time manager after the time integration to
      *        do some post processing on the solution.
@@ -1151,6 +1162,7 @@ private:
     VertexMapper vertexMapper_;
 
     TimeManager *timeManager_;
+    Scalar maxTimeStepSize_;
 
     Model model_;
 

@@ -36,7 +36,6 @@ namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 }
 
 /*!
@@ -262,7 +261,7 @@ public:
 
         return
             std::min(std::min(episodeMaxTimeStepSize(),
-                    GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize)),
+                    problem_->maxTimeStepSize()),
                      std::max<Scalar>(0.0, endTime() - time()));
     }
 

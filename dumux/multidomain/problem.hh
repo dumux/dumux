@@ -98,6 +98,7 @@ public:
         mdVertexMapper_ = std::make_shared<VertexMapper> (mdGrid_->leafGridView());
         sdProblem1_ = std::make_shared<SubDomainProblem1> (timeManager, mdGrid_->subDomain(sdID1()).leafGridView());
         sdProblem2_ = std::make_shared<SubDomainProblem2> (timeManager, mdGrid_->subDomain(sdID2()).leafGridView());
+        maxTimeStepSize_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
     }
 
     //! \copydoc Dumux::ImplicitProblem::init()
@@ -202,6 +203,12 @@ public:
     {
         asImp_().sdProblem1().postTimeStep();
         asImp_().sdProblem2().postTimeStep();
+    }
+
+    //! \copydoc Dumux::ImplicitProblem::maxTimeStepSize()
+    Scalar maxTimeStepSize() const
+    {
+        return maxTimeStepSize_;
     }
 
     //! \copydoc Dumux::ImplicitProblem::nextTimeStepSize()
@@ -426,6 +433,7 @@ private:
     static std::string simname_;
 
     TimeManager &timeManager_;
+    Scalar maxTimeStepSize_;
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
