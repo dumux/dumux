@@ -86,7 +86,7 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pc(params, swTemp);
-            if (checkValues(swTemp, pcTemp))
+            if (checkValues_(swTemp, pcTemp))
             {
                 sw.push_back(swTemp);
                 pc.push_back(pcTemp);
@@ -127,7 +127,7 @@ public:
         {
             pcTemp = lowerpc + pcInterval * Scalar(i) / Scalar(numIntervals_);
             swTemp = MaterialLaw::sw(params, pcTemp);
-            if (checkValues(pcTemp, swTemp))
+            if (checkValues_(pcTemp, swTemp))
             {
                 pc.push_back(pcTemp);
                 sw.push_back(swTemp);
@@ -168,7 +168,7 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             dpcdswTemp = MaterialLaw::dpc_dsw(params, swTemp);
-            if (checkValues(swTemp, dpcdsw))
+            if (checkValues_(swTemp, dpcdsw))
             {
                 sw.push_back(swTemp);
                 dpcdsw.push_back(dpcdswTemp);
@@ -209,7 +209,7 @@ public:
         {
             pcTemp = lowerpc + pcInterval * Scalar(i) / Scalar(numIntervals_);
             dswdpcTemp = MaterialLaw::dsw_dpc(params, pcTemp);
-            if (checkValues(pcTemp, dswdpcTemp))
+            if (checkValues_(pcTemp, dswdpcTemp))
             {
                 pc.push_back(pcTemp);
                 dswdpc.push_back(dswdpcTemp);
@@ -252,7 +252,7 @@ public:
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             krwTemp = MaterialLaw::krw(params, swTemp);
             krnTemp = MaterialLaw::krn(params, swTemp);
-            if (checkValues(swTemp, krwTemp) && checkValues(swTemp, krnTemp))
+            if (checkValues_(swTemp, krwTemp) && checkValues_(swTemp, krnTemp))
             {
                 sw.push_back(swTemp);
                 krw.push_back(krwTemp);
@@ -297,7 +297,7 @@ public:
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             dkrwdswTemp = MaterialLaw::dkrw_dsw(params, swTemp);
             dkrndswTemp = MaterialLaw::dkrn_dsw(params, swTemp);
-            if (checkValues(swTemp, dkrwdswTemp) && checkValues(swTemp, dkrndswTemp))
+            if (checkValues_(swTemp, dkrwdswTemp) && checkValues_(swTemp, dkrndswTemp))
             {
                 sw.push_back(swTemp);
                 dkrw_dsw.push_back(dkrwdswTemp);
@@ -316,7 +316,6 @@ public:
         gnuplotkrdsw_.plot("dkrndsw");
     }
 
-private:
     /*!
      * \brief Check the validity range for wetting saturation, to avoid an
      *        assert of the used material laws
@@ -338,13 +337,14 @@ private:
             Dune::dwarn << "warning: fluid-matrix law " << plotName << " can only be plotted for sw < 1.0 - snr" << std::endl;
     }
 
+private:
     /*!
      * \brief Check the values for occurrences of nan and inf
      *
      * \param value1 A data point value
      * \param value2 An other data point value
      */
-    bool checkValues(Scalar value1, Scalar value2)
+    bool checkValues_(Scalar value1, Scalar value2)
     {
         return !std::isnan(value1) && !std::isinf(value1)
                && !std::isnan(value2) && !std::isinf(value2);

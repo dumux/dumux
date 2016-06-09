@@ -104,7 +104,7 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pcgw(params, swTemp);
-            if (checkValues(swTemp, pcTemp))
+            if (checkValues_(swTemp, pcTemp))
             {
                 sw.push_back(swTemp);
                 pc.push_back(pcTemp);
@@ -145,7 +145,7 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pcnw(params, swTemp);
-            if (checkValues(swTemp, pcTemp))
+            if (checkValues_(swTemp, pcTemp))
             {
                 sw.push_back(swTemp);
                 pc.push_back(pcTemp);
@@ -186,7 +186,7 @@ public:
         {
             stTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pcgn(params, stTemp);
-            if (checkValues(stTemp, pcTemp))
+            if (checkValues_(stTemp, pcTemp))
             {
                 st.push_back(stTemp);
                 pc.push_back(pcTemp);
@@ -232,9 +232,9 @@ public:
             krwTemp = MaterialLaw::krw(params, swTemp, 0.0);
             krnTemp = MaterialLaw::krn(params, swTemp, 1.0 - swTemp);
             krgTemp = MaterialLaw::krg(params, swTemp, 0.0);
-            if (checkValues(swTemp, krwTemp)
-                && checkValues(swTemp, krnTemp)
-                && checkValues(swTemp, krgTemp))
+            if (checkValues_(swTemp, krwTemp)
+                && checkValues_(swTemp, krnTemp)
+                && checkValues_(swTemp, krgTemp))
             {
                 sw.push_back(swTemp);
                 krw.push_back(krwTemp);
@@ -279,7 +279,7 @@ public:
         {
             snTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             alphaTemp = MaterialLaw::pcAlpha(params, snTemp);
-            if (checkValues(snTemp, alphaTemp))
+            if (checkValues_(snTemp, alphaTemp))
             {
                 sn.push_back(snTemp);
                 alpha.push_back(alphaTemp);
@@ -296,7 +296,6 @@ public:
         gnuplotpcAlpha_.plot("alpha");
     }
 
-private:
     /*!
      * \brief Check the validity range for wetting saturation, to avoid an
      *        assert of the used material laws
@@ -318,13 +317,14 @@ private:
             Dune::dwarn << "warning: fluid-matrix law " << plotName << " can only be plotted for sw < 1.0 - snr" << std::endl;
     }
 
+private:
     /*!
      * \brief Check the values for occurrences of nan and inf
      *
      * \param value1 A data point value
      * \param value2 An other data point value
      */
-    bool checkValues(Scalar value1, Scalar value2)
+    bool checkValues_(Scalar value1, Scalar value2)
     {
         return !std::isnan(value1) && !std::isinf(value1)
                && !std::isnan(value2) && !std::isinf(value2);
