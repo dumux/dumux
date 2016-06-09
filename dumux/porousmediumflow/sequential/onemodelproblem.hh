@@ -355,6 +355,16 @@ public:
     void advanceTimeLevel()
     {}
 
+     /*!
+     * \brief Returns the user specified maximum time step size
+     *
+     * Overload in problem for custom needs.
+     */
+    Scalar maxTimeStepSize() const
+    {
+        return GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
+    }
+
     /*!
      * \brief Returns the current time step size [seconds].
      */

@@ -724,6 +724,16 @@ public:
     bool shouldWriteOutput() const
     { return true; }
 
+     /*!
+     * \brief Returns the user specified maximum time step size
+     *
+     * Overload in problem for custom needs.
+     */
+    Scalar maxTimeStepSize() const
+    {
+        return GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
+    }
+
     /*!
      * \brief Called by the time manager after the time integration to
      *        do some post processing on the solution.
