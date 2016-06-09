@@ -30,6 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/io/plotmateriallaw3p.hh>
 namespace Dumux
 {
 
@@ -117,10 +118,25 @@ public:
         // parameters for adsorption
         materialParams_.setKdNAPL(0.);
         materialParams_.setRhoBulk(1500.);
+
+        plotFluidMatrixInteractions_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output,
+                                                                    PlotFluidMatrixInteractions);
     }
 
     ~InfiltrationThreePSpatialParams()
     {}
+
+     /*!
+     * \brief This is called from the problem and creates a gnuplot output
+     *        of e.g the pc-Sw curve
+     */
+    void plotMaterialLaw()
+    {
+        PlotMaterialLaw<TypeTag> plotMaterialLaw(plotFluidMatrixInteractions_);
+
+        plotMaterialLaw.plotpc(materialParams_);
+        plotMaterialLaw.plotkr(materialParams_);
+    }
 
     /*!
      * \brief Intrinsic permability
@@ -188,6 +204,8 @@ private:
     Scalar porosity_;
 
     MaterialLawParams materialParams_;
+
+    bool plotFluidMatrixInteractions_;
 };
 
 }
