@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for the flux variables
  */
-#ifndef DUMUX_IMPLICIT_FLUXVARIABLES_HH
-#define DUMUX_IMPLICIT_FLUXVARIABLES_HH
+#ifndef DUMUX_POROUSMEDIUMFLOW_IMPLICIT_FLUXVARIABLES_HH
+#define DUMUX_POROUSMEDIUMFLOW_IMPLICIT_FLUXVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -40,7 +40,7 @@ NEW_PROP_TAG(NumComponents);
  *        Actual flux variables inherit from this class
  */
 template<class TypeTag, class Implementation>
-class FluxVariablesBase
+class PorousMediumFluxVariablesBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -53,7 +53,7 @@ class FluxVariablesBase
     enum{ enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableFluxVariablesCache) };
 
 public:
-    FluxVariablesBase() : problemPtr_(nullptr), scvFacePtr_(nullptr)
+    PorousMediumFluxVariablesBase() : problemPtr_(nullptr), scvFacePtr_(nullptr)
     {}
 
     void init(const Problem& problem,
@@ -116,14 +116,14 @@ private:
  *        specializations are provided for combinations of physical processes
  */
 template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
-class FluxVariables {};
+class PorousMediumFluxVariables {};
 
 
 // specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
 template<class TypeTag>
-class FluxVariables<TypeTag, true, false, false> : public FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, false, false>>
+class PorousMediumFluxVariables<TypeTag, true, false, false> : public PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, false, false>>;
+    using ParentType = PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -170,9 +170,9 @@ public:
 
 // specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
-class FluxVariables<TypeTag, true, true, false> : public FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, true, false>>
+class PorousMediumFluxVariables<TypeTag, true, true, false> : public PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, FluxVariables<TypeTag, true, true, false>>;
+    using ParentType = PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -241,7 +241,7 @@ private:
 
 // specialization for pure molecularDiffusion_
 template<class TypeTag>
-class FluxVariables<TypeTag, false, true, false>
+class PorousMediumFluxVariables<TypeTag, false, true, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -281,7 +281,7 @@ private:
 
 // specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
 template<class TypeTag>
-class FluxVariables<TypeTag, true, false, true>
+class PorousMediumFluxVariables<TypeTag, true, false, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -326,7 +326,7 @@ private:
 
 // specialization for non-isothermal advection molecularDiffusion_ equations
 template<class TypeTag>
-class FluxVariables<TypeTag, true, true, true>
+class PorousMediumFluxVariables<TypeTag, true, true, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -392,7 +392,7 @@ private:
 
 // specialization for non-isothermal molecularDiffusion_
 template<class TypeTag>
-class FluxVariables<TypeTag, false, true, true>
+class PorousMediumFluxVariables<TypeTag, false, true, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -445,7 +445,7 @@ private:
 
 // specialization for pure heat conduction (e.g. the heat equation)
 template<class TypeTag>
-class FluxVariables<TypeTag, false, false, true>
+class PorousMediumFluxVariables<TypeTag, false, false, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

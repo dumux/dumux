@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for the flux variables
  */
-#ifndef DUMUX_IMPLICIT_FLUXVARIABLESCACHE_HH
-#define DUMUX_IMPLICIT_FLUXVARIABLESCACHE_HH
+#ifndef DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
+#define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -41,7 +41,7 @@ NEW_PROP_TAG(NumComponents);
  */
 // specialization for the Box Method
 template<class TypeTag>
-class BoxFluxVariablesCache
+class BoxPorousMediumFluxVariablesCache
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -80,7 +80,7 @@ private:
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
-class CCTpfaFluxVariablesCache
+class CCTpfaPorousMediumFluxVariablesCache
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

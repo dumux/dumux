@@ -35,14 +35,15 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
 
+#include <dumux/porousmediumflow/implicit/fluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
+
 #include "properties.hh"
 #include "model.hh"
 #include "assembler.hh"
 #include "localjacobian.hh"
 #include "volumevariables.hh"
 #include "volumevariablesvector.hh"
-#include "fluxvariables.hh"
-#include "fluxvariablescache.hh"
 #include "fluxvariablescachevector.hh"
 #include "fvelementgeometry.hh"
 
@@ -105,7 +106,8 @@ SET_TYPE_PROP(ImplicitBase, PreviousVolumeVariablesVector, Dumux::VolumeVariable
 //! The global flux variables cache vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesCacheVector, Dumux::FluxVariablesCacheVector<TypeTag>);
 
-// //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+//! by default, we set the flux variables to ones for porous media
 SET_PROP(ImplicitBase, FluxVariables)
 {
 private:
@@ -113,7 +115,7 @@ private:
     static constexpr bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
     static constexpr bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
 public:
-    typedef Dumux::FluxVariables<TypeTag, advection, diffusion, energy> type;
+    typedef Dumux::PorousMediumFluxVariables<TypeTag, advection, diffusion, energy> type;
 };
 
 //! The type of a solution for the whole grid at a fixed time
