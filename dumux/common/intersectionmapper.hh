@@ -52,17 +52,17 @@ public:
     : gridView_(gridview), elementMapper_(gridView_), size_(gridView_.size(1)),
       intersectionMapGlobal_(gridView_.size(0)), intersectionMapLocal_(gridView_.size(0))
     {
-        const auto element = *gridView_.template begin<0>();
-
-        int fIdx = 0;
-        for (const auto& intersection : intersections(gridView_, element))
-        {
-            int idxInInside = intersection.indexInInside();
-
-            standardLocalIdxMap_[idxInInside] = fIdx;
-
-            fIdx++;
-        }
+//        const auto element = *gridView_.template begin<0>();
+//
+//        int fIdx = 0;
+//        for (const auto& intersection : intersections(gridView_, element))
+//        {
+//            int idxInInside = intersection.indexInInside();
+//
+//            standardLocalIdxMap_[idxInInside] = fIdx;
+//
+//            fIdx++;
+//        }
     }
 
     const ElementMapper& elementMapper() const
@@ -231,12 +231,12 @@ public:
                     {
 
                         int faceIdxNeighbor = 0;
-                        if (size(globalIdxNeighbor) == 2 * dim)
-                        {
-                            faceIdxNeighbor = standardLocalIdxMap_[intersection.indexInOutside()];
-                        }
-                        else
-                        {
+//                        if (size(globalIdxNeighbor) == 2 * dim)
+//                        {
+//                            faceIdxNeighbor = standardLocalIdxMap_[intersection.indexInOutside()];
+//                        }
+//                        else
+//                        {
                             for (const auto& intersectionNeighbor : intersections(gridView_, neighbor))
                             {
                                 if (intersectionNeighbor.neighbor())
@@ -248,7 +248,7 @@ public:
                                 }
                                 faceIdxNeighbor++;
                             }
-                        }
+//                        }
 
                         intersectionMapGlobal_[eIdxGlobal][fIdx] = globalIntersectionIdx;
                         intersectionMapGlobal_[globalIdxNeighbor][faceIdxNeighbor] = globalIntersectionIdx;
@@ -272,7 +272,7 @@ protected:
     unsigned int size_;
     std::vector<std::unordered_map<int, int> > intersectionMapGlobal_;
     std::vector<std::unordered_map<int, int> > intersectionMapLocal_;
-    std::unordered_map<int, int> standardLocalIdxMap_;
+    //std::unordered_map<int, int> standardLocalIdxMap_;
 };
 
 }
