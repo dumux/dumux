@@ -15,24 +15,26 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_VERTIDXTOELEMNEIGHBORMAPPER_HH
-#define DUMUX_VERTIDXTOELEMNEIGHBORMAPPER_HH
+#ifndef DUMUX_VertIdxToScvNeighborMapper_HH
+#define DUMUX_VertIdxToScvNeighborMapper_HH
 
 #include<vector>
 #include<unordered_map>
 #include<dune/grid/common/mcmgmapper.hh>
 #include<dune/grid/common/grid.hh>
+#include <fstream>
+using namespace std;
 
 /**
  * @file
- * @brief  defines a vertex mapper for mapping neighbor elements to a global vertex index. Every element in which a vertex appears is a neighbor element.
+ * @brief  defines a vertex mapper for mapping neighbor elements and neighbor subcontrol volumes to a global vertex index.
  */
 
 namespace Dumux
 {
 
 template<class GridView>
-class VertIdxToElemNeighborMapper
+class VertIdxToScvNeighborMapper
 {
 
     typedef typename GridView::Grid Grid;
@@ -44,23 +46,18 @@ class VertIdxToElemNeighborMapper
     typedef typename Grid::template Codim<0>::Entity::EntitySeed EntitySeed;
 
 
+
 public:
 
     //public types
     // vector of pairs of element seed and scvIdx
     typedef std::vector<std::pair<EntitySeed, int> > NeighborElementScv;
-    // vector of element seeds
-    //typedef std::vector<EntitySeed> NeighborElementSeeds;
-    // iterator for the neighbor element pointer
-    //typedef typename NeighborElementSeeds::const_iterator NeighborElementSeedsIterator;
     // iterator for the neighbor element pointer and scvIdx pair
     typedef typename NeighborElementScv::const_iterator NeighborElementScvIterator;
-    // map containing vertex index as key and a vector neighbor element pointers as values
-    //typedef std::unordered_map<int, NeighborElementSeeds > VertexElementMapper;
-    // map for vertex index to pair of element pointers and scv index
+    // map containing vertex index as a key and a vector of pairs of element pointers and neighbor scv index
     typedef std::unordered_map<int, NeighborElementScv > VertexElementScvMapper;
 
-    VertIdxToElemNeighborMapper(const GridView& gridView)
+    VertIdxToScvNeighborMapper(const GridView& gridView)
     : gridView_(gridView), vertexMapper_(gridView)
 
     {
@@ -105,18 +102,21 @@ public:
     }
 
     //return scvIdx corresponding to i-th element
-    unsigned int vertexElementsScvIdx (int vIdxGlobal, int elem)
+    unsigned int vertexElementsScvIdx (int vIdxGlobal, int elem) const
     {
         return vertexElements(vIdxGlobal)[elem].second;
     }
 
     //return pointer to i-th element
-    ElementPointer vertexElementPointer (int vIdxGlobal, int elem)
+    ElementPointer vertexElementPointer (int vIdxGlobal, int elem) const
     {
         return gridView_.grid().entity(vertexElements(vIdxGlobal)[elem].first);
     }
 
-
+     /*!
+     * \brief Updates the VertexToScvNeighborMapper
+     * \note  Loops over Elements to match subcontrol volumes to the respective adjacent vertices
+     */
     void update()
     {
         vertexMapper_.update();
@@ -134,12 +134,7 @@ public:
             for (int vIdx = 0; vIdx < noCorner; ++vIdx)
             {
                 //Get the global vertex index
-//#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int vIdxGlobal = vertexMapper_.subIndex(*eIt, vIdx, dim);
-
-//#else
-//                int vIdxGlobal = vertexMapper_.map(*eIt, vIdx, dim);
-//#endif
                 typename VertexElementScvMapper::iterator vHandle = vertexElementScvMapper_.find(vIdxGlobal);
                 //   if vertex (number) was not found yet, insert new vertex entry with first element neighbor
                 if (vHandle == vertexElementScvMapper_.end())
@@ -155,10 +150,34 @@ public:
         }
     }
 
+    /*!
+    * \brief Produces a text file which lists for each vertex the neighbored elements as well as the indices of
+    * the vertex adjacent subcontrol volumes
+    */
+    void output()
+    {
+        vertexMapper_.update();
+        int numDofs = gridView_.size(dim);
+        ofstream out("vertexScvMapper.txt", ios::app);
+        for (int globalIdx = 0; globalIdx < numDofs; ++globalIdx)
+            {
+                out << "global vertex index: " << globalIdx << endl;
+                int numNeighbors = size(globalIdx);
+                out << "number of neighbor elements: " << numNeighbors << endl;
+                for (int neighborIdx = 0; neighborIdx < numNeighbors; neighborIdx++) {
+                    int neighborScvIdx = vertexElementsScvIdx(globalIdx, neighborIdx);
+                    ElementPointer elem = vertexElementPointer(globalIdx, neighborIdx);
+                    out << neighborIdx << "-> element center: (" << elem.geometry().center()[0] << ", " << elem.geometry().center()[1] << ") ";
+                    out << "scvIdx: " << neighborScvIdx << endl;
+                }
+                out << "---------------" << endl;
+            }
+        out.close();
+    }
+
 protected:
 
     const GridView& gridView_;
-    //VertexElementMapper vertexElementMapper_;
     VertexElementScvMapper vertexElementScvMapper_;
     //vertex map
     VertexMapper vertexMapper_;

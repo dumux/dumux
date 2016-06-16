@@ -1,0 +1,21 @@
+[TimeManager]
+DtInitial = 5 # [s]
+TEnd = 2000 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 0.1 0.5
+Cells = 1 500
+
+[SpatialParams]
+UpperBorder = 0.355
+LowerBorder = 0.155
+
+[Problem]
+Name = satcondition # name passed to the output routines
+SnInitial = 0
+
+[Implicit]
+EnablePartialReassemble = 1 # enable partial reassembly of the jacobian matrix?
+EnableJacobianRecycling = 1 # Enable reuse of jacobian matrices?
+UseSaturationCondition = 1

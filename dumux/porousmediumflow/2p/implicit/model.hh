@@ -108,13 +108,16 @@ public:
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
+        unsigned numElements = this->gridView_().size(0);
 
         // create the required scalar fields
         ScalarField *pw = writer.allocateManagedBuffer(numDofs);
         ScalarField *pn = writer.allocateManagedBuffer(numDofs);
         ScalarField *pc = writer.allocateManagedBuffer(numDofs);
-        ScalarField *sw = writer.allocateManagedBuffer(numDofs);
-        ScalarField *sn = writer.allocateManagedBuffer(numDofs);
+        //ScalarField *sw = writer.allocateManagedBuffer(numDofs);
+        //ScalarField *sn = writer.allocateManagedBuffer(numDofs);
+        ScalarField *sw = writer.allocateManagedBuffer(numElements);
+        ScalarField *sn = writer.allocateManagedBuffer(numElements);
         ScalarField *rhoW = writer.allocateManagedBuffer(numDofs);
         ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
         ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
@@ -135,7 +138,6 @@ public:
             }
         }
 
-        unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
         for (const auto& element : elements(this->gridView_()))
@@ -154,6 +156,8 @@ public:
                                    element,
                                    fvGeometry,
                                    false /* oldSol? */);
+                (*sw)[eIdx] = 0;
+                (*sn)[eIdx] = 0;
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
@@ -162,8 +166,8 @@ public:
                     (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                     (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
                     (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
-                    (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                    (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                    (*sw)[eIdx] += elemVolVars[scvIdx].saturation(wPhaseIdx)*fvGeometry.subContVol[scvIdx].volume;
+                    (*sn)[eIdx] += elemVolVars[scvIdx].saturation(nPhaseIdx)*fvGeometry.subContVol[scvIdx].volume;
                     (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
                     (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
                     (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
@@ -171,15 +175,18 @@ public:
                     (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
                     (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
-
+                (*sw)[eIdx] /= fvGeometry.elementVolume;
+                (*sn)[eIdx] /= fvGeometry.elementVolume;
                 // velocity output
                 velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
                 velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
             }
         }
 
-        writer.attachDofData(*sn, "Sn", isBox);
-        writer.attachDofData(*sw, "Sw", isBox);
+        //writer.attachDofData(*sn, "Sn", isBox);
+        //writer.attachDofData(*sw, "Sw", isBox);
+        writer.attachCellData(*sn, "Sn", isBox);
+        writer.attachCellData(*sw, "Sw", isBox);
         writer.attachDofData(*pn, "pn", isBox);
         writer.attachDofData(*pw, "pw", isBox);
         writer.attachDofData(*pc, "pc", isBox);

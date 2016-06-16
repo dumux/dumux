@@ -1,4 +1,5 @@
 add_subdirectory(pointsources)
+add_subdirectory(test1d_saturationcondition)
 add_input_file_links()
 
 # isothermal tests
