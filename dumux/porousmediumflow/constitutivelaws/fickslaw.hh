@@ -21,8 +21,8 @@
  * \brief This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */
-#ifndef DUMUX_IMPLICIT_FICKS_LAW_HH
-#define DUMUX_IMPLICIT_FICKS_LAW_HH
+#ifndef DUMUX_POROUSMEDIUMFLOW_FICKS_LAW_HH
+#define DUMUX_POROUSMEDIUMFLOW_FICKS_LAW_HH
 
 #include <dune/common/float_cmp.hh>
 

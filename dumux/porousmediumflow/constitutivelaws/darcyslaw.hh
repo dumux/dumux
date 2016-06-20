@@ -22,8 +22,8 @@
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
  *        of the Darcy approximation. Specializations are provided for the different discretization methods.
  */
-#ifndef DUMUX_IMPLICIT_DARCYS_LAW_HH
-#define DUMUX_IMPLICIT_DARCYS_LAW_HH
+#ifndef DUMUX_POROUSMEDIUMFLOW_DARCYS_LAW_HH
+#define DUMUX_POROUSMEDIUMFLOW_DARCYS_LAW_HH
 
 #include <memory>
 
