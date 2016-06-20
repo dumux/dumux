@@ -24,6 +24,7 @@
 #define DUMUX_POROUSMEDIUMFLOW_IMPLICIT_FLUXVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/implicit/fluxvariablesbase.hh>
 
 namespace Dumux
 {
@@ -36,82 +37,6 @@ NEW_PROP_TAG(NumComponents);
 
 /*!
  * \ingroup ImplicitModel
- * \brief Base class for the flux variables
- *        Actual flux variables inherit from this class
- */
-template<class TypeTag, class Implementation>
-class PorousMediumFluxVariablesBase
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-
-    enum{ enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableFluxVariablesCache) };
-
-public:
-    PorousMediumFluxVariablesBase() : problemPtr_(nullptr), scvFacePtr_(nullptr)
-    {}
-
-    void init(const Problem& problem,
-              const Element& element,
-              const SubControlVolumeFace &scvFace)
-    {
-        problemPtr_ = &problem;
-        scvFacePtr_ = &scvFace;
-
-        // update the stencil if needed
-        if (!enableFluxVarsCache)
-            stencil_ = asImp_().computeStencil(problem, scvFace);
-    }
-
-    // when caching is enabled, get the stencil from the cache class
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil() const
-    { return problem().model().fluxVarsCache(scvFace()).stencil(); }
-
-    // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Stencil>::type& stencil()
-    { return stencil_; }
-
-    const Problem& problem() const
-    { return *problemPtr_; }
-
-    const SubControlVolumeFace& scvFace() const
-    {
-        return *scvFacePtr_;
-    }
-
-    Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
-    { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
-
-private:
-
-    Implementation &asImp_()
-    {
-        assert(static_cast<Implementation*>(this) != 0);
-        return *static_cast<Implementation*>(this);
-    }
-
-    const Implementation &asImp_() const
-    {
-        assert(static_cast<const Implementation*>(this) != 0);
-        return *static_cast<const Implementation*>(this);
-    }
-
-    const Problem *problemPtr_;              //! Pointer to the problem
-    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
-    Stencil stencil_;                        //! The flux stencil
-};
-
-
-
-/*!
- * \ingroup ImplicitModel
  * \brief the flux variables class
  *        specializations are provided for combinations of physical processes
  */
@@ -121,9 +46,9 @@ class PorousMediumFluxVariables {};
 
 // specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
 template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, true, false, false> : public PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>
+class PorousMediumFluxVariables<TypeTag, true, false, false> : public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>
 {
-    using ParentType = PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>;
+    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -170,9 +95,9 @@ public:
 
 // specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, true, true, false> : public PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>
+class PorousMediumFluxVariables<TypeTag, true, true, false> : public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>
 {
-    using ParentType = PorousMediumFluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>;
+    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
