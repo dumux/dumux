@@ -29,8 +29,6 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/implicit/box/fvelementgeometryvector.hh>
-#include <dumux/porousmediumflow/implicit/box/darcyslaw.hh>
-#include <dumux/porousmediumflow/implicit/box/fickslaw.hh>
 
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
@@ -49,6 +47,8 @@ template<class TypeTag> class BoxFVElementGeometryVector;
 template<class TypeTag> class BoxStencilsVector;
 
 namespace Properties {
+//! Set the corresponding discretization method property
+SET_INT_PROP(BoxModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::Box);
 
 //! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(BoxModel, FVElementGeometryVector, BoxFVElementGeometryVector<TypeTag>);
@@ -79,16 +79,6 @@ private:
 public:
     using type = SubControlVolumeFace<ScvfGeometry, IndexType>;
 };
-
-//! The darcy flux variables
-SET_TYPE_PROP(BoxModel, AdvectionType, BoxDarcysLaw<TypeTag>);
-
-// TODO: Actually implement the diffusion and energy flux variables
-//! The diffusion flux variables
-SET_TYPE_PROP(BoxModel, MolecularDiffusionType, BoxFicksLaw<TypeTag>);
-
-//! The energy flux variables
-//SET_TYPE_PROP(BoxModel, HeatConductionType, BoxFouriersLaw);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);

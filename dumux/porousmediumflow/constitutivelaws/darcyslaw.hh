@@ -20,10 +20,10 @@
  * \file
  * \brief This file contains the data which is required to calculate
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation.
+ *        of the Darcy approximation. Specializations are provided for the different discretization methods.
  */
-#ifndef DUMUX_CC_TPFA_DARCYS_LAW_HH
-#define DUMUX_CC_TPFA_DARCYS_LAW_HH
+#ifndef DUMUX_IMPLICIT_DARCYS_LAW_HH
+#define DUMUX_IMPLICIT_DARCYS_LAW_HH
 
 #include <memory>
 
@@ -46,12 +46,18 @@ NEW_PROP_TAG(ProblemEnableGravity);
 }
 
 /*!
- * \ingroup CCTpfaDarcysLaw
+ * \ingroup DarcysLaw
  * \brief Evaluates the normal component of the Darcy velocity
- * on a (sub)control volume face.
+ * on a (sub)control volume face. Specializations are provided
+ * for the different discretization methods.
  */
+template <class TypeTag, typename DiscretizationMethod = void>
+class DarcysLaw
+{};
+
+// Specialization for the CC-Tpfa method
 template <class TypeTag>
-class CCTpfaDarcysLaw
+class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
@@ -203,6 +209,181 @@ private:
 
         return omega;
     }
+};
+
+// Specialization for the Box Method
+template <class TypeTag>
+class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::Box>::type >
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    enum { dim = GridView::dimension} ;
+    enum { dimWorld = GridView::dimensionworld} ;
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+public:
+
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace& scvFace)
+    {
+        DUNE_THROW(Dune::NotImplemented, "Darcy's law for the Box method is not yet implemented!");
+
+        problemPtr_ = &problem;
+        scvFacePtr_ = &scvFace;
+        elementPtr_ = &element;
+        enableGravity_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+
+        updateTransmissibilities_();
+    }
+
+    void update(const Problem& problem,
+                const Element& element,
+                const SubControlVolumeFace &scvFace,
+                VolumeVariables* boundaryVolVars)
+    {
+        update(problem, element, scvFace);
+    }
+
+    void updateTransmissibilities(const Problem &problem, const SubControlVolumeFace &scvFace)
+    {
+        updateTransmissibilities_();
+    }
+
+    void beginFluxComputation(bool boundaryVolVarsUpdated = false)
+    {
+        // Get the inside volume variables
+        const auto insideScvIdx = scvFace_().insideScvIdx();
+        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto* insideVolVars = &problem_().model().curVolVars(insideScv);
+
+        // and the outside volume variables
+        const VolumeVariables* outsideVolVars;
+        outsideVolVars = &problem_().model().curVolVars(scvFace_().outsideScvIdx());
+
+        // loop over all phases to compute the volume flux
+        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+        {
+            auto hInside = insideVolVars->pressure(phaseIdx);
+            auto hOutside = outsideVolVars->pressure(phaseIdx);
+
+            if (enableGravity_)
+            {
+                // do averaging for the density
+                const auto rhoInside = insideVolVars->density(phaseIdx);
+                const auto rhoOutide = outsideVolVars->density(phaseIdx);
+                const auto rho = (rhoInside + rhoOutide)*0.5;
+
+
+                // ask for the gravitational acceleration in the inside neighbor
+                const auto xInside = insideScv.center();
+                const auto gInside = problem_().gravityAtPos(xInside);
+
+                hInside -= rho*(gInside*xInside);
+
+                const auto outsideScvIdx = scvFace_().outsideScvIdx();
+                const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
+                const auto xOutside = outsideScv.center();
+                const auto gOutside = problem_().gravityAtPos(xOutside);
+                hOutside -= rho*(gOutside*xOutside);
+            }
+
+            kGradPNormal_[phaseIdx] = tij_*(hInside - hOutside);
+
+            if (std::signbit(kGradPNormal_[phaseIdx]))
+            {
+                upWindIndices_[phaseIdx] = std::make_pair(scvFace_().outsideScvIdx(), scvFace_().insideScvIdx());
+            }
+            else
+            {
+                upWindIndices_[phaseIdx] = std::make_pair(scvFace_().insideScvIdx(), scvFace_().outsideScvIdx());
+            }
+        }
+    }
+
+    /*!
+     * \brief A function to calculate the mass flux over a sub control volume face
+     *
+     * \param phaseIdx The index of the phase of which the flux is to be calculated
+     * \param upwindFunction A function which does the upwinding
+     */
+    template<typename FunctionType>
+    Scalar flux(IndexType phaseIdx, FunctionType upwindFunction) const
+    {
+        return kGradPNormal_[phaseIdx]*upwindFunction(upVolVars(phaseIdx), dnVolVars(phaseIdx));
+    }
+
+    // for compatibility with cell-centered models
+    const std::set<IndexType>& stencil() const
+    {
+        return std::set<IndexType>();
+    }
+
+    const VolumeVariables& upVolVars(IndexType phaseIdx) const
+    {
+        return problem_().model().curVolVars(upWindIndices_[phaseIdx].first);
+    }
+
+    const VolumeVariables& dnVolVars(IndexType phaseIdx) const
+    {
+        return problem_().model().curVolVars(upWindIndices_[phaseIdx].second);
+    }
+
+private:
+
+    void updateTransmissibilities_()
+    {
+        const auto insideScvIdx = scvFace_().insideScvIdx();
+        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto insideK = problem_().spatialParams().intrinsicPermeability(insideScv);
+        Scalar ti = calculateOmega_(insideK, insideScv);
+
+        const auto outsideScvIdx = scvFace_().outsideScvIdx();
+        const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
+        const auto outsideK = problem_().spatialParams().intrinsicPermeability(outsideScv);
+        Scalar tj = -1.0*calculateOmega_(outsideK, outsideScv);
+
+        tij_ = scvFace_().area()*(ti * tj)/(ti + tj);
+    }
+
+    const Problem &problem_() const
+    {
+        return *problemPtr_;
+    }
+
+    const SubControlVolumeFace& scvFace_() const
+    {
+        return *scvFacePtr_;
+    }
+
+    const Element& element_() const
+    {
+        return *elementPtr_;
+    }
+
+    const Problem *problemPtr_; //! Pointer to the problem
+    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
+    const Element *elementPtr_; //! Point to the element
+    bool enableGravity_; //! If we have a problem considering gravitational effects
+
+    //! The upstream (first) and downstream (second) volume variable indices
+    std::array<std::pair<IndexType, IndexType>, numPhases> upWindIndices_;
+    Scalar tij_ = 0;
+
+    //! Precomputed values
+    std::array<Scalar, numPhases> kGradPNormal_; //! K(grad(p) - rho*g)*n
+    GlobalPosition normalK_; //! (K^T)n
 };
 
 } // end namespace

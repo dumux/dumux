@@ -83,6 +83,9 @@ NEW_PROP_TAG(EnableFluxVariablesCache); //! specifies if data on flux vars shoul
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
 NEW_PROP_TAG(ConstantBoundaryConditions); //!< boundary data is stored in case the BC are constant
 
+NEW_PROP_TAG(DiscretizationMethods); //!< Contains all the available discretization methods
+NEW_PROP_TAG(DiscretizationMethod); //!< Property for the used discretization method
+
 // Specify the forms of fluxes that should be considered in the model
 // also, specify their corresponding flux variables
 NEW_PROP_TAG(EnableAdvection); //! specifies if advection is considered in the model

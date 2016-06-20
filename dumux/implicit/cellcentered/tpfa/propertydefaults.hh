@@ -32,8 +32,6 @@
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/porousmediumflow/implicit/cellcentered/tpfa/darcyslaw.hh>
-#include <dumux/porousmediumflow/implicit/cellcentered/tpfa/fickslaw.hh>
 
 namespace Dumux {
 
@@ -41,6 +39,9 @@ namespace Dumux {
 template<class TypeTag> class CCElementBoundaryTypes;
 
 namespace Properties {
+//! Set the corresponding discretization method property
+SET_INT_PROP(CCTpfaModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa);
+
 //! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVElementGeometryCache)>);
 
@@ -67,16 +68,6 @@ public:
 
 //! The flux variables cache class, by default the one for porous media
 SET_TYPE_PROP(CCTpfaModel, FluxVariablesCache, Dumux::CCTpfaPorousMediumFluxVariablesCache<TypeTag>);
-
-//! The darcy flux variables
-SET_TYPE_PROP(CCTpfaModel, AdvectionType, Dumux::CCTpfaDarcysLaw<TypeTag>);
-
-// TODO: Actually implement the diffusion and energy flux variables
-//! The diffusion flux variables
-SET_TYPE_PROP(CCTpfaModel, MolecularDiffusionType, Dumux::CCTpfaFicksLaw<TypeTag>);
-
-//! The energy flux variables
-//SET_TYPE_PROP(CCTpfaModel, HeatConductionType, CCTpfaFouriersLaw);
 
 } // namespace Properties
 

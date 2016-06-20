@@ -38,6 +38,9 @@
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 
+#include <dumux/porousmediumflow/constitutivelaws/darcyslaw.hh>
+#include <dumux/porousmediumflow/constitutivelaws/fickslaw.hh>
+
 #include "properties.hh"
 #include "model.hh"
 #include "assembler.hh"
@@ -57,6 +60,20 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Some defaults for very fundamental properties
 //////////////////////////////////////////////////////////////////
+
+//! All the available discretization methods
+SET_PROP(ImplicitBase, DiscretizationMethods)
+{
+    // Box-Method
+    static const int Box = 0;
+    // CC-Tpfa Method
+    static const int CCTpfa = 1;
+    // TODO: implement the other methods
+    // CC-NLTPFA?
+    // static const int CCNlTpfa = 2;
+    // CC-MPFA
+    // static const int CCMpfa = 3;
+};
 
 //! Set the default type for the time manager
 SET_TYPE_PROP(ImplicitBase, TimeManager, TimeManager<TypeTag>);
@@ -117,6 +134,15 @@ private:
 public:
     typedef Dumux::PorousMediumFluxVariables<TypeTag, advection, diffusion, energy> type;
 };
+
+//! We use darcys law as the default for the advective flux calculation
+SET_TYPE_PROP(ImplicitBase, AdvectionType, Dumux::DarcysLaw<TypeTag>);
+
+//! We use darcys law as the default for the deffusive flux calculation
+SET_TYPE_PROP(ImplicitBase, MolecularDiffusionType, Dumux::FicksLaw<TypeTag>);
+
+//! TODO: IMPLEMENT The energy flux çalculation law
+//SET_TYPE_PROP(ImplicitBase, HeatConductionType, FouriersLaw<TypeTag>);
 
 //! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,
