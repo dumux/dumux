@@ -37,10 +37,10 @@ class ElasticMatrixProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ElasticMatrixProblem, INHERITS_FROM(BoxElastic,ElSpatialParams));
+NEW_TYPE_TAG(ElasticMatrixProblem, INHERITS_FROM(CCTpfaModel, Elastic, ElSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(ElasticMatrixProblem, Problem, ElasticMatrixProblem<TypeTag>);
@@ -86,6 +86,8 @@ class ElasticMatrixProblem: public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -144,18 +146,21 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The global position
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes values;
+
         values.setAllNeumann();
-        values.setDirichlet(uyIdx);
 
         if(globalPos[0] < eps_)
         {
+            values.setDirichlet(uyIdx);
             values.setDirichlet(uxIdx);
             if(globalPos[2] < eps_)
                 values.setDirichlet(uzIdx);
         }
+
+        return values;
     }
 
     /*!
@@ -167,9 +172,9 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        values = 0.0;
+        return PrimaryVariables(0.0);
     }
 
     /*!
@@ -179,20 +184,18 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
-            const Element &element,
-            const FVElementGeometry &fvGeometry,
-            const Intersection &intersection,
-            int scvIdx,
-            int boundaryFaceIdx) const
+    PrimaryVariables neumann(const Element &element, const SubControlVolumeFace &scvFace) const
     {
-        values = 0.0;
-        // get Lame parameters
+        PrimaryVariables values(0.0);
 
-        Scalar lambda = this->spatialParams().lameParams(element, fvGeometry, scvIdx)[0];
-        Scalar mu = this->spatialParams().lameParams(element, fvGeometry, scvIdx)[1];
-        Scalar E = this->spatialParams().E(element, fvGeometry, scvIdx);
-        Scalar nu = this->spatialParams().nu(element, fvGeometry, scvIdx);
+        // inside scv
+        const auto& scv = this->model().fvGeometries().subControlVolume(scvFace.insideScvIdx());
+
+        // get Lame parameters
+        Scalar lambda = this->spatialParams().lameParams(element, scv)[0];
+        Scalar mu = this->spatialParams().lameParams(element, scv)[1];
+        Scalar E = this->spatialParams().E(element, scv);
+        Scalar nu = this->spatialParams().nu(element, scv);
 
         // calculate values of sigma in normal direction
         Dune::FieldMatrix<Scalar, dim, dim> sigma(0);
@@ -203,11 +206,12 @@ public:
         sigma *= -1.0/E;
 
         // determine normal vector of current face
-        Dune::FieldVector<Scalar, dim-1> localDimM1(0);
-        Dune::FieldVector<Scalar,dim> normal = intersection.unitOuterNormal(localDimM1);
+        Dune::FieldVector<Scalar,dim> normal = scvFace.unitOuterNormal();
 
         // use stress in normal direction as boundary condition
         sigma.mv(normal, values);
+
+        return values;
     }
     // \}
 
@@ -225,10 +229,9 @@ public:
      * unit. Positive values mean that momentum is created, negative ones
      * mean that it vanishes.
      */
-    void sourceAtPos(PrimaryVariables &priVars,
-                     const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        priVars = Scalar(0.0);
+        return PrimaryVariables(0.0);
     }
 
     /*!
@@ -240,9 +243,9 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        return initial_(globalPos);
     }
 
     // \}
@@ -250,10 +253,9 @@ public:
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVariables &priVars,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        priVars = 0.0; // initial condition for the solid displacement
+        return PrimaryVariables(0.0); // initial condition for the solid displacement
     }
 
     static constexpr Scalar eps_ = 3e-6;

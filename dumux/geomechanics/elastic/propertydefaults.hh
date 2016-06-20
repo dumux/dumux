@@ -31,14 +31,14 @@
 #define DUMUX_ELASTIC_PROPERTIES_DEFAULTS_HH
 
 #include "properties.hh"
-
 #include "model.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "fluxvariables.hh"
 #include "indices.hh"
 
-
+#include <dumux/geomechanics/implicit/stressvariables.hh>
+#include <dumux/geomechanics/implicit/stressvariablescache.hh>
+#include <dumux/geomechanics/constitutivelaws/hookeslaw.hh>
 
 namespace Dumux
 {
@@ -50,7 +50,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //!< set the number of equations to the space dimension of the problem
-SET_PROP(BoxElastic, NumEq)
+SET_PROP(Elastic, NumEq)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -60,24 +60,46 @@ public:
 };
 
 //! Use the linear elasticity local residual function for the elasticity model
-SET_TYPE_PROP(BoxElastic,
-              LocalResidual,
-              ElasticLocalResidual<TypeTag>);
+SET_TYPE_PROP(Elastic, LocalResidual, ElasticLocalResidual<TypeTag>);
 
 //! define the model
-SET_TYPE_PROP(BoxElastic, Model, ElasticModel<TypeTag>);
+SET_TYPE_PROP(Elastic, Model, ElasticModel<TypeTag>);
 
 //! define the VolumeVariables
-SET_TYPE_PROP(BoxElastic, VolumeVariables, ElasticVolumeVariablesBase<TypeTag>);
+SET_TYPE_PROP(Elastic, VolumeVariables, ElasticVolumeVariablesBase<TypeTag>);
+
+//! Disable advection
+SET_BOOL_PROP(Elastic, EnableAdvection, false);
+
+//! Disable molecular diffusion
+SET_BOOL_PROP(Elastic, EnableMolecularDiffusion, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(Elastic, EnableEnergyBalance, false);
 
 //! define the FluxVariables
-SET_TYPE_PROP(BoxElastic, FluxVariables, ElasticFluxVariablesBase<TypeTag>);
+SET_PROP(Elastic, FluxVariables)
+{
+private:
+    static constexpr bool advection = GET_PROP_VALUE(TypeTag, EnableAdvection);
+    static constexpr bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
+    static constexpr bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+public:
+    typedef Dumux::StressVariables<TypeTag, advection, diffusion, energy> type;
+};
 
 //! Set the indices used by the linear elasticity model
-SET_TYPE_PROP(BoxElastic, Indices, ElasticIndices<>);
+SET_TYPE_PROP(Elastic, Indices, ElasticIndices<>);
 
 //! enable gravity by default
-SET_BOOL_PROP(BoxElastic, ProblemEnableGravity, true);
+SET_BOOL_PROP(Elastic, ProblemEnableGravity, true);
+
+//! The flux variables cache class
+SET_TYPE_PROP(Elastic, FluxVariablesCache, Dumux::StressVariablesCache<TypeTag>);
+
+//! The darcy flux variables
+SET_TYPE_PROP(Elastic, MechanicalLawType, Dumux::HookesLaw<TypeTag>);
+
 }
 }
 

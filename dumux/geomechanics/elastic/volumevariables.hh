@@ -43,6 +43,7 @@ class ElasticVolumeVariablesBase : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -61,16 +62,12 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const bool isOldSol)
+                const SubControlVolume& scv)
     {
         ParentType::update(priVars,
                            problem,
                            element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+                           scv);
 
         primaryVars_ = priVars;
 
@@ -78,11 +75,10 @@ public:
             displacement_[i] = priVars[Indices::u(i)];
 
         // retrieve Lame parameters and rock density from spatialParams
-        const Dune::FieldVector<Scalar, 2> &lameParams =
-                problem.spatialParams().lameParams(element, fvGeometry, scvIdx);
+        const Dune::FieldVector<Scalar, 2> &lameParams = problem.spatialParams().lameParams(element, scv);
         lambda_ = lameParams[0];
         mu_ = lameParams[1];
-        rockDensity_ = problem.spatialParams().rockDensity(element, scvIdx);
+        rockDensity_ = problem.spatialParams().rockDensity(element, scv);
     }
 
     /*!

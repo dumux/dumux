@@ -59,17 +59,15 @@ namespace Dumux
 template<class TypeTag >
 class ElasticModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum {
-        dim = GridView::dimension
-    };
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dim = GridView::dimension };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
@@ -88,12 +86,12 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // create the required scalar fields
-        unsigned numScv = this->gridView_().size(dim);
+        unsigned numDofs = this->numDofs();
         unsigned numElements = this->gridView_().size(0);
 
-        ScalarField &ux = *writer.allocateManagedBuffer(numScv);
-        ScalarField &uy = *writer.allocateManagedBuffer(numScv);
-        ScalarField &uz = *writer.allocateManagedBuffer(numScv);
+        ScalarField &ux = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &uy = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &uz = *writer.allocateManagedBuffer(numDofs);
         VectorField &sigmax = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
         VectorField &sigmay = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
         VectorField &sigmaz = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
@@ -114,81 +112,67 @@ public:
 
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvGeometry;
-        VolumeVariables volVars;
-        ElementBoundaryTypes elemBcTypes;
-
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
             int eIdx = this->problem_().model().elementMapper().index(element);
             rank[eIdx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), element);
-            elemBcTypes.update(this->problem_(), element, fvGeometry);
+            // make sure FVElementGeometry and the volume variables are bound to the element
+            this->fvGeometries_().bind(element);
+            this->curVolVars_().bind(element);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            const auto& fvGeometry = this->fvGeometries(element);
+            for (const auto& scv : fvGeometry.scvs())
             {
-                int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
+                int dofIdxGlobal = scv.dofIndex();
+                const auto& volVars = this->curVolVars(scv);
 
-                volVars.update(sol[vIdxGlobal],
-                               this->problem_(),
-                               element,
-                               fvGeometry,
-                               scvIdx,
-                               false);
-
-                ux[vIdxGlobal] = volVars.displacement(0);
+                ux[dofIdxGlobal] = volVars.displacement(0);
                 if (dim >= 2)
-                    uy[vIdxGlobal] = volVars.displacement(1);
+                    uy[dofIdxGlobal] = volVars.displacement(1);
                 if (dim >= 3)
-                    uz[vIdxGlobal] = volVars.displacement(2);
-              };
+                    uz[dofIdxGlobal] = volVars.displacement(2);
+            }
 
             // In the box method, the stress is evaluated on the FE-Grid. However, to get an
             // average apparent stress for the cell, all contributing stresses have to be interpolated.
-            DimMatrix stress;
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                            element,
-                            fvGeometry,
-                            false /* isOldSol? */);
+            DimMatrix stress(0.0);
+            unsigned int counter = 0;
 
             // loop over the faces
-            for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++)
+            for (const auto& scvFace : fvGeometry.scvfs())
             {
-                stress = 0.0;
+                if (scvFace.boundary())
+                {
+                    BoundaryTypes bcTypes = this->problem_().boundaryTypes(element, scvFace);
+                    if (bcTypes.hasNeumann())
+                        continue;
+                }
+
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
                 FluxVariables fluxVars;
-                fluxVars.update(this->problem_(),
-                                element,
-                                fvGeometry,
-                                fIdx,
-                                elemVolVars);
+                fluxVars.initAndComputeFluxes(this->problem_(), element, scvFace);
 
-                stress = fluxVars.sigma();
-                stress /= fvGeometry.numScvf;
-
-                // Add up stresses for each cell.
+                // Add up stresses for each scv face.
                 // Beware the sign convention applied here: compressive stresses are negative
-                sigmax[eIdx] += stress[0];
-                if (dim >= 2)
-                {
-                    sigmay[eIdx] += stress[1];
-                }
-                if (dim == 3)
-                {
-                    sigmaz[eIdx] += stress[2];
-                }
+                stress += fluxVars.stressTensor();
+                counter++;
             }
+
+            // divide by the number of added stress tensors and add to container
+            stress /= counter;
+            sigmax[eIdx] += stress[0];
+            if (dim >= 2)
+                sigmay[eIdx] += stress[1];
+            if (dim == 3)
+                sigmaz[eIdx] += stress[2];
         }
 
-
-        writer.attachVertexData(ux, "ux");
+        writer.attachDofData(ux, "ux", isBox);
         if (dim >= 2)
-            writer.attachVertexData(uy, "uy");
+            writer.attachDofData(uy, "uy", isBox);
         if (dim == 3)
-            writer.attachVertexData(uz, "uz");
+            writer.attachDofData(uz, "uz", isBox);
         writer.attachCellData(sigmax, "stress X", dim);
         if (dim >= 2)
         writer.attachCellData(sigmay, "stress Y", dim);

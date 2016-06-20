@@ -43,6 +43,7 @@ template<class TypeTag>
 class ElasticLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
 protected:
+    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -52,8 +53,9 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -66,10 +68,10 @@ public:
      *        \param scvIdx The index of the considered face of the sub-control volume
      *        \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
+    PrimaryVariables computeStorage(const SubControlVolume& scv, const VolumeVariables& volVars) const
     {
         // quasistationary conditions assumed
-        storage = Scalar(0);
+        return PrimaryVariables(0.0);
     }
 
     /*!
@@ -81,28 +83,11 @@ public:
      *        \param onBoundary A boolean variable to specify whether the flux variables
      *               are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
+    PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace) const
     {
-        flux = 0;
         FluxVariables fluxVars;
-        fluxVars.update(this->problem_(),
-                        this->element_(),
-                        this->fvGeometry_(),
-                        fIdx,
-                        this->curVolVars_(),
-                        onBoundary);
-
-        // get normal vector of current face
-        const DimVector &normal(this->fvGeometry_().subContVolFace[fIdx].normal);
-        DimVector tmp(0.0);
-
-        // multiply stress tensor with normal vector of current face
-        fluxVars.sigma().mv(normal, tmp);
-
-        for (int i=0; i < dim; ++i)
-        {
-          flux[Indices::momentum(i)] = tmp[i];
-        }
+        fluxVars.initAndComputeFluxes(this->problem_(), this->element_(), scvFace);
+        return fluxVars.stressVector();
     }
 
     /*!
@@ -111,27 +96,21 @@ public:
      *        \param scvIdx The index of the vertex of the sub control volume
      *
      */
-    void computeSource(PrimaryVariables &source, const int scvIdx)
+    PrimaryVariables computeSource(const SubControlVolume& scv)
     {
-        const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
+        PrimaryVariables source(0.0);
 
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
+        source += ParentType::computeSource(scv);
 
-        DimVector tmp1(0.0);
-        // gravity term of the momentum balance
-        // gravity of solid matrix
-        tmp1 = this->problem_().gravity();
-        tmp1 *= volVars.rockDensity();
+        // gravity term of the solid matrix in the momentum balance
+        DimVector gravityTerm(0.0);
+        gravityTerm = this->problem_().gravity();
+        gravityTerm *= this->problem_().model().curVolVars(scv).rockDensity();
 
         for (int i = 0; i < dim; ++i)
-        {
-          source[Indices::momentum(i)] += tmp1[i];
-        }
+          source[Indices::momentum(i)] += gravityTerm[i];
+
+        return source;
     }
 
 };

@@ -55,20 +55,20 @@ class ElSpatialParams
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename Grid::ctype CoordScalar;
-    enum {
-        dimWorld=GridView::dimensionworld,
-    };
+
+    enum { dimWorld=GridView::dimensionworld };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
-
 public:
 
-    ElSpatialParams(const GridView &gridView)
+    ElSpatialParams(const Problem& problem, const GridView &gridView)
     {
         // rock density
         rockDensity_ = 2650.0;
@@ -90,8 +90,7 @@ public:
      * \param element The finite element
      * \param scvIdx The local index of the sub-control volume where
      */
-    const Scalar rockDensity(const Element &element,
-                                        int scvIdx) const
+    const Scalar rockDensity(const Element &element, const SubControlVolume& scv) const
     {
         return rockDensity_;
     }
@@ -113,9 +112,7 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume where
      */
-    const Dune::FieldVector<Scalar,2> lameParams(const Element &element,
-                                           const FVElementGeometry &fvGeometry,
-                                           int scvIdx) const
+    const Dune::FieldVector<Scalar,2> lameParams(const Element &element, const SubControlVolume& scv) const
     {
         // Lame parameters
         Dune::FieldVector<Scalar, 2> param;
@@ -133,9 +130,7 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume where
      */
-    const Scalar E(const Element &element,
-                   const FVElementGeometry &fvGeometry,
-                   int scvIdx) const
+    const Scalar E(const Element &element, const SubControlVolume& scv) const
     {
         return E_;
     }
@@ -147,9 +142,7 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume where
      */
-    const Scalar nu(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    const Scalar nu(const Element &element, const SubControlVolume& scv) const
     {
         return nu_;
     }

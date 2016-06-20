@@ -28,7 +28,9 @@
 #ifndef DUMUX_ELASTIC_PROPERTIES_HH
 #define DUMUX_ELASTIC_PROPERTIES_HH
 
+#include <dumux/implicit/properties.hh>
 #include <dumux/implicit/box/properties.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 
 namespace Dumux
 {
@@ -40,7 +42,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit model for elastic deformations of the medium
-NEW_TYPE_TAG(BoxElastic, INHERITS_FROM(BoxModel));
+NEW_TYPE_TAG(Elastic, INHERITS_FROM(ImplicitBase));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
