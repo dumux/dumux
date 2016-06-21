@@ -104,7 +104,7 @@ public:
 
         auto c = geometry.center();
 
-        // procees according to number of corners
+        // proceed according to number of corners
         switch (geometry.corners())
         {
         case 3: // triangle
