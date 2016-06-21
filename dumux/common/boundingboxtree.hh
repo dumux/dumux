@@ -16,9 +16,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A bounding box tree for grid point intersections
+ * \brief An axis-aligned bounding box volume hierarchy for dune grids
  *
- * Dumux implementation of the bounding box tree
+ * Dumux implementation of an AABB tree
  * adapted from implementation in FEniCS by Anders Logg
  */
 #ifndef DUMUX_BOUNDINGBOXTREE_HH
@@ -30,13 +30,17 @@
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/geometrycollision.hh>
 
 namespace Dumux {
 
-// optimized dimension-dependent methods
+/*!
+ * \brief A helper class to optimize dimension-dependent methods
+ */
 template <int dimworld>
 class BoundingBoxTreeHelper {};
 
+//! Helper methods for world dimension three
 template <>
 class BoundingBoxTreeHelper<3>
 {
@@ -45,7 +49,7 @@ class BoundingBoxTreeHelper<3>
     typedef Dune::FieldVector<double, 3> GlobalPosition;
 
 public:
-    // Check whether a point is inside a given geometry
+    //! Check whether a point is inside a given three-dimensional geometry
     template <class Geometry>
     static typename std::enable_if<Geometry::mydimension == 3, bool>::type
     pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
@@ -143,6 +147,7 @@ public:
                         << type << " in three-dimensional world.");
     }
 
+    //! Check whether a point is inside a given two-dimensional geometry
     template <class Geometry>
     static typename std::enable_if<Geometry::mydimension == 2, bool>::type
     pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
@@ -180,6 +185,7 @@ public:
 
     }
 
+    //! Check whether a point is inside a given one-dimensional geometry
     template <class Geometry>
     static typename std::enable_if<Geometry::mydimension == 1, bool>::type
     pointInGeometry(const Geometry& geometry, const GlobalPosition& point)
@@ -189,7 +195,7 @@ public:
                                point);
     }
 
-    //! find out if a point is inside a tetrahedron
+    //! Find out whether a point is inside a tetrahedron (p0, p1, p2, p3)
     static bool pointInTetrahedron(const GlobalPosition& p0, const GlobalPosition& p1,
                                    const GlobalPosition& p2, const GlobalPosition& p3,
                                    const GlobalPosition& point)
@@ -210,20 +216,21 @@ public:
             const GlobalPosition v3 = *p[(i + 3)%4] - *p[i];
             const GlobalPosition v = point - *p[i];
             // compute the normal to the facet (cross product)
-            const GlobalPosition n1 = Dumux::crossProduct(v1, v2);
+            GlobalPosition n1 = Dumux::crossProduct(v1, v2);
+            n1 /= n1.two_norm();
             // find out on which side of the plane v and v3 are
             const double t1 = n1.dot(v);
             const double t2 = n1.dot(v3);
             // If the point is not exactly on the plane the
             // points have to be on the same side
-            const double eps = eps_ * v.two_norm();
+            const double eps = eps_ * v1.two_norm();
             if ((t1 > eps || t1 < -eps) && std::signbit(t1) != std::signbit(t2))
                 return false;
         }
         return true;
     }
 
-    //! find out if a point is inside a triangle
+    //! Find out whether a point is inside a triangle (p0, p1, p2)
     static bool pointInTriangle(const GlobalPosition& p0, const GlobalPosition& p1,
                                 const GlobalPosition& p2, const GlobalPosition& point)
     {
@@ -264,7 +271,7 @@ public:
         return true;
     }
 
-    //! find out if a point is inside an interval
+    //! Find out whether a point is inside an interval (p0, p1)
     static bool pointInInterval(const GlobalPosition& p0, const GlobalPosition& p1,
                                 const GlobalPosition& point)
     {
@@ -299,12 +306,14 @@ public:
         return false;
     }
 
-    // Check whether a point is in a bounding box
+    /*!
+     * \brief Check whether a point is in a bounding box
+     * \param point The point
+     * \param b Pointer to bounding box coordinates
+     */
     static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point,
-                                   const double* boundingBoxCoordinates,
-                                   unsigned int node)
+                                   const double* b)
     {
-        const double* b = boundingBoxCoordinates + 6*node;
         const double eps0 = eps_*(b[3] - b[0]);
         const double eps1 = eps_*(b[4] - b[1]);
         const double eps2 = eps_*(b[5] - b[2]);
@@ -313,7 +322,22 @@ public:
                 b[2] - eps2 <= point[2] && point[2] <= b[5] + eps2);
     }
 
-    // Compute the bounding box of a vector of bounding boxes
+    /*!
+     * \brief Check whether bounding box a collides with bounding box b
+     * \param a, b Pointer to bounding box coordinates
+     */
+    static bool boundingBoxInBoundingBox(const double* a,
+                                         const double* b)
+    {
+      const double eps0 = eps_*(b[3] - b[0]);
+      const double eps1 = eps_*(b[4] - b[1]);
+      const double eps2 = eps_*(b[5] - b[2]);
+      return (b[0] - eps0 <= a[3] && a[0] <= b[3] + eps0 &&
+              b[1] - eps1 <= a[4] && a[1] <= b[4] + eps1 &&
+              b[2] - eps2 <= a[5] && a[2] <= b[5] + eps2);
+    }
+
+    //! Compute the bounding box of a vector of bounding boxes
     static void computeBBoxOfBBoxes(double* bBox,
                                     std::size_t& axis,
                                     const std::vector<double>& leafBoxes,
@@ -352,7 +376,7 @@ public:
             axis = 2;
     }
 
-    // Sort the bounding boxes along the longest axis
+    //! Sort the bounding boxes along the longest axis
     static void sortBoundingBoxes(std::size_t axis,
                                   const std::vector<double>& leafBoxes,
                                   const std::vector<unsigned int>::iterator& begin,
@@ -370,8 +394,10 @@ public:
         }
     }
 
-    // Comparison operators for sorting bounding boxes. There are sorted by their
-    // mid points along the longest axis
+    /*!
+     * \brief Comparison function for sorting bounding boxes on the x-axis
+     * \note This could be replaced by lambdas
+     */
     struct lessXBox
     {
         const std::vector<double>& bBoxes;
@@ -384,6 +410,10 @@ public:
         }
     };
 
+    /*!
+     * \brief Comparison function for sorting bounding boxes on the y-axis
+     * \note This could be replaced by lambdas
+     */
     struct lessYBox
     {
         const std::vector<double>& bBoxes;
@@ -396,6 +426,10 @@ public:
         }
     };
 
+    /*!
+     * \brief Comparison function for sorting bounding boxes on the z-axis
+     * \note This could be replaced by lambdas
+     */
     struct lessZBox
     {
         const std::vector<double>& bBoxes;
@@ -409,6 +443,7 @@ public:
     };
 };
 
+//! Helper methods for world dimension two
 template <>
 class BoundingBoxTreeHelper<2>
 {
@@ -517,19 +552,34 @@ public:
         return false;
     }
 
-    // Check whether a point is in a bounding box
+    /*!
+     * \brief Check whether a point is in a bounding box
+     * \param point The point
+     * \param b Pointer to bounding box coordinates
+     */
     static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point,
-                                   const double* boundingBoxCoordinates,
-                                   unsigned int node)
+                                   const double* b)
     {
-        const double* b = boundingBoxCoordinates + 4*node;
         const double eps0 = eps_*(b[2] - b[0]);
         const double eps1 = eps_*(b[3] - b[1]);
         return (b[0] - eps0 <= point[0] && point[0] <= b[2] + eps0 &&
                 b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
     }
 
-    // Compute the bounding box of a vector of bounding boxes
+    /*!
+     * \brief Check whether bounding box a collides with bounding box b
+     * \param a, b Pointer to bounding box coordinates
+     */
+    static bool boundingBoxInBoundingBox(const double* a,
+                                         const double* b)
+    {
+      const double eps0 = eps_*(b[2] - b[0]);
+      const double eps1 = eps_*(b[3] - b[1]);
+      return (b[0] - eps0 <= a[2] && a[0] <= b[2] + eps0 &&
+              b[1] - eps1 <= a[3] && a[1] <= b[3] + eps1);
+    }
+
+    //! Compute the bounding box of a vector of bounding boxes
     static void computeBBoxOfBBoxes(double* bBox,
                                     std::size_t& axis,
                                     const std::vector<double>& leafBoxes,
@@ -563,7 +613,7 @@ public:
             axis = 1;
     }
 
-    // Sort the bounding boxes along the longest axis
+    //! Sort the bounding boxes along the longest axis
     static void sortBoundingBoxes(std::size_t axis,
                                   const std::vector<double>& leafBoxes,
                                   const std::vector<unsigned int>::iterator& begin,
@@ -576,8 +626,10 @@ public:
             std::nth_element(begin, middle, end, lessYBox(leafBoxes));
     }
 
-    // Comparison operators for sorting bounding boxes. There are sorted by their
-    // mid points along the longest axis
+    /*!
+     * \brief Comparison function for sorting bounding boxes on the x-axis
+     * \note This could be replaced by lambdas
+     */
     struct lessXBox
     {
         const std::vector<double>& bBoxes;
@@ -590,6 +642,10 @@ public:
         }
     };
 
+    /*!
+     * \brief Comparison function for sorting bounding boxes on the y-axis
+     * \note This could be replaced by lambdas
+     */
     struct lessYBox
     {
         const std::vector<double>& bBoxes;
@@ -603,6 +659,7 @@ public:
     };
 };
 
+//! Helper methods for world dimension one
 template <>
 class BoundingBoxTreeHelper<1>
 {
@@ -644,17 +701,30 @@ public:
         return false;
     }
 
-    // Check whether a point is in a bounding box
+    /*!
+     * \brief Check whether a point is in a bounding box
+     * \param point The point
+     * \param b Pointer to bounding box coordinates
+     */
     static bool pointInBoundingBox(const GlobalPosition& point,
-                                   const double* boundingBoxCoordinates,
-                                   unsigned int node)
+                                   const double* b)
     {
-        const double* b = boundingBoxCoordinates + 2*node;
         const double eps0 = eps_*(b[1] - b[0]);
         return b[0] - eps0 <= point[0] && point[0] <= b[1] + eps0;
     }
 
-    // Compute the bounding box of a vector of bounding boxes
+    /*!
+     * \brief Check whether bounding box a collides with bounding box b
+     * \param a, b Pointer to bounding box coordinates
+     */
+    static bool boundingBoxInBoundingBox(const double* a,
+                                         const double* b)
+    {
+      const double eps0 = eps_*(b[1] - b[0]);
+      return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
+    }
+
+    //! Compute the bounding box of a vector of bounding boxes
     static void computeBBoxOfBBoxes(double* bBox,
                                     std::size_t& axis,
                                     const std::vector<double>& leafBoxes,
@@ -679,7 +749,7 @@ public:
         axis = 0;
     }
 
-    // Sort the bounding boxes along the longest axis
+    //! Sort the bounding boxes along the longest axis
     static void sortBoundingBoxes(std::size_t axis,
                                   const std::vector<double>& leafBoxes,
                                   const std::vector<unsigned int>::iterator& begin,
@@ -687,8 +757,10 @@ public:
                                   const std::vector<unsigned int>::iterator& end)
     { std::nth_element(begin, middle, end, lessXBox(leafBoxes)); }
 
-    // Comparison operators for sorting bounding boxes. There are sorted by their
-    // mid points along the longest axis
+    /*!
+     * \brief Comparison function for sorting bounding boxes on the x-axis
+     * \note This could be replaced by lambdas
+     */
     struct lessXBox
     {
         const std::vector<double>& bBoxes;
@@ -702,7 +774,62 @@ public:
     };
 };
 
-//! An index to element map
+/*!
+ * \brief An intersection object resulting from the collision of two bounding box tree primitives
+ *
+ * After is has been found that two leaf bounding boxes intersect a primitive test has to be
+ * performed to see if the actual entities inside the bounding box intersect too. The result
+ * if such an intersection is found as an object of this class containing the indices of the
+ * intersecting entities and the corners of the intersection object.
+ */
+template<class GridView1, class GridView2>
+class BoundingBoxTreeIntersection
+{
+    const static int dimworld = GridView1::dimensionworld;
+    using Scalar = typename GridView1::ctype;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+
+public:
+    BoundingBoxTreeIntersection(unsigned int a, unsigned int b, std::vector<GlobalPosition>&& c)
+    : a_(a), b_(b), corners_(c) {}
+
+    //! Get the index of the intersecting entity belonging to this grid
+    inline unsigned int first() const
+    { return a_; }
+
+    //! Get the index of the intersecting entity belonging to the other grid
+    inline unsigned int second() const
+    { return b_; }
+
+    //! Get the corners of the intersection geometry
+    inline std::vector<GlobalPosition> corners() const
+    { return corners_; }
+
+    /*!
+     * \brief Check if the corners of this intersection match with the given corners
+     * \note This is useful to check if the intersection geometry of two intersections coincide.
+     */
+    bool cornersMatch(const std::vector<GlobalPosition>& corners) const
+    {
+        if (corners.size() != corners_.size())
+            return false;
+
+        const auto eps = 1.5e-7*(corners_[1] - corners_[0]).two_norm();
+        for (int i = 0; i < corners_.size(); ++i)
+            if ((corners[0] - corners[1]).two_norm() > eps)
+                return false;
+
+        return true;
+    }
+
+private:
+    unsigned int a_, b_; //!< Indices of the intersection elements
+    std::vector<GlobalPosition> corners_; //!< the corner points of the intersection geometry
+};
+
+/*!
+ * \brief A class mapping from an element index to elements using element seeds
+ */
 template <class GridView>
 class IndexToElementMap
   : public std::vector<typename GridView::Traits::Grid::template Codim<0>::EntitySeed>
@@ -713,6 +840,7 @@ public:
     IndexToElementMap(const GridView& gridView)
       : grid_(gridView.grid()) {}
 
+    //! get an element from an index t
     template<class T>
     Element entity(T&& t)
     { return grid_.entity((*this)[std::forward<T>(t)]); }
@@ -721,28 +849,36 @@ private:
     const Grid& grid_;
 };
 
-//! The bounding box class. Implements an axis-aligned bounding box tree for grids.
+/*!
+ * \brief An axis-aligned bounding box volume tree implementation
+ *
+ * The class constructs a hierarchical structure of bounding box volumes around
+ * grid entities. This class can be used to efficiently compute intersections
+ * between a grid and other geometrical object. It only implements the intersection
+ * of two of such bounding box trees, so that two independent grids can be intersected.
+ */
 template <class GridView>
 class BoundingBoxTree
 {
+    //! be friends with all other kinds bounding box trees so that
+    //! they can call each others private methods
+    template <class OtherGridView> friend class BoundingBoxTree;
+
     static const int dim = GridView::dimension;
     static const int dimworld = GridView::dimensionworld;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename Dune::ReferenceElements<double, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<double, dim> ReferenceElement;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    // Default Constructor
+    //! Default Constructor
     BoundingBoxTree() {}
 
-    // Constructor with gridView
+    //! Constructor with gridView
     BoundingBoxTree(const GridView& leafGridView)
     { build(leafGridView); }
 
-    // Destructor
-    ~BoundingBoxTree() {}
-
-    // Build up bounding box tree for a grid
+    //! Build up bounding box tree for a grid with leafGridView
     void build(const GridView& leafGridView)
     {
         // clear data if any
@@ -782,7 +918,7 @@ public:
                   << timer.stop() << " seconds." << std::endl;
     }
 
-    // Compute all intersections between entities and a point
+    //! Compute all intersections between entities and a point
     std::vector<unsigned int> computeEntityCollisions(const Dune::FieldVector<double, dimworld>& point) const
     {
         // Call the recursive find function to find candidates
@@ -791,30 +927,52 @@ public:
         return entities;
     }
 
-    // Get an element from a global element index
+    //! Compute all intersections between entities and another bounding box tree
+    template<class OtherGridView>
+    std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>>
+    computeEntityCollisions(const Dumux::BoundingBoxTree<OtherGridView>& otherTree) const
+    {
+        // check if the world dimensions match
+        static_assert(dimworld == OtherGridView::dimensionworld, "Can only collide bounding box trees of same world dimension");
+
+        // Create data structure for return type
+        std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>> intersections;
+
+        // Call the recursive find function to find candidates
+        computeCollisions_(otherTree,
+                           this->numBoundingBoxes_() - 1,
+                           otherTree.numBoundingBoxes_() -1,
+                           intersections);
+
+        return intersections;
+    }
+
+    //! Get an element from a global element index
     Element entity(unsigned int eIdx) const
     { return indexToElementMap_->entity(eIdx); }
 
 private:
-
-    // Bounding box data. Leaf nodes are indicated by setting child_0 to
-    // the node itself and child_1 is the index of the entity in the bounding box.
+    /*!
+     * \brief Bounding box data structure
+     * Leaf nodes are indicated by setting child_0 to
+     * the node itself and child_1 is the index of the entity in the bounding box.
+     */
     struct BoundingBox
     {
         unsigned int child_0;
         unsigned int child_1;
     };
 
-    // Vector of bounding boxes
+    //! Vector of bounding boxes
     std::vector<BoundingBox> boundingBoxes_;
 
-    // Vector of bounding box coordinates
+    //! Vector of bounding box coordinates
     std::vector<double> boundingBoxCoordinates_;
 
-    // Shared pointer to the index to element map
+    //! Shared pointer to the index to element map
     std::shared_ptr<IndexToElementMap<GridView> > indexToElementMap_;
 
-    // Clear all data
+    //! Clear all data
     void clear_()
     {
         boundingBoxes_.clear();
@@ -822,7 +980,7 @@ private:
         if(indexToElementMap_) indexToElementMap_->clear();
     }
 
-    // Build bounding box tree for all entities recursively
+    //! Build bounding box tree for all entities recursively
     unsigned int build_(const std::vector<double>& leafBoxes,
                         const std::vector<unsigned int>::iterator& begin,
                         const std::vector<unsigned int>::iterator& end)
@@ -862,7 +1020,7 @@ private:
         return addBoundingBox_(bBox, b);
     }
 
-    // Compute collisions with point recursively
+    //! Compute collisions with point recursively
     void computeCollisions_(const Dune::FieldVector<double, dimworld>& point,
                             unsigned int node,
                             std::vector<unsigned int>& entities) const
@@ -871,7 +1029,7 @@ private:
         const BoundingBox& bBox = getBoundingBox_(node);
 
         // if the point is not in the bounding box we can stop
-        if (!BoundingBoxTreeHelper<dimworld>::pointInBoundingBox(point, boundingBoxCoordinates_.data(), node))
+        if (!BoundingBoxTreeHelper<dimworld>::pointInBoundingBox(point, getBoundingBoxCoordinates_(node)))
             return;
 
         // We know now it's inside. If the box is a leaf add it.
@@ -896,7 +1054,74 @@ private:
         }
     }
 
-    // Add a new bounding box to the tree
+    //! Compute collisions with other bounding box tree recursively
+    template <class OtherGridView>
+    void computeCollisions_(const Dumux::BoundingBoxTree<OtherGridView>& treeB,
+                            unsigned int nodeA,
+                            unsigned int nodeB,
+                            std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>>& intersections) const
+    {
+        // get alias
+        const auto& treeA = *this;
+
+        // Get the bounding box for the current node
+        const auto& bBoxA = treeA.getBoundingBox_(nodeA);
+        const auto& bBoxB = treeB.getBoundingBox_(nodeB);
+
+        // if the two bounding boxes don't collide we can stop searching
+        if (!BoundingBoxTreeHelper<dimworld>::
+             boundingBoxInBoundingBox(treeA.getBoundingBoxCoordinates_(nodeA),
+                                      treeB.getBoundingBoxCoordinates_(nodeB)))
+            return;
+
+        // Check if we have a leaf in treeA or treeB
+        const bool isLeafA = treeA.isLeaf_(bBoxA, nodeA);
+        const bool isLeafB = treeB.isLeaf_(bBoxB, nodeB);
+
+        // If both boxes are leaves and collide add them
+        if (isLeafA && isLeafB)
+        {
+            const unsigned int eIdxA = bBoxA.child_1;
+            const unsigned int eIdxB = bBoxB.child_1;
+
+            auto geometryA = treeA.entity(eIdxA).geometry();
+            auto geometryB = treeB.entity(eIdxB).geometry();
+
+            using CollisionType = Dumux::GeometryCollision<decltype(geometryA), decltype(geometryB)>;
+            std::vector<GlobalPosition> intersection;
+            if (CollisionType::collide(geometryA, geometryB, intersection))
+                intersections.emplace_back(eIdxA, eIdxB, std::move(intersection));
+        }
+
+        // if we reached the leaf in treeA, just continue in treeB
+        else if (isLeafA)
+        {
+            computeCollisions_(treeB, nodeA, bBoxB.child_0, intersections);
+            computeCollisions_(treeB, nodeA, bBoxB.child_1, intersections);
+        }
+
+        // if we reached the leaf in treeB, just continue in treeA
+        else if (isLeafB)
+        {
+            computeCollisions_(treeB, bBoxA.child_0, nodeB, intersections);
+            computeCollisions_(treeB, bBoxA.child_1, nodeB, intersections);
+        }
+
+        // we know now that both trees didn't reach the leaf yet so
+        // we continue with the larger tree first (bigger node number)
+        else if (nodeA > nodeB)
+        {
+            computeCollisions_(treeB, bBoxA.child_0, nodeB, intersections);
+            computeCollisions_(treeB, bBoxA.child_1, nodeB, intersections);
+        }
+        else
+        {
+            computeCollisions_(treeB, nodeA, bBoxB.child_0, intersections);
+            computeCollisions_(treeB, nodeA, bBoxB.child_1, intersections);
+        }
+    }
+
+    //! Add a new bounding box to the tree
     inline unsigned int addBoundingBox_(const BoundingBox& bBox,
                                         const double* b)
     {
@@ -911,20 +1136,24 @@ private:
         return boundingBoxes_.size() - 1;
     }
 
-    // Get an existing bounding box for a given node
+    //! Get an existing bounding box for a given node
     inline const BoundingBox& getBoundingBox_(unsigned int node) const
     { return boundingBoxes_[node]; }
 
-    // Get the number of bounding boxes currently in the tree
+    //! Get an existing bounding box for a given node
+    const double* getBoundingBoxCoordinates_(unsigned int node) const
+    { return boundingBoxCoordinates_.data() + 2*dimworld*node; }
+
+    //! Get the number of bounding boxes currently in the tree
     inline std::size_t numBoundingBoxes_() const
     { return boundingBoxes_.size(); }
 
-    // Check whether a bounding box is a leaf node
-    // Leaf nodes have itself as child_0
+    //! Check whether a bounding box is a leaf node
+    //! Leaf nodes have itself as child_0
     inline bool isLeaf_(const BoundingBox& bBox, unsigned int node) const
     { return bBox.child_0 == node; }
 
-    // Compute the bounding box of a grid entity
+    //! Compute the bounding box of a grid entity
     template <class Entity>
     void computeEntityBoundingBox_(double* b, const Entity& entity) const
     {
