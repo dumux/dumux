@@ -438,7 +438,7 @@ public:
             }
         case 6: // element is prism
             {
-            Dune::GeometryType type; type.makePrism();
+            Dune::GeometryType type; type.makeHexahedron();
 
             std::vector<GlobalPosition>
             corners = {{fvGeometry.subContVol[0].global, edgeCoord[3],
