@@ -486,10 +486,10 @@ public:
                 // add this scvf to the element's scvf list
                 scvfIndexSet.push_back(scvfIdx);
 
-                // find the scvs this scvf is belonging to
+                // find the global scv indices this scvf is belonging to
                 std::vector<IndexType> scvIndices(2);
-                scvIndices[0] = referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim);
-                scvIndices[1] = referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim);
+                scvIndices[0] = scvIndexSet[referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)];
+                scvIndices[1] = scvIndexSet[referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim)];
 
                 // compute the scvf normal unit outer normal
                 auto normal = BoxGeometryHelper<GridView>::normal(elementGeometry, *scvfGeometry);
@@ -522,7 +522,7 @@ public:
                         scvfIndexSet.push_back(scvfIdx);
 
                         // find the scvs this scvf is belonging to
-                        std::vector<IndexType> scvIndices = {static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, scvfLocalIdx++, dim))};
+                        std::vector<IndexType> scvIndices = {static_cast<IndexType>(scvIndexSet[referenceElement.subEntity(intersection.indexInInside(), 1, scvfLocalIdx++, dim)])};
 
                         // get the unit outer normal through the intersection
                         auto normal = intersection.unitOuterNormal(isGeometry.local(scvfGeometry->center()));
