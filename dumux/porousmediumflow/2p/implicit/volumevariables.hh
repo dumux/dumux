@@ -54,6 +54,7 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
 
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef Dumux::VertIdxToScvNeighborMapper<GridView> VertIdxToScvNeighborMapper;
@@ -98,7 +99,7 @@ public:
         bool useSatCond = 0;
         if (ParameterTree::tree().hasKey("Implicit.UseSaturationCondition"))
         {
-            useSatCond = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseSaturationCondition)
+            useSatCond = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseSaturationCondition);
         }
 
         if (useSatCond)
