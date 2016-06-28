@@ -1,13 +1,13 @@
 # isothermal tests
 add_dumux_test(test_box2pncmin test_box2pncmin test_box2pncmin.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/saltflushbox-00045.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pncmin -ParameterFile test_2pncmin.input -Problem.Name saltflushbox")
 
 add_dumux_test(test_cc2pncmin test_cc2pncmin test_cc2pncmin.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/saltflushcc2pncmin-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/saltflushcc-00044.vtu

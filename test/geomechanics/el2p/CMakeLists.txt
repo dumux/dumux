@@ -1,7 +1,7 @@
 add_input_file_links()
 
 add_dumux_test(test_el2p test_el2p test_el2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/el2p-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/el2p-00048.vtu
@@ -9,7 +9,7 @@ add_dumux_test(test_el2p test_el2p test_el2p.cc
 
 if(MPI_FOUND)
   add_dumux_test(test_el2p_parallel test_el2p test_el2p.cc
-                 python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+                 python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                    --script fuzzy
                    --files ${CMAKE_SOURCE_DIR}/test/references/el2p-parallel-reference.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/s0004-p0001-el2p-00048.vtu

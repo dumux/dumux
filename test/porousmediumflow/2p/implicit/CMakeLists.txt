@@ -3,28 +3,28 @@ add_input_file_links()
 
 # isothermal tests
 add_dumux_test(test_box2p test_box2p test_box2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/lensbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/lensbox-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2p")
 
 add_dumux_test(test_cc2p test_cc2p test_cc2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/lenscc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/lenscc-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2p")
 
 add_dumux_test(test_ccadaptive2p test_ccadaptive2p test_ccadaptive2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/lensccadaptive-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/lensccadaptive-00018.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccadaptive2p")
 
 add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generalizeddirichlet.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/generalizeddirichlet-reference.vtp
                          ${CMAKE_CURRENT_BINARY_DIR}/generalizeddirichlet-00035.vtp
@@ -32,7 +32,7 @@ add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generali
 
 if(HAVE_DUNE_CORNERPOINT)
 add_dumux_test(test_cc2pcornerpoint test_cc2pcornerpoint test_cc2pcornerpoint.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/cc2pcornerpoint-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/cc2pcornerpoint-00006.vtu
@@ -42,14 +42,14 @@ endif()
 # non-isothermal tests
 if(HAVE_UG)
 add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-simplex-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00008.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni -Grid.CellType Simplex")
 else()
 add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00008.vtu
@@ -58,14 +58,14 @@ endif()
 
 if(HAVE_UG)
 add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-simplex-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni -Grid.CellType Simplex")
 else()
 add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-cube-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00009.vtu

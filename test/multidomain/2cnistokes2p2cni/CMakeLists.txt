@@ -1,7 +1,7 @@
 add_input_file_links()
 
 add_dumux_test(test_2cnistokes2p2cni test_2cnistokes2p2cni test_2cnistokes2p2cni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                   --script fuzzy
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_2cnistokes2p2cni -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cnistokes2p2cni_reference.input"
                   --files ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cni-ff-reference.vtu
@@ -11,7 +11,7 @@ add_dumux_test(test_2cnistokes2p2cni test_2cnistokes2p2cni test_2cnistokes2p2cni
                   --zeroThreshold {"v":1e-7,"velocityN_0":5e-11,"velocityW_0":5e-10,"velocityW_1":5e-9})
 
 add_dumux_test(test_2cnistokes2p2cni_boundarylayer test_2cnistokes2p2cni test_2cnistokes2p2cni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                   --script fuzzy
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_2cnistokes2p2cni -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cnistokes2p2cni_boundarylayer.input"
                   --files ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cniboundarylayer-ff-reference.vtu

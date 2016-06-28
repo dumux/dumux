@@ -1,5 +1,5 @@
 add_dumux_test(test_ccadaptive2ppointsource test_ccadaptive2ppointsource test_ccadaptive2ppointsource.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/lensccadaptivepointsource-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/lensccadaptive-00012.vtu
