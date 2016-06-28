@@ -2,14 +2,14 @@ add_input_file_links()
 
 # isothermal tests
 add_dumux_test(test_box2p2c test_box2p2c test_box2p2c.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injectionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injectionbox-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2p2c")
 
 add_dumux_test(test_cc2p2c test_cc2p2c test_cc2p2c.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injectioncc-00009.vtu
@@ -17,14 +17,14 @@ add_dumux_test(test_cc2p2c test_cc2p2c test_cc2p2c.cc
 
 # non-isothermal tests
 add_dumux_test(test_box2p2cni test_box2p2cni test_box2p2cni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/waterairbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/waterairbox-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2p2cni -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_box2p2cni_reference.input")
 
 add_dumux_test(test_cc2p2cni test_cc2p2cni test_cc2p2cni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/wateraircc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/wateraircc-00010.vtu
