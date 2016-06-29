@@ -14,6 +14,10 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
     - multidomain should now work with all compilers (optimzed) without segfaults
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+    - The problem class interface needs to provide the method maxTimeStepSize().
+      This is important if you implement problem classes not deriving from the base
+      problem classes in Dumux (ImplicitProblem, OneModelProblem,
+      ImpetProblem, and MultidomainProblem).
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.10: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
