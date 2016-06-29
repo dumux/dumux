@@ -26,7 +26,7 @@
 #ifndef DUMUX_AIR_HH
 #define DUMUX_AIR_HH
 
-#include <dune/common/exceptions.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/material/components/component.hh>
 #include <dumux/material/idealgas.hh>
 
@@ -155,8 +155,8 @@ public:
         Scalar r;
         if(temperature < 273.15 || temperature > 660.)
         {
-            DUNE_THROW(Dune::NotImplemented,
-                "ConstrelAir: Temperature out of range at ");
+            DUNE_THROW(Dumux::NumericalProblem,
+                "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
         }
         r = 1.496*1.E-6*pow(temperature,1.5)/(temperature+120.);
         return (r);
