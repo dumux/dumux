@@ -26,7 +26,7 @@
 #ifndef DUMUX_AIR_HH
 #define DUMUX_AIR_HH
 
-#include <dune/common/exceptions.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/material/components/component.hh>
 #include <dumux/material/idealgas.hh>
 
@@ -155,10 +155,10 @@ public:
         Scalar r;
         if(temperature < 273.15 || temperature > 660.)
         {
-            DUNE_THROW(Dune::NotImplemented,
-                "ConstrelAir: Temperature out of range at ");
+            DUNE_THROW(Dumux::NumericalProblem,
+                "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
         }
-        r = 1.496*1.E-6*pow(temperature,1.5)/(temperature+120.);
+        r = 1.496*1.E-6*std::pow(temperature,1.5)/(temperature+120.);
         return (r);
 
     }
@@ -219,17 +219,17 @@ public:
 
         Scalar c_p = 0.661738E+01
                 -0.105885E+01 * phi
-                +0.201650E+00 * pow(phi,2.)
-                -0.196930E-01 * pow(phi,3.)
-                +0.106460E-02 * pow(phi,4.)
-                -0.303284E-04 * pow(phi,5.)
-                +0.355861E-06 * pow(phi,6.);
-        c_p +=   -0.549169E+01 * pow(phi,-1.)
-                +0.585171E+01* pow(phi,-2.)
-                -0.372865E+01* pow(phi,-3.)
-                +0.133981E+01* pow(phi,-4.)
-                -0.233758E+00* pow(phi,-5.)
-                +0.125718E-01* pow(phi,-6.);
+                +0.201650E+00 * std::pow(phi,2)
+                -0.196930E-01 * std::pow(phi,3)
+                +0.106460E-02 * std::pow(phi,4)
+                -0.303284E-04 * std::pow(phi,5)
+                +0.355861E-06 * std::pow(phi,6);
+        c_p +=   -0.549169E+01 * std::pow(phi,-1)
+                +0.585171E+01* std::pow(phi,-2)
+                -0.372865E+01* std::pow(phi,-3)
+                +0.133981E+01* std::pow(phi,-4)
+                -0.233758E+00* std::pow(phi,-5)
+                +0.125718E-01* std::pow(phi,-6);
         c_p *= IdealGas::R / (molarMass() * 1000); // in J/mol/K * mol / kg / 1000 = kJ/kg/K
 
 
