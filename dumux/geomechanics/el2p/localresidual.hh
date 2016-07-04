@@ -55,6 +55,7 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectivePermeabilityModel) EffectivePermeabilityModel;
 
     enum {
         numFluidPhases = GET_PROP_VALUE(TypeTag, NumPhases)
@@ -146,29 +147,20 @@ public:
         // according to the relation given in Rutqvist and Tsang (2002)
         // this evaluation should be moved to another location
         DimVector tmpVec;
+
         DimMatrix Keff, Keff_i, Keff_j;
+        Keff_i = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().i],
+                              this->problem_().spatialParams(),
+                              this->element_(),
+                              this->fvGeometry_(),
+                              fluxVars.face().i);
+        Keff_j = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().j],
+                              this->problem_().spatialParams(),
+                              this->element_(),
+                              this->fvGeometry_(),
+                              fluxVars.face().j);
 
-        Scalar exp_i, exp_j;
-        // evaluate effective permeabilities for nodes i and j based on the
-        // effective porosities, the initial porosities and the initial permeabilities
-        exp_i =
-                22.2
-                        * (this->curVolVars_()[fluxVars.face().i].effPorosity
-                                / this->curVolVars_()[fluxVars.face().i].porosity()
-                                - 1);
-        exp_j =
-                22.2
-                        * (this->curVolVars_()[fluxVars.face().j].effPorosity
-                                / this->curVolVars_()[fluxVars.face().j].porosity()
-                                - 1);
-        Keff_i = fluxVars.intrinsicPermeability();
-        Keff_i *= exp(exp_i);
-        Keff_j = fluxVars.intrinsicPermeability();
-        Keff_j *= exp(exp_j);
-
-        // calculate the mean effective permeability at integration point
         this->problem_().spatialParams().meanK(Keff, Keff_i, Keff_j);
-
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numFluidPhases; ++phaseIdx) {
             // data attached to upstream and the downstream vertices

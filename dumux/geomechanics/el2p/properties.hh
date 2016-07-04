@@ -82,6 +82,8 @@ NEW_PROP_TAG(LocalOperator);
 
 //! The type traits required for using the AMG backend
 NEW_PROP_TAG(AmgTraits);
+
+NEW_PROP_TAG(EffectivePermeabilityModel);
 }
 
 }

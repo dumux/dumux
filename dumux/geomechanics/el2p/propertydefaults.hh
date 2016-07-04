@@ -60,6 +60,8 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/amgbackend.hh>
 
+#include <dumux/material/fluidmatrixinteractions/permeabilityrutqvisttsang.hh>
+
 namespace Dumux
 {
 
@@ -138,6 +140,17 @@ public:
     typedef typename MaterialLaw::Params type;
 };
 
+SET_PROP(BoxElasticTwoP, EffectivePermeabilityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dumux::PermeabilityRutqvistTsang<Scalar, dim> type;
+};
+
+// SET_TYPE_PROP(BoxElasticTwoP, EffectivePermeabilityModel, Dumux::PermeabilityRutqvistTsang<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Gridview)::dimension>);
 
 // use the SuperLU linear solver by default
 #if HAVE_SUPERLU
