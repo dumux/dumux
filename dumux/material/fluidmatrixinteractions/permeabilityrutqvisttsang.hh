@@ -44,7 +44,7 @@ namespace Dumux
  * \f$ k_\text{eff} = k_{\text{0}} \cdot \text{exp} \left[22.2\left(\phi_\text{eff}/ \phi_\text{0} -1 \right) \right] \f$
  *
  */
-template<class Scalar, int dim>
+template<class Scalar>
 class PermeabilityRutqvistTsang
 {
 public:
@@ -65,7 +65,7 @@ public:
      * Deep Saline Aquifers, PhD thesis \cite darcis2013 .
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    static Dune::FieldMatrix<Scalar, dim, dim> effectivePermeability(const VolumeVariables& volVars,
+    static auto effectivePermeability(const VolumeVariables& volVars,
                                         const SpatialParams& spatialParams,
                                         const Element& element,
                                         const FVGeometry& fvGeometry,
@@ -80,7 +80,7 @@ public:
                 22.2
                         * (effPorosity / initialPorosity - 1);
 
-        Dune::FieldMatrix<Scalar, dim, dim> Keff
+        auto Keff
             = spatialParams.intrinsicPermeability(element, fvGeometry, scvIdx);
         Keff *= exp(exponent);
 
