@@ -86,9 +86,8 @@ class BoxAssembler : public ImplicitAssembler<TypeTag>
 
             for (auto&& globalJ : stencil)
                 this->matrix().addindex(globalI, globalJ);
-
-            this->matrix().endindices();
         }
+        this->matrix().endindices();
     }
 };
 
