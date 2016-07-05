@@ -66,9 +66,6 @@ public:
     typedef Dumux::SubControlVolumeFace<ScvfGeometry, IndexType> type;
 };
 
-//! The flux variables cache class, by default the one for porous media
-SET_TYPE_PROP(CCTpfaModel, FluxVariablesCache, Dumux::CCTpfaPorousMediumFluxVariablesCache<TypeTag>);
-
 } // namespace Properties
 
 } // namespace Dumux

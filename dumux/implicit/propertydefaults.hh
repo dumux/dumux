@@ -127,6 +127,9 @@ public:
     typedef Dumux::PorousMediumFluxVariables<TypeTag, advection, diffusion, energy> type;
 };
 
+//! The flux variables cache class, by default the one for porous media
+SET_TYPE_PROP(ImplicitBase, FluxVariablesCache, Dumux::PorousMediumFluxVariablesCache<TypeTag>);
+
 //! We use darcys law as the default for the advective flux calculation
 SET_TYPE_PROP(ImplicitBase, AdvectionType, Dumux::DarcysLaw<TypeTag>);
 

@@ -24,28 +24,27 @@
 #define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(NumComponents);
-}
-
 /*!
  * \ingroup ImplicitModel
- * \brief The flux variables cache classes
- *        stores the transmissibilities and stencils
+ * \brief The flux variables cache classes for porous media.
+ *        Store flux stencils and data required for flux calculation
  */
+template<class TypeTag, typename DiscretizationMethod = void>
+class PorousMediumFluxVariablesCache {};
+
 // specialization for the Box Method
 template<class TypeTag>
-class BoxPorousMediumFluxVariablesCache
+class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::Box>::type >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -53,34 +52,52 @@ class BoxPorousMediumFluxVariablesCache
     using Stencil = std::vector<IndexType>;
     using TransmissibilityVector = std::vector<IndexType>;
 
+    typedef typename GridView::ctype CoordScalar;
+    static const int dim = GridView::dimension;
+    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> FeCache;
+    typedef typename FeCache::FiniteElementType::Traits::LocalBasisType FeLocalBasis;
+    typedef typename FeLocalBasis::Traits::JacobianType ShapeJacobian;
+    typedef typename Dune::FieldVector<Scalar, 1> ShapeValue;
+    typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+
 public:
+    // stores required data for the flux calculation
+    struct FaceData
+    {
+        std::vector<ShapeJacobian> localJacobian;
+        std::vector<ShapeValue> shapeValues;
+        JacobianInverseTransposed jacInvT;
+    };
+
     void update(const Problem& problem,
                 const Element& element,
+                const typename Element::Geometry& geometry,
+                const FeLocalBasis& localBasis,
                 const SubControlVolumeFace &scvFace)
     {
-        stencil_ = AdvectionType::stencil(problem, scvFace);
-        volVarsStencil_ = AdvectionType::volVarsStencil(problem, element, scvFace);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, scvFace);
+        faceData_ = AdvectionType::calculateFaceData(problem, element, geometry, localBasis, scvFace);
+
+        // The stencil info is obsolete for the box method.
+        // It is here for compatibility with cc methods
+        stencil_ = Stencil(0);
     }
 
+    const FaceData& faceData() const
+    { return faceData_; }
+
     const Stencil& stencil() const
-    { return stencil_; }
-
-    const Stencil& darcyStencil() const
-    { return volVarsStencil_; }
-
-    const TransmissibilityVector& tij() const
-    { return tij_; }
+    {
+        return stencil_;
+    }
 
 private:
-    Stencil volVarsStencil_;
+    FaceData faceData_;
     Stencil stencil_;
-    TransmissibilityVector tij_;
 };
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
-class CCTpfaPorousMediumFluxVariablesCache
+class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -98,8 +115,8 @@ public:
                 const SubControlVolumeFace &scvFace)
     {
         FluxVariables fluxVars;
-        stencil_ = fluxVars.computeStencil(problem, scvFace);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, scvFace);
+        stencil_ = fluxVars.computeStencil(problem, element, scvFace);
+        tij_ = AdvectionType::calculateTransmissibilities(problem, element, scvFace);
     }
 
     const Stencil& stencil() const
