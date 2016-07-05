@@ -83,6 +83,7 @@ class CCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
@@ -153,7 +154,7 @@ public:
      *
      * \param element The DUNE Codim<0> entity which we look at.
      */
-    void assemble(const Element& element, JacobianMatrix& matrix)
+    void assemble(const Element& element, JacobianMatrix& matrix, SolutionVector& residual)
     {
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
 
@@ -173,17 +174,20 @@ public:
         if (isGhost)
         {
             this->residual_ = 0.0;
+            residual[globalI_] = 0.0;
         }
         else
         {
             this->localResidual().eval(element, bcTypes_);
             this->residual_ = this->localResidual().residual();
+            // store residual in global container as well
+            residual[globalI_] = this->localResidual().residual(0);
         }
 
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, matrix, isGhost);
+        evalPartialDerivatives_(element, matrix, residual, isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
         // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
@@ -200,7 +204,9 @@ public:
         // }
     }
 
-    void evalPartialDerivatives_(const Element& element, JacobianMatrix& matrix, const bool isGhost)
+
+private:
+    void evalPartialDerivatives_(const Element& element, JacobianMatrix& matrix, SolutionVector& residual, const bool isGhost)
     {
         // get stencil informations
         const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
@@ -328,7 +334,7 @@ public:
             neighborDeriv /= delta;
 
             // restore the original state of the scv's volume variables
-            this->model_().curVolVars_(scv) = std::move(origVolVars);
+            this->model_().curVolVars_(scv) = origVolVars;
 
             // update the global jacobian matrix with the current partial derivatives
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
