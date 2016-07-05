@@ -60,6 +60,7 @@ private:
     using Intersection = typename GridView::Intersection;
 
     using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
+    using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
 
 public:
     //! get sub control volume geometries from element of dimension 1
@@ -257,22 +258,23 @@ public:
     static typename std::enable_if<d == 3, ScvfGeometryVector>::type
     getBoundaryScvfGeometries(const typename Intersection::Geometry& geometry)
     {
-        // sub control volume face geometries in 2D are always lines
-        Dune::GeometryType scvfGeometryType; scvfGeometryType.makeLine();
+        // sub control volume face geometries in 3D are always quadrilaterals
+        Dune::GeometryType scvfGeometryType; scvfGeometryType.makeQuadrilateral();
 
         // extract the corners of the sub control volumes
-        const auto& referenceElement = ReferenceElements::general(geometry.type());
+        const auto& referenceElement = FaceReferenceElements::general(geometry.type());
 
         // vertices
         CornerList v;
         for (int i = 0; i < geometry.corners(); ++i)
             v.emplace_back(geometry.corner(i));
 
-        // face midpoints
-        CornerList f;
+        // edge midpoints
+        CornerList e;
         for (int i = 0; i < referenceElement.size(1); ++i)
-            f.emplace_back(geometry.global(referenceElement.position(i, 1)));
+            e.emplace_back(geometry.global(referenceElement.position(i, 1)));
 
+        // face midpoint
         auto c = geometry.center();
 
         // procees according to number of corners
@@ -281,19 +283,19 @@ public:
         case 3: // triangle
         {
             ScvfGeometryVector scvfGeometries(3);
-            scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[0], c}));
-            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[1], c}));
-            scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[2], c}));
+            scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[0], e[0], e[1], c}));
+            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[1], e[2], e[0], c}));
+            scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[2], e[1], e[2], c}));
 
             return scvfGeometries;
         }
         case 4: // quadrilateral
         {
             ScvfGeometryVector scvfGeometries(4);
-            scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[0], c}));
-            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[1], c}));
-            scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[2], c}));
-            scvfGeometries[3] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[3], c}));
+            scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[0], e[2], e[0], c}));
+            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[1], e[1], e[2], c}));
+            scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[2], e[0], e[3], c}));
+            scvfGeometries[3] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({v[3], e[3], e[1], c}));
 
             return scvfGeometries;
         }
