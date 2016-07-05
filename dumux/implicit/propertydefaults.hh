@@ -46,7 +46,6 @@
 #include "assembler.hh"
 #include "localjacobian.hh"
 #include "volumevariables.hh"
-#include "volumevariablesvector.hh"
 #include "fluxvariablescachevector.hh"
 #include "fvelementgeometry.hh"
 
@@ -114,15 +113,8 @@ SET_TYPE_PROP(ImplicitBase, FVElementGeometry, Dumux::FVElementGeometry<TypeTag>
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
-//! The global current volume variables vector class
-SET_TYPE_PROP(ImplicitBase, CurrentVolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag, false, GET_PROP_VALUE(TypeTag, EnableVolumeVariablesCache)>);
-
-//! The global previous volume variables vector class
-SET_TYPE_PROP(ImplicitBase, PreviousVolumeVariablesVector, Dumux::VolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableVolumeVariablesCache)>);
-
 //! The global flux variables cache vector class
 SET_TYPE_PROP(ImplicitBase, FluxVariablesCacheVector, Dumux::FluxVariablesCacheVector<TypeTag>);
-
 //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
 //! by default, we set the flux variables to ones for porous media
 SET_PROP(ImplicitBase, FluxVariables)
