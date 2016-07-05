@@ -77,6 +77,7 @@ class FicksLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discreti
 public:
 
     static Scalar flux(const Problem& problem,
+                       const Element& element,
                        const SubControlVolumeFace& scvFace,
                        const int phaseIdx,
                        const int compIdx)
