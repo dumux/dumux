@@ -161,8 +161,7 @@ public:
         this->model_().prevVolVars_().bindElement(element);
         this->model_().fluxVariablesCache_().bind(element);
 
-        // set the current grid element and update the element's
-        // finite volume geometry
+        // set the actual dof index
         globalI_ = this->problem_().elementMapper().index(element);
 
         const auto& fvGeometry = this->model_().fvGeometries(element);
