@@ -28,6 +28,8 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
+
+#include "fluxvariablescachevector.hh"
 #include "volumevariablesvector.hh"
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
@@ -66,6 +68,9 @@ SET_TYPE_PROP(CCModel, CurrentVolumeVariablesVector, Dumux::CCVolumeVariablesVec
 
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCModel, PreviousVolumeVariablesVector, Dumux::CCVolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The global flux variables cache vector class
+SET_TYPE_PROP(CCModel, FluxVariablesCacheVector, Dumux::CCFluxVariablesCacheVector<TypeTag>);
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
