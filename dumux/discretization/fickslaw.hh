@@ -24,25 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_FICKS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
-#include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
-
-#include <dumux/implicit/properties.hh>
-
-
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(EffectiveDiffusivityModel);
-}
-
 /*!
  * \ingroup CCTpfaFicksLaw
  * \brief Evaluates the diffusive mass flux according to Fick's law
