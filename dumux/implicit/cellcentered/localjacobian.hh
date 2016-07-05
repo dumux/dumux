@@ -159,6 +159,7 @@ public:
         this->model_().fvGeometries_().bind(element);
         this->model_().curVolVars_().bind(element);
         this->model_().prevVolVars_().bindElement(element);
+        this->model_().fluxVariablesCache_().bind(element);
 
         // set the current grid element and update the element's
         // finite volume geometry
@@ -259,8 +260,9 @@ private:
                 priVars[pvIdx] += eps;
                 delta += eps;
 
-                // update the volume variables
+                // update the volume variables and bind the flux var cache again
                 this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
+                this->model_().fluxVariablesCache_().bind(element);
 
                 if (!isGhost)
                 {
@@ -297,8 +299,9 @@ private:
                 priVars[pvIdx] -= delta + eps;
                 delta += eps;
 
-                // update the volume variables
+                // update the volume variables and bind the flux var cache again
                 this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
+                this->model_().fluxVariablesCache_().bind(element);
 
                 if (!isGhost)
                 {

@@ -82,7 +82,7 @@ public:
                        const SubControlVolumeFace& scvFace,
                        const IndexType phaseIdx)
     {
-        const auto& tij = getTransmissibilities(problem, scvFace);
+        const auto& tij = problem.model().fluxVarsCache(scvFace).tij();
 
         // Get the inside volume variables
         const auto insideScvIdx = scvFace.insideScvIdx();
@@ -141,18 +141,6 @@ public:
             stencil.push_back(scvFace.insideScvIdx());
 
         return stencil;
-    }
-
-    template <typename T = TypeTag>
-    static const typename std::enable_if<GET_PROP_VALUE(T, EnableFluxVariablesCache), Scalar>::type& getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
-    {
-        return problem.model().fluxVarsCache(scvFace).tij();
-    }
-
-    template <typename T = TypeTag>
-    static const typename std::enable_if<!GET_PROP_VALUE(T, EnableFluxVariablesCache), Scalar>::type getTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
-    {
-        return calculateTransmissibilities(problem, scvFace);
     }
 
     static Scalar calculateTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
