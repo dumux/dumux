@@ -180,7 +180,7 @@ public:
      * \param intersection The intersection for which the boundary type is set
      */
     BoundaryTypes boundaryTypes(const Element &element,
-                                   const SubControlVolumeFace &scvFace) const
+                                const SubControlVolumeFace &scvFace) const
     {
         if (isBox)
             DUNE_THROW(Dune::InvalidStateException,
