@@ -31,7 +31,7 @@
 #include <dumux/implicit/adaptive/gridadaptproperties.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
- #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
+#include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux
 {
@@ -771,23 +771,20 @@ public:
     //                                         fvGeometry, scvIdx, fluidState);
     // }
 
-    const FluxVariablesCache& fluxVarsCache(const SubControlVolumeFace& scvf) const
-    { return fluxVarsCacheVector_[scvf.index()]; }
+    const FluxVariablesCacheVector& fluxVarsCache() const
+    { return fluxVarsCacheVector_; }
 
-    const FluxVariablesCache& fluxVarsCache(unsigned int scvfIdx) const
-    { return fluxVarsCacheVector_[scvfIdx]; }
+    const FluxVariablesCache& fluxVarsCache(const SubControlVolumeFace& scvf) const
+    { return fluxVarsCacheVector_[scvf]; }
 
     const VolumeVariables& curVolVars(const SubControlVolume& scv) const
-    { return curVolVarsVector_[scv.index()]; }
-
-    const VolumeVariables& curVolVars(unsigned int scvIdx) const
-    { return curVolVarsVector_[scvIdx]; }
+    { return curVolVarsVector_[scv]; }
 
     const VolumeVariables& prevVolVars(const SubControlVolume& scv) const
-    { return prevVolVarsVector_[scv.index()]; }
+    { return prevVolVarsVector_[scv]; }
 
-    const VolumeVariables& prevVolVars(unsigned int scvIdx) const
-    { return prevVolVarsVector_[scvIdx]; }
+    const VolumeVariables& curVolVars(const unsigned int scvIdx) const
+    { return curVolVarsVector_[scvIdx]; }
 
     const FVElementGeometryVector& fvGeometries() const
     { return *fvGeometryVector_; }
@@ -801,25 +798,22 @@ protected:
     { return curVolVarsVector_; }
 
     VolumeVariables& curVolVars_(const SubControlVolume& scv)
-    { return curVolVarsVector_[scv.index()]; }
+    { return curVolVarsVector_[scv]; }
 
-    VolumeVariables& curVolVars_(unsigned int scvIdx)
+    VolumeVariables& curVolVars_(const unsigned int scvIdx)
     { return curVolVarsVector_[scvIdx]; }
 
     PreviousVolumeVariablesVector& prevVolVars_()
     { return prevVolVarsVector_; }
 
     VolumeVariables& prevVolVars_(const SubControlVolume& scv)
-    { return prevVolVarsVector_[scv.index()]; }
+    { return prevVolVarsVector_[scv]; }
 
-    VolumeVariables& prevVolVars_(unsigned int scvIdx)
-    { return prevVolVarsVector_[scvIdx]; }
+    FluxVariablesCacheVector& fluxVariablesCache_()
+    { return fluxVarsCacheVector_; }
 
     FluxVariablesCache& fluxVarsCache_(const SubControlVolumeFace& scvf)
-    { return fluxVarsCacheVector_[scvf.index()]; }
-
-    FluxVariablesCache& fluxVarsCache_(unsigned int scvfIdx)
-    { return fluxVarsCacheVector_[scvfIdx]; }
+    { return fluxVarsCacheVector_[scvf]; }
 
     FVElementGeometryVector& fvGeometries_()
     { return *fvGeometryVector_; }
@@ -988,6 +982,7 @@ protected:
     // the finite volume element geometries
     std::shared_ptr<FVElementGeometryVector> fvGeometryVector_;
 
+    // container to store the box volumes
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 
 public:
