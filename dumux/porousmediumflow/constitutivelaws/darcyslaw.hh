@@ -33,6 +33,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/implicit/properties.hh>
+#include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 
 namespace Dumux
@@ -201,175 +202,110 @@ private:
 template <class TypeTag>
 class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::Box>::type >
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesCache) FluxVariablesCache;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::IndexSet::IndexType IndexType;
+    typedef typename GridView::ctype CoordScalar;
+    typedef std::vector<IndexType> Stencil;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
+
+    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> FeCache;
+    typedef typename FeCache::FiniteElementType::Traits::LocalBasisType FeLocalBasis;
+    typedef typename FluxVariablesCache::FaceData FaceData;
 
 public:
 
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace& scvFace)
+    static Scalar flux(const Problem& problem,
+                       const Element& element,
+                       const SubControlVolumeFace& scvFace,
+                       const IndexType phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "Darcy's law for the Box method is not yet implemented!");
+        // get the precalculated local jacobian and shape values at the integration point
+        const auto& faceData = problem.model().fluxVarsCache()[scvFace].faceData();
 
-        problemPtr_ = &problem;
-        scvFacePtr_ = &scvFace;
-        elementPtr_ = &element;
-        enableGravity_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        const auto& fvGeometry = problem.model().fvGeometries(element);
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(scvFace.insideScvIdx());
+        const auto extrusionFactor = problem.model().curVolVars(insideScv).extrusionFactor();
+        const auto K = problem.spatialParams().intrinsicPermeability(insideScv);
 
-        updateTransmissibilities_();
-    }
-
-    void update(const Problem& problem,
-                const Element& element,
-                const SubControlVolumeFace &scvFace,
-                VolumeVariables* boundaryVolVars)
-    {
-        update(problem, element, scvFace);
-    }
-
-    void updateTransmissibilities(const Problem &problem, const SubControlVolumeFace &scvFace)
-    {
-        updateTransmissibilities_();
-    }
-
-    void beginFluxComputation(bool boundaryVolVarsUpdated = false)
-    {
-        // Get the inside volume variables
-        const auto insideScvIdx = scvFace_().insideScvIdx();
-        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto* insideVolVars = &problem_().model().curVolVars(insideScv);
-
-        // and the outside volume variables
-        const VolumeVariables* outsideVolVars;
-        outsideVolVars = &problem_().model().curVolVars(scvFace_().outsideScvIdx());
-
-        // loop over all phases to compute the volume flux
-        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+        // evaluate gradP - rho*g at integration point
+        DimVector gradP(0.0);
+        for (const auto& scv : fvGeometry.scvs())
         {
-            auto hInside = insideVolVars->pressure(phaseIdx);
-            auto hOutside = outsideVolVars->pressure(phaseIdx);
+            // the global shape function gradient
+            DimVector gradI;
+            faceData.jacInvT.mv(faceData.localJacobian[scv.indexInElement()][0], gradI);
 
-            if (enableGravity_)
-            {
-                // do averaging for the density
-                const auto rhoInside = insideVolVars->density(phaseIdx);
-                const auto rhoOutide = outsideVolVars->density(phaseIdx);
-                const auto rho = (rhoInside + rhoOutide)*0.5;
-
-
-                // ask for the gravitational acceleration in the inside neighbor
-                const auto xInside = insideScv.center();
-                const auto gInside = problem_().gravityAtPos(xInside);
-
-                hInside -= rho*(gInside*xInside);
-
-                const auto outsideScvIdx = scvFace_().outsideScvIdx();
-                const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
-                const auto xOutside = outsideScv.center();
-                const auto gOutside = problem_().gravityAtPos(xOutside);
-                hOutside -= rho*(gOutside*xOutside);
-            }
-
-            kGradPNormal_[phaseIdx] = tij_*(hInside - hOutside);
-
-            if (std::signbit(kGradPNormal_[phaseIdx]))
-            {
-                upWindIndices_[phaseIdx] = std::make_pair(scvFace_().outsideScvIdx(), scvFace_().insideScvIdx());
-            }
-            else
-            {
-                upWindIndices_[phaseIdx] = std::make_pair(scvFace_().insideScvIdx(), scvFace_().outsideScvIdx());
-            }
+            gradI *= problem.model().curVolVars(scv).pressure(phaseIdx);
+            gradP += gradI;
         }
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        {
+            // gravitational acceleration
+            DimVector g(problem.gravityAtPos(scvFace.center()));
+
+            // interpolate the density at the IP
+            const auto& insideVolVars = problem.model().curVolVars(insideScv);
+            const auto& outsideScv = problem.model().fvGeometries().subControlVolume(scvFace.outsideScvIdx());
+            const auto& outsideVolVars = problem.model().curVolVars(outsideScv);
+            Scalar rho = 0.5*(insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx));
+
+            // turn gravity into a force
+            g *= rho;
+
+            // subtract from pressure gradient
+            gradP -= g;
+        }
+
+        // apply the permeability and return the flux
+        auto KGradP = applyPermeability(K, gradP);
+        return -1.0*(KGradP*scvFace.unitOuterNormal())*scvFace.area()*extrusionFactor;
     }
 
-    /*!
-     * \brief A function to calculate the mass flux over a sub control volume face
-     *
-     * \param phaseIdx The index of the phase of which the flux is to be calculated
-     * \param upwindFunction A function which does the upwinding
-     */
-    template<typename FunctionType>
-    Scalar flux(IndexType phaseIdx, FunctionType upwindFunction) const
+    static DimVector applyPermeability(const DimWorldMatrix& K, const DimVector& gradI)
     {
-        return kGradPNormal_[phaseIdx]*upwindFunction(upVolVars(phaseIdx), dnVolVars(phaseIdx));
+        DimVector result(0.0);
+        K.mv(gradI, result);
+
+        return result;
     }
 
-    // for compatibility with cell-centered models
-    const std::set<IndexType>& stencil() const
+    static DimVector applyPermeability(const Scalar k, const DimVector& gradI)
     {
-        return std::set<IndexType>();
+        DimVector result(gradI);
+        result *= k;
+        return result;
     }
 
-    const VolumeVariables& upVolVars(IndexType phaseIdx) const
+    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
+    static Stencil stencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
-        return problem_().model().curVolVars(upWindIndices_[phaseIdx].first);
+        return Stencil(0);
     }
 
-    const VolumeVariables& dnVolVars(IndexType phaseIdx) const
+    static FaceData calculateFaceData(const Problem& problem, const Element& element, const typename Element::Geometry& geometry, const FeLocalBasis& localBasis, const SubControlVolumeFace& scvFace)
     {
-        return problem_().model().curVolVars(upWindIndices_[phaseIdx].second);
+        FaceData faceData;
+
+        // evaluate shape functions and gradients at the integration point
+        const auto ipLocal = geometry.local(scvFace.center());
+        faceData.jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+        localBasis.evaluateJacobian(ipLocal, faceData.localJacobian);
+        localBasis.evaluateFunction(ipLocal, faceData.shapeValues);
+
+        return std::move(faceData);
     }
-
-private:
-
-    void updateTransmissibilities_()
-    {
-        const auto insideScvIdx = scvFace_().insideScvIdx();
-        const auto& insideScv = problem_().model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto insideK = problem_().spatialParams().intrinsicPermeability(insideScv);
-        Scalar ti = calculateOmega_(insideK, insideScv);
-
-        const auto outsideScvIdx = scvFace_().outsideScvIdx();
-        const auto& outsideScv = problem_().model().fvGeometries().subControlVolume(outsideScvIdx);
-        const auto outsideK = problem_().spatialParams().intrinsicPermeability(outsideScv);
-        Scalar tj = -1.0*calculateOmega_(outsideK, outsideScv);
-
-        tij_ = scvFace_().area()*(ti * tj)/(ti + tj);
-    }
-
-    const Problem &problem_() const
-    {
-        return *problemPtr_;
-    }
-
-    const SubControlVolumeFace& scvFace_() const
-    {
-        return *scvFacePtr_;
-    }
-
-    const Element& element_() const
-    {
-        return *elementPtr_;
-    }
-
-    const Problem *problemPtr_; //! Pointer to the problem
-    const SubControlVolumeFace *scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
-    const Element *elementPtr_; //! Point to the element
-    bool enableGravity_; //! If we have a problem considering gravitational effects
-
-    //! The upstream (first) and downstream (second) volume variable indices
-    std::array<std::pair<IndexType, IndexType>, numPhases> upWindIndices_;
-    Scalar tij_ = 0;
-
-    //! Precomputed values
-    std::array<Scalar, numPhases> kGradPNormal_; //! K(grad(p) - rho*g)*n
-    GlobalPosition normalK_; //! (K^T)n
 };
 
 } // end namespace
