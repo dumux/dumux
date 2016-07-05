@@ -134,8 +134,7 @@ public:
 
                     // if globalI is in flux var stencil, add to list
                     FluxVariables fluxVars;
-                    fluxVars.init(problem, elementJ, scvFaceJ);
-                    const auto& fluxStencil = fluxVars.stencil();
+                    const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, scvFaceJ);
                     for (auto globalIdx : fluxStencil)
                         if (globalIdx == globalI)
                             fluxVarIndices.push_back(fluxVarsIdx);
