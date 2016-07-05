@@ -184,18 +184,18 @@ public:
         {
             // sub control volumes
             ScvGeometryVector scvGeometries(4);
-            scvGeometries[0] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({v[0], e[0], e[1], f[0], e[3], f[1],  f[2], c}));
-            scvGeometries[1] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[0], v[1], f[0], e[2], f[1], e[4], c, f[3]}));
-            scvGeometries[2] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[1], f[0], v[2], e[2], f[2], c, e[5], f[3]}));
-            scvGeometries[3] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[3], f[1], f[2], c, v[3], e[4], e[5], f[3]}));
+            scvGeometries[0] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({v[0], e[0], e[1], f[0], e[3], f[1], f[2], c}));
+            scvGeometries[1] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({v[1], e[2], e[0], f[0], f[3], e[4], c, f[1]}));
+            scvGeometries[2] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({v[2], e[1], e[2], f[0], e[5], f[2], f[3], c}));
+            scvGeometries[3] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({v[3], e[3], e[5], f[2], e[4], f[1], f[3], c}));
 
             // sub control volume faces
             ScvfGeometryVector scvfGeometries(6);
             scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[0], f[0], f[1], c}));
-            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[1], f[0], f[2], c}));
+            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[0], e[1], c, f[2]}));
             scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[2], f[0], f[3], c}));
-            scvfGeometries[3] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[3], f[1], f[2], c}));
-            scvfGeometries[4] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[4], f[3], f[1], c}));
+            scvfGeometries[3] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[2], e[3], c, f[1]}));
+            scvfGeometries[4] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[3], c, e[4], f[1]}));
             scvfGeometries[5] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[5], f[2], f[3], c}));
 
             return std::make_pair(scvGeometries, scvfGeometries);
@@ -208,24 +208,24 @@ public:
             scvGeometries[1] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[6], v[1], f[4], e[5], f[2], e[1], c, f[1]}));
             scvGeometries[2] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[4], f[4], v[2], e[7], f[0], c, e[2], f[3]}));
             scvGeometries[3] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({f[4], e[5], e[7], v[3], c, f[1], f[3], e[3]}));
-            scvGeometries[4] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[0], f[2], f[0], c, v[4], e[1], e[8], f[5]}));
-            scvGeometries[5] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({f[2], e[1], c, f[1], e[1], v[5], f[5], e[9]}));
-            scvGeometries[6] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({f[0], c, e[2], f[3], e[8], f[5], v[6], e[1]}));
-            scvGeometries[7] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({c, f[1], f[3], e[3], f[5], e[9], e[1], v[7]}));
+            scvGeometries[4] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({e[0], f[2], f[0], c, v[4], e[10], e[8], f[5]}));
+            scvGeometries[5] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({f[2], e[1], c, f[1], e[10], v[5], f[5], e[9]}));
+            scvGeometries[6] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({f[0], c, e[2], f[3], e[8], f[5], v[6], e[11]}));
+            scvGeometries[7] = std::make_shared<ScvGeometry>(scvGeometryType, std::vector<GlobalPosition>({c, f[1], f[3], e[3], f[5], e[9], e[11], v[7]}));
 
             // sub control volume faces
             ScvfGeometryVector scvfGeometries(12);
-            scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[0], f[2], f[0], c}));
-            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[1], f[1], f[2], c}));
-            scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[2], f[0], f[3], c}));
+            scvfGeometries[0] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[0], e[0], c, f[2]}));
+            scvfGeometries[1] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[1], c, e[1], f[2]}));
+            scvfGeometries[2] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[3], e[2], c, f[0]}));
             scvfGeometries[3] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[3], f[3], f[1], c}));
-            scvfGeometries[4] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[4], f[4], f[0], c}));
+            scvfGeometries[4] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[4], e[4], c, f[0]}));
             scvfGeometries[5] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[5], f[4], f[1], c}));
             scvfGeometries[6] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[6], f[4], f[2], c}));
-            scvfGeometries[7] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[7], f[4], f[3], c}));
-            scvfGeometries[8] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[8], f[5], f[0], c}));
-            scvfGeometries[9] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[9], f[5], f[1], c}));
-            scvfGeometries[10] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[10], f[5], f[2], c}));
+            scvfGeometries[7] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({f[4], e[7], c, f[3]}));
+            scvfGeometries[8] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({c, f[0], f[5], e[8]}));
+            scvfGeometries[9] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[9], f[1], f[5], c}));
+            scvfGeometries[10] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[10], f[2], f[5], c}));
             scvfGeometries[11] = std::make_shared<ScvfGeometry>(scvfGeometryType, std::vector<GlobalPosition>({e[11], f[5], f[3], c}));
 
             return std::make_pair(scvGeometries, scvfGeometries);
