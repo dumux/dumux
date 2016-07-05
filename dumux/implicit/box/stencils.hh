@@ -43,14 +43,14 @@ class BoxElementStencils
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     // TODO a separate stencil class all stencils can derive from?
-    using Stencil = std::set<IndexType>;
+    using Stencil = std::vector<IndexType>;
 
     static const int dim = GridView::dimension;
 public:
     void update(const Problem& problem, const Element& element)
     {
         for(int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
-            elementStencil_.insert(problem.vertexMapper().subIndex(element, vIdxLocal, dim));
+            elementStencil_.push_back(problem.vertexMapper().subIndex(element, vIdxLocal, dim));
     }
 
     //! The full element stencil (all element this element is interacting with)
@@ -75,12 +75,24 @@ class BoxVertexStencils
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     // TODO a separate stencil class all stencils can derive from?
-    using Stencil = std::set<IndexType>;
+    using Stencil = std::vector<IndexType>;
 public:
     //! The full vertex stencil (all vertices this vertex is interacting with)
     const Stencil& vertexStencil() const
     {
         return vertexStencil_;
+    }
+
+    //! The scv indices connected to a vertex
+    const Stencil& vertexScvs() const
+    {
+        return vertexScvs_;
+    }
+
+    //! The element indices adjacent to the vertex
+    const Stencil& elementIndices() const
+    {
+        return elementIndices_;
     }
 
 private:
@@ -90,7 +102,19 @@ private:
         return vertexStencil_;
     }
 
+    Stencil& vertexScvs()
+    {
+        return vertexScvs_;
+    }
+
+    Stencil& elementIndices()
+    {
+        return elementIndices_;
+    }
+
     Stencil vertexStencil_;
+    Stencil vertexScvs_;
+    Stencil elementIndices_;
 };
 
 /*!
@@ -106,7 +130,7 @@ class BoxStencilsVector
     static const int dim = GridView::dimension;
 
 public:
-    void update(const Problem& problem)
+    void update(Problem& problem)
     {
         problemPtr_ = &problem;
         elementStencils_.resize(problem.gridView().size(0));
@@ -116,19 +140,34 @@ public:
             auto eIdx = problem.elementMapper().index(element);
             elementStencils_[eIdx].update(problem, element);
 
-            for (int vIdxLocalI = 0; vIdxLocalI < element.subEntities(dim); ++vIdxLocalI)
+            // bind the FvGeometry to the element before using it
+            problem.model().fvGeometries_().bindElement(element);
+            const auto& fvGeometry = problem.model().fvGeometries(element);
+
+            for (const auto& scv : fvGeometry.scvs())
             {
-                auto globalI = problem.vertexMapper().subIndex(element, vIdxLocalI, dim);
-                for (int vIdxLocalJ = vIdxLocalI; vIdxLocalJ < element.subEntities(dim); ++vIdxLocalJ)
+                auto vIdxGlobal = scv.dofIndex();
+                vertexStencils_[vIdxGlobal].vertexScvs().push_back(scv.index());
+                vertexStencils_[vIdxGlobal].elementIndices().push_back(eIdx);
+
+                for (const auto& scvJ : fvGeometry.scvs())
                 {
-                    auto globalJ = problem.vertexMapper().subIndex(element, vIdxLocalJ, dim);
+                    auto vIdxGlobalJ = scvJ.dofIndex();
 
                     // make sure that vertex j is in the neighbor set
                     // of vertex i and vice-versa
-                    vertexStencils_[globalI].vertexStencil().insert(globalJ);
-                    vertexStencils_[globalJ].vertexStencil().insert(globalI);
+                    vertexStencils_[vIdxGlobal].vertexStencil().push_back(vIdxGlobalJ);
+                    vertexStencils_[vIdxGlobalJ].vertexStencil().push_back(vIdxGlobal);
                 }
             }
+        }
+
+        // The vertex indices in the stencils have to be made unique
+        for (auto& vertexStencil : vertexStencils_)
+        {
+            auto& vertStencil = vertexStencil.vertexStencil();
+            std::sort(vertStencil.begin(), vertStencil.end());
+            vertStencil.erase(std::unique(vertStencil.begin(), vertStencil.end()), vertStencil.end());
         }
     }
 
