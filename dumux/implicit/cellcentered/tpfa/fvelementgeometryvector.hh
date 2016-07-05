@@ -39,7 +39,7 @@ namespace Dumux
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-template<class TypeTag, bool enableFVElementGeometryCache>
+template<class TypeTag, bool EnableFVElementGeometryCache>
 class CCTpfaFVElementGeometryVector
 {};
 
