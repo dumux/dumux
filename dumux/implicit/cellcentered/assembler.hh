@@ -44,15 +44,6 @@ class CCAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IndexSet::IndexType IndexType;
 
-    // assemble an interior element
-    void assembleElement_(const Element &element)
-    {
-        auto globalI = this->elementMapper_().index(element);
-
-        this->model_().localJacobian().assemble(element, this->matrix());
-        this->residual_[globalI] = this->model_().localJacobian().residual(0);
-    }
-
     void setRowSizes_()
     {
         for (const auto& element : elements(this->gridView_()))

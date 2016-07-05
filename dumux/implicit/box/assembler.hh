@@ -41,26 +41,7 @@ class BoxAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IndexSet::IndexType IndexType;
-
-    // assemble an interior element
-    void assembleElement_(const Element &element)
-    {
-
-        this->model_().localJacobian().assemble(element, this->matrix());
-
-        for(int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
-        {
-            auto globalI = vertexMapper_().subIndex(element, dim, vIdxLocal);
-
-            // update the right hand side
-            this->residual_[globalI] += this->model_().localJacobian().residual(vIdxLocal);
-
-            for (int j = 0; j < residual_[globalI].dimension; ++j)
-                assert(std::isfinite(residual_[globalI][j]));
-        }
-    }
 
     void setRowSizes_()
     {

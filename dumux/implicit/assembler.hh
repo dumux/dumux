@@ -154,7 +154,7 @@ protected:
 
         // assemble the elements...
         for (const auto& element : elements(gridView_()))
-            asImp_().assembleElement_(element);
+            this->model_().localJacobian().assemble(element, this->matrix(), this->residual());
     }
 
 protected:
