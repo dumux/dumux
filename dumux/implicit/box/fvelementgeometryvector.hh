@@ -358,8 +358,13 @@ public:
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-template<class TypeTag>
+template<class TypeTag, bool EnableFVElementGeometryCache>
 class BoxFVElementGeometryVector
+{};
+
+// specialization in case the FVElementGeometries are stored
+template<class TypeTag>
+class BoxFVElementGeometryVector<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
