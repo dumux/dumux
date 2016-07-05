@@ -201,6 +201,8 @@ public:
         // }
     }
 
+    const AssemblyMap& assemblyMap() const
+    { return assemblyMap_; }
 
 private:
     void evalPartialDerivatives_(const Element& element, JacobianMatrix& matrix, SolutionVector& residual, const bool isGhost)
