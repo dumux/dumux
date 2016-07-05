@@ -110,16 +110,28 @@ public:
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
     {
+        problemPtr_ = &problem;
+
+        // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
         fvGeometries_.clear();
         elementMap_.clear();
 
-        // Build the SCV and SCV faces
+        // determine size of containers
+        IndexType numScvs = gridView_.size(0);
+        IndexType numScvf = 0;
+        for (const auto& element : elements(gridView_))
+            numScvf += element.subEntities(1);
+
+        // reserve memory
+        elementMap_.resize(numScvs);
+        scvs_.resize(numScvs);
+        scvfs_.reserve(numScvf);
+
+        // Build the scvs and scv faces
         IndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
-        elementMap_.resize(gridView_.size(0));
-        scvs_.resize(gridView_.size(0));
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
@@ -129,31 +141,33 @@ public:
             elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
-            std::vector<IndexType> scvfsIndexSet;
+            std::vector<IndexType> scvfsIndexSet(element.subEntities(1));
             for (const auto& intersection : intersections(gridView_, element))
             {
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
                     auto nIdx = problem.elementMapper().index(intersection.outside());
-                    scvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
-                                                          intersection.geometry().center(),
-                                                          intersection.centerUnitOuterNormal(),
-                                                          scvfIdx,
-                                                          std::vector<IndexType>({eIdx, nIdx}),
-                                                          false));
-                    scvfsIndexSet.push_back(scvfIdx++);
+                    scvfs_.emplace_back(SubControlVolumeFace(intersection.geometry(),
+                                                             intersection.geometry().center(),
+                                                             intersection.centerUnitOuterNormal(),
+                                                             scvfIdx,
+                                                             intersection.indexInInside(),
+                                                             std::vector<IndexType>({eIdx, nIdx}),
+                                                             false));
+                    scvfsIndexSet[intersection.indexInInside()] = scvfIdx++;
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
-                    scvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
-                                                          intersection.geometry().center(),
-                                                          intersection.centerUnitOuterNormal(),
-                                                          scvfIdx,
-                                                          std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
-                                                          true));
-                    scvfsIndexSet.push_back(scvfIdx++);
+                    scvfs_.emplace_back(SubControlVolumeFace(intersection.geometry(),
+                                                             intersection.geometry().center(),
+                                                             intersection.centerUnitOuterNormal(),
+                                                             scvfIdx,
+                                                             intersection.indexInInside(),
+                                                             std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
+                                                             true));
+                    scvfsIndexSet[intersection.indexInInside()] = scvfIdx++;
                 }
             }
 
@@ -168,6 +182,11 @@ public:
     void bindElement(const Element& element) {}
 
 private:
+    const Problem& problem_() const
+    { return *problemPtr_; }
+
+    const Problem* problemPtr_;
+
     GridView gridView_;
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<std::shared_ptr<SubControlVolume>> scvs_;
@@ -199,19 +218,19 @@ public:
      */
     const FVElementGeometry& fvGeometry(const Element& element) const
     {
-        return fvGeometries_[getStencilScvIdx_(problem_().elementMapper().index(element))];
+        return fvGeometries_[getLocalScvIdx_(problem_().elementMapper().index(element), true)];
     }
 
     //! Get a sub control volume with a global scv index
     const SubControlVolume& subControlVolume(IndexType scvIdx) const
     {
-        return stencilScvs_[getStencilScvIdx_(scvIdx)];
+        return localSvs_[getLocalScvIdx_(scvIdx)];
     }
 
     //! Get a sub control volume face with a global scvf index
     const SubControlVolumeFace& subControlVolumeFace(IndexType scvfIdx) const
     {
-        return stencilScvfs_[getStencilScvFaceIdx_(scvfIdx)];
+        return localScvfs_[getLocalScvFaceIdx_(scvfIdx)];
     }
 
     //! The total number of sub control volumes
@@ -245,16 +264,17 @@ public:
     {
         problemPtr_ = &problem;
         elementMap_.clear();
-        scvFaceToElementMap_.clear();
         eIdxBound_ = -1;
 
-        // Build the SCV and SCV faces
+        // reserve memory or resize the containers
+        numScvs_ = gridView_.size(0);
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
-        numScvs_ = gridView_.size(0);
         elementMap_.resize(numScvs_);
         scvFaceIndices_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
+
+        // Build the SCV and SCV face
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
@@ -263,24 +283,24 @@ public:
             elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
-            std::vector<IndexType> scvfsIndexSet;
-            std::vector<IndexType> neighborVolVarIndexSet;
+            IndexType numLocalFaces = element.subEntities(1);
+            std::vector<IndexType> scvfsIndexSet(numLocalFaces);
+            std::vector<IndexType> neighborVolVarIndexSet(numLocalFaces);
             for (const auto& intersection : intersections(gridView_, element))
             {
+                IndexType localFaceIdx = intersection.indexInInside();
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
-                    scvFaceToElementMap_.push_back(eIdx);
-                    scvfsIndexSet.push_back(numScvf_++);
+                    scvfsIndexSet[localFaceIdx] = numScvf_++;
                     auto nIdx = problem.elementMapper().index(intersection.outside());
-                    neighborVolVarIndexSet.push_back(nIdx);
+                    neighborVolVarIndexSet[localFaceIdx] = nIdx;
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
-                    scvFaceToElementMap_.push_back(eIdx);
-                    scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back(numScvs_ + numBoundaryScvf_++);
+                    scvfsIndexSet[localFaceIdx] = numScvf_++;
+                    neighborVolVarIndexSet[localFaceIdx] = numScvs_ + numBoundaryScvf_++;
                 }
             }
 
@@ -294,13 +314,8 @@ public:
     // called by the local jacobian to prepare element assembly
     void bind(const Element& element)
     {
-        const auto eIdx = problem_().elementMapper().index(element);
-        if (eIdxBound_ == eIdx && fvGeometries_.size() > 1)
-            return;
-
+        eIdxBound_ = problem_().elementMapper().index(element);
         release_();
-        eIdxBound_ = eIdx;
-
         makeElementGeometries_(element);
         for (const auto& intersection : intersections(gridView_, element))
         {
@@ -312,13 +327,8 @@ public:
     // Binding of an element preparing the geometries only inside the element
     void bindElement(const Element& element)
     {
-        const auto eIdx = problem_().elementMapper().index(element);
-        if (eIdx == eIdxBound_ || std::find(stencilScvIndices_.begin(), stencilScvIndices_.end(), eIdx) != stencilScvIndices_.end() )
-            return;
-
+        eIdxBound_ = problem_().elementMapper().index(element);
         release_();
-        eIdxBound_ = eIdx;
-
         makeElementGeometries_(element);
     }
 
@@ -327,10 +337,10 @@ private:
 
     void release_()
     {
-        stencilScvs_.clear();
-        stencilScvIndices_.clear();
-        stencilScvfs_.clear();
-        stencilScvFaceIndices_.clear();
+        localSvs_.clear();
+        localScvIndices_.clear();
+        localScvfs_.clear();
+        localScvfIndices_.clear();
         fvGeometries_.clear();
     }
 
@@ -338,9 +348,9 @@ private:
     {
         const auto eIdx = problem_().elementMapper().index(element);
 
-        std::vector<SubControlVolume> scv({SubControlVolume(element.geometry(), eIdx)});
-        stencilScvs_.push_back(scv[0]);
-        stencilScvIndices_.push_back(eIdx);
+        SubControlVolume scv(element.geometry(), eIdx);
+        localSvs_.push_back(scv);
+        localScvIndices_.push_back(eIdx);
 
         const auto& scvFaceIndices = scvFaceIndices_[eIdx];
         const auto& neighborVolVarIndices = neighborVolVarIndices_[eIdx];
@@ -350,14 +360,15 @@ private:
         {
             if (intersection.neighbor() || intersection.boundary())
             {
-                stencilScvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
+                localScvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
                                                              intersection.geometry().center(),
                                                              intersection.centerUnitOuterNormal(),
                                                              scvFaceIndices[scvfCounter],
+                                                             intersection.indexInInside(),
                                                              std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]}),
                                                              intersection.boundary()));
 
-                stencilScvFaceIndices_.push_back(scvFaceIndices[scvfCounter]);
+                localScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
             }
         }
@@ -366,24 +377,31 @@ private:
         fvGeometries_.push_back(FVElementGeometry(*this, {eIdx}, scvFaceIndices));
     }
 
-    const int getStencilScvIdx_(const int scvIdx) const
+    const int getLocalScvIdx_(const int scvIdx, bool isElement = false) const
     {
-        auto it = std::find(stencilScvIndices_.begin(), stencilScvIndices_.end(), scvIdx);
+        auto it = std::find(localScvIndices_.begin(), localScvIndices_.end(), scvIdx);
 
-        if (it != stencilScvIndices_.end())
-            return std::distance(stencilScvIndices_.begin(), it);
+        if (it != localScvIndices_.end())
+            return std::distance(localScvIndices_.begin(), it);
         else
-            DUNE_THROW(Dune::InvalidStateException,
+        {
+            if (!isElement)
+                DUNE_THROW(Dune::InvalidStateException,
                        "Could not find the sub control volume for scvIdx = " << scvIdx <<
                        ", make sure to properly bind the FVGeometries to the element before using them.");
+            else
+                DUNE_THROW(Dune::InvalidStateException,
+                       "You are trying to get the fvgeometry of element with index " << scvIdx <<
+                       ", but bound is the element " << eIdxBound_ << ". Please bind element before using the fvgeometry.");
+        }
     }
 
-    const int getStencilScvFaceIdx_(const int scvfIdx) const
+    const int getLocalScvFaceIdx_(const int scvfIdx) const
     {
-        auto it = std::find(stencilScvFaceIndices_.begin(), stencilScvFaceIndices_.end(), scvfIdx);
+        auto it = std::find(localScvfIndices_.begin(), localScvfIndices_.end(), scvfIdx);
 
-        if (it != stencilScvFaceIndices_.end())
-            return std::distance(stencilScvFaceIndices_.begin(), it);
+        if (it != localScvfIndices_.end())
+            return std::distance(localScvfIndices_.begin(), it);
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "Could not find the sub control volume face for scvfIdx = " << scvfIdx <<
@@ -401,18 +419,17 @@ private:
     IndexType numScvf_;
     IndexType numBoundaryScvf_;
 
-    // vectors that stores global data
+    // vectors that store the global data
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<std::vector<IndexType>> scvFaceIndices_;
     std::vector<std::vector<IndexType>> neighborVolVarIndices_;
-    std::vector<IndexType> scvFaceToElementMap_;
 
     // vectors to store the geometries temporarily after binding an element
     IndexType eIdxBound_;
-    std::vector<SubControlVolume> stencilScvs_;
-    std::vector<IndexType> stencilScvIndices_;
-    std::vector<SubControlVolumeFace> stencilScvfs_;
-    std::vector<IndexType> stencilScvFaceIndices_;
+    std::vector<SubControlVolume> localSvs_;
+    std::vector<IndexType> localScvIndices_;
+    std::vector<SubControlVolumeFace> localScvfs_;
+    std::vector<IndexType> localScvfIndices_;
     std::vector<FVElementGeometry> fvGeometries_;
 };
 
