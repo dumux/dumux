@@ -22,17 +22,14 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-#ifndef DUMUX_IMPLICIT_BOX_FV_GEOMETRY_VECTOR_HH
-#define DUMUX_IMPLICIT_BOX_FV_GEOMETRY_VECTOR_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_FV_GEOMETRY_VECTOR_HH
+#define DUMUX_DISCRETIZATION_BOX_FV_GEOMETRY_VECTOR_HH
 
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/subcontrolvolume.hh>
-#include <dumux/implicit/subcontrolvolumeface.hh>
-#include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/common/elementmap.hh>
 #include <dumux/common/math.hh>
 

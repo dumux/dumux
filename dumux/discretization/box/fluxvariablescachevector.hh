@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for the volume variables vector
  */
-#ifndef DUMUX_IMPLICIT_BOX_FLUXVARSCACHEVECTOR_HH
-#define DUMUX_IMPLICIT_BOX_FLUXVARSCACHEVECTOR_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_FLUXVARSCACHEVECTOR_HH
+#define DUMUX_DISCRETIZATION_BOX_FLUXVARSCACHEVECTOR_HH
 
 #include <dumux/implicit/properties.hh>
 

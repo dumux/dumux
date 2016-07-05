@@ -28,13 +28,13 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
+#include <dumux/discretization/cellcentered/fluxvariablescachevector.hh>
+#include <dumux/discretization/cellcentered/volumevariablesvector.hh>
+#include <dumux/discretization/cellcentered/stencils.hh>
 
-#include "fluxvariablescachevector.hh"
-#include "volumevariablesvector.hh"
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
 #include "properties.hh"
-#include "stencils.hh"
 #include "localjacobian.hh"
 #include "assembler.hh"
 

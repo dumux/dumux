@@ -38,15 +38,15 @@
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 
-#include <dumux/porousmediumflow/constitutivelaws/darcyslaw.hh>
-#include <dumux/porousmediumflow/constitutivelaws/fickslaw.hh>
+#include <dumux/discretization/volumevariables.hh>
+#include <dumux/discretization/fvelementgeometry.hh>
+#include <dumux/discretization/darcyslaw.hh>
+#include <dumux/discretization/fickslaw.hh>
 
 #include "properties.hh"
 #include "model.hh"
 #include "assembler.hh"
 #include "localjacobian.hh"
-#include "volumevariables.hh"
-#include "fvelementgeometry.hh"
 
 namespace Dumux {
 

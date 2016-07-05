@@ -20,8 +20,8 @@
  * \file
  * \brief Implements the notion of stencils for vertex-centered models
  */
-#ifndef DUMUX_BOX_STENCILS_HH
-#define DUMUX_BOX_STENCILS_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_STENCILS_HH
+#define DUMUX_DISCRETIZATION_BOX_STENCILS_HH
 
 #include <set>
 #include <dumux/implicit/box/properties.hh>

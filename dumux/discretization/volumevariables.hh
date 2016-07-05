@@ -21,10 +21,10 @@
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
-#ifndef DUMUX_IMPLICIT_VOLUME_VARIABLES_HH
-#define DUMUX_IMPLICIT_VOLUME_VARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_VOLUME_VARIABLES_HH
+#define DUMUX_DISCRETIZATION_VOLUME_VARIABLES_HH
 
-#include "properties.hh"
+#include <dumux/implicit/properties.hh>
 
 #include <dumux/common/valgrind.hh>
 

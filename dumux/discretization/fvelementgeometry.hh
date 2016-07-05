@@ -21,14 +21,11 @@
  * \brief Class providing iterators over sub control volumes and sub control
  *        volume faces of an element.
  */
-#ifndef DUMUX_FV_ELEMENTGEOMETRY_HH
-#define DUMUX_FV_ELEMENTGEOMETRY_HH
+#ifndef DUMUX_DISCRETIZATION_FV_ELEMENTGEOMETRY_HH
+#define DUMUX_DISCRETIZATION_FV_ELEMENTGEOMETRY_HH
 
 #include <dune/common/iteratorrange.hh>
 #include <dune/common/iteratorfacades.hh>
-
-#include <dumux/implicit/subcontrolvolume.hh>
-#include <dumux/implicit/subcontrolvolumeface.hh>
 
 namespace Dumux
 {
@@ -41,7 +38,7 @@ NEW_PROP_TAG(FVElementGeometryVector);
 }
 
 /*!
- * \ingroup ImplcititModel
+ * \ingroup Discretization
  * \brief An iterator over sub control volumes
  */
 template<class SubControlVolume, class Vector, class FVElementGeometryVector>

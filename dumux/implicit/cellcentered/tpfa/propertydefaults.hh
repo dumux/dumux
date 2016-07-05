@@ -28,9 +28,10 @@
 #define DUMUX_CCTPFA_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
-#include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometryvector.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolume.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 
 namespace Dumux {
@@ -53,7 +54,7 @@ private:
     using ScvGeometry = typename Grid::template Codim<0>::Geometry;
     using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
 public:
-    typedef Dumux::SubControlVolume<ScvGeometry, IndexType, /*isBox=*/false> type;
+    typedef Dumux::CCTpfaSubControlVolume<ScvGeometry, IndexType> type;
 };
 
 SET_PROP(CCTpfaModel, SubControlVolumeFace)
@@ -63,7 +64,7 @@ private:
     using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
     using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
 public:
-    typedef Dumux::SubControlVolumeFace<ScvfGeometry, IndexType> type;
+    typedef Dumux::CCTpfaSubControlVolumeFace<ScvfGeometry, IndexType> type;
 };
 
 } // namespace Properties

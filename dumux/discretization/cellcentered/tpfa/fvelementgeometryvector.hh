@@ -22,12 +22,10 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-#ifndef DUMUX_IMPLICIT_TPFA_FV_GEOMETRY_VECTOR_HH
-#define DUMUX_IMPLICIT_TPFA_FV_GEOMETRY_VECTOR_HH
+#ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GEOMETRY_VECTOR_HH
+#define DUMUX_DISCRETIZATION_CCTPFA_FV_GEOMETRY_VECTOR_HH
 
-#include <dumux/implicit/subcontrolvolume.hh>
-#include <dumux/implicit/subcontrolvolumeface.hh>
-#include <dumux/implicit/fvelementgeometry.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/common/elementmap.hh>
 
 namespace Dumux
@@ -286,21 +284,21 @@ public:
             IndexType numLocalFaces = element.subEntities(1);
             std::vector<IndexType> scvfsIndexSet(numLocalFaces);
             std::vector<IndexType> neighborVolVarIndexSet(numLocalFaces);
+            IndexType localFaceIdx = 0;
             for (const auto& intersection : intersections(gridView_, element))
             {
-                IndexType localFaceIdx = intersection.indexInInside();
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
                     scvfsIndexSet[localFaceIdx] = numScvf_++;
                     auto nIdx = problem.elementMapper().index(intersection.outside());
-                    neighborVolVarIndexSet[localFaceIdx] = nIdx;
+                    neighborVolVarIndexSet[localFaceIdx++] = nIdx;
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
                     scvfsIndexSet[localFaceIdx] = numScvf_++;
-                    neighborVolVarIndexSet[localFaceIdx] = numScvs_ + numBoundaryScvf_++;
+                    neighborVolVarIndexSet[localFaceIdx++] = numScvs_ + numBoundaryScvf_++;
                 }
             }
 
@@ -361,12 +359,12 @@ private:
             if (intersection.neighbor() || intersection.boundary())
             {
                 localScvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
-                                                             intersection.geometry().center(),
-                                                             intersection.centerUnitOuterNormal(),
-                                                             scvFaceIndices[scvfCounter],
-                                                             intersection.indexInInside(),
-                                                             std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]}),
-                                                             intersection.boundary()));
+                                                           intersection.geometry().center(),
+                                                           intersection.centerUnitOuterNormal(),
+                                                           scvFaceIndices[scvfCounter],
+                                                           intersection.indexInInside(),
+                                                           std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]}),
+                                                           intersection.boundary()));
 
                 localScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;

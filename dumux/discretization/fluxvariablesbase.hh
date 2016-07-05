@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for the flux variables
  */
-#ifndef DUMUX_IMPLICIT_FLUXVARIABLESBASE_HH
-#define DUMUX_IMPLICIT_FLUXVARIABLESBASE_HH
+#ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
+#define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -29,7 +29,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup Discretization
  * \brief Base class for the flux variables
  *        Actual flux variables inherit from this class
  */

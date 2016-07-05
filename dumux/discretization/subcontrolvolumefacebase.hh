@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for a sub control volume face
  */
-#ifndef DUMUX_SUBCONTROLVOLUMEFACE_HH
-#define DUMUX_SUBCONTROLVOLUMEFACE_HH
+#ifndef DUMUX_DISCRETIZATION_SUBCONTROLVOLUMEFACEBASE_HH
+#define DUMUX_DISCRETIZATION_SUBCONTROLVOLUMEFACEBASE_HH
 
 #include <utility>
 #include <dune/common/fvector.hh>
@@ -30,12 +30,12 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup Discretization
  * \brief Base class for a sub control volume face, i.e a part of the boundary
  *        of a sub control volume we computing a flux on.
  */
 template<class Geometry, typename IndexType>
-class SubControlVolumeFace
+class SubControlVolumeFaceBase
 {
     using Scalar = typename Geometry::ctype;
     static const int dim = Geometry::mydimension;
@@ -45,13 +45,13 @@ class SubControlVolumeFace
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    SubControlVolumeFace(const Geometry& geometry,
-                         const GlobalPosition& ipGlobal,
-                         const GlobalPosition& unitOuterNormal,
-                         IndexType scvfIndex,
-                         IndexType indexInElement,
-                         const std::vector<IndexType>& scvIndices,
-                         bool boundary = false)
+    SubControlVolumeFaceBase(const Geometry& geometry,
+                             const GlobalPosition& ipGlobal,
+                             const GlobalPosition& unitOuterNormal,
+                             IndexType scvfIndex,
+                             IndexType indexInElement,
+                             const std::vector<IndexType>& scvIndices,
+                             bool boundary = false)
     : geometry_(geometry),
       ipGlobal_(ipGlobal),
       ipLocal_(geometry.local(ipGlobal)),
@@ -141,5 +141,6 @@ private:
 };
 
 } // end namespace
+
 
 #endif

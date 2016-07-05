@@ -24,7 +24,7 @@
 #define DUMUX_POROUSMEDIUMFLOW_IMPLICIT_FLUXVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/implicit/fluxvariablesbase.hh>
+#include <dumux/discretization/fluxvariablesbase.hh>
 
 namespace Dumux
 {
