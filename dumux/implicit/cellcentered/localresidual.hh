@@ -53,7 +53,7 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
 
     enum { constantBC = GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions) };
 
-    enum { enableVolVarsCache = GET_PROP_VALUE(TypeTag, EnableVolumeVariablesCache) };
+    enum { enableVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache) };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -70,23 +70,44 @@ public:
 
 protected:
 
+    void evalFluxes_()
+    {
+        // calculate the mass flux over the scv faces
+        const auto& fvGeometry = this->fvGeometry_();
+        for (const auto& scvf : fvGeometry.scvfs())
+        {
+            this->residual_[0] += this->asImp_().computeFlux_(scvf);
+        }
+    }
+
     PrimaryVariables computeFlux_(const SubControlVolumeFace &scvf)
     {
         if (!scvf.boundary() /*TODO: || GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
             return this->asImp_().computeFlux(scvf);
         else
-            return this->asImp_().evalBoundary_(scvf);
+            return PrimaryVariables(0.0);
+
     }
 
-    PrimaryVariables evalBoundary_(const SubControlVolumeFace &scvf)
+    void evalBoundary_()
     {
-        PrimaryVariables flux = evalBoundaryFluxes_(scvf);
+        const auto& fvGeometry = this->fvGeometry_();
+
+        for (const auto& scvf : fvGeometry.scvfs())
+        {
+            if (scvf.boundary())
+                this->residual_[0] += evalBoundaryFluxes_(scvf);
+        }
 
         // additionally treat mixed D/N conditions in a strong sense
         if (this->bcTypes_().hasDirichlet())
-            this->asImp_().evalDirichlet_(flux, scvf);
-
-        return flux;
+        {
+            for (const auto& scvf : fvGeometry.scvfs())
+            {
+                if (scvf.boundary())
+                    this->asImp_().evalDirichlet_(scvf);
+            }
+        }
     }
 
     /*!
@@ -99,11 +120,11 @@ protected:
 
         // evaluate the Neumann conditions at the boundary face
         PrimaryVariables flux(0);
-        if (bcTypes.hasNeumann())
+        if (bcTypes.hasNeumann() /*TODO: && !GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
             flux += this->asImp_().evalNeumannSegment_(scvf, bcTypes);
 
         // TODO: evaluate the outflow conditions at the boundary face
-        //if (bcTypes.hasOutflow())
+        //if (bcTypes.hasOutflow() /*TODO: && !GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
         //    flux += this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
 
         // evaluate the pure Dirichlet conditions at the boundary face
@@ -117,12 +138,12 @@ protected:
      * \brief Evaluate Dirichlet conditions on faces that have mixed
      *        Dirichlet/Neumann boundary conditions.
      */
-    void evalDirichlet_(PrimaryVariables &flux, const SubControlVolumeFace &scvf)
+    void evalDirichlet_(const SubControlVolumeFace &scvf)
     {
         BoundaryTypes bcTypes = this->problem_().boundaryTypes(this->element_(), scvf);
 
         if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
-            this->asImp_().evalDirichletSegmentMixed_(flux, scvf, bcTypes);
+            this->asImp_().evalDirichletSegmentMixed_(scvf, bcTypes);
     }
 
     /*!
@@ -240,8 +261,7 @@ protected:
      * \brief Treat Dirichlet boundary conditions in a strong sense for a
      *        single intersection that has mixed D/N boundary conditions
      */
-    void evalDirichletSegmentMixed_(PrimaryVariables &flux,
-                                    const SubControlVolumeFace &scvf,
+    void evalDirichletSegmentMixed_(const SubControlVolumeFace &scvf,
                                     const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet values
@@ -257,7 +277,6 @@ protected:
             {
                 auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                 this->residual_[0][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
-                flux[eqIdx] = 0;
             }
         }
     }
