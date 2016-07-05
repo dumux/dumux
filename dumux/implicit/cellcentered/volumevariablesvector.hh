@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for the volume variables vector
  */
-#ifndef DUMUX_IMPLICIT_VOLVARSVECTOR_HH
-#define DUMUX_IMPLICIT_VOLVARSVECTOR_HH
+#ifndef DUMUX_IMPLICIT_CC_VOLVARSVECTOR_HH
+#define DUMUX_IMPLICIT_CC_VOLVARSVECTOR_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -33,14 +33,14 @@ namespace Dumux
  * \brief Base class for the volume variables vector
  */
 template<class TypeTag, bool useOldSol, bool enableVolVarsCache>
-class VolumeVariablesVector
+class CCVolumeVariablesVector
 {};
 
 // specialization in case of storing the volume variables
 template<class TypeTag, bool useOldSol>
-class VolumeVariablesVector<TypeTag, useOldSol,/*enableVolVarCaching*/true> : public std::vector<typename GET_PROP_TYPE(TypeTag, VolumeVariables)>
+class CCVolumeVariablesVector<TypeTag, useOldSol,/*enableVolVarCaching*/true> : public std::vector<typename GET_PROP_TYPE(TypeTag, VolumeVariables)>
 {
-    friend VolumeVariablesVector<TypeTag, !useOldSol, true>;
+    friend CCVolumeVariablesVector<TypeTag, !useOldSol, true>;
     friend ImplicitModel<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -48,13 +48,13 @@ class VolumeVariablesVector<TypeTag, useOldSol,/*enableVolVarCaching*/true> : pu
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
+
+    static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    CCVolumeVariablesVector<TypeTag, useOldSol, true>& operator= (const CCVolumeVariablesVector<TypeTag, useOldSol, true>& other) = default;
 
-    VolumeVariablesVector<TypeTag, useOldSol, true>& operator= (const VolumeVariablesVector<TypeTag, useOldSol, true>& other) = default;
-
-    VolumeVariablesVector<TypeTag, useOldSol, true>& operator= (const VolumeVariablesVector<TypeTag, !useOldSol, true>& other)
+    CCVolumeVariablesVector<TypeTag, useOldSol, true>& operator= (const CCVolumeVariablesVector<TypeTag, !useOldSol, true>& other)
     {
         // do the copy
         numScvs_ = other.numScvs_;
@@ -70,10 +70,7 @@ public:
     void update(Problem& problem, const SolutionVector& sol)
     {
         numScvs_ = problem.model().fvGeometries().numScv();
-        if (!isBox)
-            numBoundaryScvs_ = problem.model().fvGeometries().numBoundaryScvf();
-        else
-            numBoundaryScvs_ = 0;
+        numBoundaryScvs_ = problem.model().fvGeometries().numBoundaryScvf();
 
         volumeVariables_.resize(numScvs_);
         boundaryVolumeVariables_.resize(numBoundaryScvs_);
@@ -83,36 +80,42 @@ public:
             const auto& fvGeometry = problem.model().fvGeometries(element);
             for (const auto& scv : fvGeometry.scvs())
             {
-                (*this)[scv.index()].update(sol[scv.dofIndex()],
-                                            problem,
-                                            element,
-                                            scv);
+                (*this)[scv].update(sol[scv.dofIndex()],
+                                    problem,
+                                    element,
+                                    scv);
             }
 
-            if (!isBox)
+            // handle the boundary volume variables
+            for (const auto& scvFace : fvGeometry.scvfs())
             {
-                for (const auto& scvFace : fvGeometry.scvfs())
-                {
-                    // if we are not on a boundary, skip the rest
-                    if (!scvFace.boundary())
-                        continue;
+                // if we are not on a boundary, skip the rest
+                if (!scvFace.boundary())
+                    continue;
 
-                    // When complex boundary handling is inactive, we only use BC vol vars on pure Dirichlet boundaries
-                    const auto bcTypes = problem.boundaryTypes(element, scvFace);
-                    if (/*TODO !GET_PROP_VALUE(TypeTag, BoundaryReconstruction) && */!(bcTypes.hasDirichlet() && !bcTypes.hasNeumann()))
-                        continue;
+                // When complex boundary handling is inactive, we only use BC vol vars on pure Dirichlet boundaries
+                const auto bcTypes = problem.boundaryTypes(element, scvFace);
+                if (/*TODO !GET_PROP_VALUE(TypeTag, BoundaryReconstruction) && */!(bcTypes.hasDirichlet() && !bcTypes.hasNeumann()))
+                    continue;
 
-                    const auto insideScvIdx = scvFace.insideScvIdx();
-                    const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-                    const auto dirichletPriVars = problem.dirichlet(element, scvFace);
+                const auto insideScvIdx = scvFace.insideScvIdx();
+                const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+                const auto dirichletPriVars = problem.dirichlet(element, scvFace);
 
-                    (*this)[scvFace.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
-                }
+                (*this)[scvFace.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
             }
         }
     }
 
-    const VolumeVariables& operator [](IndexType scvIdx) const
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return (*this)[scv.index()]; }
+
+    VolumeVariables& operator [](const SubControlVolume& scv)
+    { return (*this)[scv.index()]; }
+
+    // operator for the access with an index
+    // needed for cc methods for the access to the boundary volume variables
+    const VolumeVariables& operator [](const IndexType scvIdx) const
     {
         assert(scvIdx < numScvs_ + numBoundaryScvs_);
 
@@ -122,7 +125,7 @@ public:
             return boundaryVolumeVariables_[scvIdx-numScvs_];
     }
 
-    VolumeVariables& operator [](IndexType scvIdx)
+    VolumeVariables& operator [](const IndexType scvIdx)
     {
         assert(scvIdx < numScvs_ + numBoundaryScvs_);
 
@@ -134,9 +137,9 @@ public:
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
-    void bind(const Element& element) const {}
+    void bind(const Element& element) {}
     // function to prepare the vol vars within the element
-    void bindElement(const Element& element) const {}
+    void bindElement(const Element& element) {}
 
 private:
     IndexType numScvs_;
@@ -148,10 +151,10 @@ private:
 
 // Specialization when the current volume variables are not stored
 template<class TypeTag>
-class VolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/false>
+class CCVolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/false>
 {
     // prev vol vars have to be a friend class in order for the assignment operator to work
-    friend VolumeVariablesVector<TypeTag, true, false>;
+    friend CCVolumeVariablesVector<TypeTag, true, false>;
     friend ImplicitModel<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -159,16 +162,19 @@ class VolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/f
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
+
+    static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    VolumeVariablesVector& operator= (const VolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/false>& other) = default;
+    CCVolumeVariablesVector& operator= (const CCVolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/false>& other) = default;
 
-    void operator= (const VolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/false>& other)
+    // operator curVolVars = prevVolVars
+    void operator= (const CCVolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/false>& other)
     {
         eIdxBound_ = -1;
     }
 
-    VolumeVariablesVector() : problemPtr_(nullptr), eIdxBound_(-1) {}
+    CCVolumeVariablesVector() : problemPtr_(nullptr), eIdxBound_(-1) {}
 
 
 public:
@@ -181,39 +187,28 @@ public:
 
     // Binding of an element, prepares the volume variables within the element stencil
     // called by the local jacobian to prepare element assembly
-    // specialization for cc models
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(TypeTag, ImplicitIsBox)>::type
-    bind(const Element& element)
+    void bind(const Element& element)
     {
-        const auto eIdx = problem_().elementMapper().index(element);
-        if (eIdx == eIdxBound_ && volVarIndices_.size() > 1)
-            return;
+        eIdxBound_ = problem_().elementMapper().index(element);
 
-        eIdxBound_ = eIdx;
-
-        // make sure the FVElementGeometry is bound to the element
-        problem_().model().fvGeometries_().bind(element);
-        const auto& fvGeometry = problem_().model().fvGeometries(eIdx);
-
-        // get stencil information
+        // stencil information
         const auto& elementStencil = problem_().model().stencils(element).elementStencil();
         const auto& neighborStencil = problem_().model().stencils(element).neighborStencil();
         const auto numDofs = elementStencil.size();
 
-        // resize volume variables to the required size
+        // resize local containers to the required size (for internal elements)
         volumeVariables_.resize(numDofs);
         volVarIndices_.resize(numDofs);
         int localIdx = 0;
 
         // update the volume variables of the element at hand
-        const auto& scvI = problem_().model().fvGeometries().subControlVolume(eIdx);
-        const auto& solI = problem_().model().curSol()[eIdx];
+        const auto& scvI = problem_().model().fvGeometries().subControlVolume(eIdxBound_);
+        const auto& solI = problem_().model().curSol()[eIdxBound_];
         volumeVariables_[localIdx].update(solI, problem_(), element, scvI);
         volVarIndices_[localIdx] = scvI.index();
         localIdx++;
 
-        // Update the volume variables of the neighboring elements and the boundary
+        // Update the volume variables of the neighboring elements
         for (auto globalJ : neighborStencil)
         {
             const auto& elementJ = problem_().model().fvGeometries().element(globalJ);
@@ -224,7 +219,8 @@ public:
             localIdx++;
         }
 
-        // Check for boundary volume variables
+        // Update boundary volume variables
+        const auto& fvGeometry = problem_().model().fvGeometries(element);
         for (const auto& scvFace : fvGeometry.scvfs())
         {
             // if we are not on a boundary, skip the rest
@@ -233,12 +229,12 @@ public:
 
             // When complex boundary handling is inactive, we only use BC vol vars on pure Dirichlet boundaries
             const auto bcTypes = problem_().boundaryTypes(element, scvFace);
-            if (/*TODO !GET_PROP_VALUE(TypeTag, BoundaryReconstruction) && */!(bcTypes.hasDirichlet() && !bcTypes.hasNeumann()))
+            if (/*TODO !GET_PROP_VALUE(TypeTag, BoundaryReconstruction) && */bcTypes.hasNeumann() || bcTypes.hasOutflow())
                 continue;
 
+            const auto dirichletPriVars = problem_().dirichlet(element, scvFace);
             volumeVariables_.resize(localIdx+1);
             volVarIndices_.resize(localIdx+1);
-            const auto dirichletPriVars = problem_().dirichlet(element, scvFace);
             volumeVariables_[localIdx].update(dirichletPriVars, problem_(), element, scvI);
             volVarIndices_[localIdx] = scvFace.outsideScvIdx();
             localIdx++;
@@ -247,27 +243,24 @@ public:
 
     // Binding of an element, prepares only the volume variables of the element
     // specialization for cc models
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(TypeTag, ImplicitIsBox)>::type
-    bindElement(const Element& element)
+    void bindElement(const Element& element)
     {
-        const auto eIdx = problem_().elementMapper().index(element);
-        if (eIdx == eIdxBound_ || std::find(volVarIndices_.begin(), volVarIndices_.end(), eIdx) != volVarIndices_.end())
-            return;
-
+        eIdxBound_ = problem_().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
-        eIdxBound_ = eIdx;
-
-        // make sure the FVElementGeometry is bound to the element
-        problem_().model().fvGeometries_().bindElement(element);
 
         // update the volume variables of the element at hand
-        const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdx);
-        const auto& sol = problem_().model().curSol()[eIdx];
+        const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdxBound_);
+        const auto& sol = problem_().model().curSol()[eIdxBound_];
         volumeVariables_[0].update(sol, problem_(), element, scv);
         volVarIndices_[0] = scv.index();
     }
+
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return (*this)[scv.index()]; }
+
+    VolumeVariables& operator [](const SubControlVolume& scv)
+    { return (*this)[scv.index()]; }
 
     const VolumeVariables& operator [](IndexType scvIdx) const
     {
@@ -309,10 +302,10 @@ private:
 
 // Specialization when the previous volume variables are not stored
 template<class TypeTag>
-class VolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/false>
+class CCVolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/false>
 {
     // current vol vars have to be a friend class in order for the assignment operator to work
-    friend VolumeVariablesVector<TypeTag, false, false>;
+    friend CCVolumeVariablesVector<TypeTag, false, false>;
     friend ImplicitModel<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -320,9 +313,12 @@ class VolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/fa
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
 
-    VolumeVariablesVector& operator= (const VolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/false>& other)
+    static const int dim = GridView::dimension;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+
+    CCVolumeVariablesVector& operator= (const CCVolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*/false>& other)
     {
         release_();
         problemPtr_ = other.problemPtr_;
@@ -330,7 +326,7 @@ class VolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/fa
         return *this;
     }
 
-    VolumeVariablesVector() : problemPtr_(nullptr), eIdxBound_(-1) {}
+    CCVolumeVariablesVector() : problemPtr_(nullptr), eIdxBound_(-1) {}
 
 
 public:
@@ -341,28 +337,24 @@ public:
     }
 
     // Binding of an element, prepares the volume variables of only the element
-    // specialization for cc models
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(TypeTag, ImplicitIsBox)>::type
-    bindElement(const Element& element)
+    void bindElement(const Element& element)
     {
-        const auto eIdx = problem_().elementMapper().index(element);
-        if (eIdx == eIdxBound_)
-            return;
-
+        eIdxBound_ = problem_().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
-        eIdxBound_ = eIdx;
-
-        // make sure FVElementGeometry is bound to the element
-        problem_().model().fvGeometries_().bindElement(element);
 
         // update the volume variables of the element at hand
-        const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdx);
-        const auto& sol = problem_().model().prevSol()[eIdx];
+        const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdxBound_);
+        const auto& sol = problem_().model().prevSol()[eIdxBound_];
         volumeVariables_[0].update(sol, problem_(), element, scv);
         volVarIndices_[0] = scv.index();
     }
+
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return (*this)[scv.index()]; }
+
+    VolumeVariables& operator [](const SubControlVolume& scv)
+    { return (*this)[scv.index()]; }
 
     const VolumeVariables& operator [](IndexType scvIdx) const
     {

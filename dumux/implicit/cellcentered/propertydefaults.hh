@@ -28,6 +28,7 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
+#include "volumevariablesvector.hh"
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
 #include "properties.hh"
@@ -59,6 +60,12 @@ SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
 
 //! The stencil container
 SET_TYPE_PROP(CCModel, StencilsVector, CCStencilsVector<TypeTag>);
+
+//! The global current volume variables vector class
+SET_TYPE_PROP(CCModel, CurrentVolumeVariablesVector, Dumux::CCVolumeVariablesVector<TypeTag, false, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The global previous volume variables vector class
+SET_TYPE_PROP(CCModel, PreviousVolumeVariablesVector, Dumux::CCVolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);

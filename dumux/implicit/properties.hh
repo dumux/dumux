@@ -61,7 +61,7 @@ NEW_PROP_TAG(SubControlVolume);//!< The type of the sub control volume
 NEW_PROP_TAG(SubControlVolumeFace); //!< The type of the sub control volume face
 NEW_PROP_TAG(FVElementGeometry); //!< The type of the finite volume geometry (iterators over scvs, scvfs)
 NEW_PROP_TAG(FVElementGeometryVector); //!< The type of the finite volume geometry vector
-NEW_PROP_TAG(EnableFVElementGeometryCache); //! specifies if geometric data is be saved (faster, but more memory consuming)
+NEW_PROP_TAG(EnableGlobalFVElementGeometryCache); //! specifies if geometric data is be saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(JacobianAssembler); //!< Assembles the global jacobian matrix
 NEW_PROP_TAG(JacobianMatrix); //!< Type of the global jacobian matrix
@@ -72,14 +72,14 @@ NEW_PROP_TAG(PrimaryVariables); //!< A vector of primary variables within a sub-
 NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
 
-NEW_PROP_TAG(EnableVolumeVariablesCache); //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
+NEW_PROP_TAG(EnableGlobalVolumeVariablesCache); //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
 NEW_PROP_TAG(CurrentVolumeVariablesVector);  //!< The type for a container of current volume variables
 NEW_PROP_TAG(PreviousVolumeVariablesVector);  //!< The type for a container of previous volume variables
 NEW_PROP_TAG(FluxVariables); //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache); //!< Stores data associated with flux vars (if enabled)
 NEW_PROP_TAG(FluxVariablesCacheVector); //!< The global vector of flux variable containers
-NEW_PROP_TAG(EnableFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
+NEW_PROP_TAG(EnableGlobalFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
 NEW_PROP_TAG(ConstantBoundaryConditions); //!< boundary data is stored in case the BC are constant
 

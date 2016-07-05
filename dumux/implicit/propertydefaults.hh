@@ -175,13 +175,13 @@ SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
 
 //! We do not store the FVGeometry by default
-SET_BOOL_PROP(ImplicitBase, EnableFVElementGeometryCache, false);
+SET_BOOL_PROP(ImplicitBase, EnableGlobalFVElementGeometryCache, false);
 
 //! We do not store the volume variables by default
-SET_BOOL_PROP(ImplicitBase, EnableVolumeVariablesCache, false);
+SET_BOOL_PROP(ImplicitBase, EnableGlobalVolumeVariablesCache, false);
 
 //! disable flux variables data caching by default
-SET_BOOL_PROP(ImplicitBase, EnableFluxVariablesCache, false);
+SET_BOOL_PROP(ImplicitBase, EnableGlobalFluxVariablesCache, false);
 
 //! boundary conditions are not stationary by default
 SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);

@@ -43,7 +43,7 @@ namespace Properties {
 SET_INT_PROP(CCTpfaModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa);
 
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVElementGeometryCache)>);
+SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVElementGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(CCTpfaModel, SubControlVolume)
