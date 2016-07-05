@@ -49,6 +49,7 @@ public:
                          const GlobalPosition& ipGlobal,
                          const GlobalPosition& unitOuterNormal,
                          IndexType scvfIndex,
+                         IndexType indexInElement,
                          const std::vector<IndexType>& scvIndices,
                          bool boundary = false)
     : geometry_(geometry),
@@ -56,6 +57,7 @@ public:
       ipLocal_(geometry.local(ipGlobal)),
       unitOuterNormal_(unitOuterNormal),
       scvfIndex_(scvfIndex),
+      indexInElement_(indexInElement),
       scvIndices_(scvIndices),
       boundary_(boundary) {}
 
@@ -121,12 +123,19 @@ public:
         return scvfIndex_;
     }
 
+    //! The global index of this sub control volume face
+    IndexType indexInElement() const
+    {
+        return indexInElement_;
+    }
+
 private:
     Geometry geometry_;
     GlobalPosition ipGlobal_;
     LocalPosition ipLocal_;
     GlobalPosition unitOuterNormal_;
     IndexType scvfIndex_;
+    IndexType indexInElement_;
     std::vector<IndexType> scvIndices_;
     bool boundary_;
 };
