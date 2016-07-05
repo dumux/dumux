@@ -793,10 +793,7 @@ public:
     { return *fvGeometryVector_; }
 
     const FVElementGeometry& fvGeometries(const Element& element) const
-    { return fvGeometryVector_->fvGeometry(elementMapper().index(element)); }
-
-    const FVElementGeometry& fvGeometries(unsigned int eIdx) const
-    { return fvGeometryVector_->fvGeometry(eIdx); }
+    { return fvGeometryVector_->fvGeometry(element); }
 
 protected:
 

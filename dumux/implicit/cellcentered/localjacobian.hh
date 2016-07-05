@@ -124,8 +124,8 @@ public:
             assemblyMap_[globalI].reserve(neighborStencil.size());
             for (auto globalJ : neighborStencil)
             {
-                const auto& fvGeometry = this->model_().fvGeometries(globalJ);
                 const auto& elementJ = this->model_().fvGeometries().element(globalJ);
+                const auto& fvGeometry = this->model_().fvGeometries(elementJ);
 
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
@@ -166,7 +166,7 @@ public:
         // finite volume geometry
         globalI_ = this->problem_().elementMapper().index(element);
 
-        const auto& fvGeometry = fvElemGeom_();
+        const auto& fvGeometry = this->model_().fvGeometries(element);
         bcTypes_.update(this->problem_(), element, fvGeometry);
 
         // calculate the local residual
@@ -337,12 +337,6 @@ public:
             for (auto globalJ : neighborStencil)
                 this->updateGlobalJacobian_(matrix, globalJ, globalI_, pvIdx, neighborDeriv[j++]);
         }
-    }
-
-
-    const FVElementGeometry& fvElemGeom_() const
-    {
-        return this->model_().fvGeometries(globalI_);
     }
 
     IndexType globalI_;

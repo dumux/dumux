@@ -64,9 +64,9 @@ public:
      * \note The finite volume geometry offers iterators over the sub control volumes
      *       and the sub control volume faces of an element.
      */
-    const FVElementGeometry& fvGeometry(IndexType eIdx) const
+    const FVElementGeometry& fvGeometry(const Element& element) const
     {
-        return fvGeometries_[eIdx];
+        return fvGeometries_[problem_().elementMapper().index(element)];
     }
 
     //! Get a sub control volume with a global scv index
@@ -197,11 +197,6 @@ public:
      * \note The finite volume geometry offers iterators over the sub control volumes
      *       and the sub control volume faces of an element.
      */
-    const FVElementGeometry& fvGeometry(IndexType eIdx) const
-    {
-        return fvGeometries_[getStencilScvIdx_(eIdx)];
-    }
-
     const FVElementGeometry& fvGeometry(const Element& element) const
     {
         return fvGeometries_[getStencilScvIdx_(problem_().elementMapper().index(element))];
