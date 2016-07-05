@@ -95,6 +95,7 @@ public:
         model_().fvGeometries_().bind(element);
         model_().curVolVars_().bind(element);
         model_().prevVolVars_().bindElement(element);
+        model_().fluxVariablesCache_().bindElement(element);
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -143,6 +144,7 @@ public:
         model_().fvGeometries_().bind(element);
         model_().curVolVars_().bind(element);
         model_().prevVolVars_().bindElement(element);
+        model_().fluxVariablesCache_().bindElement(element);
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -187,6 +189,7 @@ public:
 
         asImp_().evalFluxes_();
         asImp_().evalVolumeTerms_();
+        asImp_().evalBoundary_();
     }
 
     /*!
@@ -249,29 +252,6 @@ protected:
     {
         assert(static_cast<const Implementation*>(this) != 0);
         return *static_cast<const Implementation*>(this);
-    }
-
-    void evalFluxes_()
-    {
-        // calculate the mass flux over the scv faces and subtract
-        const auto& fvGeometry = fvGeometry_();
-        for (const auto& scvf : fvGeometry.scvfs())
-        {
-            auto flux = asImp_().computeFlux_(scvf);
-
-            if (!isBox)
-            {
-                residual_[0] += flux;
-            }
-            else
-            {
-                const auto& insideScv = model_().fvGeometries().subControlVolume(scvf.insideScvIdx());
-                const auto& outsideScv = model_().fvGeometries().subControlVolume(scvf.outsideScvIdx());
-
-                residual_[insideScv.indexInElement()] += flux;
-                residual_[outsideScv.indexInElement()] -= flux;
-            }
-        }
     }
 
     PrimaryVariables evalFlux_(const Element &element, const int scvfIdx)
@@ -389,8 +369,8 @@ protected:
             prevStorage *= prevExtrusionFactor;
             curStorage *= curExtrusionFactor;
 
-            storageTerm_[scvIdx] = curStorage;
-            storageTerm_[scvIdx] -= prevStorage;
+            storageTerm_[scvIdx] = std::move(curStorage);
+            storageTerm_[scvIdx] -= std::move(prevStorage);
             storageTerm_[scvIdx] *= scv.volume();
             storageTerm_[scvIdx] /= problem_().timeManager().timeStepSize();
 
