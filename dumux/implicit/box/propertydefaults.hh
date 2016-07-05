@@ -28,10 +28,15 @@
 
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
-#include <dumux/implicit/box/fvelementgeometryvector.hh>
+#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 
+#include "fluxvariablescachevector.hh"
+#include "volumevariablesvector.hh"
 #include "elementboundarytypes.hh"
+#include "fvelementgeometryvector.hh"
 #include "localresidual.hh"
+#include "localjacobian.hh"
+#include "assembler.hh"
 #include "properties.hh"
 #include "stencils.hh"
 
@@ -43,15 +48,15 @@ namespace Dumux {
 // forward declarations
 template<class TypeTag> class BoxLocalResidual;
 template<class TypeTag> class BoxElementBoundaryTypes;
-template<class TypeTag> class BoxFVElementGeometryVector;
 template<class TypeTag> class BoxStencilsVector;
+template<class TypeTag, bool enableFVElementGeometryCache> class BoxFVElementGeometryVector;
 
 namespace Properties {
 //! Set the corresponding discretization method property
 SET_INT_PROP(BoxModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::Box);
 
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(BoxModel, FVElementGeometryVector, BoxFVElementGeometryVector<TypeTag>);
+SET_TYPE_PROP(BoxModel, FVElementGeometryVector, BoxFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVElementGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(BoxModel, SubControlVolume)
@@ -89,8 +94,23 @@ SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper)
 //! The stencil container
 SET_TYPE_PROP(BoxModel, StencilsVector, BoxStencilsVector<TypeTag>);
 
+//! The global current volume variables vector class
+SET_TYPE_PROP(BoxModel, CurrentVolumeVariablesVector, Dumux::BoxVolumeVariablesVector<TypeTag, false, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The global previous volume variables vector class
+SET_TYPE_PROP(BoxModel, PreviousVolumeVariablesVector, Dumux::BoxVolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The global flux variables cache vector class
+SET_TYPE_PROP(BoxModel, FluxVariablesCacheVector, Dumux::BoxFluxVariablesCacheVector<TypeTag>);
+
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);
+
+//! Assembler for the global jacobian matrix
+SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
+
+//! The local jacobian operator
+SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
 
 //! indicate that this is a box discretization
 SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);
