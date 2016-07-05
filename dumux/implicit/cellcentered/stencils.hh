@@ -52,7 +52,7 @@ public:
         for (const auto& scvf : fvGeometry.scvfs())
         {
             FluxVariables fluxVars;
-            const auto& stencil = fluxVars.computeStencil(problem, scvf);
+            const auto& stencil = fluxVars.computeStencil(problem, element, scvf);
 
             elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
         }
@@ -63,7 +63,7 @@ public:
         auto globalI = problem.elementMapper().index(element);
         neighborStencil_ = elementStencil_;
 
-        //remove the element itself and possible ghost neighbors from the stencil
+        // remove the element itself and possible ghost neighbors from the neighbor stencil
         auto pred = [&problem, globalI](const int i) -> bool
         {
             if (i == globalI)

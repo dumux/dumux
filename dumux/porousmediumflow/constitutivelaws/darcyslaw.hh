@@ -41,7 +41,6 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration of properties
-NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(ProblemEnableGravity);
 }
 
@@ -63,15 +62,14 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IndexSet::IndexType IndexType;
     typedef std::vector<IndexType> Stencil;
 
-    using Element = typename GridView::template Codim<0>::Entity;
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -79,17 +77,15 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
 public:
 
     static Scalar flux(const Problem& problem,
+                       const Element& element,
                        const SubControlVolumeFace& scvFace,
                        const IndexType phaseIdx)
     {
         const auto& tij = problem.model().fluxVarsCache(scvFace).tij();
 
-        // Get the inside volume variables
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        // Get the inside and outside volume variables
+        const auto& insideScv = problem.model().fvGeometries().subControlVolume(scvFace.insideScvIdx());
         const auto& insideVolVars = problem.model().curVolVars(insideScv);
-
-        // and the outside volume variables
         const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
 
         auto hInside = insideVolVars.pressure(phaseIdx);
@@ -101,7 +97,6 @@ public:
             const auto rhoInside = insideVolVars.density(phaseIdx);
             const auto rhoOutide = outsideVolVars.density(phaseIdx);
             const auto rho = (rhoInside + rhoOutide)*0.5;
-
 
             // ask for the gravitational acceleration in the inside neighbor
             const auto xInside = insideScv.center();
@@ -129,9 +124,9 @@ public:
         return tij*(hInside - hOutside);
     }
 
-    static Stencil stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
+    static Stencil stencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
-        std::vector<IndexType> stencil;
+        Stencil stencil;
         if (!scvFace.boundary())
         {
             stencil.push_back(scvFace.insideScvIdx());
@@ -143,21 +138,24 @@ public:
         return stencil;
     }
 
-    static Scalar calculateTransmissibilities(const Problem& problem, const SubControlVolumeFace& scvFace)
+    // The flux variables cache has to be bound to an element prior to flux calculations
+    // During the binding, the transmissibilities will be computed and stored using the method below.
+    static Scalar calculateTransmissibilities(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
         Scalar tij;
 
         const auto insideScvIdx = scvFace.insideScvIdx();
         const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
         const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv);
-        Scalar ti = calculateOmega_(problem, scvFace, insideK, insideScv);
+        Scalar ti = calculateOmega_(problem, scvFace, insideK, element, insideScv);
 
         if (!scvFace.boundary())
         {
             const auto outsideScvIdx = scvFace.outsideScvIdx();
             const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
+            const auto outsideElement = problem.model().fvGeometries().element(outsideScvIdx);
             const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv);
-            Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideScv);
+            Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideElement, outsideScv);
 
             tij = scvFace.area()*(ti * tj)/(ti + tj);
         }
@@ -171,7 +169,7 @@ public:
 
 private:
 
-    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &K, const SubControlVolume &scv)
+    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &K, const Element& element, const SubControlVolume &scv)
     {
         GlobalPosition Knormal;
         K.mv(scvFace.unitOuterNormal(), Knormal);
@@ -181,19 +179,19 @@ private:
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = Knormal * distanceVector;
-        omega *= problem.model().curVolVars(scv).extrusionFactor();
+        omega *= problem.boxExtrusionFactor(element, scv);
 
         return omega;
     }
 
-    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, Scalar K, const SubControlVolume &scv)
+    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const Scalar K, const Element& element, const SubControlVolume &scv)
     {
         auto distanceVector = scvFace.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = K * (distanceVector * scvFace.unitOuterNormal());
-        omega *= problem.model().curVolVars(scv).extrusionFactor();
+        omega *= problem.boxExtrusionFactor(element, scv);
 
         return omega;
     }

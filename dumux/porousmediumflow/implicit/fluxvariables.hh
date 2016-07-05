@@ -57,11 +57,11 @@ class PorousMediumFluxVariables<TypeTag, true, false, false> : public FluxVariab
     using Stencil = std::vector<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     enum
     {
         isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox),
-        enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableFluxVariablesCache),
         constantBC = GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions)
     };
 
@@ -77,9 +77,10 @@ public:
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType upwindFunction)
     {
-        Scalar flux = AdvectionType::flux(this->problem(), this->scvFace(), phaseIdx);
+        Scalar flux = AdvectionType::flux(this->problem(), this->element(), this->scvFace(), phaseIdx);
 
-        const auto& insideVolVars = this->problem().model().curVolVars(this->scvFace().insideScvIdx());
+        const auto& insideScv = this->problem().model().fvGeometries().subControlVolume(this->scvFace().insideScvIdx());
+        const auto& insideVolVars = this->problem().model().curVolVars(insideScv);
         const auto& outsideVolVars = this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
 
         if (std::signbit(flux))
@@ -88,8 +89,8 @@ public:
             return flux*upwindFunction(insideVolVars, outsideVolVars);
     }
 
-    Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
-    { return AdvectionType::stencil(problem, scvFace); }
+    Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    { return AdvectionType::stencil(problem, element, scvFace); }
 };
 
 
@@ -124,14 +125,14 @@ public:
         ParentType::init(problem, element, scvFace);
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            advectiveFluxes_[phaseIdx] = AdvectionType::flux(problem, scvFace, phaseIdx);
+            advectiveFluxes_[phaseIdx] = AdvectionType::flux(problem, element, scvFace, phaseIdx);
     }
 
-    Stencil computeStencil(const Problem& problem, const SubControlVolumeFace& scvFace)
+    Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     {
         // unifiy advective and diffusive stencil
-        Stencil stencil = AdvectionType::stencil(problem, scvFace);
-        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, scvFace);
+        Stencil stencil = AdvectionType::stencil(problem, element, scvFace);
+        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, scvFace);
 
         stencil.insert(stencil.end(), diffusionStencil.begin(), diffusionStencil.end());
         std::sort(stencil.begin(), stencil.end());
@@ -154,7 +155,7 @@ public:
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
     {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(), this->scvFace(), phaseIdx, compIdx);
+        Scalar flux = MolecularDiffusionType::flux(this->problem(), this->element(), this->scvFace(), phaseIdx, compIdx);
         return flux;
     }
 
