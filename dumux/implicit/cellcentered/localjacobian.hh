@@ -285,7 +285,7 @@ private:
                 // to calculate f(x + \epsilon) and we can recycle the
                 // (already calculated) residual f(x)
                 if (!isGhost)
-                    partialDeriv = this->residual_[0];
+                    partialDeriv = this->residual(0);
                 neighborDeriv = origFlux;
             }
 
@@ -324,7 +324,7 @@ private:
                 // calculate f(x - \epsilon) and we can recycle the
                 // (already calculated) residual f(x)
                 if (!isGhost)
-                    partialDeriv -= this->residual_[0];
+                    partialDeriv -= this->residual(0);
                 neighborDeriv -= origFlux;
             }
 
