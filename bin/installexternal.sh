@@ -412,17 +412,12 @@ for TMP in "$@"; do
             MPICXX=$(which mpicxx)
             MPIF77=$(which mpif77)
 
-            if test -f $(pwd)'/../dune-common/bin/mpi-config'; then 
-                MPICONFIG=$(pwd)'/../dune-common/bin/mpi-config'
+            if test -f $TOPDIR'/dune-common/bin/mpi-config'; then
+                MPICONFIG=$TOPDIR'/dune-common/bin/mpi-config'
             else
-                if test -f $(pwd)'/../dune-common-2.0/bin/mpi-config'
-                then
-                    MPICONFIG=$(pwd)'/../dune-common-2.0/bin/mpi-config'
-                else 
-                    echo "MPICONFIG not found!"
-                    return
-                fi
-            fi 
+                echo "MPICONFIG not found!"
+                return
+            fi
 
             MPILIBS=$($MPICONFIG --libs)
             MPILIBDIR=$(echo $MPILIBS | sed "s/.*-L\([^[:blank:]]*\).*/\1/")
