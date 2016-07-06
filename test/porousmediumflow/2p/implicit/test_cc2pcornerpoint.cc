@@ -24,11 +24,10 @@
  */
 #include <config.h>
 
-#if (HAVE_DUNE_CORNERPOINT && HAVE_OPM_CORE && HAVE_OPM_PARSER)
+#if (HAVE_OPM_GRID && HAVE_OPM_CORE && HAVE_OPM_PARSER)
 
 #include "cc2pcornerpointproblem.hh"
 #include <dumux/common/start.hh>
-#include <opm/core/io/eclipse/EclipseGridInspector.hpp>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

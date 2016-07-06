@@ -16,7 +16,7 @@
 find_path(NLOPT_INCLUDE_DIR
   NAMES nlopt.h
   PATHS ${NLOPT_PREFIX} ${NLOPT_ROOT}
-  PATH_SUFFIXES "nlopt" "include/nlopt" "include" "SRC" "src"
+  PATH_SUFFIXES "nlopt" "include/nlopt" "include" "SRC" "src" "api"
   NO_DEFAULT_PATH
 )
 
@@ -30,7 +30,7 @@ find_path(NLOPT_INCLUDE_DIR
 find_library(NLOPT_LIBRARY
   NAMES "nlopt" "libnlopt"
   PATHS ${NLOPT_PREFIX} ${NLOPT_ROOT}
-  PATH_SUFFIXES "lib" "lib32" "lib64" "libnlopt"
+  PATH_SUFFIXES "lib" "lib32" "lib64" "libnlopt" ".libs"
   NO_DEFAULT_PATH
 )
 

@@ -29,7 +29,7 @@ find_path(GLPK_INCLUDE_DIR
 # look for library, only at positions given by the user
 find_library(GLPK_LIBRARY
   NAMES "glpk" "libglpk"
-  PATHS ${GLPK_PREFIX} ${GLPK_ROOT}
+  PATHS ${GLPK_PREFIX} ${GLPK_ROOT} ${GLPK_ROOT}/src/.libs/
   PATH_SUFFIXES "lib" "lib32" "lib64" "libglpk"
   NO_DEFAULT_PATH
 )
