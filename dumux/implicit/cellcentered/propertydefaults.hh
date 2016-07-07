@@ -32,6 +32,7 @@
 #include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/elementvolumevariables.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/stencils.hh>
 
 #include "elementboundarytypes.hh"
@@ -64,6 +65,17 @@ SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
 
 //! The stencil container
 SET_TYPE_PROP(CCModel, StencilsVector, CCStencilsVector<TypeTag>);
+
+//! The sub control volume
+SET_PROP(CCModel, SubControlVolume)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
+    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+public:
+    typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
+};
 
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);

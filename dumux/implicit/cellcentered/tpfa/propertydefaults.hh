@@ -31,7 +31,6 @@
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/globalfvgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
-#include <dumux/discretization/cellcentered/tpfa/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 
@@ -49,17 +48,6 @@ SET_TYPE_PROP(CCTpfaModel, GlobalFVGeometry, CCTpfaGlobalFVGeometry<TypeTag, GET
 
 //! Set the default for the local finite volume geometry
 SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
-
-//! The sub control volume
-SET_PROP(CCTpfaModel, SubControlVolume)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-public:
-    typedef Dumux::CCTpfaSubControlVolume<ScvGeometry, IndexType> type;
-};
 
 SET_PROP(CCTpfaModel, SubControlVolumeFace)
 {

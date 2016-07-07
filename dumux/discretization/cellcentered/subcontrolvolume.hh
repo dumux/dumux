@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for a sub control volume
  */
-#ifndef DUMUX_DISCRETIZATION_CC_TPFA_SUBCONTROLVOLUME_HH
-#define DUMUX_DISCRETIZATION_CC_TPFA_SUBCONTROLVOLUME_HH
+#ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
+#define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
@@ -29,7 +29,7 @@
 namespace Dumux
 {
 template<class G, typename I>
-class CCTpfaSubControlVolume : public SubControlVolumeBase<G, I>
+class CCSubControlVolume : public SubControlVolumeBase<G, I>
 {
 public:
     // exported types
@@ -43,15 +43,15 @@ private:
 
 public:
     // the default constructor
-    CCTpfaSubControlVolume() = default;
+    CCSubControlVolume() = default;
 
     // the contructor in the cc case
-    CCTpfaSubControlVolume(Geometry&& geometry,
+    CCSubControlVolume(Geometry&& geometry,
                            IndexType elementIndex)
     : SubControlVolumeBase<G, I>(std::move(geometry), elementIndex) {}
 
     // the contructor in the cc case
-    CCTpfaSubControlVolume(const Geometry& geometry,
+    CCSubControlVolume(const Geometry& geometry,
                            IndexType elementIndex)
     : SubControlVolumeBase<G, I>(geometry, elementIndex) {}
 
