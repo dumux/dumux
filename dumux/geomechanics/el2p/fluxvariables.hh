@@ -136,7 +136,6 @@ public:
 
         elTwoPGradients_(problem, element, elemVolVars);
         calculateDDt_(problem, element, elemVolVars);
-        calculateK_(problem, element, elemVolVars);
     }
 
 public:
@@ -257,27 +256,6 @@ protected:
         // multiply time derivative of solid displacement vector with
         // normal vector of current scv-face
         timeDerivUNormal_ = tmp * face().normal;
-    }
-
-    /*!
-     * \brief Calculation the harmonic mean of the intrinsic permeability tensor
-     *        \param problem The considered problem file
-     *        \param element The considered element of the grid
-     *        \param elemVolVars The parameters stored in the considered element
-     */
-    void calculateK_(const Problem &problem,
-                     const Element &element,
-                     const ElementVolumeVariables &elemVolVars)
-    {
-        // calculate the mean intrinsic permeability
-        const SpatialParams &spatialParams = problem.spatialParams();
-        spatialParams.meanK(K_,
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_(),
-                                                                face().i),
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_(),
-                                                                face().j));
     }
 
     //! time derivative of solid displacement times normal vector at integration point
