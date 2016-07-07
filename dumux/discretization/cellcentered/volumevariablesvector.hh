@@ -78,7 +78,7 @@ public:
         {
             problem.model().fvGeometries_().bindElement(element);
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 (*this)[scv].update(sol[scv.dofIndex()],
                                     problem,
@@ -87,7 +87,7 @@ public:
             }
 
             // handle the boundary volume variables
-            for (const auto& scvFace : fvGeometry.scvfs())
+            for (const auto& scvFace : scvfs(fvGeometry))
             {
                 // if we are not on a boundary, skip the rest
                 if (!scvFace.boundary())
@@ -221,7 +221,7 @@ public:
 
         // Update boundary volume variables
         const auto& fvGeometry = problem_().model().fvGeometries(element);
-        for (const auto& scvFace : fvGeometry.scvfs())
+        for (const auto& scvFace : scvfs(fvGeometry))
         {
             // if we are not on a boundary, skip the rest
             if (!scvFace.boundary())

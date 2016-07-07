@@ -144,13 +144,13 @@ public:
             problem.model().fvGeometries_().bindElement(element);
             const auto& fvGeometry = problem.model().fvGeometries(element);
 
-            for (const auto& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 auto vIdxGlobal = scv.dofIndex();
                 vertexStencils_[vIdxGlobal].vertexScvs().push_back(scv.index());
                 vertexStencils_[vIdxGlobal].elementIndices().push_back(eIdx);
 
-                for (const auto& scvJ : fvGeometry.scvs())
+                for (const auto& scvJ : scvs(fvGeometry))
                 {
                     auto vIdxGlobalJ = scvJ.dofIndex();
 

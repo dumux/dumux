@@ -133,31 +133,44 @@ class FVElementGeometry
     using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, FVElementGeometryVector>;
 
 public:
+    // This class in not default-constructible
+    FVElementGeometry() = delete;
+
     // Constructor with vectors
-    FVElementGeometry(const FVElementGeometryVector& fvGeometryVector,
+    FVElementGeometry(const FVElementGeometryVector& localFvGeometry,
                       const std::vector<IndexType>& scvIndices,
                       const std::vector<IndexType>& scvfIndices)
-    : fvGeometryVector_(fvGeometryVector), scvIndices_(scvIndices), scvfIndices_(scvfIndices)
+    : localFvGeometry_(localFvGeometry),
+      scvIndices_(scvIndices),
+      scvfIndices_(scvfIndices)
     {}
 
     //! iterator range for sub control volumes
-    inline Dune::IteratorRange<ScvIterator> scvs() const
+    //! This is a free function found by means of ADL
+    //! To iterate over all sub control volumes of this FVElementGeometry use
+    //! for (const auto& scv : scvs(fvGeometry))
+    friend inline Dune::IteratorRange<ScvIterator>
+    scvs(const FVElementGeometry& g)
     {
-        return Dune::IteratorRange<ScvIterator>(ScvIterator(scvIndices_.begin(), fvGeometryVector_),
-                                                ScvIterator(scvIndices_.end(), fvGeometryVector_));
+        return Dune::IteratorRange<ScvIterator>(ScvIterator(g.scvIndices().begin(), g.localFvGeometry()),
+                                                ScvIterator(g.scvIndices().end(), g.localFvGeometry()));
+    }
+
+    //! iterator range for sub control volume faces
+    //! This is a free function found by means of ADL
+    //! To iterate over all sub control volume faces of this FVElementGeometry use
+    //! for (const auto& scvf : scvfs(fvGeometry))
+    friend inline Dune::IteratorRange<ScvfIterator>
+    scvfs(const FVElementGeometry& g)
+    {
+        return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndices().begin(), g.localFvGeometry()),
+                                                 ScvfIterator(g.scvfIndices().end(), g.localFvGeometry()));
     }
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     {
         return scvIndices_.size();
-    }
-
-    //! iterator range for sub control volume faces
-    inline Dune::IteratorRange<ScvfIterator> scvfs() const
-    {
-        return Dune::IteratorRange<ScvfIterator>(ScvfIterator(scvfIndices_.begin(), fvGeometryVector_),
-                                                 ScvfIterator(scvfIndices_.end(), fvGeometryVector_));
     }
 
     //! number of sub control volumes in this fv element geometry
@@ -167,7 +180,24 @@ public:
     }
 
 private:
-    const FVElementGeometryVector& fvGeometryVector_;
+
+    //! The sub control volume indices
+    //! Depending on the type of discretization and caching
+    //! these may be local or global indices
+    const std::vector<IndexType>& scvIndices() const
+    { return scvIndices_; }
+
+    //! The sub control volume face indices
+    //! Depending on the type of discretization and caching
+    //! these may be local or global indices
+    const std::vector<IndexType>& scvfIndices() const
+    { return scvfIndices_; }
+
+    //! The LocalFvGeometry object this FvElementGeometry belongs to
+    const FVElementGeometryVector& localFvGeometry() const
+    { return localFvGeometry_; }
+
+    const FVElementGeometryVector& localFvGeometry_;
     std::vector<IndexType> scvIndices_;
     std::vector<IndexType> scvfIndices_;
 };

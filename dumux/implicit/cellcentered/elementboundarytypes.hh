@@ -87,12 +87,12 @@ public:
 
         (*this)[0].reset();
 
-        for (const auto& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             if (!problem.model().onBoundary(scv))
                 return;
 
-            for (const auto& scvFace : fvGeometry.scvfs())
+            for (const auto& scvFace : scvfs(fvGeometry))
             {
                 if (!scvFace.boundary())
                     continue;

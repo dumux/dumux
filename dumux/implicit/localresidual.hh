@@ -292,7 +292,7 @@ protected:
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
         const auto& fvGeometry = fvGeometry_();
-        for (const auto& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             auto scvIdx = scv.indexInElement();
 
@@ -305,7 +305,7 @@ protected:
     {
         PrimaryVariables source(0);
         const auto& fvGeometry = fvGeometry_();
-        for (const auto& scv : fvGeometry)
+        for (const auto& scv : scvs(fvGeometry))
         {
             source += this->problem_().source(element_(), scv);
 
@@ -327,7 +327,7 @@ protected:
     {
         // evaluate the volume terms (storage + source terms)
         const auto& fvGeometry = fvGeometry_();
-        for (const auto& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             auto scvIdx = scv.indexInElement();
             auto curExtrusionFactor = model_().curVolVars(scv).extrusionFactor();
@@ -351,7 +351,7 @@ protected:
     {
         // evaluate the volume terms (storage + source terms)
         const auto& fvGeometry = fvGeometry_();
-        for (const auto& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             auto scvIdx = scv.indexInElement();
             auto prevExtrusionFactor = model_().prevVolVars(scv).extrusionFactor();

@@ -61,7 +61,7 @@ public:
             problem.model().fvGeometries_().bindElement(element);
 
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (auto&& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(scv);
@@ -128,7 +128,7 @@ public:
             volVarsVector.bindElement(element);
 
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 if (!visited_[dofIdxGlobal])

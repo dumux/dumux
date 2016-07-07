@@ -56,7 +56,7 @@ public:
             problem.model().fvGeometries_().bind(element);
 
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scvf : fvGeometry.scvfs())
+            for (const auto& scvf : scvfs(fvGeometry))
             {
                 (*this)[scvf].update(problem, element, scvf);
             }
@@ -84,7 +84,7 @@ public:
         IndexType localScvfIdx = 0;
 
         // fill the containers
-        for (const auto& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
         {
             fluxVarsCache_[localScvfIdx].update(problem_(), element, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
@@ -118,7 +118,7 @@ public:
         fluxVarsCache_.resize(numScvf);
         globalScvfIndices_.resize(numScvf);
         IndexType localScvfIdx = 0;
-        for (const auto& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
         {
             fluxVarsCache_[localScvfIdx].update(problem_(), element, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();

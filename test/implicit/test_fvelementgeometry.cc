@@ -114,22 +114,22 @@ int main (int argc, char *argv[]) try
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
         auto fvGeometry = fvGeometries.fvGeometry(eIdx);
 
-        auto range = fvGeometry.scvs();
+        auto range = scvs(fvGeometry);
         NoopFunctor<SubControlVolume> op;
         if(0 != testForwardIterator(range.begin(), range.end(), op))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
-        for (auto&& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             std::cout << "-- scv center at: " << scv.center() << std::endl;
         }
 
-        auto range2 = fvGeometry.scvfs();
+        auto range2 = scvfs(fvGeometry);
         NoopFunctor<SubControlVolumeFace> op2;
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
-        for (auto&& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
         {
             std::cout << "-- scvf center at: " << scvf.center();
             if (scvf.boundary()) std::cout << " (on boundary).";

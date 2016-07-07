@@ -164,7 +164,7 @@ public:
                 this->curVolVars_().bindElement(element);
 
                 const auto& fvGeometry = this->fvGeometries(element);
-                for (const auto& scv : fvGeometry.scvs())
+                for (const auto& scv : scvs(fvGeometry))
                 {
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
@@ -306,7 +306,7 @@ public:
             this->curVolVars_().bindElement(element);
 
             const auto& fvGeometry = this->fvGeometries(element);
-            for (const auto& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 const auto& volVars = this->curVolVars(scv);
                 int dofIdxGlobal = scv.dofIndex();

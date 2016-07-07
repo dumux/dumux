@@ -56,7 +56,7 @@ public:
             const auto& elementGeometry = element.geometry();
             const auto& localBasis = problem.model().fvGeometries().feLocalBasis(elementGeometry.type());
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scvf : fvGeometry.scvfs())
+            for (const auto& scvf : scvfs(fvGeometry))
             {
                 (*this)[scvf].update(problem, element, elementGeometry, localBasis, scvf);
             }
@@ -88,7 +88,7 @@ public:
         const auto numScvf = fvGeometry.numScvf();
         fluxVarsCache_.resize(numScvf);
         IndexType localScvfIdx = 0;
-        for (const auto& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
             fluxVarsCache_[localScvfIdx++].update(problem_(), element, elementGeometry, localBasis, scvf);
     }
 

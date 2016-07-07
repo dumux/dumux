@@ -74,7 +74,7 @@ protected:
     {
         // calculate the mass flux over the scv faces
         const auto& fvGeometry = this->fvGeometry_();
-        for (const auto& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
         {
             this->residual_[0] += this->asImp_().computeFlux_(scvf);
         }
@@ -93,7 +93,7 @@ protected:
     {
         const auto& fvGeometry = this->fvGeometry_();
 
-        for (const auto& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
         {
             if (scvf.boundary())
                 this->residual_[0] += evalBoundaryFluxes_(scvf);
@@ -102,7 +102,7 @@ protected:
         // additionally treat mixed D/N conditions in a strong sense
         if (this->bcTypes_().hasDirichlet())
         {
-            for (const auto& scvf : fvGeometry.scvfs())
+            for (const auto& scvf : scvfs(fvGeometry))
             {
                 if (scvf.boundary())
                     this->asImp_().evalDirichlet_(scvf);

@@ -317,15 +317,15 @@ public:
                     auto fvGeometry = problem.model().fvGeometries(element);
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
-                    std::vector<unsigned int> scvs;
-                    for (auto&& scv : fvGeometry.scvs())
+                    std::vector<unsigned int> scvIndices;
+                    for (const auto& scv : scvs(fvGeometry))
                     {
                         if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(scv.geometry(), globalPos))
-                            scvs.push_back(scv.indexInElement());
+                            scvIndices.push_back(scv.indexInElement());
                     }
                     // for all scvs that where tested positiv add the point sources
                     // to the element/scv to point source map
-                    for (auto scvIdx : scvs)
+                    for (auto scvIdx : scvIndices)
                     {
                         const auto key = std::make_pair(eIdx, scvIdx);
                         if (pointSourceMap.count(key))

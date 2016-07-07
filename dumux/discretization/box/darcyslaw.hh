@@ -91,7 +91,7 @@ public:
 
         // evaluate gradP - rho*g at integration point
         DimVector gradP(0.0);
-        for (const auto& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             // the global shape function gradient
             DimVector gradI;

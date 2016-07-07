@@ -148,7 +148,7 @@ public:
                 this->curVolVars_().bindElement(element);
 
                 const auto& fvGeometry = this->fvGeometries(element);
-                for (const auto& scv : fvGeometry.scvs())
+                for (const auto& scv : scvs(fvGeometry))
                 {
                     auto eIdx = scv.elementIndex();
                     auto dofIdxGlobal = scv.dofIndex();

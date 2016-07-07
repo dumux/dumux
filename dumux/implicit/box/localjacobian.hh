@@ -126,7 +126,7 @@ public:
         this->model_().updatePVWeights(fvGeometry);
 
         // calculation of the derivatives
-        for (const auto& scv : fvGeometry.scvs())
+        for (const auto& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
@@ -264,7 +264,7 @@ protected:
 
         // update the global stiffness matrix with the current partial derivatives
         const auto& fvGeometry = this->model_().fvGeometries(element);
-        for (const auto& scvJ : fvGeometry.scvs())
+        for (const auto& scvJ : scvs(fvGeometry))
             this->updateGlobalJacobian_(matrix, scvJ.dofIndex(), dofIdx, pvIdx, partialDeriv[scvJ.indexInElement()]);
     }
 

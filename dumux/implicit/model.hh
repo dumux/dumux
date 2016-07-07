@@ -862,7 +862,7 @@ protected:
             const auto& fvGeometry = fvGeometries(element);
 
             // loop over sub control volumes
-            for(const auto& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 // let the problem do the dirty work of nailing down
                 // the initial solution.

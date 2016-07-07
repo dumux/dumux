@@ -347,7 +347,7 @@ public:
             this->model().fvGeometries_().bindElement(element);
             const auto& fvGeometry = this->model().fvGeometries(element);
 
-            for (const auto& scv : fvGeometry.scvs())
+            for (const auto& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(scv);

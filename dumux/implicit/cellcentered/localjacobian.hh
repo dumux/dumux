@@ -128,7 +128,7 @@ public:
 
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
-                for (const auto& scvFaceJ : fvGeometry.scvfs())
+                for (const auto& scvFaceJ : scvfs(fvGeometry))
                 {
                     auto fluxVarsIdx = scvFaceJ.index();
 

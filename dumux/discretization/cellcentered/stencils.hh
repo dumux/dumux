@@ -49,7 +49,7 @@ public:
 
         const auto& fvGeometry = problem.model().fvGeometries(element);
         // loop over sub control faces
-        for (const auto& scvf : fvGeometry.scvfs())
+        for (const auto& scvf : scvfs(fvGeometry))
         {
             FluxVariables fluxVars;
             const auto& stencil = fluxVars.computeStencil(problem, element, scvf);
