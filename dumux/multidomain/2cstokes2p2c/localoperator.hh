@@ -261,7 +261,7 @@ public:
         const std::shared_ptr<MDElement> mdElement1
             = std::make_shared<MDElement>(intersectionGeometry.inside());
         const std::shared_ptr<MDElement> mdElement2
-            = std::make_shared<MDElement>(intersectionGeometry.inside());
+            = std::make_shared<MDElement>(intersectionGeometry.outside());
 
         // the subdomain elements
         const std::shared_ptr<SDElement1> sdElement1
