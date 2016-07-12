@@ -32,9 +32,12 @@ namespace Dumux
  * \brief Base class for a sub control volume, i.e a part of the control
  *        volume we are making the balance for.
  */
-template<class Geometry, typename IndexType>
+template<class G, typename I>
 class SubControlVolumeBase
 {
+    using IndexType = I;
+    using Geometry = typename std::decay<G>::type;
+
     using Scalar = typename Geometry::ctype;
     enum { dimworld = Geometry::coorddimension };
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
@@ -43,24 +46,54 @@ public:
     /*\brief The constructor
      * \param geometry The geometry of the sub control volume
      * \param elementIndex The index of the element the scv is part of
-     * \param indexInElement The local index of the scv in the element
      */
-    SubControlVolumeBase(Geometry geometry,
+    SubControlVolumeBase(Geometry&& geometry,
                          IndexType elementIndex)
     : geometry_(std::move(geometry)),
       elementIndex_(std::move(elementIndex))
     {}
 
+    /*\brief The constructor
+     * \param geometry The geometry of the sub control volume
+     * \param elementIndex The index of the element the scv is part of
+     */
+    SubControlVolumeBase(const Geometry& geometry,
+                         IndexType elementIndex)
+    : geometry_(geometry),
+      elementIndex_(elementIndex)
+    {}
+
+    //! The copy constrcutor
+    SubControlVolumeBase(const SubControlVolumeBase& other) = delete;
+
+    //! The move constrcutor
+    SubControlVolumeBase(SubControlVolumeBase&& other) = default;
+
+    //! The copy assignment operator
+    SubControlVolumeBase& operator=(const SubControlVolumeBase& other) = delete;
+
+    //! The move assignment operator
+    SubControlVolumeBase& operator=(SubControlVolumeBase&& other)
+    {
+        // We want to use the default copy/move assignment operators.
+        // But since geometry is not assignable :( we
+        // have to dirty reconstruct it
+        geometry_.~Geometry();
+        new(&geometry_) Geometry(std::move(other.geometry_));
+        elementIndex_ = std::move(other.elementIndex_);
+        return *this;
+    }
+
     //! The center of the sub control volume
     GlobalPosition center() const
     {
-        return geometry_.center();
+        return geometry().center();
     }
 
     //! The volume of the sub control volume
     Scalar volume() const
     {
-        return geometry_.volume();
+        return geometry().volume();
     }
 
     //! The geometry of the sub control volume
@@ -79,104 +112,6 @@ public:
 private:
     Geometry geometry_;
     IndexType elementIndex_;
-};
-
-// This class is set as the property
-template<class G, typename I, bool isBox>
-class SubControlVolume {};
-
-// Specialization for cc models
-template<class G, typename I>
-class SubControlVolume<G, I, false> : public SubControlVolumeBase<G, I>
-{
-public:
-    // exported types
-    using Geometry = G;
-    using IndexType = I;
-
-private:
-    using Scalar = typename Geometry::ctype;
-    enum { dimworld = Geometry::coorddimension };
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-
-public:
-    // the contructor in the cc case
-    SubControlVolume(Geometry geometry,
-                     IndexType elementIndex)
-    : SubControlVolumeBase<G, I>(std::move(geometry), std::move(elementIndex)) {}
-
-    IndexType indexInElement() const
-    {
-        return IndexType(0);
-    }
-
-    //! The global index of this scv
-    IndexType index() const
-    {
-        return this->elementIndex();
-    }
-
-    IndexType dofIndex() const
-    {
-        return this->elementIndex();
-    }
-
-    GlobalPosition dofPosition() const
-    {
-        return this->geometry().center();
-    }
-};
-
-// Specialization for box models
-template<class G, typename I>
-class SubControlVolume<G, I, true> : public SubControlVolumeBase<G, I>
-{
-public:
-    // exported types
-    using Geometry = G;
-    using IndexType = I;
-
-private:
-    using Scalar = typename Geometry::ctype;
-    enum { dimworld = Geometry::coorddimension };
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-
-public:
-    // the contructor in the box case
-    SubControlVolume(Geometry geometry,
-                     IndexType scvIdx,
-                     IndexType elementIndex,
-                     IndexType indexInElement,
-                     IndexType dofIndex)
-    : SubControlVolumeBase<G, I>(std::move(geometry), std::move(elementIndex)),
-      scvIdx_(scvIdx), indexInElement_(std::move(indexInElement)),
-      dofIndex_(std::move(dofIndex)) {}
-
-    IndexType indexInElement() const
-    {
-        return indexInElement_;
-    }
-
-    //! The global index of this scv
-    IndexType index() const
-    {
-        return scvIdx_;
-    }
-
-    IndexType dofIndex() const
-    {
-        return dofIndex_;
-    }
-
-    GlobalPosition dofPosition() const
-    {
-        return this->geometry().corner(indexInElement_);
-    }
-
-private:
-    IndexType scvIdx_;
-    IndexType indexInElement_;
-    IndexType dofIndex_;
 };
 
 } // end namespace

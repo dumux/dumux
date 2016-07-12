@@ -58,10 +58,10 @@ public:
         for (const auto& element : elements(problem.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            problem.model().fvGeometries_().bindElement(element);
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scv : scvs(fvGeometry))
+            for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(scv);
@@ -124,11 +124,12 @@ public:
         for (const auto& element : elements(problem.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            problem.model().fvGeometries_().bindElement(element);
-            volVarsVector.bindElement(element);
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scv : scvs(fvGeometry))
+            volVarsVector.bindElement(element, fvGeometry);
+
+            for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 if (!visited_[dofIdxGlobal])

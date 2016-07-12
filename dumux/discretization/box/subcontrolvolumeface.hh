@@ -46,14 +46,12 @@ class BoxSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, IndexT
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    BoxSubControlVolumeFace(const Geometry& geometry,
-                             const GlobalPosition& ipGlobal,
-                             const GlobalPosition& unitOuterNormal,
-                             IndexType scvfIndex,
-                             IndexType indexInElement,
-                             const std::vector<IndexType>& scvIndices,
-                             bool boundary = false)
-    : SubControlVolumeFaceBase<Geometry, IndexType>(geometry, ipGlobal, unitOuterNormal, scvfIndex, indexInElement, scvIndices, boundary) {}
+    BoxSubControlVolumeFace(Geometry&& geometry,
+                            const GlobalPosition& unitOuterNormal,
+                            IndexType scvfIndex,
+                            const std::vector<IndexType>& scvIndices,
+                            bool boundary = false)
+    : SubControlVolumeFaceBase<Geometry, IndexType>(std::move(geometry), geometry.center(), unitOuterNormal, scvfIndex, scvIndices, boundary) {}
 };
 
 } // end namespace

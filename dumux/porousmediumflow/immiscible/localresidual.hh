@@ -38,14 +38,18 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
@@ -95,10 +99,16 @@ public:
      * \brief Evaluate the mass flux over a face of a sub control volume
      * \param scvf The sub control volume face to compute the flux on
      */
-    PrimaryVariables computeFlux(const SubControlVolumeFace& scvf)
+    PrimaryVariables computeFlux(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const SubControlVolumeFace& scvf,
+                                 const BoundaryTypes& bcTypes)
     {
         FluxVariables fluxVars;
-        fluxVars.initAndComputeFluxes(asImp_()->problem_(), this->element_(), scvf);
+        fluxVars.initAndComputeFluxes(this->problem(),
+                                      element,
+                                      fvGeometry,
+                                      scvf);
 
         // copy weight to local scope for use in lambda expression
         auto w = upwindWeight_;
@@ -114,7 +124,6 @@ public:
             auto eqIdx = conti0EqIdx + phaseIdx;
             flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindRule);
         }
-
         return flux;
     }
 

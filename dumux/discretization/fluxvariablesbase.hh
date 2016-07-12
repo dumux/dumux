@@ -42,6 +42,7 @@ class FluxVariablesBase
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Stencil = std::vector<IndexType>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     enum{ enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache) };
@@ -53,15 +54,17 @@ public:
 
     void init(const Problem& problem,
               const Element& element,
+              const FVElementGeometry& fvGeometry,
               const SubControlVolumeFace &scvFace)
     {
         problemPtr_ = &problem;
         elementPtr_ = &element;
         scvFacePtr_ = &scvFace;
+        fvGeometryPtr_ = &fvGeometry;
 
         // update the stencil if needed
         if (!enableFluxVarsCache)
-            stencil_ = asImp_().computeStencil(problem, element, scvFace);
+            stencil_ = asImp_().computeStencil(problem, element, fvGeometry, scvFace);
     }
 
     // when caching is enabled, get the stencil from the cache class
@@ -83,6 +86,9 @@ public:
     const SubControlVolumeFace& scvFace() const
     { return *scvFacePtr_; }
 
+    const FVElementGeometry& fvGeometry() const
+    { return *fvGeometryPtr_; }
+
     Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
 
@@ -101,7 +107,8 @@ private:
     }
 
     const Problem* problemPtr_;              //! Pointer to the problem
-    const Element* elementPtr_;                 //! Pointer to the element at hand
+    const Element* elementPtr_;              //! Pointer to the element at hand
+    const FVElementGeometry* fvGeometryPtr_;
     const SubControlVolumeFace* scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
     Stencil stencil_;                        //! The flux stencil
 };

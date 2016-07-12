@@ -43,9 +43,14 @@ private:
 
 public:
     // the contructor in the cc case
-    CCTpfaSubControlVolume(Geometry geometry,
-                     IndexType elementIndex)
-    : SubControlVolumeBase<G, I>(std::move(geometry), std::move(elementIndex)) {}
+    CCTpfaSubControlVolume(Geometry&& geometry,
+                           IndexType elementIndex)
+    : SubControlVolumeBase<G, I>(std::move(geometry), elementIndex) {}
+
+    // the contructor in the cc case
+    CCTpfaSubControlVolume(const Geometry& geometry,
+                           IndexType elementIndex)
+    : SubControlVolumeBase<G, I>(geometry, elementIndex) {}
 
     IndexType indexInElement() const
     {

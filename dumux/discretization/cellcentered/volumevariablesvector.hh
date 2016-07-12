@@ -78,7 +78,7 @@ public:
         {
             problem.model().fvGeometries_().bindElement(element);
             const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scv : scvs(fvGeometry))
+            for (auto&& scv : scvs(fvGeometry))
             {
                 (*this)[scv].update(sol[scv.dofIndex()],
                                     problem,
@@ -87,7 +87,7 @@ public:
             }
 
             // handle the boundary volume variables
-            for (const auto& scvFace : scvfs(fvGeometry))
+            for (auto&& scvFace : scvfs(fvGeometry))
             {
                 // if we are not on a boundary, skip the rest
                 if (!scvFace.boundary())
@@ -161,6 +161,7 @@ class CCVolumeVariablesVector<TypeTag, /*isOldSol*/false, /*enableVolVarCaching*
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int dim = GridView::dimension;
@@ -187,7 +188,8 @@ public:
 
     // Binding of an element, prepares the volume variables within the element stencil
     // called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry)
     {
         eIdxBound_ = problem_().elementMapper().index(element);
 
@@ -202,7 +204,7 @@ public:
         int localIdx = 0;
 
         // update the volume variables of the element at hand
-        const auto& scvI = problem_().model().fvGeometries().subControlVolume(eIdxBound_);
+        auto&& scvI = fvGeometry.scv(eIdxBound_);
         const auto& solI = problem_().model().curSol()[eIdxBound_];
         volumeVariables_[localIdx].update(solI, problem_(), element, scvI);
         volVarIndices_[localIdx] = scvI.index();
@@ -211,8 +213,8 @@ public:
         // Update the volume variables of the neighboring elements
         for (auto globalJ : neighborStencil)
         {
-            const auto& elementJ = problem_().model().fvGeometries().element(globalJ);
-            const auto& scvJ = problem_().model().fvGeometries().subControlVolume(globalJ);
+            const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            auto&& scvJ = fvGeometry.scv(globalJ);
             const auto& solJ = problem_().model().curSol()[globalJ];
             volumeVariables_[localIdx].update(solJ, problem_(), elementJ, scvJ);
             volVarIndices_[localIdx] = scvJ.index();
@@ -220,8 +222,7 @@ public:
         }
 
         // Update boundary volume variables
-        const auto& fvGeometry = problem_().model().fvGeometries(element);
-        for (const auto& scvFace : scvfs(fvGeometry))
+        for (auto&& scvFace : scvfs(fvGeometry))
         {
             // if we are not on a boundary, skip the rest
             if (!scvFace.boundary())
@@ -243,14 +244,15 @@ public:
 
     // Binding of an element, prepares only the volume variables of the element
     // specialization for cc models
-    void bindElement(const Element& element)
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry)
     {
         eIdxBound_ = problem_().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element at hand
-        const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdxBound_);
+        auto&& scv = fvGeometry.scv(eIdxBound_);
         const auto& sol = problem_().model().curSol()[eIdxBound_];
         volumeVariables_[0].update(sol, problem_(), element, scv);
         volVarIndices_[0] = scv.index();
@@ -283,12 +285,8 @@ private:
     const int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(volVarIndices_.begin(), volVarIndices_.end(), volVarIdx);
-
-        if (it != volVarIndices_.end())
-            return std::distance(volVarIndices_.begin(), it);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Could not find the current volume variables for volVarIdx = " << volVarIdx <<
-                                                    ", make sure to properly bind the volume variables to the element before using them");
+        assert(it != volVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
+        return std::distance(volVarIndices_.begin(), it);
     }
 
     Problem& problem_() const
@@ -312,6 +310,7 @@ class CCVolumeVariablesVector<TypeTag, /*isOldSol*/true, /*enableVolVarCaching*/
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int dim = GridView::dimension;
@@ -337,14 +336,15 @@ public:
     }
 
     // Binding of an element, prepares the volume variables of only the element
-    void bindElement(const Element& element)
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry)
     {
         eIdxBound_ = problem_().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element at hand
-        const auto& scv = problem_().model().fvGeometries().subControlVolume(eIdxBound_);
+        auto&& scv = fvGeometry.scv(eIdxBound_);
         const auto& sol = problem_().model().prevSol()[eIdxBound_];
         volumeVariables_[0].update(sol, problem_(), element, scv);
         volVarIndices_[0] = scv.index();
@@ -377,12 +377,8 @@ private:
     const int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(volVarIndices_.begin(), volVarIndices_.end(), volVarIdx);
-
-        if (it != volVarIndices_.end())
-            return std::distance(volVarIndices_.begin(), it);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Could not find the previous volume variables for volVarIdx = " << volVarIdx <<
-                                                    ", make sure to properly bind the volume variables to the element before using them");
+        assert(it != volVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
+        return std::distance(volVarIndices_.begin(), it);
     }
 
     Problem& problem_() const

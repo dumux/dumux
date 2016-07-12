@@ -38,6 +38,7 @@ namespace Dumux
 template<class Geometry, typename IndexType>
 class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, IndexType>
 {
+    using ParentType = SubControlVolumeFaceBase<Geometry, IndexType>;
     using Scalar = typename Geometry::ctype;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
@@ -46,14 +47,27 @@ class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, Ind
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
+    //! Constructor with all arguments
     CCTpfaSubControlVolumeFace(const Geometry& geometry,
                                const GlobalPosition& ipGlobal,
                                const GlobalPosition& unitOuterNormal,
                                IndexType scvfIndex,
-                               IndexType indexInElement,
                                const std::vector<IndexType>& scvIndices,
                                bool boundary = false)
-    : SubControlVolumeFaceBase<Geometry, IndexType>(geometry, ipGlobal, unitOuterNormal, scvfIndex, indexInElement, scvIndices, boundary)
+    : ParentType(geometry, ipGlobal, unitOuterNormal, scvfIndex, scvIndices, boundary)
+    {}
+
+    //! Constructor with intersection
+    template <class Intersection>
+    CCTpfaSubControlVolumeFace(const Intersection& is,
+                               IndexType scvfIndex,
+                               const std::vector<IndexType>& scvIndices)
+    : ParentType(is.geometry(),
+                 is.geometry().center(),
+                 is.centerUnitOuterNormal(),
+                 scvfIndex,
+                 scvIndices,
+                 is.boundary())
     {}
 };
 

@@ -189,7 +189,7 @@ public:
         PrimaryVariables values(0.0);
 
         // inside scv
-        const auto& scv = this->model().fvGeometries().subControlVolume(scvFace.insideScvIdx());
+        auto&& scv = this->model().fvGeometries().subControlVolume(scvFace.insideScvIdx());
 
         // get Lame parameters
         Scalar lambda = this->spatialParams().lameParams(element, scv)[0];

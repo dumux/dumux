@@ -314,14 +314,16 @@ public:
                     // check in which subcontrolvolume(s) we are
                     // TODO mapper/problem in bboxtree would allow to make this much better
                     const auto element = boundingBoxTree.entity(eIdx);
-                    auto fvGeometry = problem.model().fvGeometries(element);
+                    auto fvGeometry = localView(problem.model().globalFvGeometry());
+                    fvGeometry.bindElement(element);
+
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
                     std::vector<unsigned int> scvIndices;
-                    for (const auto& scv : scvs(fvGeometry))
+                    for (auto&& scv : scvs(fvGeometry))
                     {
                         if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(scv.geometry(), globalPos))
-                            scvIndices.push_back(scv.indexInElement());
+                            scvIndices.push_back(scv.index());
                     }
                     // for all scvs that where tested positiv add the point sources
                     // to the element/scv to point source map

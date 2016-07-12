@@ -29,7 +29,8 @@
 
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvelementgeometryvector.hh>
+#include <dumux/discretization/cellcentered/tpfa/globalfvgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
@@ -43,8 +44,11 @@ namespace Properties {
 //! Set the corresponding discretization method property
 SET_INT_PROP(CCTpfaModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa);
 
-//! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometryVector, CCTpfaFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVElementGeometryCache)>);
+//! Set the default for the global finite volume geometry
+SET_TYPE_PROP(CCTpfaModel, GlobalFVGeometry, CCTpfaGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+
+//! Set the default for the local finite volume geometry
+SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(CCTpfaModel, SubControlVolume)

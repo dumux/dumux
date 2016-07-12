@@ -30,10 +30,20 @@ namespace Dumux
 
 /*!
  * \ingroup ImplicitModel
+ * \brief Base class for the finite volume geometry vector for box models
+ *        This builds up the sub control volumes and sub control volume faces
+ *        for each element.
+ */
+template<class TypeTag, bool EnableGlobalFluxVariablesCache>
+class BoxFluxVariablesCacheVector
+{};
+
+/*!
+ * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag>
-class BoxFluxVariablesCacheVector
+class BoxFluxVariablesCacheVector<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -41,87 +51,107 @@ class BoxFluxVariablesCacheVector
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type update(Problem& problem)
+    void update(Problem& problem)
     {
         problemPtr_ = &problem;
-        fluxVarsCache_.resize(problem.model().fvGeometries().numScvf());
+        fluxVarsCache_.resize(problem.gridView.size(0));
         for (const auto& element : elements(problem.gridView()))
         {
+            eIdx_ = problem.elementMapper().index(element);
             // bind the geometries and volume variables to the element (all the elements in stencil)
-            problem.model().fvGeometries_().bind(element);
+            auto fvGeometry = localView(problem.model().globalFvGeometries());
+            fvGeometry.bind(element);
 
-            const auto& elementGeometry = element.geometry();
-            const auto& localBasis = problem.model().fvGeometries().feLocalBasis(elementGeometry.type());
-            const auto& fvGeometry = problem.model().fvGeometries(element);
-            for (const auto& scvf : scvfs(fvGeometry))
+            const auto& localBasis = fvGeometry.feLocalBasis();
+            fluxVarsCache_[eIdx_].resize(fvGeometry.numScvf());
+            for (auto&& scvf : scvfs(fvGeometry))
             {
-                (*this)[scvf].update(problem, element, elementGeometry, localBasis, scvf);
+                (*this)[scvf].update(problem, element, localBasis, scvf);
             }
         }
     }
 
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type update(Problem& problem)
+    // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
+    // We assume the FVGeometries to be bound at this point
+    void bind(const Element& element, const FVElementGeometry& fvGeometry)
+    {
+        bindElement(element, fvGeometry);
+    }
+
+    void bindElement(const Element& element, const FVElementGeometry& fvGeometry)
+    { eIdx_ = problem_().elementMapper().index(element); }
+
+    // access operator
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return fluxVarsCache_[eIdx_][scvf.index()]; }
+
+    // access operator
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    { return fluxVarsCache_[eIdx_][scvf.index()]; }
+
+private:
+    const Problem& problem_() const
+    { return *problemPtr_; }
+
+    // currently bound element
+    IndexType eIdx_;
+    const Problem* problemPtr_;
+    std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_;
+};
+
+/*!
+ * \ingroup ImplicitModel
+ * \brief Base class for the flux variables cache vector, we store one cache per face
+ */
+template<class TypeTag>
+class BoxFluxVariablesCacheVector<TypeTag, false>
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+
+public:
+
+    void update(Problem& problem)
     {
         problemPtr_ = &problem;
     }
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
-    void bind(const Element& element)
+    void bind(const Element& element, const FVElementGeometry& fvGeometry)
     {
-        bindElement(element);
+        bindElement(element, fvGeometry);
     }
 
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bindElement(const Element& element)
+    void bindElement(const Element& element, const FVElementGeometry& fvGeometry)
     {
-        const auto& fvGeometry = problem_().model().fvGeometries(element);
-        const auto& elementGeometry = element.geometry();
-        const auto& localBasis = problem_().model().fvGeometries().feLocalBasis(elementGeometry.type());
-
         // temporary resizing of the cache
-        const auto numScvf = fvGeometry.numScvf();
-        fluxVarsCache_.resize(numScvf);
-        IndexType localScvfIdx = 0;
-        for (const auto& scvf : scvfs(fvGeometry))
-            fluxVarsCache_[localScvfIdx++].update(problem_(), element, elementGeometry, localBasis, scvf);
+        fluxVarsCache_.resize(fvGeometry.numScvf());
+        for (auto&& scvf : scvfs(fvGeometry))
+            (*this)[scvf].update(problem_(), element, fvGeometry, scvf);
     }
 
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bindElement(const Element& element) {}
-
-    // access operators in the case of caching
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf) const
+    // access operator
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[scvf.index()]; }
 
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf)
+    // access operator
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
-
-    // access operators in the case of no caching
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf) const
-    { return fluxVarsCache_[scvf.indexInElement()]; }
-
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf)
-    { return fluxVarsCache_[scvf.indexInElement()]; }
 
 private:
     const Problem& problem_() const
     { return *problemPtr_; }
 
+    // currently bound element
     const Problem* problemPtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
 };

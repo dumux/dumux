@@ -52,33 +52,35 @@ NEW_PROP_TAG(ProblemEnableGravity);
 template <class TypeTag>
 class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IndexSet::IndexType IndexType;
-    typedef std::vector<IndexType> Stencil;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::vector<IndexType>;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
 
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
+                       const FVElementGeometry& fvGeometry,
                        const SubControlVolumeFace& scvFace,
                        const IndexType phaseIdx)
     {
         const auto& tij = problem.model().fluxVarsCache(scvFace).tij();
 
         // Get the inside and outside volume variables
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(scvFace.insideScvIdx());
+        const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
         const auto& insideVolVars = problem.model().curVolVars(insideScv);
         const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
 
@@ -108,7 +110,9 @@ public:
             else
             {
                 const auto outsideScvIdx = scvFace.outsideScvIdx();
-                const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
+                // as we assemble fluxes from the neighbor to our element the outside index
+                // refers to the scv of our element, so we use the scv method
+                const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
                 const auto xOutside = outsideScv.center();
                 const auto gOutside = problem.gravityAtPos(xOutside);
                 hOutside -= rho*(gOutside*xOutside);
@@ -118,7 +122,10 @@ public:
         return tij*(hInside - hOutside);
     }
 
-    static Stencil stencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    static Stencil stencil(const Problem& problem,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvFace)
     {
         Stencil stencil;
         if (!scvFace.boundary())
@@ -134,20 +141,25 @@ public:
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibilities will be computed and stored using the method below.
-    static Scalar calculateTransmissibilities(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    static Scalar calculateTransmissibilities(const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const SubControlVolumeFace& scvFace)
     {
         Scalar tij;
 
         const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv);
         Scalar ti = calculateOmega_(problem, scvFace, insideK, element, insideScv);
 
         if (!scvFace.boundary())
         {
             const auto outsideScvIdx = scvFace.outsideScvIdx();
-            const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
-            const auto outsideElement = problem.model().fvGeometries().element(outsideScvIdx);
+            // as we assemble fluxes from the neighbor to our element the outside index
+            // refers to the scv of our element, so we use the scv method
+            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
             const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv);
             Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideElement, outsideScv);
 
@@ -163,7 +175,11 @@ public:
 
 private:
 
-    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &K, const Element& element, const SubControlVolume &scv)
+    static Scalar calculateOmega_(const Problem& problem,
+                                  const SubControlVolumeFace& scvFace,
+                                  const DimWorldMatrix &K,
+                                  const Element& element,
+                                  const SubControlVolume &scv)
     {
         GlobalPosition Knormal;
         K.mv(scvFace.unitOuterNormal(), Knormal);
@@ -178,7 +194,11 @@ private:
         return omega;
     }
 
-    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const Scalar K, const Element& element, const SubControlVolume &scv)
+    static Scalar calculateOmega_(const Problem& problem,
+                                  const SubControlVolumeFace& scvFace,
+                                  const Scalar K,
+                                  const Element& element,
+                                  const SubControlVolume &scv)
     {
         auto distanceVector = scvFace.center();
         distanceVector -= scv.center();

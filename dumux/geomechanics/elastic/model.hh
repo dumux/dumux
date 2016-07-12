@@ -166,6 +166,7 @@ public:
                 sigmay[eIdx] += stress[1];
             if (dim == 3)
                 sigmaz[eIdx] += stress[2];
+            }
         }
 
         writer.attachDofData(ux, "ux", isBox);

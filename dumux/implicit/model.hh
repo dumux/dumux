@@ -82,7 +82,7 @@ class ImplicitModel
         dim = GridView::dimension
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometryVector) FVElementGeometryVector;
+    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) LocalJacobian;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
@@ -119,8 +119,8 @@ public:
 
         updateBoundaryIndices_();
 
-        fvGeometryVector_ = std::make_shared<FVElementGeometryVector>(gridView_());
-        fvGeometryVector_->update(problem_());
+        globalFvGeometryPtr_ = std::make_shared<GlobalFVGeometry>(gridView_());
+        globalFvGeometryPtr_->update(problem);
 
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
@@ -132,18 +132,18 @@ public:
         asImp_().applyInitialSolution_();
 
         // resize and update the volVars with the initial solution
-        curVolVarsVector_.update(problem_(), curSol());
+        curVolVarsVector_.update(problem, curSol());
 
         // update stencils
-        stencilsVector_.update(problem_());
+        stencilsVector_.update(problem);
 
         // update the flux variables caches
-        fluxVarsCacheVector_.update(problem_());
+        fluxVarsCacheVector_.update(problem);
 
         // initialize assembler and create matrix
-        localJacobian_.init(problem_());
+        localJacobian_.init(problem);
         jacAsm_ = std::make_shared<JacobianAssembler>();
-        jacAsm_->init(problem_());
+        jacAsm_->init(problem);
 
         // also set the solution of the "previous" time step to the
         // initial solution.
@@ -786,11 +786,8 @@ public:
     const VolumeVariables& curVolVars(const unsigned int scvIdx) const
     { return curVolVarsVector_[scvIdx]; }
 
-    const FVElementGeometryVector& fvGeometries() const
-    { return *fvGeometryVector_; }
-
-    const FVElementGeometry& fvGeometries(const Element& element) const
-    { return fvGeometryVector_->fvGeometry(element); }
+    const GlobalFVGeometry& globalFvGeometry() const
+    { return *globalFvGeometryPtr_; }
 
 protected:
 
@@ -815,8 +812,8 @@ protected:
     FluxVariablesCache& fluxVarsCache_(const SubControlVolumeFace& scvf)
     { return fluxVarsCacheVector_[scvf]; }
 
-    FVElementGeometryVector& fvGeometries_()
-    { return *fvGeometryVector_; }
+    GlobalFVGeometry& globalFvGeometry_()
+    { return *globalFvGeometryPtr_; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -858,11 +855,11 @@ protected:
         for (const auto& element : elements(gridView_()))
         {
             // deal with the current element, bind FVGeometry to it
-            fvGeometries_().bindElement(element);
-            const auto& fvGeometry = fvGeometries(element);
+            auto fvGeometry = localView(globalFvGeometry());
+            fvGeometry.bindElement(element);
 
             // loop over sub control volumes
-            for (const auto& scv : scvs(fvGeometry))
+            for (auto&& scv : scvs(fvGeometry))
             {
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
@@ -980,7 +977,7 @@ protected:
     StencilsVector stencilsVector_;
 
     // the finite volume element geometries
-    std::shared_ptr<FVElementGeometryVector> fvGeometryVector_;
+    std::shared_ptr<GlobalFVGeometry> globalFvGeometryPtr_;
 
     // container to store the box volumes
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;

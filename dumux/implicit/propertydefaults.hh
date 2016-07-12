@@ -39,7 +39,6 @@
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 
 #include <dumux/discretization/volumevariables.hh>
-#include <dumux/discretization/fvelementgeometry.hh>
 #include <dumux/discretization/darcyslaw.hh>
 #include <dumux/discretization/fickslaw.hh>
 
@@ -106,9 +105,6 @@ SET_TYPE_PROP(ImplicitBase,
 //! Set the BaseModel to ImplicitModel
 SET_TYPE_PROP(ImplicitBase, BaseModel, ImplicitModel<TypeTag>);
 
-//! The finite volume element geometry providing iterators over scvs and scv faces
-SET_TYPE_PROP(ImplicitBase, FVElementGeometry, Dumux::FVElementGeometry<TypeTag>);
-
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
@@ -167,7 +163,7 @@ SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
 
 //! We do not store the FVGeometry by default
-SET_BOOL_PROP(ImplicitBase, EnableGlobalFVElementGeometryCache, false);
+SET_BOOL_PROP(ImplicitBase, EnableGlobalFVGeometryCache, false);
 
 //! We do not store the volume variables by default
 SET_BOOL_PROP(ImplicitBase, EnableGlobalVolumeVariablesCache, false);

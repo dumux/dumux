@@ -24,6 +24,7 @@
 #define DUMUX_IMPLICIT_ASSEMBLER_HH
 
 #include "properties.hh"
+#include <dune/istl/io.hh>
 
 namespace Dumux {
 
@@ -115,6 +116,8 @@ public:
             DUNE_THROW(NumericalProblem,
                        "A process did not succeed in linearizing the system");
         }
+        // printmatrix(std::cout, matrix(), "", "");
+
     }
 
     /*!

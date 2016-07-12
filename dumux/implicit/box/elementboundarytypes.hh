@@ -89,9 +89,9 @@ public:
         hasNeumann_ = false;
         hasOutflow_ = false;
 
-        for (const auto& scv : scvs(fvGeometry))
+        for (auto&& scv : scvs(fvGeometry))
         {
-            int scvIdxLocal = scv.indexInElement();
+            int scvIdxLocal = scv.index();
             (*this)[scvIdxLocal].reset();
 
             if (problem.model().onBoundary(scv))

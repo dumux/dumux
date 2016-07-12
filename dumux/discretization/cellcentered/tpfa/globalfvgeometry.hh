@@ -20,13 +20,14 @@
  * \file
  * \brief Base class for the finite volume geometry vector for cell-centered TPFA models
  *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ *        for each element of the grid partition.
  */
-#ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GEOMETRY_VECTOR_HH
-#define DUMUX_DISCRETIZATION_CCTPFA_FV_GEOMETRY_VECTOR_HH
+#ifndef DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FVGEOMETRY_HH
+#define DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FVGEOMETRY_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/common/elementmap.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 
 namespace Dumux
 {
@@ -37,13 +38,13 @@ namespace Dumux
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-template<class TypeTag, bool EnableFVElementGeometryCache>
-class CCTpfaFVElementGeometryVector
+template<class TypeTag, bool EnableGlobalFVGeometryCache>
+class CCTpfaGlobalFVGeometry
 {};
 
-// specialization in case the FVElementGeometries are stored
+// specialization in case the FVElementGeometries are stored globally
 template<class TypeTag>
-class CCTpfaFVElementGeometryVector<TypeTag, true>
+class CCTpfaGlobalFVGeometry<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -52,32 +53,14 @@ class CCTpfaFVElementGeometryVector<TypeTag, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
+    //! The local class needs access to the scv, scvfs and the fv element geometry
+    //! as they are globally cached
+    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
     //! Constructor
-    CCTpfaFVElementGeometryVector(const GridView gridView)
+    CCTpfaGlobalFVGeometry(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView) {}
-
-    /* \brief Get the finite volume geometry of an element
-     * \note The finite volume geometry offers iterators over the sub control volumes
-     *       and the sub control volume faces of an element.
-     */
-    const FVElementGeometry& fvGeometry(const Element& element) const
-    {
-        return fvGeometries_[problem_().elementMapper().index(element)];
-    }
-
-    //! Get a sub control volume with a global scv index
-    const SubControlVolume& subControlVolume(IndexType scvIdx) const
-    {
-        return *scvs_[scvIdx];
-    }
-
-    //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& subControlVolumeFace(IndexType scvfIdx) const
-    {
-        return scvfs_[scvfIdx];
-    }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -105,6 +88,10 @@ public:
     Element element(IndexType eIdx) const
     { return elementMap_.element(eIdx); }
 
+    //! Return the gridView this global object lives on
+    const GridView& gridView() const
+    { return gridView_; }
+
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
     {
@@ -113,7 +100,7 @@ public:
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
-        fvGeometries_.clear();
+        scvfIndicesOfScv_.clear();
         elementMap_.clear();
 
         // determine size of containers
@@ -124,8 +111,9 @@ public:
 
         // reserve memory
         elementMap_.resize(numScvs);
-        scvs_.resize(numScvs);
+        scvs_.reserve(numScvs);
         scvfs_.reserve(numScvf);
+        scvfIndicesOfScv_.resize(numScvs);
 
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
@@ -133,7 +121,7 @@ public:
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
-            scvs_[eIdx] = std::make_shared<SubControlVolume>(element.geometry(), eIdx);
+            scvs_.emplace_back(element.geometry(), eIdx);
 
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
@@ -169,17 +157,41 @@ public:
                 }
             }
 
-            // Compute the finite volume element geometries
-            fvGeometries_.push_back(FVElementGeometry(*this, {eIdx}, scvfsIndexSet));
+            // Save the scvf indices belonging to this scv to build up fv element geometries fast
+            scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
         }
     }
 
-    // Binding of an element, called by the local jacobian to prepare element assembly
-    // For compatibility reasons with the FVGeometry cache disabled
-    void bind(const Element& element) {}
-    void bindElement(const Element& element) {}
+    /*!
+     * \brief Return a local restriction of this global object
+     *        The local object is only functional after calling its bind/bindElement method
+     *        This is a free function that will be found by means of ADL
+     */
+    friend FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
+    {
+        return FVElementGeometry(global);
+    }
 
 private:
+
+    //! Get a sub control volume with a global scv index
+    const SubControlVolume& scv(IndexType scvIdx) const
+    {
+        return scvs_[scvIdx];
+    }
+
+    //! Get a sub control volume face with a global scvf index
+    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    {
+        return scvfs_[scvfIdx];
+    }
+
+    //! Get the sub control volume face indices of an scv by global index
+    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    {
+        return scvfIndicesOfScv_[scvIdx];
+    }
+
     const Problem& problem_() const
     { return *problemPtr_; }
 
@@ -187,15 +199,15 @@ private:
 
     GridView gridView_;
     Dumux::ElementMap<GridView> elementMap_;
-    std::vector<std::shared_ptr<SubControlVolume>> scvs_;
+    std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
-    std::vector<FVElementGeometry> fvGeometries_;
+    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     IndexType numBoundaryScvf_;
 };
 
 // specialization in case the FVElementGeometries are not stored
 template<class TypeTag>
-class CCTpfaFVElementGeometryVector<TypeTag, false>
+class CCTpfaGlobalFVGeometry<TypeTag, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -204,32 +216,13 @@ class CCTpfaFVElementGeometryVector<TypeTag, false>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
+    //! The local fvGeometry needs access to the problem
+    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
     //! Constructor
-    CCTpfaFVElementGeometryVector(const GridView gridView)
-    : gridView_(gridView), elementMap_(gridView), eIdxBound_(-1) {}
-
-    /* \brief Get the finite volume geometry of an element
-     * \note The finite volume geometry offers iterators over the sub control volumes
-     *       and the sub control volume faces of an element.
-     */
-    const FVElementGeometry& fvGeometry(const Element& element) const
-    {
-        return fvGeometries_[getLocalScvIdx_(problem_().elementMapper().index(element), true)];
-    }
-
-    //! Get a sub control volume with a global scv index
-    const SubControlVolume& subControlVolume(IndexType scvIdx) const
-    {
-        return localSvs_[getLocalScvIdx_(scvIdx)];
-    }
-
-    //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& subControlVolumeFace(IndexType scvfIdx) const
-    {
-        return localScvfs_[getLocalScvFaceIdx_(scvfIdx)];
-    }
+    CCTpfaGlobalFVGeometry(const GridView gridView)
+    : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -257,19 +250,22 @@ public:
     Element element(IndexType eIdx) const
     { return elementMap_.element(eIdx); }
 
+    //! Return the gridView this global object lives on
+    const GridView& gridView() const
+    { return gridView_; }
+
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
     {
         problemPtr_ = &problem;
         elementMap_.clear();
-        eIdxBound_ = -1;
 
         // reserve memory or resize the containers
         numScvs_ = gridView_.size(0);
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
         elementMap_.resize(numScvs_);
-        scvFaceIndices_.resize(numScvs_);
+        scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
 
         // Build the SCV and SCV face
@@ -303,113 +299,33 @@ public:
             }
 
             // store the sets of indices in the data container
-            scvFaceIndices_[eIdx] = scvfsIndexSet;
+            scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
     }
 
-    // Binding of an element preparing the geometries of the whole stencil
-    // called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
-    {
-        eIdxBound_ = problem_().elementMapper().index(element);
-        release_();
-        makeElementGeometries_(element);
-        for (const auto& intersection : intersections(gridView_, element))
-        {
-            if (intersection.neighbor())
-                makeElementGeometries_(intersection.outside());
-        }
-    }
+    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    { return scvfIndicesOfScv_[scvIdx]; }
 
-    // Binding of an element preparing the geometries only inside the element
-    void bindElement(const Element& element)
-    {
-        eIdxBound_ = problem_().elementMapper().index(element);
-        release_();
-        makeElementGeometries_(element);
-    }
+    const std::vector<IndexType>& neighborVolVarIndices(IndexType scvIdx) const
+    { return neighborVolVarIndices_[scvIdx]; }
 
+    /*!
+     * \brief Return a local restriction of this global object
+     *        The local object is only functional after calling its bind/bindElement method
+     *        This is a free function that will be found by means of ADL
+     */
+    friend FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
+    {
+        return FVElementGeometry(global);
+    }
 
 private:
-
-    void release_()
-    {
-        localSvs_.clear();
-        localScvIndices_.clear();
-        localScvfs_.clear();
-        localScvfIndices_.clear();
-        fvGeometries_.clear();
-    }
-
-    void makeElementGeometries_(const Element& element)
-    {
-        const auto eIdx = problem_().elementMapper().index(element);
-
-        SubControlVolume scv(element.geometry(), eIdx);
-        localSvs_.push_back(scv);
-        localScvIndices_.push_back(eIdx);
-
-        const auto& scvFaceIndices = scvFaceIndices_[eIdx];
-        const auto& neighborVolVarIndices = neighborVolVarIndices_[eIdx];
-
-        int scvfCounter = 0;
-        for (const auto& intersection : intersections(gridView_, element))
-        {
-            if (intersection.neighbor() || intersection.boundary())
-            {
-                localScvfs_.push_back(SubControlVolumeFace(intersection.geometry(),
-                                                           intersection.geometry().center(),
-                                                           intersection.centerUnitOuterNormal(),
-                                                           scvFaceIndices[scvfCounter],
-                                                           intersection.indexInInside(),
-                                                           std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]}),
-                                                           intersection.boundary()));
-
-                localScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
-                scvfCounter++;
-            }
-        }
-
-        // Compute the finite volume element geometries
-        fvGeometries_.push_back(FVElementGeometry(*this, {eIdx}, scvFaceIndices));
-    }
-
-    const int getLocalScvIdx_(const int scvIdx, bool isElement = false) const
-    {
-        auto it = std::find(localScvIndices_.begin(), localScvIndices_.end(), scvIdx);
-
-        if (it != localScvIndices_.end())
-            return std::distance(localScvIndices_.begin(), it);
-        else
-        {
-            if (!isElement)
-                DUNE_THROW(Dune::InvalidStateException,
-                       "Could not find the sub control volume for scvIdx = " << scvIdx <<
-                       ", make sure to properly bind the FVGeometries to the element before using them.");
-            else
-                DUNE_THROW(Dune::InvalidStateException,
-                       "You are trying to get the fvgeometry of element with index " << scvIdx <<
-                       ", but bound is the element " << eIdxBound_ << ". Please bind element before using the fvgeometry.");
-        }
-    }
-
-    const int getLocalScvFaceIdx_(const int scvfIdx) const
-    {
-        auto it = std::find(localScvfIndices_.begin(), localScvfIndices_.end(), scvfIdx);
-
-        if (it != localScvfIndices_.end())
-            return std::distance(localScvfIndices_.begin(), it);
-        else
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Could not find the sub control volume face for scvfIdx = " << scvfIdx <<
-                       ", make sure to properly bind the FVGeometries to the to the element before using them.");
-    }
-
     const Problem& problem_() const
     { return *problemPtr_; }
 
     const Problem* problemPtr_;
+
     GridView gridView_;
 
     // Information on the global number of geometries
@@ -419,16 +335,8 @@ private:
 
     // vectors that store the global data
     Dumux::ElementMap<GridView> elementMap_;
-    std::vector<std::vector<IndexType>> scvFaceIndices_;
+    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<IndexType>> neighborVolVarIndices_;
-
-    // vectors to store the geometries temporarily after binding an element
-    IndexType eIdxBound_;
-    std::vector<SubControlVolume> localSvs_;
-    std::vector<IndexType> localScvIndices_;
-    std::vector<SubControlVolumeFace> localScvfs_;
-    std::vector<IndexType> localScvfIndices_;
-    std::vector<FVElementGeometry> fvGeometries_;
 };
 
 } // end namespace

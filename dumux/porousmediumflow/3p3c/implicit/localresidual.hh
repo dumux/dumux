@@ -49,6 +49,10 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -116,10 +120,13 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace)
+    PrimaryVariables computeFlux(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const SubControlVolumeFace& scvf,
+                                 const BoundaryTypes& bcTypes)
     {
         FluxVariables fluxVars;
-        fluxVars.initAndComputeFluxes(asImp_()->problem_(), this->element_(), scvFace);
+        fluxVars.initAndComputeFluxes(this->problem(), element, fvGeometry, scvf);
 
         // get upwind weights into local scope
         auto massWeight = massWeight_;

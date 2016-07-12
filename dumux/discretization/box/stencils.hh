@@ -141,16 +141,16 @@ public:
             elementStencils_[eIdx].update(problem, element);
 
             // bind the FvGeometry to the element before using it
-            problem.model().fvGeometries_().bindElement(element);
-            const auto& fvGeometry = problem.model().fvGeometries(element);
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            for (const auto& scv : scvs(fvGeometry))
+            for (auto&& scv : scvs(fvGeometry))
             {
                 auto vIdxGlobal = scv.dofIndex();
                 vertexStencils_[vIdxGlobal].vertexScvs().push_back(scv.index());
                 vertexStencils_[vIdxGlobal].elementIndices().push_back(eIdx);
 
-                for (const auto& scvJ : scvs(fvGeometry))
+                for (auto&& scvJ : scvs(fvGeometry))
                 {
                     auto vIdxGlobalJ = scvJ.dofIndex();
 

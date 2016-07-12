@@ -32,7 +32,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/fvelementgeometryvector.hh>
+#include <dumux/implicit/cellcentered/tpfa/globalfvgeometry.hh>
 #include <dumux/implicit/fvelementgeometry.hh>
 #include <dumux/implicit/subcontrolvolume.hh>
 #include <dumux/implicit/subcontrolvolumeface.hh>
@@ -119,7 +119,7 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range.begin(), range.end(), op))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
-        for (const auto& scv : scvs(fvGeometry))
+        for (auto&& scv : scvs(fvGeometry))
         {
             std::cout << "-- scv center at: " << scv.center() << std::endl;
         }
@@ -129,7 +129,7 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (auto&& scvf : scvfs(fvGeometry))
         {
             std::cout << "-- scvf center at: " << scvf.center();
             if (scvf.boundary()) std::cout << " (on boundary).";

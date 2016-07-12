@@ -38,22 +38,24 @@ class CCElementStencils
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     // TODO a separate stencil class all stencils can derive from?
     using Stencil = std::vector<IndexType>;
 public:
-    void update(const Problem& problem, const Element& element)
+    //! Update the stencil. We expect a bound fvGeometry
+    void update(const Problem& problem,
+                const Element& element,
+                const FVElementGeometry& fvGeometry)
     {
         elementStencil_.clear();
 
-        const auto& fvGeometry = problem.model().fvGeometries(element);
         // loop over sub control faces
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (auto&& scvf : scvfs(fvGeometry))
         {
             FluxVariables fluxVars;
-            const auto& stencil = fluxVars.computeStencil(problem, element, scvf);
-
+            const auto& stencil = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
             elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
         }
         // make values in elementstencil unique
@@ -64,15 +66,16 @@ public:
         neighborStencil_ = elementStencil_;
 
         // remove the element itself and possible ghost neighbors from the neighbor stencil
-        auto pred = [&problem, globalI](const int i) -> bool
+        auto pred = [&fvGeometry, globalI](const int i) -> bool
         {
             if (i == globalI)
                 return true;
-            if (problem.model().fvGeometries().element(i).partitionType() == Dune::GhostEntity)
+            if (fvGeometry.globalFvGeometry().element(i).partitionType() == Dune::GhostEntity)
                 return true;
             return false;
         };
-        neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(), pred), neighborStencil_.end());
+        neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(), pred),
+                               neighborStencil_.end());
     }
 
     //! The full element stencil (all element this element is interacting with)
@@ -110,11 +113,12 @@ public:
         elementStencils_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
-            // bind the FvGeometry to the element before using it
-            problem.model().fvGeometries_().bind(element);
+            // restrict the FvGeometry locally and bind to the element
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bind(element);
 
             auto eIdx = problem.elementMapper().index(element);
-            elementStencils_[eIdx].update(problem, element);
+            elementStencils_[eIdx].update(problem, element, fvGeometry);
         }
     }
 

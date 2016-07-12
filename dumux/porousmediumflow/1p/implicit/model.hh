@@ -93,18 +93,21 @@ public:
             int eIdx = this->elementMapper().index(element);
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
-            // make sure FVElementGeometry and the volume variables are bound to the element
-            this->fvGeometries_().bindElement(element);
-            this->curVolVars_().bindElement(element);
+            // get the local fv geometry
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
+            this->curVolVars_().bindElement(element, fvGeometry);
 
-            const auto& fvGeometry = this->fvGeometries(element);
-            for (const auto& scv : scvs(fvGeometry))
+            for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& spatialParams = this->problem_().spatialParams();
                 auto dofIdxGlobal = scv.dofIndex();
 
                 (*p)[dofIdxGlobal] = this->curVolVars(scv).pressure();
             }
+
+            // velocity output
+            //velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
         }
 
         writer.attachDofData(*p, "p", isBox);

@@ -27,12 +27,12 @@
 #define DUMUX_BOX_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/discretization/fvelementgeometry.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/fluxvariablescachevector.hh>
 #include <dumux/discretization/box/volumevariablesvector.hh>
-#include <dumux/discretization/box/fvelementgeometryvector.hh>
+#include <dumux/discretization/box/globalfvgeometry.hh>
+#include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/discretization/box/stencils.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 
@@ -58,7 +58,10 @@ namespace Properties {
 SET_INT_PROP(BoxModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::Box);
 
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(BoxModel, FVElementGeometryVector, BoxFVElementGeometryVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVElementGeometryCache)>);
+SET_TYPE_PROP(BoxModel, GlobalFVGeometry, BoxGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+
+//! Set the default for the FVElementGeometry vector
+SET_TYPE_PROP(BoxModel, FVElementGeometry, BoxFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(BoxModel, SubControlVolume)
@@ -71,7 +74,7 @@ private:
     using ScvGeometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld>;
     using IndexType = typename GridView::IndexSet::IndexType;
 public:
-    using type = BoxSubControlVolume<ScvGeometry, IndexType, /*isBox=*/true>;
+    using type = BoxSubControlVolume<ScvGeometry, IndexType>;
 };
 
 SET_PROP(BoxModel, SubControlVolumeFace)
@@ -103,7 +106,7 @@ SET_TYPE_PROP(BoxModel, CurrentVolumeVariablesVector, BoxVolumeVariablesVector<T
 SET_TYPE_PROP(BoxModel, PreviousVolumeVariablesVector, BoxVolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(BoxModel, FluxVariablesCacheVector, BoxFluxVariablesCacheVector<TypeTag>);
+SET_TYPE_PROP(BoxModel, FluxVariablesCacheVector, BoxFluxVariablesCacheVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);

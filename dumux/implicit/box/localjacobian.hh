@@ -68,30 +68,30 @@ namespace Dumux
 template<class TypeTag>
 class BoxLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 {
-    typedef ImplicitLocalJacobian<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
+    using ParentType = ImplicitLocalJacobian<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension,
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 public:
     BoxLocalJacobian()
@@ -105,41 +105,41 @@ public:
      *
      * \param element The DUNE Codim<0> entity which we look at.
      */
-    void assemble(const Element& element, JacobianMatrix& matrix, SolutionVector& residual)
+    void assemble(const Element& element,
+                  JacobianMatrix& matrix,
+                  SolutionVector& residual)
     {
         // prepare the volvars/fvGeometries for the case when caching is disabled
-        this->model_().fvGeometries_().bind(element);
-        this->model_().curVolVars_().bind(element);
-        this->model_().prevVolVars_().bindElement(element);
-        this->model_().fluxVariablesCache_().bind(element);
-
-        // the finite volume element geometry
-        const auto& fvGeometry = this->model_().fvGeometries(element);
+        auto fvGeometry = localView(this->problem_().model().globalFvGeometry());
+        fvGeometry.bind(element);
+        this->model_().curVolVars_().bind(element, fvGeometry);
+        this->model_().prevVolVars_().bindElement(element, fvGeometry);
+        this->model_().fluxVariablesCache_().bind(element, fvGeometry);
 
         // the element boundary types
-        bcTypes_.update(this->problem_(), element, fvGeometry);
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(this->problem_(), element, fvGeometry);
 
         // calculate the actual element residual
-        this->localResidual().eval(element, bcTypes_);
+        this->localResidual().eval(element, bcTypes, fvGeometry);
         this->residual_ = this->localResidual().residual();
 
         this->model_().updatePVWeights(fvGeometry);
 
         // calculation of the derivatives
-        for (const auto& scv : scvs(fvGeometry))
+        for (auto&& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            const auto localScvIdx = scv.indexInElement();
             VolumeVariables origVolVars(this->model_().curVolVars(scv));
 
             // add precalculated residual for this scv into the global container
-            residual[dofIdx] += this->residual_[localScvIdx];
+            residual[dofIdx] += this->residual_[scv.index()];
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
-                evalPartialDerivative_(matrix, element, scv, pvIdx);
+                evalPartialDerivative_(matrix, element, fvGeometry, scv, bcTypes, pvIdx);
 
                 // restore the original state of the scv's volume variables
                 this->model_().curVolVars_(scv) = origVolVars;
@@ -195,10 +195,12 @@ protected:
      */
     void evalPartialDerivative_(JacobianMatrix& matrix,
                                 const Element& element,
+                                const FVElementGeometry& fvGeometry,
                                 const SubControlVolume& scv,
+                                const ElementBoundaryTypes& bcTypes,
                                 const int pvIdx)
     {
-        auto dofIdx = scv.dofIndex();
+        const auto dofIdx = scv.dofIndex();
 
         ElementSolutionVector partialDeriv(element.subEntities(dim));
         PrimaryVariables priVars(this->model_().curSol()[dofIdx]);
@@ -219,7 +221,7 @@ protected:
             this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
 
             // calculate the deflected residual
-            this->localResidual().eval(element, bcTypes_);
+            this->localResidual().eval(element, bcTypes, fvGeometry);
 
             // store the residual
             partialDeriv = this->localResidual().residual();
@@ -245,7 +247,7 @@ protected:
             this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
 
             // calculate the deflected residual
-            this->localResidual().eval(element, bcTypes_);
+            this->localResidual().eval(element, bcTypes, fvGeometry);
 
             // subtract the residual from the derivative storage
             partialDeriv -= this->localResidual().residual();
@@ -263,17 +265,14 @@ protected:
         partialDeriv /= delta;
 
         // update the global stiffness matrix with the current partial derivatives
-        const auto& fvGeometry = this->model_().fvGeometries(element);
-        for (const auto& scvJ : scvs(fvGeometry))
-            this->updateGlobalJacobian_(matrix, scvJ.dofIndex(), dofIdx, pvIdx, partialDeriv[scvJ.indexInElement()]);
+        for (auto&& scvJ : scvs(fvGeometry))
+            this->updateGlobalJacobian_(matrix, scvJ.dofIndex(), dofIdx, pvIdx, partialDeriv[scvJ.index()]);
     }
 
 private:
-
     int numericDifferenceMethod_;
-
-    ElementBoundaryTypes bcTypes_;
 };
+
 }
 
 #endif

@@ -43,21 +43,15 @@ private:
 
 public:
     // the contructor in the box case
-    BoxSubControlVolume(Geometry geometry,
-                     IndexType scvIdx,
-                     IndexType elementIndex,
-                     IndexType indexInElement,
-                     IndexType dofIndex)
+    BoxSubControlVolume(Geometry&& geometry,
+                        IndexType scvIdx,
+                        IndexType elementIndex,
+                        IndexType dofIndex)
     : SubControlVolumeBase<G, I>(std::move(geometry), std::move(elementIndex)),
-      scvIdx_(scvIdx), indexInElement_(std::move(indexInElement)),
+      scvIdx_(std::move(scvIdx)),
       dofIndex_(std::move(dofIndex)) {}
 
-    IndexType indexInElement() const
-    {
-        return indexInElement_;
-    }
-
-    //! The global index of this scv
+    //! The local index of this scv
     IndexType index() const
     {
         return scvIdx_;
@@ -70,12 +64,11 @@ public:
 
     GlobalPosition dofPosition() const
     {
-        return this->geometry().corner(indexInElement_);
+        return this->geometry().corner(scvIdx_);
     }
 
 private:
     IndexType scvIdx_;
-    IndexType indexInElement_;
     IndexType dofIndex_;
 };
 

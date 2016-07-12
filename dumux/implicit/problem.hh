@@ -973,8 +973,8 @@ public:
     PrimaryVariables scvPointSources(const Element &element, const SubControlVolume &scv) const
     {
         PrimaryVariables source(0);
-
-        auto key = std::make_pair(this->gridView().indexSet().index(element), scv.indexInElement());
+        auto scvIdx = isBox ? scv.index() : 0;
+        auto key = std::make_pair(this->gridView().indexSet().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources

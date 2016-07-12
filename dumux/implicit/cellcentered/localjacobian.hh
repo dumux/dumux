@@ -75,7 +75,7 @@ class CCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
@@ -114,8 +114,8 @@ public:
         assemblyMap_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
-            // bind FVGeometry to the element to prepare all the geometries of the stencil
-            problem.model().fvGeometries_().bind(element);
+            // get a local finite volume geometry object that is bindable
+            auto fvGeometryJ = localView(problem.model().globalFvGeometry());
 
             auto globalI = problem.elementMapper().index(element);
             const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
@@ -123,18 +123,19 @@ public:
             assemblyMap_[globalI].reserve(neighborStencil.size());
             for (auto globalJ : neighborStencil)
             {
-                const auto& elementJ = this->model_().fvGeometries().element(globalJ);
-                const auto& fvGeometry = this->model_().fvGeometries(elementJ);
+                const auto& elementJ = fvGeometryJ.globalFvGeometry().element(globalJ);
+                fvGeometryJ.bind(elementJ);
 
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
-                for (const auto& scvFaceJ : scvfs(fvGeometry))
+                for (auto&& scvFaceJ : scvfs(fvGeometryJ))
                 {
                     auto fluxVarsIdx = scvFaceJ.index();
 
                     // if globalI is in flux var stencil, add to list
                     FluxVariables fluxVars;
-                    const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, scvFaceJ);
+                    const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, fvGeometryJ, scvFaceJ);
+
                     for (auto globalIdx : fluxStencil)
                         if (globalIdx == globalI)
                             fluxVarIndices.push_back(fluxVarsIdx);
@@ -156,15 +157,16 @@ public:
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
 
         // prepare the volvars/fvGeometries in case caching is disabled
-        this->model_().fvGeometries_().bind(element);
-        this->model_().curVolVars_().bind(element);
-        this->model_().prevVolVars_().bindElement(element);
-        this->model_().fluxVariablesCache_().bind(element);
+        auto fvGeometry = localView(this->model_().globalFvGeometry());
+        fvGeometry.bind(element);
+
+        this->model_().curVolVars_().bind(element, fvGeometry);
+        this->model_().prevVolVars_().bindElement(element, fvGeometry);
+        this->model_().fluxVariablesCache_().bind(element, fvGeometry);
 
         // set the actual dof index
         globalI_ = this->problem_().elementMapper().index(element);
 
-        const auto& fvGeometry = this->model_().fvGeometries(element);
         bcTypes_.update(this->problem_(), element, fvGeometry);
 
         // calculate the local residual
@@ -175,7 +177,7 @@ public:
         }
         else
         {
-            this->localResidual().eval(element, bcTypes_);
+            this->localResidual().eval(element, bcTypes_, fvGeometry);
             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
             residual[globalI_] = this->localResidual().residual(0);
@@ -184,7 +186,7 @@ public:
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, matrix, residual, isGhost);
+        evalPartialDerivatives_(element, fvGeometry, matrix, residual, isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
         // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
@@ -205,7 +207,11 @@ public:
     { return assemblyMap_; }
 
 private:
-    void evalPartialDerivatives_(const Element& element, JacobianMatrix& matrix, SolutionVector& residual, const bool isGhost)
+    void evalPartialDerivatives_(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 JacobianMatrix& matrix,
+                                 SolutionVector& residual,
+                                 const bool isGhost)
     {
         // get stencil informations
         const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
@@ -230,16 +236,19 @@ private:
         unsigned int j = 0;
         for (auto globalJ : neighborStencil)
         {
-            auto elementJ = this->problem_().model().fvGeometries().element(globalJ);
+            auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
             neighborElements.push_back(elementJ);
 
             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
-                origFlux[j] += localRes.evalFlux_(elementJ, fluxVarIdx);
+            {
+                auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, scvf);
+            }
 
             ++j;
         }
 
-        const auto& scv = this->model_().fvGeometries().subControlVolume(globalI_);
+        auto&& scv = fvGeometry.scv(globalI_);
         VolumeVariables origVolVars(this->model_().curVolVars(scv));
 
         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -261,12 +270,12 @@ private:
 
                 // update the volume variables and bind the flux var cache again
                 this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
-                this->model_().fluxVariablesCache_().bind(element);
+                this->model_().fluxVariablesCache_().bind(element, fvGeometry);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, bcTypes_);
+                    this->localResidual().eval(element, bcTypes_, fvGeometry);
 
                     // store the residual and the storage term
                     partialDeriv = this->localResidual().residual(0);
@@ -276,7 +285,10 @@ private:
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                 {
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fluxVarIdx);
+                    {
+                        auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, scvf);
+                    }
                 }
             }
             else
@@ -300,12 +312,12 @@ private:
 
                 // update the volume variables and bind the flux var cache again
                 this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
-                this->model_().fluxVariablesCache_().bind(element);
+                this->model_().fluxVariablesCache_().bind(element, fvGeometry);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, bcTypes_);
+                    this->localResidual().eval(element, bcTypes_, fvGeometry);
 
                     // subtract the residual from the derivative storage
                     partialDeriv -= this->localResidual().residual(0);
@@ -315,7 +327,10 @@ private:
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                 {
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fluxVarIdx);
+                    {
+                        auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, scvf);
+                    }
                 }
             }
             else

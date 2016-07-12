@@ -144,11 +144,12 @@ public:
             for (const auto& scv : fvGeometry.scvs())
             {
                 // make sure FVElementGeometry & vol vars are bound to the element
-                this->fvGeometries_().bindElement(element);
-                this->curVolVars_().bindElement(element);
+                auto fvGeometry = localView(this->globalFvGeometry());
+                fvGeometry.bindElement(element);
 
-                const auto& fvGeometry = this->fvGeometries(element);
-                for (const auto& scv : scvs(fvGeometry))
+                this->curVolVars_().bindElement(element, fvGeometry);
+
+                for (auto&& scv : scvs(fvGeometry))
                 {
                     auto eIdx = scv.elementIndex();
                     auto dofIdxGlobal = scv.dofIndex();

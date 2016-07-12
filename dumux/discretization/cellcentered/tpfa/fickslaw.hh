@@ -59,6 +59,7 @@ class FicksLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discreti
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IndexSet::IndexType IndexType;
     typedef typename std::vector<IndexType> Stencil;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -73,16 +74,16 @@ public:
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
+                       const FVElementGeometry& fvGeometry,
                        const SubControlVolumeFace& scvFace,
                        const int phaseIdx,
                        const int compIdx)
     {
         // diffusion tensors are always solution dependent
-        Scalar tij = calculateTransmissibility_(problem, element, scvFace, phaseIdx, compIdx);
+        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, scvFace, phaseIdx, compIdx);
 
         // Get the inside volume variables
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
         const auto& insideVolVars = problem.model().curVolVars(insideScv);
 
         // and the outside volume variables
@@ -96,7 +97,10 @@ public:
         return rho*tij*(xInside - xOutside);
     }
 
-    static Stencil stencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
+    static Stencil stencil(const Problem& problem,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvFace)
     {
         std::vector<IndexType> stencil;
         stencil.clear();
@@ -114,12 +118,16 @@ public:
 private:
 
 
-    static Scalar calculateTransmissibility_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace, const int phaseIdx, const int compIdx)
+    static Scalar calculateTransmissibility_(const Problem& problem,
+                                             const Element& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const SubControlVolumeFace& scvFace,
+                                             const int phaseIdx, const int compIdx)
     {
         Scalar tij;
 
         const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
+        const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = problem.model().curVolVars(insideScvIdx);
 
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
@@ -129,7 +137,7 @@ private:
         if (!scvFace.boundary())
         {
             const auto outsideScvIdx = scvFace.outsideScvIdx();
-            const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
+            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = problem.model().curVolVars(outsideScvIdx);
 
             auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);

@@ -158,11 +158,12 @@ public:
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
                 // make sure FVElementGeometry & vol vars are bound to the element
-                this->fvGeometries_().bindElement(element);
-                this->curVolVars_().bindElement(element);
+                auto fvGeometry = localView(this->globalFvGeometry());
+                fvGeometry.bind(element);
 
-                const auto& fvGeometry = this->fvGeometries(element);
-                for (const auto& scv : scvs(fvGeometry))
+                this->curVolVars_().bindElement(element, fvGeometry);
+
+                for (auto&& scv : scvs(fvGeometry))
                 {
                     auto dofIdxGlobal = scv.dofIndex();
                     const auto& volVars = this->curVolVars(scv);

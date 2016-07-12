@@ -45,6 +45,7 @@ class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_V
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -52,30 +53,30 @@ class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_V
     using Stencil = std::vector<IndexType>;
     using TransmissibilityVector = std::vector<IndexType>;
 
-    typedef typename GridView::ctype CoordScalar;
+    using CoordScalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
-    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> FeCache;
-    typedef typename FeCache::FiniteElementType::Traits::LocalBasisType FeLocalBasis;
-    typedef typename FeLocalBasis::Traits::JacobianType ShapeJacobian;
-    typedef typename Dune::FieldVector<Scalar, 1> ShapeValue;
-    typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+
+    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
+    using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
+    using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+    using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
 
 public:
     // stores required data for the flux calculation
     struct FaceData
     {
-        std::vector<ShapeJacobian> localJacobian;
-        std::vector<ShapeValue> shapeValues;
+        std::vector<ShapeJacobian> shapeJacobian;
+        std::vector<ShapeValue> shapeValue;
         JacobianInverseTransposed jacInvT;
     };
 
     void update(const Problem& problem,
                 const Element& element,
-                const typename Element::Geometry& geometry,
-                const FeLocalBasis& localBasis,
+                const FVElementGeometry& fvGeometry,
                 const SubControlVolumeFace &scvFace)
     {
-        faceData_ = AdvectionType::calculateFaceData(problem, element, geometry, localBasis, scvFace);
+        faceData_ = AdvectionType::calculateFaceData(problem, element, fvGeometry, scvFace);
 
         // The stencil info is obsolete for the box method.
         // It is here for compatibility with cc methods
@@ -103,6 +104,7 @@ class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_V
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -112,11 +114,12 @@ class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_V
 public:
     void update(const Problem& problem,
                 const Element& element,
+                const FVElementGeometry& fvGeometry,
                 const SubControlVolumeFace &scvFace)
     {
         FluxVariables fluxVars;
-        stencil_ = fluxVars.computeStencil(problem, element, scvFace);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, element, scvFace);
+        stencil_ = fluxVars.computeStencil(problem, element, fvGeometry, scvFace);
+        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, scvFace);
     }
 
     const Stencil& stencil() const
