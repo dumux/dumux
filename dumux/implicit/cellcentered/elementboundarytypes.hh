@@ -106,13 +106,6 @@ public:
         }
     }
 
-    void update(const Problem &problem,
-                const Element &element)
-    {
-        const auto& fvGeometry = problem.model().fvGeometries(element);
-        update(problem, element, fvGeometry);
-    }
-
     /*!
      * \brief Returns whether the element has a vertex which contains
      *        a Dirichlet value.

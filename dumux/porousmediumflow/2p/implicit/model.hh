@@ -159,14 +159,15 @@ public:
 
                 // make sure FVElementGeometry & vol vars are bound to the element
                 auto fvGeometry = localView(this->globalFvGeometry());
-                fvGeometry.bind(element);
+                fvGeometry.bindElement(element);
 
-                this->curVolVars_().bindElement(element, fvGeometry);
+                auto elemVolVars = localView(this->curGlobalVolVars());
+                elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
                 for (auto&& scv : scvs(fvGeometry))
                 {
                     auto dofIdxGlobal = scv.dofIndex();
-                    const auto& volVars = this->curVolVars(scv);
+                    const auto& volVars = elemVolVars[scv];
 
                     (*pw)[dofIdxGlobal] = volVars.pressure(wPhaseIdx);
                     (*pn)[dofIdxGlobal] = volVars.pressure(nPhaseIdx);

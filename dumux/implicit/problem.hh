@@ -45,50 +45,45 @@ template<class TypeTag>
 class ImplicitProblem
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
-
-    typedef typename GET_PROP_TYPE(TypeTag, VtkMultiWriter) VtkMultiWriter;
-
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
-    typedef typename GET_PROP_TYPE(TypeTag, PointSourceHelper) PointSourceHelper;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    using VtkMultiWriter = typename GET_PROP_TYPE(TypeTag, VtkMultiWriter);
+    using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef typename GridView::Grid::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using CoordScalar = typename GridView::Grid::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
-    typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
-    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
+    using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
+    using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
 
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
@@ -970,7 +965,10 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
-    PrimaryVariables scvPointSources(const Element &element, const SubControlVolume &scv) const
+    PrimaryVariables scvPointSources(const Element &element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& elemVolVars,
+                                     const SubControlVolume &scv) const
     {
         PrimaryVariables source(0);
         auto scvIdx = isBox ? scv.index() : 0;
@@ -984,7 +982,7 @@ public:
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
             // factor again. That's because the user specifies absolute values in kg/s.
-            const Scalar volume = scv.volume()*model().curVolVars(scv).extrusionFactor();
+            const Scalar volume = scv.volume()*elemVolVars[scv].extrusionFactor();
 
             for (auto&& pointSource : pointSources)
             {

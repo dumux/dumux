@@ -45,7 +45,6 @@ class PrimaryVariableSwitch
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using CurrentVolumeVariablesVector = typename GET_PROP_TYPE(TypeTag, CurrentVolumeVariablesVector);
 
 public:
 
@@ -116,8 +115,7 @@ public:
      * \param problem The problem
      * \param curSol The current solution to be updated / modified
      */
-    bool update(Problem& problem, SolutionVector& curSol,
-                CurrentVolumeVariablesVector& volVarsVector)
+    bool update(Problem& problem, SolutionVector& curSol)
     {
         bool switched = false;
         visited_.assign(phasePresence_.size(), false);
@@ -127,7 +125,8 @@ public:
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
-            volVarsVector.bindElement(element, fvGeometry);
+            auto elemVolVars = localView(problem.model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry);
 
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -139,10 +138,10 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    volVarsVector[dofIdxGlobal].update(curSol[dofIdxGlobal], problem, element, scv);
+                    elemVolVars[dofIdxGlobal].update(curSol[dofIdxGlobal], problem, element, scv);
                     const auto& globalPos = scv.dofPosition();
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], volVarsVector[dofIdxGlobal], dofIdxGlobal, globalPos))
+                    if (asImp_().update_(curSol[dofIdxGlobal], elemVolVars[dofIdxGlobal], dofIdxGlobal, globalPos))
                         switched = true;
 
                 }

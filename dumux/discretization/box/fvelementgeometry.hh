@@ -83,13 +83,13 @@ public:
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(IndexType scvIdx) const
     {
-        return globalFvGeometry().scv(scvIdx, eIdx_);
+        return globalFvGeometry().scvs(eIdx_)[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(IndexType scvfIdx) const
     {
-        return globalFvGeometry().scvf(scvfIdx, eIdx_);
+        return globalFvGeometry().scvfs(eIdx_)[scvfIdx];
     }
 
     //! iterator range for sub control volumes. Iterates over

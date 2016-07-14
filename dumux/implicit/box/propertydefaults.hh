@@ -30,7 +30,8 @@
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/fluxvariablescachevector.hh>
-#include <dumux/discretization/box/volumevariablesvector.hh>
+#include <dumux/discretization/box/globalvolumevariables.hh>
+#include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/globalfvgeometry.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/discretization/box/stencils.hh>
@@ -51,7 +52,6 @@ namespace Dumux {
 template<class TypeTag> class BoxLocalResidual;
 template<class TypeTag> class BoxElementBoundaryTypes;
 template<class TypeTag> class BoxStencilsVector;
-template<class TypeTag, bool enableFVElementGeometryCache> class BoxFVElementGeometryVector;
 
 namespace Properties {
 //! Set the corresponding discretization method property
@@ -99,11 +99,11 @@ SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper)
 //! The stencil container
 SET_TYPE_PROP(BoxModel, StencilsVector, BoxStencilsVector<TypeTag>);
 
-//! The global current volume variables vector class
-SET_TYPE_PROP(BoxModel, CurrentVolumeVariablesVector, BoxVolumeVariablesVector<TypeTag, false, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+//! The global volume variables vector class
+SET_TYPE_PROP(BoxModel, GlobalVolumeVariables, BoxGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
-//! The global previous volume variables vector class
-SET_TYPE_PROP(BoxModel, PreviousVolumeVariablesVector, BoxVolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+//! The element volume variables vector class
+SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(BoxModel, FluxVariablesCacheVector, BoxFluxVariablesCacheVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);

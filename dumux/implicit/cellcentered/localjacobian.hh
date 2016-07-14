@@ -68,29 +68,28 @@ namespace Dumux
 template<class TypeTag>
 class CCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 {
-    typedef ImplicitLocalJacobian<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    using ParentType = ImplicitLocalJacobian<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IndexSet::IndexType IndexType;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
-    typedef std::vector<std::vector<std::vector<IndexType>>> AssemblyMap;
+    using AssemblyMap = std::vector<std::vector<std::vector<IndexType>>>;
 
 public:
 
@@ -124,7 +123,7 @@ public:
             for (auto globalJ : neighborStencil)
             {
                 const auto& elementJ = fvGeometryJ.globalFvGeometry().element(globalJ);
-                fvGeometryJ.bind(elementJ);
+                fvGeometryJ.bindElement(elementJ);
 
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
@@ -160,14 +159,19 @@ public:
         auto fvGeometry = localView(this->model_().globalFvGeometry());
         fvGeometry.bind(element);
 
-        this->model_().curVolVars_().bind(element, fvGeometry);
-        this->model_().prevVolVars_().bindElement(element, fvGeometry);
-        this->model_().fluxVariablesCache_().bind(element, fvGeometry);
+        auto curElemVolVars = localView(this->model_().curGlobalVolVars());
+        curElemVolVars.bind(element, fvGeometry, this->model_().curSol());
+
+        auto prevElemVolVars = localView(this->model_().prevGlobalVolVars());
+        prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol());
+
+        this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
 
         // set the actual dof index
         globalI_ = this->problem_().elementMapper().index(element);
 
-        bcTypes_.update(this->problem_(), element, fvGeometry);
+        ElementBoundaryTypes elemBcTypes;
+        elemBcTypes.update(this->problem_(), element, fvGeometry);
 
         // calculate the local residual
         if (isGhost)
@@ -177,7 +181,7 @@ public:
         }
         else
         {
-            this->localResidual().eval(element, bcTypes_, fvGeometry);
+            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
             residual[globalI_] = this->localResidual().residual(0);
@@ -186,7 +190,7 @@ public:
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, fvGeometry, matrix, residual, isGhost);
+        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, matrix, residual, isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
         // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
@@ -209,6 +213,9 @@ public:
 private:
     void evalPartialDerivatives_(const Element& element,
                                  const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& prevElemVolVars,
+                                 ElementVolumeVariables& curElemVolVars,
+                                 const ElementBoundaryTypes& elemBcTypes,
                                  JacobianMatrix& matrix,
                                  SolutionVector& residual,
                                  const bool isGhost)
@@ -242,21 +249,23 @@ private:
             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
             {
                 auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, scvf);
+                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf);
             }
 
             ++j;
         }
 
         auto&& scv = fvGeometry.scv(globalI_);
-        VolumeVariables origVolVars(this->model_().curVolVars(scv));
+        auto& curVolVars = curElemVolVars[scv];
+        // save a copy of the original vol vars
+        VolumeVariables origVolVars(curVolVars);
 
         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
         {
             neighborDeriv = 0.0;
             PrimaryVariables priVars(this->model_().curSol()[globalI_]);
 
-            Scalar eps = this->numericEpsilon(scv, pvIdx);
+            Scalar eps = this->numericEpsilon(scv, curVolVars, pvIdx);
             Scalar delta = 0;
 
             if (numericDifferenceMethod_ >= 0)
@@ -269,13 +278,13 @@ private:
                 delta += eps;
 
                 // update the volume variables and bind the flux var cache again
-                this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
-                this->model_().fluxVariablesCache_().bind(element, fvGeometry);
+                curVolVars.update(priVars, this->problem_(), element, scv);
+                this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, bcTypes_, fvGeometry);
+                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
 
                     // store the residual and the storage term
                     partialDeriv = this->localResidual().residual(0);
@@ -287,7 +296,7 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, scvf);
+                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf);
                     }
                 }
             }
@@ -311,13 +320,13 @@ private:
                 delta += eps;
 
                 // update the volume variables and bind the flux var cache again
-                this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
-                this->model_().fluxVariablesCache_().bind(element, fvGeometry);
+                curVolVars.update(priVars, this->problem_(), element, scv);
+                this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, bcTypes_, fvGeometry);
+                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
 
                     // subtract the residual from the derivative storage
                     partialDeriv -= this->localResidual().residual(0);
@@ -329,7 +338,7 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, scvf);
+                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf);
                     }
                 }
             }
@@ -350,7 +359,7 @@ private:
             neighborDeriv /= delta;
 
             // restore the original state of the scv's volume variables
-            this->model_().curVolVars_(scv) = origVolVars;
+            curVolVars = origVolVars;
 
             // update the global jacobian matrix with the current partial derivatives
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
@@ -362,12 +371,10 @@ private:
     }
 
     IndexType globalI_;
-    ElementBoundaryTypes bcTypes_;
-
     int numericDifferenceMethod_;
-
     AssemblyMap assemblyMap_;
 };
+
 }
 
 #endif

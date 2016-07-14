@@ -55,27 +55,25 @@ class ImplicitModel
     friend typename GET_PROP_TYPE(TypeTag, Problem);
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     friend typename GET_PROP_TYPE(TypeTag, StencilsVector);
-    friend typename GET_PROP_TYPE(TypeTag, CurrentVolumeVariablesVector);
-    friend typename GET_PROP_TYPE(TypeTag, PreviousVolumeVariablesVector);
+    friend typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     friend typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, CurrentVolumeVariablesVector) CurrentVolumeVariablesVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PreviousVolumeVariablesVector) PreviousVolumeVariablesVector;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesCache) FluxVariablesCache;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector) FluxVariablesCacheVector;
-    typedef typename GET_PROP_TYPE(TypeTag, StencilsVector) StencilsVector;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
+    using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheVector = typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector);
+    using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
@@ -83,17 +81,15 @@ class ImplicitModel
     };
 
     using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) LocalJacobian;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-
-    typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using LocalJacobian = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+    using ReferenceElement = typename Dune::ReferenceElement<CoordScalar, dim>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -119,7 +115,7 @@ public:
 
         updateBoundaryIndices_();
 
-        globalFvGeometryPtr_ = std::make_shared<GlobalFVGeometry>(gridView_());
+        globalFvGeometryPtr_ = std::make_shared<GlobalFVGeometry>(problem.gridView());
         globalFvGeometryPtr_->update(problem);
 
         int numDofs = asImp_().numDofs();
@@ -132,7 +128,7 @@ public:
         asImp_().applyInitialSolution_();
 
         // resize and update the volVars with the initial solution
-        curVolVarsVector_.update(problem, curSol());
+        curGlobalVolVars_.update(problem, curSol());
 
         // update stencils
         stencilsVector_.update(problem);
@@ -148,7 +144,7 @@ public:
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
-        prevVolVarsVector_ = curVolVarsVector_;
+        prevGlobalVolVars_ = curGlobalVolVars_;
     }
 
     /*!
@@ -411,7 +407,7 @@ public:
         if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
         {
             uPrev_ = uCur_;
-            prevVolVarsVector_ = curVolVarsVector_;
+            prevGlobalVolVars_ = curGlobalVolVars_;
 
             updateBoundaryIndices_();
 
@@ -437,7 +433,7 @@ public:
     void newtonEndStep()
     {
         // TODO resize vector if grid was adapted
-        curVolVarsVector_.update(problem_(), curSol());
+        curGlobalVolVars_.update(problem_(), curSol());
     }
 
     /*!
@@ -451,7 +447,7 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
-        curVolVarsVector_ = prevVolVarsVector_;
+        curGlobalVolVars_ = prevGlobalVolVars_;
     }
 
     /*!
@@ -465,7 +461,7 @@ public:
     {
         // make the current solution the previous one.
         uPrev_ = uCur_;
-        prevVolVarsVector_ = curVolVarsVector_;
+        prevGlobalVolVars_ = curGlobalVolVars_;
     }
 
     /*!
@@ -777,43 +773,31 @@ public:
     const FluxVariablesCache& fluxVarsCache(const SubControlVolumeFace& scvf) const
     { return fluxVarsCacheVector_[scvf]; }
 
-    const VolumeVariables& curVolVars(const SubControlVolume& scv) const
-    { return curVolVarsVector_[scv]; }
+    const GlobalVolumeVariables& curGlobalVolVars() const
+    { return curGlobalVolVars_; }
 
-    const VolumeVariables& prevVolVars(const SubControlVolume& scv) const
-    { return prevVolVarsVector_[scv]; }
-
-    const VolumeVariables& curVolVars(const unsigned int scvIdx) const
-    { return curVolVarsVector_[scvIdx]; }
+    const GlobalVolumeVariables& prevGlobalVolVars() const
+    { return prevGlobalVolVars_; }
 
     const GlobalFVGeometry& globalFvGeometry() const
     { return *globalFvGeometryPtr_; }
 
 protected:
 
-    CurrentVolumeVariablesVector& curVolVars_()
-    { return curVolVarsVector_; }
+    GlobalFVGeometry& globalFvGeometry()
+    { return *globalFvGeometryPtr_; }
 
-    VolumeVariables& curVolVars_(const SubControlVolume& scv)
-    { return curVolVarsVector_[scv]; }
+    GlobalVolumeVariables& curGlobalVolVars()
+    { return curGlobalVolVars_; }
 
-    VolumeVariables& curVolVars_(const unsigned int scvIdx)
-    { return curVolVarsVector_[scvIdx]; }
-
-    PreviousVolumeVariablesVector& prevVolVars_()
-    { return prevVolVarsVector_; }
-
-    VolumeVariables& prevVolVars_(const SubControlVolume& scv)
-    { return prevVolVarsVector_[scv]; }
+    GlobalVolumeVariables& prevGlobalVolVars()
+    { return prevGlobalVolVars_; }
 
     FluxVariablesCacheVector& fluxVariablesCache_()
     { return fluxVarsCacheVector_; }
 
     FluxVariablesCache& fluxVarsCache_(const SubControlVolumeFace& scvf)
     { return fluxVarsCacheVector_[scvf]; }
-
-    GlobalFVGeometry& globalFvGeometry_()
-    { return *globalFvGeometryPtr_; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -967,8 +951,8 @@ protected:
     SolutionVector uPrev_;
 
     // the current and previous variables (primary and secondary variables)
-    CurrentVolumeVariablesVector curVolVarsVector_;
-    PreviousVolumeVariablesVector prevVolVarsVector_;
+    GlobalVolumeVariables curGlobalVolVars_;
+    GlobalVolumeVariables prevGlobalVolVars_;
 
     // the flux variables cache vector vector
     FluxVariablesCacheVector fluxVarsCacheVector_;

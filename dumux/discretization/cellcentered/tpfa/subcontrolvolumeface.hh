@@ -60,10 +60,11 @@ public:
     //! Constructor with intersection
     template <class Intersection>
     CCTpfaSubControlVolumeFace(const Intersection& is,
+                               typename Intersection::Geometry&& isGeometry,
                                IndexType scvfIndex,
                                const std::vector<IndexType>& scvIndices)
-    : ParentType(is.geometry(),
-                 is.geometry().center(),
+    : ParentType(std::move(isGeometry),
+                 isGeometry.center(),
                  is.centerUnitOuterNormal(),
                  scvfIndex,
                  scvIndices,

@@ -57,6 +57,7 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -76,6 +77,7 @@ public:
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
                        const IndexType phaseIdx)
     {
@@ -83,7 +85,8 @@ public:
         const auto& faceData = problem.model().fluxVarsCache()[scvf].faceData();
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto extrusionFactor = problem.model().curVolVars(insideScv).extrusionFactor();
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto extrusionFactor = insideVolVars.extrusionFactor();
         const auto K = problem.spatialParams().intrinsicPermeability(insideScv);
 
         // evaluate gradP - rho*g at integration point
@@ -94,7 +97,7 @@ public:
             DimVector gradI;
             faceData.jacInvT.mv(faceData.shapeJacobian[scv.index()][0], gradI);
 
-            gradI *= problem.model().curVolVars(scv).pressure(phaseIdx);
+            gradI *= elemVolVars[scv].pressure(phaseIdx);
             gradP += gradI;
         }
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
@@ -103,9 +106,8 @@ public:
             DimVector g(problem.gravityAtPos(scvf.center()));
 
             // interpolate the density at the IP
-            const auto& insideVolVars = problem.model().curVolVars(insideScv);
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-            const auto& outsideVolVars = problem.model().curVolVars(outsideScv);
+            const auto& outsideVolVars = elemVolVars[outsideScv];
             Scalar rho = 0.5*(insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx));
 
             // turn gravity into a force

@@ -51,6 +51,7 @@ class BoxFluxVariablesCacheVector<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
@@ -76,12 +77,16 @@ public:
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
-    void bind(const Element& element, const FVElementGeometry& fvGeometry)
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars)
     {
-        bindElement(element, fvGeometry);
+        bindElement(element, fvGeometry, elemVolVars);
     }
 
-    void bindElement(const Element& element, const FVElementGeometry& fvGeometry)
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars)
     { eIdx_ = problem_().elementMapper().index(element); }
 
     // access operator
@@ -114,6 +119,7 @@ class BoxFluxVariablesCacheVector<TypeTag, false>
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
@@ -126,12 +132,16 @@ public:
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
-    void bind(const Element& element, const FVElementGeometry& fvGeometry)
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars)
     {
-        bindElement(element, fvGeometry);
+        bindElement(element, fvGeometry, elemVolVars);
     }
 
-    void bindElement(const Element& element, const FVElementGeometry& fvGeometry)
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars)
     {
         // temporary resizing of the cache
         fluxVarsCache_.resize(fvGeometry.numScvf());

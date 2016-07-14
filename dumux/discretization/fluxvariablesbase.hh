@@ -44,6 +44,7 @@ class FluxVariablesBase
     using Stencil = std::vector<IndexType>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum{ enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache) };
     enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -55,12 +56,14 @@ public:
     void init(const Problem& problem,
               const Element& element,
               const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace &scvFace)
     {
         problemPtr_ = &problem;
         elementPtr_ = &element;
         scvFacePtr_ = &scvFace;
         fvGeometryPtr_ = &fvGeometry;
+        elemVolVarsPtr_ = &elemVolVars;
 
         // update the stencil if needed
         if (!enableFluxVarsCache)
@@ -89,6 +92,9 @@ public:
     const FVElementGeometry& fvGeometry() const
     { return *fvGeometryPtr_; }
 
+    const ElementVolumeVariables& elemVolVars() const
+    { return *elemVolVarsPtr_; }
+
     Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
 
@@ -110,6 +116,7 @@ private:
     const Element* elementPtr_;              //! Pointer to the element at hand
     const FVElementGeometry* fvGeometryPtr_;
     const SubControlVolumeFace* scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
+    const ElementVolumeVariables* elemVolVarsPtr_;
     Stencil stencil_;                        //! The flux stencil
 };
 } // end namespace

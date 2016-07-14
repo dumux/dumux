@@ -90,20 +90,23 @@ public:
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            int eIdx = this->elementMapper().index(element);
+            auto eIdx = this->elementMapper().index(element);
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
             // get the local fv geometry
             auto fvGeometry = localView(this->globalFvGeometry());
             fvGeometry.bindElement(element);
-            this->curVolVars_().bindElement(element, fvGeometry);
+
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
             for (auto&& scv : scvs(fvGeometry))
             {
+                const auto& volVars = elemVolVars[scv];
                 const auto& spatialParams = this->problem_().spatialParams();
                 auto dofIdxGlobal = scv.dofIndex();
 
-                (*p)[dofIdxGlobal] = this->curVolVars(scv).pressure();
+                (*p)[dofIdxGlobal] = volVars.pressure();
             }
 
             // velocity output

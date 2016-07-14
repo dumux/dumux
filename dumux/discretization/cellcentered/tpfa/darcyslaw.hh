@@ -58,6 +58,7 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -74,6 +75,7 @@ public:
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
                        const IndexType phaseIdx)
     {
@@ -81,8 +83,8 @@ public:
 
         // Get the inside and outside volume variables
         const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
-        const auto& insideVolVars = problem.model().curVolVars(insideScv);
-        const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
 
         auto hInside = insideVolVars.pressure(phaseIdx);
         auto hOutside = outsideVolVars.pressure(phaseIdx);
@@ -144,6 +146,7 @@ public:
     static Scalar calculateTransmissibilities(const Problem& problem,
                                               const Element& element,
                                               const FVElementGeometry& fvGeometry,
+                                              const ElementVolumeVariables& elemVolVars,
                                               const SubControlVolumeFace& scvFace)
     {
         Scalar tij;

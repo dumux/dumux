@@ -68,25 +68,23 @@ template<class TypeTag>
 class ImplicitLocalJacobian
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IndexSet::IndexType IndexType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
@@ -204,7 +202,8 @@ protected:
     { return problem_().vertexMapper(); }
 
 
-    Scalar numericEpsilon(const SubControlVolume &scv,
+    Scalar numericEpsilon(const SubControlVolume& scv,
+                          const VolumeVariables& volVar,
                           const int pvIdx) const
     {
         // define the base epsilon as the geometric mean of 1 and the
@@ -219,7 +218,7 @@ protected:
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
-        Scalar priVar = model_().curVolVars(scv).priVar(pvIdx);
+        Scalar priVar = volVar.priVar(pvIdx);
         return baseEps*(std::abs(priVar) + 1.0);
     }
 
@@ -278,6 +277,7 @@ protected:
 
     ElementSolutionVector residual_;
 };
+
 }
 
 #endif

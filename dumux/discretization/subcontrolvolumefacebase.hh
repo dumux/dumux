@@ -42,7 +42,6 @@ class SubControlVolumeFaceBase
     static const int dimworld = Geometry::coorddimension;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
     SubControlVolumeFaceBase(const Geometry& geometry,
@@ -53,7 +52,6 @@ public:
                              bool boundary = false)
     : geometry_(geometry),
       ipGlobal_(ipGlobal),
-      ipLocal_(geometry.local(ipGlobal)),
       unitOuterNormal_(unitOuterNormal),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
@@ -67,7 +65,6 @@ public:
                              bool boundary = false)
     : geometry_(std::move(geometry)),
       ipGlobal_(ipGlobal),
-      ipLocal_(geometry_.local(ipGlobal)),
       unitOuterNormal_(unitOuterNormal),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
@@ -84,13 +81,6 @@ public:
     {
         // Return center for now
         return ipGlobal_;
-    }
-
-    //! The integration point for flux evaluations in global coordinates
-    LocalPosition ipLocal() const
-    {
-        // Return center for now
-        return ipLocal_;
     }
 
     //! The area of the sub control volume face
@@ -138,7 +128,6 @@ public:
 private:
     Geometry geometry_;
     GlobalPosition ipGlobal_;
-    LocalPosition ipLocal_;
     GlobalPosition unitOuterNormal_;
     IndexType scvfIndex_;
     std::vector<IndexType> scvIndices_;

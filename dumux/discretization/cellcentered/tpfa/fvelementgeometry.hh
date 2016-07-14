@@ -103,7 +103,7 @@ public:
     scvfs(const CCTpfaFVElementGeometry& fvGeometry)
     {
         const auto& g = fvGeometry.globalFvGeometry();
-        const auto scvIdx = fvGeometry.scvIndices()[0];
+        const auto scvIdx = fvGeometry.scvIndices_[0];
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
     }
@@ -212,15 +212,11 @@ public:
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
-    {
-        return scvs_.size();
-    }
+    { return scvs_.size(); }
 
     //! number of sub control volumes in this fv element geometry
     std::size_t numScvf() const
-    {
-        return scvfs_.size();
-    }
+    { return scvfs_.size(); }
 
     //! Binding of an element preparing the geometries of the whole stencil
     //! called by the local jacobian to prepare element assembly
@@ -229,6 +225,8 @@ public:
         bindElement(element);
         for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
         {
+            neighborScvs_.reserve(element.subEntities(1));
+            neighborScvfIndices_.reserve(element.subEntities(1));
             if (intersection.neighbor())
                 makeNeighborGeometries(intersection.outside());
         }
@@ -264,11 +262,12 @@ private:
             if (intersection.neighbor() || intersection.boundary())
             {
                 scvfs_.emplace_back(intersection,
+                                    intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
                                     std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
                                     );
 
-                scvfIndices_.push_back(scvFaceIndices[scvfCounter]);
+                scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
             }
         }
@@ -294,6 +293,7 @@ private:
                 if (intersection.outside() == *elementPtr_)
                 {
                     neighborScvfs_.emplace_back(intersection,
+                                                intersection.geometry(),
                                                 scvFaceIndices[scvfCounter],
                                                 std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
                                                 );
@@ -306,6 +306,7 @@ private:
             else if (intersection.boundary())
             {
                 neighborScvfs_.emplace_back(intersection,
+                                            intersection.geometry(),
                                             scvFaceIndices[scvfCounter],
                                             std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
                                             );

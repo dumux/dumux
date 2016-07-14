@@ -105,6 +105,7 @@ class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_V
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -115,11 +116,12 @@ public:
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvFace)
     {
         FluxVariables fluxVars;
         stencil_ = fluxVars.computeStencil(problem, element, fvGeometry, scvFace);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, scvFace);
+        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvFace);
     }
 
     const Stencil& stencil() const

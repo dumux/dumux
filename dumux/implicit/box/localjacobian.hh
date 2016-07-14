@@ -90,6 +90,7 @@ class BoxLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
@@ -112,16 +113,21 @@ public:
         // prepare the volvars/fvGeometries for the case when caching is disabled
         auto fvGeometry = localView(this->problem_().model().globalFvGeometry());
         fvGeometry.bind(element);
-        this->model_().curVolVars_().bind(element, fvGeometry);
-        this->model_().prevVolVars_().bindElement(element, fvGeometry);
-        this->model_().fluxVariablesCache_().bind(element, fvGeometry);
+
+        auto curElemVolVars = localView(this->model_().curGlobalVolVars());
+        curElemVolVars.bind(element, fvGeometry, this->model_().curSol());
+
+        auto prevElemVolVars = localView(this->model_().prevGlobalVolVars());
+        prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol());
+
+        this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
 
         // the element boundary types
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(this->problem_(), element, fvGeometry);
+        ElementBoundaryTypes elemBcTypes;
+        elemBcTypes.update(this->problem_(), element, fvGeometry);
 
         // calculate the actual element residual
-        this->localResidual().eval(element, bcTypes, fvGeometry);
+        this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
         this->residual_ = this->localResidual().residual();
 
         this->model_().updatePVWeights(fvGeometry);
@@ -131,7 +137,8 @@ public:
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            VolumeVariables origVolVars(this->model_().curVolVars(scv));
+            auto& curVolVars = curElemVolVars[scv];
+            VolumeVariables origVolVars(curVolVars);
 
             // add precalculated residual for this scv into the global container
             residual[dofIdx] += this->residual_[scv.index()];
@@ -139,10 +146,10 @@ public:
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
-                evalPartialDerivative_(matrix, element, fvGeometry, scv, bcTypes, pvIdx);
+                evalPartialDerivative_(matrix, element, fvGeometry, prevElemVolVars, curElemVolVars, scv, elemBcTypes, pvIdx);
 
                 // restore the original state of the scv's volume variables
-                this->model_().curVolVars_(scv) = origVolVars;
+                curVolVars = origVolVars;
             }
 
             // TODO: what if we have an extended source stencil????
@@ -196,15 +203,18 @@ protected:
     void evalPartialDerivative_(JacobianMatrix& matrix,
                                 const Element& element,
                                 const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& prevElemVolVars,
+                                ElementVolumeVariables& curElemVolVars,
                                 const SubControlVolume& scv,
-                                const ElementBoundaryTypes& bcTypes,
+                                const ElementBoundaryTypes& elemBcTypes,
                                 const int pvIdx)
     {
         const auto dofIdx = scv.dofIndex();
+        auto& volVars = curElemVolVars[scv];
 
         ElementSolutionVector partialDeriv(element.subEntities(dim));
         PrimaryVariables priVars(this->model_().curSol()[dofIdx]);
-        Scalar eps = this->numericEpsilon(scv, pvIdx);
+        Scalar eps = this->numericEpsilon(scv, volVars, pvIdx);
         Scalar delta = 0;
 
         // calculate the residual with the forward deflected primary variables
@@ -218,10 +228,10 @@ protected:
             delta += eps;
 
             // update the volume variables connected to the dof
-            this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
+            volVars.update(priVars, this->problem_(), element, scv);
 
             // calculate the deflected residual
-            this->localResidual().eval(element, bcTypes, fvGeometry);
+            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
 
             // store the residual
             partialDeriv = this->localResidual().residual();
@@ -244,10 +254,10 @@ protected:
             delta += eps;
 
             // update the volume variables connected to the dof
-            this->model_().curVolVars_(scv).update(priVars, this->problem_(), element, scv);
+            volVars.update(priVars, this->problem_(), element, scv);
 
             // calculate the deflected residual
-            this->localResidual().eval(element, bcTypes, fvGeometry);
+            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
 
             // subtract the residual from the derivative storage
             partialDeriv -= this->localResidual().residual();

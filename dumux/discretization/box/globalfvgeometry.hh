@@ -164,17 +164,17 @@ public:
                                                         static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
                 // compute the scvf normal unit outer normal
-                auto normal = geometryHelper.normal(elementGeometry, *scvfGeometry);
+                auto normal = geometryHelper.normal(elementGeometry, scvfGeometry);
                 const auto v = elementGeometry.corner(localScvIndices[1]) - elementGeometry.corner(localScvIndices[0]);
                 const auto s = v*normal;
                 if (std::signbit(s))
                     normal *= -1;
 
-                scvfs_.emplace_back(std::move(scvfGeometry),
-                                    normal,
-                                    scvfLocalIdx,
-                                    localScvIndices,
-                                    false);
+                scvfs_[eIdx].emplace_back(std::move(scvfGeometry),
+                                          normal,
+                                          scvfLocalIdx,
+                                          localScvIndices,
+                                          false);
 
                 // increment local counter
                 scvfLocalIdx++;
@@ -199,11 +199,11 @@ public:
                             {static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1,
                                                                                isScvfLocalIdx++, dim))};
 
-                        scvfs_.emplace_back(std::move(scvfGeometry),
-                                            intersection.centerUnitOuterNormal(),
-                                            scvfLocalIdx,
-                                            localScvIndices,
-                                            true);
+                        scvfs_[eIdx].emplace_back(std::move(scvfGeometry),
+                                                  intersection.centerUnitOuterNormal(),
+                                                  scvfLocalIdx,
+                                                  localScvIndices,
+                                                  true);
 
                         // increment local counter
                         scvfLocalIdx++;
@@ -228,13 +228,12 @@ public:
     { return feCache_; }
 
 private:
-
     //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(IndexType eIdx)
+    const std::vector<SubControlVolume>& scvs(IndexType eIdx) const
     { return scvs_[eIdx]; }
 
     //! Get the local scvfs for an element
-    const std::vector<SubControlVolume>& scvfs(IndexType eIdx)
+    const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const
     { return scvfs_[eIdx]; }
 
     const Problem& problem_() const

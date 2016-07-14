@@ -40,6 +40,7 @@ class CCFluxVariablesCacheVector
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
@@ -77,7 +78,9 @@ public:
     // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
     template <typename T = TypeTag>
     typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bindElement(const Element& element, const FVElementGeometry& fvGeometry)
+    bindElement(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
     {
         // resizing of the cache
         const auto numScvf = fvGeometry.numScvf();
@@ -88,7 +91,7 @@ public:
         // fill the containers
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(problem_(), element, fvGeometry, scvf);
+            fluxVarsCache_[localScvfIdx].update(problem_(), element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -97,14 +100,18 @@ public:
     // Specialization for the global caching being enabled - do nothing here
     template <typename T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bindElement(const Element& element, const FVElementGeometry& fvGeometry)
+    bindElement(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
     {}
 
     // This function is called by the CCLocalResidual before flux calculations during assembly.
     // Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
     template <typename T = TypeTag>
     typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bind(const Element& element, const FVElementGeometry& fvGeometry)
+    bind(const Element& element,
+         const FVElementGeometry& fvGeometry,
+         const ElementVolumeVariables& elemVolVars)
     {
         const auto globalI = problem_().elementMapper().index(element);
         const auto& neighborStencil = problem_().model().stencils(element).neighborStencil();
@@ -124,7 +131,7 @@ public:
         IndexType localScvfIdx = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(problem_(), element, fvGeometry, scvf);
+            fluxVarsCache_[localScvfIdx].update(problem_(), element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -138,7 +145,7 @@ public:
             for (auto fluxVarIdx : fluxVarIndicesJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(fluxVarIdx);
-                fluxVarsCache_[localScvfIdx].update(problem_(), elementJ, fvGeometry, scvfJ);
+                fluxVarsCache_[localScvfIdx].update(problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
                 globalScvfIndices_[localScvfIdx] = scvfJ.index();
                 localScvfIdx++;
             }
@@ -148,7 +155,9 @@ public:
     // Specialization for the global caching being enabled - do nothing here
     template <typename T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bind(const Element& element, const FVElementGeometry& fvGeometry) {}
+    bind(const Element& element,
+         const FVElementGeometry& fvGeometry,
+         const ElementVolumeVariables& elemVolVars) {}
 
     // access operators in the case of caching
     template <typename T = TypeTag>

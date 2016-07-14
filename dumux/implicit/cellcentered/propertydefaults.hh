@@ -29,7 +29,8 @@
 
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/discretization/cellcentered/fluxvariablescachevector.hh>
-#include <dumux/discretization/cellcentered/volumevariablesvector.hh>
+#include <dumux/discretization/cellcentered/globalvolumevariables.hh>
+#include <dumux/discretization/cellcentered/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/stencils.hh>
 
 #include "elementboundarytypes.hh"
@@ -64,10 +65,10 @@ SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
 SET_TYPE_PROP(CCModel, StencilsVector, CCStencilsVector<TypeTag>);
 
 //! The global current volume variables vector class
-SET_TYPE_PROP(CCModel, CurrentVolumeVariablesVector, Dumux::CCVolumeVariablesVector<TypeTag, false, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(CCModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global previous volume variables vector class
-SET_TYPE_PROP(CCModel, PreviousVolumeVariablesVector, Dumux::CCVolumeVariablesVector<TypeTag, true, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCModel, FluxVariablesCacheVector, Dumux::CCFluxVariablesCacheVector<TypeTag>);

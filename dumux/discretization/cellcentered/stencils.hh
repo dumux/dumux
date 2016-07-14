@@ -46,9 +46,12 @@ class CCElementStencils
 public:
     //! Update the stencil. We expect a bound fvGeometry
     void update(const Problem& problem,
-                const Element& element,
-                const FVElementGeometry& fvGeometry)
+                const Element& element)
     {
+        // restrict the FvGeometry locally and bind to the element
+        auto fvGeometry = localView(problem.model().globalFvGeometry());
+        fvGeometry.bindElement(element); // for TPFA bind element is enough
+
         elementStencil_.clear();
 
         // loop over sub control faces
@@ -113,12 +116,8 @@ public:
         elementStencils_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
-            // restrict the FvGeometry locally and bind to the element
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
-            fvGeometry.bind(element);
-
             auto eIdx = problem.elementMapper().index(element);
-            elementStencils_[eIdx].update(problem, element, fvGeometry);
+            elementStencils_[eIdx].update(problem, element);
         }
     }
 

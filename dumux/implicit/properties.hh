@@ -74,8 +74,8 @@ NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a
 
 NEW_PROP_TAG(EnableGlobalVolumeVariablesCache); //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(CurrentVolumeVariablesVector);  //!< The type for a container of current volume variables
-NEW_PROP_TAG(PreviousVolumeVariablesVector);  //!< The type for a container of previous volume variables
+NEW_PROP_TAG(ElementVolumeVariables);  //!< The type for a local (element/stencil) container for the volume variables
+NEW_PROP_TAG(GlobalVolumeVariables);  //!< The type for a global container for the volume variables
 NEW_PROP_TAG(FluxVariables); //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache); //!< Stores data associated with flux vars (if enabled)
 NEW_PROP_TAG(FluxVariablesCacheVector); //!< The global vector of flux variable containers

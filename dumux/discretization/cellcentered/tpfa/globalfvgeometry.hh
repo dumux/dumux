@@ -134,25 +134,21 @@ public:
                 if (intersection.neighbor())
                 {
                     auto nIdx = problem.elementMapper().index(intersection.outside());
-                    scvfs_.emplace_back(SubControlVolumeFace(intersection.geometry(),
-                                                             intersection.geometry().center(),
-                                                             intersection.centerUnitOuterNormal(),
-                                                             scvfIdx,
-                                                             intersection.indexInInside(),
-                                                             std::vector<IndexType>({eIdx, nIdx}),
-                                                             false));
+                    scvfs_.emplace_back(intersection,
+                                        intersection.geometry(),
+                                        scvfIdx,
+                                        std::vector<IndexType>({eIdx, nIdx})
+                                        );
                     scvfsIndexSet[intersection.indexInInside()] = scvfIdx++;
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
-                    scvfs_.emplace_back(SubControlVolumeFace(intersection.geometry(),
-                                                             intersection.geometry().center(),
-                                                             intersection.centerUnitOuterNormal(),
-                                                             scvfIdx,
-                                                             intersection.indexInInside(),
-                                                             std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
-                                                             true));
+                    scvfs_.emplace_back(intersection,
+                                        intersection.geometry(),
+                                        scvfIdx,
+                                        std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++})
+                                        );
                     scvfsIndexSet[intersection.indexInInside()] = scvfIdx++;
                 }
             }
@@ -167,10 +163,8 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
-    {
-        return FVElementGeometry(global);
-    }
+    friend inline FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
+    { return FVElementGeometry(global); }
 
 private:
 
@@ -277,7 +271,7 @@ public:
             elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
-            IndexType numLocalFaces = element.subEntities(1);
+            auto numLocalFaces = element.subEntities(1);
             std::vector<IndexType> scvfsIndexSet(numLocalFaces);
             std::vector<IndexType> neighborVolVarIndexSet(numLocalFaces);
             IndexType localFaceIdx = 0;

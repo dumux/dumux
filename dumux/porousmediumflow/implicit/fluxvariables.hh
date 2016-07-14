@@ -59,6 +59,7 @@ class PorousMediumFluxVariables<TypeTag, true, false, false> : public FluxVariab
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum
     {
@@ -71,9 +72,10 @@ public:
     void initAndComputeFluxes(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace)
     {
-        ParentType::init(problem, element, fvGeometry, scvFace);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace);
     }
 
     template<typename FunctionType>
@@ -82,12 +84,13 @@ public:
         Scalar flux = AdvectionType::flux(this->problem(),
                                           this->element(),
                                           this->fvGeometry(),
+                                          this->elemVolVars(),
                                           this->scvFace(),
                                           phaseIdx);
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->problem().model().curVolVars(insideScv);
-        const auto& outsideVolVars = this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
+        const auto& insideVolVars = this->elemVolVars()[insideScv];
+        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
 
         if (std::signbit(flux))
             return flux*upwindFunction(outsideVolVars, insideVolVars);
