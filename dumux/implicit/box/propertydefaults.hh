@@ -29,7 +29,8 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
-#include <dumux/discretization/box/fluxvariablescachevector.hh>
+#include <dumux/discretization/box/globalfluxvariablescache.hh>
+#include <dumux/discretization/box/elementfluxvariablescache.hh>
 #include <dumux/discretization/box/globalvolumevariables.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/globalfvgeometry.hh>
@@ -106,7 +107,10 @@ SET_TYPE_PROP(BoxModel, GlobalVolumeVariables, BoxGlobalVolumeVariables<TypeTag,
 SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(BoxModel, FluxVariablesCacheVector, BoxFluxVariablesCacheVector<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(BoxModel, GlobalFluxVariablesCache, BoxGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+
+//! The local flux variables cache vector class
+SET_TYPE_PROP(BoxModel, ElementFluxVariablesCache, BoxElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);

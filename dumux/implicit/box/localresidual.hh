@@ -62,6 +62,8 @@ class BoxLocalResidual : public ImplicitLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
 public:
     // copying the local residual class is not a good idea
@@ -74,7 +76,8 @@ protected:
     void evalFluxes_(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars,
-                     const ElementBoundaryTypes& bcTypes)
+                     const ElementBoundaryTypes& bcTypes,
+                     const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // calculate the mass flux over the scv faces and subtract
         for (auto&& scvf : scvfs(fvGeometry))
@@ -84,7 +87,7 @@ protected:
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, bcTypes[insideScv.index()]);
+                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, bcTypes[insideScv.index()], elemFluxVarsCache[scvf]);
 
                 this->residual_[insideScv.index()] += flux;
                 this->residual_[outsideScv.index()] -= flux;
@@ -95,7 +98,8 @@ protected:
     void evalBoundary_(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const ElementBoundaryTypes& bcTypes)
+                       const ElementBoundaryTypes& bcTypes,
+                       const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if (bcTypes.hasNeumann() || bcTypes.hasOutflow())
         {
@@ -104,7 +108,7 @@ protected:
                 if (scvf.boundary())
                 {
                     auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.index()]);
+                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.index()], elemFluxVarsCache[scvf]);
                 }
             }
         }
@@ -160,7 +164,8 @@ protected:
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace &scvf,
                              const SubControlVolume& insideScv,
-                             const BoundaryTypes& bcTypes)
+                             const BoundaryTypes& bcTypes,
+                             const FluxVariablesCache& fluxVarsCache)
     {
 
         // evaluate the Neumann conditions at the boundary face

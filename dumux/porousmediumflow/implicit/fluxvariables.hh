@@ -60,12 +60,7 @@ class PorousMediumFluxVariables<TypeTag, true, false, false> : public FluxVariab
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    enum
-    {
-        isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox),
-        constantBC = GET_PROP_VALUE(TypeTag, ConstantBoundaryConditions)
-    };
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
 public:
 
@@ -73,9 +68,10 @@ public:
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace)
+                              const SubControlVolumeFace &scvFace,
+                              const FluxVariablesCache& fluxVarsCache)
     {
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
     }
 
     template<typename FunctionType>
@@ -86,7 +82,8 @@ public:
                                           this->fvGeometry(),
                                           this->elemVolVars(),
                                           this->scvFace(),
-                                          phaseIdx);
+                                          phaseIdx,
+                                          this->fluxVarsCache());
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];

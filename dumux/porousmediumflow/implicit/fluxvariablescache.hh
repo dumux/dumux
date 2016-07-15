@@ -63,28 +63,34 @@ class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_V
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
 
 public:
-    // stores required data for the flux calculation
-    struct FaceData
-    {
-        std::vector<ShapeJacobian> shapeJacobian;
-        std::vector<ShapeValue> shapeValue;
-        JacobianInverseTransposed jacInvT;
-    };
 
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
-                const SubControlVolumeFace &scvFace)
+                const SubControlVolumeFace &scvf)
     {
-        faceData_ = AdvectionType::calculateFaceData(problem, element, fvGeometry, scvFace);
+        const auto geometry = element.geometry();
+        const auto& localBasis = fvGeometry.feLocalBasis();
+
+        // evaluate shape functions and gradients at the integration point
+        const auto ipLocal = geometry.local(scvf.center());
+        jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
+        localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
+        //localBasis.evaluateFunction(ipLocal, shapeValue_); // do we need the shapeValues for the flux?
 
         // The stencil info is obsolete for the box method.
         // It is here for compatibility with cc methods
         stencil_ = Stencil(0);
     }
 
-    const FaceData& faceData() const
-    { return faceData_; }
+    const std::vector<ShapeJacobian>& shapeJacobian() const
+    { return shapeJacobian_; }
+
+   /* const std::vector<ShapeValue>& shapeValue() const
+    { return shapeValue_; }*/
+
+    const JacobianInverseTransposed& jacInvT() const
+    { return jacInvT_; }
 
     const Stencil& stencil() const
     {
@@ -92,7 +98,10 @@ public:
     }
 
 private:
-    FaceData faceData_;
+    std::vector<ShapeJacobian> shapeJacobian_;
+    //std::vector<ShapeValue> shapeValue_;
+    JacobianInverseTransposed jacInvT_;
+
     Stencil stencil_;
 };
 
@@ -117,11 +126,11 @@ public:
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace &scvFace)
+                const SubControlVolumeFace &scvf)
     {
         FluxVariables fluxVars;
-        stencil_ = fluxVars.computeStencil(problem, element, fvGeometry, scvFace);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvFace);
+        stencil_ = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
+        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
     }
 
     const Stencil& stencil() const

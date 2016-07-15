@@ -56,6 +56,8 @@ class ImplicitLocalResidual
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
@@ -108,12 +110,13 @@ public:
         auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
 
-        problem().model().fluxVariablesCache_().bindElement(element, fvGeometry, curElemVolVars);
+        auto elemFluxVarsCache = localView(problem().model().globalFluxVarsCache());
+        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem(), element, fvGeometry);
 
-        asImp_().eval(element, fvGeometry, curElemVolVars, prevElemVolVars, bcTypes);
+        asImp_().eval(element, fvGeometry, curElemVolVars, prevElemVolVars, bcTypes, elemFluxVarsCache);
     }
 
     /*!
@@ -197,7 +200,8 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& prevElemVolVars,
               const ElementVolumeVariables& curElemVolVars,
-              const ElementBoundaryTypes &bcTypes)
+              const ElementBoundaryTypes &bcTypes,
+              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // resize the vectors for all terms
         auto numScv = fvGeometry.numScv();
@@ -208,8 +212,8 @@ public:
         storageTerm_ = 0.0;
 
         asImp_().evalVolumeTerms_(element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes);
-        asImp_().evalFluxes_(element, fvGeometry, curElemVolVars, bcTypes);
-        asImp_().evalBoundary_(element, fvGeometry, curElemVolVars, bcTypes);
+        asImp_().evalFluxes_(element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundary_(element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache);
     }
 
     /*!
@@ -288,7 +292,8 @@ protected:
     PrimaryVariables evalFlux_(const Element &element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace scvf)
+                               const SubControlVolumeFace scvf,
+                               const FluxVariablesCache& fluxVarsCache)
     {
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem(), element, fvGeometry);
@@ -296,7 +301,7 @@ protected:
         residual_.resize(fvGeometry.numScv());
         residual_ = 0;
 
-        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes);
+        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, fluxVarsCache);
     }
 
     /*!

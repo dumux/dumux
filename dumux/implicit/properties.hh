@@ -78,7 +78,8 @@ NEW_PROP_TAG(ElementVolumeVariables);  //!< The type for a local (element/stenci
 NEW_PROP_TAG(GlobalVolumeVariables);  //!< The type for a global container for the volume variables
 NEW_PROP_TAG(FluxVariables); //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache); //!< Stores data associated with flux vars (if enabled)
-NEW_PROP_TAG(FluxVariablesCacheVector); //!< The global vector of flux variable containers
+NEW_PROP_TAG(GlobalFluxVariablesCache); //!< The global vector of flux variable containers
+NEW_PROP_TAG(ElementFluxVariablesCache); //!< A local vector of flux variable caches per element
 NEW_PROP_TAG(EnableGlobalFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
 NEW_PROP_TAG(ConstantBoundaryConditions); //!< boundary data is stored in case the BC are constant

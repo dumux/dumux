@@ -28,7 +28,8 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/discretization/cellcentered/fluxvariablescachevector.hh>
+#include <dumux/discretization/cellcentered/globalfluxvariablescache.hh>
+#include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/stencils.hh>
@@ -71,7 +72,10 @@ SET_TYPE_PROP(CCModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<Typ
 SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(CCModel, FluxVariablesCacheVector, Dumux::CCFluxVariablesCacheVector<TypeTag>);
+SET_TYPE_PROP(CCModel, GlobalFluxVariablesCache, Dumux::CCGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+
+//! The local flux variables cache vector class
+SET_TYPE_PROP(CCModel, ElementFluxVariablesCache, Dumux::CCElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);

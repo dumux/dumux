@@ -128,9 +128,8 @@ public:
         auto eIdx = globalVolVars().problem_().elementMapper().index(element);
 
         // stencil information
-        const auto& elementStencil = globalVolVars().problem_().model().stencils(element).elementStencil();
         const auto& neighborStencil = globalVolVars().problem_().model().stencils(element).neighborStencil();
-        const auto numDofs = elementStencil.size();
+        const auto numDofs = neighborStencil.size() + 1;
 
         // resize local containers to the required size (for internal elements)
         volumeVariables_.resize(numDofs);

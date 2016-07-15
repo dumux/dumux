@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the volume variables vector
+ * \brief The global object of flux var caches
  */
-#ifndef DUMUX_DISCRETIZATION_CC_FLUXVARSCACHEVECTOR_HH
-#define DUMUX_DISCRETIZATION_CC_FLUXVARSCACHEVECTOR_HH
+#ifndef DUMUX_DISCRETIZATION_CC_ELEMENT_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_CC_ELEMENT_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -30,10 +30,17 @@ namespace Dumux
 
 /*!
  * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \brief Base class for the stencil local flux variables cache
+ */
+template<class TypeTag, bool EnableGlobalFluxVariablesCache>
+class CCElementFluxVariablesCache;
+
+/*!
+ * \ingroup ImplicitModel
+ * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class CCFluxVariablesCacheVector
+class CCElementFluxVariablesCache<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -42,45 +49,64 @@ class CCFluxVariablesCacheVector
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    update(Problem& problem)
-    {
-        problemPtr_ = &problem;
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
-        fluxVarsCache_.resize(globalFvGeometry.numScvf());
-        for (const auto& element : elements(problem.gridView()))
-        {
-            // Prepare the geometries within the elements of the stencil
-            auto fvGeometry = localView(globalFvGeometry);
-            fvGeometry.bind(element);
+    CCElementFluxVariablesCache(GlobalFluxVariablesCache& global)
+    : globalFluxVarsCachePtr_(&global) {}
 
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                (*this)[scvf].update(problem, element, scvf);
-            }
-        }
-    }
+    // Specialization for the global caching being enabled - do nothing here
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars) {}
 
-    // When global flux variables caching is disabled, we don't need to update the cache
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    update(Problem& problem)
-    {
-        problemPtr_ = &problem;
-    }
+    // Specialization for the global caching being enabled - do nothing here
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars) {}
+
+    // access operators in the case of caching
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
+
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
+
+    //! The global object we are a restriction of
+    const GlobalFluxVariablesCache& globalFluxVarsCache() const
+    {  return *globalFluxVarsCachePtr_; }
+
+private:
+    GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+};
+
+/*!
+ * \ingroup ImplicitModel
+ * \brief Spezialization when not using global caching
+ */
+template<class TypeTag>
+class CCElementFluxVariablesCache<TypeTag, false>
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+
+public:
+    CCElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
+    : globalFluxVarsCachePtr_(&global) {}
 
     // This function has to be called prior to flux calculations on the element.
     // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bindElement(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars)
     {
         // resizing of the cache
         const auto numScvf = fvGeometry.numScvf();
@@ -91,37 +117,27 @@ public:
         // fill the containers
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(problem_(), element, fvGeometry, elemVolVars, scvf);
+            fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
     }
 
-    // Specialization for the global caching being enabled - do nothing here
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bindElement(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
-    {}
-
     // This function is called by the CCLocalResidual before flux calculations during assembly.
     // Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bind(const Element& element,
-         const FVElementGeometry& fvGeometry,
-         const ElementVolumeVariables& elemVolVars)
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars)
     {
-        const auto globalI = problem_().elementMapper().index(element);
-        const auto& neighborStencil = problem_().model().stencils(element).neighborStencil();
+        const auto globalI = globalFluxVarsCache().problem_().elementMapper().index(element);
+        const auto& neighborStencil = globalFluxVarsCache().problem_().model().stencils(element).neighborStencil();
         const auto numNeighbors = neighborStencil.size();
 
         // find the number of scv faces that need to be prepared
         auto numScvf = fvGeometry.numScvf();
         for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto& fluxVarIndicesJ = problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
+            const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
             numScvf += fluxVarIndicesJ.size();
         }
 
@@ -131,7 +147,7 @@ public:
         IndexType localScvfIdx = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(problem_(), element, fvGeometry, elemVolVars, scvf);
+            fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -139,63 +155,40 @@ public:
         // add required data on the scv faces in the neighboring elements
         for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto& fluxVarIndicesJ = problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
+            const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
             const auto elementJ = fvGeometry.globalFvGeometry().element(neighborStencil[localIdxJ]);
 
             for (auto fluxVarIdx : fluxVarIndicesJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(fluxVarIdx);
-                fluxVarsCache_[localScvfIdx].update(problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
+                fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
                 globalScvfIndices_[localScvfIdx] = scvfJ.index();
                 localScvfIdx++;
             }
         }
     }
 
-    // Specialization for the global caching being enabled - do nothing here
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache)>::type
-    bind(const Element& element,
-         const FVElementGeometry& fvGeometry,
-         const ElementVolumeVariables& elemVolVars) {}
-
-    // access operators in the case of caching
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf) const
-    { return fluxVarsCache_[scvf.index()]; }
-
-    template <typename T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf)
-    { return fluxVarsCache_[scvf.index()]; }
-
     // access operators in the case of no caching
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf) const
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
-    template <typename T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), FluxVariablesCache>::type&
-    operator [](const SubControlVolumeFace& scvf)
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
+
+    //! The global object we are a restriction of
+    const GlobalFluxVariablesCache& globalFluxVarsCache() const
+    {  return *globalFluxVarsCachePtr_; }
 
 private:
+    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+
     // get index of scvf in the local container
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), int>::type
-    getLocalScvfIdx_(const int scvfIdx) const
+    int getLocalScvfIdx_(const int scvfIdx) const
     {
         auto it = std::find(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
         assert(it != globalScvfIndices_.end() && "Could not find the flux vars cache for scvfIdx");
         return std::distance(globalScvfIndices_.begin(), it);
     }
-
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
-    const Problem* problemPtr_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<IndexType> globalScvfIndices_;

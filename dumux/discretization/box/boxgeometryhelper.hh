@@ -45,8 +45,8 @@ private:
     using Scalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    using ScvGeometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld>;
-    using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
+    using ScvGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim, dimWorld>;
+    using ScvfGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim-1, dimWorld>;
 
     using GlobalPosition = typename ScvGeometry::GlobalCoordinate;
     using CornerList = std::vector<GlobalPosition>;

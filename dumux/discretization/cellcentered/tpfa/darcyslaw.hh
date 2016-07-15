@@ -59,6 +59,7 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -77,9 +78,10 @@ public:
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
-                       const IndexType phaseIdx)
+                       const IndexType phaseIdx,
+                       const FluxVarsCache& fluxVarsCache)
     {
-        const auto& tij = problem.model().fluxVarsCache(scvFace).tij();
+        const auto& tij = fluxVarsCache.tij();
 
         // Get the inside and outside volume variables
         const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());

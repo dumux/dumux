@@ -55,8 +55,7 @@ class ImplicitModel
     friend typename GET_PROP_TYPE(TypeTag, Problem);
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     friend typename GET_PROP_TYPE(TypeTag, StencilsVector);
-    friend typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
-    friend typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector);
+    friend typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
 
     using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -72,7 +71,7 @@ class ImplicitModel
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FluxVariablesCacheVector = typename GET_PROP_TYPE(TypeTag, FluxVariablesCacheVector);
+    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
 
     enum {
@@ -134,7 +133,7 @@ public:
         stencilsVector_.update(problem);
 
         // update the flux variables caches
-        fluxVarsCacheVector_.update(problem);
+        globalfluxVarsCache_.update(problem);
 
         // initialize assembler and create matrix
         localJacobian_.init(problem);
@@ -741,37 +740,8 @@ public:
         return asImp_().onBoundary(scv.dofIndex());
     }
 
-    /*!
-     * \brief Fill the fluid state according to the primary variables.
-     *
-     * Taking the information from the primary variables,
-     * the fluid state is filled with every information that is
-     * necessary to evaluate the model's local residual.
-     *
-     * \param priVars The primary variables of the model.
-     * \param problem The problem at hand.
-     * \param element The current element.
-     * \param fvGeometry The finite volume element geometry.
-     * \param scvIdx The index of the subcontrol volume.
-     * \param fluidState The fluid state to fill.
-     */
-    // template <class FluidState>
-    // static void completeFluidState(const PrimaryVariables& priVars,
-    //                                const Problem& problem,
-    //                                const Element& element,
-    //                                const FVElementGeometry& fvGeometry,
-    //                                const int scvIdx,
-    //                                FluidState& fluidState)
-    // {
-    //     VolumeVariables::completeFluidState(priVars, problem, element,
-    //                                         fvGeometry, scvIdx, fluidState);
-    // }
-
-    const FluxVariablesCacheVector& fluxVarsCache() const
-    { return fluxVarsCacheVector_; }
-
-    const FluxVariablesCache& fluxVarsCache(const SubControlVolumeFace& scvf) const
-    { return fluxVarsCacheVector_[scvf]; }
+    const GlobalFluxVariablesCache& globalFluxVarsCache() const
+    { return globalfluxVarsCache_; }
 
     const GlobalVolumeVariables& curGlobalVolVars() const
     { return curGlobalVolVars_; }
@@ -784,8 +754,8 @@ public:
 
 protected:
 
-    GlobalFVGeometry& globalFvGeometry()
-    { return *globalFvGeometryPtr_; }
+    // GlobalFVGeometry& globalFvGeometry()
+    // { return *globalFvGeometryPtr_; }
 
     GlobalVolumeVariables& curGlobalVolVars()
     { return curGlobalVolVars_; }
@@ -793,11 +763,8 @@ protected:
     GlobalVolumeVariables& prevGlobalVolVars()
     { return prevGlobalVolVars_; }
 
-    FluxVariablesCacheVector& fluxVariablesCache_()
-    { return fluxVarsCacheVector_; }
-
-    FluxVariablesCache& fluxVarsCache_(const SubControlVolumeFace& scvf)
-    { return fluxVarsCacheVector_[scvf]; }
+    GlobalFluxVariablesCache& globalFluxVarsCache()
+    { return globalfluxVarsCache_; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -955,7 +922,7 @@ protected:
     GlobalVolumeVariables prevGlobalVolVars_;
 
     // the flux variables cache vector vector
-    FluxVariablesCacheVector fluxVarsCacheVector_;
+    GlobalFluxVariablesCache globalfluxVarsCache_;
 
     // the stencils vector
     StencilsVector stencilsVector_;

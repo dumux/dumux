@@ -309,10 +309,8 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
-    {
-        return FVElementGeometry(global);
-    }
+    friend inline FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
+    { return FVElementGeometry(global); }
 
 private:
     const Problem& problem_() const

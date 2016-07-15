@@ -45,40 +45,28 @@ class FluxVariablesBase
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    enum{ enableFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache) };
-    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
 public:
-    FluxVariablesBase() : problemPtr_(nullptr), scvFacePtr_(nullptr)
-    {}
 
     void init(const Problem& problem,
               const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
-              const SubControlVolumeFace &scvFace)
+              const SubControlVolumeFace &scvFace,
+              const FluxVariablesCache& fluxVarsCache)
     {
         problemPtr_ = &problem;
         elementPtr_ = &element;
         scvFacePtr_ = &scvFace;
         fvGeometryPtr_ = &fvGeometry;
         elemVolVarsPtr_ = &elemVolVars;
-
-        // update the stencil if needed
-        if (!enableFluxVarsCache)
-            stencil_ = asImp_().computeStencil(problem, element, fvGeometry, scvFace);
+        fluxVarsCachePtr_ = &fluxVarsCache;
     }
 
-    // when caching is enabled, get the stencil from the cache class
-    template <typename T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), Stencil>::type& stencil() const
+    // get the stencil from the cache class
+    const Stencil & stencil() const
     { return problem().model().fluxVarsCache(scvFace()).stencil(); }
-
-    // when caching is disabled, return the private stencil variable. The update(...) routine has to be called beforehand.
-    template <typename T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFluxVariablesCache), Stencil>::type& stencil()
-    { return stencil_; }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -95,30 +83,28 @@ public:
     const ElementVolumeVariables& elemVolVars() const
     { return *elemVolVarsPtr_; }
 
+    const FluxVariablesCache& fluxVarsCache() const
+    { return *fluxVarsCachePtr_; }
+
     Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
 
 private:
 
     Implementation &asImp_()
-    {
-        assert(static_cast<Implementation*>(this) != 0);
-        return *static_cast<Implementation*>(this);
-    }
+    { return *static_cast<Implementation*>(this); }
 
     const Implementation &asImp_() const
-    {
-        assert(static_cast<const Implementation*>(this) != 0);
-        return *static_cast<const Implementation*>(this);
-    }
+    { return *static_cast<const Implementation*>(this); }
 
     const Problem* problemPtr_;              //! Pointer to the problem
     const Element* elementPtr_;              //! Pointer to the element at hand
     const FVElementGeometry* fvGeometryPtr_;
     const SubControlVolumeFace* scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
     const ElementVolumeVariables* elemVolVarsPtr_;
-    Stencil stencil_;                        //! The flux stencil
+    const FluxVariablesCache* fluxVarsCachePtr_;
 };
+
 } // end namespace
 
 #endif

@@ -43,6 +43,7 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -104,14 +105,16 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const BoundaryTypes& bcTypes)
+                                 const BoundaryTypes& bcTypes,
+                                 const FluxVariablesCache& fluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.initAndComputeFluxes(this->problem(),
                                       element,
                                       fvGeometry,
                                       elemVolVars,
-                                      scvf);
+                                      scvf,
+                                      fluxVarsCache);
 
         // copy weight to local scope for use in lambda expression
         auto w = upwindWeight_;

@@ -82,6 +82,7 @@ class CCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -165,7 +166,8 @@ public:
         auto prevElemVolVars = localView(this->model_().prevGlobalVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol());
 
-        this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
+        auto elemFluxVarsCache = localView(this->model_().globalFluxVarsCache());
+        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
         // set the actual dof index
         globalI_ = this->problem_().elementMapper().index(element);
@@ -181,7 +183,7 @@ public:
         }
         else
         {
-            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
+            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
             residual[globalI_] = this->localResidual().residual(0);
@@ -190,7 +192,7 @@ public:
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, matrix, residual, isGhost);
+        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
         // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
@@ -215,6 +217,7 @@ private:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
                                  ElementVolumeVariables& curElemVolVars,
+                                 ElementFluxVariablesCache& elemFluxVarsCache,
                                  const ElementBoundaryTypes& elemBcTypes,
                                  JacobianMatrix& matrix,
                                  SolutionVector& residual,
@@ -249,7 +252,7 @@ private:
             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
             {
                 auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf);
+                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
             }
 
             ++j;
@@ -279,12 +282,12 @@ private:
 
                 // update the volume variables and bind the flux var cache again
                 curVolVars.update(priVars, this->problem_(), element, scv);
-                this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
+                elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
+                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
 
                     // store the residual and the storage term
                     partialDeriv = this->localResidual().residual(0);
@@ -296,7 +299,7 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf);
+                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
                     }
                 }
             }
@@ -321,12 +324,12 @@ private:
 
                 // update the volume variables and bind the flux var cache again
                 curVolVars.update(priVars, this->problem_(), element, scv);
-                this->model_().fluxVariablesCache_().bind(element, fvGeometry, curElemVolVars);
+                elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes);
+                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
 
                     // subtract the residual from the derivative storage
                     partialDeriv -= this->localResidual().residual(0);
@@ -338,7 +341,7 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf);
+                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
                     }
                 }
             }

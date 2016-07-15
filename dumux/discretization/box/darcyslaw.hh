@@ -55,7 +55,7 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -70,7 +70,6 @@ class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, Discret
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
-    using FaceData = typename FluxVariablesCache::FaceData;
 
 public:
 
@@ -79,23 +78,23 @@ public:
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
-                       const IndexType phaseIdx)
+                       const IndexType phaseIdx,
+                       const FluxVarCache& fluxVarCache)
     {
-        // get the precalculated local jacobian and shape values at the integration point
-        const auto& faceData = problem.model().fluxVarsCache()[scvf].faceData();
-
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto extrusionFactor = insideVolVars.extrusionFactor();
         const auto K = problem.spatialParams().intrinsicPermeability(insideScv);
 
+        const auto& jacInvT = fluxVarCache.jacInvT();
+        const auto& shapeJacobian = fluxVarCache.shapeJacobian();
         // evaluate gradP - rho*g at integration point
         DimVector gradP(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             // the global shape function gradient
             DimVector gradI;
-            faceData.jacInvT.mv(faceData.shapeJacobian[scv.index()][0], gradI);
+            jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
 
             gradI *= elemVolVars[scv].pressure(phaseIdx);
             gradP += gradI;
@@ -144,24 +143,6 @@ public:
                            const SubControlVolumeFace& scvf)
     {
         return Stencil(0);
-    }
-
-    static FaceData calculateFaceData(const Problem& problem,
-                                      const Element& element,
-                                      const FVElementGeometry& fvGeometry,
-                                      const SubControlVolumeFace& scvf)
-    {
-        FaceData faceData;
-        const auto geometry = element.geometry();
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(scvf.center());
-        faceData.jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-        localBasis.evaluateJacobian(ipLocal, faceData.shapeJacobian);
-        localBasis.evaluateFunction(ipLocal, faceData.shapeValue);
-
-        return faceData;
     }
 };
 
