@@ -42,6 +42,9 @@ private:
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
+    // the default constructor
+    CCTpfaSubControlVolume() = default;
+
     // the contructor in the cc case
     CCTpfaSubControlVolume(Geometry&& geometry,
                            IndexType elementIndex)

@@ -24,6 +24,7 @@
 #define DUMUX_SUBCONTROLVOLUME_HH
 
 #include <dune/common/fvector.hh>
+#include <dumux/common/optional.hh>
 
 namespace Dumux
 {
@@ -63,6 +64,9 @@ public:
       elementIndex_(elementIndex)
     {}
 
+    //! Default constructor
+    SubControlVolumeBase() = default;
+
     //! The copy constrcutor
     SubControlVolumeBase(const SubControlVolumeBase& other) = delete;
 
@@ -75,11 +79,11 @@ public:
     //! The move assignment operator
     SubControlVolumeBase& operator=(SubControlVolumeBase&& other)
     {
-        // We want to use the default copy/move assignment operators.
-        // But since geometry is not assignable :( we
-        // have to dirty reconstruct it
-        geometry_.~Geometry();
-        new(&geometry_) Geometry(std::move(other.geometry_));
+        // We want to use the default copy/move assignment.
+        // But since geometry is not copy assignable :( we
+        // have to construct it again
+        geometry_.release();
+        geometry_.emplace(other.geometry_.value());
         elementIndex_ = std::move(other.elementIndex_);
         return *this;
     }
@@ -100,7 +104,7 @@ public:
     // e.g. for integration
     const Geometry& geometry() const
     {
-        return geometry_;
+        return geometry_.value();
     }
 
     //! The global index of the element this scv is embedded in
@@ -110,7 +114,8 @@ public:
     }
 
 private:
-    Geometry geometry_;
+    // Work around the fact that geometry is not default constructible
+    Optional<Geometry> geometry_;
     IndexType elementIndex_;
 };
 
