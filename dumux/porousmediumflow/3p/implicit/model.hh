@@ -147,7 +147,8 @@ public:
                 auto fvGeometry = localView(this->globalFvGeometry());
                 fvGeometry.bindElement(element);
 
-                this->curVolVars_().bindElement(element, fvGeometry);
+                auto elemVolVars = localView(this->curGlobalVolVars());
+                elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
                 for (auto&& scv : scvs(fvGeometry))
                 {
@@ -155,7 +156,7 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
                     (*rank)[eIdx] = this->gridView_().comm().rank();
 
-                    const auto& volVars = this->curVolVars(scv);
+                    const auto& volVars = elemVolVars[scv];
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
                     {
