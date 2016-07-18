@@ -498,6 +498,18 @@ Scalar crossProduct(const Dune::FieldVector<Scalar, 2> &vec1,
                     const Dune::FieldVector<Scalar, 2> &vec2)
 {   return vec1[0]*vec2[1]-vec1[1]*vec2[0]; }
 
+/*!
+ * \brief Triple product of three vectors in three-dimensional Euclidean space retuning scalar
+ *
+ * \param vec1 The first vector
+ * \param vec2 The second vector
+ * \param vec3 The third vector
+ */
+template <class Scalar>
+Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
+                    const Dune::FieldVector<Scalar, 3> &vec2,
+                    const Dune::FieldVector<Scalar, 3> &vec3)
+{   return crossProduct<Scalar>(vec1, vec2)*vec3; }
 } // end namespace Dumux
 
 #endif
