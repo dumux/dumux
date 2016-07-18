@@ -25,6 +25,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/dynmatrix.hh>
 
 #include <cmath>
 #include <algorithm>
@@ -510,6 +511,31 @@ Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
                     const Dune::FieldVector<Scalar, 3> &vec2,
                     const Dune::FieldVector<Scalar, 3> &vec3)
 {   return crossProduct<Scalar>(vec1, vec2)*vec3; }
+
+/*!
+ * \brief Multiply two dynamic matrices
+ *
+ * \param M1 The first dynamic matrix
+ * \param M2 The second dynamic matrix (to be multiplied to M1 from the right side)
+ */
+template <class Scalar>
+Dune::DynamicMatrix<Scalar> multiplyMatrices(const Dune::DynamicMatrix<Scalar> &M1,
+                                             const Dune::DynamicMatrix<Scalar> &M2)
+{
+    DUNE_ASSERT_BOUNDS(M1.M() == M2.N());
+
+    std::size_t rows = M1.N();
+    std::size_t cols = M2.M();
+
+    Dune::DynamicMatrix<Scalar> result(rows, cols, 0.0);
+    for (std::size_t i = 0; i < rows; i++)
+        for (std::size_t j = 0; j < cols; j++)
+            for (std::size_t k = 0; k < M1.M(); k++)
+                result[i][j] += M1[i][k]*M2[k][j];
+
+    return result;
+}
+
 } // end namespace Dumux
 
 #endif
