@@ -32,10 +32,10 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/globalfvgeometry.hh>
-#include <dumux/implicit/fvelementgeometry.hh>
-#include <dumux/implicit/subcontrolvolume.hh>
-#include <dumux/implicit/subcontrolvolumeface.hh>
+#include <dumux/discretization/cellcentered/tpfa/globalfvgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolume.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
 namespace Dumux
 {
@@ -91,8 +91,7 @@ int main (int argc, char *argv[]) try
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometryVector = typename GET_PROP_TYPE(TypeTag, FVElementGeometryVector);
-
+    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
@@ -104,15 +103,16 @@ int main (int argc, char *argv[]) try
 
     Problem problem(leafGridView);
 
-    FVElementGeometryVector fvGeometries(leafGridView);
-    fvGeometries.update(problem);
+    GlobalFVGeometry global(leafGridView);
+    global.update(problem);
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = problem.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = fvGeometries.fvGeometry(eIdx);
+        auto fvGeometry = localView(global);
+        fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);
         NoopFunctor<SubControlVolume> op;
@@ -121,7 +121,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv center at: " << scv.center() << std::endl;
+            std::cout << "-- scv " << scv.index() << " center at: " << scv.center() << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -131,7 +131,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            std::cout << "-- scvf center at: " << scvf.center();
+            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal();
             if (scvf.boundary()) std::cout << " (on boundary).";
             std::cout << std::endl;
         }
