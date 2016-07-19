@@ -292,7 +292,7 @@ protected:
     PrimaryVariables evalFlux_(const Element &element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace scvf,
+                               const SubControlVolumeFace& scvf,
                                const FluxVariablesCache& fluxVarsCache)
     {
         ElementBoundaryTypes bcTypes;
