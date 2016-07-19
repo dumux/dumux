@@ -111,7 +111,7 @@ public:
 
         // reserve memory
         elementMap_.resize(numScvs);
-        scvs_.reserve(numScvs);
+        scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
 
@@ -121,7 +121,7 @@ public:
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
-            scvs_.emplace_back(element.geometry(), eIdx);
+            scvs_[eIdx] = SubControlVolume(std::move(element.geometry()), eIdx);
 
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
