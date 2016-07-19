@@ -24,18 +24,18 @@
 #define DUMUX_SUBCONTROLVOLUME_HH
 
 #include <dune/common/fvector.hh>
-#include <dumux/common/optional.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for a sub control volume, i.e a part of the control
- *        volume we are making the balance for.
+ *        volume we are making the balance for. Defines the general interface.
  */
-template<class G, typename I>
+template<class Imp, class G, typename I>
 class SubControlVolumeBase
 {
+    using Implementation = Imp;
     using IndexType = I;
     using Geometry = typename std::decay<G>::type;
 
@@ -44,79 +44,49 @@ class SubControlVolumeBase
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    /*\brief The constructor
-     * \param geometry The geometry of the sub control volume
-     * \param elementIndex The index of the element the scv is part of
-     */
-    SubControlVolumeBase(Geometry&& geometry,
-                         IndexType elementIndex)
-    : geometry_(std::move(geometry)),
-      elementIndex_(std::move(elementIndex))
-    {}
-
-    /*\brief The constructor
-     * \param geometry The geometry of the sub control volume
-     * \param elementIndex The index of the element the scv is part of
-     */
-    SubControlVolumeBase(const Geometry& geometry,
-                         IndexType elementIndex)
-    : geometry_(geometry),
-      elementIndex_(elementIndex)
-    {}
-
-    //! Default constructor
-    SubControlVolumeBase() = default;
-
-    //! The copy constrcutor
-    SubControlVolumeBase(const SubControlVolumeBase& other) = delete;
-
-    //! The move constrcutor
-    SubControlVolumeBase(SubControlVolumeBase&& other) = default;
-
-    //! The copy assignment operator
-    SubControlVolumeBase& operator=(const SubControlVolumeBase& other) = delete;
-
-    //! The move assignment operator
-    SubControlVolumeBase& operator=(SubControlVolumeBase&& other)
-    {
-        // We want to use the default copy/move assignment.
-        // But since geometry is not copy assignable :( we
-        // have to construct it again
-        geometry_.release();
-        geometry_.emplace(other.geometry_.value());
-        elementIndex_ = std::move(other.elementIndex_);
-        return *this;
-    }
 
     //! The center of the sub control volume
     GlobalPosition center() const
     {
-        return geometry().center();
+        return asImp_().center();
     }
 
     //! The volume of the sub control volume
     Scalar volume() const
     {
-        return geometry().volume();
+        return asImp_().volume();
     }
 
-    //! The geometry of the sub control volume
-    // e.g. for integration
-    const Geometry& geometry() const
+    //! The global index of this scv
+    IndexType index() const
     {
-        return geometry_.value();
+        return asImp_().index();
+    }
+
+    //! The index of the dof this scv is embedded in
+    IndexType dofIndex() const
+    {
+        return asImp_().dofIndex();
+    }
+
+    // The position of the dof this scv is embedded in
+    GlobalPosition dofPosition() const
+    {
+        return asImp_().dofPosition();
     }
 
     //! The global index of the element this scv is embedded in
     IndexType elementIndex() const
     {
-        return elementIndex_;
+        return asImp_().elementIndex();
     }
 
 private:
-    // Work around the fact that geometry is not default constructible
-    Optional<Geometry> geometry_;
-    IndexType elementIndex_;
+    const Implementation& asImp_() const
+    { return *static_cast<const Implementation*>(this);}
+
+    Implementation& asImp_()
+    { return *static_cast<Implementation*>(this);}
 };
 
 } // end namespace

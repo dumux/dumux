@@ -35,9 +35,13 @@ namespace Dumux
  * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. We simply use the base class here.
  */
-template<class Geometry, typename IndexType>
-class BoxSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, IndexType>
+template<class G, typename I>
+class BoxSubControlVolumeFace : public SubControlVolumeFaceBase<BoxSubControlVolumeFace<G, I>, G, I>
 {
+    using ParentType = SubControlVolumeFaceBase<BoxSubControlVolumeFace<G, I>, G, I>;
+    using Geometry = G;
+    using IndexType = I;
+
     using Scalar = typename Geometry::ctype;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
@@ -46,12 +50,96 @@ class BoxSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, IndexT
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    BoxSubControlVolumeFace(Geometry&& geometry,
+    BoxSubControlVolumeFace(std::vector<GlobalPosition>&& corners,
                             const GlobalPosition& unitOuterNormal,
+                            Scalar area,
                             IndexType scvfIndex,
                             const std::vector<IndexType>& scvIndices,
                             bool boundary = false)
-    : SubControlVolumeFaceBase<Geometry, IndexType>(std::move(geometry), geometry.center(), unitOuterNormal, scvfIndex, scvIndices, boundary) {}
+    : ParentType(),
+      corners_(std::move(corners)),
+      center_(0.0),
+      unitOuterNormal_(unitOuterNormal),
+      area_(area),
+      scvfIndex_(scvfIndex),
+      scvIndices_(scvIndices),
+      boundary_(boundary)
+      {
+        for (const auto& corner : corners_)
+            center_ += corner;
+        center_ /= corners_.size();
+      }
+
+    //! The center of the sub control volume face
+    GlobalPosition center() const
+    {
+        return center_;
+    }
+
+    //! The integration point for flux evaluations in global coordinates
+    GlobalPosition ipGlobal() const
+    {
+        // Return center for now
+        return center();
+    }
+
+    //! The area of the sub control volume face
+    Scalar area() const
+    {
+        return area_;
+    }
+
+    //! returns bolean if the sub control volume face is on the boundary
+    bool boundary() const
+    {
+        return boundary_;
+    }
+
+    GlobalPosition unitOuterNormal() const
+    {
+        return unitOuterNormal_;
+    }
+
+    //! index of the inside sub control volume for spatial param evaluation
+    IndexType insideScvIdx() const
+    {
+        return scvIndices_[0];
+    }
+
+    //! index of the outside sub control volume for spatial param evaluation
+    // This results in undefined behaviour if boundary is true
+    IndexType outsideScvIdx() const
+    {
+        assert(!boundary());
+        return scvIndices_[1];
+    }
+
+    //! The global index of this sub control volume face
+    IndexType index() const
+    {
+        return scvfIndex_;
+    }
+
+    GlobalPosition corner(unsigned int localIdx) const
+    {
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
+    }
+
+    //! The geometry of the sub control volume face
+    const Geometry geometry() const
+    {
+        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
+    }
+
+private:
+    std::vector<GlobalPosition> corners_;
+    GlobalPosition center_;
+    GlobalPosition unitOuterNormal_;
+    Scalar area_;
+    IndexType scvfIndex_;
+    std::vector<IndexType> scvIndices_;
+    bool boundary_;
 };
 
 } // end namespace

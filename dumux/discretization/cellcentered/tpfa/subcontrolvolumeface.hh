@@ -26,6 +26,7 @@
 #include <utility>
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/common/optional.hh>
 
 namespace Dumux
 {
@@ -35,10 +36,13 @@ namespace Dumux
  * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. We simply use the base class here.
  */
-template<class Geometry, typename IndexType>
-class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, IndexType>
+template<class G, typename I>
+class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<G, I>, G, I>
 {
-    using ParentType = SubControlVolumeFaceBase<Geometry, IndexType>;
+    using ParentType = SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<G, I>, G, I>;
+    using Geometry = G;
+    using IndexType = I;
+
     using Scalar = typename Geometry::ctype;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
@@ -47,15 +51,8 @@ class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<Geometry, Ind
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    //! Constructor with all arguments
-    CCTpfaSubControlVolumeFace(const Geometry& geometry,
-                               const GlobalPosition& ipGlobal,
-                               const GlobalPosition& unitOuterNormal,
-                               IndexType scvfIndex,
-                               const std::vector<IndexType>& scvIndices,
-                               bool boundary = false)
-    : ParentType(geometry, ipGlobal, unitOuterNormal, scvfIndex, scvIndices, boundary)
-    {}
+    // the default constructor
+    CCTpfaSubControlVolumeFace() = default;
 
     //! Constructor with intersection
     template <class Intersection>
@@ -63,13 +60,105 @@ public:
                                typename Intersection::Geometry&& isGeometry,
                                IndexType scvfIndex,
                                const std::vector<IndexType>& scvIndices)
-    : ParentType(std::move(isGeometry),
-                 isGeometry.center(),
-                 is.centerUnitOuterNormal(),
-                 scvfIndex,
-                 scvIndices,
-                 is.boundary())
-    {}
+    : ParentType(),
+      geometry_(std::move(isGeometry)),
+      unitOuterNormal_(is.centerUnitOuterNormal()),
+      scvfIndex_(scvfIndex),
+      scvIndices_(scvIndices),
+      boundary_(is.boundary())
+      {}
+
+    //! The copy constrcutor
+    CCTpfaSubControlVolumeFace(const CCTpfaSubControlVolumeFace& other) = delete;
+
+    //! The move constrcutor
+    CCTpfaSubControlVolumeFace(CCTpfaSubControlVolumeFace&& other) = default;
+
+    //! The copy assignment operator
+    CCTpfaSubControlVolumeFace& operator=(const CCTpfaSubControlVolumeFace& other) = delete;
+
+    //! The move assignment operator
+    CCTpfaSubControlVolumeFace& operator=(CCTpfaSubControlVolumeFace&& other)
+    {
+        // We want to use the default copy/move assignment.
+        // But since geometry is not copy assignable :( we
+        // have to construct it again
+        geometry_.release();
+        geometry_.emplace(other.geometry_.value());
+        unitOuterNormal_ = std::move(other.unitOuterNormal_);
+        scvfIndex_ = std::move(other.scvfIndex_);
+        scvIndices_ = std::move(other.scvIndices_);
+        boundary_ = std::move(other.boundary_);
+        return *this;
+    }
+
+    //! The center of the sub control volume face
+    GlobalPosition center() const
+    {
+        return geometry().center();
+    }
+
+    //! The integration point for flux evaluations in global coordinates
+    GlobalPosition ipGlobal() const
+    {
+        // Return center for now
+        return center();
+    }
+
+    //! The area of the sub control volume face
+    Scalar area() const
+    {
+        return geometry().volume();
+    }
+
+    //! returns bolean if the sub control volume face is on the boundary
+    bool boundary() const
+    {
+        return boundary_;
+    }
+
+    GlobalPosition unitOuterNormal() const
+    {
+        return unitOuterNormal_;
+    }
+
+    //! index of the inside sub control volume for spatial param evaluation
+    IndexType insideScvIdx() const
+    {
+        return scvIndices_[0];
+    }
+
+    //! index of the outside sub control volume for spatial param evaluation
+    // This results in undefined behaviour if boundary is true
+    IndexType outsideScvIdx() const
+    {
+        return scvIndices_[1];
+    }
+
+    //! The global index of this sub control volume face
+    IndexType index() const
+    {
+        return scvfIndex_;
+    }
+
+    GlobalPosition corner(unsigned int localIdx) const
+    {
+        assert(localIdx < geometry().corners() && "provided index exceeds the number of corners");
+        return geometry().corner(localIdx);
+    }
+
+    //! The geometry of the sub control volume face
+    const Geometry& geometry() const
+    {
+        return geometry_.value();
+    }
+
+private:
+    Optional<Geometry> geometry_;
+    GlobalPosition unitOuterNormal_;
+    IndexType scvfIndex_;
+    std::vector<IndexType> scvIndices_;
+    bool boundary_;
 };
 
 } // end namespace

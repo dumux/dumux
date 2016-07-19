@@ -34,104 +34,75 @@ namespace Dumux
  * \brief Base class for a sub control volume face, i.e a part of the boundary
  *        of a sub control volume we computing a flux on.
  */
-template<class Geometry, typename IndexType>
+template<class Imp, class G, typename I>
 class SubControlVolumeFaceBase
 {
-    using Scalar = typename Geometry::ctype;
-    static const int dim = Geometry::mydimension;
-    static const int dimworld = Geometry::coorddimension;
+    using Implementation = Imp;
+    using Geometry = G;
+    using IndexType = I;
+
+    using Scalar = typename G::ctype;
+    static const int dim = G::mydimension;
+    static const int dimworld = G::coorddimension;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    SubControlVolumeFaceBase(const Geometry& geometry,
-                             const GlobalPosition& ipGlobal,
-                             const GlobalPosition& unitOuterNormal,
-                             IndexType scvfIndex,
-                             const std::vector<IndexType>& scvIndices,
-                             bool boundary = false)
-    : geometry_(geometry),
-      ipGlobal_(ipGlobal),
-      unitOuterNormal_(unitOuterNormal),
-      scvfIndex_(scvfIndex),
-      scvIndices_(scvIndices),
-      boundary_(boundary) {}
-
-    SubControlVolumeFaceBase(Geometry&& geometry,
-                             const GlobalPosition& ipGlobal,
-                             const GlobalPosition& unitOuterNormal,
-                             IndexType scvfIndex,
-                             const std::vector<IndexType>& scvIndices,
-                             bool boundary = false)
-    : geometry_(std::move(geometry)),
-      ipGlobal_(ipGlobal),
-      unitOuterNormal_(unitOuterNormal),
-      scvfIndex_(scvfIndex),
-      scvIndices_(scvIndices),
-      boundary_(boundary) {}
-
     //! The center of the sub control volume face
     GlobalPosition center() const
     {
-        return geometry_.center();
+        return asImp_().center();
     }
 
     //! The integration point for flux evaluations in global coordinates
     GlobalPosition ipGlobal() const
     {
         // Return center for now
-        return ipGlobal_;
+        return asImp_().ipGlobal();
     }
 
     //! The area of the sub control volume face
     Scalar area() const
     {
-        return geometry_.volume();
-    }
-
-    //! The geometry of the sub control volume face
-    const Geometry& geometry() const
-    {
-        return geometry_;
+        return asImp_().area();
     }
 
     //! returns bolean if the sub control volume face is on the boundary
     bool boundary() const
     {
-        return boundary_;
+        return asImp_().boundary();
     }
 
     GlobalPosition unitOuterNormal() const
     {
-        return unitOuterNormal_;
+        return asImp_().unitOuterNormal();
     }
 
     //! index of the inside sub control volume for spatial param evaluation
     IndexType insideScvIdx() const
     {
-        return scvIndices_[0];
+        return asImp_().insideScvIdx();
     }
 
     //! index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
     IndexType outsideScvIdx() const
     {
-        return scvIndices_[1];
+        return asImp_().outsideScvIdx();
     }
 
     //! The global index of this sub control volume face
     IndexType index() const
     {
-        return scvfIndex_;
+        return asImp_().index();
     }
 
 private:
-    Geometry geometry_;
-    GlobalPosition ipGlobal_;
-    GlobalPosition unitOuterNormal_;
-    IndexType scvfIndex_;
-    std::vector<IndexType> scvIndices_;
-    bool boundary_;
+    const Implementation& asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+
+    Implementation& asImp_()
+    { return *static_cast<Implementation*>(this); }
 };
 
 } // end namespace

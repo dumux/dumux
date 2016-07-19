@@ -104,6 +104,8 @@ private:
     using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
 
     using GlobalPosition = typename ScvGeometry::GlobalCoordinate;
+    using PointVector = std::vector<GlobalPosition>;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
@@ -112,129 +114,129 @@ private:
 public:
 
     BoxGeometryHelper(const typename Element::Geometry& geometry)
+    : vertexOffset(1),
+      faceOffset(1 + geometry.corners())
     {
         // extract the corners of the sub control volumes
         const auto& referenceElement = ReferenceElements::general(geometry.type());
 
+        // the element center
+        p.emplace_back(geometry.center());
+
         // vertices
         for (int i = 0; i < geometry.corners(); ++i)
-            v.emplace_back(geometry.corner(i));
+            p.emplace_back(geometry.corner(i));
 
         // face midpoints
         for (int i = 0; i < referenceElement.size(1); ++i)
-            f.emplace_back(geometry.global(referenceElement.position(i, 1)));
-
-        c = geometry.center();
+            p.emplace_back(geometry.global(referenceElement.position(i, 1)));
 
         corners = geometry.corners();
     }
 
-    //! Create the sub control volume geometries
-    std::vector<ScvGeometry> createScvGeometries()
+    //! Create a vector with the scv corners
+    PointVector getScvCorners(unsigned int localScvIdx)
     {
-        std::vector<ScvGeometry> scvGeometries;
-
-        // sub control volume geometries in 2D are always quadrilaterals
-        Dune::GeometryType scvGeometryType;
-        scvGeometryType.makeQuadrilateral();
-
-        // proceed according to number of corners
+        // proceed according to number of corners of the element
         switch (corners)
         {
         case 3: // triangle
         {
-            scvGeometries.reserve(3);
+            static const unsigned int triangleScvMap[3][4] =
+            {
+                {vertexOffset+0, faceOffset+0, faceOffset+1, 0},
+                {vertexOffset+1, faceOffset+2, faceOffset+0, 0},
+                {vertexOffset+2, faceOffset+1, faceOffset+2, 0}
+            };
 
-            // the sub control volumes
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[0], f[0], f[1], c}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[0], v[1], c, f[2]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[1], c, v[2], f[2]}));
-
-            break;
+            return PointVector( {p[triangleScvMap[localScvIdx][0]],
+                                 p[triangleScvMap[localScvIdx][1]],
+                                 p[triangleScvMap[localScvIdx][2]],
+                                 p[triangleScvMap[localScvIdx][3]]} );
         }
         case 4: // quadrilateral
         {
-            scvGeometries.reserve(4);
+            static const unsigned int quadScvMap[4][4] =
+            {
+                {vertexOffset+0, faceOffset+2, faceOffset+0, 0},
+                {vertexOffset+1, faceOffset+1, faceOffset+2, 0},
+                {vertexOffset+2, faceOffset+0, faceOffset+3, 0},
+                {vertexOffset+3, faceOffset+3, faceOffset+1, 0}
+            };
 
-            // the sub control volumes
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[0], f[2], f[0], c}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[2], v[1], c, f[1]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[0], c, v[2], f[3]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({c, f[1], f[3], v[3]}));
-
-            break;
+            return PointVector( {p[quadScvMap[localScvIdx][0]],
+                                 p[quadScvMap[localScvIdx][1]],
+                                 p[quadScvMap[localScvIdx][2]],
+                                 p[quadScvMap[localScvIdx][3]]} );
         }
         default:
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " corners=" << corners);
         }
-
-        return scvGeometries;
     }
 
 
-    //! Create the sub control volume face geometries
-    std::vector<ScvfGeometry> createScvfGeometries()
+    //! Create a vector with the corners of sub control volume faces
+    PointVector getScvfCorners(unsigned int localScvfIdx)
     {
-        std::vector<ScvfGeometry> scvfGeometries;
-
-        // sub control volume face geometries in 2D are always lines
-        Dune::GeometryType scvfGeometryType;
-        scvfGeometryType.makeLine();
-
         // proceed according to number of corners
         switch (corners)
         {
         case 3: // triangle
         {
-            scvfGeometries.reserve(3);
+            static const unsigned int triangleScvfMap[3][2] =
+            {
+                {0, faceOffset+0},
+                {faceOffset+1, 0},
+                {0, faceOffset+2}
+            };
 
-            // the sub control volume faces
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[0], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[1], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[2], c}));
-
-            break;
+            return PointVector( {p[triangleScvfMap[localScvfIdx][0]],
+                                 p[triangleScvfMap[localScvfIdx][1]]} );
         }
         case 4: // quadrilateral
         {
-            scvfGeometries.reserve(4);
+            static const unsigned int quadScvfMap[4][2] =
+            {
+                {faceOffset+0, 0},
+                {0, faceOffset+1},
+                {0, faceOffset+2},
+                {faceOffset+3, 0}
+            };
 
-            // the sub control volume faces
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[0], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[1], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[2], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[3], c}));
-
-            break;
+            return PointVector( {p[quadScvfMap[localScvfIdx][0]],
+                                 p[quadScvfMap[localScvfIdx][1]]} );
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+            DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " corners=" << corners);
         }
-
-        return scvfGeometries;
     }
 
     //! Create the sub control volume face geometries on the boundary
-    static std::vector<ScvfGeometry> createBoundaryScvfGeometries(const typename Intersection::Geometry& geometry)
+    static PointVector getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+                                                            unsigned int idxOnIntersection)
     {
-        return {ScvfGeometry(Dune::GeometryType(1), std::vector<GlobalPosition>({geometry.corner(0), geometry.center()})),
-                ScvfGeometry(Dune::GeometryType(1), std::vector<GlobalPosition>({geometry.center(), geometry.corner(1)}))};
+        if (idxOnIntersection == 0)
+            return PointVector({geometry.corner(0), geometry.center()});
+        else if (idxOnIntersection == 1)
+            return PointVector({geometry.center(), geometry.corner(1)});
+        else
+            DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
     }
 
     //! get scvf normal vector for dim == 2, dimworld == 3
     template <int w = dimWorld>
     static typename std::enable_if<w == 3, GlobalPosition>::type
     normal(const typename Element::Geometry& geometry,
-           const ScvfGeometry& scvfGeometry)
+           const PointVector& scvfCorners)
     {
         const auto v1 = geometry.corner(1) - geometry.corner(0);
         const auto v2 = geometry.corner(2) - geometry.corner(0);
         const auto v3 = Dumux::crossProduct(v1, v2);
-        const auto t = scvfGeometry.corner(1) - scvfGeometry.corner(0);
+        const auto t = scvfCorners[1] - scvfCorners[0];
         GlobalPosition normal = Dumux::crossProduct(v3, t);
         normal /= normal.two_norm();
         return normal;
@@ -244,18 +246,44 @@ public:
     template <int w = dimWorld>
     static typename std::enable_if<w == 2, GlobalPosition>::type
     normal(const typename Element::Geometry& geometry,
-           const ScvfGeometry& scvfGeometry)
+           const PointVector& scvfCorners)
     {
-        const auto t = scvfGeometry.corner(1) - scvfGeometry.corner(0);
+        const auto t = scvfCorners[1] - scvfCorners[0];
         GlobalPosition normal({-t[1], t[0]});
         normal /= normal.two_norm();
         return normal;
     }
+
+    //! get scv volume for dim == 2, dimworld == 3
+    template <int w = dimWorld>
+    static typename std::enable_if<w == 3, Scalar>::type
+    volume(const PointVector& scvCorners)
+    {
+        const auto v1 = scvCorners[1] - scvCorners[0];
+        const auto v2 = scvCorners[2] - scvCorners[0];
+        return Dumux::crossProduct(v1, v2).two_norm();
+    }
+
+    //! get scv volume for dim == 2, dimworld == 2
+    template <int w = dimWorld>
+    static typename std::enable_if<w == 2, Scalar>::type
+    volume(const PointVector& scvCorners)
+    {
+        const auto v1 = scvCorners[1] - scvCorners[0];
+        const auto v2 = scvCorners[2] - scvCorners[0];
+        return Dumux::crossProduct(v1, v2);
+    }
+
+    //! get scvf area
+    static Scalar area(const PointVector& scvfCorners)
+    {
+        return (scvfCorners[1] - scvfCorners[0]).two_norm();
+    }
 private:
-    std::vector<GlobalPosition> v; // vertices
-    std::vector<GlobalPosition> f; // face midpoints
-    GlobalPosition c; // element center
+    std::vector<GlobalPosition> p; // the points needed for construction of the geometries
     std::size_t corners; // number of element corners
+    const unsigned int vertexOffset; // offset for vertex positions in point vector
+    const unsigned int faceOffset; // offset for face center positions in point vector
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element

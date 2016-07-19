@@ -25,18 +25,17 @@
 
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
+#include <dumux/common/optional.hh>
 
 namespace Dumux
 {
 template<class G, typename I>
-class CCSubControlVolume : public SubControlVolumeBase<G, I>
+class CCSubControlVolume : public SubControlVolumeBase<CCSubControlVolume<G, I>, G, I>
 {
-public:
-    // exported types
+    using ParentType = SubControlVolumeBase<CCSubControlVolume<G, I>, G, I>;
     using Geometry = G;
     using IndexType = I;
 
-private:
     using Scalar = typename Geometry::ctype;
     enum { dimworld = Geometry::coorddimension };
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
@@ -47,29 +46,84 @@ public:
 
     // the contructor in the cc case
     CCSubControlVolume(Geometry&& geometry,
-                           IndexType elementIndex)
-    : SubControlVolumeBase<G, I>(std::move(geometry), elementIndex) {}
+                       IndexType elementIndex)
+    : ParentType(), geometry_(std::move(geometry)), elementIndex_(elementIndex) {}
 
-    // the contructor in the cc case
-    CCSubControlVolume(const Geometry& geometry,
-                           IndexType elementIndex)
-    : SubControlVolumeBase<G, I>(geometry, elementIndex) {}
+    //! The copy constrcutor
+    CCSubControlVolume(const CCSubControlVolume& other) = delete;
+
+    //! The move constrcutor
+    CCSubControlVolume(CCSubControlVolume&& other) = default;
+
+    //! The copy assignment operator
+    CCSubControlVolume& operator=(const CCSubControlVolume& other) = delete;
+
+    //! The move assignment operator
+    CCSubControlVolume& operator=(CCSubControlVolume&& other)
+    {
+        // We want to use the default copy/move assignment.
+        // But since geometry is not copy assignable :( we
+        // have to construct it again
+        geometry_.release();
+        geometry_.emplace(other.geometry_.value());
+        elementIndex_ = std::move(other.elementIndex_);
+        return *this;
+    }
+
+    //! The center of the sub control volume
+    GlobalPosition center() const
+    {
+        return geometry().center();
+    }
+
+    //! The volume of the sub control volume
+    Scalar volume() const
+    {
+        return geometry().volume();
+    }
+
+    //! The geometry of the sub control volume
+    // e.g. for integration
+    const Geometry& geometry() const
+    {
+        return geometry_.value();
+    }
 
     //! The global index of this scv
     IndexType index() const
     {
-        return this->elementIndex();
+        return elementIndex();
     }
 
+    //! The index of the dof this scv is embedded in
     IndexType dofIndex() const
     {
-        return this->elementIndex();
+        return elementIndex();
     }
 
+    // The position of the dof this scv is embedded in
     GlobalPosition dofPosition() const
     {
-        return this->geometry().center();
+        return geometry().center();
     }
+
+    //! The global index of the element this scv is embedded in
+    IndexType elementIndex() const
+    {
+        return elementIndex_;
+    }
+
+    //! Return the corner for the given local index
+    GlobalPosition corner(unsigned int localIdx) const
+    {
+        assert(localIdx < geometry().corners().size() && "provided index exceeds the number of corners");
+        return geometry().corners(localIdx);
+    }
+
+private:
+    // Work around the fact that geometry is not default constructible
+    Optional<Geometry> geometry_;
+    IndexType elementIndex_;
 };
 } // end namespace
 
