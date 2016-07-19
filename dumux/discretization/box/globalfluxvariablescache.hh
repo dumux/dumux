@@ -60,19 +60,18 @@ public:
     void update(Problem& problem)
     {
         problemPtr_ = &problem;
-        fluxVarsCache_.resize(problem.gridView.size(0));
+        fluxVarsCache_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
             auto eIdx = problem.elementMapper().index(element);
             // bind the geometries and volume variables to the element (all the elements in stencil)
-            auto fvGeometry = localView(problem.model().globalFvGeometries());
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bind(element);
 
-            const auto& localBasis = fvGeometry.feLocalBasis();
             fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                (*this)[scvf].update(problem, element, localBasis, scvf);
+                this->get(eIdx, scvf.index()).update(problem, element, fvGeometry, scvf);
             }
         }
     }

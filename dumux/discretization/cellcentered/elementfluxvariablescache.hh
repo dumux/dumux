@@ -53,7 +53,7 @@ class CCElementFluxVariablesCache<TypeTag, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    CCElementFluxVariablesCache(GlobalFluxVariablesCache& global)
+    CCElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
     : globalFluxVarsCachePtr_(&global) {}
 
     // Specialization for the global caching being enabled - do nothing here
@@ -70,15 +70,12 @@ public:
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
 
-    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
-    { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
-
     //! The global object we are a restriction of
     const GlobalFluxVariablesCache& globalFluxVarsCache() const
     {  return *globalFluxVarsCachePtr_; }
 
 private:
-    GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
 };
 
 /*!

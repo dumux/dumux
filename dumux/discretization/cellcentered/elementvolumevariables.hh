@@ -54,21 +54,15 @@ class CCElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 
 public:
     //! Constructor
-    CCElementVolumeVariables(GlobalVolumeVariables& globalVolVars)
+    CCElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
     : globalVolVarsPtr_(&globalVolVars) {}
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return globalVolVars().volVars(scv.index()); }
 
-    VolumeVariables& operator [](const SubControlVolume& scv)
-    { return globalVolVars().volVars(scv.index()); }
-
     // operator for the access with an index
     // needed for cc methods for the access to the boundary volume variables
     const VolumeVariables& operator [](const IndexType scvIdx) const
-    { return globalVolVars().volVars(scvIdx); }
-
-    VolumeVariables& operator [](const IndexType scvIdx)
     { return globalVolVars().volVars(scvIdx); }
 
     // For compatibility reasons with the case of not storing the vol vars.
@@ -88,12 +82,8 @@ public:
     const GlobalVolumeVariables& globalVolVars() const
     { return *globalVolVarsPtr_; }
 
-    //! The global volume variables object we are a restriction of
-    GlobalVolumeVariables& globalVolVars()
-    { return *globalVolVarsPtr_; }
-
 private:
-    GlobalVolumeVariables* globalVolVarsPtr_;
+    const GlobalVolumeVariables* globalVolVarsPtr_;
 };
 
 

@@ -57,19 +57,13 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 
 public:
     //! Constructor
-    BoxElementVolumeVariables(GlobalVolumeVariables& globalVolVars)
+    BoxElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
     : globalVolVarsPtr_(&globalVolVars) {}
 
     const VolumeVariables& operator [](IndexType scvIdx) const
     { return globalVolVars().volVars(eIdx_, scvIdx); }
 
-    VolumeVariables& operator [](IndexType scvIdx)
-    { return globalVolVars().volVars(eIdx_, scvIdx); }
-
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return globalVolVars().volVars(eIdx_, scv.index()); }
-
-    VolumeVariables& operator [](const SubControlVolume& scv)
     { return globalVolVars().volVars(eIdx_, scv.index()); }
 
     // For compatibility reasons with the case of not storing the vol vars.
@@ -93,12 +87,8 @@ public:
     const GlobalVolumeVariables& globalVolVars() const
     { return *globalVolVarsPtr_; }
 
-    //! The global volume variables object we are a restriction of
-    GlobalVolumeVariables& globalVolVars()
-    { return *globalVolVarsPtr_; }
-
 private:
-    GlobalVolumeVariables* globalVolVarsPtr_;
+    const GlobalVolumeVariables* globalVolVarsPtr_;
     IndexType eIdx_;
 };
 

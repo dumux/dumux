@@ -77,10 +77,6 @@ public:
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return globalFluxVarsCache().get(eIdx_, scvf.index()); }
 
-    // access operator
-    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
-    { return globalFluxVarsCache().get(eIdx_, scvf.index()); }
-
     //! The global object we are a restriction of
     const GlobalFluxVariablesCache& globalFluxVarsCache() const
     {  return *globalFluxVarsCachePtr_; }
@@ -139,7 +135,7 @@ public:
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
 
-//! The global object we are a restriction of
+    //! The global object we are a restriction of
     const GlobalFluxVariablesCache& globalFluxVarsCache() const
     {  return *globalFluxVarsCachePtr_; }
 

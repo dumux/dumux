@@ -41,8 +41,11 @@ class CCGlobalVolumeVariables
 template<class TypeTag>
 class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
-    // The local class need to access and change volVars
+    // The local class needs to access and change volVars
     friend CCElementVolumeVariables<TypeTag, true>;
+    // The local jacobian needs to access and change volVars for derivative calculation
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -92,7 +95,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(CCGlobalVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const CCGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
 private:

@@ -41,7 +41,11 @@ class BoxGlobalVolumeVariables
 template<class TypeTag>
 class BoxGlobalVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 {
+    // The local class needs to access and change volVars
     friend BoxElementVolumeVariables<TypeTag, true>;
+    // The local jacobian needs to access and change volVars for derivative calculation
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -85,7 +89,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(BoxGlobalVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const BoxGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
 private:

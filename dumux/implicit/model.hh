@@ -48,14 +48,8 @@ template <class TypeTag> class BoxLocalResidual;
 template<class TypeTag>
 class ImplicitModel
 {
-    friend CCLocalResidual<TypeTag>;
-    friend BoxLocalResidual<TypeTag>;
-    friend ImplicitLocalResidual<TypeTag>;
-    friend PrimaryVariableSwitch<TypeTag>;
-    friend typename GET_PROP_TYPE(TypeTag, Problem);
+    // The local jacobian needs to be able to modify objects during the assembly
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-    friend typename GET_PROP_TYPE(TypeTag, StencilsVector);
-    friend typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
 
     using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -754,17 +748,10 @@ public:
 
 protected:
 
-    // GlobalFVGeometry& globalFvGeometry()
-    // { return *globalFvGeometryPtr_; }
-
-    GlobalVolumeVariables& curGlobalVolVars()
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), GlobalVolumeVariables>::type&
+    nonConstCurGlobalVolVars()
     { return curGlobalVolVars_; }
-
-    GlobalVolumeVariables& prevGlobalVolVars()
-    { return prevGlobalVolVars_; }
-
-    GlobalFluxVariablesCache& globalFluxVarsCache()
-    { return globalfluxVarsCache_; }
 
     /*!
      * \brief A reference to the problem on which the model is applied.

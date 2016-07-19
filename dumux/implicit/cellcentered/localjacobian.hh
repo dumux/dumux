@@ -259,7 +259,7 @@ private:
         }
 
         auto&& scv = fvGeometry.scv(globalI_);
-        auto& curVolVars = curElemVolVars[scv];
+        auto& curVolVars = getCurVolVars(curElemVolVars, scv);
         // save a copy of the original vol vars
         VolumeVariables origVolVars(curVolVars);
 
@@ -372,6 +372,18 @@ private:
                 this->updateGlobalJacobian_(matrix, globalJ, globalI_, pvIdx, neighborDeriv[j++]);
         }
     }
+
+    //! If the global vol vars caching is enabled we have to modify the global volvar object
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
+    getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return this->model_().nonConstCurGlobalVolVars().volVars(scv.index()); }
+
+    //! When global volume variables caching is disabled, return the local volvar object
+    template<class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
+    getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return elemVolVars[scv]; }
 
     IndexType globalI_;
     int numericDifferenceMethod_;

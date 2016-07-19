@@ -80,7 +80,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(CCGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:

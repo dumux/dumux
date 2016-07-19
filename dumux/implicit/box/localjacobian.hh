@@ -139,7 +139,7 @@ public:
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            auto& curVolVars = curElemVolVars[scv];
+            auto& curVolVars = getCurVolVars(curElemVolVars, scv);
             VolumeVariables origVolVars(curVolVars);
 
             // add precalculated residual for this scv into the global container
@@ -213,7 +213,7 @@ protected:
                                 const int pvIdx)
     {
         const auto dofIdx = scv.dofIndex();
-        auto& volVars = curElemVolVars[scv];
+        auto& volVars = getCurVolVars(curElemVolVars, scv);
 
         ElementSolutionVector partialDeriv(element.subEntities(dim));
         PrimaryVariables priVars(this->model_().curSol()[dofIdx]);
@@ -281,6 +281,18 @@ protected:
         for (auto&& scvJ : scvs(fvGeometry))
             this->updateGlobalJacobian_(matrix, scvJ.dofIndex(), dofIdx, pvIdx, partialDeriv[scvJ.index()]);
     }
+
+    //! If the global vol vars caching is enabled we have to modify the global volvar object
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
+    getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return this->model_().nonConstCurGlobalVolVars().volVars(scv.elementIndex(), scv.index()); }
+
+    //! When global volume variables caching is disabled, return the local volvar object
+    template<class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
+    getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return elemVolVars[scv]; }
 
 private:
     int numericDifferenceMethod_;
