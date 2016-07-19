@@ -89,6 +89,14 @@ public:
         normal /= normal.two_norm();
         return normal;
     }
+
+    //! geometry type of an scv
+    static Dune::GeometryType scvType()
+    { return Dune::GeometryType(1); }
+
+    //! geometry type of an scvf
+    static Dune::GeometryType scvfType()
+    { return Dune::GeometryType(0); }
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -279,6 +287,15 @@ public:
     {
         return (scvfCorners[1] - scvfCorners[0]).two_norm();
     }
+
+    //! geometry type of an scv
+    static Dune::GeometryType scvType()
+    { return Dune::GeometryType((1<<dim)-1, dim); }
+
+    //! geometry type of an scvf
+    static Dune::GeometryType scvfType()
+    { return Dune::GeometryType(1); }
+
 private:
     std::vector<GlobalPosition> p; // the points needed for construction of the geometries
     std::size_t corners; // number of element corners
@@ -465,6 +482,14 @@ public:
         normal /= normal.two_norm();
         return normal;
     }
+
+    //! geometry type of an scv
+    static Dune::GeometryType scvType()
+    { return Dune::GeometryType((1<<dim)-1, dim); }
+
+    //! geometry type of an scvf
+    static Dune::GeometryType scvfType()
+    { return Dune::GeometryType((1<<(dim-1))-1, dim-1); }
 };
 
 } // end namespace Dumux
