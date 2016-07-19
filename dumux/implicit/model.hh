@@ -748,6 +748,12 @@ public:
 
 protected:
 
+    /*!
+     * \brief A non const reference to current global vol vars vector.
+     *
+     * The local jacobian needs this access during the calculation of
+     * the derivatives in the case of global volume variables caching.
+     */
     template<class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), GlobalVolumeVariables>::type&
     nonConstCurGlobalVolVars()
