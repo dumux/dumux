@@ -55,11 +55,6 @@ public:
                            IndexType elementIndex)
     : SubControlVolumeBase<G, I>(geometry, elementIndex) {}
 
-    IndexType indexInElement() const
-    {
-        return IndexType(0);
-    }
-
     //! The global index of this scv
     IndexType index() const
     {
