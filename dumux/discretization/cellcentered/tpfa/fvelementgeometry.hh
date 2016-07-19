@@ -305,13 +305,6 @@ private:
             }
             else if (intersection.boundary())
             {
-                neighborScvfs_.emplace_back(intersection,
-                                            intersection.geometry(),
-                                            scvFaceIndices[scvfCounter],
-                                            std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
-                                            );
-
-                neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
             }
         }
