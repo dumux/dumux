@@ -285,46 +285,34 @@ private:
         GeometryHelper geometryHelper(elementGeometry);
 
         // construct the sub control volumes
+        scvs_.resize(elementGeometry.corners());
         for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
             auto dofIdxGlobal = globalFvGeometry().problem_().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
-            // get the corners and the volume of the scv
-            auto scvCorners = geometryHelper.getScvCorners(scvLocalIdx);
-            auto volume = geometryHelper.volume(scvCorners);
-
             // add scv to the local container
-            scvs_.emplace_back(std::move(scvCorners),
-                               volume,
-                               scvLocalIdx,
-                               eIdx,
-                               dofIdxGlobal);
+            scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
+                                                  scvLocalIdx,
+                                                  eIdx,
+                                                  dofIdxGlobal);
         }
 
         // construct the sub control volume faces
         unsigned int scvfLocalIdx = 0;
+        scvfs_.resize(element.subEntities(1));
         for (; scvfLocalIdx < element.subEntities(1); ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connsected to
             std::vector<IndexType> localScvIndices({static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                     static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
-            // get the corner points, the area, and the unit normal vector of the scv face
-            auto scvfCorners = geometryHelper.getScvfCorners(scvfLocalIdx);
-            auto area = geometryHelper.area(scvfCorners);
-            auto normal = geometryHelper.normal(elementGeometry, scvfCorners);
-            const auto v = elementGeometry.corner(localScvIndices[1]) - elementGeometry.corner(localScvIndices[0]);
-            const auto s = v*normal;
-            if (std::signbit(s))
-                normal *= -1;
-
-            scvfs_.emplace_back(std::move(scvfCorners),
-                                normal,
-                                area,
-                                scvfLocalIdx,
-                                localScvIndices,
-                                false);
+            scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
+                                                        element,
+                                                        elementGeometry,
+                                                        scvfLocalIdx,
+                                                        localScvIndices,
+                                                        false);
         }
 
         // construct the sub control volume faces on the domain boundary
@@ -332,7 +320,7 @@ private:
         {
             if (intersection.boundary())
             {
-                auto isGeometry = intersection.geometry();
+                const auto isGeometry = intersection.geometry();
 
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
@@ -341,13 +329,10 @@ private:
                        {static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1,
                                                                           isScvfLocalIdx, dim))};
 
-                    // get the corner points and the area of the boundary scv face
-                    auto scvfCorners = geometryHelper.getBoundaryScvfCorners(isGeometry, isScvfLocalIdx);
-                    auto area = geometryHelper.area(scvfCorners);
-
-                    scvfs_.emplace_back(std::move(scvfCorners),
-                                        intersection.centerUnitOuterNormal(),
-                                        area,
+                    scvfs_.emplace_back(geometryHelper,
+                                        intersection,
+                                        isGeometry,
+                                        isScvfLocalIdx,
                                         scvfLocalIdx,
                                         localScvIndices,
                                         true);

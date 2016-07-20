@@ -25,6 +25,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
+#include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux
@@ -41,26 +42,29 @@ class BoxSubControlVolume : public SubControlVolumeBase<BoxSubControlVolume<G, I
     enum { dimworld = Geometry::coorddimension };
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
+
 public:
+    //! The default constructor
+    BoxSubControlVolume() = default;
+
     // the contructor in the box case
-    BoxSubControlVolume(std::vector<GlobalPosition>&& corners,
-                        Scalar volume,
+    template<class GeometryHelper>
+    BoxSubControlVolume(const GeometryHelper& geometryHelper,
                         IndexType scvIdx,
                         IndexType elementIndex,
                         IndexType dofIndex)
-    : ParentType(),
-      corners_(std::move(corners)),
+    : corners_(geometryHelper.getScvCorners(scvIdx)),
       center_(0.0),
-      volume_(volume),
-      elementIndex_(std::move(elementIndex)),
-      scvIdx_(std::move(scvIdx)),
-      dofIndex_(std::move(dofIndex))
-      {
+      volume_(geometryHelper.scvVolume(corners_)),
+      elementIndex_(elementIndex),
+      scvIdx_(scvIdx),
+      dofIndex_(dofIndex)
+    {
         // compute center point
         for (const auto& corner : corners_)
             center_ += corner;
         center_ /= corners_.size();
-      }
+    }
 
     //! The center of the sub control volume
     GlobalPosition center() const

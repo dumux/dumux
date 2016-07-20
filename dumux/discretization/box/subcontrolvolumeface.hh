@@ -26,6 +26,7 @@
 #include <utility>
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/discretization/box/boxgeometryhelper.hh>
 
 namespace Dumux
 {
@@ -50,25 +51,51 @@ class BoxSubControlVolumeFace : public SubControlVolumeFaceBase<BoxSubControlVol
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    BoxSubControlVolumeFace(std::vector<GlobalPosition>&& corners,
-                            const GlobalPosition& unitOuterNormal,
-                            Scalar area,
+    //! The default constructor
+    BoxSubControlVolumeFace() = default;
+
+    //! Constructor for inner scvfs
+    template<class GeometryHelper, class Element>
+    BoxSubControlVolumeFace(const GeometryHelper& geometryHelper,
+                            const Element& element,
+                            const typename Element::Geometry& elemGeometry,
                             IndexType scvfIndex,
                             const std::vector<IndexType>& scvIndices,
                             bool boundary = false)
-    : ParentType(),
-      corners_(std::move(corners)),
+    : corners_(geometryHelper.getScvfCorners(scvfIndex)),
       center_(0.0),
-      unitOuterNormal_(unitOuterNormal),
-      area_(area),
+      unitOuterNormal_(geometryHelper.normal(corners_, scvIndices)),
+      area_(geometryHelper.scvfArea(corners_)),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       boundary_(boundary)
-      {
+    {
         for (const auto& corner : corners_)
             center_ += corner;
         center_ /= corners_.size();
-      }
+    }
+
+    //! Constructor for boundary scvfs
+    template<class GeometryHelper, class Intersection>
+    BoxSubControlVolumeFace(const GeometryHelper& geometryHelper,
+                            const Intersection& intersection,
+                            const typename Intersection::Geometry& isGeometry,
+                            unsigned int indexInIntersection,
+                            IndexType scvfIndex,
+                            const std::vector<IndexType>& scvIndices,
+                            bool boundary = false)
+    : corners_(geometryHelper.getBoundaryScvfCorners(isGeometry, indexInIntersection)),
+      center_(0.0),
+      unitOuterNormal_(intersection.centerUnitOuterNormal()),
+      area_(geometryHelper.scvfArea(corners_)),
+      scvfIndex_(scvfIndex),
+      scvIndices_(scvIndices),
+      boundary_(boundary)
+    {
+        for (const auto& corner : corners_)
+            center_ += corner;
+        center_ /= corners_.size();
+    }
 
     //! The center of the sub control volume face
     GlobalPosition center() const

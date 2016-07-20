@@ -76,7 +76,7 @@ class BoxGlobalFVGeometry<TypeTag, true>
 public:
     //! Constructor
     BoxGlobalFVGeometry(const GridView gridView)
-    : gridView_(gridView), elementMap_(gridView) {}
+    : gridView_(gridView) {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -91,14 +91,6 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
-    // Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.index()); }
-
-    // Get an element from a global element index
-    Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
-
     //! Return the gridView this global object lives on
     const GridView& gridView() const
     { return gridView_; }
@@ -110,12 +102,10 @@ public:
 
         scvs_.clear();
         scvfs_.clear();
-        elementMap_.clear();
 
         auto numElements = gridView_.size(0);
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
-        elementMap_.resize(numElements);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -125,7 +115,6 @@ public:
         {
             // fill the element map with seeds
             auto eIdx = problem.elementMapper().index(element);
-            elementMap_[eIdx] = element.seed();
 
             // count
             numScv_ += element.subEntities(dim);
@@ -139,46 +128,32 @@ public:
             GeometryHelper geometryHelper(elementGeometry);
 
             // construct the sub control volumes
-            scvs_[eIdx].reserve(elementGeometry.corners());
+            scvs_[eIdx].resize(elementGeometry.corners());
             for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
                 auto dofIdxGlobal = problem.vertexMapper().subIndex(element, scvLocalIdx, dim);
 
-                // get the corners and the volume of the scv
-                auto scvCorners = geometryHelper.getScvCorners(scvLocalIdx);
-                auto volume = geometryHelper.volume(scvCorners);
-                scvs_[eIdx].emplace_back(std::move(scvCorners),
-                                         volume,
-                                         scvLocalIdx,
-                                         eIdx,
-                                         dofIdxGlobal);
+                scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper,
+                                                            scvLocalIdx,
+                                                            eIdx,
+                                                            dofIdxGlobal);
             }
 
             // construct the sub control volume faces
-            auto numInteriorScvfs = element.subEntities(1);
             unsigned int scvfLocalIdx = 0;
-            scvfs_[eIdx].reserve(numInteriorScvfs);
-            for (; scvfLocalIdx < numInteriorScvfs; ++scvfLocalIdx)
+            scvfs_[eIdx].resize(element.subEntities(1));
+            for (; scvfLocalIdx < element.subEntities(1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
                 std::vector<IndexType> localScvIndices({static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                         static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
-                // get the corner points, the area, and the unit normal vector of the scv face
-                auto scvfCorners = geometryHelper.getScvfCorners(scvfLocalIdx);
-                auto area = geometryHelper.area(scvfCorners);
-                auto normal = geometryHelper.normal(elementGeometry, scvfCorners);
-                const auto v = elementGeometry.corner(localScvIndices[1]) - elementGeometry.corner(localScvIndices[0]);
-                const auto s = v*normal;
-                if (std::signbit(s))
-                    normal *= -1;
-
-                scvfs_[eIdx].emplace_back(std::move(scvfCorners),
-                                          normal,
-                                          area,
-                                          scvfLocalIdx,
-                                          localScvIndices,
-                                          false);
+                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
+                                                                  element,
+                                                                  elementGeometry,
+                                                                  scvfLocalIdx,
+                                                                  localScvIndices,
+                                                                  false);
             }
 
             // construct the sub control volume faces on the domain boundary
@@ -186,7 +161,7 @@ public:
             {
                 if (intersection.boundary())
                 {
-                    auto isGeometry = intersection.geometry();
+                    const auto isGeometry = intersection.geometry();
                     // count
                     numScvf_ += isGeometry.corners();
                     numBoundaryScvf_ += isGeometry.corners();
@@ -198,13 +173,10 @@ public:
                             {static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1,
                                                                                isScvfLocalIdx, dim))};
 
-                        // get the corner points and the area of the boundary scv face
-                        auto scvfCorners = geometryHelper.getBoundaryScvfCorners(isGeometry, isScvfLocalIdx);
-                        auto area = geometryHelper.area(scvfCorners);
-
-                        scvfs_[eIdx].emplace_back(std::move(scvfCorners),
-                                                  intersection.centerUnitOuterNormal(),
-                                                  area,
+                        scvfs_[eIdx].emplace_back(geometryHelper,
+                                                  intersection,
+                                                  isGeometry,
+                                                  isScvfLocalIdx,
                                                   scvfLocalIdx,
                                                   localScvIndices,
                                                   true);
@@ -247,7 +219,6 @@ private:
     const FeCache feCache_;
 
     GridView gridView_;
-    Dumux::ElementMap<GridView> elementMap_;
     std::vector<std::vector<SubControlVolume>> scvs_;
     std::vector<std::vector<SubControlVolumeFace>> scvfs_;
     // TODO do we need those?
@@ -286,7 +257,8 @@ class BoxGlobalFVGeometry<TypeTag, false>
 public:
     //! Constructor
     BoxGlobalFVGeometry(const GridView gridView)
-    : gridView_(gridView), elementMap_(gridView) {}
+    : gridView_(gridView)
+    {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -301,14 +273,6 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
-    // Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.index()); }
-
-    // Get an element from a global element index
-    Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
-
     //! Return the gridView this global object lives on
     const GridView& gridView() const
     { return gridView_; }
@@ -317,21 +281,14 @@ public:
     void update(const Problem& problem)
     {
         problemPtr_ = &problem;
-        elementMap_.clear();
-
-        auto numElems = gridView_.size(0);
-        elementMap_.resize(numElems);
 
         // save global data on the grid's scvs and scvfs
+        // TODO do we need those information?
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
         for (const auto& element : elements(gridView_))
         {
-            // fill the element map with seeds
-            auto eIdx = problem.elementMapper().index(element);
-            elementMap_[eIdx] = element.seed();
-
             numScv_ += element.subEntities(dim);
             numScvf_ += element.subEntities(dim-1);
 
@@ -376,9 +333,6 @@ private:
     std::size_t numScv_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
-
-    // vectors that store the global data
-    Dumux::ElementMap<GridView> elementMap_;
 };
 
 } // end namespace
