@@ -127,7 +127,8 @@ public:
             elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
-            std::vector<IndexType> scvfsIndexSet(element.subEntities(1));
+            std::vector<IndexType> scvfsIndexSet;
+            scvfsIndexSet.reserve(element.subEntities(1));
             for (const auto& intersection : intersections(gridView_, element))
             {
                 // inner sub control volume faces
@@ -139,7 +140,7 @@ public:
                                         scvfIdx,
                                         std::vector<IndexType>({eIdx, nIdx})
                                         );
-                    scvfsIndexSet[intersection.indexInInside()] = scvfIdx++;
+                    scvfsIndexSet.push_back(scvfIdx++);
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
@@ -149,7 +150,7 @@ public:
                                         scvfIdx,
                                         std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++})
                                         );
-                    scvfsIndexSet[intersection.indexInInside()] = scvfIdx++;
+                    scvfsIndexSet.push_back(scvfIdx++);
                 }
             }
 
