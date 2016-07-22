@@ -72,6 +72,9 @@ add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni")
 endif()
 
+add_dumux_test(test_fracture_box2p test_fracture_box2p test_fracture_box2p.cc
+               ${CMAKE_CURRENT_BINARY_DIR}/test_fracture_box2p)
+
 #install sources
 install(FILES
 cc2pcornerpointproblem.hh
