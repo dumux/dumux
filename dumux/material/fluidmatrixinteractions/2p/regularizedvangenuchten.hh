@@ -320,7 +320,7 @@ public:
         else if (swe > 1)
             return 1;
         else if (swe > swThHigh) {
-            typedef Spline<Scalar> Spline;
+            typedef Dumux::Spline<Scalar> Spline;
             Spline sp(swThHigh, 1.0, // x1, x2
                       VanGenuchten::krw(params, swThHigh), 1.0, // y1, y2
                       VanGenuchten::dkrw_dswe(params, swThHigh), 0); // m1, m2
@@ -356,7 +356,7 @@ public:
         else if (swe >= 1)
             return 0;
         else if (swe < swThLow) {
-            typedef Spline<Scalar> Spline;
+            typedef Dumux::Spline<Scalar> Spline;
             Spline sp(0.0, swThLow, // x1, x2
                       1.0, VanGenuchten::krn(params, swThLow), // y1, y2
                       0.0, VanGenuchten::dkrn_dswe(params, swThLow)); // m1, m2

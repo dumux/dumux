@@ -68,7 +68,7 @@ public:
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
         typedef Dumux::H2O<Scalar> H2O;
-        typedef Xylene<Scalar> Xylene;
+        typedef Dumux::Xylene<Scalar> Xylene;
 
         temperature = std::max(temperature, 1e-9); // regularization
         temperature = std::min(temperature, 500.0); // regularization

@@ -62,7 +62,7 @@ public:
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        typedef N2<Scalar> N2;
+        typedef Dumux::N2<Scalar> N2;
         typedef Dumux::O2<Scalar> O2;
 
         // atomic diffusion volumes
