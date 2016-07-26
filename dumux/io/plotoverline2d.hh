@@ -167,13 +167,13 @@ public:
                 if (isBetween(globalPosCurrent, pointOne, pointTwo))
                 {
                     const Scalar time         = problem.timeManager().time();
-                    const Scalar saturationW  = elemVolVars[scvIdx].fluidState().saturation(wPhaseIdx);
-                    const Scalar Tw           = elemVolVars[scvIdx].fluidState().temperature(wPhaseIdx);
-                    const Scalar Tn           = elemVolVars[scvIdx].fluidState().temperature(nPhaseIdx);
-                    const Scalar Ts           = elemVolVars[scvIdx].fluidState().temperature(sPhaseIdx);
-                    const Scalar xH2On        = elemVolVars[scvIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+                    const Scalar saturationW  = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                    const Scalar Tw           = elemVolVars[scvIdx].temperature(wPhaseIdx);
+                    const Scalar Tn           = elemVolVars[scvIdx].temperature(nPhaseIdx);
+                    const Scalar Ts           = elemVolVars[scvIdx].temperature(sPhaseIdx);
+                    const Scalar xH2On        = elemVolVars[scvIdx].moleFraction(nPhaseIdx, wCompIdx);
                     const Scalar xH2OnEquil   = elemVolVars[scvIdx].xEquil(nPhaseIdx, wCompIdx);
-                    const Scalar xN2w         = elemVolVars[scvIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                    const Scalar xN2w         = elemVolVars[scvIdx].moleFraction(wPhaseIdx, nCompIdx);
                     const Scalar xN2wEquil    = elemVolVars[scvIdx].xEquil(wPhaseIdx, nCompIdx);
 
                     // actual output into the text file
