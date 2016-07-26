@@ -894,8 +894,9 @@ public:
                 const auto faceVec = elementGlobal - edgeCoordinates[scvfIdx];
                 const auto elemVec1 = elementGlobal - geometry.corner(0);
                 const auto elemVec2 = elementGlobal - geometry.corner(1);
-                const auto elemNormal = Dumux::crossProduct(elemVec1, elemVec2);
-                scvFace.normal = Dumux::crossProduct(faceVec, elemNormal);
+                GlobalPosition elemNormal;
+                this->crossProduct(elemNormal, elemVec1, elemVec2);
+                this->crossProduct(scvFace.normal, faceVec, elemNormal);
 
                 const auto diffVec = subContVol[j].global - subContVol[i].global;
                 // make sure the normal points to the right direction
