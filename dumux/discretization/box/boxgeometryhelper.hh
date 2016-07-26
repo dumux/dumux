@@ -360,8 +360,8 @@ public:
             static const std::uint8_t map[4][8] =
             {
                 {vo+0, eo+0, eo+1, fo+0, eo+3, fo+1, fo+2,    0},
-                {vo+1, eo+2, eo+0, fo+0, fo+3, eo+4,    0, fo+1},
-                {vo+2, eo+1, eo+3, fo+0, eo+5, fo+2, fo+3,    0},
+                {vo+1, eo+2, eo+0, fo+0, eo+4, fo+3, fo+1,    0},
+                {vo+2, eo+1, eo+2, fo+0, eo+5, fo+2, fo+3,    0},
                 {vo+3, eo+3, eo+5, fo+2, eo+4, fo+1, fo+3,    0}
             };
 
@@ -383,13 +383,13 @@ public:
             static const std::uint8_t map[8][8] =
             {
                 {vo+0, eo+6, eo+4, fo+4, eo+0, fo+2, fo+0,    0},
-                {eo+6, vo+1, fo+4, eo+5, fo+2, eo+1,    0, fo+1},
-                {eo+4, fo+4, vo+2, eo+7, fo+0,    0, eo+2, fo+3},
-                {fo+4, eo+5, eo+7, vo+3,    0, fo+1, fo+3, eo+3},
-                {eo+0, fo+2, fo+0,    0, vo+4, eo+10, eo+8, fo+5},
-                {fo+2, eo+1,    0, fo+1, eo+10, vo+5, fo+5, eo+9},
-                {fo+0,    0, eo+2, fo+3, eo+8, fo+5, vo+6, eo+11},
-                {   0, fo+1, fo+3, eo+3, fo+5, eo+9, eo+11, vo+7}
+                {vo+1, eo+5, eo+6, fo+4, eo+1, fo+1, fo+2,    0},
+                {vo+2, eo+4, eo+7, fo+4, eo+2, fo+0, fo+3,    0},
+                {vo+3, eo+7, eo+5, fo+4, eo+3, fo+3, fo+1,    0},
+                {vo+4, eo+8, eo+10, fo+5, eo+0, fo+0, fo+2,    0},
+                {vo+5, eo+10, eo+9, fo+5, eo+1, fo+2, fo+1,    0},
+                {vo+6, eo+11, eo+8, fo+5, eo+2, fo+3, fo+0,    0},
+                {vo+7, eo+9, eo+11, fo+5, eo+3, fo+1, fo+3,    0},
             };
 
             return PointVector( {p[map[localScvIdx][0]],
