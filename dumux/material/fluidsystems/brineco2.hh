@@ -218,6 +218,7 @@ public:
         }
     }
 
+    using Base::density;
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
@@ -226,7 +227,6 @@ public:
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
-    using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           int phaseIdx)
@@ -275,6 +275,7 @@ public:
         }
     }
 
+    using Base::viscosity;
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
@@ -285,7 +286,6 @@ public:
      *       component is neglected. This contribution is probably not big, but somebody
      *       would have to find out its influence.
      */
-    using Base::viscosity;
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
                             int phaseIdx)
@@ -305,6 +305,7 @@ public:
         return result;
     }
 
+    using Base::fugacityCoefficient;
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
@@ -331,7 +332,6 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component
      */
-    using Base::fugacityCoefficient;
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -423,6 +423,7 @@ public:
     }
 
 
+    using Base::diffusionCoefficient;
     /*!
      * \brief Calculate the molecular diffusion coefficient for a
      *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
@@ -448,7 +449,6 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
-    using Base::diffusionCoefficient;
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
                                        int phaseIdx,
@@ -457,6 +457,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
+    using Base::binaryDiffusionCoefficient;
     /*!
      * \brief Given the phase compositions, return the binary
      *        diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
@@ -465,7 +466,6 @@ public:
      * \param compIIdx Index of the component i
      * \param compJIdx Index of the component j
      */
-    using Base::binaryDiffusionCoefficient;
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -500,13 +500,13 @@ public:
         }
     }
 
+    using Base::enthalpy;
     /*!
      * \brief Given the phase composition, return the specific
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
-    using Base::enthalpy;
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
@@ -539,6 +539,7 @@ public:
         }
     }
 
+    using Base::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState An arbitrary fluid state
@@ -548,7 +549,6 @@ public:
      *       component is neglected. This contribution is probably not big, but somebody
      *       would have to find out its influence.
      */
-    using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
@@ -563,6 +563,7 @@ public:
                                                fluidState.pressure(phaseIdx));
     }
 
+    using Base::heatCapacity;
     /*!
      * \copydoc BaseFluidSystem::heatCapacity
      *
@@ -573,7 +574,6 @@ public:
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
-    using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
