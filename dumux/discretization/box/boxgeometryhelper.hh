@@ -303,181 +303,272 @@ private:
 template <class GridView>
 class BoxGeometryHelper<GridView, 3>
 {
-private:
     using Scalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    using ScvGeometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld>;
-    using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
+
+    using ScvGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim, dimWorld>;
+    using ScvfGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim-1, dimWorld>;
 
     using GlobalPosition = typename ScvGeometry::GlobalCoordinate;
-    using CornerList = std::vector<GlobalPosition>;
+    using PointVector = std::vector<GlobalPosition>;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
     using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
     using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
 
+    //! the maximum number of helper points used to construct the geometries
+    //! Using a statically sized point array is much faster than dynamic allocation
+    static constexpr int maxPoints = 27;
 public:
-    using ScvGeometryVector = std::vector<ScvGeometry>;
-    using ScvfGeometryVector = std::vector<ScvfGeometry>;
-
-    //! get sub control volume geometries from element
-    void getScvAndScvfGeometries(const typename Element::Geometry& geometry,
-                            ScvGeometryVector& scvGeometries,
-                            ScvfGeometryVector& scvfGeometries)
+    BoxGeometryHelper(const typename Element::Geometry& geometry)
+    : elementGeometry_(geometry), corners_(geometry.corners())
     {
-        // sub control volume geometries in 3D are always hexahedrons
-        Dune::GeometryType scvGeometryType; scvGeometryType.makeHexahedron();
-        // sub control volume face geometries in 3D are always quadrilaterals
-        Dune::GeometryType scvfGeometryType; scvfGeometryType.makeQuadrilateral();
-
         // extract the corners of the sub control volumes
         const auto& referenceElement = ReferenceElements::general(geometry.type());
 
+        // the element center
+        p[0] = geometry.center();
+
         // vertices
-        CornerList v;
-        for (int i = 0; i < geometry.corners(); ++i)
-            v.emplace_back(geometry.corner(i));
+        for (int i = 0; i < corners_; ++i)
+            p[i+1] = geometry.corner(i);
 
         // edge midpoints
-        CornerList e;
         for (int i = 0; i < referenceElement.size(dim-1); ++i)
-            e.emplace_back(geometry.global(referenceElement.position(i, dim-1)));
+            p[i+corners_+1] = geometry.global(referenceElement.position(i, dim-1));
 
         // face midpoints
-        CornerList f;
         for (int i = 0; i < referenceElement.size(1); ++i)
-            f.emplace_back(geometry.global(referenceElement.position(i, 1)));
+            p[i+corners_+1+referenceElement.size(dim-1)] = geometry.global(referenceElement.position(i, 1));
+    }
 
-        auto c = geometry.center();
-
-        // procees according to number of corners
-        // \todo prisms (corners == 6) and pyramids (corners == 5)
-        switch (geometry.corners())
+    //! Create a vector with the scv corners
+    PointVector getScvCorners(unsigned int localScvIdx) const
+    {
+        // proceed according to number of corners of the element
+        switch (corners_)
         {
         case 4: // tetrahedron
         {
-            scvGeometries.reserve(4);
-            scvfGeometries.reserve(6);
+            //! Only build the maps the first time we encounter a tetrahedron
+            static const std::uint8_t vo = 1; //! vertex offset in point vector p
+            static const std::uint8_t eo = 5; //! edge offset in point vector p
+            static const std::uint8_t fo = 11; //! face offset in point vector p
+            static const std::uint8_t map[4][8] =
+            {
+                {vo+0, eo+0, eo+1, fo+0, eo+3, fo+1, fo+2,    0},
+                {vo+1, eo+2, eo+0, fo+0, fo+3, eo+4,    0, fo+1},
+                {vo+2, eo+1, eo+3, fo+0, eo+5, fo+2, fo+3,    0},
+                {vo+3, eo+3, eo+5, fo+2, eo+4, fo+1, fo+3,    0}
+            };
 
-            // sub control volumes
-            ScvGeometryVector scvGeometries(4);
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[0], e[0], e[1], f[0], e[3], f[1], f[2], c}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[1], e[2], e[0], f[0], f[3], e[4], c, f[1]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[2], e[1], e[2], f[0], e[5], f[2], f[3], c}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[3], e[3], e[5], f[2], e[4], f[1], f[3], c}));
-
-            // sub control volume faces
-            ScvfGeometryVector scvfGeometries(6);
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[0], f[0], f[1], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[0], e[1], c, f[2]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[2], f[0], f[3], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[2], e[3], c, f[1]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[3], c, e[4], f[1]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[5], f[2], f[3], c}));
-
-            break;
+            return PointVector( {p[map[localScvIdx][0]],
+                                 p[map[localScvIdx][1]],
+                                 p[map[localScvIdx][2]],
+                                 p[map[localScvIdx][3]],
+                                 p[map[localScvIdx][4]],
+                                 p[map[localScvIdx][5]],
+                                 p[map[localScvIdx][6]],
+                                 p[map[localScvIdx][7]]} );
         }
         case 8: // hexahedron
         {
-            scvGeometries.reserve(8);
-            scvfGeometries.reserve(12);
+            //! Only build the maps the first time we encounter a quadrilateral
+            static const std::uint8_t vo = 1; //! vertex offset in point vector p
+            static const std::uint8_t eo = 9; //! edge offset in point vector p
+            static const std::uint8_t fo = 21; //! face offset in point vector p
+            static const std::uint8_t map[8][8] =
+            {
+                {vo+0, eo+6, eo+4, fo+4, eo+0, fo+2, fo+0,    0},
+                {eo+6, vo+1, fo+4, eo+5, fo+2, eo+1,    0, fo+1},
+                {eo+4, fo+4, vo+2, eo+7, fo+0,    0, eo+2, fo+3},
+                {fo+4, eo+5, eo+7, vo+3,    0, fo+1, fo+3, eo+3},
+                {eo+0, fo+2, fo+0,    0, vo+4, eo+10, eo+8, fo+5},
+                {fo+2, eo+1,    0, fo+1, eo+10, vo+5, fo+5, eo+9},
+                {fo+0,    0, eo+2, fo+3, eo+8, fo+5, vo+6, eo+11},
+                {   0, fo+1, fo+3, eo+3, fo+5, eo+9, eo+11, vo+7}
+            };
 
-            // sub control volumes
-            ScvGeometryVector scvGeometries(8);
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({v[0], e[6], e[4], f[4], e[0], f[2], f[0], c}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({e[6], v[1], f[4], e[5], f[2], e[1], c, f[1]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({e[4], f[4], v[2], e[7], f[0], c, e[2], f[3]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[4], e[5], e[7], v[3], c, f[1], f[3], e[3]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({e[0], f[2], f[0], c, v[4], e[10], e[8], f[5]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[2], e[1], c, f[1], e[10], v[5], f[5], e[9]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({f[0], c, e[2], f[3], e[8], f[5], v[6], e[11]}));
-            scvGeometries.emplace_back(scvGeometryType, std::vector<GlobalPosition>({c, f[1], f[3], e[3], f[5], e[9], e[11], v[7]}));
-
-            // sub control volume faces
-            ScvfGeometryVector scvfGeometries(12);
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[0], e[0], c, f[2]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[1], c, e[1], f[2]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[3], e[2], c, f[0]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[3], f[3], f[1], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[4], e[4], c, f[0]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[5], f[4], f[1], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[6], f[4], f[2], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({f[4], e[7], c, f[3]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({c, f[0], f[5], e[8]}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[9], f[1], f[5], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[10], f[2], f[5], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({e[11], f[5], f[3], c}));
-
-            break;
+            return PointVector( {p[map[localScvIdx][0]],
+                                 p[map[localScvIdx][1]],
+                                 p[map[localScvIdx][2]],
+                                 p[map[localScvIdx][3]],
+                                 p[map[localScvIdx][4]],
+                                 p[map[localScvIdx][5]],
+                                 p[map[localScvIdx][6]],
+                                 p[map[localScvIdx][7]]} );
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for " << geometry.type());
+            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
+                                                            << " corners=" << corners_);
         }
     }
 
-    //! get sub control volume geometries from element
-    ScvfGeometryVector getBoundaryScvfGeometries(const typename Intersection::Geometry& geometry)
+    //! Create a vector with the scvf corners
+    PointVector getScvfCorners(unsigned int localScvfIdx) const
     {
-        ScvfGeometryVector scvfGeometries;
+        // proceed according to number of corners of the element
+        switch (corners_)
+        {
+        case 4: // tetrahedron
+        {
+            //! Only build the maps the first time we encounter a triangle
+            static const std::uint8_t eo = 5; //! edge offset in point vector p
+            static const std::uint8_t fo = 11; //! face offset in point vector p
+            static const std::uint8_t map[6][4] =
+            {
+                {eo+0, fo+0, fo+1,    0},
+                {fo+1, eo+1,    0, fo+2},
+                {eo+2, fo+0, fo+3,    0},
+                {fo+2, eo+3,    0, fo+1},
+                {fo+3,    0, eo+4, fo+1},
+                {eo+5, fo+2, fo+3,    0}
+            };
 
-        // sub control volume face geometries in 3D are always quadrilaterals
-        Dune::GeometryType scvfGeometryType; scvfGeometryType.makeQuadrilateral();
+            return PointVector( {p[map[localScvfIdx][0]],
+                                 p[map[localScvfIdx][1]],
+                                 p[map[localScvfIdx][2]],
+                                 p[map[localScvfIdx][3]]} );
+        }
+        case 8: // hexahedron
+        {
+            //! Only build the maps the first time we encounter a quadrilateral
+            static const std::uint8_t eo = 9; //! edge offset in point vector p
+            static const std::uint8_t fo = 21; //! face offset in point vector p
+            static const std::uint8_t map[12][4] =
+            {
+                {fo+0, eo+0,    0, fo+2},
+                {fo+1,    0, eo+1, fo+2},
+                {fo+3, eo+2,    0, fo+0},
+                {eo+3, fo+3, fo+1,    0},
+                {fo+4, eo+4,    0, fo+0},
+                {eo+5, fo+4, fo+1,    0},
+                {eo+6, fo+4, fo+2,    0},
+                {fo+4, eo+7,    0, fo+3},
+                {   0, fo+0, fo+5, eo+8},
+                {eo+9, fo+1, fo+5,    0},
+                {eo+10, fo+2, fo+5,   0},
+                {eo+11, fo+5, fo+3,   0}
+            };
 
+            return PointVector( {p[map[localScvfIdx][0]],
+                                 p[map[localScvfIdx][1]],
+                                 p[map[localScvfIdx][2]],
+                                 p[map[localScvfIdx][3]]} );
+        }
+        default:
+            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
+                                                            << " corners=" << corners_);
+        }
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    PointVector getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+                                       unsigned int indexInIntersection) const
+    {
         // extract the corners of the sub control volumes
         const auto& referenceElement = FaceReferenceElements::general(geometry.type());
 
+        GlobalPosition pi[9];
+        auto corners = geometry.corners();
+
+        // the element center
+        pi[0] = geometry.center();
+
         // vertices
-        CornerList v;
-        for (int i = 0; i < geometry.corners(); ++i)
-            v.emplace_back(geometry.corner(i));
+        for (int i = 0; i < corners; ++i)
+            pi[i+1] = geometry.corner(i);
 
-        // edge midpoints
-        CornerList e;
+        // face midpoints
         for (int i = 0; i < referenceElement.size(1); ++i)
-            e.emplace_back(geometry.global(referenceElement.position(i, 1)));
-
-        // face midpoint
-        auto c = geometry.center();
+            pi[i+corners+1] = geometry.global(referenceElement.position(i, 1));
 
         // procees according to number of corners
-        switch (geometry.corners())
+        switch (corners)
         {
         case 3: // triangle
         {
-            scvfGeometries.reserve(3);
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[0], e[0], e[1], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[1], e[2], e[0], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[2], e[1], e[2], c}));
+            //! Only build the maps the first time we encounter a triangle
+            static const std::uint8_t vo = 1; //! vertex offset in point vector p
+            static const std::uint8_t fo = 4; //! face offset in point vector p
+            static const std::uint8_t map[3][4] =
+            {
+                {vo+0, fo+0, fo+1, 0},
+                {vo+1, fo+2, fo+0, 0},
+                {vo+2, fo+1, fo+2, 0}
+            };
 
-            return scvfGeometries;
+            return PointVector( {pi[map[indexInIntersection][0]],
+                                 pi[map[indexInIntersection][1]],
+                                 pi[map[indexInIntersection][2]],
+                                 pi[map[indexInIntersection][3]]} );
         }
         case 4: // quadrilateral
         {
-            scvfGeometries.reserve(4);
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[0], e[2], e[0], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[1], e[1], e[2], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[2], e[0], e[3], c}));
-            scvfGeometries.emplace_back(scvfGeometryType, std::vector<GlobalPosition>({v[3], e[3], e[1], c}));
+            //! Only build the maps the first time we encounter a quadrilateral
+            static const std::uint8_t vo = 1; //! vertex offset in point vector p
+            static const std::uint8_t fo = 5; //! face offset in point vector p
+            static const std::uint8_t map[4][4] =
+            {
+                {vo+0, fo+2, fo+0, 0},
+                {vo+1, fo+1, fo+2, 0},
+                {vo+2, fo+0, fo+3, 0},
+                {vo+3, fo+3, fo+1, 0}
+            };
 
-            return scvfGeometries;
+            return PointVector( {pi[map[indexInIntersection][0]],
+                                 pi[map[indexInIntersection][1]],
+                                 pi[map[indexInIntersection][2]],
+                                 pi[map[indexInIntersection][3]]} );
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scvf boundary geometries for " << geometry.type());
+            DUNE_THROW(Dune::NotImplemented, "Box scvf boundary geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
+                                                            << " corners=" << corners);
         }
     }
 
     //! get scvf normal vector
-    static GlobalPosition normal(const typename Element::Geometry& geometry,
-                                 const ScvfGeometry& scvfGeometry)
+    GlobalPosition normal(const PointVector& p,
+                          const std::vector<unsigned int>& scvIndices) const
     {
-        const auto t1 = scvfGeometry.corner(1) - scvfGeometry.corner(0);
-        const auto t2 = scvfGeometry.corner(2) - scvfGeometry.corner(0);
-        GlobalPosition normal = Dumux::crossProduct(t1, t2);
+        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
         normal /= normal.two_norm();
+
+        const auto v = elementGeometry_.corner(scvIndices[1]) - elementGeometry_.corner(scvIndices[0]);
+        const auto s = v*normal;
+        if (std::signbit(s))
+            normal *= -1;
+
         return normal;
     }
+
+    //! get scv volume
+    Scalar scvVolume(const PointVector& p) const
+    {
+        // after Grandy 1997, Efficient computation of volume of hexahedron
+        const auto v = p[7]-p[0];
+        return 1.0/6.0 * ( Dumux::tripleProduct(v, p[1]-p[0], p[3]-p[5])
+                         + Dumux::tripleProduct(v, p[4]-p[0], p[5]-p[6])
+                         + Dumux::tripleProduct(v, p[2]-p[0], p[6]-p[3]));
+    }
+
+    //! get scvf area
+    Scalar scvfArea(const PointVector& p) const
+    {
+        // after Wolfram alpha quadrilateral area
+        return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
+    }
+
+private:
+    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    GlobalPosition p[maxPoints]; // the points needed for construction of the scv/scvf geometries
+    std::size_t corners_; // number of element corners
 };
 
 } // end namespace Dumux
