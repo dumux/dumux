@@ -274,27 +274,23 @@ public:
     //! get scv volume for dim == 2, dimworld == 3
     template <int w = dimWorld>
     typename std::enable_if<w == 3, Scalar>::type
-    scvVolume(const PointVector& scvCorners) const
+    scvVolume(const PointVector& p) const
     {
-        const auto v1 = scvCorners[1] - scvCorners[0];
-        const auto v2 = scvCorners[2] - scvCorners[0];
-        return Dumux::crossProduct(v1, v2).two_norm();
+        return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
     }
 
     //! get scv volume for dim == 2, dimworld == 2
     template <int w = dimWorld>
     typename std::enable_if<w == 2, Scalar>::type
-    scvVolume(const PointVector& scvCorners) const
+    scvVolume(const PointVector& p) const
     {
-        const auto v1 = scvCorners[1] - scvCorners[0];
-        const auto v2 = scvCorners[2] - scvCorners[0];
-        return Dumux::crossProduct(v1, v2);
+        return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]);
     }
 
     //! get scvf area
-    Scalar scvfArea(const PointVector& scvfCorners) const
+    Scalar scvfArea(const PointVector& p) const
     {
-        return (scvfCorners[1] - scvfCorners[0]).two_norm();
+        return (p[1]-p[0]).two_norm();
     }
 
 private:
