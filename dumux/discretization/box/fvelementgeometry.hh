@@ -72,8 +72,8 @@ class BoxFVElementGeometry<TypeTag, true>
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    using ScvIterator = ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
+    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
 public:
     //! Constructor
