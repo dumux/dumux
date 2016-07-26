@@ -34,7 +34,7 @@ namespace Dumux
  * \ingroup ImplicitBaseProblems
  * \brief Base class for all fully implicit Richards problems
  *
- * For a description of the Richards model, see Dumux::RichardsModel
+ * For a description of the Richards model, see RichardsModel
  */
 template<class TypeTag>
 class RichardsProblem : public ImplicitPorousMediaProblem<TypeTag>

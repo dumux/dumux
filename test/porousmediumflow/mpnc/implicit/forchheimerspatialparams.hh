@@ -47,7 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(ForchheimerSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ForchheimerSpatialParams, SpatialParams, Dumux::ForchheimerSpatialParams<TypeTag>);
+SET_TYPE_PROP(ForchheimerSpatialParams, SpatialParams, ForchheimerSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(ForchheimerSpatialParams, MaterialLaw)

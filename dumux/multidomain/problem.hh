@@ -101,7 +101,7 @@ public:
         maxTimeStepSize_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
     }
 
-    //! \copydoc Dumux::ImplicitProblem::init()
+    //! \copydoc ImplicitProblem::init()
     void init()
     {
         // initialize the sub-problems
@@ -115,17 +115,17 @@ public:
         asImp_().initMortarElements();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::serialize()
+    //! \copydoc ImplicitProblem::serialize()
     template <class Restarter>
     void serialize(Restarter &res)
     {
         this->model().serialize(res);
     }
 
-    //! \copydoc Dumux::ImplicitProblem::serialize()
+    //! \copydoc ImplicitProblem::serialize()
     void serialize()
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
         Restarter res;
         res.serializeBegin(this->asImp_());
         std::cout << "Serialize to file '" << res.fileName() << "'\n";
@@ -134,10 +134,10 @@ public:
         res.serializeEnd();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::restart()
+    //! \copydoc ImplicitProblem::restart()
     void restart(Scalar tRestart)
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
         Restarter res;
         res.deserializeBegin(this->asImp_(), tRestart);
         std::cout << "Deserialize from file '" << res.fileName() << "'\n";
@@ -146,7 +146,7 @@ public:
         res.deserializeEnd();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::deserialize()
+    //! \copydoc ImplicitProblem::deserialize()
     template <class Restarter>
     void deserialize(Restarter &res)
     {
@@ -168,7 +168,7 @@ public:
         asImp_().sdProblem2().preTimeStep();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::timeIntegration()
+    //! \copydoc ImplicitProblem::timeIntegration()
     void timeIntegration()
     {
         const int maxFails =
@@ -205,13 +205,13 @@ public:
         asImp_().sdProblem2().postTimeStep();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::maxTimeStepSize()
+    //! \copydoc ImplicitProblem::maxTimeStepSize()
     Scalar maxTimeStepSize() const
     {
         return maxTimeStepSize_;
     }
 
-    //! \copydoc Dumux::ImplicitProblem::nextTimeStepSize()
+    //! \copydoc ImplicitProblem::nextTimeStepSize()
     Scalar nextTimeStepSize(const Scalar dt)
     {
         return newtonCtl_.suggestTimeStepSize(dt);
@@ -226,15 +226,15 @@ public:
         model_.updateSuccessful();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
+    //! \copydoc ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     { return true; }
 
-    //! \copydoc Dumux::ImplicitProblem::shouldWriteRestartFile()
+    //! \copydoc ImplicitProblem::shouldWriteRestartFile()
     bool shouldWriteRestartFile() const
     { return false; }
 
-    //! \copydoc Dumux::ImplicitProblem::episodeEnd()
+    //! \copydoc ImplicitProblem::episodeEnd()
     void episodeEnd()
     {
         std::cerr << "The end of an episode is reached, but the problem "
@@ -242,7 +242,7 @@ public:
                   << "Doing nothing!\n";
     }
 
-    //! \copydoc Dumux::ImplicitProblem::advanceTimeLevel()
+    //! \copydoc ImplicitProblem::advanceTimeLevel()
     void advanceTimeLevel()
     {
         asImp_().sdProblem1().advanceTimeLevel();
@@ -251,7 +251,7 @@ public:
         model_.advanceTimeLevel();
     }
 
-    //! \copydoc Dumux::ImplicitProblem::writeOutput()
+    //! \copydoc ImplicitProblem::writeOutput()
     void writeOutput()
     {
         // write the current result to disk
@@ -264,35 +264,35 @@ public:
 
     // \}
 
-    //! \copydoc Dumux::ImplicitProblem::name()
+    //! \copydoc ImplicitProblem::name()
     const char *name() const
     { return simname_.c_str(); }
 
-    //! \copydoc Dumux::ImplicitProblem::setName()
+    //! \copydoc ImplicitProblem::setName()
     static void setName(const char *newName)
     { simname_ = newName; }
 
-    //! \copydoc Dumux::ImplicitProblem::timeManager()
+    //! \copydoc ImplicitProblem::timeManager()
     TimeManager &timeManager()
     { return timeManager_; }
 
-    //! \copydoc Dumux::ImplicitProblem::timeManager()
+    //! \copydoc ImplicitProblem::timeManager()
     const TimeManager &timeManager() const
     { return timeManager_; }
 
-    //! \copydoc Dumux::ImplicitProblem::newtonController()
+    //! \copydoc ImplicitProblem::newtonController()
     NewtonController &newtonController()
     { return newtonCtl_; }
 
-    //! \copydoc Dumux::ImplicitProblem::newtonController()
+    //! \copydoc ImplicitProblem::newtonController()
     const NewtonController &newtonController() const
     { return newtonCtl_; }
 
-    //! \copydoc Dumux::ImplicitProblem::model()
+    //! \copydoc ImplicitProblem::model()
     Model &model()
     { return model_; }
 
-    //! \copydoc Dumux::ImplicitProblem::model()
+    //! \copydoc ImplicitProblem::model()
     const Model &model() const
     { return model_; }
     // \}

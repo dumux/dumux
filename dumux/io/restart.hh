@@ -282,7 +282,7 @@ public:
                                 const std::string directory=".")
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "Dumux::Restart::restartFileList()");
+                   "Restart::restartFileList()");
     }
 
 

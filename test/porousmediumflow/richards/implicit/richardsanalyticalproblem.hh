@@ -58,7 +58,7 @@ SET_TYPE_PROP(RichardsAnalyticalProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
 SET_PROP(RichardsAnalyticalProblem, Problem)
-{ typedef Dumux::RichardsAnalyticalProblem<TypeTag> type; };
+{ typedef RichardsAnalyticalProblem<TypeTag> type; };
 
 // Set the wetting phase
 SET_PROP(RichardsAnalyticalProblem, WettingPhase)
@@ -66,7 +66,7 @@ SET_PROP(RichardsAnalyticalProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Enable gravity

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::ParameterCacheBase
+ * \brief @copybrief ParameterCacheBase
  */
 #ifndef DUMUX_PARAMETER_CACHE_BASE_HH
 #define DUMUX_PARAMETER_CACHE_BASE_HH

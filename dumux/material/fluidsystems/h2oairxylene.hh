@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::H2OAirXylene
+ * \brief @copybrief FluidSystems::H2OAirXylene
  */
 #ifndef DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH
@@ -50,7 +50,7 @@ namespace FluidSystems
  * \note This fluid system assumes all phases to be ideal mixtures.
  */
 template <class Scalar,
-          class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
+          class H2OType = TabulatedComponent<Scalar, H2O<Scalar> > >
 class H2OAirXylene
     : public BaseFluidSystem<Scalar, H2OAirXylene<Scalar, H2OType> >
 {
@@ -59,7 +59,7 @@ class H2OAirXylene
 
 public:
     typedef H2OType H2O;
-    typedef Dumux::Xylene<Scalar> NAPL;
+    typedef Xylene<Scalar> NAPL;
     typedef Dumux::Air<Scalar> Air;
 
     static const int numPhases = 3;
@@ -365,9 +365,9 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx==gPhaseIdx) {
-            Scalar diffAC = Dumux::BinaryCoeff::Air_Xylene::gasDiffCoeff(temperature, pressure);
-            Scalar diffWC = Dumux::BinaryCoeff::H2O_Xylene::gasDiffCoeff(temperature, pressure);
-            Scalar diffAW = Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
+            Scalar diffAC = BinaryCoeff::Air_Xylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffWC = BinaryCoeff::H2O_Xylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffAW = BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
 
             const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
             const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
@@ -447,9 +447,9 @@ public:
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
             else if (compIdx == airIdx)
-                return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
+                return BinaryCoeff::H2O_Air::henry(T)/p;
             else if (compIdx == NAPLIdx)
-                return Dumux::BinaryCoeff::H2O_Xylene::henry(T)/p;
+                return BinaryCoeff::H2O_Xylene::henry(T)/p;
         }
 
         // for the NAPL phase, we assume currently that nothing is
@@ -587,7 +587,7 @@ namespace Properties {
 /*!
  * \brief A threephase fluid system with water, air and xylene as components.
  *
- * This is an adapter to use Dumux::H2OAirXyleneFluidSystem<TypeTag>, as is
+ * This is an adapter to use H2OAirXyleneFluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
  *  This fluidsystem is applied by default with the tabulated version of
  *  water of the IAPWS-formulation.
@@ -603,7 +603,7 @@ namespace Properties {
  *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  *
  *     // Do not use the defaults !
- *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     // typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
  *
  *     // Apply e.g. untabulated water:
  *     typedef Dumux::H2O<Scalar> H2O;

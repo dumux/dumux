@@ -45,7 +45,7 @@ NEW_TYPE_TAG(TutorialSpatialParamsImplicit);/*@\label{tutorial-implicit:define-s
 
 // Set the spatial parameters
 SET_TYPE_PROP(TutorialSpatialParamsImplicit, SpatialParams,
-        Dumux::TutorialSpatialParamsImplicit<TypeTag>); /*@\label{tutorial-implicit:set-spatialparameters}@*/
+        TutorialSpatialParamsImplicit<TypeTag>); /*@\label{tutorial-implicit:set-spatialparameters}@*/
 
 // Set the material law
 SET_PROP(TutorialSpatialParamsImplicit, MaterialLaw)

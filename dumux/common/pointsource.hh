@@ -168,9 +168,9 @@ private:
  * \brief A point source class with an identifier to attach data
  */
 template<class TypeTag, typename IdType>
-class IdPointSource : public Dumux::PointSource<TypeTag>
+class IdPointSource : public PointSource<TypeTag>
 {
-    typedef typename Dumux::PointSource<TypeTag> ParentType;
+    typedef PointSource<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -215,9 +215,9 @@ private:
  * \brief A point source class for time dependent point sources
  */
 template<class TypeTag>
-class TimeDependentPointSource : public Dumux::PointSource<TypeTag>
+class TimeDependentPointSource : public PointSource<TypeTag>
 {
-    typedef typename Dumux::PointSource<TypeTag> ParentType;
+    typedef PointSource<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;

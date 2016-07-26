@@ -51,7 +51,7 @@ SET_TYPE_PROP(RichardsNIConductionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(RichardsNIConductionProblem, Problem,
-              Dumux::RichardsNIConductionProblem<TypeTag>);
+              RichardsNIConductionProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(RichardsNIConductionProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
@@ -59,7 +59,7 @@ SET_TYPE_PROP(RichardsNIConductionProblem, FluidSystem, FluidSystems::H2ON2<type
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsNIConductionProblem,
               SpatialParams,
-              Dumux::RichardsNISpatialParams<TypeTag>);
+              RichardsNISpatialParams<TypeTag>);
 }
 
 /*!

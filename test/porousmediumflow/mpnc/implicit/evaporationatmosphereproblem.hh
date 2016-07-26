@@ -81,19 +81,19 @@ SET_TYPE_PROP(EvaporationAtmosphereProblem, Grid, Dune::YaspGrid<2, Dune::Tensor
 // Set the problem property
 SET_TYPE_PROP(EvaporationAtmosphereProblem,
               Problem,
-              Dumux::EvaporationAtmosphereProblem<TTAG(EvaporationAtmosphereProblem)>);
+              EvaporationAtmosphereProblem<TTAG(EvaporationAtmosphereProblem)>);
 
 // Set fluid configuration
 SET_PROP(EvaporationAtmosphereProblem, FluidSystem)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:  typedef Dumux::FluidSystems::H2ON2Kinetic<Scalar, /*useComplexRelations=*/false> type;
+public:  typedef FluidSystems::H2ON2Kinetic<Scalar, /*useComplexRelations=*/false> type;
 };
 
 // Set the newton controller
 SET_TYPE_PROP(EvaporationAtmosphereProblem,
               NewtonController,
-              Dumux::VeloModelNewtonController<TypeTag>);
+              VeloModelNewtonController<TypeTag>);
 
 
 //! Set the default pressure formulation: either pw first or pn first
@@ -132,10 +132,10 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableKinetic, true);
 SET_PROP(EvaporationAtmosphereProblem, FluidState){
     private:    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     private:    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//    public: typedef Dumux::NonEquilibriumEnergyFluidState<TypeTag> type;
-//    public: typedef Dumux::NonEquilibriumMassFluidState<TypeTag> type;
-    public: typedef Dumux::NonEquilibriumFluidState<Scalar, FluidSystem> type;
-//    public: typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+//    public: typedef NonEquilibriumEnergyFluidState<TypeTag> type;
+//    public: typedef NonEquilibriumMassFluidState<TypeTag> type;
+    public: typedef NonEquilibriumFluidState<Scalar, FluidSystem> type;
+//    public: typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 SET_BOOL_PROP(EvaporationAtmosphereProblem, UseMaxwellDiffusion, false);
@@ -709,7 +709,7 @@ private:
             Scalar xl[numComponents];
             Scalar beta[numComponents];
 
-            const Scalar Henry              = Dumux::BinaryCoeff::H2O_N2::henry(TInitial_);
+            const Scalar Henry              = BinaryCoeff::H2O_N2::henry(TInitial_);
             const Scalar satVapPressure     = FluidSystem::H2O::vaporPressure(TInitial_);
             xl[FluidSystem::H2OIdx]         = x_[wPhaseIdx][wCompIdx];
             xl[FluidSystem::N2Idx]          = x_[wPhaseIdx][nCompIdx];
@@ -761,7 +761,7 @@ private:
     Scalar pnInjection_;
     Dune::ParameterTree inputParameters_;
     Scalar x_[numPhases][numComponents] ;
-    Dumux::GnuplotInterface<Scalar> gnuplot_;
+    GnuplotInterface<Scalar> gnuplot_;
 
     Scalar TInject_;
 

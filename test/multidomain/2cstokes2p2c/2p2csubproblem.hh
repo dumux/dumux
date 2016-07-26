@@ -196,7 +196,7 @@ public:
     { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, NamePM); }
 
     /*!
-     * \brief Called by the Dumux::TimeManager in order to
+     * \brief Called by the TimeManager in order to
      *        initialize the problem.
      *
      * If you overload this method don't forget to call

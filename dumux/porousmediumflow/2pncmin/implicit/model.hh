@@ -110,8 +110,8 @@ namespace Dumux
 template<class TypeTag>
 class TwoPNCMinModel: public TwoPNCModel<TypeTag>
 {
-    typedef Dumux::TwoPNCMinModel<TypeTag> ThisType;
-    typedef Dumux::TwoPNCModel<TypeTag> ParentType;
+    typedef TwoPNCMinModel<TypeTag> ThisType;
+    typedef TwoPNCModel<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -123,7 +123,7 @@ class TwoPNCMinModel: public TwoPNCModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef Dumux::Constants<Scalar> Constant;
+    typedef Constants<Scalar> Constant;
 
     enum {
         dim = GridView::dimension,

@@ -48,7 +48,7 @@ template<class TypeTag> class BoxFVElementGeometry;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry
-SET_TYPE_PROP(BoxModel, FVElementGeometry, Dumux::BoxFVElementGeometry<TypeTag>);
+SET_TYPE_PROP(BoxModel, FVElementGeometry, BoxFVElementGeometry<TypeTag>);
 
 //! Disable evaluation of shape function gradients at the sub-control volume center by default
 // The shape function gradients at the sub-control volume center are currently only
@@ -56,19 +56,19 @@ SET_TYPE_PROP(BoxModel, FVElementGeometry, Dumux::BoxFVElementGeometry<TypeTag>)
 SET_BOOL_PROP(BoxModel, EvalGradientsAtSCVCenter, false);
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, Dumux::BoxElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
 
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper));
 
 //! Set the BaseLocalResidual to BoxLocalResidual
-SET_TYPE_PROP(BoxModel, BaseLocalResidual, Dumux::BoxLocalResidual<TypeTag>);
+SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);
 
 //! An array of secondary variable containers
-SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables<TypeTag>);
+SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTag>);
 
 //! Assembler for the global jacobian matrix
-SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
+SET_TYPE_PROP(BoxModel, JacobianAssembler, BoxAssembler<TypeTag>);
 
 //! disable two-point-flux by default
 SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);

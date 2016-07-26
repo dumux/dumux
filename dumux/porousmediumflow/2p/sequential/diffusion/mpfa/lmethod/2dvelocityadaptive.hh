@@ -86,9 +86,9 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
-    typedef typename Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
+    typedef FVMPFALInteractionVolume<TypeTag> InteractionVolume;
     typedef std::vector<Dune::FieldVector<bool, 2 * dim> > InnerBoundaryVolumeFaces;
-    typedef Dumux::FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    typedef FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 
     enum
         {

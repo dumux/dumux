@@ -86,7 +86,7 @@ public:
     //! Constructs an object of type OneModelProblemProblem
     /*!
      *  \tparam TypeTag The TypeTag
-     *  \tparam verbose Output level for Dumux::TimeManager
+     *  \tparam verbose Output level for TimeManager
      */
     OneModelProblem(const GridView &gridView, bool verbose = true)
         : gridView_(gridView),
@@ -112,7 +112,7 @@ public:
     //! Constructs an object of type OneModelProblemProblem
     /*!
      *  \tparam TypeTag The TypeTag
-     *  \tparam verbose Output level for Dumux::TimeManager
+     *  \tparam verbose Output level for TimeManager
      */
     OneModelProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
@@ -312,7 +312,7 @@ public:
     }
 
     /*!
-     * \brief Called by the Dumux::TimeManager in order to
+     * \brief Called by the TimeManager in order to
      *        initialize the problem.
      */
     void init()
@@ -323,21 +323,21 @@ public:
     }
 
     /*!
-     * \brief Called by Dumux::TimeManager just before the time
+     * \brief Called by TimeManager just before the time
      *        integration.
      */
     void preTimeStep()
     {}
 
     /*!
-     * \brief Called by Dumux::TimeManager in order to do a time
+     * \brief Called by TimeManager in order to do a time
      *        integration on the model.
      */
     void timeIntegration()
     {}
 
     /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
+     * \brief Called by TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.
      *
@@ -378,7 +378,7 @@ public:
     { timeManager().setTimeStepSize(dt); }
 
     /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
+     * \brief Called by TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.
      */
@@ -545,7 +545,7 @@ public:
     { return *timeManager_; }
 
     /*!
-     * \brief \copybrief Dumux::OneModelProblem::timeManager()
+     * \brief \copybrief OneModelProblem::timeManager()
      */
     const TimeManager &timeManager() const
     { return *timeManager_; }
@@ -557,7 +557,7 @@ public:
     { return variables_; }
 
     /*!
-     * \brief \copybrief Dumux::OneModelProblem::variables()
+     * \brief \copybrief OneModelProblem::variables()
      */
     const Variables& variables () const
     { return variables_; }
@@ -569,7 +569,7 @@ public:
     { return *model_; }
 
     /*!
-     * \brief \copybrief Dumux::OneModelProblem::model()
+     * \brief \copybrief OneModelProblem::model()
      */
     const Model &model() const
     { return *model_; }
@@ -588,11 +588,11 @@ public:
      * The file will start with the prefix returned by the name()
      * method, has the current time of the simulation clock in it's
      * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Dumux::Restart for details.
+     * file.)  See Restart for details.
      */
     void serialize()
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
 
         Restarter res;
         res.serializeBegin(asImp_());
@@ -613,7 +613,7 @@ public:
      */
     void restart(double tRestart)
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
 
         Restarter res;
         res.deserializeBegin(asImp_(), tRestart);
@@ -648,7 +648,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \brief \copybrief Dumux::OneModelProblem::asImp_()
+    //! \brief \copybrief OneModelProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

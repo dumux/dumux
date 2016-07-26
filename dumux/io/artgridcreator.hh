@@ -76,7 +76,7 @@ public:
 
         bool verbose = false;
         try { verbose = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, Verbosity);}
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
 
         if (verbose)
             std::cout << "Opening " << artFileName << std::endl;
@@ -477,11 +477,11 @@ private:
 };
 
 template <class TypeTag>
-typename Dumux::ArtGridCreator<TypeTag>::VerticesVector ArtGridCreator<TypeTag>::vertices_;
+typename ArtGridCreator<TypeTag>::VerticesVector ArtGridCreator<TypeTag>::vertices_;
 template <class TypeTag>
-typename Dumux::ArtGridCreator<TypeTag>::EdgesVector ArtGridCreator<TypeTag>::edges_;
+typename ArtGridCreator<TypeTag>::EdgesVector ArtGridCreator<TypeTag>::edges_;
 template <class TypeTag>
-typename Dumux::ArtGridCreator<TypeTag>::FacesVector ArtGridCreator<TypeTag>::faces_;
+typename ArtGridCreator<TypeTag>::FacesVector ArtGridCreator<TypeTag>::faces_;
 template <class TypeTag>
 int ArtGridCreator<TypeTag>::vertexNumber_;
 template <class TypeTag>

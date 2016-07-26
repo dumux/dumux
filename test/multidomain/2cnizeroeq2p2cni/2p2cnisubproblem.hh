@@ -195,11 +195,11 @@ public:
     }
 
     // functions have to be overwritten, otherwise they remain uninitialized
-    //! \copydoc Dumux::ImplicitProblem::bBoxMin()
+    //! \copydoc ImplicitProblem::bBoxMin()
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
 
-    //! \copydoc Dumux::ImplicitProblem::bBoxMax()
+    //! \copydoc ImplicitProblem::bBoxMax()
     const GlobalPosition &bBoxMax() const
     { return bBoxMax_; }
 
@@ -208,11 +208,11 @@ public:
      */
     // \{
 
-    //! \copydoc Dumux::ImplicitProblem::name()
+    //! \copydoc ImplicitProblem::name()
     const std::string &name() const
     { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, NamePM); }
 
-    //! \copydoc Dumux::ImplicitProblem::init()
+    //! \copydoc ImplicitProblem::init()
     void init()
     {
         ParentType::init();
@@ -226,7 +226,7 @@ public:
      */
     // \{
 
-    //! \copydoc Dumux::ImplicitProblem::boundaryTypesAtPos()
+    //! \copydoc ImplicitProblem::boundaryTypesAtPos()
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
@@ -244,13 +244,13 @@ public:
         }
     }
 
-    //! \copydoc Dumux::ImplicitProblem::dirichletAtPos()
+    //! \copydoc ImplicitProblem::dirichletAtPos()
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         initial_(values, globalPos);
     }
 
-    //! \copydoc Dumux::ImplicitProblem::neumannAtPos()
+    //! \copydoc ImplicitProblem::neumannAtPos()
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         values = 0.;
@@ -262,13 +262,13 @@ public:
      * \name Volume terms
      */
     // \{
-    //! \copydoc Dumux::ImplicitProblem::sourceAtPos()
+    //! \copydoc ImplicitProblem::sourceAtPos()
     void sourceAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         values = 0.;
     }
 
-    //! \copydoc Dumux::ImplicitProblem::initialAtPos()
+    //! \copydoc ImplicitProblem::initialAtPos()
     void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         initial_(values, globalPos);

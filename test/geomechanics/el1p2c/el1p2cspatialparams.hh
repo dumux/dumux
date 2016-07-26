@@ -43,7 +43,7 @@ namespace Properties
 NEW_TYPE_TAG(El1P2CSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(El1P2CSpatialParams, SpatialParams, Dumux::El1P2CSpatialParams<TypeTag>);
+SET_TYPE_PROP(El1P2CSpatialParams, SpatialParams, El1P2CSpatialParams<TypeTag>);
 
 }
 

@@ -43,15 +43,15 @@ namespace Dumux
                   Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
     // Set the problem property
-    SET_TYPE_PROP(NavierStokesTestProblem, Problem, Dumux::NavierStokesTestProblem<TypeTag>);
+    SET_TYPE_PROP(NavierStokesTestProblem, Problem, NavierStokesTestProblem<TypeTag>);
 
     // Set calculation to Navier-Stokes, not Stokes
     SET_BOOL_PROP(NavierStokesTestProblem, EnableNavierStokes, true);
 
     // Use nitrogen with a constant viscosity as gas phase
     SET_TYPE_PROP(NavierStokesTestProblem, Fluid,
-                  Dumux::FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                Dumux::Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+                  FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
   }
 
   /*!

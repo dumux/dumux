@@ -155,7 +155,7 @@ public:
         Scalar r;
         if(temperature < 273.15 || temperature > 660.)
         {
-            DUNE_THROW(Dumux::NumericalProblem,
+            DUNE_THROW(NumericalProblem,
                 "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
         }
         r = 1.496*1.E-6*std::pow(temperature,1.5)/(temperature+120.);

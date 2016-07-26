@@ -57,7 +57,7 @@ SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::UGGrid<3>);
 SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::YaspGrid<3>);
 #endif
 
-SET_TYPE_PROP(DiffusionTestProblem, Problem, Dumux::TestDiffusion3DProblem<TypeTag>);
+SET_TYPE_PROP(DiffusionTestProblem, Problem, TestDiffusion3DProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(DiffusionTestProblem, WettingPhase)
@@ -65,7 +65,7 @@ SET_PROP(DiffusionTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -74,13 +74,13 @@ SET_PROP(DiffusionTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
 };
 
 #if HAVE_SUPERLU
-SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #else
-SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, Dumux::ILUnRestartedGMResBackend<TypeTag>);
+SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, ILUnRestartedGMResBackend<TypeTag>);
 SET_INT_PROP(DiffusionTestProblem, LinearSolverGMResRestart, 80);
 SET_INT_PROP(DiffusionTestProblem, LinearSolverMaxIterations, 1000);
 SET_SCALAR_PROP(DiffusionTestProblem, LinearSolverResidualReduction, 1e-8);
@@ -258,7 +258,7 @@ public:
     }
 
 private:
-    Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
+    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
     static constexpr Scalar eps_ = 1e-4;
 
 };

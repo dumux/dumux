@@ -93,7 +93,7 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
     };
 
 public:
-    //! Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
+    //! Type for storing an MPFA-interaction-volume. (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
@@ -124,7 +124,7 @@ private:
     Problem& problem_;
 };
 
-/*! \brief Overwrites the method from the base class Dumux::FvMpfaL3dInteractionVolumeContainerAdaptive
+/*! \brief Overwrites the method from the base class FvMpfaL3dInteractionVolumeContainerAdaptive
  * On each boundary, a TPFA is used in compositional models. Therefore we do not need to store interaction
  * volume containers on the boundary cells.
  */
@@ -138,16 +138,16 @@ void FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::storeBoundaryInte
  *
  * The MPFA is about to be calculated through an intersection, and to do so, its place in the
  * local indexing scheme, i.e. its subVolumeFaceIdx, has to be found. This method
- * investigates the case (see Dumux::FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
+ * investigates the case (see FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
  * 8 cells are present in the current interaction region: A Interaction region where the non-adaptive
  * MPFA-model is applied.
  * This requires a local Index of the "large" cell (where the hanging node rests) to get the right
  * subVolumeFaceIdx.
  *  \param isIt The iterator of the intersection the mpfa should be calculated for
  *  \param localIdxLarge The (local) Index of the large cell (on which the hanging node lives)
- *  \param interactionVolume The interaction volume (Dumux::FvMpfaL3dInteractionVolumeAdaptive) of interest
+ *  \param interactionVolume The interaction volume (FvMpfaL3dInteractionVolumeAdaptive) of interest
  *  \param properFluxDirection Indicates whether the flux through the intersection aligns with its normal
- *  \return The Subvolume Face Idx required by the methods in Dumux::FvMpfaL3dTransmissibilityCalculator
+ *  \return The Subvolume Face Idx required by the methods in FvMpfaL3dTransmissibilityCalculator
  */
 template<class TypeTag>
 inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase8cells(const IntersectionIterator& isIt,
@@ -277,12 +277,12 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
  *
  * The MPFA is about to be calculated through an intersection, and to do so, its place in the
  * local indexing scheme, i.e. its subVolumeFaceIdx, has to be found. This method
- * investigates the case (see Dumux::FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
+ * investigates the case (see FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
  * 6 cells are present in the current interaction region.
  *  \param isIt The iterator of the intersection the mpfa should be calculated for
- *  \param interactionVolume The interaction volume (Dumux::FvMpfaL3dInteractionVolumeAdaptive) of interest
+ *  \param interactionVolume The interaction volume (FvMpfaL3dInteractionVolumeAdaptive) of interest
  *  \param properFluxDirection Indicates whether the flux through the intersection aligns with its normal
- *  \return The Subvolume Face Idx required by the methods in Dumux::FvMpfaL3dTransmissibilityCalculator
+ *  \return The Subvolume Face Idx required by the methods in FvMpfaL3dTransmissibilityCalculator
  */
 template<class TypeTag>
 inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase6cells(const IntersectionIterator& isIt,
@@ -415,12 +415,12 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
  *
  * The MPFA is about to be calculated through an intersection, and to do so, its place in the
  * local indexing scheme, i.e. its subVolumeFaceIdx, has to be found. This method
- * investigates the case (see Dumux::FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
+ * investigates the case (see FvMpfaL3dInteractionVolumeAdaptive.HangingNodeTypes ) if
  * 2 or 4 cells are present in the current interaction region.
  *  \param isIt The iterator of the intersection the mpfa should be calculated for
- *  \param interactionVolume The interaction volume (Dumux::FvMpfaL3dInteractionVolumeAdaptive) of interest
+ *  \param interactionVolume The interaction volume (FvMpfaL3dInteractionVolumeAdaptive) of interest
  *  \param properFluxDirection Indicates whether the flux through the intersection aligns with its normal
- *  \return The Subvolume Face Idx required by the methods in Dumux::FvMpfaL3dTransmissibilityCalculator
+ *  \return The Subvolume Face Idx required by the methods in FvMpfaL3dTransmissibilityCalculator
  */
 template<class TypeTag>
 inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase2or4cells(const IntersectionIterator& isIt,

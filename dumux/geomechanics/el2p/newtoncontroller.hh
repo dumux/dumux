@@ -91,7 +91,7 @@ public:
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * Throws NumericalProblem if the linear solver didn't
      * converge.
      *
      * \param A The matrix of the linear system of equations
@@ -138,7 +138,7 @@ public:
             if (this->gridView_().comm().size() > 1)
                 converged = this->gridView_().comm().min(converged);
 
-            Dumux::NumericalProblem p;
+            NumericalProblem p;
             std::string msg;
             std::ostringstream ms(msg);
             ms << e.what() << "M=" << A.base()[e.r][e.c];
@@ -151,7 +151,7 @@ public:
             if (this->gridView_().comm().size() > 1)
                 converged = this->gridView_().comm().min(converged);
 
-            Dumux::NumericalProblem p;
+            NumericalProblem p;
             p.message(e.what());
             throw p;
         }

@@ -42,7 +42,7 @@ namespace Properties
 NEW_TYPE_TAG(TwoPDFMSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPDFMSpatialParams, SpatialParams, Dumux::TwoPDFMSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPDFMSpatialParams, SpatialParams, TwoPDFMSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(TwoPDFMSpatialParams, MaterialLaw)
@@ -312,7 +312,7 @@ private:
     const FaceMapper faceMapper_;
     const VertexMapper vertexMapper_;
 
-    Dumux::FractureMapper<TypeTag> fractureMapper_;
+    FractureMapper<TypeTag> fractureMapper_;
 };
 
 } // end namespace

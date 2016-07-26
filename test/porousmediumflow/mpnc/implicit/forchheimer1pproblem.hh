@@ -52,7 +52,7 @@ SET_TYPE_PROP(Forchheimer1pProblem, Grid, Dune::YaspGrid<1>);
 // Set the problem property
 SET_TYPE_PROP(Forchheimer1pProblem,
               Problem,
-              Dumux::Forchheimer1pProblem<TypeTag>);
+              Forchheimer1pProblem<TypeTag>);
 
 
 // Set fluid configuration
@@ -60,7 +60,7 @@ SET_PROP(Forchheimer1pProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar>, /*useComplexRelations=*/false> type;
+    typedef FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar>, /*useComplexRelations=*/false> type;
 };
 
 // Enable molecular diffusion of the components?
@@ -390,7 +390,7 @@ private:
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-        typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+        typedef ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fs,

@@ -51,18 +51,18 @@ NEW_TYPE_TAG(ThreePNIConvectionCCProblem, INHERITS_FROM(CCModel, ThreePNIConvect
 SET_TYPE_PROP(ThreePNIConvectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConvectionProblem, Problem, Dumux::ThreePNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(ThreePNIConvectionProblem, Problem, ThreePNIConvectionProblem<TypeTag>);
 
 
 // Set the fluid system
 SET_TYPE_PROP(ThreePNIConvectionProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ThreePNIConvectionProblem,
               SpatialParams,
-              Dumux::ThreePNISpatialParams<TypeTag>);
+              ThreePNISpatialParams<TypeTag>);
 }
 
 
@@ -105,7 +105,7 @@ class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef Dumux::H2O<Scalar> IapwsH2O;
+    typedef H2O<Scalar> IapwsH2O;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

@@ -46,7 +46,7 @@ NEW_PROP_TAG(PrimaryVariables);
 * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta (2006) \cite A3:acosta:2006
 * for the non-isothermal case
 */
-template <class TypeTag, Dumux::ElectroChemistryModel electroChemistryModel>
+template <class TypeTag, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryModel>
 {
     typedef ElectroChemistry<TypeTag, electroChemistryModel> ParentType;
@@ -57,7 +57,7 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
-    typedef Dumux::Constants<Scalar> Constant;
+    typedef Constants<Scalar> Constant;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {

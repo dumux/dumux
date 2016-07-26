@@ -155,7 +155,7 @@ private:
             return 0;
         else if (S > eps) {
             // regularize
-            typedef Dumux::Spline<Scalar> Spline;
+            typedef Spline<Scalar> Spline;
             Spline sp(eps, 1.0, // x1, x2
                       eps*eps*eps, 1, // y1, y2
                       3*eps*eps, 0); // m1, m2

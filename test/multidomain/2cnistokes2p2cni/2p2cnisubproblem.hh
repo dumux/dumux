@@ -203,11 +203,11 @@ public:
     }
 
     // functions have to be overwritten, otherwise they remain uninitialized
-    //! \copydoc Dumux::ImplicitProblem::bBoxMin()
+    //! \copydoc ImplicitProblem::bBoxMin()
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
 
-    //! \copydoc Dumux::ImplicitProblem::bBoxMax()
+    //! \copydoc ImplicitProblem::bBoxMax()
     const GlobalPosition &bBoxMax() const
     { return bBoxMax_; }
 
@@ -225,7 +225,7 @@ public:
     { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, NamePM); }
 
     /*!
-     * \brief Called by the Dumux::TimeManager in order to
+     * \brief Called by the TimeManager in order to
      *        initialize the problem.
      *
      * If you overload this method don't forget to call
@@ -448,7 +448,7 @@ private:
     Scalar initializationTime_;
     std::ofstream outfile;
 
-    Dumux::GnuplotInterface<Scalar> gnuplot_;
+    GnuplotInterface<Scalar> gnuplot_;
     std::ofstream evaporationFile;
     bool liveEvaporationRates_;
 };

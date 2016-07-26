@@ -48,7 +48,7 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoC, SolutionVector,
               typename GET_PROP_TYPE(TypeTag, MultiDomainGridOperator)::Traits::Domain);
 
 // Specif the used Newton controller
-SET_TYPE_PROP(TwoCStokesTwoPTwoC, NewtonController, Dumux::TwoCStokesTwoPTwoCNewtonController<TypeTag>);
+SET_TYPE_PROP(TwoCStokesTwoPTwoC, NewtonController, TwoCStokesTwoPTwoCNewtonController<TypeTag>);
 
 // Set this to one here (must fit to the structure of the coupled matrix which has block length 1)
 SET_INT_PROP(TwoCStokesTwoPTwoC, NumEq, 1);

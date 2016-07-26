@@ -152,7 +152,7 @@ public:
 
     //! Set the initial values before the first pressure equation
     /*!
-     * This method is called before first pressure equation is solved from Dumux::IMPET.
+     * This method is called before first pressure equation is solved from IMPET.
      */
     void initialize()
     {
@@ -333,7 +333,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! @copydoc Dumux::IMPETProblem::asImp_()
+    //! @copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 };
@@ -645,7 +645,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
 
     // compute mean permeability
     DimMatrix meanK_(0.);
-    Dumux::harmonicMeanMatrix(meanK_,
+    harmonicMeanMatrix(meanK_,
             K_I,
             problem().spatialParams().intrinsicPermeability(neighbor));
     Dune::FieldVector<Scalar,dim> K(0);

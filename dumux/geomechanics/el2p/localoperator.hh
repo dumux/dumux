@@ -306,7 +306,7 @@ public:
              // assume deformation induced porosity changes
              if(model_.problem().coupled() == true){
                 if (porosity + uDiv < 1e-3*porosity){
-                    DUNE_THROW(Dumux::NumericalProblem, "volume change too large");
+                    DUNE_THROW(NumericalProblem, "volume change too large");
                 }
                 else
                     // this equation would be correct if the bulk volume could change (Vol_new = Vol_init * (1+div u)), however, we

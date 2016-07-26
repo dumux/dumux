@@ -42,7 +42,7 @@ namespace Properties
 NEW_TYPE_TAG(TestIMPESAdaptiveSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestIMPESAdaptiveSpatialParams, SpatialParams, Dumux::TestIMPESAdaptiveSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveSpatialParams, SpatialParams, TestIMPESAdaptiveSpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(TestIMPESAdaptiveSpatialParams, MaterialLaw)

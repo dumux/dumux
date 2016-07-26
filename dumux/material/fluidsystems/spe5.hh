@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::Spe5
+ * \brief @copybrief FluidSystems::Spe5
  */
 #ifndef DUMUX_SPE5_FLUID_SYSTEM_HH
 #define DUMUX_SPE5_FLUID_SYSTEM_HH
@@ -55,13 +55,13 @@ namespace FluidSystems
 template <class Scalar>
 class Spe5
 {
-    typedef Dumux::FluidSystems::Spe5<Scalar> ThisType;
+    typedef FluidSystems::Spe5<Scalar> ThisType;
 
-    typedef typename Dumux::PengRobinsonMixture<Scalar, ThisType> PengRobinsonMixture;
-    typedef typename Dumux::PengRobinson<Scalar> PengRobinson;
+    typedef Dumux::PengRobinsonMixture<Scalar, ThisType> PengRobinsonMixture;
+    typedef Dumux::PengRobinson<Scalar> PengRobinson;
 
 public:
-    typedef Dumux::Spe5ParameterCache<Scalar, ThisType> ParameterCache;
+    typedef Spe5ParameterCache<Scalar, ThisType> ParameterCache;
 
     /****************************************
      * Fluid phase parameters
@@ -314,7 +314,7 @@ public:
      */
     static void init()
     {
-        Dumux::PengRobinsonParamsMixture<Scalar, ThisType, gPhaseIdx, /*useSpe5=*/true> prParams;
+        PengRobinsonParamsMixture<Scalar, ThisType, gPhaseIdx, /*useSpe5=*/true> prParams;
 
         // find envelopes of the 'a' and 'b' parameters for the range
         // 273.15K <= T <= 373.15K and 10e3 Pa <= p <= 100e6 Pa. For

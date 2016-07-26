@@ -105,7 +105,7 @@ public:
         try {
             return execute_(ctl);
         }
-        catch (const Dumux::NumericalProblem &e) {
+        catch (const NumericalProblem &e) {
             if (ctl.verbose())
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
             ctl.newtonFail();

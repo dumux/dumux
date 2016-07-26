@@ -197,7 +197,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
         if (sat <= 0)
             return 0;
 
-        static const Dumux::Spline<Scalar> sp(0, eps, // x0, x1
+        static const Spline<Scalar> sp(0, eps, // x0, x1
                                               0, 0.5, // y0, y1
                                               0, 0); // m0, m1
         return sp.eval(sat);

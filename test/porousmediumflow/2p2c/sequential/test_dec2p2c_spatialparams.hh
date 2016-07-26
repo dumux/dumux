@@ -41,7 +41,7 @@ namespace Properties
 NEW_TYPE_TAG(Test2P2CSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(Test2P2CSpatialParams, SpatialParams, Dumux::Test2P2CSpatialParams<TypeTag>);
+SET_TYPE_PROP(Test2P2CSpatialParams, SpatialParams, Test2P2CSpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(Test2P2CSpatialParams, MaterialLaw)

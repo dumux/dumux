@@ -20,7 +20,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::H2OAir
+ * \brief @copybrief FluidSystems::H2OAir
  */
 #ifndef DUMUX_H2O_AIR_SYSTEM_HH
 #define DUMUX_H2O_AIR_SYSTEM_HH
@@ -70,7 +70,7 @@ namespace FluidSystems
  * {
  *     // e.g. to use a simple version of H2O
  *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
+ *     typedef FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar> > type;
  * };
  * \endcode
  *
@@ -79,8 +79,8 @@ namespace FluidSystems
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
+ * additional namespace FluidSystem::.
+ * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  *
  * \note The template argument \p useComplexRelations can be used to switch from a complex
@@ -89,7 +89,7 @@ namespace FluidSystems
  * effects are not considered.
  */
 template <class Scalar,
-          class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >,
+          class H2Otype = TabulatedComponent<Scalar, H2O<Scalar> >,
           bool useComplexRelations = true>
 class H2OAir
 : public BaseFluidSystem<Scalar, H2OAir<Scalar, H2Otype, useComplexRelations> >
@@ -541,7 +541,7 @@ public:
         if (phaseIdx == wPhaseIdx) {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
-            return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
+            return BinaryCoeff::H2O_Air::henry(T)/p;
         }
 
         // for the gas phase, assume an ideal gas when it comes to
@@ -782,7 +782,7 @@ NEW_PROP_TAG(Components);
 /*!
  * \brief A two-phase fluid system with water and air as components.
  *
- * This is an adapter to use Dumux::H2OAirFluidSystem<TypeTag>, as is
+ * This is an adapter to use H2OAirFluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
  *  This fluidsystem is applied by default with the tabulated version of
  *  water of the IAPWS-formulation.
@@ -798,7 +798,7 @@ NEW_PROP_TAG(Components);
  *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  *
  *     // Do not use the defaults !
- *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     // typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
  *
  *     // Apply e.g. untabulated water:
  *     typedef Dumux::H2O<Scalar> H2O;

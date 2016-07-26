@@ -88,7 +88,7 @@ public:
      *
      *  For not-regularized part:
      *
-         \copydetails Dumux::VanGenuchten::pc()
+         \copydetails VanGenuchten::pc()
      */
     static Scalar pc(const Params &params, Scalar swe)
     {
@@ -141,7 +141,7 @@ public:
      *
      *  For not-regularized part:
      *
-         \copydetails Dumux::VanGenuchten::sw()
+         \copydetails VanGenuchten::sw()
      *
      */
     static Scalar sw(const Params &params, Scalar pc)
@@ -199,7 +199,7 @@ public:
     *
     *        For not-regularized part:
     *
-      \copydetails Dumux::VanGenuchten::dpc_dsw()
+      \copydetails VanGenuchten::dpc_dsw()
     *
     */
     DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
@@ -220,7 +220,7 @@ public:
     *
     *        For not-regularized part:
     *
-      \copydetails Dumux::VanGenuchten::dpc_dswe()
+      \copydetails VanGenuchten::dpc_dswe()
     *
     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
@@ -249,7 +249,7 @@ public:
      *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      *        For not-regularized part:
-        \copydetails Dumux::VanGenuchten::dsw_dpc()
+        \copydetails VanGenuchten::dsw_dpc()
      */
     DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, Scalar pc) is deprecated. Use dswe_dpc(const Params &params, Scalar pc) instead.")
     static Scalar dsw_dpc(const Params &params, Scalar pc)
@@ -268,7 +268,7 @@ public:
      *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      *        For not-regularized part:
-        \copydetails Dumux::VanGenuchten::dswe_dpc()
+        \copydetails VanGenuchten::dswe_dpc()
      */
     static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
@@ -306,7 +306,7 @@ public:
      *    - between \f$\mathrm{0.95 \leq \overline{S}_w \leq 1}\f$:  use a spline as interpolation
      *
      *  For not-regularized part:
-        \copydetails Dumux::VanGenuchten::krw()
+        \copydetails VanGenuchten::krw()
      */
     static Scalar krw(const Params &params, Scalar swe)
     {
@@ -320,7 +320,7 @@ public:
         else if (swe > 1)
             return 1;
         else if (swe > swThHigh) {
-            typedef Dumux::Spline<Scalar> Spline;
+            typedef Spline<Scalar> Spline;
             Spline sp(swThHigh, 1.0, // x1, x2
                       VanGenuchten::krw(params, swThHigh), 1.0, // y1, y2
                       VanGenuchten::dkrw_dswe(params, swThHigh), 0); // m1, m2
@@ -341,7 +341,7 @@ public:
      *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
      *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
      *
-         \copydetails Dumux::VanGenuchten::krn()
+         \copydetails VanGenuchten::krn()
      *
      */
     static Scalar krn(const Params &params, Scalar swe)
@@ -356,7 +356,7 @@ public:
         else if (swe >= 1)
             return 0;
         else if (swe < swThLow) {
-            typedef Dumux::Spline<Scalar> Spline;
+            typedef Spline<Scalar> Spline;
             Spline sp(0.0, swThLow, // x1, x2
                       1.0, VanGenuchten::krn(params, swThLow), // y1, y2
                       0.0, VanGenuchten::dkrn_dswe(params, swThLow)); // m1, m2

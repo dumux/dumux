@@ -97,7 +97,7 @@ public:
 SET_TYPE_PROP(Pressure, PressureSolutionVector, typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution);
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(Pressure, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(Pressure, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 //! set the default for the reduction of the initial residual
 SET_SCALAR_PROP(Pressure, LinearSolverResidualReduction, 1e-13);

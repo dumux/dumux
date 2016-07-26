@@ -190,7 +190,7 @@ private:
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 };
@@ -402,7 +402,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
-    Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
+    harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitDistVec, permeability);

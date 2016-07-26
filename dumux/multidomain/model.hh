@@ -175,7 +175,7 @@ public:
     const SubDomainModel2 &sdModel2() const
     { return sdProblem2().model(); }
 
-    //! \copydoc Dumux::ImplicitModel::update()
+    //! \copydoc ImplicitModel::update()
     bool update(NewtonMethod &solver,
                 NewtonController &controller)
     {
@@ -202,11 +202,11 @@ public:
     }
 
 
-    //! \copydoc Dumux::ImplicitModel::checkPlausibility()
+    //! \copydoc ImplicitModel::checkPlausibility()
     void checkPlausibility() const
     { }
 
-    //! \copydoc Dumux::ImplicitModel::updateBegin()
+    //! \copydoc ImplicitModel::updateBegin()
     void updateBegin()
     {
         sdModel1().updateBegin();
@@ -215,7 +215,7 @@ public:
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
     }
 
-    //! \copydoc Dumux::ImplicitModel::updateSuccessful()
+    //! \copydoc ImplicitModel::updateSuccessful()
     void updateSuccessful()
     {
         sdModel1().updateSuccessful();
@@ -238,7 +238,7 @@ public:
         SplitAndMerge::mergeSolVectors(sdModel1().prevSol(), sdModel2().prevSol(), *uPrev_);
     }
 
-    //! \copydoc Dumux::ImplicitModel::updateFailed()
+    //! \copydoc ImplicitModel::updateFailed()
     void updateFailed()
     {
         sdModel1().updateFailed();
@@ -274,7 +274,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "");
     }
 
-    //! \copydoc Dumux::ImplicitModel::serialize()
+    //! \copydoc ImplicitModel::serialize()
     template <class Restarter>
     void serialize(Restarter &res)
     {
@@ -282,7 +282,7 @@ public:
         sdProblem2().serialize(res);
     }
 
-    //! \copydoc Dumux::ImplicitModel::deserialize()
+    //! \copydoc ImplicitModel::deserialize()
     template <class Restarter>
     void deserialize(Restarter &res)
     {
@@ -291,7 +291,7 @@ public:
         wasRestarted_ = true;
     }
 
-    //! \copydoc Dumux::ImplicitModel::resetJacobianAssembler()
+    //! \copydoc ImplicitModel::resetJacobianAssembler()
     void resetJacobianAssembler()
     {
         jacAsm_.template reset<JacobianAssembler>(0);

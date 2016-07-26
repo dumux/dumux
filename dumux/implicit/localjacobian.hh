@@ -284,7 +284,7 @@ public:
         // the base epsilon is thus approximately 10^-8.
         /*
         static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
+            = geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
         */
         static const Scalar baseEps = 1e-10;
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);

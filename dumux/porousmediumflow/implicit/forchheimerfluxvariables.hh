@@ -81,7 +81,7 @@ class ImplicitForchheimerFluxVariables
     : public ImplicitDarcyFluxVariables<TypeTag>
 {
     friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
-    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
+    typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;

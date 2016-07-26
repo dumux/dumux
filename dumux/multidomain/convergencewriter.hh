@@ -56,8 +56,8 @@ struct MultiDomainConvergenceWriter
     typedef typename GET_PROP_TYPE(SubDomain1TypeTag, SolutionVector) SolutionVector1;
     typedef typename GET_PROP_TYPE(SubDomain2TypeTag, SolutionVector) SolutionVector2;
 
-    typedef Dumux::VtkMultiWriter<GridView1> VtkMultiWriter1;
-    typedef Dumux::VtkMultiWriter<GridView2> VtkMultiWriter2;
+    typedef VtkMultiWriter<GridView1> VtkMultiWriter1;
+    typedef VtkMultiWriter<GridView2> VtkMultiWriter2;
 
     /*!
     * \brief The constructor

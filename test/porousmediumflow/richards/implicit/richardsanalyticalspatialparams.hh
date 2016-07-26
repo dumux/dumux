@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(RichardsAnalyticalSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsAnalyticalSpatialParams, SpatialParams, Dumux::RichardsAnalyticalSpatialParams<TypeTag>);
+SET_TYPE_PROP(RichardsAnalyticalSpatialParams, SpatialParams, RichardsAnalyticalSpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(RichardsAnalyticalSpatialParams, MaterialLaw)

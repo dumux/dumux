@@ -56,8 +56,8 @@ class ElOnePTwoCFluxVariables: public ElasticFluxVariablesBase<TypeTag> ,
     friend class ElasticFluxVariablesBase<TypeTag>; // be friends with parents
     friend class OnePTwoCFluxVariables<TypeTag>; // be friends with parents
 
-    typedef Dumux::ElasticFluxVariablesBase<TypeTag> ElasticBase;
-    typedef Dumux::OnePTwoCFluxVariables<TypeTag> OnePTwoCBase;
+    typedef ElasticFluxVariablesBase<TypeTag> ElasticBase;
+    typedef OnePTwoCFluxVariables<TypeTag> OnePTwoCBase;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

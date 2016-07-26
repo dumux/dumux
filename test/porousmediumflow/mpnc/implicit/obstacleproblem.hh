@@ -54,14 +54,14 @@ SET_TYPE_PROP(ObstacleProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ObstacleProblem,
               Problem,
-              Dumux::ObstacleProblem<TypeTag>);
+              ObstacleProblem<TypeTag>);
 
 // Set fluid configuration
 SET_PROP(ObstacleProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
+    typedef FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
 };
 
 // Enable smooth upwinding?
@@ -399,7 +399,7 @@ private:
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-        typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+        typedef ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fs,

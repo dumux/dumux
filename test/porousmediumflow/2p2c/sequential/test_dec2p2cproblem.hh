@@ -48,18 +48,18 @@ NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CS
 SET_TYPE_PROP(TestDecTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_TYPE_PROP(TestDecTwoPTwoCProblem, Problem, Dumux::TestDecTwoPTwoCProblem<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, Problem, TestDecTwoPTwoCProblem<TypeTag>);
 
 // Set the model properties
-SET_TYPE_PROP(TestDecTwoPTwoCProblem, TransportModel, Dumux::FVTransport2P2C<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, TransportModel, FVTransport2P2C<TypeTag>);
 
-SET_TYPE_PROP(TestDecTwoPTwoCProblem, PressureModel,Dumux::FVPressure2P2C<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, PressureModel,FVPressure2P2C<TypeTag>);
 
 
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 // Select fluid system
-SET_TYPE_PROP(TestDecTwoPTwoCProblem, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, FluidSystem, H2OAirFluidSystem<TypeTag>);
 
 // Select fluid system
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableComplicatedFluidSystem, true);

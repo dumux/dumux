@@ -45,23 +45,23 @@ namespace Properties
 {
 NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
 
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2CMultiPhysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, CellData2P2CMultiPhysics<TypeTag>);
 
 // Set the grid type
 SET_TYPE_PROP(TestMultTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, Problem, Dumux::TestMultTwoPTwoCProblem<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, Problem, TestMultTwoPTwoCProblem<TypeTag>);
 
 // Set the model properties
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, TransportModel,Dumux::FVTransport2P2CMultiPhysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, TransportModel,FVTransport2P2CMultiPhysics<TypeTag>);
 
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, PressureModel, Dumux::FVPressure2P2CMultiPhysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, PressureModel, FVPressure2P2CMultiPhysics<TypeTag>);
 
 SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
 // Select fluid system
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, FluidSystem, H2OAirFluidSystem<TypeTag>);
 
 // Select fluid system
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
@@ -158,14 +158,14 @@ Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 
 // \}
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::referencePressureAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::referencePressureAtPos()
  */
 Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e6;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryTypesAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::boundaryTypesAtPos()
  */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
@@ -177,14 +177,14 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryFormulation()
+ * \copydoc TestDecTwoPTwoCProblem::boundaryFormulation()
  */
 const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
     bcFormulation = Indices::concentration;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::dirichletAtPos()
  */
 void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos) const
 {
@@ -201,7 +201,7 @@ void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos)
 
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::neumannAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::neumannAtPos()
  */
 void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
@@ -209,7 +209,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
     neumannValues[Indices::contiWEqIdx] = 0.;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::sourceAtPos()
  */
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
@@ -218,14 +218,14 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initialFormulation()
+ * \copydoc TestDecTwoPTwoCProblem::initialFormulation()
  */
 const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
     initialFormulation = Indices::concentration;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentrationAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::initConcentrationAtPos()
  */
 Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 {

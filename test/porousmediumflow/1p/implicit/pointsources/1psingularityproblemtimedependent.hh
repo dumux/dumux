@@ -42,10 +42,10 @@ namespace Properties
 NEW_TYPE_TAG(OnePSingularityProblemTimeDependent, INHERITS_FROM(OnePSingularityCCProblem));
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityProblemTimeDependent, Problem, Dumux::OnePSingularityProblemTimeDependent<TypeTag>);
+SET_TYPE_PROP(OnePSingularityProblemTimeDependent, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
 
 // point source
-SET_TYPE_PROP(OnePSingularityProblemTimeDependent, PointSource, Dumux::TimeDependentPointSource<TypeTag>);
+SET_TYPE_PROP(OnePSingularityProblemTimeDependent, PointSource, TimeDependentPointSource<TypeTag>);
 }
 
 /*!
@@ -91,7 +91,7 @@ public:
      * \brief Applies a vector of point sources. The point sources
      *        are possibly solution dependent.
      *
-     * \param pointSources A vector of Dumux::PointSource s that contain
+     * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
      *
      * For this method, the \a values method of the point source

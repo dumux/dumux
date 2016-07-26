@@ -148,7 +148,7 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
-    typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    typedef  FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 public:
     //! Type including methods for calculation of MPFA transmissibilities
     typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
@@ -508,7 +508,7 @@ private:
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
+ * \brief @copybrief FluidSystems::H2OAirMesitylene
  */
 #ifndef DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH
@@ -52,7 +52,7 @@ namespace FluidSystems
  * It assumes all phases to be ideal mixtures.
  */
 template <class Scalar,
-          class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
+          class H2OType = TabulatedComponent<Scalar, H2O<Scalar> > >
 class H2OAirMesitylene
     : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
@@ -60,7 +60,7 @@ class H2OAirMesitylene
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
-    typedef Dumux::Mesitylene<Scalar> NAPL;
+    typedef Mesitylene<Scalar> NAPL;
     typedef Dumux::Air<Scalar> Air;
     typedef H2OType H2O;
 
@@ -366,9 +366,9 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx==gPhaseIdx) {
-            Scalar diffAC = Dumux::BinaryCoeff::Air_Mesitylene::gasDiffCoeff(temperature, pressure);
-            Scalar diffWC = Dumux::BinaryCoeff::H2O_Mesitylene::gasDiffCoeff(temperature, pressure);
-            Scalar diffAW = Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
+            Scalar diffAC = BinaryCoeff::Air_Mesitylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffWC = BinaryCoeff::H2O_Mesitylene::gasDiffCoeff(temperature, pressure);
+            Scalar diffAW = BinaryCoeff::H2O_Air::gasDiffCoeff(temperature, pressure);
 
             const Scalar xga = fluidState.moleFraction(gPhaseIdx, airIdx);
             const Scalar xgw = fluidState.moleFraction(gPhaseIdx, H2OIdx);
@@ -448,9 +448,9 @@ public:
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
             else if (compIdx == airIdx)
-                return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
+                return BinaryCoeff::H2O_Air::henry(T)/p;
             else if (compIdx == NAPLIdx)
-                return Dumux::BinaryCoeff::H2O_Mesitylene::henry(T)/p;
+                return BinaryCoeff::H2O_Mesitylene::henry(T)/p;
         }
 
         // for the NAPL phase, we assume currently that nothing is
@@ -588,7 +588,7 @@ namespace Properties {
 /*!
  * \brief A threephase fluid system with water, air and mesitylene as components.
  *
- * This is an adapter to use Dumux::H2OAirMesityleneFluidSystem<TypeTag>, as is
+ * This is an adapter to use H2OAirMesityleneFluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
  *  This fluidsystem is applied by default with the tabulated version of
  *  water of the IAPWS-formulation.
@@ -604,7 +604,7 @@ namespace Properties {
  *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  *
  *     // Do not use the defaults !
- *     // typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ *     // typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
  *
  *     // Apply e.g. untabulated water:
  *     typedef Dumux::H2O<Scalar> H2O;

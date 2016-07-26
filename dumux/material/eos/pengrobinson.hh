@@ -158,7 +158,7 @@ public:
         Scalar a = params.a(phaseIdx); // "attractive factor"
         Scalar b = params.b(phaseIdx); // "co-volume"
 
-        Scalar RT = Dumux::Constants<Scalar>::R*T;
+        Scalar RT = Constants<Scalar>::R*T;
         Scalar Astar = a*p/(RT*RT);
         Scalar Bstar = b*p/RT;
 
@@ -233,7 +233,7 @@ public:
         Scalar p = params.pressure();
         Scalar Vm = params.molarVolume();
 
-        Scalar RT = Dumux::Constants<Scalar>::R*T;
+        Scalar RT = Constants<Scalar>::R*T;
         Scalar Z = p*Vm/RT;
         Scalar Bstar = p*params.b() / RT;
 
@@ -368,7 +368,7 @@ protected:
         Scalar u = 2;
         Scalar w = -1;
 
-        Scalar RT = Dumux::Constants<Scalar>::R*T;
+        Scalar RT = Constants<Scalar>::R*T;
 
         // calculate coefficients of the 4th order polynominal in
         // monomial basis
@@ -417,7 +417,7 @@ protected:
         // invert resulting cubic polynomial analytically
         Scalar allV[4];
         allV[0] = V;
-        int numSol = 1 + Dumux::invertCubicPolynomial(allV + 1, b1, b2, b3, b4);
+        int numSol = 1 + invertCubicPolynomial(allV + 1, b1, b2, b3, b4);
 
         // sort all roots of the derivative
         std::sort(allV + 0, allV + numSol);

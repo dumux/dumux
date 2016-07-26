@@ -83,7 +83,7 @@ public:
      */
     Scalar meanK(Scalar K1, Scalar K2) const
     {
-        const Scalar K = Dumux::harmonicMean(K1, K2);
+        const Scalar K = harmonicMean(K1, K2);
         return K;
     }
 
@@ -95,7 +95,7 @@ public:
      */
     void meanK(DimWorldMatrix &result, Scalar K1, Scalar K2) const
     {
-        const Scalar K = Dumux::harmonicMean(K1, K2);
+        const Scalar K = harmonicMean(K1, K2);
         for (int i = 0; i < dimWorld; ++i)
         {
             for (int j = 0; j < dimWorld; ++j)

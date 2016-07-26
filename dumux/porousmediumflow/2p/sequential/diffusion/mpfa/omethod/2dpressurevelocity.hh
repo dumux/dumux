@@ -72,7 +72,7 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
 
-    typedef Dumux::FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
+    typedef FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum

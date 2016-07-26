@@ -49,22 +49,22 @@ template<class TypeTag> class CCFVElementGeometry;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry
-SET_TYPE_PROP(CCModel, FVElementGeometry, Dumux::CCFVElementGeometry<TypeTag>);
+SET_TYPE_PROP(CCModel, FVElementGeometry, CCFVElementGeometry<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(CCModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(CCModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
 
 //! Set the BaseLocalResidual to CCLocalResidual
-SET_TYPE_PROP(CCModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
+SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 
 //! An array of secondary variable containers
-SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag>);
+SET_TYPE_PROP(CCModel, ElementVolumeVariables, CCElementVolumeVariables<TypeTag>);
 
 //! Assembler for the global jacobian matrix
-SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
+SET_TYPE_PROP(CCModel, JacobianAssembler, CCAssembler<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);

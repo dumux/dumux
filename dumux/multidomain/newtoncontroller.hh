@@ -126,7 +126,7 @@ public:
      * \param x Vector of unknowns
      * \param b Right hand side
      *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * Throws NumericalProblem if the linear solver didn't
      * converge.
      */
     template <class Matrix, class Vector>
@@ -171,7 +171,7 @@ public:
                           MPI_COMM_WORLD);
 #endif
 
-            Dumux::NumericalProblem p;
+            NumericalProblem p;
             std::string msg;
             std::ostringstream ms(msg);
             ms << e.what() << "M=" << A.base()[e.r][e.c];
@@ -192,7 +192,7 @@ public:
                           MPI_COMM_WORLD);
 #endif
 
-            Dumux::NumericalProblem p;
+            NumericalProblem p;
             p.message(e.what());
             throw p;
         }

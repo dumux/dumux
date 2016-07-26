@@ -201,7 +201,7 @@ public:
     { }
 
 public:
-    //! \copydoc Dumux::TwoCStokesTwoPTwoCLocalOperator::evalCoupling()
+    //! \copydoc TwoCStokesTwoPTwoCLocalOperator::evalCoupling()
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
     void evalCoupling(const LFSU1& lfsu1, const LFSU2& lfsu2,
                       const int vertInElem1, const int vertInElem2,

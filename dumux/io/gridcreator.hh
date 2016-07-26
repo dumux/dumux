@@ -241,15 +241,15 @@ protected:
             // get some optional parameters
             bool verbose = false;
             try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             bool boundarySegments = false;
             try { boundarySegments = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), BoundarySegments);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             bool domainMarkers = false;
             try { domainMarkers = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), DomainMarkers);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             if(domainMarkers)
             {
@@ -295,13 +295,13 @@ protected:
         // The optional parameters (they have a default)
         GlobalPosition lowerLeft(0.0);
         try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
 
         typedef std::array<unsigned int, dim> CellArray;
         CellArray cells;
         std::fill(cells.begin(), cells.end(), 1);
         try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
 
         // make the grid
         if (cellType == CellType::Cube)
@@ -323,7 +323,7 @@ protected:
             const int level = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Refinement);
             grid().globalRefine(level);
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
     }
 
@@ -408,7 +408,7 @@ public:
         static const int isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
         int overlap = isBox ? 0 : 1;
         try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
 
         if (isBox && overlap != 0)
             DUNE_THROW(Dune::NotImplemented, "Parallel overlapping grids for box models.");
@@ -425,7 +425,7 @@ public:
     {
         int overlap = 1;
         try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
         return overlap;
     }
 
@@ -468,7 +468,7 @@ public:
             postProcessing_();
             return;
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Then look for the necessary keys to construct from the input file
@@ -482,12 +482,12 @@ public:
             CellArray cells;
             std::fill(cells.begin(), cells.end(), 1);
             try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             typedef std::bitset<dim> BitSet;
             BitSet periodic;
             try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             // get the overlap dependent on some template parameters
             int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
@@ -495,7 +495,7 @@ public:
             bool default_lb = false;
             CellArray partitioning;
             try { partitioning = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Partitioning);}
-            catch (Dumux::ParameterException &e) { default_lb = true; }
+            catch (ParameterException &e) { default_lb = true; }
 
             //make the grid
             if (default_lb)
@@ -507,8 +507,8 @@ public:
             }
             postProcessing_();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameter "
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) <<  ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
@@ -524,7 +524,7 @@ private:
         // Check if should refine the grid
         bool keepPhysicalOverlap = true;
         try { keepPhysicalOverlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), KeepPhysicalOverlap);}
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
         ParentType::grid().refineOptions(keepPhysicalOverlap);
         ParentType::maybeRefineGrid();
     }
@@ -570,18 +570,18 @@ public:
             // The optional parameters (they have a default)
             GlobalPosition lowerLeft(0.0);
             try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             typedef std::array<int, dim> CellArray;
             CellArray cells;
             std::fill(cells.begin(), cells.end(), 1);
             try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             typedef std::bitset<dim> BitSet;
             BitSet periodic;
             try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             // the default is dependent on the discretization
             int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
@@ -589,7 +589,7 @@ public:
             bool default_lb = false;
             CellArray partitioning;
             try { partitioning = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Partitioning);}
-            catch (Dumux::ParameterException &e) { default_lb = true; }
+            catch (ParameterException &e) { default_lb = true; }
 
             //make the grid
             if (default_lb)
@@ -601,8 +601,8 @@ public:
             }
             postProcessing_();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
@@ -618,7 +618,7 @@ private:
         // Check if should refine the grid
         bool keepPhysicalOverlap = true;
         try { keepPhysicalOverlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), KeepPhysicalOverlap);}
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
         ParentType::grid().refineOptions(keepPhysicalOverlap);
         ParentType::maybeRefineGrid();
     }
@@ -692,7 +692,7 @@ public:
               paramName += ".Cells";
               paramName += std::to_string(i);
               try { cells[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, IntVector, paramName.c_str()); }
-              catch (Dumux::ParameterException &e) { cells[i].resize(positions[i].size()-1, 1.0); }
+              catch (ParameterException &e) { cells[i].resize(positions[i].size()-1, 1.0); }
             }
 
             // grading factor (has a default)
@@ -703,14 +703,14 @@ public:
               paramName += ".Grading";
               paramName += std::to_string(i);
               try { grading[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramName.c_str()); }
-              catch (Dumux::ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
+              catch (ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
             }
 
             // The optional parameters (they have a default)
             typedef std::bitset<dim> BitSet;
             BitSet periodic;
             try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             // the default is dependent on the discretization
             int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
@@ -719,13 +719,13 @@ public:
             typedef std::array<int, dim> CellArray;
             CellArray partitioning;
             try { partitioning = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Partitioning);}
-            catch (Dumux::ParameterException &e) { default_lb = true; }
+            catch (ParameterException &e) { default_lb = true; }
 
             //make the grid
             // sanity check of the input parameters
             bool verbose = false;
             try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
-            catch (Dumux::ParameterException &e) {  }
+            catch (ParameterException &e) {  }
 
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
@@ -850,8 +850,8 @@ public:
             }
             postProcessing_();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters:" << std::endl
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameters:" << std::endl
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".Positions0, ..." << std::endl);
         }
         catch (...) { throw; }
@@ -866,7 +866,7 @@ private:
         // Check if should refine the grid
         bool keepPhysicalOverlap = true;
         try { keepPhysicalOverlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), KeepPhysicalOverlap);}
-        catch (Dumux::ParameterException &e) { }
+        catch (ParameterException &e) { }
         ParentType::grid().refineOptions(keepPhysicalOverlap);
         ParentType::maybeRefineGrid();
     }
@@ -905,7 +905,7 @@ public:
             postProcessing_();
             return;
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Look for the necessary keys to construct from the input file
@@ -918,12 +918,12 @@ public:
             // The optional parameters
             int cells = 1;
             try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells);}
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             ParentType::gridPtr() = std::make_shared<Grid>(cells, leftBoundary, rightBoundary);
             postProcessing_();
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Look for the necessary keys to construct from the input file with just a coordinates vector
@@ -935,8 +935,8 @@ public:
             ParentType::gridPtr() = std::make_shared<Grid>(coordinates);
             postProcessing_();
         }
-        catch (Dumux::ParameterException &e) {
-            DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
+        catch (ParameterException &e) {
+            DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
                                          << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".LeftBoundary, "
                                          << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".RightBoundary or "
                                          << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".Coordinates or a grid file in "
@@ -957,7 +957,7 @@ private:
               if (refType != "Local" && refType != "Copy")
                    DUNE_THROW(Dune::IOError, "OneGrid only supports 'Local' or 'Copy' as refinment type. Not '"<< refType<<"'!");
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         if (refType == "Local")
@@ -1011,7 +1011,7 @@ public:
             postProcessing_();
             return;
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Then look for the necessary keys to construct from the input file
@@ -1023,7 +1023,7 @@ public:
                 if (cellType != "Cube" && cellType != "Simplex")
                     DUNE_THROW(Dune::IOError, "UGGrid only supports 'Cube' or 'Simplex' as cell type. Not '"<< cellType<<"'!");
             }
-            catch (Dumux::ParameterException &e) {}
+            catch (ParameterException &e) {}
             catch (...) { throw; }
 
             // make the grid
@@ -1033,8 +1033,8 @@ public:
                 ParentType::template makeStructuredGrid<dim, dim>(ParentType::CellType::Simplex);
             postProcessing_();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
@@ -1050,7 +1050,7 @@ private:
         bool setDefaultHeapSize = true;
         unsigned defaultHeapSize;
         try { defaultHeapSize = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, unsigned, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), HeapSize);}
-        catch (Dumux::ParameterException &e) { setDefaultHeapSize = false; }
+        catch (ParameterException &e) { setDefaultHeapSize = false; }
 
         if(setDefaultHeapSize)
             Grid::setDefaultHeapSize(defaultHeapSize);
@@ -1067,7 +1067,7 @@ private:
               if (refType != "Local" && refType != "Copy")
                    DUNE_THROW(Dune::IOError, "UGGrid only supports 'Local' or 'Copy' as refinment type. Not '"<< refType<<"'!");
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         if (refType == "Local")
@@ -1081,7 +1081,7 @@ private:
               if (closureType != "None" && closureType != "Green")
                    DUNE_THROW(Dune::IOError, "UGGrid only supports 'Green' or 'None' as closure type. Not '"<< closureType<<"'!");
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         if (closureType == "Green")
@@ -1147,7 +1147,7 @@ public:
                     ParentType::gridPtr() = std::shared_ptr<Grid>(Dune::BackupRestoreFacility<Grid>::restore(oss.str()));
                     return;
                 }
-                catch (Dumux::ParameterException &e)
+                catch (ParameterException &e)
                 {
                     std::cerr << e.what() << std::endl;
                     std::cerr << "Restart functionality for an adaptive grid requested, but failed." << std::endl;
@@ -1156,7 +1156,7 @@ public:
                 }
             }
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 #endif
 
@@ -1167,7 +1167,7 @@ public:
             ParentType::maybeRefineGrid();
             return;
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Then look for the necessary keys to construct from the input file
@@ -1179,8 +1179,8 @@ public:
                 ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex);
             ParentType::maybeRefineGrid();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
@@ -1226,7 +1226,7 @@ public:
             ParentType::maybeRefineGrid();
             return;
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Then look for the necessary keys to construct a structured grid from the input file
@@ -1234,8 +1234,8 @@ public:
             ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex);
             ParentType::maybeRefineGrid();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }
@@ -1277,7 +1277,7 @@ public:
             ParentType::maybeRefineGrid();
             return;
         }
-        catch (Dumux::ParameterException &e) {}
+        catch (ParameterException &e) {}
         catch (...) { throw; }
 
         // Then look for the necessary keys to construct a structured grid from the input file
@@ -1289,13 +1289,13 @@ public:
             // The optional parameters (they have a default)
             GlobalPosition lowerLeft(0.0);
             try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             typedef std::array<unsigned int, 1> CellArray;
             CellArray cells;
             std::fill(cells.begin(), cells.end(), 1);
             try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-            catch (Dumux::ParameterException &e) { }
+            catch (ParameterException &e) { }
 
             // make the grid (structured interval grid in dimworld space)
             Dune::GridFactory<Grid> factory;
@@ -1317,8 +1317,8 @@ public:
             ParentType::gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
             ParentType::maybeRefineGrid();
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters "
+        catch (ParameterException &e) {
+                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
                                               << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
         }

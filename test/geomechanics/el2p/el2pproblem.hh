@@ -81,11 +81,11 @@ SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
 // Set fluid configuration
 SET_PROP(El2P_TestProblem, FluidSystem)
 {
-    typedef Dumux::BrineCO2FluidSystem<TypeTag> type;
+    typedef BrineCO2FluidSystem<TypeTag> type;
 };
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(El2P_TestProblem, CO2Table, Dumux::El2P::CO2Tables);
+SET_TYPE_PROP(El2P_TestProblem, CO2Table, El2P::CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 1e-1);
 
@@ -100,7 +100,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
 public:
-    typedef Dumux::InitialDisplacement<TypeTag, dim> type;
+    typedef InitialDisplacement<TypeTag, dim> type;
 };
 
 // Set the initial pressure and saturation function
@@ -110,13 +110,13 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 public:
-    typedef Dumux::InitialPressSat<TypeTag> type;
+    typedef InitialPressSat<TypeTag> type;
 };
 
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-5);
 
 // use the algebraic multigrid
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, Dumux::El2PAMGBackend<TypeTag>);
+SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
 
 // central differences to calculate the jacobian by default
 SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);

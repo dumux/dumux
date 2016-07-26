@@ -54,13 +54,13 @@ SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(HeterogeneousProblem, Problem, Dumux::HeterogeneousProblem<TypeTag>);
+SET_TYPE_PROP(HeterogeneousProblem, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousProblem, FluidSystem, Dumux::BrineCO2FluidSystem<TypeTag>);
+SET_TYPE_PROP(HeterogeneousProblem, FluidSystem, BrineCO2FluidSystem<TypeTag>);
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(HeterogeneousProblem, CO2Table, Dumux::HeterogeneousCO2Tables::CO2Tables);
+SET_TYPE_PROP(HeterogeneousProblem, CO2Table, HeterogeneousCO2Tables::CO2Tables);
 
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(HeterogeneousProblem, ProblemSalinity, 1e-1);

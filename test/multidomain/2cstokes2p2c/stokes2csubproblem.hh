@@ -40,7 +40,7 @@ NEW_TYPE_TAG(Stokes2cSubProblem,
              INHERITS_FROM(BoxStokesnc, SubDomain));
 
 // Set the problem property
-SET_TYPE_PROP(Stokes2cSubProblem, Problem, Dumux::Stokes2cSubProblem<TypeTag>);
+SET_TYPE_PROP(Stokes2cSubProblem, Problem, Stokes2cSubProblem<TypeTag>);
 
 // Use the local residual extended for the coupling the local residual extended for the coupling
 SET_TYPE_PROP(Stokes2cSubProblem, LocalResidual, StokesncCouplingLocalResidual<TypeTag>);

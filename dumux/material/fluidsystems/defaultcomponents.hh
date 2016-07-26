@@ -63,7 +63,7 @@ private:
     typedef Dumux::H2O<Scalar> H2O_IAPWS;
 
 public:
-    typedef Dumux::TabulatedComponent<Scalar, H2O_IAPWS> H2O;
+    typedef TabulatedComponent<Scalar, H2O_IAPWS> H2O;
     typedef Dumux::N2<Scalar> N2;
     typedef Dumux::O2<Scalar> O2;
     typedef Dumux::H2<Scalar> H2;
@@ -71,7 +71,7 @@ public:
     typedef Dumux::SimpleCO2<Scalar> SimpleCO2;
     typedef Dumux::SimpleH2O<Scalar> SimpleH2O;
     typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> > BrineRawComponent;
-    typedef Dumux::TabulatedComponent<Scalar, BrineRawComponent > Brine;
+    typedef TabulatedComponent<Scalar, BrineRawComponent > Brine;
 
     static void init()
     {

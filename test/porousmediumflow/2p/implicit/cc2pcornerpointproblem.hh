@@ -49,10 +49,10 @@ NEW_TYPE_TAG(CC2PCornerPointProblem, INHERITS_FROM(CCTwoP, CC2PCornerPointSpatia
 SET_TYPE_PROP(CC2PCornerPointProblem, Grid, Dune::CpGrid);
 
 // Set the problem property
-SET_TYPE_PROP(CC2PCornerPointProblem, Problem, Dumux::CC2PCornerPointProblem<TypeTag>);
+SET_TYPE_PROP(CC2PCornerPointProblem, Problem, CC2PCornerPointProblem<TypeTag>);
 
 // Set the grid creator
-SET_TYPE_PROP(CC2PCornerPointProblem, GridCreator, Dumux::CpGridCreator<TypeTag>);
+SET_TYPE_PROP(CC2PCornerPointProblem, GridCreator, CpGridCreator<TypeTag>);
 
 // Set properties that are specific for CpGrid
 SET_TYPE_PROP(CC2PCornerPointProblem, ElementVolumeVariables, CpElementVolumeVariables<TypeTag>);
@@ -65,7 +65,7 @@ SET_PROP(CC2PCornerPointProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -74,7 +74,7 @@ SET_PROP(CC2PCornerPointProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 }
 

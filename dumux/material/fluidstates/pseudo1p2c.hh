@@ -37,7 +37,7 @@ namespace Dumux
  *  no information is stored but 0-values are returned to allow for general output
  *  methods.
  *  The "flash" calculation routines are in the sequential flash constrain solver, see
- *  Dumux::CompositionalFlash .
+ *  CompositionalFlash .
  *  \tparam TypeTag The property Type Tag
  */
 template <class TypeTag>

@@ -167,7 +167,7 @@ public:
             if (gridView_().comm().size() > 1)
                 succeeded = gridView_().comm().min(succeeded);
         }
-        catch (Dumux::NumericalProblem &e)
+        catch (NumericalProblem &e)
         {
             std::cout << "rank " << problem_().gridView().comm().rank()
                       << " caught an exception while assembling:" << e.what()

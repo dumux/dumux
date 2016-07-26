@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::PureWaterSimpleFluidSystem
+ * \brief @copybrief FluidSystems::PureWaterSimpleFluidSystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
 #define DUMUX_PURE_WATER_FLUID_SYSTEM_HH
@@ -57,8 +57,8 @@ namespace FluidSystems
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
+ * additional namespace FluidSystem::.
+ * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
 template <class Scalar, bool useComplexRelations = false>
@@ -430,7 +430,7 @@ public:
         {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
-            return Dumux::BinaryCoeff::H2O_N2::henry(T)/p;
+            return BinaryCoeff::H2O_N2::henry(T)/p;
         }
 
         // for the gas phase, assume an ideal gas when it comes to
@@ -562,7 +562,7 @@ public:
 /*!
  * \brief A two-phase fluid system with water and nitrogen as components.
  *
- * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
+ * This is an adapter to use H2ON2FluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
  */
 template<class TypeTag>

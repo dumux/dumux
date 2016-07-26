@@ -66,7 +66,7 @@ SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(MPFATwoPTestProblem, Problem, Dumux::MPFATwoPTestProblem<TypeTag>);
+SET_TYPE_PROP(MPFATwoPTestProblem, Problem, MPFATwoPTestProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(MPFATwoPTestProblem, WettingPhase)
@@ -74,7 +74,7 @@ SET_PROP(MPFATwoPTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 #if PROBLEM == 2
@@ -84,7 +84,7 @@ SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 #else
 // Set the non-wetting phase
@@ -93,7 +93,7 @@ SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 #endif
 
@@ -108,9 +108,9 @@ SET_BOOL_PROP(MPFATwoPTestProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(MPFATwoPTestProblem, ProblemEnableGravity, false);
 #endif
 
-SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 SET_SCALAR_PROP(MPFATwoPTestProblem, ImpetCFLFactor, 1.0);
-SET_TYPE_PROP(MPFATwoPTestProblem, AdaptionIndicator, Dumux::GridAdaptionIndicator2PLocal<TypeTag>);
+SET_TYPE_PROP(MPFATwoPTestProblem, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
 
 NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
 NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));

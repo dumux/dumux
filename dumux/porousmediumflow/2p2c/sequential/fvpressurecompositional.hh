@@ -388,7 +388,7 @@ protected:
     Problem& problem_;
 
     //! output for the initialization procedure
-    Dumux::VtkMultiWriter<GridView> initializationOutputWriter_;
+    VtkMultiWriter<GridView> initializationOutputWriter_;
 
     Scalar maxError_; //!< Maximum volume error of all cells
     Scalar incp_; //!< Increment for the volume derivative w.r.t pressure
@@ -412,7 +412,7 @@ private:
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 };

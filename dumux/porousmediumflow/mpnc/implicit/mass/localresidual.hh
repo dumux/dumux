@@ -138,7 +138,7 @@ if (!std::isfinite(volumeFlux))
 
                 const Scalar mobConUp   = mobUp*conUp;
                 const Scalar mobConDn   = mobDn*conDn;
-                const Scalar meanMobCon = Dumux::harmonicMean(mobConUp, mobConDn);
+                const Scalar meanMobCon = harmonicMean(mobConUp, mobConDn);
 
                 const Scalar x      = std::abs(kGradPNormal);
                 const Scalar sign   = (kGradPNormal > 0)?-1:1;

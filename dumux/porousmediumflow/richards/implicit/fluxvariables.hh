@@ -42,7 +42,7 @@ template <class TypeTag>
 class RichardsFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
     friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
-    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
+    typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

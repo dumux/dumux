@@ -64,7 +64,7 @@ NEW_PROP_TAG(ProblemBaseClass);
 SET_TYPE_PROP(GeneralLensProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(GeneralLensProblem, Problem, Dumux::GeneralLensProblem<TypeTag>);
+SET_TYPE_PROP(GeneralLensProblem, Problem, GeneralLensProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(GeneralLensProblem, WettingPhase)
@@ -72,7 +72,7 @@ SET_PROP(GeneralLensProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -81,7 +81,7 @@ SET_PROP(GeneralLensProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 ///////////////////////////////////////////////////
@@ -91,10 +91,10 @@ public:
 NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(BoxTwoP, GeneralLensProblem));
 
 // Set the problem property
-SET_TYPE_PROP(BoxGeneralLensProblem, ProblemBaseClass, Dumux::ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(BoxGeneralLensProblem, ProblemBaseClass, ImplicitPorousMediaProblem<TypeTag>);
 
 // Set the problem property
-SET_TYPE_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpatialParams<TypeTag>);
+SET_TYPE_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass,ImplicitSpatialParams<TypeTag>);
 
 
 ///////////////////////////////////////////////////
@@ -104,10 +104,10 @@ SET_TYPE_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpati
 NEW_TYPE_TAG(CCGeneralLensProblem, INHERITS_FROM(CCTwoP, GeneralLensProblem));
 
 // Set the problem property
-SET_TYPE_PROP(CCGeneralLensProblem, ProblemBaseClass, Dumux::ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(CCGeneralLensProblem, ProblemBaseClass, ImplicitPorousMediaProblem<TypeTag>);
 
 // Set the problem property
-SET_TYPE_PROP(CCGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpatialParams<TypeTag>);
+SET_TYPE_PROP(CCGeneralLensProblem, SpatialParamsBaseClass,ImplicitSpatialParams<TypeTag>);
 
 
 ///////////////////////////////////////////////////
@@ -117,10 +117,10 @@ SET_TYPE_PROP(CCGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpatia
 NEW_TYPE_TAG(SequentialGeneralLensProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, GeneralLensProblem));
 
 // Set the problem property
-SET_TYPE_PROP(SequentialGeneralLensProblem, ProblemBaseClass, Dumux::IMPESProblem2P<TypeTag>);
+SET_TYPE_PROP(SequentialGeneralLensProblem, ProblemBaseClass, IMPESProblem2P<TypeTag>);
 
 // Set the problem property
-SET_TYPE_PROP(SequentialGeneralLensProblem, SpatialParamsBaseClass, Dumux::FVSpatialParams<TypeTag>);
+SET_TYPE_PROP(SequentialGeneralLensProblem, SpatialParamsBaseClass, FVSpatialParams<TypeTag>);
 
 SET_INT_PROP(SequentialGeneralLensProblem, Formulation,
         SequentialTwoPCommonIndices::pwsn);

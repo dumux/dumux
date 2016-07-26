@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::GasPhase
+ * \brief @copybrief FluidSystems::GasPhase
  */
 #ifndef DUMUX_GAS_PHASE_HH
 #define DUMUX_GAS_PHASE_HH
@@ -51,7 +51,7 @@ class GasPhase
 
 public:
     typedef ComponentT Component;
-    typedef Dumux::NullParameterCache ParameterCache;
+    typedef NullParameterCache ParameterCache;
 
     /****************************************
      * Fluid phase related static parameters
@@ -332,7 +332,7 @@ public:
  */
 template <class Scalar, class ComponentT>
 class
-DUNE_DEPRECATED_MSG("Class Dumux::GasPhase is deprecated. Use Dumux::FluidSystems::GasPhase instead.")
+DUNE_DEPRECATED_MSG("Class GasPhase is deprecated. Use FluidSystems::GasPhase instead.")
 GasPhase
 : public FluidSystems::GasPhase<Scalar, ComponentT>
 { };

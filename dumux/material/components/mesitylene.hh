@@ -42,7 +42,7 @@ namespace Dumux
 template <class Scalar>
 class Mesitylene : public Component<Scalar, Mesitylene<Scalar> >
 {
-    typedef Dumux::Constants<Scalar> Consts;
+    typedef Constants<Scalar> Consts;
 
 public:
     /*!

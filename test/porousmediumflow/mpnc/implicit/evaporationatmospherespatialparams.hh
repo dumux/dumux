@@ -58,7 +58,7 @@ namespace Properties
 NEW_TYPE_TAG(EvaporationAtmosphereSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, Dumux::EvaporationAtmosphereSpatialParams<TypeTag>);
+SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(EvaporationAtmosphereSpatialParams, MaterialLaw)

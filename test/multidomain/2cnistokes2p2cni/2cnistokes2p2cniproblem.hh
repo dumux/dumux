@@ -66,7 +66,7 @@ SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNITestProblem, Problem, TwoCNIStokesTwoPTwoCNI
 
 // Set the local coupling operator
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNITestProblem, MultiDomainCouplingLocalOperator,
-              Dumux::TwoCNIStokesTwoPTwoCNILocalOperator<TypeTag>);
+              TwoCNIStokesTwoPTwoCNILocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNITestProblem, SubDomain1TypeTag, TTAG(Stokes2cniSubProblem));
@@ -81,12 +81,12 @@ SET_TYPE_PROP(Stokes2cniSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCNISubPro
 SET_TYPE_PROP(TwoPTwoCNISubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cniSubProblem));
 
 // Set the spatial parameters used for the problems
-SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 
 // Set the fluid system to use complex relations (last argument)
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNITestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
+                                   H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
 
 #ifdef HAVE_PARDISO
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNITestProblem, LinearSolver, PardisoBackend<TypeTag>);

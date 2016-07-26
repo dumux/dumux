@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::TwoPImmiscible
+ * \brief @copybrief FluidSystems::TwoPImmiscible
  */
 #ifndef DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
 #define DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
@@ -47,12 +47,12 @@ namespace FluidSystems {
  * The fluid phases are completely specified by means of their
  * constituting components.
  * The wetting and the non-wetting phase can be defined individually
- * via Dumux::FluidSystem::LiquidPhase<Component> and
- * Dumux::FluidSystem::GasPhase<Component>. These phases consist of one pure
+ * via FluidSystem::LiquidPhase<Component> and
+ * FluidSystem::GasPhase<Component>. These phases consist of one pure
  * component. With the help of this adapter class, the phase
  * properties can be accessed. This is suitable for pure two-phase
  * systems without compositional effects.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
+ * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
 template <class Scalar, class WettingPhase, class NonwettingPhase>
@@ -453,7 +453,7 @@ NEW_PROP_TAG(NonwettingPhase);
 /*!
  * \brief A non-compositional twophase fluid system.
  *
- * This is an adapter to use Dumux::TwoPImmiscible<TypeTag>, as is
+ * This is an adapter to use TwoPImmiscible<TypeTag>, as is
  * done with most other classes in Dumux and all template parameters
  * are usually defined in the property system anyhow.
  */

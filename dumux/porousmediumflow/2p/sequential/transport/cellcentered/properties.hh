@@ -69,7 +69,7 @@ SET_TYPE_PROP(FVTransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
 //! \brief Set PrecomputedConstRels flag <tt>true</tt> as default
 SET_BOOL_PROP( FVTransportTwoP, PrecomputedConstRels, true);
 //! Set finite volume implementation of the two-phase saturation equation as default saturation model
-SET_TYPE_PROP(FVTransportTwoP, TransportModel, Dumux::FVSaturation2P<TypeTag>);
+SET_TYPE_PROP(FVTransportTwoP, TransportModel, FVSaturation2P<TypeTag>);
 }
 }
 

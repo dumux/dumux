@@ -230,7 +230,7 @@ public:
     PressureModel &pressureModel()
     { return *pressModel_; }
 
-    //! \copydoc Dumux::IMPETProblem::pressureModel()
+    //! \copydoc IMPETProblem::pressureModel()
     const PressureModel &pressureModel() const
     { return *pressModel_; }
 
@@ -241,7 +241,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

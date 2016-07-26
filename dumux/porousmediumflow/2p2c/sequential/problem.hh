@@ -94,7 +94,7 @@ public:
     { }
 
     /*!
-     * \brief Called by Dumux::TimeManager just before the time
+     * \brief Called by TimeManager just before the time
      *        integration.
      *
      *        In compositional/compressible models, the secondary variables
@@ -179,7 +179,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

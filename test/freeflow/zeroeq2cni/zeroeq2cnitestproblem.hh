@@ -43,11 +43,11 @@ NEW_TYPE_TAG(ZeroEq2cniTestProblem, INHERITS_FROM(BoxZeroEqncni));
 SET_TYPE_PROP(ZeroEq2cniTestProblem, Grid, Dune::YaspGrid<2>);
 
 //Set the problem property
-SET_TYPE_PROP(ZeroEq2cniTestProblem, Problem, Dumux::ZeroEq2cniTestProblem<TypeTag>);
+SET_TYPE_PROP(ZeroEq2cniTestProblem, Problem, ZeroEq2cniTestProblem<TypeTag>);
 
 // Select the fluid system
 SET_TYPE_PROP(ZeroEq2cniTestProblem, FluidSystem,
-              Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEq2cniTestProblem, ProblemEnableGravity, false);

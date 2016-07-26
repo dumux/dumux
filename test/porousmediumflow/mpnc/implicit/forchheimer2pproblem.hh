@@ -50,7 +50,7 @@ SET_TYPE_PROP(Forchheimer2pProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(Forchheimer2pProblem,
               Problem,
-              Dumux::Forchheimer2pProblem<TypeTag>);
+              Forchheimer2pProblem<TypeTag>);
 
 
 // Set fluid configuration
@@ -58,7 +58,7 @@ SET_PROP(Forchheimer2pProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
+    typedef FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
 };
 
 
@@ -393,7 +393,7 @@ private:
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-        typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+        typedef ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fs,

@@ -51,17 +51,17 @@ SET_TYPE_PROP(OnePTwoCNIConductionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePTwoCNIConductionProblem, Problem,
-              Dumux::OnePTwoCNIConductionProblem<TypeTag>);
+              OnePTwoCNIConductionProblem<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCNIConductionProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCNIConductionProblem,
               SpatialParams,
-              Dumux::OnePTwoCNISpatialParams<TypeTag>);
+              OnePTwoCNISpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCNIConductionProblem, UseMoles, true);

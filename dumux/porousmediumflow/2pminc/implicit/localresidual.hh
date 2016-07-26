@@ -42,7 +42,7 @@ template<class TypeTag>
 class TwoPMincLocalResidual : public TwoPLocalResidual<TypeTag>
 {
 protected:
-    typedef typename Dumux::TwoPLocalResidual<TypeTag> ParentType;
+    typedef TwoPLocalResidual<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

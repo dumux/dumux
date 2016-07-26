@@ -58,7 +58,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The local jacobian operator for the stokes box scheme
-SET_TYPE_PROP(BoxStokes, LocalJacobian, Dumux::StokesLocalJacobian<TypeTag>);
+SET_TYPE_PROP(BoxStokes, LocalJacobian, StokesLocalJacobian<TypeTag>);
 
 SET_PROP(BoxStokes, NumEq) //!< set the number of equations
 {
@@ -108,7 +108,7 @@ SET_PROP(BoxStokes, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 //! Set the indices used by the Stokes model
@@ -120,7 +120,7 @@ SET_PROP(BoxStokes, FluidState)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
-    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 
 };
 

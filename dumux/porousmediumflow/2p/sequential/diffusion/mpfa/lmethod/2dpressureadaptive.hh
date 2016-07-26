@@ -151,8 +151,8 @@ public:
      * to calculated the transmissibility matrices of one MPFA interaction volume.
      *
      */
-    typedef Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
-    typedef Dumux::FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    typedef FVMPFALInteractionVolume<TypeTag> InteractionVolume;
+    typedef FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 private:
 
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;

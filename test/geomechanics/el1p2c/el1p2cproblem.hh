@@ -46,18 +46,18 @@ namespace Dumux
     SET_TYPE_PROP(El1P2CProblem, Grid, Dune::YaspGrid<3>);
 
     // Set the problem property
-    SET_TYPE_PROP(El1P2CProblem, Problem, Dumux::El1P2CProblem<TTAG(El1P2CProblem)>);
+    SET_TYPE_PROP(El1P2CProblem, Problem, El1P2CProblem<TTAG(El1P2CProblem)>);
 
     // Set fluid configuration
     SET_PROP(El1P2CProblem, FluidSystem)
     { private:
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     public:
-        typedef Dumux::FluidSystems::H2ON2<Scalar, false> type;
+        typedef FluidSystems::H2ON2<Scalar, false> type;
     };
 
     // Set the soil properties
-    SET_TYPE_PROP(El1P2CProblem, SpatialParams, Dumux::El1P2CSpatialParams<TypeTag>);
+    SET_TYPE_PROP(El1P2CProblem, SpatialParams, El1P2CSpatialParams<TypeTag>);
 
     //Define whether mole(true) or mass (false) fractions are used
     SET_BOOL_PROP(El1P2CProblem, UseMoles, false);
@@ -66,7 +66,7 @@ namespace Dumux
     SET_BOOL_PROP(El1P2CProblem, ImplicitWithStabilization, true);
 
     // use the algebraic multigrid
-    SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
+    SET_TYPE_PROP(El1P2CProblem, LinearSolver, AMGBackend<TypeTag> );
 }
 
 /*!

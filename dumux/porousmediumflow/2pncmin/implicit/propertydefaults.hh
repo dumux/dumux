@@ -105,7 +105,7 @@ SET_PROP(TwoPNCMin, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+        typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 //! Use the 2pncmin local residual operator

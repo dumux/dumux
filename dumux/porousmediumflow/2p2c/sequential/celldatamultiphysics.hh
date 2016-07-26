@@ -75,7 +75,7 @@ public:
 
     /*! \name Acess to primary variables */
     //@{
-    //! \copydoc Dumux::TwoPTwoCFluidState::pressure()
+    //! \copydoc TwoPTwoCFluidState::pressure()
     Scalar pressure(int phaseIdx)
     {
         if(fluidStateType_ == simple)
@@ -85,7 +85,7 @@ public:
         else
             return this->fluidState_->pressure(phaseIdx);
     }
-    //! \copydoc Dumux::TwoPTwoCFluidState::pressure()
+    //! \copydoc TwoPTwoCFluidState::pressure()
     const Scalar pressure(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -95,7 +95,7 @@ public:
         else
             return this->fluidState_->pressure(phaseIdx);
     }
-    //! \copydoc Dumux::CellData2P2C::setPressure()
+    //! \copydoc CellData2P2C::setPressure()
     void setPressure(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
@@ -138,7 +138,7 @@ public:
 
     /*! \name Acess to secondary variables */
     //@{
-    //! \copydoc Dumux::TwoPTwoCFluidState::setSaturation()
+    //! \copydoc TwoPTwoCFluidState::setSaturation()
     void setSaturation(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
@@ -149,7 +149,7 @@ public:
         else
             manipulateFluidState().setSaturation(phaseIdx, value);
     }
-    //! \copydoc Dumux::TwoPTwoCFluidState::saturation()
+    //! \copydoc TwoPTwoCFluidState::saturation()
     const Scalar saturation(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -160,7 +160,7 @@ public:
             return this->fluidState_->saturation(phaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::setViscosity()
+    //! \copydoc TwoPTwoCFluidState::setViscosity()
     void setViscosity(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
@@ -171,7 +171,7 @@ public:
         else
             manipulateFluidState().setViscosity(phaseIdx, value);
     }
-    //! \copydoc Dumux::TwoPTwoCFluidState::viscosity()
+    //! \copydoc TwoPTwoCFluidState::viscosity()
     const Scalar viscosity(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -185,7 +185,7 @@ public:
     }
 
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::capillaryPressure()
+    //! \copydoc TwoPTwoCFluidState::capillaryPressure()
     const Scalar capillaryPressure() const
     {
         if(fluidStateType_ == simple)
@@ -194,7 +194,7 @@ public:
             return this->fluidState_->pressure(nPhaseIdx) - this->fluidState_->pressure(wPhaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::density()
+    //! \copydoc TwoPTwoCFluidState::density()
     const Scalar density(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -205,7 +205,7 @@ public:
             return this->fluidState_->density(phaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::massFraction()
+    //! \copydoc TwoPTwoCFluidState::massFraction()
     const Scalar massFraction(int phaseIdx, int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -216,7 +216,7 @@ public:
             return this->fluidState_->massFraction(phaseIdx, compIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::moleFraction()
+    //! \copydoc TwoPTwoCFluidState::moleFraction()
     const Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -226,7 +226,7 @@ public:
         else
             return this->fluidState_->moleFraction(phaseIdx, compIdx);
     }
-    //! \copydoc Dumux::TwoPTwoCFluidState::temperature()
+    //! \copydoc TwoPTwoCFluidState::temperature()
     const Scalar temperature(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -237,7 +237,7 @@ public:
             return this->fluidState_->temperature(phaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::phaseMassFraction()
+    //! \copydoc TwoPTwoCFluidState::phaseMassFraction()
     const Scalar phaseMassFraction(int phaseIdx) const
     {
         if(fluidStateType_ == simple)

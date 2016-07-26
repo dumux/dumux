@@ -512,7 +512,7 @@ public:
             }
             succeeded = 1;
         }
-        catch (Dumux::NumericalProblem &e)
+        catch (NumericalProblem &e)
         {
             std::cout << "\n"
                       << "Rank " << this->problem_().gridView().comm().rank()

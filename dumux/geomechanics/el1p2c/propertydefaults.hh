@@ -80,10 +80,10 @@ SET_TYPE_PROP(BoxElasticOnePTwoC,
 SET_TYPE_PROP(BoxElasticOnePTwoC, Model, ElOnePTwoCModel<TypeTag>);
 
 //! define the ElementVolumeVariables
-SET_TYPE_PROP(BoxElasticOnePTwoC, ElementVolumeVariables, Dumux::ElOnePTwoCElementVolumeVariables<TypeTag>);
+SET_TYPE_PROP(BoxElasticOnePTwoC, ElementVolumeVariables, ElOnePTwoCElementVolumeVariables<TypeTag>);
 
 //! define the VolumeVariables
-SET_TYPE_PROP(BoxElasticOnePTwoC, VolumeVariables, Dumux::ElOnePTwoCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(BoxElasticOnePTwoC, VolumeVariables, ElOnePTwoCVolumeVariables<TypeTag>);
 
 //! define the FluxVariables
 SET_TYPE_PROP(BoxElasticOnePTwoC, FluxVariables, ElOnePTwoCFluxVariables<TypeTag>);
@@ -99,7 +99,7 @@ SET_PROP(BoxElasticOnePTwoC, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+        typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 //! set default upwind weights to 1.0, i.e. fully upwind

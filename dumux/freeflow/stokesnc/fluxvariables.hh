@@ -48,7 +48,7 @@ template <class TypeTag>
 class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
 {
     friend class StokesFluxVariables<TypeTag>; // be friends with parent
-    typedef Dumux::StokesFluxVariables<TypeTag> ParentType;
+    typedef StokesFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 

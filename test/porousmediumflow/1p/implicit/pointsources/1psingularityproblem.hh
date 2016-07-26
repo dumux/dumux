@@ -48,7 +48,7 @@ SET_PROP(OnePSingularityProblem, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the grid type
@@ -56,13 +56,13 @@ SET_TYPE_PROP(OnePSingularityProblem, Grid,
     Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityProblem, Problem, Dumux::OnePSingularityProblem<TypeTag> );
+SET_TYPE_PROP(OnePSingularityProblem, Problem, OnePSingularityProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePSingularityProblem, SpatialParams, Dumux::OnePSingularitySpatialParams<TypeTag> );
+SET_TYPE_PROP(OnePSingularityProblem, SpatialParams, OnePSingularitySpatialParams<TypeTag> );
 
 // Linear solver settings
-SET_TYPE_PROP(OnePSingularityProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(OnePSingularityProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(OnePSingularityProblem, ProblemEnableGravity, false);
@@ -221,7 +221,7 @@ public:
      * \brief Applies a vector of point sources. The point sources
      *        are possibly solution dependent.
      *
-     * \param pointSources A vector of Dumux::PointSource s that contain
+     * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
      *
      * For this method, the \a values method of the point source

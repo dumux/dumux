@@ -49,12 +49,12 @@ NEW_TYPE_TAG(ColumnCCProblem, INHERITS_FROM(CCModel, ColumnProblem));
 SET_TYPE_PROP(ColumnProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ColumnProblem, Problem, Dumux::ColumnProblem<TypeTag>);
+SET_TYPE_PROP(ColumnProblem, Problem, ColumnProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(ColumnProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 }
 
 

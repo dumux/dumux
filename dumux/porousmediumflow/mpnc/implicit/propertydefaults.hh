@@ -114,7 +114,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type;
+    typedef CompositionFromFugacities<Scalar, FluidSystem> type;
 };
 
 
@@ -223,7 +223,7 @@ SET_PROP(MPNC, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+        typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 //! Set the default pressure formulation to the pressure of the (most) wetting phase

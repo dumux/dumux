@@ -203,7 +203,7 @@ public:
                 std::cout << "J: " << J << "\n";
                 */
 
-                throw Dumux::NumericalProblem(e.what());
+                throw NumericalProblem(e.what());
             }
             Valgrind::CheckDefined(deltaX);
 

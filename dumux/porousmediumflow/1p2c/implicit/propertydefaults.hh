@@ -81,7 +81,7 @@ SET_PROP(OnePTwoC, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+        typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 //! set default upwind weight to 1.0, i.e. fully upwind

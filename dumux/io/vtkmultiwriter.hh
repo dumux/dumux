@@ -173,7 +173,7 @@ public:
         sanitizeBuffer_(buf, nComps);
 
         using FunctionPtr = std::shared_ptr<const typename VtkWriter::VTKFunction>;
-        typedef Dumux::VtkNestedFunction<GridView, VertexMapper, DataBuffer> VtkFn;
+        typedef VtkNestedFunction<GridView, VertexMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
                                     gridView_,
                                     vertexMapper_,
@@ -204,7 +204,7 @@ public:
         sanitizeBuffer_(buf, nComps);
 
         using FunctionPtr = std::shared_ptr<const typename VtkWriter::VTKFunction>;
-        typedef Dumux::VtkNestedFunction<GridView, ElementMapper, DataBuffer> VtkFn;
+        typedef VtkNestedFunction<GridView, ElementMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
                                     gridView_,
                                     elementMapper_,

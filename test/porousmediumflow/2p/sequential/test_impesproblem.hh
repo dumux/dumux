@@ -61,7 +61,7 @@ NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IM
 SET_TYPE_PROP(IMPESTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::IMPESTestProblem<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, Problem, IMPESTestProblem<TypeTag>);
 
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_n-S_w formulation
@@ -89,7 +89,7 @@ SET_PROP(IMPESTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -98,19 +98,19 @@ SET_PROP(IMPESTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
-SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 
 // set up an additional problem where the AMG backend is used
 NEW_TYPE_TAG(IMPESTestProblemWithAMG, INHERITS_FROM(IMPESTestProblem));
 // use the AMG backend for the corresponding test
-SET_TYPE_PROP(IMPESTestProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblemWithAMG, LinearSolver, AMGBackend<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(IMPESTestProblemWithAMG, Grid, Dune::YaspGrid<2>);
 // Set the grid creator
-SET_TYPE_PROP(IMPESTestProblemWithAMG, GridCreator, Dumux::GridCreator<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblemWithAMG, GridCreator, GridCreator<TypeTag>);
 }
 
 /*!

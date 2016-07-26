@@ -66,7 +66,7 @@ public:
     static constexpr Scalar molarMass = 18.01518e-3;
 
     //! Specific gas constant of water \f$\mathrm{[J/(kg*K)]}\f$
-    static constexpr Scalar Rs = Dumux::Constants<Scalar>::R / molarMass;
+    static constexpr Scalar Rs = Constants<Scalar>::R / molarMass;
 
     //! Critical temperature of water \f$\mathrm{[K]}\f$
     static constexpr Scalar criticalTemperature = 647.096;

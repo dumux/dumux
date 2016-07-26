@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::BrineCO2
+ * \brief @copybrief FluidSystems::BrineCO2
  */
 #ifndef DUMUX_BRINE_CO2_SYSTEM_HH
 #define DUMUX_BRINE_CO2_SYSTEM_HH
@@ -60,9 +60,9 @@ namespace FluidSystems{
  */
 template<class Scalar,
          class CO2Table,
-         class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >,
-         class BrineRawComponent = Dumux::Brine<Scalar, Dumux::H2O<Scalar> >,
-         class Brinetype = Dumux::TabulatedComponent<Scalar, BrineRawComponent> >
+         class H2Otype = TabulatedComponent<Scalar, H2O<Scalar> >,
+         class BrineRawComponent = Brine<Scalar, H2O<Scalar> >,
+         class Brinetype = TabulatedComponent<Scalar, BrineRawComponent> >
 class BrineCO2
 : public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
 {
@@ -70,13 +70,13 @@ class BrineCO2
     typedef BaseFluidSystem <Scalar, ThisType> Base;
 
 
-    typedef Dumux::BinaryCoeff::Brine_CO2<Scalar, CO2Table> Brine_CO2;
+    typedef BinaryCoeff::Brine_CO2<Scalar, CO2Table> Brine_CO2;
 
 public:
-    typedef Dumux::NullParameterCache ParameterCache;
+    typedef NullParameterCache ParameterCache;
     typedef H2Otype H2O;
     typedef Brinetype Brine;
-    typedef typename Dumux::CO2<Scalar, CO2Table> CO2;
+    typedef Dumux::CO2<Scalar, CO2Table> CO2;
 
     static const int numComponents = 2;
     static const int numPhases = 2;
@@ -693,7 +693,7 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(CO2Table);
 NEW_PROP_TAG(ProblemSalinity);
 // Set Co2 tables
-SET_TYPE_PROP(NumericModel, CO2Table, Dumux::CO2Tables);
+SET_TYPE_PROP(NumericModel, CO2Table, CO2Tables);
 // Set salinity defaults
 SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
 }
@@ -715,13 +715,13 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
  * {
  *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  *     // Do not use the defaults that are the following
- *     //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
- *     //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> >  BrineRawComponent;
- *     //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
+ *     //    typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
+ *     //    typedef Brine<Scalar, H2O<Scalar> >  BrineRawComponent;
+ *     //    typedef TabulatedComponent<Scalar,BrineRawComponent > Brine;
  *
  *     // Apply the following component classes:
  *     typedef Dumux::H2O<Scalar> H2O;
- *     typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
+ *     typedef Brine<Scalar, H2O> BrineRawComponent;
  *     typedef typename BrineRawComponent Brine;// all components have to be redefined,
  *                                              // the applied H2O and Brine implemementations.
  * };

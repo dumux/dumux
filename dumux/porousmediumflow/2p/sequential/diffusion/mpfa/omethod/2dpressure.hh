@@ -132,7 +132,7 @@ class FvMpfaO2dPressure2p: public FVPressure<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
-    typedef Dumux::FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
+    typedef FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
 
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
     typedef std::vector<Dune::FieldVector<bool, 2 * dim> > InnerBoundaryVolumeFaces;

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::LiquidPhase
+ * \brief @copybrief FluidSystems::LiquidPhase
  */
 #ifndef DUMUX_LIQUID_PHASE_HH
 #define DUMUX_LIQUID_PHASE_HH
@@ -50,7 +50,7 @@ class LiquidPhase
 
 public:
     typedef ComponentT Component;
-    typedef Dumux::NullParameterCache ParameterCache;
+    typedef NullParameterCache ParameterCache;
 
     /****************************************
      * Fluid phase related static parameters
@@ -316,7 +316,7 @@ public:
  */
 template <class Scalar, class ComponentT>
 class
-DUNE_DEPRECATED_MSG("Class Dumux::LiquidPhase is deprecated. Use Dumux::FluidSystems::LiquidPhase instead.")
+DUNE_DEPRECATED_MSG("Class LiquidPhase is deprecated. Use FluidSystems::LiquidPhase instead.")
 LiquidPhase
 : public FluidSystems::LiquidPhase<Scalar, ComponentT>
 { };

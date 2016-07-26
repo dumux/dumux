@@ -146,7 +146,7 @@ public:
     {
         return massConcentration_[compIdx];
     }
-    //! \copydoc Dumux::CellData2P2C::totalConcentration()
+    //! \copydoc CellData2P2C::totalConcentration()
     const Scalar massConcentration(int compIdx) const
     {
         return massConcentration_[compIdx];
@@ -162,7 +162,7 @@ public:
     {
         massConcentration_[compIdx] = value;
     }
-    //! \copydoc Dumux::CellData2P2C::setTotalConcentration()
+    //! \copydoc CellData2P2C::setTotalConcentration()
     void setMassConcentration(int compIdx, Scalar value)
     {
         massConcentration_[compIdx] = value;
@@ -279,23 +279,23 @@ public:
 
     /*** b) from fluidstate ***/
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::setSaturation()
+    //! \copydoc TwoPTwoCFluidState::setSaturation()
     void setSaturation(int phaseIdx, Scalar value)
     {
         fluidState_->setSaturation(phaseIdx, value);
     }
-    //! \copydoc Dumux::TwoPTwoCFluidState::saturation()
+    //! \copydoc TwoPTwoCFluidState::saturation()
     const Scalar saturation(int phaseIdx) const
     {
         return fluidState_->saturation(phaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::setViscosity()
+    //! \copydoc TwoPTwoCFluidState::setViscosity()
     void setViscosity(int phaseIdx, Scalar value)
     {
         fluidState_->setViscosity(phaseIdx, value);
     }
-    //! \copydoc Dumux::TwoPTwoCFluidState::viscosity()
+    //! \copydoc TwoPTwoCFluidState::viscosity()
     const Scalar viscosity(int phaseIdx) const
     {
         return fluidState_->viscosity(phaseIdx);
@@ -309,31 +309,31 @@ public:
         return fluidState_->pressure(nPhaseIdx) - fluidState_->pressure(wPhaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::density()
+    //! \copydoc TwoPTwoCFluidState::density()
     const Scalar density(int phaseIdx) const
     {
         return (fluidState_->density(phaseIdx));
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::massFraction()
+    //! \copydoc TwoPTwoCFluidState::massFraction()
     const Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return fluidState_->massFraction(phaseIdx, compIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::moleFraction()
+    //! \copydoc TwoPTwoCFluidState::moleFraction()
     const Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         return fluidState_->moleFraction(phaseIdx, compIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::temperature()
+    //! \copydoc TwoPTwoCFluidState::temperature()
     const Scalar temperature(int phaseIdx) const
     {
         return fluidState_->temperature(phaseIdx);
     }
 
-    //! \copydoc Dumux::TwoPTwoCFluidState::phaseMassFraction()
+    //! \copydoc TwoPTwoCFluidState::phaseMassFraction()
     const Scalar phaseMassFraction(int phaseIdx) const
     {
         return fluidState_->phaseMassFraction(phaseIdx);

@@ -20,7 +20,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::H2ON2O2
+ * \brief @copybrief FluidSystems::H2ON2O2
  */
 #ifndef DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
@@ -66,8 +66,8 @@ namespace FluidSystems
  * is not necessary for non-tabularized ones.
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
+ * additional namespace FluidSystem::.
+ * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
 template <class Scalar, bool useComplexRelations = true>
@@ -80,7 +80,7 @@ class H2ON2O2
     typedef Dumux::IdealGas<Scalar> IdealGas;
     typedef Dumux::Constants<Scalar> Constants;
     typedef Dumux::H2O<Scalar> IapwsH2O;
-    typedef Dumux::TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
+    typedef TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
     typedef Dumux::N2<Scalar> SimpleN2;
     typedef Dumux::O2<Scalar> O2;
 
@@ -463,7 +463,7 @@ public:
         // other
         Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
         Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, N2Idx));
-        Scalar rho_gO2 = Dumux::O2<Scalar>::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, O2Idx));
+        Scalar rho_gO2 = O2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, O2Idx));
         return (rho_gH2O + rho_gN2 + rho_gO2 ) / std::max(1e-5, sumMoleFrac);
     }
 
@@ -565,8 +565,8 @@ public:
         {
             switch(compIdx){
             case H2OIdx: return H2O::vaporPressure(T)/p;
-            case N2Idx: return Dumux::BinaryCoeff::H2O_N2::henry(T)/p;
-            case O2Idx: return Dumux::BinaryCoeff::H2O_O2::henry(T)/p;
+            case N2Idx: return BinaryCoeff::H2O_N2::henry(T)/p;
+            case O2Idx: return BinaryCoeff::H2O_O2::henry(T)/p;
             };
         }
 
@@ -810,14 +810,14 @@ public:
             // assume an ideal gas for both components. See:
             //
             //http://en.wikipedia.org/wiki/Heat_capacity
-            Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
-            Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
+            Scalar c_vN2molar = Constants::R*2.39;
+            Scalar c_pN2molar = Constants::R + c_vN2molar;
 
-            Scalar c_vO2molar = Dumux::Constants<Scalar>::R*2.43;
-            Scalar c_pO2molar = Dumux::Constants<Scalar>::R + c_vO2molar;
+            Scalar c_vO2molar = Constants::R*2.43;
+            Scalar c_pO2molar = Constants::R + c_vO2molar;
 
-            Scalar c_vH2Omolar = Dumux::Constants<Scalar>::R*3.37; // <- correct??
-            Scalar c_pH2Omolar = Dumux::Constants<Scalar>::R + c_vH2Omolar;
+            Scalar c_vH2Omolar = Constants::R*3.37; // <- correct??
+            Scalar c_pH2Omolar = Constants::R + c_vH2Omolar;
 
             c_pN2 = c_pN2molar/molarMass(N2Idx);
             c_pO2 = c_pO2molar/molarMass(O2Idx);
@@ -840,7 +840,7 @@ public:
  * \brief A two-phase (water and air) fluid system
  *        with water, nitrogen and oxygen as components.
  *
- * This is an adapter to use Dumux::H2ON2O2<TypeTag>, as is
+ * This is an adapter to use H2ON2O2<TypeTag>, as is
  * done with most other classes in Dumux.
  */
 template<class TypeTag>

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::OneP
+ * \brief @copybrief FluidSystems::OneP
  */
 #ifndef DUMUX_1P_FLUIDSYSTEM_HH
 #define DUMUX_1P_FLUIDSYSTEM_HH
@@ -52,8 +52,8 @@ namespace FluidSystems {
  * \brief A fluid system for single phase models.
  *
  * The fluid is defined as a template parameter. For existing
- * components the Dumux::FluidSystems::LiquidPhase<Component> and
- * Dumux::FluidSystems::GasPhase<Component> may be used.
+ * components the FluidSystems::LiquidPhase<Component> and
+ * FluidSystems::GasPhase<Component> may be used.
  */
 template <class Scalar, class Fluid>
 class OneP
@@ -414,7 +414,7 @@ NEW_PROP_TAG(Fluid);
 /*!
  * \brief A pure single-phase fluid system.
  *
- * This is an adapter to use Dumux::TwoPImmiscible<TypeTag>, as is
+ * This is an adapter to use TwoPImmiscible<TypeTag>, as is
  * done with most other classes in Dumux and all template parameters
  * are usually defined in the property system anyhow.
  */

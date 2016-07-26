@@ -76,7 +76,7 @@ namespace Dumux
     // types for matrics, vectors and boundary conditions
     typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
     typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-        typedef std::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+        typedef std::array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
         typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     virtual ~LocalStiffness ()
@@ -256,7 +256,7 @@ namespace Dumux
     // types for matrics, vectors and boundary conditions
       typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
       typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-      typedef std::array<Dumux::BoundaryConditions::Flags,m> BCBlockType;    // componentwise boundary conditions
+      typedef std::array<BoundaryConditions::Flags,m> BCBlockType;    // componentwise boundary conditions
 
     /*! initialize local stiffness matrix */
       LinearLocalStiffness ()
