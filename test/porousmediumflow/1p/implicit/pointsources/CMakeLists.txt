@@ -4,21 +4,21 @@ add_dumux_test(test_cc1p_pointsources test_cc1p_pointsources test_cc1p_pointsour
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1psingularitycc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1psingularitycc-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1psingularitycc-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p_pointsources")
 
 add_dumux_test(test_cc1p_pointsources_timedependent test_cc1p_pointsources_timedependent test_cc1p_pointsources_timedependent.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1psingularitycctimedependent-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1psingularitycctimedependent-00004.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1psingularitycctimedependent-00003.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p_pointsources_timedependent -ParameterFile test_cc1p_pointsources.input -TimeManager.TEnd 4 -Problem.Name 1psingularitycctimedependent")
 
 add_dumux_test(test_box1p_pointsources test_box1p_pointsources test_box1p_pointsources.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1psingularitybox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1psingularitybox-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1psingularitybox-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p_pointsources")
 
 

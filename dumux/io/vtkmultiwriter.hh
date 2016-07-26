@@ -122,10 +122,7 @@ public:
             startMultiFile_(multiFileName_);
         }
 
-
         curWriter_ = std::make_shared<VtkWriter>(gridView_, Dune::VTK::conforming);
-        ++curWriterNum_;
-
         curTime_ = t;
         curOutFileName_ = fileName_();
     }
@@ -243,8 +240,8 @@ public:
     void endWrite(bool onlyDiscard = false)
     {
         if (!onlyDiscard) {
+            ++curWriterNum_;
             curWriter_->write(curOutFileName_.c_str(), OutputValue);
-
 
             // determine name to write into the multi-file for the
             // current time step
@@ -269,10 +266,7 @@ public:
                                << " file=\"" << fileName << "." << suffix << "\"/>\n";
                 }
             }
-
         }
-        else
-            -- curWriterNum_;
 
         // discard managed objects
         while (managedObjects_.begin() != managedObjects_.end()) {
