@@ -169,9 +169,8 @@ public:
                     for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        std::vector<IndexType> localScvIndices =
-                            {static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1,
-                                                                               isScvfLocalIdx, dim))};
+                        IndexType insideScvIdx = static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
+                        std::vector<IndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                         scvfs_[eIdx].emplace_back(geometryHelper,
                                                   intersection,
