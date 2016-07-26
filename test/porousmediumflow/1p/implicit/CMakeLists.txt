@@ -8,28 +8,28 @@ add_dumux_test(test_box1p test_box1p test_box1p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p")
 
 add_dumux_test(test_box1pwithamg test_box1pwithamg test_box1pwithamg.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestboxwithamg-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestboxwithamg-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pwithamg")
 
 add_dumux_test(test_cc1p test_cc1p test_cc1p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p")
 
 add_dumux_test(test_cc1pwithamg test_cc1pwithamg test_cc1pwithamg.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestccwithamg-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestccwithamg-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pwithamg")
 
 add_dumux_test(test_cc1pwithgstat test_cc1pwithgstat test_cc1pwithgstat.cc
@@ -40,7 +40,7 @@ add_dumux_test(test_box1pniconduction test_box1pniconduction test_box1pniconduct
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/box1pniconduction-00007.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/box1pniconduction-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pniconduction"
                  --zeroThreshold {"velocity":1e-8})
 
@@ -48,7 +48,7 @@ add_dumux_test(test_box1pniconvection test_box1pniconvection test_box1pniconvect
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/box1pniconvection-00011.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/box1pniconvection-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pniconvection"
                  --zeroThreshold {"velocity":1e-16})
 
@@ -56,7 +56,7 @@ add_dumux_test(test_cc1pniconduction test_cc1pniconduction test_cc1pniconduction
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconduction-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconduction-00007.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconduction-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconduction"
                  --zeroThreshold {"velocity":1e-8})
 
@@ -64,7 +64,7 @@ add_dumux_test(test_cc1pniconvection test_cc1pniconvection test_cc1pniconvection
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconvection-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconvection-00011.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconvection-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconvection")
 
 # dim < dimWorld tests with foamgrid
@@ -72,28 +72,28 @@ add_dumux_test(test_box1p1d3d test_box1p1d3d test_box1p1d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox1d3d-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox1d3d-00002.vtp
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox1d3d-00001.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p1d3d")
 
 add_dumux_test(test_box1p2d3d test_box1p2d3d test_box1p2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox2d3d-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox2d3d-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox2d3d-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p2d3d")
 
 add_dumux_test(test_cc1p1d3d test_cc1p1d3d test_cc1p1d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc1d3d-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc1d3d-00002.vtp
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc1d3d-00001.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p1d3d")
 
 add_dumux_test(test_cc1p2d3d test_cc1p2d3d test_cc1p2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc2d3d-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc2d3d-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc2d3d-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2d3d")
 
 

@@ -5,7 +5,7 @@ add_dumux_test(test_zeroeq2cni test_zeroeq2cni test_zeroeq2cni.cc
                   --script fuzzy
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_zeroeq2cni"
                   --files ${CMAKE_SOURCE_DIR}/test/references/zeroeq2cni-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/zeroeq2cni-00011.vtu)
+                          ${CMAKE_CURRENT_BINARY_DIR}/zeroeq2cni-00010.vtu)
 
 #install sources
 install(FILES
