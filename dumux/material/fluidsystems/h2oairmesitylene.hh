@@ -224,6 +224,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
+    using Base::density;
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
@@ -236,7 +237,6 @@ public:
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
-    using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState, int phaseIdx)
     {
@@ -276,13 +276,13 @@ public:
             NAPL::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
     }
 
+    using Base::viscosity;
     /*!
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      * \todo Check the parameter phiCAW for the mesitylene case and give a physical meaningful name
      */
-    using Base::viscosity;
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
                             int phaseIdx)
@@ -348,6 +348,7 @@ public:
     }
 
 
+    using Base::diffusionCoefficient;
     /*!
      * \brief Given all mole fractions, return the diffusion
      *        coefficent in \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
@@ -355,7 +356,6 @@ public:
      * \param phaseIdx The index of the phase
      * \param compIdx The index of the component
      */
-    using Base::diffusionCoefficient;
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
                                        int phaseIdx,
@@ -419,6 +419,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::binaryDiffusionCoefficient()");
     }
 
+    using Base::fugacityCoefficient;
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
@@ -432,7 +433,6 @@ public:
      * \param phaseIdx The index of the phase
      * \param compIdx The index of the component
      */
-    using Base::fugacityCoefficient;
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -474,7 +474,7 @@ public:
         return 1.0;
     }
 
-
+    using Base::enthalpy;
     /*!
      * \brief Given all mole fractions in a phase, return the specific
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
@@ -484,7 +484,6 @@ public:
      *  \note This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
-    using Base::enthalpy;
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
@@ -513,12 +512,12 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
+    using Base::heatCapacity;
     /*!
      * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
-    using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
@@ -526,12 +525,12 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::heatCapacity()");
     }
 
+    using Base::thermalConductivity;
     /*!
      * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      */
-    using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)

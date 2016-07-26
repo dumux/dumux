@@ -164,10 +164,10 @@ public:
     static Scalar density(Scalar temperature, Scalar pressure)
     {  return Component::liquidDensity(temperature, pressure); }
 
+    using Base::density;
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
      */
-    using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           const int phaseIdx)
@@ -188,10 +188,10 @@ public:
     static const Scalar enthalpy(Scalar temperature, Scalar pressure)
     {  return Component::liquidEnthalpy(temperature, pressure); }
 
+    using Base::enthalpy;
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
      */
-    using Base::enthalpy;
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            const int phaseIdx)
@@ -212,10 +212,10 @@ public:
     static Scalar viscosity(Scalar temperature, Scalar pressure)
     {  return Component::liquidViscosity(temperature, pressure); }
 
+    using Base::viscosity;
     /*!
      * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
      */
-    using Base::viscosity;
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
                             const int phaseIdx)
@@ -224,10 +224,10 @@ public:
                          fluidState.pressure(phaseIdx));
     }
 
+    using Base::fugacityCoefficient;
     /*!
      * \copydoc Base::fugacityCoefficient
      */
-    using Base::fugacityCoefficient;
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -245,10 +245,10 @@ public:
         return std::numeric_limits<Scalar>::infinity();
     }
 
+    using Base::diffusionCoefficient;
     /*!
      * \copydoc Base::diffusionCoefficient
      */
-    using Base::diffusionCoefficient;
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
                                        int phaseIdx,
@@ -257,10 +257,10 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Not applicable: Diffusion coefficients");
     }
 
+    using Base::binaryDiffusionCoefficient;
     /*!
      * \copydoc Base::binaryDiffusionCoefficient
      */
-    using Base::binaryDiffusionCoefficient;
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -277,10 +277,10 @@ public:
     static Scalar thermalConductivity(Scalar temperature, Scalar pressure)
     { return Component::liquidThermalConductivity(temperature, pressure); }
 
+    using Base::thermalConductivity;
     /*!
      * \brief Thermal conductivity of the fluid \f$\mathrm{[W/(m K)]}\f$.
      */
-    using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       const int phaseIdx)
@@ -295,10 +295,10 @@ public:
     static Scalar heatCapacity(Scalar temperature, Scalar pressure)
     { return Component::liquidHeatCapacity(temperature, pressure); }
 
+    using Base::heatCapacity;
     /*!
      * \brief Specific isobaric heat capacity of the fluid \f$\mathrm{[J/(kg K)]}\f$.
      */
-    using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                const int phaseIdx)

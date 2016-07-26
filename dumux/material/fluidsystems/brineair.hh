@@ -352,6 +352,7 @@ public:
         }
     }
 
+    using Base::density;
      /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
@@ -367,7 +368,6 @@ public:
      * - cited by: Bachu & Adams (2002)
      *   "Equations of State for basin geofluids" \cite adams2002
      */
-    using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           int phaseIdx)
@@ -392,6 +392,7 @@ public:
             }
       }
 
+    using Base::viscosity;
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
@@ -402,7 +403,6 @@ public:
      *       component is neglected. This contribution is probably not big, but somebody
      *       would have to find out its influence.
      */
-    using Base::viscosity;
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
                             int phaseIdx)
@@ -430,6 +430,7 @@ public:
         return result;
     }
 
+    using Base::fugacityCoefficient;
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
@@ -451,7 +452,6 @@ public:
      * inverse Henry constant for the solutes and the saturated vapor pressure
      * both divided by phase pressure.
      */
-    using Base::fugacityCoefficient;
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -491,6 +491,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
+    using Base::binaryDiffusionCoefficient;
     /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
@@ -501,7 +502,6 @@ public:
      * \param compIIdx The index of the first component to consider
      * \param compJIdx The index of the second component to consider
      */
-    using Base::binaryDiffusionCoefficient;
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -548,6 +548,7 @@ public:
         }
     }
 
+    using Base::enthalpy;
     /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
@@ -567,7 +568,6 @@ public:
      *       is neglected. This contribution is probably not big. Somebody would have to
      *       find out the enthalpy of solution for this system. ...
      */
-    using Base::enthalpy;
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
@@ -633,6 +633,7 @@ public:
     }
 
 
+    using Base::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState An abitrary fluid state
@@ -642,7 +643,6 @@ public:
      *       component is neglected. This contribution is probably not big, but somebody
      *       would have to find out its influence.
      */
-    using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
@@ -655,6 +655,7 @@ public:
                                                fluidState.pressure(phaseIdx));
     }
 
+    using Base::heatCapacity;
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
@@ -665,7 +666,6 @@ public:
      *       description of the influence of the composition on the phase property
      *       has to be found.
      */
-    using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
