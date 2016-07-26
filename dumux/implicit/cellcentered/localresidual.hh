@@ -89,7 +89,7 @@ protected:
                                   const FluxVariablesCache& fluxVarsCache)
     {
         if (!scvf.boundary() /*TODO: || GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
-            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, bcTypes[0], fluxVarsCache);
+            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
         else
             return PrimaryVariables(0.0);
 
@@ -98,17 +98,20 @@ protected:
     void evalBoundary_(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const ElementBoundaryTypes& bcTypes,
+                       const ElementBoundaryTypes& elemBcTypes,
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if (scvf.boundary())
-                this->residual_[0] += evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes[0], elemFluxVarsCache[scvf]);
+            {
+                auto bcTypes = this->problem().boundaryTypes(element, scvf);
+                this->residual_[0] += evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache[scvf]);
+            }
         }
 
         // additionally treat mixed D/N conditions in a strong sense
-        if (bcTypes.hasDirichlet())
+        if (elemBcTypes.hasDirichlet())
         {
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -201,7 +204,7 @@ protected:
         // temporary vector to store the Dirichlet boundary fluxes
         PrimaryVariables flux(0);
 
-        auto dirichletFlux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, bcTypes, fluxVarsCache);
+        auto dirichletFlux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
 
         // add fluxes to the residual
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

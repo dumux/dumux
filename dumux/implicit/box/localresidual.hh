@@ -87,7 +87,7 @@ protected:
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, bcTypes[insideScv.index()], elemFluxVarsCache[scvf]);
+                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache[scvf]);
 
                 this->residual_[insideScv.index()] += flux;
                 this->residual_[outsideScv.index()] -= flux;
@@ -119,10 +119,8 @@ protected:
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto scvBcTypes = bcTypes[scv.index()];
-                if (!scvBcTypes.hasDirichlet())
-                    continue;
-
-                this->asImp_().evalDirichlet_(element, fvGeometry, elemVolVars, scv, scvBcTypes);
+                if (scvBcTypes.hasDirichlet())
+                    this->asImp_().evalDirichlet_(element, fvGeometry, elemVolVars, scv, scvBcTypes);
             }
         }
     }

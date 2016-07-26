@@ -40,19 +40,21 @@ namespace Dumux
 template<class TypeTag>
 class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -70,8 +72,6 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
         nCompIdx = Indices::nCompIdx,
         gCompIdx = Indices::gCompIdx
     };
-
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
 
@@ -122,11 +122,17 @@ public:
      */
     PrimaryVariables computeFlux(const Element& element,
                                  const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const BoundaryTypes& bcTypes)
+                                 const FluxVariablesCache& fluxVarsCache)
     {
         FluxVariables fluxVars;
-        fluxVars.initAndComputeFluxes(this->problem(), element, fvGeometry, scvf);
+        fluxVars.initAndComputeFluxes(this->problem(),
+                                      element,
+                                      fvGeometry,
+                                      elemVolVars,
+                                      scvf,
+                                      fluxVarsCache);
 
         // get upwind weights into local scope
         auto massWeight = massWeight_;
