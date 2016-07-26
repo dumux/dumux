@@ -73,6 +73,14 @@ public:
         eIdx_ = globalFluxVarsCache().problem_().elementMapper().index(element);
     }
 
+    void bindScvf(const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const SubControlVolumeFace& scvf)
+    {
+        bindElement(element, fvGeometry, elemVolVars);
+    }
+
     // access operator
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return globalFluxVarsCache().get(eIdx_, scvf.index()); }
@@ -125,6 +133,15 @@ public:
         fluxVarsCache_.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
             (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, scvf);
+    }
+
+    void bindScvf(const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const SubControlVolumeFace& scvf)
+    {
+        fluxVarsCache_.resize(fvGeometry.numScvf());
+        (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, scvf);
     }
 
     // access operator

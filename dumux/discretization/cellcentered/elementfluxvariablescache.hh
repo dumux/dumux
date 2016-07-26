@@ -66,6 +66,12 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
+    // Specialization for the global caching being enabled - do nothing here
+    void bindScvf(const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const SubControlVolumeFace& scvf) {}
+
     // access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
@@ -163,6 +169,18 @@ public:
                 localScvfIdx++;
             }
         }
+    }
+
+    void bindScvf(const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const SubControlVolumeFace& scvf)
+    {
+        fluxVarsCache_.resize(1);
+        globalScvfIndices_.resize(1);
+
+        fluxVarsCache_[0].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+        globalScvfIndices_[0] = scvf.index();
     }
 
     // access operators in the case of no caching
