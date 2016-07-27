@@ -39,6 +39,7 @@ NEW_PROP_TAG(NumComponents);
  * \ingroup ImplicitModel
  * \brief the flux variables class
  *        specializations are provided for combinations of physical processes
+ * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
 class PorousMediumFluxVariables {};
@@ -114,11 +115,13 @@ class PorousMediumFluxVariables<TypeTag, true, true, false> : public FluxVariabl
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Stencil = std::vector<IndexType>;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     enum
     {
@@ -131,12 +134,52 @@ public:
     void initAndComputeFluxes(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const SubControlVolumeFace &scvFace)
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolumeFace &scvFace,
+                              const FluxVariablesCache& fluxVarsCache)
     {
-        ParentType::init(problem, element, fvGeometry, scvFace);
+        advFluxCached_.reset();
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+    }
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            advectiveFluxes_[phaseIdx] = AdvectionType::flux(problem, element, fvGeometry, scvFace, phaseIdx);
+    template<typename FunctionType>
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
+    {
+        if (!advFluxCached_[phaseIdx])
+        {
+
+            advPreFlux_[phaseIdx] = AdvectionType::flux(this->problem(),
+                                                        this->element(),
+                                                        this->fvGeometry(),
+                                                        this->elemVolVars(),
+                                                        this->scvFace(),
+                                                        phaseIdx,
+                                                        this->fluxVarsCache());
+            advFluxCached_.set(phaseIdx, true);
+        }
+
+
+
+        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
+        const auto& insideVolVars = this->elemVolVars()[insideScv];
+        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+
+        if (std::signbit(advPreFlux_[phaseIdx]))
+            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
+        else
+            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
+    }
+
+    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
+    {
+        Scalar flux = MolecularDiffusionType::flux(this->problem(),
+                                                   this->element(),
+                                                   this->fvGeometry(),
+                                                   this->elemVolVars(),
+                                                   this->scvFace(),
+                                                   phaseIdx, compIdx,
+                                                   this->fluxVarsCache());
+        return flux;
     }
 
     Stencil computeStencil(const Problem& problem,
@@ -154,197 +197,44 @@ public:
 
         return stencil;
     }
-
-    template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
-    {
-        const auto& insideVolVars = this->problem().model().curVolVars(this->scvFace().insideScvIdx());
-        const auto& outsideVolVars = this->problem().model().curVolVars(this->scvFace().outsideScvIdx());
-
-        if (std::signbit(advectiveFluxes_[phaseIdx]))
-            return advectiveFluxes_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
-        else
-            return advectiveFluxes_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
-    }
-
-    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
-    {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(),
-                                                   this->element(),
-                                                   this->fvGeometry(),
-                                                   this->scvFace(),
-                                                   phaseIdx, compIdx);
-        return flux;
-    }
-
 private:
-    // storage for calculated advective fluxes to not having to calculate them again
-    std::array<Scalar, numPhases> advectiveFluxes_;
+    //! simple caching if advection flux is used twice with different upwind function
+    std::bitset<numPhases> advFluxCached_;
+    std::array<Scalar, numPhases> advPreFlux_;
 };
-
-
-// specialization for pure molecularDiffusion_
-template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, false, true, false>
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-
-    enum
-    {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
-    };
-
-public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
-    {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                molecularDiffusion_.update(problem, scvf, phaseIdx, compIdx);
-    }
-
-    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
-    {
-        return molecularDiffusion_[phaseIdx][compIdx];
-    }
-
-    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
-    {
-        return molecularDiffusion_[phaseIdx][compIdx];
-    }
-
-private:
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> molecularDiffusion_;
-};
-
 
 // specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
 template<class TypeTag>
 class PorousMediumFluxVariables<TypeTag, true, false, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
+    enum
+    {
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+    };
+
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
-    {
-        advection_.update(problem, scvf);
-        heatConduction_.update(problem, scvf);
-    }
-
-    const AdvectionType& advection() const
-    {
-        return advection_;
-    }
-
-    AdvectionType& advection()
-    {
-        return advection_;
-    }
-
-    const HeatConductionType& heatConduction() const
-    {
-        return heatConduction_;
-    }
-
-    HeatConductionType& heatConduction()
-    {
-        return heatConduction_;
-    }
 
 private:
-    AdvectionType advection_;
-    HeatConductionType heatConduction_;
+    //! simple caching if advection flux is used twice with different upwind function
+    std::bitset<numPhases> advFluxCached_;
+    std::array<Scalar, numPhases> advPreFlux_;
 };
 
-
-// specialization for non-isothermal advection molecularDiffusion_ equations
+// specialization for non-isothermal advection and difussion equations (e.g. non-isothermal three-phase three-component flow)
 template<class TypeTag>
 class PorousMediumFluxVariables<TypeTag, true, true, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
-    enum
-    {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
-    };
-
-public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
-    {
-        advection_.update(problem, scvf);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                molecularDiffusion_.update(problem, scvf, phaseIdx, compIdx);
-        heatConduction_.update(problem, scvf);
-    }
-
-    const AdvectionType& advection() const
-    {
-        return advection_;
-    }
-
-    AdvectionType& advection()
-    {
-        return advection_;
-    }
-
-    const HeatConductionType& heatConduction() const
-    {
-        return heatConduction_;
-    }
-
-    HeatConductionType& heatConduction()
-    {
-        return heatConduction_;
-    }
-
-    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
-    {
-        return molecularDiffusion_[phaseIdx][compIdx];
-    }
-
-    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
-    {
-        return molecularDiffusion_[phaseIdx][compIdx];
-    }
-
-private:
-    AdvectionType advection_;
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> molecularDiffusion_;
-    HeatConductionType heatConduction_;
-};
-
-
-// specialization for non-isothermal molecularDiffusion_
-template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, false, true, true>
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum
     {
@@ -353,69 +243,11 @@ class PorousMediumFluxVariables<TypeTag, false, true, true>
     };
 
 public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
-    {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                molecularDiffusion_.update(problem, scvf, phaseIdx, compIdx);
-        heatConduction_.update(problem, scvf);
-    }
-
-    const HeatConductionType& heatConduction() const
-    {
-        return heatConduction_;
-    }
-
-    HeatConductionType& heatConduction()
-    {
-        return heatConduction_;
-    }
-
-    const MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx) const
-    {
-        return molecularDiffusion_[phaseIdx][compIdx];
-    }
-
-    MolecularDiffusionType& molecularDiffusion(const int phaseIdx, const int compIdx)
-    {
-        return molecularDiffusion_[phaseIdx][compIdx];
-    }
 
 private:
-    std::array< std::array<MolecularDiffusionType, numComponents>, numPhases> molecularDiffusion_;
-    HeatConductionType heatConduction_;
-};
-
-
-// specialization for pure heat conduction (e.g. the heat equation)
-template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, false, false, true>
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::set<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-
-public:
-    void update(const Problem& problem, const SubControlVolumeFace &scvf)
-    {
-        heatConduction_.update(problem, scvf);
-    }
-
-    const HeatConductionType& heatConduction() const
-    {
-        return heatConduction_;
-    }
-
-    HeatConductionType& heatConduction()
-    {
-        return heatConduction_;
-    }
-
-private:
-    HeatConductionType heatConduction_;
+    //! simple caching if advection flux is used twice with different upwind function
+    std::bitset<numPhases> advFluxCached_;
+    std::array<Scalar, numPhases> advPreFlux_;
 };
 
 } // end namespace

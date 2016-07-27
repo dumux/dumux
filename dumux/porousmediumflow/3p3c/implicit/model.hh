@@ -95,18 +95,16 @@ template<class TypeTag>
 class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     friend typename GET_PROP_TYPE(TypeTag, BaseModel);
-    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
         dim = GridView::dimension,
@@ -135,7 +133,7 @@ class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -144,15 +142,16 @@ public:
      * \brief One Newton iteration was finished.
      * \param uCurrent The solution after the current Newton iteration
      */
-    void newtonEndStep()
+    template<typename T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), void>::type
+    newtonEndStep()
     {
         // \todo resize volvars vector if grid was adapted
 
         // update the variable switch
-        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol(),
-                                             this->curVolVars_());
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
 
-        // update the secondary variables
+        // update the secondary variables if global caching is enabled
         // \note we only updated if phase presence changed as the volume variables
         //       are already updated once by the switch
         if (switchFlag_)
@@ -163,17 +162,15 @@ public:
                 auto fvGeometry = localView(this->globalFvGeometry());
                 fvGeometry.bindElement(element);
 
-                this->curVolVars_().bindElement(element, fvGeometry);
-
                 for (auto&& scv : scvs(fvGeometry))
                 {
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
-                        this->curVolVars_(dofIdxGlobal).update(this->curSol()[dofIdxGlobal],
-                                                               this->problem_(),
-                                                               element,
-                                                               scv);
+                        this->nonConstantCurGlobalVolVars()[dofIdxGlobal].update(this->curSol()[dofIdxGlobal],
+                                                                                 this->problem_(),
+                                                                                 element,
+                                                                                 scv);
                     }
                 }
 
@@ -182,6 +179,7 @@ public:
     }
 
     /*!
+<<<<<<< HEAD
      * \brief Compute the total storage inside one phase of all
      *        conservation quantities.
      *
@@ -206,6 +204,21 @@ public:
 
     /*!
      * \brief Called by the update() method if applying the newton
+=======
+     * \brief One Newton iteration was finished.
+     * \param uCurrent The solution after the current Newton iteration
+     */
+    template<typename T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), void>::type
+    newtonEndStep()
+    {
+        // update the variable switch
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
+    }
+
+    /*!
+     * \brief Called by the update() method if applying the Newton
+>>>>>>> 4257cd9... [3p3c] Adapt to local-global concept
      *        method was unsuccessful.
      */
     void updateFailed()
@@ -253,7 +266,7 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        using ScalarField = Dune::BlockVector<Dune::FieldVector<double, 1> >;
         // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // get the number of degrees of freedom
@@ -306,11 +319,12 @@ public:
             auto fvGeometry = localView(this->globalFvGeometry());
             fvGeometry.bindElement(element);
 
-            this->curVolVars_().bindElement(element, fvGeometry);
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                const auto& volVars = this->curVolVars(scv);
+                const auto& volVars = elemVolVars[scv];
                 int dofIdxGlobal = scv.dofIndex();
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)

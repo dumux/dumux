@@ -126,7 +126,7 @@ public:
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(problem.model().curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry);
+            elemVolVars.bindElement(element, fvGeometry, problem.model().curSol());
 
             for (auto&& scv : scvs(fvGeometry))
             {
