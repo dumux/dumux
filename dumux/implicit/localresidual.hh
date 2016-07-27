@@ -230,7 +230,7 @@ public:
         PrimaryVariables source(0);
 
         // add contributions from volume flux sources
-        source += this->problem().source(element, scv);
+        source += this->problem().source(element, fvGeometry, elemVolVars, scv);
 
         // add contribution from possible point sources
         source += this->problem().scvPointSources(element, fvGeometry, elemVolVars, scv);

@@ -313,8 +313,8 @@ public:
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
      * \param elemVolVars All volume variables for the element
+     * \param scv The subcontrolvolume
      *
      * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
@@ -322,6 +322,8 @@ public:
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
