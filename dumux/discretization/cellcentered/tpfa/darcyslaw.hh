@@ -78,7 +78,7 @@ public:
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
-                       const IndexType phaseIdx,
+                       int phaseIdx,
                        const FluxVarsCache& fluxVarsCache)
     {
         const auto& tij = fluxVarsCache.tij();
