@@ -50,44 +50,46 @@ NEW_PROP_TAG(EffectiveDiffusivityModel);
 template <class TypeTag>
 class FicksLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffDiffModel;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::IndexSet::IndexType IndexType;
-    typedef typename std::vector<IndexType> Stencil;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = typename std::vector<IndexType>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
-                       const int phaseIdx,
-                       const int compIdx)
+                       int phaseIdx, int compIdx,
+                       const FluxVarsCache& fluxVarsCache)
     {
         // diffusion tensors are always solution dependent
-        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, scvFace, phaseIdx, compIdx);
+        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvFace, phaseIdx, compIdx);
 
         // Get the inside volume variables
         const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
-        const auto& insideVolVars = problem.model().curVolVars(insideScv);
+        const auto& insideVolVars = elemVolVars[insideScv];
 
         // and the outside volume variables
-        const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
+        const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
 
         // compute the diffusive flux
         const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
@@ -103,7 +105,6 @@ public:
                            const SubControlVolumeFace& scvFace)
     {
         std::vector<IndexType> stencil;
-        stencil.clear();
         if (!scvFace.boundary())
         {
             stencil.push_back(scvFace.insideScvIdx());
@@ -121,6 +122,7 @@ private:
     static Scalar calculateTransmissibility_(const Problem& problem,
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
                                              const SubControlVolumeFace& scvFace,
                                              const int phaseIdx, const int compIdx)
     {
@@ -128,7 +130,7 @@ private:
 
         const auto insideScvIdx = scvFace.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
-        const auto& insideVolVars = problem.model().curVolVars(insideScvIdx);
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
 
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
@@ -138,7 +140,7 @@ private:
         {
             const auto outsideScvIdx = scvFace.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-            const auto& outsideVolVars = problem.model().curVolVars(outsideScvIdx);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
             auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
             outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
@@ -154,7 +156,11 @@ private:
         return tij;
     }
 
-    static Scalar calculateOmega_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace, const DimWorldMatrix &D, const SubControlVolume &scv)
+    static Scalar calculateOmega_(const Problem& problem,
+                                  const Element& element,
+                                  const SubControlVolumeFace& scvFace,
+                                  const DimWorldMatrix &D,
+                                  const SubControlVolume &scv)
     {
         GlobalPosition Dnormal;
         D.mv(scvFace.unitOuterNormal(), Dnormal);
@@ -169,7 +175,11 @@ private:
         return omega;
     }
 
-    static Scalar calculateOmega_(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace, Scalar D, const SubControlVolume &scv)
+    static Scalar calculateOmega_(const Problem& problem,
+                                  const Element& element,
+                                  const SubControlVolumeFace& scvFace,
+                                  Scalar D,
+                                  const SubControlVolume &scv)
     {
         auto distanceVector = scvFace.center();
         distanceVector -= scv.center();
