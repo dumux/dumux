@@ -81,31 +81,6 @@ class TwoPNCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 
 public:
     /*!
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param fIdx The local index of the sub-control-volume face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    TwoPNCFluxVariables(const Problem &problem,
-                     const Element &element,
-                     const FVElementGeometry &fvGeometry,
-                     const int fIdx,
-                     const ElementVolumeVariables &elemVolVars,
-                     const bool onBoundary = false)
-    : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    TwoPNCFluxVariables() = default;
-
-    /*!
      * \brief Compute / update the flux variables
      *
      * \param problem The problem
@@ -181,23 +156,6 @@ protected:
         }
     }
 
-    DUNE_DEPRECATED_MSG("This method will be removed without replacement!")
-    Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementVolumeVariables &vDat)
-    {
-
-        static const Scalar eps = 1e-2;
-        const Scalar sat = vDat[scvIdx].density(phaseIdx);
-        if (sat > eps)
-            return 0.5;
-        if (sat <= 0)
-            return 0;
-
-        static const Spline<Scalar> sp(0, eps, // x0, x1
-                                              0, 0.5, // y0, y1
-                                              0, 0); // m0, m1
-        return sp.eval(sat);
-    }
-
     void calculatePorousDiffCoeff_(const Problem &problem,
                                    const Element &element,
                                    const ElementVolumeVariables &elemVolVars)
@@ -246,21 +204,7 @@ protected:
         }
     }
 
-    DUNE_DEPRECATED_MSG("Use calculatePorousDiffCoeff_ (captial P)")
-    void calculateporousDiffCoeff_(const Problem &problem,
-                                   const Element &element,
-                                   const ElementVolumeVariables &elemVolVars)
-    { calculatePorousDiffCoeff_(problem, element, elemVolVars); }
-
 public:
-    DUNE_DEPRECATED_MSG("Use darcy flux variables interface.")
-    Scalar KmvpNormal(int phaseIdx) const
-    { return this->kGradPNormal_[phaseIdx]; }
-
-    DUNE_DEPRECATED_MSG("Will be removed without replacement. Use darcy flux variables interface.")
-    GlobalPosition Kmvp(int phaseIdx) const
-    { return this->kGradP_[phaseIdx]; }
-
     /*!
      * \brief The binary diffusion coefficient for each fluid phase.
      *
@@ -287,26 +231,6 @@ public:
      */
     Scalar molarDensity(int phaseIdx) const
     { return molarDensity_[phaseIdx]; }
-
-    /*!
-     * \brief The concentration gradient of a component in a phase.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
-    DUNE_DEPRECATED_MSG("Use concentrationGrad!")
-    const GlobalPosition &massFractionGrad(int phaseIdx, int compIdx) const
-    { return massFractionGrad_[phaseIdx][compIdx]; }
-
-    /*!
-     * \brief The molar concentration gradient of a component in a phase.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
-    DUNE_DEPRECATED_MSG("Use concentrationGrad!")
-    const GlobalPosition &moleFractionGrad(int phaseIdx, int compIdx) const
-    { return moleFractionGrad_[phaseIdx][compIdx]; }
 
     /*!
      * \brief The concentration gradient of a component in a phase.

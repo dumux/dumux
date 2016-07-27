@@ -44,46 +44,8 @@ class RichardsFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
     friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
     typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
     enum { nPhaseIdx = Indices::nPhaseIdx} ;
-
-
-
-public:
-    /*
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     * are calculated for interior SCV faces or boundary faces, default=false
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    RichardsFluxVariables(const Problem &problem,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const int fIdx,
-                 const ElementVolumeVariables &elemVolVars,
-                 const bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    RichardsFluxVariables() = default;
 
 public:
     /*!
@@ -105,10 +67,8 @@ public:
       else
           return ParentType::volumeFlux(phaseIdx);
     }
-
-
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

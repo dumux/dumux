@@ -69,32 +69,6 @@ class TwoPDFMFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 
 public:
     /*!
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param fIdx The local index of the SCV (sub-control-volume) face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     * are calculated for interior SCV faces or boundary faces, default=false
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    TwoPDFMFluxVariables(const Problem &problem,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 int fIdx,
-                 const ElementVolumeVariables &elemVolVars,
-                 const bool onBoundary = false)
-        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    TwoPDFMFluxVariables() = default;
-
-    /*!
      * \brief Compute / update the flux variables
      *
      * \param problem The problem
