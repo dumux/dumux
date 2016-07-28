@@ -37,6 +37,7 @@
 #include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/discretization/box/stencils.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
+#include <dumux/discretization/methods.hh>
 
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
@@ -56,7 +57,10 @@ template<class TypeTag> class BoxStencilsVector;
 
 namespace Properties {
 //! Set the corresponding discretization method property
-SET_INT_PROP(BoxModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::Box);
+SET_PROP(BoxModel, DiscretizationMethod)
+{
+    static const DiscretizationMethods value = DiscretizationMethods::Box;
+};
 
 //! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(BoxModel, GlobalFVGeometry, BoxGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);

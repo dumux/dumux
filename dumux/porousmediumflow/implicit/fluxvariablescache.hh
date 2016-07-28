@@ -25,21 +25,26 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
+// forward declaration
+template<class TypeTag, DiscretizationMethods Method>
+class PorousMediumFluxVariablesCacheImplementation
+{};
 
 /*!
  * \ingroup ImplicitModel
  * \brief The flux variables cache classes for porous media.
  *        Store flux stencils and data required for flux calculation
  */
-template<class TypeTag, typename DiscretizationMethod = void>
-class PorousMediumFluxVariablesCache {};
+template<class TypeTag>
+using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
 // specialization for the Box Method
 template<class TypeTag>
-class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::Box>::type >
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -107,7 +112,7 @@ private:
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCache<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

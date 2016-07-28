@@ -30,7 +30,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/implicit/properties.hh>
-
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -48,7 +48,7 @@ NEW_PROP_TAG(EffectiveDiffusivityModel);
  * \brief Specialization of Fick's Law for the CCTpfa method.
  */
 template <class TypeTag>
-class FicksLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
+class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

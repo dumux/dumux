@@ -33,6 +33,7 @@
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -41,7 +42,10 @@ template<class TypeTag> class CCElementBoundaryTypes;
 
 namespace Properties {
 //! Set the corresponding discretization method property
-SET_INT_PROP(CCTpfaModel, DiscretizationMethod, GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa);
+SET_PROP(CCTpfaModel, DiscretizationMethod)
+{
+    static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
+};
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(CCTpfaModel, GlobalFVGeometry, CCTpfaGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);

@@ -27,6 +27,10 @@
 
 namespace Dumux
 {
+// forward declaration
+template <class TypeTag, int Method>
+class DarcysLawImplementation
+{};
 
 /*!
  * \ingroup DarcysLaw
@@ -35,9 +39,8 @@ namespace Dumux
  * for the different discretization methods. These specializations
  * are found in the headers included below.
  */
-template <class TypeTag, typename DiscretizationMethod = void>
-class DarcysLaw
-{};
+template <class TypeTag>
+using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
 } // end namespace
 

@@ -58,20 +58,6 @@ namespace Properties {
 // Some defaults for very fundamental properties
 //////////////////////////////////////////////////////////////////
 
-//! All the available discretization methods
-SET_PROP(ImplicitBase, DiscretizationMethods)
-{
-    // Box-Method
-    static const int Box = 0;
-    // CC-Tpfa Method
-    static const int CCTpfa = 1;
-    // TODO: implement the other methods
-    // CC-NLTPFA?
-    // static const int CCNlTpfa = 2;
-    // CC-MPFA
-    // static const int CCMpfa = 3;
-};
-
 //! Set the default type for the time manager
 SET_TYPE_PROP(ImplicitBase, TimeManager, TimeManager<TypeTag>);
 

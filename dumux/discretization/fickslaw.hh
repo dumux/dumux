@@ -24,15 +24,21 @@
 #ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_FICKS_LAW_HH
 
+#include <dumux/discretization/methods.hh>
+
 namespace Dumux
 {
+// forward declaration
+template <class TypeTag, DiscretizationMethods Method>
+class FicksLawImplementation
+{};
+
 /*!
  * \ingroup CCTpfaFicksLaw
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
-template <class TypeTag, typename DiscretizationMethod = void>
-class FicksLaw
-{};
+template <class TypeTag>
+using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
 } // end namespace
 

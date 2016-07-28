@@ -33,8 +33,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/implicit/properties.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -50,7 +49,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
  * \brief Specialization of Darcy's Law for the CCTpfa method.
  */
 template <class TypeTag>
-class DarcysLaw<TypeTag, typename std::enable_if<GET_PROP_VALUE(TypeTag, DiscretizationMethod) == GET_PROP(TypeTag, DiscretizationMethods)::CCTpfa>::type >
+class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
