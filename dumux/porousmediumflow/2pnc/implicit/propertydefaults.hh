@@ -30,12 +30,14 @@
 
 #include "indices.hh"
 #include "model.hh"
-#include "fluxvariables.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
+#include "primaryvariableswitch.hh"
 
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -140,7 +142,16 @@ public:
 };
 
 //! Use the 2pnc local residual
-SET_TYPE_PROP(TwoPNC, LocalResidual, TwoPNCLocalResidual<TypeTag>);
+SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+
+//! Enable advection
+SET_BOOL_PROP(TwoPNC, EnableAdvection, true);
+
+//! Enable molecular diffusion
+SET_BOOL_PROP(TwoPNC, EnableMolecularDiffusion, true);
+
+//! Isothermal model by default
+SET_BOOL_PROP(TwoPNC, EnableEnergyBalance, false);
 
 //! Use the 2pnc newton controller
 SET_TYPE_PROP(TwoPNC, NewtonController, TwoPNCNewtonController<TypeTag>);
@@ -148,14 +159,11 @@ SET_TYPE_PROP(TwoPNC, NewtonController, TwoPNCNewtonController<TypeTag>);
 //! the Model property
 SET_TYPE_PROP(TwoPNC, Model, TwoPNCModel<TypeTag>);
 
+//! The primary variable switch for the 2pnc model
+SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);
+
 //! the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(TwoPNC, FluxVariables, TwoPNCFluxVariables<TypeTag>);
-
-//! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(TwoPNC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(TwoPNC, ImplicitMassUpwindWeight, 1.0);
@@ -168,6 +176,14 @@ SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
 
 //! Use the ImplicitSpatialParams by default
 SET_TYPE_PROP(TwoPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+SET_PROP(TwoPNC, EffectiveDiffusivityModel)
+{
+private :
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+ public:
+    using type = DiffusivityMillingtonQuirk<Scalar>;
+};
 
 //! Enable gravity by default
 SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
@@ -195,14 +211,11 @@ SET_BOOL_PROP(TwoPNCNI, NiOutputLevel, 0);
 // set isothermal Model
 SET_TYPE_PROP(TwoPNCNI, IsothermalModel, TwoPNCModel<TypeTag>);
 
-// set isothermal FluxVariables
-SET_TYPE_PROP(TwoPNCNI, IsothermalFluxVariables, TwoPNCFluxVariables<TypeTag>);
-
 //set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, TwoPNCLocalResidual<TypeTag>);
+SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(TwoPNCNI, IsothermalIndices, TwoPNCIndices<TypeTag, /*PVOffset=*/0>);
