@@ -52,21 +52,21 @@ NEW_PROP_TAG(SpatialParamsForchCoeff);
 template<class TypeTag>
 class ImplicitSpatialParamsOneP
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     enum { dimWorld = GridView::dimensionworld };
     enum { dim = GridView::dimension};
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using CoordScalar = typename GridView::ctype;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
     ImplicitSpatialParamsOneP(const Problem& problem, const GridView &gridView)
@@ -110,10 +110,20 @@ public:
 
     /*!
      * \brief Function for defining the intrinsic (absolute) permeability.
+     *        That is possibly solution dependent.
      *
-     * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
+     * \return the intrinsic permeability
+     */
+    const DimWorldMatrix intrinsicPermeability (const SubControlVolume &scv,
+                                                const VolumeVariables &volVars) const
+    {
+        return asImp_().intrinsicPermeability(scv);
+    }
+
+    /*!
+     * \brief Function for defining the intrinsic (absolute) permeability.
+     *        That is possibly solution dependent.
+     *
      * \return the intrinsic permeability
      */
     const DimWorldMatrix intrinsicPermeability (const SubControlVolume &scv) const

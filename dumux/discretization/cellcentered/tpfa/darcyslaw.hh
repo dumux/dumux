@@ -154,7 +154,8 @@ public:
 
         const auto insideScvIdx = scvFace.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
-        const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv);
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
         Scalar ti = calculateOmega_(problem, scvFace, insideK, element, insideScv);
 
         if (!scvFace.boundary())
@@ -164,7 +165,8 @@ public:
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
-            const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv, outsideVolVars);
             Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideElement, outsideScv);
 
             tij = scvFace.area()*(ti * tj)/(ti + tj);
