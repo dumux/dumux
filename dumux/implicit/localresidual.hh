@@ -132,7 +132,7 @@ public:
     {
         // make sure FVElementGeometry and volume variables are bound to the element
         auto fvGeometry = localView(problem().model().globalFvGeometry());
-        fvGeometry.bind(element);
+        fvGeometry.bindElement(element);
 
         auto curElemVolVars = localView(problem().model().curGlobalVolVars());
         curElemVolVars.bindElement(element, fvGeometry, problem().model().curSol());
@@ -140,7 +140,7 @@ public:
         auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
 
-        asImp_().evalStorage_(fvGeometry, curElemVolVars, prevElemVolVars);
+        asImp_().evalStorage_(fvGeometry, prevElemVolVars, curElemVolVars);
     }
 
     // !
