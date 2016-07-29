@@ -50,13 +50,22 @@ public:
     : ParentType(), geometry_(std::move(geometry)), elementIndex_(elementIndex) {}
 
     //! The copy constrcutor
-    CCSubControlVolume(const CCSubControlVolume& other) = delete;
+    CCSubControlVolume(const CCSubControlVolume& other) = default;
 
     //! The move constrcutor
     CCSubControlVolume(CCSubControlVolume&& other) = default;
 
     //! The copy assignment operator
-    CCSubControlVolume& operator=(const CCSubControlVolume& other) = delete;
+    CCSubControlVolume& operator=(const CCSubControlVolume& other)
+    {
+        // We want to use the default copy/move assignment.
+        // But since geometry is not copy assignable :( we
+        // have to construct it again
+        geometry_.release();
+        geometry_.emplace(other.geometry_.value());
+        elementIndex_ = other.elementIndex_;
+        return *this;
+    }
 
     //! The move assignment operator
     CCSubControlVolume& operator=(CCSubControlVolume&& other)
