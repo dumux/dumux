@@ -45,16 +45,16 @@ public:
      * \param spatialParams spatial parameters
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scvIdx scvIdx (to be passed to spatialParams)
+     * \param scv scv (to be passed to spatialParams)
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               int scvIdx)
+                                               const SubControlVolume& scv)
     {
         //Get the thermal conductivities and the porosity from the volume variables
         Scalar lambdaW = volVars.fluidThermalConductivity(0);
