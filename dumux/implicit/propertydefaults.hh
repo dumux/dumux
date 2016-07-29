@@ -98,15 +98,7 @@ SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
 //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
 //! by default, we set the flux variables to ones for porous media
-SET_PROP(ImplicitBase, FluxVariables)
-{
-private:
-    static constexpr bool advection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static constexpr bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static constexpr bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
-public:
-    typedef PorousMediumFluxVariables<TypeTag, advection, diffusion, energy> type;
-};
+SET_TYPE_PROP(ImplicitBase, FluxVariables, PorousMediumFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for porous media
 SET_TYPE_PROP(ImplicitBase, FluxVariablesCache, PorousMediumFluxVariablesCache<TypeTag>);
@@ -199,6 +191,7 @@ SET_TYPE_PROP(ImplicitBase, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
 
 } // namespace Properties
+
 } // namespace Dumux
 
 #endif

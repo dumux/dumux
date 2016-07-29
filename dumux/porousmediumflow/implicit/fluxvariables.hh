@@ -33,24 +33,33 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(EnableAdvection);
+NEW_PROP_TAG(EnableMolecularDiffusion);
+NEW_PROP_TAG(EnableEnergyBalance);
 }
+
+// forward declaration
+template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
+class PorousMediumFluxVariablesImpl;
 
 /*!
  * \ingroup ImplicitModel
- * \brief the flux variables class
+ * \brief The flux variables class
  *        specializations are provided for combinations of physical processes
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
-class PorousMediumFluxVariables {};
+template<class TypeTag>
+using PorousMediumFluxVariables = PorousMediumFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
+                                                                         GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
+                                                                         GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 
 // specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
 template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, true, false, false>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, false, false>
+: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, false>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, false>>;
+    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -107,10 +116,10 @@ public:
 
 // specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, true, true, false>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, true, false>
+: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, false>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, false>>;
+    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, false>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -203,10 +212,10 @@ private:
 
 // specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
 template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, true, false, true>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, true>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, false, true>
+: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, true>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, false, true>>;
+    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, true>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -299,10 +308,10 @@ private:
 
 // specialization for non-isothermal advection and difussion equations (e.g. non-isothermal three-phase three-component flow)
 template<class TypeTag>
-class PorousMediumFluxVariables<TypeTag, true, true, true>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, true>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, true, true>
+: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, true>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag, true, true, true>>;
+    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, true>>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
