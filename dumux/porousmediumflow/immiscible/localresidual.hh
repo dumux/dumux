@@ -38,6 +38,7 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -62,6 +63,7 @@ public:
      * \brief Constructor. Gets the upwind weight.
      */
     ImmiscibleLocalResidual()
+    : ParentType()
     {
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
