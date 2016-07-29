@@ -24,7 +24,7 @@
 #ifndef DIFFUSIVITY_MILLINGTON_QUIRK_HH
 #define DIFFUSIVITY_MILLINGTON_QUIRK_HH
 
-#include <algorithm>
+#include <cmath>
 
 namespace Dumux
 {
@@ -61,10 +61,12 @@ public:
                                        const Scalar diffCoeff)
 
     {
-        Scalar tau = 1.0/(porosity * porosity) *
-                     std::pow(porosity * saturation, 7.0/3);
+        // instead of D_eff,pm = phi * Sw * 1/phi^2 * (phi * Sw)^(7/3) * D
+        // we calculate the more efficient
+        // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
 
-        return porosity * saturation * tau * diffCoeff;
+        return porosity * (saturation * saturation * saturation)
+               * cbrt(porosity * saturation) * diffCoeff;
     }
 };
 }
