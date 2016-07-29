@@ -37,10 +37,12 @@
 
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/localresidual.hh>
 
 #include <dumux/discretization/volumevariables.hh>
 #include <dumux/discretization/darcyslaw.hh>
 #include <dumux/discretization/fickslaw.hh>
+#include <dumux/discretization/fourierslaw.hh>
 
 #include "properties.hh"
 #include "model.hh"
@@ -103,20 +105,20 @@ private:
     static constexpr bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
     static constexpr bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
 public:
-    typedef Dumux::PorousMediumFluxVariables<TypeTag, advection, diffusion, energy> type;
+    typedef PorousMediumFluxVariables<TypeTag, advection, diffusion, energy> type;
 };
 
 //! The flux variables cache class, by default the one for porous media
-SET_TYPE_PROP(ImplicitBase, FluxVariablesCache, Dumux::PorousMediumFluxVariablesCache<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, FluxVariablesCache, PorousMediumFluxVariablesCache<TypeTag>);
 
-//! We use darcys law as the default for the advective flux calculation
-SET_TYPE_PROP(ImplicitBase, AdvectionType, Dumux::DarcysLaw<TypeTag>);
+//! We use darcy's law as the default for the advective fluxes
+SET_TYPE_PROP(ImplicitBase, AdvectionType, DarcysLaw<TypeTag>);
 
-//! We use darcys law as the default for the deffusive flux calculation
-SET_TYPE_PROP(ImplicitBase, MolecularDiffusionType, Dumux::FicksLaw<TypeTag>);
+//! We use fick's law as the default for the diffusive fluxes
+SET_TYPE_PROP(ImplicitBase, MolecularDiffusionType, FicksLaw<TypeTag>);
 
-//! TODO: IMPLEMENT The energy flux çalculation law
-//SET_TYPE_PROP(ImplicitBase, HeatConductionType, FouriersLaw<TypeTag>);
+//! We use fourier's law as the default for heat conduction fluxes
+SET_TYPE_PROP(ImplicitBase, HeatConductionType, FouriersLaw<TypeTag>);
 
 //! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,
@@ -164,11 +166,11 @@ SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);
 SET_PROP(ImplicitBase, JacobianMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
+    using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
 public:
-    typedef typename Dune::BCRSMatrix<MatrixBlock> type;
+    using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
 
 //! use the stabilized BiCG solver preconditioned by the ILU-0 by default
@@ -189,6 +191,12 @@ SET_INT_PROP(ImplicitBase, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq)
 
 //! set number of maximum timestep divisions to 10
 SET_INT_PROP(ImplicitBase, ImplicitMaxTimeStepDivisions, 10);
+
+//! Per default we have assume isothermal problems. Set this to true to solve an energy equation
+SET_BOOL_PROP(ImplicitBase, EnableEnergyBalance, false);
+
+SET_TYPE_PROP(ImplicitBase, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
+
 
 } // namespace Properties
 } // namespace Dumux

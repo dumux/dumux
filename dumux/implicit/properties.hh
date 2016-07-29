@@ -55,6 +55,7 @@ NEW_PROP_TAG(BaseModel); //!< The type of the base class of the model
 NEW_PROP_TAG(NumEq); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG(BaseLocalResidual); //!< The type of the base class of the local residual
 NEW_PROP_TAG(LocalResidual); //!< The type of the local residual function
+NEW_PROP_TAG(EnergyLocalResidual); //! The local residual of the energy equation
 NEW_PROP_TAG(LocalJacobian); //!< The type of the local jacobian operator
 
 NEW_PROP_TAG(SubControlVolume);//!< The type of the sub control volume
@@ -92,6 +93,7 @@ NEW_PROP_TAG(AdvectionType); //! The type for the calculation the advective flux
 NEW_PROP_TAG(EnableMolecularDiffusion); //! specifies if molecular diffusive fluxes are considered in the model
 NEW_PROP_TAG(MolecularDiffusionType); //! The type for the calculation of the molecular diffusion fluxes
 NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy equation
+
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
 
 // stencils

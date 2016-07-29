@@ -49,7 +49,7 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
@@ -90,7 +90,13 @@ public:
             storage[eqIdx] = volVars.porosity()
                              * volVars.density(phaseIdx)
                              * volVars.saturation(phaseIdx);
+
+            //! The energy storage in the fluid phase with index phaseIdx
+            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
         }
+
+        //! The energy storage in the solid matrix
+        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
     }
@@ -127,7 +133,14 @@ public:
 
             auto eqIdx = conti0EqIdx + phaseIdx;
             flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindRule);
+
+            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
         }
+
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+
         return flux;
     }
 

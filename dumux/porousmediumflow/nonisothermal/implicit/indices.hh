@@ -21,8 +21,8 @@
  * \file
  * \brief Defines the indices used by the non-isothermal two-phase two-component model
  */
-#ifndef DUMUX_NI_INDICES_HH
-#define DUMUX_NI_INDICES_HH
+#ifndef DUMUX_ENERGY_INDICES_HH
+#define DUMUX_ENERGY_INDICES_HH
 
 #include "properties.hh"
 
@@ -37,18 +37,15 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-class NIIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
+class EnergyIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
 {
-
 public:
-
-
-        static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
-        static const int temperatureIdx = PVOffset + numEq -1; //! The index for temperature in primary variable vectors.
-        static const int energyEqIdx = PVOffset + numEq -1; //! The index for energy in equation vectors.
-
+    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static const int temperatureIdx = PVOffset + numEq -1; //! The index for temperature in primary variable vectors.
+    static const int energyEqIdx = PVOffset + numEq -1; //! The index for energy in equation vectors.
 
 };
 
-}
+} // end namespace Dumux
+
 #endif

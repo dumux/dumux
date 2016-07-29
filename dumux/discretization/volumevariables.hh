@@ -25,29 +25,43 @@
 #define DUMUX_DISCRETIZATION_VOLUME_VARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
 {
 
+namespace Properties
+{
+NEW_PROP_TAG(FluidSystem);
+NEW_PROP_TAG(Indices);
+}
+
+// forward declaration
+template <class TypeTag, bool enableEnergyBalance>
+class ImplicitVolumeVariablesImplementation;
+
 /*!
  * \ingroup ImplicitVolumeVariables
  * \brief Base class for the model specific class which provides
- *        access to all volume averaged quantities.
+ *        access to all volume averaged quantities. The volume variables base class
+ *        is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-class ImplicitVolumeVariables
-{
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
+using ImplicitVolumeVariables = ImplicitVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+/*!
+ * \ingroup ImplicitVolumeVariables
+ * \brief The isothermal base class
+ */
+template<class TypeTag>
+class ImplicitVolumeVariablesImplementation<TypeTag, false>
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
 public:
 
@@ -72,7 +86,6 @@ public:
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        Valgrind::CheckDefined(priVars);
         priVars_ = priVars;
         extrusionFactor_ = problem.boxExtrusionFactor(element, scv);
     }
@@ -89,9 +102,7 @@ public:
      * \param pvIdx The index of the primary variable of interest
      */
     Scalar priVar(const int pvIdx) const
-    {
-        return priVars_[pvIdx];
-    }
+    { return priVars_[pvIdx]; }
 
     /*!
      * \brief Return how much the sub-control volume is extruded.
@@ -105,15 +116,135 @@ public:
     Scalar extrusionFactor() const
     { return extrusionFactor_; }
 
-    /*!
-     * \brief If running in valgrind this makes sure that all
-     *        quantities in the volume variables are defined.
-     */
-    void checkDefined() const
+    //! The temperature is obtained from the problem as a constant for isothermal models
+    static Scalar temperature(const PrimaryVariables &priVars,
+                              const Problem& problem,
+                              const Element &element,
+                              const SubControlVolume &scv)
     {
-#if !defined NDEBUG && HAVE_VALGRIND
-        Valgrind::CheckDefined(priVars_);
-#endif
+        return problem.temperatureAtPos(scv.dofPosition());
+    }
+
+    //! The phase enthalpy is zero for isothermal models
+    //! This is needed for completing the fluid state
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy(const FluidState& fluidState,
+                           const ParameterCache& paramCache,
+                           const int phaseIdx)
+    {
+        return 0;
+    }
+
+private:
+    PrimaryVariables priVars_;
+    Scalar extrusionFactor_;
+};
+
+//! The non-isothermal implicit volume variables base class
+template <class TypeTag>
+class ImplicitVolumeVariablesImplementation<TypeTag, true>
+: public ImplicitVolumeVariablesImplementation<TypeTag, false>
+{
+    using ParentType = ImplicitVolumeVariablesImplementation<TypeTag, false>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    enum { temperatureIdx = Indices::temperatureIdx };
+
+public:
+
+    /*!
+     * \brief Update all quantities for a given control volume
+     *
+     * \param priVars A vector containing the primary variables for the control volume
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param fvGeometry The finite volume geometry for the element
+     * \param scvIdx Local index of the sub control volume which is inside the element
+     */
+    void update(const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element &element,
+                const SubControlVolume &scv)
+    {
+        ParentType::update(priVars, problem, element, scv);
+
+        solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, scv);
+        solidDensity_ = problem.spatialParams().solidDensity(element, scv);
+        solidThermalConductivity_ = problem.spatialParams().solidThermalConductivity(element, scv);
+    }
+
+    /*!
+     * \brief Returns the total internal energy of a phase in the
+     *        sub-control volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar internalEnergy(const int phaseIdx) const
+    { return asImp_().fluidState().internalEnergy(phaseIdx); }
+
+    /*!
+     * \brief Returns the total enthalpy of a phase in the sub-control
+     *        volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar enthalpy(const int phaseIdx) const
+    { return asImp_().fluidState().enthalpy(phaseIdx); }
+
+    /*!
+     * \brief Returns the total heat capacity \f$\mathrm{[J/(kg K)]}\f$ of the rock matrix in
+     *        the sub-control volume.
+     */
+    Scalar solidHeatCapacity() const
+    { return solidHeatCapacity_; }
+
+    /*!
+     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the rock matrix in
+     *        the sub-control volume.
+     */
+    Scalar solidDensity() const
+    { return solidDensity_; }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of a fluid phase in
+     *        the sub-control volume.
+     */
+    Scalar fluidThermalConductivity(const int phaseIdx) const
+    { return FluidSystem::thermalConductivity(asImp_().fluidState(), phaseIdx); }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in
+     *        the sub-control volume.
+     */
+    Scalar solidThermalConductivity() const
+    { return solidThermalConductivity_; }
+
+    //! The temperature is a primary variable for non-isothermal models
+    static Scalar temperature(const PrimaryVariables &priVars,
+                              const Problem& problem,
+                              const Element &element,
+                              const SubControlVolume &scv)
+    {
+        return priVars[temperatureIdx];
+    }
+
+    //! The phase enthalpy is zero for isothermal models
+    //! This is needed for completing the fluid state
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy(const FluidState& fluidState,
+                           const ParameterCache& paramCache,
+                           const int phaseIdx)
+    {
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
     }
 
 protected:
@@ -122,10 +253,12 @@ protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
-    PrimaryVariables priVars_;
-    Scalar extrusionFactor_;
+private:
+    Scalar solidHeatCapacity_;
+    Scalar solidDensity_;
+    Scalar solidThermalConductivity_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

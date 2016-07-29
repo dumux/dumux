@@ -41,23 +41,21 @@ namespace Dumux
 template <class TypeTag>
 class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -72,9 +70,6 @@ public:
         completeFluidState(priVars, problem, element, scv, fluidState_);
         // porosity
         porosity_ = problem.spatialParams().porosity(scv);
-
-        // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, scv);
     };
 
     /*!
@@ -86,7 +81,7 @@ public:
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element, scv);
+        Scalar t = ParentType::temperature(priVars, problem, element, scv);
         fluidState.setTemperature(t);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
@@ -107,7 +102,7 @@ public:
         fluidState.setViscosity(/*phaseIdx=*/0, value);
 
         // compute and set the enthalpy
-        value = Implementation::enthalpy_(fluidState, paramCache, /*phaseIdx=*/0);
+        value = ParentType::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setEnthalpy(/*phaseIdx=*/0, value);
     }
 
@@ -173,35 +168,9 @@ public:
     { return fluidState_; }
 
 protected:
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                               const Problem& problem,
-                               const Element &element,
-                               const SubControlVolume &scv)
-    {
-        return problem.temperatureAtPos(scv.dofPosition());
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities.
-     */
-    void updateEnergy_(const PrimaryVariables &sol,
-                       const Problem &problem,
-                       const Element &element,
-                       const SubControlVolume& scv)
-    { }
-
     FluidState fluidState_;
     Scalar porosity_;
 
-private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 

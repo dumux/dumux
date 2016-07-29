@@ -25,14 +25,10 @@
  * \brief Defines default values for most properties required by the
  *        implicit non-isothermal models.
  */
-#ifndef DUMUX_NI_PROPERTY_DEFAULTS_HH
-#define DUMUX_NI_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_ENERGY_PROPERTY_DEFAULTS_HH
+#define DUMUX_ENERGY_PROPERTY_DEFAULTS_HH
 
 #include "indices.hh"
-#include "model.hh"
-#include "localresidual.hh"
-#include "volumevariables.hh"
-#include "fluxvariables.hh"
 
 namespace Dumux
 {
@@ -44,21 +40,16 @@ namespace Properties
 // Property values
 //////////////////////////////////////////////////////////////////
 
-SET_TYPE_PROP(NonIsothermal, LocalResidual, NILocalResidual<TypeTag>);
+SET_BOOL_PROP(NonIsothermal, EnableEnergyBalance, true);
 
-SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq)+1);
+//! add the energy balance
+SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq) + 1);
 
-SET_TYPE_PROP(NonIsothermal, VolumeVariables, NIVolumeVariables<TypeTag>);
+//! indices for non-isothermal models
+SET_TYPE_PROP(NonIsothermal, Indices, EnergyIndices<TypeTag, 0>);
 
-SET_TYPE_PROP(NonIsothermal, FluxVariables, NIFluxVariables<TypeTag>);
+} // end namespace Properties
 
-SET_TYPE_PROP(NonIsothermal, Indices, NIIndices<TypeTag, 0>);
+} // end namespace Dumux
 
-SET_TYPE_PROP(NonIsothermal, Model, NIModel<TypeTag>);
-
-SET_BOOL_PROP(NonIsothermal, NiOutputLevel, 1);
-
-}
-
-}
 #endif

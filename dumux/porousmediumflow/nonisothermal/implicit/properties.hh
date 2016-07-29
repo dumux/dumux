@@ -26,8 +26,8 @@
  *        implicit non-isothermal models.
  */
 
-#ifndef DUMUX_NI_PROPERTIES_HH
-#define DUMUX_NI_PROPERTIES_HH
+#ifndef DUMUX_ENERGY_PROPERTIES_HH
+#define DUMUX_ENERGY_PROPERTIES_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -45,6 +45,9 @@ NEW_TYPE_TAG(NonIsothermal);
 //////////////////////////////////////////////////////////////////
 // Property tags required for the non-isothermal models
 //////////////////////////////////////////////////////////////////
+
+//TODO cleanup
+
 NEW_PROP_TAG(IsothermalModel);
 NEW_PROP_TAG(IsothermalFluxVariables);
 NEW_PROP_TAG(IsothermalVolumeVariables);
