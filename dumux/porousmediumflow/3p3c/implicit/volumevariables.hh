@@ -44,25 +44,23 @@ namespace Dumux
 template <class TypeTag>
 class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
 
     // constraint solvers
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
-    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         dim = GridView::dimension,
 
@@ -92,7 +90,7 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         wgPhaseOnly = Indices::wgPhaseOnly
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     // universial gas constant
     static constexpr Scalar R = Dumux::Constants<Scalar>::R;
@@ -102,7 +100,7 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
 public:
 
-   typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+   using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -123,7 +121,7 @@ public:
         // get the phase presence of the dof this scv is related too
         auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
 
-        Scalar temp = Implementation::temperature_(priVars, problem, element, scv);
+        Scalar temp = ParentType::temperature(priVars, problem, element, scv);
         fluidState_.setTemperature(temp);
 
         /* first the saturations */
@@ -556,12 +554,10 @@ public:
         porosity_ = problem.spatialParams().porosity(scv);
         Valgrind::CheckDefined(porosity_);
 
-        // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, scv);
         // compute and set the enthalpy
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            Scalar h = Implementation::enthalpy_(fluidState_, paramCache, phaseIdx);
+            Scalar h = ParentType::enthalpy(fluidState_, paramCache, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
         }
     }
@@ -680,42 +676,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
     }
 
-
 protected:
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                               const Problem& problem,
-                               const Element &element,
-                               const SubControlVolume &scv)
-    {
-        return problem.temperatureAtPos(scv.dofPosition());
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities.
-     */
-    void updateEnergy_(const PrimaryVariables &sol,
-                       const Problem &problem,
-                       const Element &element,
-                       const SubControlVolume& scv)
-    {}
-
-    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
-    {
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
-    }
 
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
@@ -728,6 +689,16 @@ protected:
     FluidState fluidState_;
 
 private:
+    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
+    {
+        if (compIdx < phaseIdx)
+            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
+        else if (compIdx > phaseIdx)
+            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
+    }
+
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
 
     Implementation &asImp_()
@@ -737,6 +708,6 @@ private:
     { return *static_cast<const Implementation*>(this); }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

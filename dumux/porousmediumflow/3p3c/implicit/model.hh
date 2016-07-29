@@ -94,7 +94,9 @@ namespace Dumux
 template<class TypeTag>
 class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
+    // the parent class needs to access the variable switch
     friend typename GET_PROP_TYPE(TypeTag, BaseModel);
+
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -179,7 +181,6 @@ public:
     }
 
     /*!
-<<<<<<< HEAD
      * \brief Compute the total storage inside one phase of all
      *        conservation quantities.
      *
@@ -204,7 +205,6 @@ public:
 
     /*!
      * \brief Called by the update() method if applying the newton
-=======
      * \brief One Newton iteration was finished.
      * \param uCurrent The solution after the current Newton iteration
      */
@@ -218,7 +218,6 @@ public:
 
     /*!
      * \brief Called by the update() method if applying the Newton
->>>>>>> 4257cd9... [3p3c] Adapt to local-global concept
      *        method was unsuccessful.
      */
     void updateFailed()
@@ -335,14 +334,8 @@ public:
                 }
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    {
-                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal] =
-                            volVars.moleFraction(phaseIdx, compIdx);
-
-                    }
-                }
+                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal] = volVars.moleFraction(phaseIdx, compIdx);
 
                 (*poro)[dofIdxGlobal] = volVars.porosity();
                 (*temperature)[dofIdxGlobal] = volVars.temperature();
@@ -350,7 +343,6 @@ public:
 
             }
 
-            // // velocity output
             // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
             // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
             // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);

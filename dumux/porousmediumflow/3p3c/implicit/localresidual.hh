@@ -55,6 +55,7 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -77,7 +78,7 @@ public:
 
     ThreePThreeCLocalResidual() : ParentType()
     {
-        massWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
     /*!
      * \brief Evaluate the amount of all conservation quantities
@@ -96,9 +97,9 @@ public:
         PrimaryVariables storage(0.0);
 
         // compute storage term of all components within all phases
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 auto eqIdx = conti0EqIdx + compIdx;
                 storage[eqIdx] += volVars.porosity()
@@ -106,7 +107,13 @@ public:
                                   * volVars.molarDensity(phaseIdx)
                                   * volVars.moleFraction(phaseIdx, compIdx);
             }
+
+            //! The energy storage in the fluid phase with index phaseIdx
+            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
         }
+
+        //! The energy storage in the solid matrix
+        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
     }
@@ -135,7 +142,7 @@ public:
                                       fluxVarsCache);
 
         // get upwind weights into local scope
-        auto massWeight = massWeight_;
+        auto w = upwindWeight_;
         PrimaryVariables flux(0.0);
 
         // advective fluxes
@@ -143,21 +150,27 @@ public:
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                auto upwindRule = [massWeight, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
+                auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
                 {
-                    return ( massWeight )*up.molarDensity(phaseIdx)
-                                         *up.moleFraction(phaseIdx, compIdx)
-                                         *up.mobility(phaseIdx)
-                          +(1-massWeight)*dn.molarDensity(phaseIdx)
-                                         *dn.moleFraction(phaseIdx, compIdx)
-                                         *dn.mobility(phaseIdx);
+                    return ( w )*up.molarDensity(phaseIdx)
+                                *up.moleFraction(phaseIdx, compIdx)
+                                *up.mobility(phaseIdx)
+                          +(1-w)*dn.molarDensity(phaseIdx)
+                                *dn.moleFraction(phaseIdx, compIdx)
+                                *dn.mobility(phaseIdx);
                 };
 
                 // get equation index
                 auto eqIdx = conti0EqIdx + compIdx;
                 flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRule);
             }
+
+            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
         }
+
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         // diffusive fluxes
         Scalar jGW = fluxVars.molecularDiffusionFlux(wPhaseIdx, gCompIdx);
@@ -192,7 +205,7 @@ protected:
     { return static_cast<const Implementation *> (this); }
 
 private:
-    Scalar massWeight_;
+    Scalar upwindWeight_;
 };
 
 } // end namespace

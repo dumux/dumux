@@ -50,8 +50,7 @@ class ThreePThreeCNewtonController : public NewtonController<TypeTag>
 
 public:
     ThreePThreeCNewtonController(const Problem &problem)
-        : ParentType(problem)
-    {};
+    : ParentType(problem) {};
 
 
     /*!
@@ -66,6 +65,7 @@ public:
         return ParentType::newtonConverged();
     };
 };
-}
+
+} // end namespace Dumux
 
 #endif
