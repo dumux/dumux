@@ -18,35 +18,19 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ *
+ * \brief The available discretization methods in Dumux
  */
-#ifndef DUMUX_DISCRETIZATION_DARCYS_LAW_HH
-#define DUMUX_DISCRETIZATION_DARCYS_LAW_HH
-
-#include <dumux/discretization/methods.hh>
+#ifndef DUMUX_DISCRETIZARION_METHODS_HH
+#define DUMUX_DISCRETIZARION_METHODS_HH
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class DarcysLawImplementation
-{};
+    enum class DiscretizationMethods : unsigned int
+    {
+        Box, CCTpfa
+    };
 
-/*!
- * \ingroup DarcysLaw
- * \brief Evaluates the normal component of the Darcy velocity
- * on a (sub)control volume face. Specializations are provided
- * for the different discretization methods. These specializations
- * are found in the headers included below.
- */
-template <class TypeTag>
-using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
-
-} // end namespace
-
-#include <dumux/discretization/box/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
+} // end namespace Dumux
 
 #endif
