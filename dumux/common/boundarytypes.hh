@@ -278,6 +278,20 @@ public:
     { return boundaryInfo_[eqIdx].isDirichlet; }
 
     /*!
+     * \brief Returns true if an equation is used to specify a
+     *        Dirichlet condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool hasOnlyDirichlet() const
+    {
+        return std::all_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isDirichlet; }
+                           );
+    }
+
+    /*!
      * \brief Returns true if some equation is used to specify a
      *        Dirichlet condition.
      */

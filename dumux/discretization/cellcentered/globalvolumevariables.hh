@@ -81,11 +81,16 @@ public:
                 if (!scvf.boundary())
                     continue;
 
-                const auto insideScvIdx = scvf.insideScvIdx();
-                const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                const auto dirichletPriVars = problem.dirichlet(element, scvf);
+                // check if boundary is a pure dirichlet boundary
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                if (bcTypes.hasOnlyDirichlet())
+                {
+                    const auto insideScvIdx = scvf.insideScvIdx();
+                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
 
-                volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
+                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
+                }
             }
         }
     }

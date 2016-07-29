@@ -128,6 +128,7 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(eIdx);
+        assert(scv.dofIndex() == eIdx);
         volumeVariables_[localIdx].update(sol[eIdx], globalVolVars().problem_(), element, scvI);
         volVarIndices_[localIdx] = scvI.index();
         ++localIdx;
@@ -149,12 +150,18 @@ public:
             if (!scvf.boundary())
                 continue;
 
-            const auto dirichletPriVars = globalVolVars().problem_().dirichlet(element, scvf);
-            volumeVariables_.resize(localIdx+1);
-            volVarIndices_.resize(localIdx+1);
-            volumeVariables_[localIdx].update(dirichletPriVars, globalVolVars().problem_(), element, scvI);
-            volVarIndices_[localIdx] = scvf.outsideScvIdx();
-            ++localIdx;
+            // check if boundary is a pure dirichlet boundary
+            const auto bcTypes = globalVolVars().problem_().boundaryTypes(element, scvf);
+            if (bcTypes.hasOnlyDirichlet())
+            {
+                const auto dirichletPriVars = globalVolVars().problem_().dirichlet(element, scvf);
+
+                volumeVariables_.resize(localIdx+1);
+                volVarIndices_.resize(localIdx+1);
+                volumeVariables_[localIdx].update(dirichletPriVars, globalVolVars().problem_(), element, scvI);
+                volVarIndices_[localIdx] = scvf.outsideScvIdx();
+                ++localIdx;
+            }
         }
     }
 
