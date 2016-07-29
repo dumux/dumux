@@ -78,15 +78,15 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
-        ScalarField *p = writer.allocateManagedBuffer(numDofs);
+
+        auto *p = writer.allocateManagedBuffer(numDofs);
 
         unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer(numElements);
+        auto *rank = writer.allocateManagedBuffer(numElements);
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
