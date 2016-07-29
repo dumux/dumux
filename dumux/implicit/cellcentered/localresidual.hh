@@ -176,7 +176,7 @@ protected:
         // temporary vector to store the neumann boundary fluxes
         PrimaryVariables flux(0);
 
-        auto neumannFluxes = this->problem().neumann(element, scvf);
+        auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf);
 
         // multiply neumann fluxes with the area and the extrusion factor
         auto&& scv = fvGeometry.scv(scvf.insideScvIdx());

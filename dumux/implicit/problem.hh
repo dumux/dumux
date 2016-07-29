@@ -273,7 +273,10 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    PrimaryVariables neumann(const Element &element, const SubControlVolumeFace &scvFace) const
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolvars,
+                             const SubControlVolumeFace& scvFace) const
     {
         // forward it to the interface with only the global position
         return asImp_().neumannAtPos(scvFace.center());
