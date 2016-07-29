@@ -175,14 +175,14 @@ public:
      * \param intersection The intersection for which the boundary type is set
      */
     BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolumeFace &scvFace) const
+                                const SubControlVolumeFace &scvf) const
     {
         if (isBox)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scvFace) called for box method.");
+                       "boundaryTypes(..., scvf) called for box method.");
 
         // forward it to the method which only takes the global coordinate
-        return asImp_().boundaryTypesAtPos(scvFace.center());
+        return asImp_().boundaryTypesAtPos(scvf.center());
     }
 
     /*!
@@ -210,15 +210,15 @@ public:
      *
      * The method returns the boundary types information.
      */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvFace) const
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         // forward it to the method which only takes the global coordinate
         if (isBox)
         {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvFace) called for box method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for box method.");
         }
         else
-            return asImp_().dirichletAtPos(scvFace.center());
+            return asImp_().dirichletAtPos(scvf.center());
     }
 
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
