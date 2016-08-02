@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4158c9e..fdf5903 100644
+index 6bdffb9..d1e68a3 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -157,8 +157,8 @@ include(OpmProject)
+@@ -167,9 +167,9 @@ include(OpmProject)
  include(ConfigVars)
  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
  set(opm-parser_NAME opm-parser)
@@ -14,4 +14,5 @@ index 4158c9e..fdf5903 100644
 +#if(NOT BUILD_SHARED_LIBS)
 +#  list(APPEND opm-parser_LIBRARIES cjson)
 +#endif()
+ set(opm-parser_TARGET opmparser)
  opm_cmake_config(opm-parser)

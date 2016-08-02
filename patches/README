@@ -9,15 +9,20 @@
   dune-istl 2.4.1, e.g.:
   patch -p1 <../dumux/patches/istl-2.4.1.patch
 
-- If dune-cornerpoint has to be used for, e.g., employing the CpGridCreator,
+- If opm-grid has to be used for, e.g., employing the CpGridCreator,
   and Opm is compiled from source, it might be necessary to patch opm-parser:
-  patch -p1 <../dumux/patches/opm-parser-2015.10.patch
+  patch -p1 <../dumux/patches/opm-parser-2016.04.patch
   In addition, it might be necessary to set manually some CMake variables in the
   CMAKE_FLAGS section of the .opts-file:
-    -Ddune-cornerpoint_PREFIX=/path/to/dune-cornerpoint \
+    -Dopm-grid_PREFIX=/path/to/opm-grid \
     -Dopm-common_PREFIX=/path/to/opm-common \
     -Dopm-core_PREFIX=/path/to/opm-core \
     -Dopm-material_PREFIX=/path/to/opm-material \
     -Dopm-parser_PREFIX=/path/to/opm-parser \
-    -DHAVE_DUNE_CORNERPOINT=1 \
-  Currently, Dumux is supposed to be compatible with the Opm 2015.10 release.
+    -Dopm-grid_DIR=/path/to/opm-grid \
+    -Dopm-common_DIR=/path/to/opm-common \
+    -Dopm-core_DIR=/path/to/opm-core \
+    -Dopm-parser_DIR=/path/to/opm-parser \
+    -Dopm-material_DIR=/path/to/opm-material \
+    -DHAVE_OPM_GRID=1 \
+  Currently, Dumux is supposed to be compatible with the Opm 2016.04 release.

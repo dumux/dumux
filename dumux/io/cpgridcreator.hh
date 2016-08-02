@@ -24,10 +24,10 @@
 #ifndef DUMUX_CPGRID_CREATOR_HH
 #define DUMUX_CPGRID_CREATOR_HH
 
-#if (HAVE_DUNE_CORNERPOINT && HAVE_OPM_PARSER)
+#if HAVE_OPM_GRID
 #include <dune/grid/CpGrid.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
-#include <opm/parser/eclipse/Parser/ParseMode.hpp>
+#include <opm/parser/eclipse/Parser/ParseContext.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
 #include <dumux/common/basicproperties.hh>
@@ -59,9 +59,9 @@ public:
     {
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
 
-        Opm::ParserPtr parser(new Opm::Parser());
-        Opm::ParseMode parseMode;
-        deck() = *(new Opm::DeckConstPtr(parser->parseFile(fileName, parseMode)));
+        parser_() = *(new Opm::ParserPtr(new Opm::Parser()));
+        Opm::ParseContext parseContext;
+        deck() = *(new Opm::DeckConstPtr(parser_()->parseFile(fileName, parseContext)));
 
         gridPtr() = std::make_shared<Grid>(*(new Grid()));
         gridPtr()->processEclipseFormat(deck(), 0.0, false, false);
@@ -102,8 +102,15 @@ public:
     {
         gridPtr()->loadBalance();
     }
+
+private:
+    static Opm::ParserPtr &parser_()
+    {
+        static Opm::ParserPtr parser;
+        return parser;
+    }
 };
 }
-#endif // (HAVE_DUNE_CORNERPOINT && HAVE_OPM_PARSER)
+#endif // HAVE_OPM_GRID
 
 #endif

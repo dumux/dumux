@@ -24,7 +24,7 @@
  */
 #include <config.h>
 
-#if (HAVE_DUNE_CORNERPOINT && HAVE_OPM_CORE && HAVE_OPM_PARSER)
+#if HAVE_OPM_GRID
 
 #include "cc2pcornerpointproblem.hh"
 #include <dumux/common/start.hh>
@@ -66,10 +66,11 @@ int main(int argc, char** argv)
     return Dumux::start<TypeTag>(argc, argv, usage);
 }
 #else
+#include<iostream>
 int main(int argc, char** argv)
 {
-#warning You need to have dune-cornerpoint, opm-core and opm-parser installed to run this test
-    std::cerr << "You need to have dune-cornerpoint, opm-core and opm-parser installed to run this test\n";
+#warning You need to have opm-grid installed to run this test
+    std::cerr << "You need to have opm-grid installed to run this test\n";
     return 77;
 }
 #endif
