@@ -20,8 +20,8 @@
  * \file
  * \brief The global object of flux var caches
  */
-#ifndef DUMUX_DISCRETIZATION_CC_ELEMENT_FLUXVARSCACHE_HH
-#define DUMUX_DISCRETIZATION_CC_ELEMENT_FLUXVARSCACHE_HH
+#ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -33,14 +33,14 @@ namespace Dumux
  * \brief Base class for the stencil local flux variables cache
  */
 template<class TypeTag, bool EnableGlobalFluxVariablesCache>
-class CCElementFluxVariablesCache;
+class CCTpfaElementFluxVariablesCache;
 
 /*!
  * \ingroup ImplicitModel
  * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class CCElementFluxVariablesCache<TypeTag, true>
+class CCTpfaElementFluxVariablesCache<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -53,7 +53,7 @@ class CCElementFluxVariablesCache<TypeTag, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    CCElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
+    CCTpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
     : globalFluxVarsCachePtr_(&global) {}
 
     // Specialization for the global caching being enabled - do nothing here
@@ -89,7 +89,7 @@ private:
  * \brief Spezialization when not using global caching
  */
 template<class TypeTag>
-class CCElementFluxVariablesCache<TypeTag, false>
+class CCTpfaElementFluxVariablesCache<TypeTag, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -102,7 +102,7 @@ class CCElementFluxVariablesCache<TypeTag, false>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    CCElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
+    CCTpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
     : globalFluxVarsCachePtr_(&global) {}
 
     // This function has to be called prior to flux calculations on the element.

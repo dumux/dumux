@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
 
 namespace Dumux
 {
@@ -44,7 +43,7 @@ template<class TypeTag>
 class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 {
     // the local class needs access to the problem
-    friend CCElementFluxVariablesCache<TypeTag, true>;
+    friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -108,7 +107,7 @@ template<class TypeTag>
 class CCTpfaGlobalFluxVariablesCache<TypeTag, false>
 {
     // the local class needs access to the problem
-    friend CCElementFluxVariablesCache<TypeTag, false>;
+    friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
