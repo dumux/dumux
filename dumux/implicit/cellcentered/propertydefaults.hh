@@ -28,7 +28,6 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/discretization/cellcentered/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/elementvolumevariables.hh>
@@ -82,9 +81,6 @@ SET_TYPE_PROP(CCModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<Typ
 
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
-
-//! The global flux variables cache vector class
-SET_TYPE_PROP(CCModel, GlobalFluxVariablesCache, Dumux::CCGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCModel, ElementFluxVariablesCache, Dumux::CCElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);

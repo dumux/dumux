@@ -20,8 +20,8 @@
  * \file
  * \brief The global object of flux var caches
  */
-#ifndef DUMUX_DISCRETIZATION_CC_GLOBAL_FLUXVARSCACHE_HH
-#define DUMUX_DISCRETIZATION_CC_GLOBAL_FLUXVARSCACHE_HH
+#ifndef DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
@@ -34,14 +34,14 @@ namespace Dumux
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag, bool EnableGlobalFluxVariablesCache>
-class CCGlobalFluxVariablesCache;
+class CCTpfaGlobalFluxVariablesCache;
 
 /*!
  * \ingroup ImplicitModel
  * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class CCGlobalFluxVariablesCache<TypeTag, true>
+class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 {
     // the local class needs access to the problem
     friend CCElementFluxVariablesCache<TypeTag, true>;
@@ -80,7 +80,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCTpfaGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:
@@ -105,7 +105,7 @@ private:
  * \brief Spezialization when not using global caching
  */
 template<class TypeTag>
-class CCGlobalFluxVariablesCache<TypeTag, false>
+class CCTpfaGlobalFluxVariablesCache<TypeTag, false>
 {
     // the local class needs access to the problem
     friend CCElementFluxVariablesCache<TypeTag, false>;
@@ -122,7 +122,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCTpfaGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:

@@ -30,6 +30,7 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/globalfvgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
@@ -49,6 +50,9 @@ SET_PROP(CCTpfaModel, DiscretizationMethod)
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(CCTpfaModel, GlobalFVGeometry, CCTpfaGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+
+//! The global flux variables cache vector class
+SET_TYPE_PROP(CCTpfaModel, GlobalFluxVariablesCache, Dumux::CCTpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the default for the local finite volume geometry
 SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
