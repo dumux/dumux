@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_CC_GLOBAL_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/discretization/cellcentered/elementvolumevariables.hh>
 
 namespace Dumux
 {
@@ -42,7 +41,7 @@ template<class TypeTag>
 class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
     // The local class needs to access and change volVars
-    friend CCElementVolumeVariables<TypeTag, true>;
+    friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     // The local jacobian needs to access and change volVars for derivative calculation
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     // as does the primary variable switch
@@ -126,7 +125,7 @@ template<class TypeTag>
 class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 {
     // local class needs access to the problem
-    friend CCElementVolumeVariables<TypeTag, false>;
+    friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);

@@ -20,8 +20,8 @@
  * \file
  * \brief The local (stencil) volume variables class for cell centered models
  */
-#ifndef DUMUX_DISCRETIZATION_CC_ELEMENT_VOLUMEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_CC_ELEMENT_VOLUMEVARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
 
@@ -33,12 +33,12 @@ namespace Dumux
  * \brief Base class for the volume variables vector
  */
 template<class TypeTag, bool enableGlobalVolVarsCache>
-class CCElementVolumeVariables
+class CCTpfaElementVolumeVariables
 {};
 
 // specialization in case of storing the volume variables globally
 template<class TypeTag>
-class CCElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
+class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -54,7 +54,7 @@ class CCElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 
 public:
     //! Constructor
-    CCElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
+    CCTpfaElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
     : globalVolVarsPtr_(&globalVolVars) {}
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
@@ -89,7 +89,7 @@ private:
 
 // Specialization when the current volume variables are not stored
 template<class TypeTag>
-class CCElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
+class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -106,7 +106,7 @@ class CCElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 public:
 
     //! Constructor
-    CCElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
+    CCTpfaElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
     : globalVolVarsPtr_(&globalVolVars) {}
 
     // Binding of an element, prepares the volume variables within the element stencil

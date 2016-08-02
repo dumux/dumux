@@ -30,7 +30,6 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
-#include <dumux/discretization/cellcentered/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/stencils.hh>
 
@@ -78,9 +77,6 @@ public:
 
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
-
-//! The global previous volume variables vector class
-SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCModel, ElementFluxVariablesCache, Dumux::CCElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
