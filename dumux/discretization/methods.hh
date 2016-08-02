@@ -28,7 +28,7 @@ namespace Dumux
 {
     enum class DiscretizationMethods : unsigned int
     {
-        Box, CCTpfa
+        Box, CCTpfa, CCMpfa
     };
 
 } // end namespace Dumux

@@ -18,36 +18,50 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ * \brief Base class for interaction volume seeds of mpfa methods.
  */
-#ifndef DUMUX_DISCRETIZATION_DARCYS_LAW_HH
-#define DUMUX_DISCRETIZATION_DARCYS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMESEED_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMESEED_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include "facetypes.hh"
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class DarcysLawImplementation
-{};
 
 /*!
- * \ingroup DarcysLaw
- * \brief Evaluates the normal component of the Darcy velocity
- * on a (sub)control volume face. Specializations are provided
- * for the different discretization methods. These specializations
- * are found in the headers included below.
+ * \ingroup Mpfa
+ * \brief Base class for the interaction volume seed of mpfa methods
  */
-template <class TypeTag>
-using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template<class ScvSeedType, class ScvfSeedType>
+class CCMpfaInteractionVolumeSeed
+{
+public:
+    using LocalScvSeed = ScvSeedType;
+    using LocalScvfSeed = ScvfSeedType;
 
+    CCMpfaInteractionVolumeSeed(std::vector<LocalScvSeed>&& scvSeeds,
+                                std::vector<LocalScvfSeed>&& scvfSeeds,
+                                bool onBoundary)
+    : onBoundary_(onBoundary),
+      scvSeeds_(std::move(scvSeeds)),
+      scvfSeeds_(std::move(scvfSeeds))
+    {}
+
+    bool onBoundary() const
+    { return onBoundary_; }
+
+    const std::vector<LocalScvSeed>& scvSeeds() const
+    { return scvSeeds_; }
+
+    const std::vector<LocalScvfSeed>& scvfSeeds() const
+    { return scvfSeeds_; }
+
+private:
+    bool onBoundary_;
+    std::vector<LocalScvSeed> scvSeeds_;
+    std::vector<LocalScvfSeed> scvfSeeds_;
+};
 } // end namespace
-
-#include <dumux/discretization/box/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/darcyslaw.hh>
 
 #endif

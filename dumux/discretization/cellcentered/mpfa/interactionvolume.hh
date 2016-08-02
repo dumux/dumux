@@ -18,36 +18,30 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ * \brief Base classes for interaction volume of mpfa methods.
  */
-#ifndef DUMUX_DISCRETIZATION_DARCYS_LAW_HH
-#define DUMUX_DISCRETIZATION_DARCYS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
 
-#include <dumux/discretization/methods.hh>
+#include "methods.hh"
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class DarcysLawImplementation
+// forward declaration of the base class
+template<class TypeTag, MpfaMethods MpfaMethod>
+class CCMpfaInteractionVolumeImplementation
 {};
 
 /*!
- * \ingroup DarcysLaw
- * \brief Evaluates the normal component of the Darcy velocity
- * on a (sub)control volume face. Specializations are provided
- * for the different discretization methods. These specializations
- * are found in the headers included below.
+ * \ingroup Mpfa
+ * \brief Base class for the interaction volumes of the mpfa method
  */
-template <class TypeTag>
-using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template<class TypeTag>
+using CCMpfaInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
 
 } // end namespace
 
-#include <dumux/discretization/box/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/darcyslaw.hh>
+// the specializations of this class for the available methods have to be included here
+#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
 #endif

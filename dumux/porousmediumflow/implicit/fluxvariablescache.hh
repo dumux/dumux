@@ -149,6 +149,111 @@ private:
     Scalar tij_;
 };
 
+// forward declaration of the base class of the mpfa flux variables cache
+template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
+class PorousMediumMpfaFluxVariablesCache
+{};
+
+// specialization for cell centered mpfa methods
+template<class TypeTag>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
+       : public PorousMediumMpfaFluxVariablesCache<TypeTag,
+                                                   GET_PROP_VALUE(TypeTag, EnableAdvection),
+                                                   GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
+                                                   GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+{};
+
+// specialization for the case of pure advection
+template<class TypeTag>
+class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static const int dim = GridView::dimension;
+
+    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+
+    using Stencil = std::vector<IndexType>;
+    using TransmissibilityVector = typename Dune::DynamicMatrix<Scalar>::row_type;
+    using PositionVector = std::vector<GlobalPosition>;
+
+public:
+    // the constructor
+    PorousMediumMpfaFluxVariablesCache() : isUpdated_(false) {}
+
+    // update cached objects
+    template<class InteractionVolume>
+    void updateBoundaryAdvection(const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolumeFace &scvf,
+                                 const InteractionVolume& interactionVolume,
+                                 const unsigned int phaseIdx)
+    {
+        phaseVolVarsStencil_[phaseIdx] = interactionVolume.volVarsStencil();
+        phaseVolVarsPositions_[phaseIdx] = interactionVolume.volVarsPositions();
+
+        auto localIndexPair = interactionVolume.getLocalIndexPair(scvf);
+        phaseTij_[phaseIdx] = interactionVolume.getTransmissibilities(localIndexPair);
+        phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localIndexPair);
+    }
+
+    template<class InteractionVolume>
+    void updateInnerAdvection(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolumeFace &scvf,
+                              const InteractionVolume& interactionVolume)
+    {
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            phaseVolVarsStencil_[phaseIdx] = interactionVolume.volVarsStencil();
+            phaseVolVarsPositions_[phaseIdx] = interactionVolume.volVarsPositions();
+            phaseTij_[phaseIdx] = interactionVolume.getTransmissibilities(interactionVolume.getLocalIndexPair(scvf));
+            phaseNeumannFluxes_[phaseIdx] = 0.0;
+        }
+    }
+
+    const Stencil& advectionVolVarsStencil(const unsigned int phaseIdx) const
+    { return phaseVolVarsStencil_[phaseIdx]; }
+
+    const PositionVector& advectionVolVarsPositions(const unsigned int phaseIdx) const
+    { return phaseVolVarsPositions_[phaseIdx]; }
+
+    const TransmissibilityVector& advectionTij(const unsigned int phaseIdx) const
+    { return phaseTij_[phaseIdx]; }
+
+    Scalar advectionNeumannFlux(const unsigned int phaseIdx) const
+    { return phaseNeumannFluxes_[phaseIdx]; }
+
+    bool isUpdated() const
+    { return isUpdated_; }
+
+    void setUpdated()
+    {
+        isUpdated_ = true;
+    }
+
+private:
+    bool isUpdated_;
+    std::array<Stencil, numPhases> phaseVolVarsStencil_;
+    std::array<PositionVector, numPhases> phaseVolVarsPositions_;
+    std::array<TransmissibilityVector, numPhases> phaseTij_;
+    std::array<Scalar, numPhases> phaseNeumannFluxes_;
+};
+
 } // end namespace
 
 #endif
