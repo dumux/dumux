@@ -24,7 +24,6 @@
 #define DUMUX_IMPLICIT_ASSEMBLER_HH
 
 #include "properties.hh"
-#include <dune/istl/io.hh>
 
 namespace Dumux {
 
