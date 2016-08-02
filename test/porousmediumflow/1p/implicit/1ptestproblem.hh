@@ -26,6 +26,7 @@
 #define DUMUX_1PTEST_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -52,6 +53,7 @@ namespace Properties
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
 NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
+NEW_TYPE_TAG(OnePTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTestProblem));
 
 SET_PROP(OnePTestProblem, Fluid)
 {

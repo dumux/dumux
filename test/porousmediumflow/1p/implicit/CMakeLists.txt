@@ -3,6 +3,8 @@ add_subdirectory(pointsources)
 add_input_file_links()
 add_gstat_file_links()
 
+add_executable(test_mpfa1p test_mpfa1p.cc)
+
 # isothermal tests
 add_dumux_test(test_box1p test_box1p test_box1p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
