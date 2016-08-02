@@ -231,8 +231,10 @@ public:
 
     Scalar getNeumannFlux(const std::pair<LocalIndexType, bool>& localIndexPair) const
     {
-        auto flux = CAinv_[localIndexPair.first] * neumannFluxes_;
+        if (fluxScvfIndexSet_().size() == 0)
+            return 0.0;
 
+        auto flux = CAinv_[localIndexPair.first] * neumannFluxes_;
         if (localIndexPair.second)
             return -1.0*flux;
         return flux;
