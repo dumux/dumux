@@ -508,8 +508,8 @@ Scalar crossProduct(const Dune::FieldVector<Scalar, 2> &vec1,
  */
 template <class Scalar>
 Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
-                    const Dune::FieldVector<Scalar, 3> &vec2,
-                    const Dune::FieldVector<Scalar, 3> &vec3)
+                     const Dune::FieldVector<Scalar, 3> &vec2,
+                     const Dune::FieldVector<Scalar, 3> &vec3)
 {   return crossProduct<Scalar>(vec1, vec2)*vec3; }
 
 /*!
