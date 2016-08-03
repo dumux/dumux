@@ -106,6 +106,7 @@ NEW_PROP_TAG(ImplicitNumericDifferenceMethod);
  * solver converges faster).
  */
 NEW_PROP_TAG(ImplicitEnableHints);
+NEW_PROP_TAG(ImplicitUseInterfaceCondition);
 
 // mappers from local to global indices
 

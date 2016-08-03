@@ -28,6 +28,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/spatialparams/implicit.hh>
+#include <fstream>
 
 namespace Dumux
 {
@@ -85,11 +86,13 @@ class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout> FaceMapper;
 
     enum {
-        dim = GridView::dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     //get the material law from the property system
@@ -105,24 +108,21 @@ public:
 
         Scalar mD = 1e-12 * 1e-3; //miliDarcy
 
-        swrf_    = 0.00;
-        swrm_    = 0.00;
-        SnrF_    = 0.00;
-        SnrM_    = 0.00;
-        pdf_     = 1000; //2.5*1e4;
-        pdm_     = 2000; //2.5*1e4;
-        lambdaF_ = 2.0;
-        lambdaM_ = 2.0;
+        rockMatrixMaterialParams_.setSwr(0.1);
+        rockMatrixMaterialParams_.setSnr(0.0);
 
-        rockMatrixMaterialParams_.setSwr(swrm_);
-        rockMatrixMaterialParams_.setSnr(SnrM_);
-        fractureMaterialParams_.setSwr(swrf_);
-        fractureMaterialParams_.setSnr(SnrF_);
+        fineFractureMaterialParams_.setSwr(0.09);
+        fineFractureMaterialParams_.setSnr(0.0);
+        coarseFractureMaterialParams_.setSwr(0.08);
+        coarseFractureMaterialParams_.setSnr(0.0);
 
-        rockMatrixMaterialParams_.setPe(pdm_);
-        rockMatrixMaterialParams_.setLambda(lambdaM_);
-        fractureMaterialParams_.setPe(pdf_);
-        fractureMaterialParams_.setLambda(lambdaF_);
+        rockMatrixMaterialParams_.setPe(2000);
+        rockMatrixMaterialParams_.setLambda(2.49);
+
+        fineFractureMaterialParams_.setPe(1300);
+        fineFractureMaterialParams_.setLambda(2.0);
+        coarseFractureMaterialParams_.setPe(300);
+        coarseFractureMaterialParams_.setLambda(3.2);
 
         KMatrix_   = 1 * mD; //m^2
         KFracture_ = 1e5 * mD; //m^2
@@ -221,7 +221,10 @@ public:
         // be picky if called for non-fracture vertices
         assert(isVertexFracture(vIdxGlobal));
 
-        return fractureMaterialParams_;
+        const GlobalPosition& globalPos = element.geometry().center();
+        if (isFine_(globalPos))
+            return fineFractureMaterialParams_;
+        return coarseFractureMaterialParams_;
     }
 
     /*!
@@ -287,16 +290,15 @@ public:
         return fractureWidth_;
     }
 
-    Scalar swrf_;
-    Scalar swrm_;
-    Scalar SnrF_;
-    Scalar SnrM_;
-    Scalar lambdaF_;
-    Scalar lambdaM_;
-    Scalar pdf_;
-    Scalar pdm_;
-
 private:
+    bool isFine_(const GlobalPosition &globalPos) const
+    {
+           if (globalPos[0] > 0.5)
+               return true;
+           else
+               return false;
+    }
+
     Scalar KMatrix_;
     Scalar KFracture_;
     Scalar porosityMatrix_;
@@ -304,7 +306,8 @@ private:
 
     Scalar fractureWidth_;
 
-    MaterialLawParams fractureMaterialParams_;
+    MaterialLawParams coarseFractureMaterialParams_;
+    MaterialLawParams fineFractureMaterialParams_;
     MaterialLawParams rockMatrixMaterialParams_;
     bool inactivateFractures_;
 

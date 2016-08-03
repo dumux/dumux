@@ -34,7 +34,7 @@
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 #include <dumux/implicit/box/vertidxtoscvneighbormapper.hh>
-
+#include <dumux/porousmediumflow/2p/implicit/vertextominpcelemmapper.hh>
 #include "satconditionspatialparams.hh"
 
 namespace Dumux
@@ -125,7 +125,7 @@ SET_TYPE_PROP(SatConditionBoxAdaptiveProblem, BaseProblem, ImplicitPorousMediaPr
  * The problem is simulated quasi 1D so there is only one cell in
  * x-direction.
  *
- * On the top, left and right of the domain no-flow neumann boundary
+ * On the top, left and right of the domain neumann boundary
  * conditions are used, while dirichlet conditions apply on the bottom.
  *
  * DNAPL is injected at the top boundary at a rate of
@@ -174,6 +174,7 @@ class SatConditionProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dumux::VertIdxToScvNeighborMapper<GridView> VertIdxToScvNeighborMapper;
+    typedef typename Dumux::VertIdxToMinPcMapper<TypeTag> VertIdxToMinPcMapper;
 
 public:
     /*!
@@ -185,7 +186,8 @@ public:
     SatConditionProblem(TimeManager &timeManager,
                 const GridView &gridView)
     : ParentType(timeManager, gridView),
-    vertIdxToScvNeighborMapper_(gridView)
+    vertIdxToScvNeighborMapper_(gridView),
+    vertIdxToMinPcMapper_(gridView, this->spatialParams())
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
@@ -194,7 +196,9 @@ public:
                                              std::string,
                                              Problem,
                                              Name);
+        vertIdxToMinPcMapper_.update();
         vertIdxToScvNeighborMapper_.update();
+
     }
 
     /*!
@@ -210,6 +214,11 @@ public:
     const VertIdxToScvNeighborMapper &vertIdxToScvNeighborMapper() const
     {
         return vertIdxToScvNeighborMapper_;
+    }
+
+    const VertIdxToMinPcMapper &vertIdxToMinPcMapper() const
+    {
+        return vertIdxToMinPcMapper_;
     }
 
 
@@ -374,6 +383,7 @@ private:
     Scalar eps_;
     std::string name_;
     VertIdxToScvNeighborMapper vertIdxToScvNeighborMapper_;
+    VertIdxToMinPcMapper vertIdxToMinPcMapper_;
 };
 } //end namespace
 

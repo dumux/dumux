@@ -117,6 +117,9 @@ SET_INT_PROP(ImplicitBase, ImplicitNumericDifferenceMethod, +1);
 //! do not use hints by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnableHints, false);
 
+//! do not use InterfaceCondition by default
+SET_BOOL_PROP(ImplicitBase, ImplicitUseInterfaceCondition, false);
+
 //! disable jacobian matrix recycling by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 

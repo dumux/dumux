@@ -29,6 +29,7 @@
 
 #include <dumux/implicit/volumevariables.hh>
 #include <dumux/implicit/box/vertidxtoscvneighbormapper.hh>
+#include <dumux/porousmediumflow/2p/implicit/vertextominpcelemmapper.hh>
 
 #include <dune/common/fvector.hh>
 
@@ -58,6 +59,7 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef Dumux::VertIdxToScvNeighborMapper<GridView> VertIdxToScvNeighborMapper;
+    typedef typename Dumux::VertIdxToMinPcMapper<TypeTag> VertIdxToMinPcMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -96,13 +98,8 @@ public:
                            scvIdx,
                            isOldSol);
 
-        bool useSatCond = 0;
-        if (ParameterTree::tree().hasKey("Implicit.UseSaturationCondition"))
-        {
-            useSatCond = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseSaturationCondition);
-        }
-
-        if (useSatCond)
+        bool useInterfaceCondition_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseInterfaceCondition);
+        if (useInterfaceCondition_)
             completeFluidStateSaturationUpdate(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
         else
             completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
@@ -214,40 +211,29 @@ public:
         int globalIdx = vertexMapper.subIndex(element, scvIdx, dim);
         auto& materialParams = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-        // material params and element geometry of neighbor elements
-        FVElementGeometry neighborfvGeometry;
-        MaterialLawParams neighborMaterialParams;
 
-        // this mapper provides access to the neighbor subcontrolvolumes
-        const VertIdxToScvNeighborMapper &vertIdxToScvMapper = problem.vertIdxToScvNeighborMapper();
+        // this mapper provides access to the minimum pc for neighboring elements
+        const VertIdxToMinPcMapper &vertIdxToMinPcMapper = problem.vertIdxToMinPcMapper();
 
         //calculates capillary pressure and entry pressure for current scv
         Scalar pc = MaterialLaw::pc(materialParams, sw);
         Scalar pe = MaterialLaw::pc(materialParams, 1-materialParams.snr());
-        Scalar pcmin = pc;
 
-        // index retrieved from the vertIdxToScvMapper, which gives the local index of the vertex adjacent scv
-        int neighborScvIdx = 0;
-
-        // loops over neighbored subcontrolvolumes to calculate minimum capillary pressure
-        for (int neighborIdx = 0; neighborIdx < vertIdxToScvMapper.size(globalIdx); neighborIdx++) {
-            neighborScvIdx = vertIdxToScvMapper.vertexElementsScvIdx(globalIdx, neighborIdx);
-            ElementPointer elem = vertIdxToScvMapper.vertexElementPointer(globalIdx, neighborIdx);
-            neighborfvGeometry.update(problem.gridView(), elem);
-            neighborMaterialParams = problem.spatialParams().materialLawParams(elem, neighborfvGeometry, neighborScvIdx);
-
-            //calculate capillary pressure based on the pc-sw relation of the current neighbor element
-            if (MaterialLaw::pc(neighborMaterialParams, sw) < pcmin)
-                pcmin = MaterialLaw::pc(neighborMaterialParams, sw);
-        }
+        FVElementGeometry minPcElemFvGeometry;
+        ElementPointer minPcElem = vertIdxToMinPcMapper.vertexElementPointer(globalIdx);
+        minPcElemFvGeometry.update(problem.gridView(), minPcElem);
+        MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParams(minPcElem, minPcElemFvGeometry, scvIdx);
+        //calculate capillary pressure based on the pc-sw relation of the minPc element
+        Scalar pcmin = MaterialLaw::pc(minPcElemMaterialParams, sw);
         // update saturation
         if (std::abs(pc-pcmin) < 1e-6){}
         else if (pcmin < pe){
             sn = std::min(materialParams.snr(), 0.0 /* SnInitial*/);
-            }
+        }
         else{
             sn = 1 - MaterialLaw::sw(materialParams, pcmin);
-            }
+        }
+        sw = 1- sn;
 
         if (int(formulation) == pwsn) {
             fluidState.setSaturation(nPhaseIdx, sn);

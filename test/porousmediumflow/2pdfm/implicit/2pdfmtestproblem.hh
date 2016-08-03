@@ -36,6 +36,9 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/io/artgridcreator.hh>
+#include <dumux/implicit/box/vertidxtoscvneighbormapper.hh>
+#include <dumux/porousmediumflow/2pdfm/implicit/vertextominpcelemfracturemapper.hh>
+#include <dumux/porousmediumflow/2p/implicit/vertextominpcelemmapper.hh>
 
 #include "2pdfmspatialparams.hh"
 
@@ -132,6 +135,9 @@ class TwoPDFMTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dumux::VertIdxToScvNeighborMapper<GridView> VertIdxToScvNeighborMapper;
+    typedef Dumux::VertIdxToMinPcFractureMapper<TypeTag> VertIdxToMinPcFractureMapper;
+    typedef typename Dumux::VertIdxToMinPcMapper<TypeTag> VertIdxToMinPcMapper;
 
 public:
     /*!
@@ -143,16 +149,39 @@ public:
     TwoPDFMTestProblem(TimeManager &timeManager,
                        const GridView &gridView)
         : ParentType(timeManager, gridView),
-          useInterfaceCondition_(true)
+          useInterfaceCondition_(true),
+          vertIdxToScvNeighborMapper_(gridView),
+          vertIdxToMinPcFractureMapper_(gridView, this->spatialParams()),
+          vertIdxToMinPcMapper_(gridView, this->spatialParams())
+
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
+        //vertIdxToScvNeighborMapper_.update();
+        vertIdxToMinPcFractureMapper_.update();
+        vertIdxToMinPcMapper_.update();
+
     }
 
     /*!
      * \name Problem parameters
      */
     // \{
+
+    const VertIdxToScvNeighborMapper vertIdxToScvNeighborMapper() const
+    {
+        return vertIdxToScvNeighborMapper_;
+    }
+
+    const VertIdxToMinPcFractureMapper vertIdxToMinPcFractureMapper() const
+    {
+        return vertIdxToMinPcFractureMapper_;
+    }
+
+    const VertIdxToMinPcMapper &vertIdxToMinPcMapper() const
+    {
+        return vertIdxToMinPcMapper_;
+    }
 
     /*!
      * \brief The problem name.
@@ -348,8 +377,10 @@ private:
 
     Scalar temperature_;
     Scalar eps_;
-
+    VertIdxToScvNeighborMapper vertIdxToScvNeighborMapper_;
+    VertIdxToMinPcFractureMapper vertIdxToMinPcFractureMapper_;
     bool useInterfaceCondition_;
+    VertIdxToMinPcMapper vertIdxToMinPcMapper_;
 };
 } //end namespace
 
