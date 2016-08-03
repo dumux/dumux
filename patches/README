@@ -15,7 +15,7 @@
   patch -p1 <../dumux/patches/opm-common-2016.04.patch
   In addition, it might be necessary to set manually some CMake variables in the
   CMAKE_FLAGS section of the .opts-file:
-    -DOPM_COMMON_ROOT=/path/to//opm-common/ \
+    -DOPM_COMMON_ROOT=/path/to/opm-common/ \
     -Dopm-grid_PREFIX=/path/to/opm-grid \
     -Dopm-common_PREFIX=/path/to/opm-common \
     -Dopm-core_PREFIX=/path/to/opm-core \

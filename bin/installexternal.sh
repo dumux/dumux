@@ -276,7 +276,7 @@ installOPM()
     echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
     echo "  -DOPM_COMMON_ROOT=/path/to/opm-common \\"
-    echo "  -Dopm-grid_PREFIX_PREFIX=/path/to/opm-grid \\"
+    echo "  -Dopm-grid_PREFIX=/path/to/opm-grid \\"
     echo "  -Dopm-common_PREFIX=/path/to/opm-common \\"
     echo "  -Dopm-core_PREFIX=/path/to/opm-core \\"
     echo "  -Dopm-material_PREFIX=/path/to/opm-material \\"
