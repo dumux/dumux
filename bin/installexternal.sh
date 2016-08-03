@@ -53,27 +53,41 @@ installAluGrid()
     fi
 }
 
-installCornerpoint()
+installErt()
 {
     cd $TOPDIR
 
-    checkLocationForDuneModules dune-cornerpoint
+    checkLocationForDuneModules ert
     if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
         return
     fi
 
-    if [ ! -e dune-cornerpoint ]; then
-        git clone -b release/2015.10 https://github.com/OPM/dune-cornerpoint
+    if [ ! -e ert ]; then
+        git clone -b release/2016.04 https://github.com/Ensembles/ert.git
     fi
-
+        
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
 
     if  test "$CLEANUP" == "y"; then
-        rm -rf dune-cornerpoint
+        rm -rf ert
         return
     fi
+
+    # building ert
+    echo "Building ert"
+    cd $TOPDIR/ert
+    mkdir build
+    cd build
+    cmake ../devel 
+    make
+
+    # show additional information
+    echo "Ert has been built in directory ert/build."
+    echo "Do not change this directory otherwise opm will not find ert!"
+    
+    cd $TOPDIR
 }
 
 installFoamGrid()
@@ -217,21 +231,25 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2015.10 https://github.com/OPM/opm-common
+        git clone -b release/2016.04 https://github.com/OPM/opm-common
     fi
 
     if [ ! -e opm-core ]; then
-        git clone -b release/2015.10 https://github.com/OPM/opm-core
+        git clone -b release/2016.04 https://github.com/OPM/opm-core
     fi
 
     if [ ! -e opm-material ]; then
-        git clone -b release/2015.10 https://github.com/OPM/opm-material
+        git clone -b release/2016.04 https://github.com/OPM/opm-material
     fi
 
     if [ ! -e opm-parser ]; then
-        git clone -b release/2015.10 https://github.com/OPM/opm-parser
+        git clone -b release/2016.04 https://github.com/OPM/opm-parser
     fi
 
+    if [ ! -e opm-grid ]; then
+        git clone -b release/2016.04 https://github.com/OPM/opm-grid
+    fi
+        
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -241,23 +259,29 @@ installOPM()
         rm -rf opm-core
         rm -rf opm-material
         rm -rf opm-parser
+        rm -rf opm-grid
         return
     fi
 
     # apply patches
     echo "Applying patch for opm-parser"
     cd $TOPDIR/opm-parser
-    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2015.10.patch
+    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2016.04.patch
+    
+    echo "Applying patch for opm-common"
+    cd $TOPDIR/opm-common
+    patch -p1 < $TOPDIR/dumux/patches/opm-common-2016.04.patch
 
     # show additional information
     echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
-    echo "  -Ddune-cornerpoint_PREFIX=/path/to/dune-cornerpoint \\"
+    echo "  -DOPM_COMMON_ROOT=/path/to/opm-common \\"
+    echo "  -Dopm-grid_PREFIX_PREFIX=/path/to/opm-grid \\"
     echo "  -Dopm-common_PREFIX=/path/to/opm-common \\"
     echo "  -Dopm-core_PREFIX=/path/to/opm-core \\"
     echo "  -Dopm-material_PREFIX=/path/to/opm-material \\"
     echo "  -Dopm-parser_PREFIX=/path/to/opm-parser \\"
-    echo "  -DHAVE_DUNE_CORNERPOINT=1 \\"
+    echo "  -DHAVE_OPM_GRID=1 \\"
 
     cd $TOPDIR
 }
@@ -377,7 +401,7 @@ usage()
     echo "Where PACKAGES is one or more of the following"
     echo "  all              Install everything and the kitchen sink."
     echo "  alugrid          Download dune-alugrid."
-    echo "  cornerpoint      Download and patch dune-cornerpoint."
+    echo "  ert              Download and build ert."
     echo "  foamgrid         Download dune-foamgrid."
     echo "  gstat            Download and install gstat."
     echo "  metis            Install the METIS graph partitioner."
@@ -443,7 +467,7 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installAluGrid
-            installCornerpoint
+            installErt
             installFoamGrid
             installGStat
             installMETIS
@@ -458,9 +482,9 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             installAluGrid
             ;;
-        cornerpoint|dune-cornerpoint)
+        ert)
             SOMETHING_DONE="y"
-            installCornerpoint
+            installErt
             ;;
         foamgrid|dune-foamgrid)
             SOMETHING_DONE="y"

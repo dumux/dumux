@@ -28,7 +28,6 @@
 
 #include "cc2pcornerpointproblem.hh"
 #include <dumux/common/start.hh>
-#include <opm/core/io/eclipse/EclipseGridInspector.hpp>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
