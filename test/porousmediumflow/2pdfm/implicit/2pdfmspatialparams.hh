@@ -132,18 +132,16 @@ public:
         porosityFracture_ = 0.10;
         fractureWidth_    = 1e-2;
 
-        if (!useSimpleTest_)
-            fractureMapper_.map();
-        else
+        // comment this out if you want to use the simple test case
+        fractureMapper_.map();
+
+        isVertexFracture_.resize(gridView.size(dim));
+        for (const auto& element : elements(gridView))
         {
-            isVertexFracture_.resize(gridView.size(dim));
-            for (const auto& element : elements(gridView))
+            for (int scvIdx = 0; scvIdx < element.subEntities(dim); scvIdx++)
             {
-                for (int scvIdx = 0; scvIdx < element.subEntities(dim); scvIdx++)
-                {
-                    int vIdxGlobal = vertexMapper_.subIndex(element, scvIdx, dim);
-                    isVertexFracture_[vIdxGlobal] = isVertexFracture(element, scvIdx);
-                }
+                int vIdxGlobal = vertexMapper_.subIndex(element, scvIdx, dim);
+                isVertexFracture_[vIdxGlobal] = isVertexFracture(element, scvIdx);
             }
         }
     }
