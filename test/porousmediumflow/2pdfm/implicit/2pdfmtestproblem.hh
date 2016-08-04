@@ -153,14 +153,12 @@ public:
           vertIdxToScvNeighborMapper_(gridView),
           vertIdxToMinPcFractureMapper_(gridView, this->spatialParams()),
           vertIdxToMinPcMapper_(gridView, this->spatialParams())
-
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
         //vertIdxToScvNeighborMapper_.update();
         vertIdxToMinPcFractureMapper_.update();
         vertIdxToMinPcMapper_.update();
-
     }
 
     /*!
@@ -375,11 +373,11 @@ private:
         return globalPos[1] > this->bBoxMax()[1] - eps_;
     }
 
+    bool useInterfaceCondition_;
     Scalar temperature_;
     Scalar eps_;
     VertIdxToScvNeighborMapper vertIdxToScvNeighborMapper_;
     VertIdxToMinPcFractureMapper vertIdxToMinPcFractureMapper_;
-    bool useInterfaceCondition_;
     VertIdxToMinPcMapper vertIdxToMinPcMapper_;
 };
 } //end namespace
