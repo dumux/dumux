@@ -23,7 +23,7 @@
 #include<dune/grid/common/mcmgmapper.hh>
 #include<dune/grid/common/grid.hh>
 #include <fstream>
-#include "vertidxtoelemfacesmapper.hh"
+
 using namespace std;
 
 /**
@@ -50,8 +50,6 @@ typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename MaterialLaw::Params MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Dumux::VertIdxToElemFacesMapper<GridView> VertIdxToElemFacesMapper;
-
 
 
 public:
@@ -63,7 +61,7 @@ public:
     typedef std::unordered_map<int, ElementMinPe > VertexElemMinPcFractureMapper;
 
     VertIdxToMinPcFractureMapper(const GridView& gridView, SpatialParams& spatialParams)
-    : gridView_(gridView), vertexMapper_(gridView), spatialParams_(spatialParams), vertIdxToElemFacesMapper_(gridView)
+    : gridView_(gridView), vertexMapper_(gridView), spatialParams_(spatialParams)
 
     {
         //Call the update function in the constructor
@@ -113,7 +111,6 @@ public:
     void updateBrooksCorey()
     {
         vertexMapper_.update();
-        vertIdxToElemFacesMapper_.update();
         vertexElemMinPcFractureMapper_.clear();
         FVElementGeometry fvGeometry;
         ElementIterator eEndIt = gridView_.template end<0>();
@@ -211,7 +208,6 @@ protected:
     //vertex map
     VertexMapper vertexMapper_;
     SpatialParams spatialParams_;
-    VertIdxToElemFacesMapper vertIdxToElemFacesMapper_;
 
 };
 
