@@ -75,7 +75,6 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
 public:
     // export type of fluid state for non-isothermal models
@@ -220,7 +219,7 @@ public:
         Scalar pe = MaterialLaw::pc(materialParams, 1-materialParams.snr());
 
         FVElementGeometry minPcElemFvGeometry;
-        ElementPointer minPcElem = vertIdxToMinPcMapper.vertexElementPointer(globalIdx);
+        Element minPcElem = vertIdxToMinPcMapper.vertexElementPointer(globalIdx);
         minPcElemFvGeometry.update(problem.gridView(), minPcElem);
         MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParams(minPcElem, minPcElemFvGeometry, scvIdx);
         //calculate capillary pressure based on the pc-sw relation of the minPc element

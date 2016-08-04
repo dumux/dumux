@@ -40,7 +40,6 @@ class VertIdxToScvNeighborMapper
     typedef typename GridView::Grid Grid;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef typename Grid::template Codim<0>::Entity::EntitySeed EntitySeed;
@@ -108,7 +107,7 @@ public:
     }
 
     //return pointer to i-th element
-    ElementPointer vertexElementPointer (int vIdxGlobal, int elem) const
+    Element vertexElementPointer (int vIdxGlobal, int elem) const
     {
         return gridView_.grid().entity(vertexElements(vIdxGlobal)[elem].first);
     }
@@ -167,7 +166,7 @@ public:
                 out << "number of neighbor elements: " << numNeighbors << endl;
                 for (int neighborIdx = 0; neighborIdx < numNeighbors; neighborIdx++) {
                     int neighborScvIdx = vertexElementsScvIdx(globalIdx, neighborIdx);
-                    ElementPointer elem = vertexElementPointer(globalIdx, neighborIdx);
+                    Element elem = vertexElementPointer(globalIdx, neighborIdx);
                     out << neighborIdx << "-> element center: (" << elem.geometry().center()[0] << ", " << elem.geometry().center()[1] << ") ";
                     out << "scvIdx: " << neighborScvIdx << endl;
                 }

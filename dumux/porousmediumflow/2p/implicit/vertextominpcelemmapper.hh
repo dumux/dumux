@@ -41,7 +41,6 @@ typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename Grid::template Codim<0>::Entity::EntitySeed EntitySeed;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -93,7 +92,7 @@ public:
     }
 
     //return pointer to i-th element
-    ElementPointer vertexElementPointer (int vIdxGlobal) const
+    Element vertexElementPointer (int vIdxGlobal) const
     {
         return gridView_.grid().entity(elementMinPe(vIdxGlobal).first);
     }
