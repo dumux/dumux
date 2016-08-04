@@ -91,8 +91,8 @@ public:
         return elementMinPe(vIdxGlobal).second;
     }
 
-    //return pointer to i-th element
-    Element vertexElementPointer (int vIdxGlobal) const
+    //return i-th element
+    Element vertexElement (int vIdxGlobal) const
     {
         return gridView_.grid().entity(elementMinPe(vIdxGlobal).first);
     }

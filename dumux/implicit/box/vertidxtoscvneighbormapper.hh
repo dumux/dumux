@@ -107,7 +107,7 @@ public:
     }
 
     //return pointer to i-th element
-    Element vertexElementPointer (int vIdxGlobal, int elem) const
+    Element vertexElement (int vIdxGlobal, int elem) const
     {
         return gridView_.grid().entity(vertexElements(vIdxGlobal)[elem].first);
     }
@@ -166,7 +166,7 @@ public:
                 out << "number of neighbor elements: " << numNeighbors << endl;
                 for (int neighborIdx = 0; neighborIdx < numNeighbors; neighborIdx++) {
                     int neighborScvIdx = vertexElementsScvIdx(globalIdx, neighborIdx);
-                    Element elem = vertexElementPointer(globalIdx, neighborIdx);
+                    Element elem = vertexElement(globalIdx, neighborIdx);
                     out << neighborIdx << "-> element center: (" << elem.geometry().center()[0] << ", " << elem.geometry().center()[1] << ") ";
                     out << "scvIdx: " << neighborScvIdx << endl;
                 }

@@ -219,7 +219,7 @@ public:
         Scalar pe = MaterialLaw::pc(materialParams, 1-materialParams.snr());
 
         FVElementGeometry minPcElemFvGeometry;
-        Element minPcElem = vertIdxToMinPcMapper.vertexElementPointer(globalIdx);
+        Element minPcElem = vertIdxToMinPcMapper.vertexElement(globalIdx);
         minPcElemFvGeometry.update(problem.gridView(), minPcElem);
         MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParams(minPcElem, minPcElemFvGeometry, scvIdx);
         //calculate capillary pressure based on the pc-sw relation of the minPc element
