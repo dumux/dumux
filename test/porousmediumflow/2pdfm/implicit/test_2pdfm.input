@@ -11,5 +11,6 @@ EnableJacobianRecycling = 1 # enable reuse of jacobian matrices?
 UseInterfaceCondition = 1
 
 [Problem]
+UseSimpleTest = false
 EnableGravity = 0 # enable gravity?
 Name = 2pdfm_satup # name passed to the output routines
