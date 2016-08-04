@@ -269,6 +269,18 @@ public:
         return fractureMapper_.isDuneFractureEdge(fIdxGlobal);
     }
 
+    bool hasFractureFaces(const Element& element, const FVElementGeometry& fvGeometry, int localVertexIdx) const
+    {
+        // determine whether or not the scv has fracture faces connected to it
+        for (int fIdx = 0; fIdx < element.subEntities(1); ++fIdx)
+        {
+          auto& scvFace = fvGeometry.subContVolFace[fIdx];
+          if (isEdgeFracture(element, fIdx) && (scvFace.i == localVertexIdx || scvFace.j == localVertexIdx))
+              return true;
+        }
+        return false;
+    }
+
     /*!
      * \brief Returns the width of the fracture.
      *

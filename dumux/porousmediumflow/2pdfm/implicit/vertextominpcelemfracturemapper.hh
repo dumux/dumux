@@ -130,8 +130,7 @@ public:
                 int vIdxGlobal = vertexMapper_.subIndex(*eIt, vIdx, dim);
                 typename VertexElemMinPcFractureMapper::iterator vHandle = vertexElemMinPcFractureMapper_.find(vIdxGlobal);
 
-                bool isFracture = spatialParams_.isVertexFracture(*eIt, vIdx);
-                if (isFracture)
+                if (spatialParams_.hasFractureFaces(*eIt, fvGeometry, vIdx))
                     pe = spatialParams_.materialLawParamsFracture(*eIt, fvGeometry, vIdx).pe();
                 else
                     pe = spatialParams_.materialLawParams(*eIt, fvGeometry, vIdx).pe();
