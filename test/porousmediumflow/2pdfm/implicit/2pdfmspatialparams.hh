@@ -104,6 +104,7 @@ public:
         faceMapper_(gridView), vertexMapper_(gridView),
         fractureMapper_(gridView)
     {
+        useSimpleTest_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseSimpleTest);
         inactivateFractures_ = false;
 
         Scalar mD = 1e-12 * 1e-3; //miliDarcy
@@ -127,11 +128,24 @@ public:
         KMatrix_   = 1 * mD; //m^2
         KFracture_ = 1e5 * mD; //m^2
 
-        porosityMatrix_   =    0.25;
+        porosityMatrix_   = 0.25;
         porosityFracture_ = 0.10;
         fractureWidth_    = 1e-2;
 
-        fractureMapper_.map();
+        if (!useSimpleTest_)
+            fractureMapper_.map();
+        else
+        {
+            isVertexFracture_.resize(gridView.size(dim));
+            for (const auto& element : elements(gridView))
+            {
+                for (int scvIdx = 0; scvIdx < element.subEntities(dim); scvIdx++)
+                {
+                    int vIdxGlobal = vertexMapper_.subIndex(element, scvIdx, dim);
+                    isVertexFracture_[vIdxGlobal] = isVertexFracture(element, scvIdx);
+                }
+            }
+        }
     }
 
     /*!
@@ -239,8 +253,16 @@ public:
         {
             return false;
         }
-        int vIdxGlobal = vertexMapper_.subIndex(element, localVertexIdx, dim);
-        return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
+
+        if (!useSimpleTest_)
+        {
+            int vIdxGlobal = vertexMapper_.subIndex(element, localVertexIdx, dim);
+            return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
+        }
+
+        const auto vertexPosition = element.template subEntity<dim>(localVertexIdx).geometry().center();
+        return (vertexPosition[1] > 0.5 - 1e-6 && vertexPosition[1] < 0.5 + 1e-6) ||
+               (vertexPosition[0] > 0.5 - 1e-6 && vertexPosition[0] < 0.5 + 1e-6 && vertexPosition[1] > 0.25 && vertexPosition[1] < 0.75);
     }
 
     /*!
@@ -254,7 +276,10 @@ public:
         {
             return false;
         }
-        return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
+
+        if (!useSimpleTest_)
+            return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
+        return isVertexFracture_[vIdxGlobal];
     }
 
     /*!
@@ -265,8 +290,14 @@ public:
      */
     bool isEdgeFracture(const Element &element, int localFaceIdx) const
     {
-        int fIdxGlobal = faceMapper_.subIndex(element, localFaceIdx, 1);
-        return fractureMapper_.isDuneFractureEdge(fIdxGlobal);
+        if (!useSimpleTest_)
+        {
+            int fIdxGlobal = faceMapper_.subIndex(element, localFaceIdx, 1);
+            return fractureMapper_.isDuneFractureEdge(fIdxGlobal);
+        }
+        const auto edgePosition = element.template subEntity<1>(localFaceIdx).geometry().center();
+        return (edgePosition[1] > 0.5 - 1e-6 && edgePosition[1] < 0.5 + 1e-6) ||
+               (edgePosition[0] > 0.5 - 1e-6 && edgePosition[0] < 0.5 + 1e-6 && edgePosition[1] > 0.25 && edgePosition[1] < 0.75);
     }
 
     bool hasFractureFaces(const Element& element, const FVElementGeometry& fvGeometry, int localVertexIdx) const
@@ -311,6 +342,8 @@ private:
                return false;
     }
 
+    bool useSimpleTest_;
+
     Scalar KMatrix_;
     Scalar KFracture_;
     Scalar porosityMatrix_;
@@ -327,6 +360,7 @@ private:
     const FaceMapper faceMapper_;
     const VertexMapper vertexMapper_;
 
+    std::vector<bool> isVertexFracture_;
     Dumux::FractureMapper<TypeTag> fractureMapper_;
 };
 
