@@ -66,7 +66,6 @@ class TwoPDFMVolumeVariables : public TwoPVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) GridType;
     typedef typename GridType::ctype DT;
 
@@ -157,7 +156,7 @@ public:
         Scalar pe = MaterialLaw::pc(materialParamsFracture, 1-materialParamsFracture.snr());
 
         FVElementGeometry minPcElemFvGeometry;
-        ElementPointer minPcElem = vertIdxToMinPcMapper.vertexElementPointer(globalIdx);
+        Element minPcElem = vertIdxToMinPcMapper.vertexElement(globalIdx);
         minPcElemFvGeometry.update(problem.gridView(), minPcElem);
         //choose materialLawParamsFracture as fracture has higher pe
         MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParamsFracture(minPcElem, minPcElemFvGeometry, scvIdx);
