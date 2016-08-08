@@ -84,7 +84,7 @@ SET_PROP(BoxStokesnc, FluidState)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+    typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 //! Choose the considered phase (single-phase system); the gas phase is used

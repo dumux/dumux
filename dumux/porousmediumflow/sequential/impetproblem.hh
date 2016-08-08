@@ -312,7 +312,7 @@ public:
     }
 
     /*!
-     * \brief Called by the Dumux::TimeManager in order to
+     * \brief Called by the TimeManager in order to
      *        initialize the problem.
      */
     void init()
@@ -325,7 +325,7 @@ public:
     }
 
     /*!
-     * \brief Called by Dumux::TimeManager just before the time
+     * \brief Called by TimeManager just before the time
      *        integration.
      */
     void preTimeStep()
@@ -338,7 +338,7 @@ public:
     }
 
     /*!
-     * \brief Called by Dumux::TimeManager in order to do a time
+     * \brief Called by TimeManager in order to do a time
      *        integration on the model.
      *
      * \note \a timeStepSize and \a nextStepSize are references and may
@@ -398,7 +398,7 @@ public:
     }
 
     /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
+     * \brief Called by TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.
      *
@@ -429,7 +429,7 @@ public:
     { timeManager().setTimeStepSize(dt); }
 
     /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
+     * \brief Called by TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.
      */
@@ -662,7 +662,7 @@ public:
     TimeManager &timeManager()
     { return *timeManager_; }
 
-    //! \copydoc Dumux::IMPETProblem::timeManager()
+    //! \copydoc IMPETProblem::timeManager()
     const TimeManager &timeManager() const
     { return *timeManager_; }
 
@@ -675,7 +675,7 @@ public:
     Variables& variables ()
     { return variables_; }
 
-    //! \copydoc Dumux::IMPETProblem::variables ()
+    //! \copydoc IMPETProblem::variables ()
     const Variables& variables () const
     { return variables_; }
 
@@ -685,7 +685,7 @@ public:
     IMPETModel &model()
     { return *model_; }
 
-    //! \copydoc Dumux::IMPETProblem::model()
+    //! \copydoc IMPETProblem::model()
     const IMPETModel &model() const
     { return *model_; }
 
@@ -695,7 +695,7 @@ public:
     PressureModel &pressureModel()
     { return *pressModel_; }
 
-    //! \copydoc Dumux::IMPETProblem::pressureModel()
+    //! \copydoc IMPETProblem::pressureModel()
     const PressureModel &pressureModel() const
     { return *pressModel_; }
 
@@ -705,7 +705,7 @@ public:
     TransportModel &transportModel()
     { return *transportModel_; }
 
-    //! \copydoc Dumux::IMPETProblem::transportModel()
+    //! \copydoc IMPETProblem::transportModel()
     const TransportModel &transportModel() const
     { return *transportModel_; }
     // \}
@@ -722,11 +722,11 @@ public:
      * The file will start with the prefix returned by the name()
      * method, has the current time of the simulation clock in it's
      * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Dumux::Restart for details.
+     * file.)  See Restart for details.
      */
     void serialize()
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
 
         Restarter res;
         res.serializeBegin(asImp_());
@@ -763,7 +763,7 @@ public:
             model().initialize();
         }
 
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
 
         Restarter res;
         res.deserializeBegin(asImp_(), tRestart);
@@ -820,7 +820,7 @@ protected:
             resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         return *resultWriter_;
     }
-    //! \copydoc Dumux::IMPETProblem::resultWriter()
+    //! \copydoc IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
         if (!resultWriter_)
@@ -833,7 +833,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

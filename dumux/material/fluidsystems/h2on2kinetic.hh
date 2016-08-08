@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::H2ON2Kinetic
+ * \brief @copybrief FluidSystems::H2ON2Kinetic
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
@@ -56,7 +56,7 @@ private:
     typedef Dumux::IdealGas<Scalar> IdealGas;
 public:
     //! The type of parameter cache objects
-    typedef Dumux::NullParameterCache ParameterCache;
+    typedef NullParameterCache ParameterCache;
 
     //! Index of the solid phase
     static constexpr int sPhaseIdx = 2;
@@ -184,7 +184,7 @@ public:
             case nCompIdx :
             {
                 // wPhase, nComp comes in: we hand back the concentration in the other phase: nPhase, nComp
-                const Scalar H      = Dumux::BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
+                const Scalar H      = BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
                 const Scalar xwn    = fluidState.moleFraction(referencePhaseIdx, calcCompIdx) ; // known from reference phase
                 const Scalar xnn    = H / pn * xwn; // mole fraction in the other phase
                 Valgrind::CheckDefined(xnn);
@@ -214,7 +214,7 @@ public:
             case nCompIdx :
             {
                 // nPhase, nComp comes in: we hand back the concentration in the other phase: wPhase, nComp
-                const Scalar H      = Dumux::BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
+                const Scalar H      = BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
                 const Scalar xnn    = fluidState.moleFraction(referencePhaseIdx, calcCompIdx) ;// known from reference phase
                 const Scalar xwn    = pn / H * xnn ; // mole fraction in the other phase
                 Valgrind::CheckDefined(xwn);
@@ -276,7 +276,7 @@ public:
         const Scalar temperature        = fluidState.temperature(/*phaseIdx=*/0);
         const Scalar pn                 = fluidState.pressure(nPhaseIdx);
         const Scalar satVapPressure     = ParentType::H2O::vaporPressure(temperature);
-        const Scalar henry              = Dumux::BinaryCoeff::H2O_N2::henry(temperature);
+        const Scalar henry              = BinaryCoeff::H2O_N2::henry(temperature);
 
         Scalar x[numPhases][numComponents] ;
         x[nPhaseIdx][wCompIdx]  = ( satVapPressure*(henry - pn) )  / ( pn*(henry-satVapPressure) ) ;
@@ -298,7 +298,7 @@ public:
      */
     static Scalar henry(Scalar temperature)
     {
-        return Dumux::BinaryCoeff::H2O_N2::henry(temperature);
+        return BinaryCoeff::H2O_N2::henry(temperature);
     }
 
     /*!

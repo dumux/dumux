@@ -45,12 +45,12 @@ NEW_TYPE_TAG(StokesTestProblem, INHERITS_FROM(BoxStokes));
 SET_TYPE_PROP(StokesTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(StokesTestProblem, Problem, Dumux::StokesTestProblem<TypeTag>);
+SET_TYPE_PROP(StokesTestProblem, Problem, StokesTestProblem<TypeTag>);
 
 // Use nitrogen as gas phase
 SET_TYPE_PROP(StokesTestProblem, Fluid,
-              Dumux::FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                            Dumux::N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                            N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 /*!

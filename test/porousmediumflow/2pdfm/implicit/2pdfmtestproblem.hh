@@ -58,10 +58,10 @@ SET_TYPE_PROP(TwoPDFMTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // set the GridCreator property
-SET_TYPE_PROP(TwoPDFMTestProblem, GridCreator, Dumux::ArtGridCreator<TypeTag>);
+SET_TYPE_PROP(TwoPDFMTestProblem, GridCreator, ArtGridCreator<TypeTag>);
 
 // Set the problem property
-SET_TYPE_PROP(TwoPDFMTestProblem, Problem, Dumux::TwoPDFMTestProblem<TypeTag>);
+SET_TYPE_PROP(TwoPDFMTestProblem, Problem, TwoPDFMTestProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(TwoPDFMTestProblem, WettingPhase)
@@ -69,7 +69,7 @@ SET_PROP(TwoPDFMTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -78,11 +78,11 @@ SET_PROP(TwoPDFMTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 // Linear solver settings
-SET_TYPE_PROP(TwoPDFMTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(TwoPDFMTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 
 }
 

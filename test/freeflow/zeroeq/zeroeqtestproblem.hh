@@ -46,12 +46,12 @@ NEW_TYPE_TAG(ZeroEqTestProblem, INHERITS_FROM(BoxZeroEq));
 SET_TYPE_PROP(ZeroEqTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ZeroEqTestProblem, Problem, Dumux::ZeroEqTestProblem<TypeTag>);
+SET_TYPE_PROP(ZeroEqTestProblem, Problem, ZeroEqTestProblem<TypeTag>);
 
 // Set the air as the gas phase
 SET_TYPE_PROP(ZeroEqTestProblem, Fluid,
-              Dumux::FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                            Dumux::Air<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              FluidSystems::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                            Air<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEqTestProblem, ProblemEnableGravity, false);

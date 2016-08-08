@@ -43,7 +43,7 @@ NEW_TYPE_TAG(ElasticMatrixProblem, INHERITS_FROM(BoxElastic,ElSpatialParams));
 SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_TYPE_PROP(ElasticMatrixProblem, Problem, Dumux::ElasticMatrixProblem<TypeTag>);
+SET_TYPE_PROP(ElasticMatrixProblem, Problem, ElasticMatrixProblem<TypeTag>);
 
 }
 

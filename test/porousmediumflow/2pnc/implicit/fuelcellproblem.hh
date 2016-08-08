@@ -47,7 +47,7 @@ NEW_TYPE_TAG(FuelCellCCProblem, INHERITS_FROM(CCModel, FuelCellProblem));
 // Set the grid type
 SET_TYPE_PROP(FuelCellProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(FuelCellProblem, Problem, Dumux::FuelCellProblem<TypeTag>);
+SET_TYPE_PROP(FuelCellProblem, Problem, FuelCellProblem<TypeTag>);
 // Set the primary variable combination for the 2pnc model
 SET_INT_PROP(FuelCellProblem, Formulation, TwoPNCFormulation::pgSl);
 
@@ -57,7 +57,7 @@ SET_PROP(FuelCellProblem, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     static const bool useComplexRelations = true;
  public:
-    typedef Dumux::FluidSystems::H2ON2O2<Scalar, useComplexRelations> type;
+    typedef FluidSystems::H2ON2O2<Scalar, useComplexRelations> type;
 };
 
 // Set the transport equation that is replaced by the total mass balance
@@ -124,8 +124,8 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     // Select the electrochemistry method
-    typedef typename Dumux::ElectroChemistry<TypeTag, Dumux::ElectroChemistryModel::Ochs> ElectroChemistry;
-    typedef Dumux::Constants<Scalar> Constant;
+    typedef Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs> ElectroChemistry;
+    typedef Constants<Scalar> Constant;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -181,7 +181,7 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
-    //! \copydoc Dumux::ImplicitProblem::solDependentSource()
+    //! \copydoc ImplicitProblem::solDependentSource()
     void solDependentSource(PrimaryVariables &values,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,

@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(ElSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ElSpatialParams, SpatialParams, Dumux::ElSpatialParams<TypeTag>);
+SET_TYPE_PROP(ElSpatialParams, SpatialParams, ElSpatialParams<TypeTag>);
 
 }
 

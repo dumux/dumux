@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(HeterogeneousSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousSpatialParams, SpatialParams, Dumux::HeterogeneousSpatialParams<TypeTag>);
+SET_TYPE_PROP(HeterogeneousSpatialParams, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(HeterogeneousSpatialParams, MaterialLaw)

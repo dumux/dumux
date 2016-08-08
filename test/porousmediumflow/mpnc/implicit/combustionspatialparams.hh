@@ -52,7 +52,7 @@ NEW_PROP_TAG(NumPhases);
 NEW_TYPE_TAG(CombustionSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(CombustionSpatialParams, SpatialParams, Dumux::CombustionSpatialParams<TypeTag>);
+SET_TYPE_PROP(CombustionSpatialParams, SpatialParams, CombustionSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(CombustionSpatialParams, MaterialLaw)

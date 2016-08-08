@@ -103,14 +103,14 @@ SET_PROP(TwoP, WettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 SET_PROP(TwoP, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 SET_PROP(TwoP, FluidSystem)
@@ -120,7 +120,7 @@ SET_PROP(TwoP, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
 public:
-    typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
+    typedef FluidSystems::TwoPImmiscible<Scalar,
                                                 WettingPhase,
                                                 NonwettingPhase> type;
 };

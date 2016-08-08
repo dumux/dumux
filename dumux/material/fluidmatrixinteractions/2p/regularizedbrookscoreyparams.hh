@@ -36,7 +36,7 @@ namespace Dumux
  *        \ingroup fluidmatrixinteractionsparams
  */
 template <class ScalarT>
-class RegularizedBrooksCoreyParams : public Dumux::BrooksCoreyParams<ScalarT>
+class RegularizedBrooksCoreyParams : public BrooksCoreyParams<ScalarT>
 {
     typedef Dumux::BrooksCoreyParams<ScalarT> BrooksCoreyParams;
 

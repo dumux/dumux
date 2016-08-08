@@ -123,7 +123,7 @@ SET_PROP(TwoPNC, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+        typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 //! Set the default formulation to pl-Sg: This can be over written in the problem.

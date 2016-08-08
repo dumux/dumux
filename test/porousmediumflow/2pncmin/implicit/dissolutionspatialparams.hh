@@ -37,7 +37,7 @@ namespace Properties
 NEW_TYPE_TAG(DissolutionSpatialparams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(DissolutionSpatialparams, SpatialParams, Dumux::DissolutionSpatialparams<TypeTag>);
+SET_TYPE_PROP(DissolutionSpatialparams, SpatialParams, DissolutionSpatialparams<TypeTag>);
 
 // Set the material Law
 SET_PROP(DissolutionSpatialparams, MaterialLaw)
@@ -47,7 +47,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     // define the material law parameterized by absolute saturations
-    typedef Dumux::EffToAbsLaw<Dumux::RegularizedBrooksCorey<Scalar> > type;
+    typedef EffToAbsLaw<RegularizedBrooksCorey<Scalar> > type;
 };
 }
 

@@ -66,7 +66,7 @@ namespace Dumux
 /*! \brief This fluid state ensures that only the allowed quantities
  * are accessed
  */
-template<class Scalar, class FluidSystem, class BaseFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem> >
+template<class Scalar, class FluidSystem, class BaseFluidState = CompositionalFluidState<Scalar, FluidSystem> >
 class HairSplittingFluidState: protected BaseFluidState
 {
 public:

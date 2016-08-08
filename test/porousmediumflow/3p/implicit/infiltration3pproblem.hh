@@ -47,12 +47,12 @@ NEW_TYPE_TAG(InfiltrationThreePCCProblem, INHERITS_FROM(CCModel, InfiltrationThr
 SET_TYPE_PROP(InfiltrationThreePProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationThreePProblem, Problem, Dumux::InfiltrationThreePProblem<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePProblem, Problem, InfiltrationThreePProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(InfiltrationThreePProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 
 // Maximum tolerated relative error in the Newton method

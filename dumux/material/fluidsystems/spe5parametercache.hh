@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::Spe5ParameterCache
+ * \brief @copybrief Spe5ParameterCache
  */
 #ifndef SPE5_PARAMETER_CACHE_HH
 #define SPE5_PARAMETER_CACHE_HH
@@ -42,10 +42,10 @@ namespace Dumux
  */
 template <class Scalar, class FluidSystem>
 class Spe5ParameterCache
-    : public Dumux::ParameterCacheBase<Spe5ParameterCache<Scalar, FluidSystem> >
+    : public ParameterCacheBase<Spe5ParameterCache<Scalar, FluidSystem> >
 {
     typedef Spe5ParameterCache<Scalar, FluidSystem> ThisType;
-    typedef Dumux::ParameterCacheBase<ThisType> ParentType;
+    typedef ParameterCacheBase<ThisType> ParentType;
 
     typedef Dumux::PengRobinson<Scalar> PengRobinson;
 
@@ -57,8 +57,8 @@ class Spe5ParameterCache
 
 public:
     // types of the parameter objects for each phase
-    typedef Dumux::PengRobinsonParamsMixture<Scalar, FluidSystem, oPhaseIdx, /*useSpe5=*/true> OilPhaseParams;
-    typedef Dumux::PengRobinsonParamsMixture<Scalar, FluidSystem, gPhaseIdx, /*useSpe5=*/true> GasPhaseParams;
+    typedef PengRobinsonParamsMixture<Scalar, FluidSystem, oPhaseIdx, /*useSpe5=*/true> OilPhaseParams;
+    typedef PengRobinsonParamsMixture<Scalar, FluidSystem, gPhaseIdx, /*useSpe5=*/true> GasPhaseParams;
 
     /*!
      * \brief The constructor

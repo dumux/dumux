@@ -42,7 +42,7 @@ namespace Properties
 NEW_TYPE_TAG(TestTransportSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestTransportSpatialParams, SpatialParams, Dumux::TestTransportSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestTransportSpatialParams, SpatialParams, TestTransportSpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(TestTransportSpatialParams, MaterialLaw)

@@ -50,7 +50,7 @@ namespace Properties
 NEW_TYPE_TAG(ThreePNISpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNISpatialParams, SpatialParams, Dumux::ThreePNISpatialParams<TypeTag>);
+SET_TYPE_PROP(ThreePNISpatialParams, SpatialParams, ThreePNISpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(ThreePNISpatialParams, MaterialLaw)

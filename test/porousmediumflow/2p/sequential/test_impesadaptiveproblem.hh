@@ -62,7 +62,7 @@ SET_TYPE_PROP(TestIMPESAdaptiveRestartProblem, GridCreator, GridCreator<TypeTag>
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, TestIMPESAdaptiveProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
@@ -70,7 +70,7 @@ SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -79,7 +79,7 @@ SET_PROP(TestIMPESAdaptiveProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Enable gravity
@@ -87,7 +87,7 @@ SET_BOOL_PROP(TestIMPESAdaptiveProblem, ProblemEnableGravity, false);
 
 //SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableCompressibility, true);
 
-//SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+//SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 
 SET_SCALAR_PROP(TestIMPESAdaptiveProblem, ImpetCFLFactor, 0.95);
 }

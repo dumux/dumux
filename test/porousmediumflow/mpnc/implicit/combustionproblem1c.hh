@@ -77,19 +77,19 @@ SET_TYPE_PROP(CombustionProblemOneComponent, LinearSolver, SuperLUBackend<TypeTa
 // Set the problem property
 SET_TYPE_PROP(CombustionProblemOneComponent,
                 Problem,
-                Dumux::CombustionProblemOneComponent<TTAG(CombustionProblemOneComponent)>);
+                CombustionProblemOneComponent<TTAG(CombustionProblemOneComponent)>);
 
 // Set fluid configuration
 SET_PROP(CombustionProblemOneComponent, FluidSystem){
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false> type;
+    typedef FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false> type;
 };
 
 // Set the newton controller
 SET_TYPE_PROP(CombustionProblemOneComponent, NewtonController,
-        Dumux::VeloModelNewtonController<TypeTag>);
+        VeloModelNewtonController<TypeTag>);
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_INT_PROP(CombustionProblemOneComponent,
@@ -138,7 +138,7 @@ private:
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+    typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 SET_BOOL_PROP(CombustionProblemOneComponent, UseMaxwellDiffusion, false);
@@ -670,7 +670,7 @@ private:
             }
 
             // obtain fugacities
-            typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+            typedef ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
             ParameterCache paramCache;
             ComputeFromReferencePhase::solve(fluidState,
                     paramCache,

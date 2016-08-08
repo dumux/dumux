@@ -49,10 +49,10 @@ NEW_TYPE_TAG(WaterAirCCProblem, INHERITS_FROM(CCModel, WaterAirProblem));
 SET_TYPE_PROP(WaterAirProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(WaterAirProblem, Problem, Dumux::WaterAirProblem<TypeTag>);
+SET_TYPE_PROP(WaterAirProblem, Problem, WaterAirProblem<TypeTag>);
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(WaterAirProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(WaterAirProblem, UseMoles, true);

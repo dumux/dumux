@@ -37,7 +37,7 @@ class IdealGas
 {
 public:
     //! The ideal gas constant \f$\mathrm{[J/mol/K]}\f$
-    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
+    static constexpr Scalar R = Constants<Scalar>::R;
 
     /*!
      * \brief The density of the gas in \f$\mathrm{[kg/m^3]}\f$, depending on

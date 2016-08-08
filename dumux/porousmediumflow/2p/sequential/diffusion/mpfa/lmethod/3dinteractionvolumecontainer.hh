@@ -96,7 +96,7 @@ class FvMpfaL3dInteractionVolumeContainer
         };
 
 public:
-    //! Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
+    //! Type for storing an MPFA-interaction-volume. (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
 private:
@@ -354,7 +354,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
  * Stores information with respect to DUNE intersections, such as normals,
  * in the interaction volumes. Assumes a local storage following the DUNE
  * reference element index, which is performed by the function
- * Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+ * FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
  * std::vector < std::vector<int> >& elemVertMap).
  *
  * \param element A level 0 Entity of a DUNE grid
@@ -1322,7 +1322,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
  *  - flux face areas
  *
  *  Assumes a local storage following the DUNE reference element index, which is performed by the
- *  function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+ *  function FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
  *                                                                                       std::vector < std::vector<int> >& elemVertMap).
  *
  * \param interactionVolume An interaction volume object
@@ -1459,7 +1459,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
  * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.)
  *
  * Assumes a local storage following the DUNE reference element index, which is performed by the
- * function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+ * function FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
  *                                                                                      std::vector < std::vector<int> >& elemVertMap).
  *
  * \param interactionVolume An interaction volume object

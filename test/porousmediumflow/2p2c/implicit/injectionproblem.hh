@@ -46,12 +46,12 @@ NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
 SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem, Problem, Dumux::InjectionProblem<TypeTag>);
+SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(InjectionProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(InjectionProblem, UseMoles, true);

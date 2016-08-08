@@ -65,7 +65,7 @@ class PengRobinsonParamsMixture
     enum { numComponents = FluidSystem::numComponents };
 
     // Peng-Robinson parameters for pure substances
-    typedef Dumux::PengRobinsonParams<Scalar> PureParams;
+    typedef PengRobinsonParams<Scalar> PureParams;
 
 public:
     /*!
@@ -100,7 +100,7 @@ public:
             Scalar pc = FluidSystem::criticalPressure(i);
             Scalar omega = FluidSystem::acentricFactor(i);
             Scalar Tr = temperature/FluidSystem::criticalTemperature(i);
-            Scalar RTc = Dumux::Constants<Scalar>::R*FluidSystem::criticalTemperature(i);
+            Scalar RTc = Constants<Scalar>::R*FluidSystem::criticalTemperature(i);
 
             Scalar f_omega;
 

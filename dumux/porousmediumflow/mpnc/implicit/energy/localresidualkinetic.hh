@@ -242,13 +242,13 @@ public:
 
         const Scalar iPorosity      = iVolVar.porosity();
         const Scalar kPorosity      = kVolVar.porosity();
-        const Scalar barPorosity    = Dumux::harmonicMean(iPorosity, kPorosity);
+        const Scalar barPorosity    = harmonicMean(iPorosity, kPorosity);
 
         const Scalar ilambda        = iVolVar.thermalConductivity(phaseIdx);
         const Scalar klambda        = kVolVar.thermalConductivity(phaseIdx);
 
         // Using a harmonic average is justified by its properties: if one phase does not conduct energy, there is no transfer
-        const Scalar barLambda      = Dumux::harmonicMean(ilambda, klambda) ;
+        const Scalar barLambda      = harmonicMean(ilambda, klambda) ;
 
         const Scalar gradientNormal = fluxVars.fluxVarsEnergy().temperatureGradient(phaseIdx)
                                         * fluxVars.face().normal ;
@@ -260,7 +260,7 @@ public:
         else if (phaseIdx == wPhaseIdx or phaseIdx == nPhaseIdx){
             const Scalar iSaturation    = iFluidState.saturation(phaseIdx);
             const Scalar kSaturation    = kFluidState.saturation(phaseIdx);
-            const Scalar barSaturation = Dumux::harmonicMean(iSaturation, kSaturation);
+            const Scalar barSaturation = harmonicMean(iSaturation, kSaturation);
             flux[energyEq0Idx + phaseIdx] -= barLambda * gradientNormal *  barPorosity * barSaturation  ;
         }
         else
@@ -292,9 +292,9 @@ public:
         const  Scalar lambdaSolid       = volVars.thermalConductivity(sPhaseIdx);
 
         // Using a harmonic average is justified by its properties: if one phase does not conduct energy, there is no transfer
-        const Scalar lambdaWN      = Dumux::harmonicMean(lambdaWetting, lambdaNonWetting);
-        const Scalar lambdaWS      = Dumux::harmonicMean(lambdaWetting, lambdaSolid);
-        const Scalar lambdaNS      = Dumux::harmonicMean(lambdaNonWetting, lambdaSolid);
+        const Scalar lambdaWN      = harmonicMean(lambdaWetting, lambdaNonWetting);
+        const Scalar lambdaWS      = harmonicMean(lambdaWetting, lambdaSolid);
+        const Scalar lambdaNS      = harmonicMean(lambdaNonWetting, lambdaSolid);
 //      |------------------------------------------------------|
 //      |                          |                           |
 //      |                          |                           |
@@ -310,7 +310,7 @@ public:
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
         const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
 
-        const Scalar nusseltWN      = Dumux::harmonicMean(volVars.nusseltNumber(wPhaseIdx), volVars.nusseltNumber(nPhaseIdx));
+        const Scalar nusseltWN      = harmonicMean(volVars.nusseltNumber(wPhaseIdx), volVars.nusseltNumber(nPhaseIdx));
         const Scalar nusseltWS      = volVars.nusseltNumber(wPhaseIdx);
         const Scalar nusseltNS      = volVars.nusseltNumber(nPhaseIdx);
 
@@ -602,7 +602,7 @@ public:
 
         const Scalar iPorosity      = iVolVar.porosity();
         const Scalar kPorosity      = kVolVar.porosity();
-        const Scalar barPorosity    = Dumux::harmonicMean(iPorosity, kPorosity);
+        const Scalar barPorosity    = harmonicMean(iPorosity, kPorosity);
 
         const Scalar iSolidLambda        = iVolVar.thermalConductivity(sPhaseIdx);
         const Scalar kSolidLambda        = kVolVar.thermalConductivity(sPhaseIdx);

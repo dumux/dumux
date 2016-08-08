@@ -43,7 +43,7 @@ namespace Properties
 NEW_TYPE_TAG(ColumnSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ColumnSpatialParams, SpatialParams, Dumux::ColumnSpatialParams<TypeTag>);
+SET_TYPE_PROP(ColumnSpatialParams, SpatialParams, ColumnSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(ColumnSpatialParams, MaterialLaw)

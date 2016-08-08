@@ -66,9 +66,9 @@ namespace Properties
 //! Enable adaptive grid
 SET_BOOL_PROP(IMPESTwoPAdaptive, AdaptiveGrid, true);
 //! Set variable class for adaptive impet schemes
-SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, Dumux::VariableClassAdaptive<TypeTag>);
+SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, VariableClassAdaptive<TypeTag>);
 //! Set cell data class for adaptive two-phase IMPES schemes
-SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, Dumux::CellData2PAdaptive<TypeTag>);
+SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, CellData2PAdaptive<TypeTag>);
 //! Set the standard indicator class of two-phase models for adaption or coarsening
 SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 //!Set default class for adaptation initialization indicator

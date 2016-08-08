@@ -52,12 +52,12 @@ NEW_TYPE_TAG(KuevetteCCProblem, INHERITS_FROM(CCModel, KuevetteProblem));
 SET_TYPE_PROP(KuevetteProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(KuevetteProblem, Problem, Dumux::KuevetteProblem<TypeTag>);
+SET_TYPE_PROP(KuevetteProblem, Problem, KuevetteProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(KuevetteProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // set newton relative tolerance
 SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);

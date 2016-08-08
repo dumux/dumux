@@ -82,7 +82,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 
 public:
     //! Type for storing an MPFA-interaction-volume.
-    //! (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
+    //! (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
 private:
@@ -127,7 +127,7 @@ private:
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 
@@ -146,7 +146,7 @@ private:
  *
  * Assumes a local storage following the DUNE reference element index, which is
  * performed by the function
- * Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements
+ * FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements
  * (const Element& element, std::vector < std::vector<int> >& elemVertMap).
  *
  * In the case of an adaptive grids with hanging nodes it is important to notice,
@@ -179,7 +179,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
         // Generate and store the geometric information going from the coarsest to the finest level.
         // For the calculation we take advantage from the fact that the ordering inside the interaction volume
         // with respect to the DUNE reference element is known due to the storage process of the elements in
-        // Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements
+        // FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements
         //        (const Element& element, std::vector < std::vector<int> >& elemVertMap)
         for (int i = 0; i < 8; i++)
         {
@@ -296,7 +296,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
  *
  *  - missing cells: As hanging nodes cannot be accessed from a cell face using the DUNE reference element,
  *                   the attached coarser cells do not appear in the interaction volume object after
- *                   execution of the function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements
+ *                   execution of the function FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements
  *                                             (const Element& element, std::vector < std::vector<int> >& elemVertMap).
  *                   We take advantage of this fact because it allows us to identify the type of hanging-node interaction volume.
  *                   If, for example, only two cells are stored, we know that the interaction volume is of type 5 according to
@@ -335,7 +335,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
     // Generate and store the geometric information going from the coarsest to the finest level.
     // For the calculation we take advantage from the fact that the ordering inside the interaction volume
     // with respect to the DUNE reference element is known due to the storage process of the elements in
-    // Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::
+    // FvMpfaL3dInteractionVolumeContainer<TypeTag>::
     // storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap)
     for (int i = 0; i < 8; i++)
     {

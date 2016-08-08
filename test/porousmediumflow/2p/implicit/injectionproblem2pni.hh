@@ -63,7 +63,7 @@ SET_TYPE_PROP(InjectionProblem2PNI, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem2PNI, Problem, Dumux::InjectionProblem2PNI<TypeTag>);
+SET_TYPE_PROP(InjectionProblem2PNI, Problem, InjectionProblem2PNI<TypeTag>);
 
 // Use the same fluid system as the 2p2c injection problem
 SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
@@ -72,14 +72,14 @@ SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GE
 // Set the wetting phase
 // SET_TYPE_PROP(InjectionProblem2PNI,
 //               WettingPhase,
-//               Dumux::FluidSystems::LiquidPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
-//                                                Dumux::SimpleH2O<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
+//               FluidSystems::LiquidPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
+//                                                SimpleH2O<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 
 // Set the non-wetting phase
 // SET_TYPE_PROP(InjectionProblem2PNI,
 //               NonwettingPhase,
-//               Dumux::FluidSystems::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
-//                                             Dumux::N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
+//               FluidSystems::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
+//                                             N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 }
 
 /*!

@@ -47,7 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(TwoPMincSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPMincSpatialParams, SpatialParams, Dumux::TwoPMincSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPMincSpatialParams, SpatialParams, TwoPMincSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(TwoPMincSpatialParams, MaterialLaw)

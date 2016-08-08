@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::H2ON2
+ * \brief @copybrief FluidSystems::H2ON2
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_HH
@@ -57,8 +57,8 @@ namespace FluidSystems
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
+ * additional namespace FluidSystem::.
+ * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
 template <class Scalar, bool useComplexRelations = true>
@@ -71,7 +71,7 @@ class H2ON2
     // convenience typedefs
     typedef Dumux::IdealGas<Scalar> IdealGas;
     typedef Dumux::H2O<Scalar> IapwsH2O;
-    typedef Dumux::TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
+    typedef TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
     typedef Dumux::N2<Scalar> SimpleN2;
 
 public:
@@ -501,7 +501,7 @@ public:
         if (phaseIdx == wPhaseIdx) {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
-            return Dumux::BinaryCoeff::H2O_N2::henry(T)/p;
+            return BinaryCoeff::H2O_N2::henry(T)/p;
         }
 
         // for the gas phase, assume an ideal gas when it comes to
@@ -705,11 +705,11 @@ public:
         else {
             // assume an ideal gas for both components. See:
             // http://en.wikipedia.org/wiki/Heat_capacity
-            Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
-            Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
+            Scalar c_vN2molar = Constants<Scalar>::R*2.39;
+            Scalar c_pN2molar = Constants<Scalar>::R + c_vN2molar;
 
-            Scalar c_vH2Omolar = Dumux::Constants<Scalar>::R*3.37; // <- correct??
-            Scalar c_pH2Omolar = Dumux::Constants<Scalar>::R + c_vH2Omolar;
+            Scalar c_vH2Omolar = Constants<Scalar>::R*3.37; // <- correct??
+            Scalar c_pH2Omolar = Constants<Scalar>::R + c_vH2Omolar;
 
             c_pN2 = c_pN2molar/molarMass(N2Idx);
             c_pH2O = c_pH2Omolar/molarMass(H2OIdx);
@@ -728,7 +728,7 @@ public:
 /*!
  * \brief A two-phase fluid system with water and nitrogen as components.
  *
- * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
+ * This is an adapter to use H2ON2FluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
  */
 template<class TypeTag>

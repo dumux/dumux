@@ -51,7 +51,7 @@ public:
     { }
 
     /*!
-     * \brief Called by the Dumux::TimeManager in order to initialize the problem.
+     * \brief Called by the TimeManager in order to initialize the problem.
      *
      * If you overload this method don't forget to call ParentType::init().<br>
      * This initializes all wall-related properties, which are necessary for the

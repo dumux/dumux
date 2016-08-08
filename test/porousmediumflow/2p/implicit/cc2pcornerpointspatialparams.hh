@@ -38,7 +38,7 @@ namespace Properties
 NEW_TYPE_TAG(CC2PCornerPointSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(CC2PCornerPointSpatialParams, SpatialParams, Dumux::CC2PCornerPointSpatialParams<TypeTag>);
+SET_TYPE_PROP(CC2PCornerPointSpatialParams, SpatialParams, CC2PCornerPointSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(CC2PCornerPointSpatialParams, MaterialLaw)

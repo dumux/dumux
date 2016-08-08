@@ -45,10 +45,10 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolume, Dumux::FvMpfaL3dInteractionVolume<TypeTag>);
-SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolumeContainer, Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>);
-SET_TYPE_PROP(FvMpfaL3dPressureTwoP, PressureModel, Dumux::FvMpfaL3dPressureVelocity2p<TypeTag>);
-SET_TYPE_PROP( FvMpfaL3dPressureTwoP, Velocity, Dumux::FvMpfaVelocityInTransport<TypeTag> );
+SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolume, FvMpfaL3dInteractionVolume<TypeTag>);
+SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolumeContainer, FvMpfaL3dInteractionVolumeContainer<TypeTag>);
+SET_TYPE_PROP(FvMpfaL3dPressureTwoP, PressureModel, FvMpfaL3dPressureVelocity2p<TypeTag>);
+SET_TYPE_PROP( FvMpfaL3dPressureTwoP, Velocity, FvMpfaVelocityInTransport<TypeTag> );
 }
 }// end of Dune namespace
 #endif

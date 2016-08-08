@@ -46,9 +46,9 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(FvMpfaL2dPressureTwoP, PressureModel, Dumux::FvMpfaL2dPressureVelocity2p<TypeTag>);
+SET_TYPE_PROP(FvMpfaL2dPressureTwoP, PressureModel, FvMpfaL2dPressureVelocity2p<TypeTag>);
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
-SET_TYPE_PROP( FvMpfaL2dPressureTwoP, Velocity, Dumux::FvMpfaVelocityInTransport<TypeTag> );
+SET_TYPE_PROP( FvMpfaL2dPressureTwoP, Velocity, FvMpfaVelocityInTransport<TypeTag> );
 }
 }// end of Dune namespace
 #endif

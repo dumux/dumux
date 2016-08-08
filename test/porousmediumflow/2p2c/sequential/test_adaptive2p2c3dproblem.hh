@@ -51,15 +51,15 @@ SET_TYPE_PROP(Adaptive2p2c3d, Grid, Dune::YaspGrid<3>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(Adaptive2p2c3d, Problem, Dumux::Adaptive2p2c3d<TTAG(Adaptive2p2c3d)>);
+SET_TYPE_PROP(Adaptive2p2c3d, Problem, Adaptive2p2c3d<TTAG(Adaptive2p2c3d)>);
 
 // Set the model properties
-SET_TYPE_PROP(Adaptive2p2c3d, TransportModel, Dumux::FV3dTransport2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
+SET_TYPE_PROP(Adaptive2p2c3d, TransportModel, FV3dTransport2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
 
-SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, Dumux::FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
+SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
 
 // Select fluid system
-SET_TYPE_PROP(Adaptive2p2c3d, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
+SET_TYPE_PROP(Adaptive2p2c3d, FluidSystem, H2OAirFluidSystem<TypeTag>);
 
 SET_BOOL_PROP(Adaptive2p2c3d, EnableComplicatedFluidSystem, false);
 
@@ -151,13 +151,13 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
  * \name Problem parameters
  */
 // \{
-//! @copydoc Dumux::TestDecTwoPTwoCProblem::name()
+//! @copydoc TestDecTwoPTwoCProblem::name()
 const char *name() const
 {
     return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name).c_str();
 }
 
-//! @copydoc Dumux::TestDecTwoPTwoCProblem::shouldWriteRestartFile()
+//! @copydoc TestDecTwoPTwoCProblem::shouldWriteRestartFile()
 bool shouldWriteRestartFile() const
 {
     return false;
@@ -174,7 +174,7 @@ Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 
 // \}
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::referencePressureAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::referencePressureAtPos()
  */
 Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
@@ -182,7 +182,7 @@ Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryTypesAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::boundaryTypesAtPos()
  */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
@@ -194,7 +194,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryFormulation()
+ * \copydoc TestDecTwoPTwoCProblem::boundaryFormulation()
  */
 const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
@@ -202,7 +202,7 @@ const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulat
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::dirichletAtPos()
  */
 void dirichletAtPos(PrimaryVariables &bcValues, const GlobalPosition& globalPos) const
 {
@@ -219,7 +219,7 @@ void dirichletAtPos(PrimaryVariables &bcValues, const GlobalPosition& globalPos)
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::neumannAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::neumannAtPos()
  */
 void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
@@ -227,7 +227,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::sourceAtPos()
  */
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
@@ -237,7 +237,7 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initialFormulation()
+ * \copydoc TestDecTwoPTwoCProblem::initialFormulation()
  */
 const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
@@ -245,7 +245,7 @@ const void initialFormulation(typename Indices::BoundaryFormulation &initialForm
 }
 
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentrationAtPos()
+ * \copydoc TestDecTwoPTwoCProblem::initConcentrationAtPos()
  */
 Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 {
@@ -253,7 +253,7 @@ Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 }
 
 private:
-Dumux::VtkMultiWriter<GridView> debugWriter_;
+VtkMultiWriter<GridView> debugWriter_;
 Scalar injectionrate_;
 };
 } //end namespace

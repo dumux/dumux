@@ -49,7 +49,7 @@ template <class TypeTag>
 class TwoPDFMFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
     friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
-    typedef Dumux::ImplicitDarcyFluxVariables<TypeTag> ParentType;
+    typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
@@ -153,7 +153,7 @@ public:
             KFj = 0;
         }
 
-        KFracture = Dumux::harmonicMean(KFi, KFj);
+        KFracture = harmonicMean(KFi, KFj);
 
         // temporary vector for the Darcy velocity
         Scalar vDarcyFracture = 0;

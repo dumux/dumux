@@ -216,7 +216,7 @@ public:
             const GlobalPosition v3 = *p[(i + 3)%4] - *p[i];
             const GlobalPosition v = point - *p[i];
             // compute the normal to the facet (cross product)
-            GlobalPosition n1 = Dumux::crossProduct(v1, v2);
+            GlobalPosition n1 = crossProduct(v1, v2);
             n1 /= n1.two_norm();
             // find out on which side of the plane v and v3 are
             const double t1 = n1.dot(v);
@@ -245,7 +245,7 @@ public:
         const GlobalPosition v = point - p0;
 
         // compute the normal of the triangle
-        const GlobalPosition n = Dumux::crossProduct(v1, v2);
+        const GlobalPosition n = crossProduct(v1, v2);
 
         // first check if we are in the plane of the triangle
         // if not we can return early
@@ -256,15 +256,15 @@ public:
         // compute the normal to the triangle made of point and first edge
         // the dot product of this normal and the triangle normal has to
         // be positive because we defined the edges in the right orientation
-        const GlobalPosition n1 = Dumux::crossProduct(v, v1);
+        const GlobalPosition n1 = crossProduct(v, v1);
         const double t1 = n.dot(n1);
         if (t1 < 0) return false;
 
-        const GlobalPosition n2 = Dumux::crossProduct(v, v2);
+        const GlobalPosition n2 = crossProduct(v, v2);
         const double t2 = n.dot(n2);
         if (t2 < 0) return false;
 
-        const GlobalPosition n3 = Dumux::crossProduct(v, v3);
+        const GlobalPosition n3 = crossProduct(v, v3);
         const double t3 = n.dot(n3);
         if (t3 < 0) return false;
 
@@ -291,7 +291,7 @@ public:
             return false;
 
         // if the cross product is zero the points are on a line
-        const GlobalPosition n = Dumux::crossProduct(v1, v2);
+        const GlobalPosition n = crossProduct(v1, v2);
 
         // early return if the vector length is larger than zero
         if (n.two_norm() > v1norm*eps_)
@@ -537,7 +537,7 @@ public:
             return false;
 
         // if the cross product is zero the points are on a line
-        const double n = Dumux::crossProduct(v1, v2);
+        const double n = crossProduct(v1, v2);
 
         // early return if the cross product is larger than zero
         if (n > v1norm*eps_)
@@ -930,7 +930,7 @@ public:
     //! Compute all intersections between entities and another bounding box tree
     template<class OtherGridView>
     std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>>
-    computeEntityCollisions(const Dumux::BoundingBoxTree<OtherGridView>& otherTree) const
+    computeEntityCollisions(const BoundingBoxTree<OtherGridView>& otherTree) const
     {
         // check if the world dimensions match
         static_assert(dimworld == OtherGridView::dimensionworld, "Can only collide bounding box trees of same world dimension");
@@ -1056,7 +1056,7 @@ private:
 
     //! Compute collisions with other bounding box tree recursively
     template <class OtherGridView>
-    void computeCollisions_(const Dumux::BoundingBoxTree<OtherGridView>& treeB,
+    void computeCollisions_(const BoundingBoxTree<OtherGridView>& treeB,
                             unsigned int nodeA,
                             unsigned int nodeB,
                             std::vector<BoundingBoxTreeIntersection<GridView, OtherGridView>>& intersections) const
@@ -1087,7 +1087,7 @@ private:
             auto geometryA = treeA.entity(eIdxA).geometry();
             auto geometryB = treeB.entity(eIdxB).geometry();
 
-            using CollisionType = Dumux::GeometryCollision<decltype(geometryA), decltype(geometryB)>;
+            using CollisionType = GeometryCollision<decltype(geometryA), decltype(geometryB)>;
             std::vector<GlobalPosition> intersection;
             if (CollisionType::collide(geometryA, geometryB, intersection))
                 intersections.emplace_back(eIdxA, eIdxB, std::move(intersection));

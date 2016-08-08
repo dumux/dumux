@@ -53,7 +53,7 @@ SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, Problem, TwoCNIZeroEqTwoPTwoCNI
 
 // Set the local coupling operator
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, MultiDomainCouplingLocalOperator,
-              Dumux::TwoCNIStokesTwoPTwoCNILocalOperator<TypeTag>);
+              TwoCNIStokesTwoPTwoCNILocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, SubDomain1TypeTag, TTAG(ZeroEq2cniSubProblem));
@@ -68,12 +68,12 @@ SET_TYPE_PROP(ZeroEq2cniSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCNISubPro
 SET_TYPE_PROP(TwoPTwoCNISubProblem, OtherSubDomainTypeTag, TTAG(ZeroEq2cniSubProblem));
 
 // Set the same spatial parameters for both sub-problems
-SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, Dumux::TwoCNIZeroEqTwoPTwoCNISpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, TwoCNIZeroEqTwoPTwoCNISpatialParams<TypeTag>);
 
 // Set the fluid system to use complex relations (last argument)
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
+                                   H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
 
 // If SuperLU is not available, the UMFPack solver is used:
 #ifdef HAVE_SUPERLU
@@ -182,11 +182,11 @@ public:
         gridinfo(this->sdGrid2());
     }
 
-    //! \copydoc Dumux::ImplicitProblem::episodeEnd()
+    //! \copydoc ImplicitProblem::episodeEnd()
     void episodeEnd()
     { this->timeManager().startNextEpisode(episodeLength_); }
 
-    //! \copydoc Dumux::ImplicitProblem::shouldWriteRestartFile()
+    //! \copydoc ImplicitProblem::shouldWriteRestartFile()
     bool shouldWriteRestartFile() const
     {
         return (((this->timeManager().timeStepIndex() > 0)
@@ -195,7 +195,7 @@ public:
                 || this->timeManager().willBeFinished());
     }
 
-    //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
+    //! \copydoc ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     {
         return (this->timeManager().timeStepIndex() % freqOutput_ == 0

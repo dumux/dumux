@@ -43,7 +43,7 @@ NEW_TYPE_TAG(Stokes2cniSubProblem,
     INHERITS_FROM(BoxStokesncni, SubDomain));
 
 // Set the problem property
-SET_TYPE_PROP(Stokes2cniSubProblem, Problem, Dumux::Stokes2cniSubProblem<TypeTag>);
+SET_TYPE_PROP(Stokes2cniSubProblem, Problem, Stokes2cniSubProblem<TypeTag>);
 
 // Use the Stokes2cniCouplingLocalResidual for the computation of the local residual in the Stokes domain
 SET_TYPE_PROP(Stokes2cniSubProblem, LocalResidual, StokesncniCouplingLocalResidual<TypeTag>);
@@ -172,11 +172,11 @@ public:
     }
 
     // functions have to be overwritten, otherwise they remain uninitialized
-    //! \copydoc Dumux::ImplicitProblem::bBoxMin()
+    //! \copydoc ImplicitProblem::bBoxMin()
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
 
-    //! \copydoc Dumux::ImplicitProblem::bBoxMax()
+    //! \copydoc ImplicitProblem::bBoxMax()
     const GlobalPosition &bBoxMax() const
     { return bBoxMax_; }
 

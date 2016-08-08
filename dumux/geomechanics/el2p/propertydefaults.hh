@@ -93,7 +93,7 @@ SET_TYPE_PROP(BoxElasticTwoP, Model, ElTwoPModel<TypeTag>);
 /*!
  * \brief An array of secondary variable containers.
  */
-SET_TYPE_PROP(BoxElasticTwoP, ElementVolumeVariables, Dumux::ElTwoPElementVolumeVariables<TypeTag>);
+SET_TYPE_PROP(BoxElasticTwoP, ElementVolumeVariables, ElTwoPElementVolumeVariables<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(BoxElasticTwoP, VolumeVariables, ElTwoPVolumeVariables<TypeTag>);
@@ -145,17 +145,17 @@ SET_PROP(BoxElasticTwoP, EffectivePermeabilityModel)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::PermeabilityRutqvistTsang<Scalar> type;
+    typedef PermeabilityRutqvistTsang<Scalar> type;
 };
 
-// SET_TYPE_PROP(BoxElasticTwoP, EffectivePermeabilityModel, Dumux::PermeabilityRutqvistTsang<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Gridview)::dimension>);
+// SET_TYPE_PROP(BoxElasticTwoP, EffectivePermeabilityModel, PermeabilityRutqvistTsang<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Gridview)::dimension>);
 
 // use the SuperLU linear solver by default
 #if HAVE_SUPERLU
-SET_TYPE_PROP(BoxElasticTwoP, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(BoxElasticTwoP, LinearSolver, SuperLUBackend<TypeTag> );
 #else
 #warning no SuperLU detected, defaulting to ILU0BiCGSTAB. For many problems, the el2p model requires a direct solver.
-SET_TYPE_PROP(BoxElasticTwoP, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(BoxElasticTwoP, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 #endif
 
 // set the grid operator
@@ -315,20 +315,20 @@ public:
 // set the grid function space for the sub-models
 SET_TYPE_PROP(BoxElasticTwoP, Constraints, Dune::PDELab::NoConstraints);
 
-SET_TYPE_PROP(BoxElasticTwoP, JacobianAssembler, Dumux::PDELab::El2PAssembler<TypeTag>);
+SET_TYPE_PROP(BoxElasticTwoP, JacobianAssembler, PDELab::El2PAssembler<TypeTag>);
 
 SET_PROP(BoxElasticTwoP, WettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 SET_PROP(BoxElasticTwoP, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 SET_PROP(BoxElasticTwoP, FluidSystem)
@@ -338,7 +338,7 @@ SET_PROP(BoxElasticTwoP, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
 public:
-    typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
+    typedef FluidSystems::TwoPImmiscible<Scalar,
                                                 WettingPhase,
                                                 NonwettingPhase> type;
 };
@@ -361,7 +361,7 @@ SET_TYPE_PROP(BoxElasticTwoP, NewtonController, ElTwoPNewtonController<TypeTag>)
 
 SET_PROP(BoxElasticTwoP, LocalOperator)
 {
-    typedef Dumux::PDELab::El2PLocalOperator<TypeTag> type;
+    typedef PDELab::El2PLocalOperator<TypeTag> type;
 };
 
 //! use the local FEM space associated with cubes by default
@@ -426,7 +426,7 @@ public:
 };
 
 //! The local jacobian operator
-SET_TYPE_PROP(BoxElasticTwoP, LocalJacobian, Dumux::ElTwoPLocalJacobian<TypeTag>);
+SET_TYPE_PROP(BoxElasticTwoP, LocalJacobian, ElTwoPLocalJacobian<TypeTag>);
 
 SET_TYPE_PROP(BoxElasticTwoP, BaseModel, ElTwoPBaseModel<TypeTag>);
 

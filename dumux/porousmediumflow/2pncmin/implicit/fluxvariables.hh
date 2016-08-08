@@ -50,8 +50,8 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
     friend typename GET_PROP_TYPE(TypeTag, BaseFluxVariables); // be friends with base class
     friend class TwoPNCFluxVariables<TypeTag>; // be friends with parent class
 
-    typedef Dumux::TwoPNCFluxVariables<TypeTag> ParentType;
-    typedef Dumux::TwoPNCMinFluxVariables<TypeTag> ThisType;
+    typedef TwoPNCFluxVariables<TypeTag> ParentType;
+    typedef TwoPNCMinFluxVariables<TypeTag> ThisType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

@@ -40,7 +40,7 @@ namespace Dumux
  *        Everything except the capillary pressure is taken from the parent, i.e. Regularized VanGenuchten.
  */
 template <class ScalarT, class ParamsT = RegularizedVanGenuchtenParams<ScalarT> >
-class RegularizedVanGenuchtenOfTemperature : public Dumux::RegularizedVanGenuchten<ScalarT, ParamsT>
+class RegularizedVanGenuchtenOfTemperature : public RegularizedVanGenuchten<ScalarT, ParamsT>
 {
     typedef Dumux::RegularizedVanGenuchten<ScalarT, ParamsT> RegularizedVanGenuchten;
     // Data is in /home/pnuske/paper/pcOfT/

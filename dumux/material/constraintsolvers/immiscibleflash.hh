@@ -181,7 +181,7 @@ public:
                 std::cout << "b: " << b << "\n";
                 */
 
-                throw Dumux::NumericalProblem(e.what());
+                throw NumericalProblem(e.what());
             }
             Valgrind::CheckDefined(deltaX);
 

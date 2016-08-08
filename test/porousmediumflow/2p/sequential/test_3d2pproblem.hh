@@ -62,7 +62,7 @@ SET_TYPE_PROP(ThreeDTwoPTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune:
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(ThreeDTwoPTestProblem, Problem, Dumux::Test3D2PProblem<TypeTag>);
+SET_TYPE_PROP(ThreeDTwoPTestProblem, Problem, Test3D2PProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(ThreeDTwoPTestProblem, WettingPhase)
@@ -70,7 +70,7 @@ SET_PROP(ThreeDTwoPTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -79,7 +79,7 @@ SET_PROP(ThreeDTwoPTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 #if PROBLEM == 1
@@ -94,17 +94,17 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
-    typedef Dumux::Test3d2pSpatialParams<TypeTag> type;
+    typedef Test3d2pSpatialParams<TypeTag> type;
 };
 
 #if PROBLEM == 1
-SET_TYPE_PROP(ThreeDTwoPTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(ThreeDTwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 SET_SCALAR_PROP(ThreeDTwoPTestProblem, ImpetCFLFactor, 1.0);
 #else
 SET_SCALAR_PROP(ThreeDTwoPTestProblem, ImpetCFLFactor, 0.95);
 #endif
 
-SET_TYPE_PROP(ThreeDTwoPTestProblem, AdaptionIndicator, Dumux::GridAdaptionIndicator2PLocal<TypeTag>);
+SET_TYPE_PROP(ThreeDTwoPTestProblem, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
 
 NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestProblem));
 NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestProblem));

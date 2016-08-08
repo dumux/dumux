@@ -49,7 +49,7 @@ NEW_TYPE_TAG(GeneralizedDirichletProblem, INHERITS_FROM(BoxTwoP, GeneralizedDiri
 
 // Set the "Problem" property
 SET_PROP(GeneralizedDirichletProblem, Problem)
-{ typedef Dumux::GeneralizedDirichletProblem<TypeTag> type;};
+{ typedef GeneralizedDirichletProblem<TypeTag> type;};
 
 // Set grid to be used
 SET_TYPE_PROP(GeneralizedDirichletProblem, Grid, Dune::YaspGrid<1>);
@@ -58,14 +58,14 @@ SET_TYPE_PROP(GeneralizedDirichletProblem, Grid, Dune::YaspGrid<1>);
 SET_PROP(GeneralizedDirichletProblem, WettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type;
+public: typedef FluidSystems::LiquidPhase<Scalar, H2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
 SET_PROP(GeneralizedDirichletProblem, NonwettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type;
+public: typedef FluidSystems::LiquidPhase<Scalar, LNAPL<Scalar> > type;
 };
 
 SET_INT_PROP(GeneralizedDirichletProblem, Formulation, TwoPFormulation::pnsw);

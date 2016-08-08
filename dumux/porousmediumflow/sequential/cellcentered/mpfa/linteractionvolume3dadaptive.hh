@@ -272,7 +272,7 @@ public:
 
     //! Store the type of hanging-node-interaction volume
     /*!
-     * \param hNType the type of hanging-node-interaction volume of type Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>::HangingNodeTypes
+     * \param hNType the type of hanging-node-interaction volume of type FvMpfaL3dInteractionVolumeAdaptive<TypeTag>::HangingNodeTypes
      */
     void setHangingNodeType(int hNType)
     {
@@ -313,7 +313,7 @@ public:
         return hangingNodeType_ != noHangingNode;
     }
 
-    //! The type of the interaction volume as type of Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>::HangingNodeTypes
+    //! The type of the interaction volume as type of FvMpfaL3dInteractionVolumeAdaptive<TypeTag>::HangingNodeTypes
     int getHangingNodeType()
     {
         return hangingNodeType_;

@@ -118,7 +118,7 @@ NEW_PROP_TAG(NewtonMaxSteps);
 NEW_PROP_TAG(JacobianAssembler);
 
 // set default values
-SET_TYPE_PROP(NewtonMethod, NewtonController, Dumux::NewtonController<TypeTag>);
+SET_TYPE_PROP(NewtonMethod, NewtonController, NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
@@ -354,7 +354,7 @@ public:
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * Throws NumericalProblem if the linear solver didn't
      * converge.
      *
      * \param A The matrix of the linear system of equations
@@ -397,7 +397,7 @@ public:
             if (gridView_().comm().size() > 1)
                 converged = gridView_().comm().min(converged);
 
-            Dumux::NumericalProblem p;
+            NumericalProblem p;
             std::string msg;
             std::ostringstream ms(msg);
             ms << e.what() << "M=" << A[e.r][e.c];
@@ -410,7 +410,7 @@ public:
             if (gridView_().comm().size() > 1)
                 converged = gridView_().comm().min(converged);
 
-            Dumux::NumericalProblem p;
+            NumericalProblem p;
             p.message(e.what());
             throw p;
         }

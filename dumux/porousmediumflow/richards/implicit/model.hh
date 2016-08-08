@@ -131,7 +131,7 @@ public:
      *        solution to an ouput writer.
      *
      * \param sol The current solution which ought to be written to disk
-     * \param writer The Dumux::VtkMultiWriter which is be used to write the data
+     * \param writer The VtkMultiWriter which is be used to write the data
      */
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)

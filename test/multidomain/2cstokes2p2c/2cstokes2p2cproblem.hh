@@ -62,11 +62,11 @@ NEW_TYPE_TAG(TwoCStokesTwoPTwoCTestProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
 SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the global problem
-SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Problem, Dumux::TwoCStokesTwoPTwoCTestProblem<TypeTag>);
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Problem, TwoCStokesTwoPTwoCTestProblem<TypeTag>);
 
 // Set the local coupling operator
 SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, MultiDomainCouplingLocalOperator,
-              Dumux::TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
+              TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
 SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, SubDomain1TypeTag, TTAG(Stokes2cSubProblem));
@@ -81,12 +81,12 @@ SET_TYPE_PROP(Stokes2cSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCSubProblem
 SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cSubProblem));
 
 // Set the spatial parameters used for the problems
-SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
 
 // Set the fluid system to use simple relations (last argument)
 SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
+                                   H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
 
 // if you do not have PARDISO, the SuperLU solver is used:
 #ifdef HAVE_PARDISO

@@ -585,7 +585,7 @@ protected:
                           Scalar a, Scalar b, Scalar c, Scalar d,
                           Scalar x0 = -1e100, Scalar x1 = 1e100) const
     {
-        int n = Dumux::invertCubicPolynomial(sol,
+        int n = invertCubicPolynomial(sol,
                                              a_(segIdx) - a,
                                              b_(segIdx) - b,
                                              c_(segIdx) - c,

@@ -50,7 +50,7 @@ namespace Properties
 NEW_TYPE_TAG(RichardsNISpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNISpatialParams, SpatialParams, Dumux::RichardsNISpatialParams<TypeTag>);
+SET_TYPE_PROP(RichardsNISpatialParams, SpatialParams, RichardsNISpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(RichardsNISpatialParams, MaterialLaw)

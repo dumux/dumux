@@ -88,7 +88,7 @@ SET_TYPE_PROP(LensProblemPointSource, Problem, LensProblemPointSource<TypeTag>);
 template <class TypeTag >
 class LensProblemPointSource : public LensProblem<TypeTag>
 {
-    typedef typename Dumux::LensProblem<TypeTag> ParentType;
+    typedef LensProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -110,7 +110,7 @@ public:
      * \brief Applies a vector of point sources. The point sources
      *        are possibly solution dependent.
      *
-     * \param pointSources A vector of Dumux::PointSource s that contain
+     * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
      *
      * For this method, the \a values method of the point source

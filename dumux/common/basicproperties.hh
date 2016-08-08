@@ -148,13 +148,13 @@ SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
 SET_STRING_PROP(NumericModel, GridParameterGroup, "Grid");
 
 //! Use the DgfGridCreator by default
-SET_TYPE_PROP(NumericModel, GridCreator, Dumux::GridCreator<TypeTag>);
+SET_TYPE_PROP(NumericModel, GridCreator, GridCreator<TypeTag>);
 
 //! Use the minimal point source implementation as default
-SET_TYPE_PROP(NumericModel, PointSource, Dumux::PointSource<TypeTag>);
+SET_TYPE_PROP(NumericModel, PointSource, PointSource<TypeTag>);
 
 //! Use the point source helper using the bounding box tree as a default
-SET_TYPE_PROP(NumericModel, PointSourceHelper, Dumux::BoundingBoxTreePointSourceHelper<TypeTag>);
+SET_TYPE_PROP(NumericModel, PointSourceHelper, BoundingBoxTreePointSourceHelper<TypeTag>);
 
 //! Set default output level to 0 -> only primary variables are added to output
 SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
@@ -165,7 +165,7 @@ SET_PROP(NumericModel, VtkMultiWriter)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 public:
-    typedef typename Dumux::VtkMultiWriter<GridView> type;
+    typedef VtkMultiWriter<GridView> type;
 };
 
 } // namespace Properties

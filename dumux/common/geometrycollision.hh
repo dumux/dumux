@@ -117,7 +117,7 @@ public:
             const auto v1 = geo1.corner(f[2]) - geo1.corner(f[0]);
             const auto eps = eps_*v0.two_norm();
 
-            auto n = Dumux::crossProduct(v0, v1);
+            auto n = crossProduct(v0, v1);
             n /= n.two_norm();
 
             const Scalar denom = n*d;

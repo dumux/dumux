@@ -52,7 +52,7 @@ NEW_TYPE_TAG(TwoPMincTestBoxProblem, INHERITS_FROM(BoxTwoPMinc, TwoPMincTestProb
 SET_TYPE_PROP(TwoPMincTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TwoPMincTestProblem, Problem, Dumux::TwoPMincTestProblem<TypeTag>);
+SET_TYPE_PROP(TwoPMincTestProblem, Problem, TwoPMincTestProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(TwoPMincTestProblem, WettingPhase)
@@ -60,7 +60,7 @@ SET_PROP(TwoPMincTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -69,7 +69,7 @@ SET_PROP(TwoPMincTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 // Set number of continua

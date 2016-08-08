@@ -82,13 +82,13 @@ SET_SCALAR_PROP(OneP, ImplicitMassUpwindWeight, 0.5);
 SET_SCALAR_PROP(OneP, ImplicitMobilityUpwindWeight, 0.5);
 
 //! The fluid system to use by default
-SET_TYPE_PROP(OneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
+SET_TYPE_PROP(OneP, FluidSystem, FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
 
 SET_PROP(OneP, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 /*!
@@ -102,7 +102,7 @@ SET_PROP(OneP, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
 // disable velocity output by default

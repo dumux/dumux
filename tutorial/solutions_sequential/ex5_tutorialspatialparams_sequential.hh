@@ -44,7 +44,7 @@ NEW_TYPE_TAG(Ex5TutorialSpatialParamsSequential);
 
 // Set the spatial parameters
 SET_TYPE_PROP(Ex5TutorialSpatialParamsSequential, SpatialParams,
-        Dumux::Ex5TutorialSpatialParamsSequential<TypeTag>); /*@\label{tutorial-sequential:set-spatialparameters}@*/
+        Ex5TutorialSpatialParamsSequential<TypeTag>); /*@\label{tutorial-sequential:set-spatialparameters}@*/
 
 // Set the material law
 SET_PROP(Ex5TutorialSpatialParamsSequential, MaterialLaw)

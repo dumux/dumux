@@ -44,11 +44,11 @@ NEW_TYPE_TAG(Stokes2cTestProblem, INHERITS_FROM(BoxStokesnc));
 SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(Stokes2cTestProblem, Problem, Dumux::Stokes2cTestProblem<TypeTag>);
+SET_TYPE_PROP(Stokes2cTestProblem, Problem, Stokes2cTestProblem<TypeTag>);
 
 // Select the fluid system
 SET_TYPE_PROP(Stokes2cTestProblem, FluidSystem,
-              Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 }
 
 /*!

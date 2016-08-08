@@ -58,7 +58,7 @@ NEW_TYPE_TAG(Ex5TutorialProblemSequential, INHERITS_FROM(FVPressureTwoP, FVTrans
 // Set the problem property
 SET_PROP(Ex5TutorialProblemSequential, Problem) /*@\label{tutorial-sequential:set-problem}@*/
 {
-    typedef Dumux::Ex5TutorialProblemSequential<TypeTag> type;
+    typedef Ex5TutorialProblemSequential<TypeTag> type;
 };
 
 // Set the grid type
@@ -70,7 +70,7 @@ SET_PROP(Ex5TutorialProblemSequential, WettingPhase) /*@\label{tutorial-sequenti
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-sequential:wettingPhase}@*/
+    typedef FluidSystems::LiquidPhase<Scalar, H2O<Scalar> > type; /*@\label{tutorial-sequential:wettingPhase}@*/
 };
 
 // Set the non-wetting phase
@@ -79,10 +79,10 @@ SET_PROP(Ex5TutorialProblemSequential, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-sequential:nonwettingPhase}@*/
+    typedef FluidSystems::LiquidPhase<Scalar, LNAPL<Scalar> > type; /*@\label{tutorial-sequential:nonwettingPhase}@*/
 }; /*@\label{tutorial-sequential:2p-system-end}@*/
 
-SET_TYPE_PROP(Ex5TutorialProblemSequential, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-sequential:cflflux}@*/
+SET_TYPE_PROP(Ex5TutorialProblemSequential, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-sequential:cflflux}@*/
 SET_SCALAR_PROP(Ex5TutorialProblemSequential, ImpetCFLFactor, 0.95); /*@\label{tutorial-sequential:cflfactor}@*/
 
 // Disable gravity

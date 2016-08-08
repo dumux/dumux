@@ -51,7 +51,7 @@ class PlotThermalConductivityModel
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
+    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         wPhaseIdx = Indices::wPhaseIdx,

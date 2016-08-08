@@ -68,20 +68,20 @@ public:
      * on thermodynamic equilibrium required)
      *****************************************************/
     /*!
-     * @copydoc Dumux::CompositionalFluidState::saturation()
+     * @copydoc CompositionalFluidState::saturation()
      */
     Scalar saturation(int phaseIdx) const
     { return saturation_[phaseIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::moleFraction()
+     * @copydoc CompositionalFluidState::moleFraction()
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
 
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::massFraction()
+     * @copydoc CompositionalFluidState::massFraction()
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
@@ -93,67 +93,67 @@ public:
     }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::averageMolarMass()
+     * @copydoc CompositionalFluidState::averageMolarMass()
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return averageMolarMass_[phaseIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::molarity()
+     * @copydoc CompositionalFluidState::molarity()
      */
     Scalar molarity(int phaseIdx, int compIdx) const
     { return molarDensity(phaseIdx)*moleFraction(phaseIdx, compIdx); }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::fugacityCoefficient()
+     * @copydoc CompositionalFluidState::fugacityCoefficient()
      */
     Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
     { return fugacityCoefficient_[phaseIdx][compIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::fugacity()
+     * @copydoc CompositionalFluidState::fugacity()
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
     { return pressure_[phaseIdx]*fugacityCoefficient_[phaseIdx][compIdx]*moleFraction_[phaseIdx][compIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::molarVolume()
+     * @copydoc CompositionalFluidState::molarVolume()
      */
     Scalar molarVolume(int phaseIdx) const
     { return 1/molarDensity(phaseIdx); }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::density()
+     * @copydoc CompositionalFluidState::density()
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::molarDensity()
+     * @copydoc CompositionalFluidState::molarDensity()
      */
     Scalar molarDensity(int phaseIdx) const
     { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
 
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::temperature()
+     * @copydoc CompositionalFluidState::temperature()
      */
     Scalar temperature(int phaseIdx) const
     { return temperature_[phaseIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::pressure()
+     * @copydoc CompositionalFluidState::pressure()
      */
     Scalar pressure(int phaseIdx) const
     { return pressure_[phaseIdx]; }
     /*!
-     * @copydoc Dumux::CompositionalFluidState::enthalpy()
+     * @copydoc CompositionalFluidState::enthalpy()
      */
     Scalar enthalpy(int phaseIdx) const
     { return enthalpy_[phaseIdx]; }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::internalEnergy()
+     * @copydoc CompositionalFluidState::internalEnergy()
      */
     Scalar internalEnergy(int phaseIdx) const
     {
@@ -162,7 +162,7 @@ public:
     }
 
     /*!
-     * @copydoc Dumux::CompositionalFluidState::viscosity()
+     * @copydoc CompositionalFluidState::viscosity()
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }

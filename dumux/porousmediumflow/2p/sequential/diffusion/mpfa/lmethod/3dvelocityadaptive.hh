@@ -89,7 +89,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
 
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
-    typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    typedef  FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
     typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
 
 

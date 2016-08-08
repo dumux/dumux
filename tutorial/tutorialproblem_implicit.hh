@@ -48,7 +48,7 @@ NEW_TYPE_TAG(TutorialProblemImplicit, INHERITS_FROM(BoxTwoP, TutorialSpatialPara
 
 // Set the "Problem" property
 SET_PROP(TutorialProblemImplicit, Problem) /*@\label{tutorial-implicit:set-problem}@*/
-{ typedef Dumux::TutorialProblemImplicit<TypeTag> type;};
+{ typedef TutorialProblemImplicit<TypeTag> type;};
 
 // Set grid and the grid creator to be used
 #if HAVE_DUNE_ALUGRID /*@\label{tutorial-implicit:set-grid}@*/
@@ -63,17 +63,17 @@ SET_TYPE_PROP(TutorialProblemImplicit, Grid, Dune::YaspGrid<2>);
 SET_PROP(TutorialProblemImplicit, WettingPhase) /*@\label{tutorial-implicit:2p-system-start}@*/
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
+public: typedef FluidSystems::LiquidPhase<Scalar, H2O<Scalar> > type; /*@\label{tutorial-implicit:wettingPhase}@*/
 };
 
 // Set the non-wetting phase
 SET_PROP(TutorialProblemImplicit, NonwettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
+public: typedef FluidSystems::LiquidPhase<Scalar, LNAPL<Scalar> > type; /*@\label{tutorial-implicit:nonwettingPhase}@*/
 }; /*@\label{tutorial-implicit:2p-system-end}@*/
 
-SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-implicit:set-fluidsystem}@*/
+SET_TYPE_PROP(TutorialProblemImplicit, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-implicit:set-fluidsystem}@*/
 // Disable gravity
 SET_BOOL_PROP(TutorialProblemImplicit, ProblemEnableGravity, false); /*@\label{tutorial-implicit:gravity}@*/
 }

@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(WaterAirSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(WaterAirSpatialParams, SpatialParams, Dumux::WaterAirSpatialParams<TypeTag>);
+SET_TYPE_PROP(WaterAirSpatialParams, SpatialParams, WaterAirSpatialParams<TypeTag>);
 
 
 // Set the material law parameterized by absolute saturations

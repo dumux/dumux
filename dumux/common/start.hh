@@ -410,7 +410,7 @@ int start_(int argc,
         printProps = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintProperties);
 
     if (printProps && mpiHelper.rank() == 0) {
-        Dumux::Properties::print<TypeTag>();
+        Properties::print<TypeTag>();
     }
 
     // deal with the restart stuff
@@ -470,7 +470,7 @@ int start_(int argc,
         dumuxMessage_(false);
 
     if (printParams && mpiHelper.rank() == 0) {
-        Dumux::Parameters::print<TypeTag>();
+        Parameters::print<TypeTag>();
     }
 
     // check if a deprecated TypeTag has been used
@@ -509,8 +509,8 @@ int start(int argc,
     try {
         return start_<TypeTag>(argc, argv, usage);
     }
-    catch (Dumux::ParameterException &e) {
-        Dumux::Parameters::print<TypeTag>();
+    catch (ParameterException &e) {
+        Parameters::print<TypeTag>();
         std::cerr << e << ". Abort!\n";
         return 1;
     }

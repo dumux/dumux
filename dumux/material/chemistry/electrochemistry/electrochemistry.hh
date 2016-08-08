@@ -55,7 +55,7 @@ enum ElectroChemistryModel { Ochs, Acosta };
  * This class calculates source terms and current densities for fuel cells
  * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006
  */
-template <class TypeTag, Dumux::ElectroChemistryModel electroChemistryModel>
+template <class TypeTag, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistry
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -66,7 +66,7 @@ class ElectroChemistry
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    typedef Dumux::Constants<Scalar> Constant;
+    typedef Constants<Scalar> Constant;
 
     typedef ElectroChemistry<TypeTag, electroChemistryModel> ThisType;
 
@@ -194,7 +194,7 @@ public:
 
             if(iterations >= maxIter)
             {
-                DUNE_THROW(Dumux::NumericalProblem, "Newton solver for electrochemistry didn't converge");
+                DUNE_THROW(NumericalProblem, "Newton solver for electrochemistry didn't converge");
             }
         }
 

@@ -43,13 +43,13 @@ namespace Dumux
  * properties can be provided in tabulated form, which is necessary for this
  * component implementation. The template is passed through the fluidsystem
  * brineco2fluidsystem.hh
- * If only gaseous co2 is regarded, one can use Dumux::SimpleCO2 instead.
+ * If only gaseous co2 is regarded, one can use SimpleCO2 instead.
  */
 template <class Scalar, class CO2Tables>
 class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
 {
     static const Scalar R;
-    typedef typename Dumux::IdealGas<Scalar> IdealGas;
+    typedef Dumux::IdealGas<Scalar> IdealGas;
 
     static bool warningThrown;
 

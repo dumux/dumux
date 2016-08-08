@@ -53,7 +53,7 @@ public:
         : ParentType(problem)
     {  }
 
-    //! \copydoc Dumux::NewtonController::newtonEndStep()
+    //! \copydoc NewtonController::newtonEndStep()
     void newtonEndStep(SolutionVector &uCurrentIter, SolutionVector &uLastIter)
     {
         ParentType::newtonEndStep(uCurrentIter, uLastIter);

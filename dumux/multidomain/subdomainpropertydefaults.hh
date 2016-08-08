@@ -61,7 +61,7 @@ SET_TYPE_PROP(SubDomain, BaseLocalResidual, BoxCouplingLocalResidual<TypeTag>);
 
 // set the local operator used for submodels
 SET_TYPE_PROP(SubDomain, LocalOperator,
-              Dumux::PDELab::MultiDomainLocalOperator<TypeTag>);
+              PDELab::MultiDomainLocalOperator<TypeTag>);
 
 // use the time manager for the coupled problem in the sub problems
 SET_PROP(SubDomain, TimeManager)

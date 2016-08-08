@@ -51,7 +51,7 @@ NEW_TYPE_TAG(RichardsLensCCProblem, INHERITS_FROM(CCModel, RichardsLensProblem))
 SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsLensProblem, Problem, Dumux::RichardsLensProblem<TypeTag>);
+SET_TYPE_PROP(RichardsLensProblem, Problem, RichardsLensProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(RichardsLensProblem, WettingPhase)
@@ -59,7 +59,7 @@ SET_PROP(RichardsLensProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Enable gravity

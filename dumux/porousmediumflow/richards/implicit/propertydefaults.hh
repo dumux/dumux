@@ -116,7 +116,7 @@ SET_PROP(Richards, WettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 /*!
@@ -131,7 +131,7 @@ SET_PROP(Richards, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::GasPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::GasPhase<Scalar, NullComponent<Scalar> > type;
 };
 
 /*!
@@ -150,7 +150,7 @@ SET_PROP(Richards, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
 public:
-    typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
+    typedef FluidSystems::TwoPImmiscible<Scalar,
                                                 WettingPhase,
                                                 NonwettingPhase> type;
 };
@@ -166,7 +166,7 @@ SET_PROP(Richards, FluidState){
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
 // disable velocity output by default

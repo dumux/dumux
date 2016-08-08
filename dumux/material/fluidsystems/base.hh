@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::BaseFluidSystem
+ * \brief @copybrief FluidSystems::BaseFluidSystem
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
 #define DUMUX_BASE_FLUID_SYSTEM_HH
@@ -45,7 +45,7 @@ class BaseFluidSystem
 {
 public:
     //! The type of parameter cache objects
-    typedef Dumux::NullParameterCache ParameterCache;
+    typedef NullParameterCache ParameterCache;
 
     /*!
      * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase

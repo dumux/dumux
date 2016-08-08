@@ -45,7 +45,7 @@ namespace Properties
 NEW_TYPE_TAG(El2PSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(El2PSpatialParams, SpatialParams, Dumux::El2PSpatialParams<TypeTag>);
+SET_TYPE_PROP(El2PSpatialParams, SpatialParams, El2PSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(El2PSpatialParams, MaterialLaw)

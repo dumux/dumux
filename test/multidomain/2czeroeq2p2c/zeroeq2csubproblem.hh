@@ -40,7 +40,7 @@ NEW_TYPE_TAG(ZeroEq2cSubProblem,
              INHERITS_FROM(BoxZeroEqnc, SubDomain));
 
 // Set the problem property
-SET_TYPE_PROP(ZeroEq2cSubProblem, Problem, Dumux::ZeroEq2cSubProblem<TypeTag>);
+SET_TYPE_PROP(ZeroEq2cSubProblem, Problem, ZeroEq2cSubProblem<TypeTag>);
 
 // Use the StokencCouplingLocalResidual for the computation of the local residual in the ZeroEq domain
 SET_TYPE_PROP(ZeroEq2cSubProblem, LocalResidual,

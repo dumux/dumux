@@ -50,7 +50,7 @@ SET_PROP(OnePTestProblem, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the grid type
@@ -59,19 +59,19 @@ SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<2>);
 //SET_TYPE_PROP(OnePTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePTestProblem, Problem, Dumux::OnePTestProblem<TypeTag> );
+SET_TYPE_PROP(OnePTestProblem, Problem, OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeTag> );
+SET_TYPE_PROP(OnePTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag> );
 
 // Linear solver settings
-SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(OnePTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
 NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 // Solver settings for the tests using AMG
-SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
-SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
+SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, AMGBackend<TypeTag> );
+SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, AMGBackend<TypeTag> );
 
 // if FoamGrid is available, test for dim < dimWorld
 #if HAVE_DUNE_FOAMGRID

@@ -52,7 +52,7 @@ SET_TYPE_PROP(Stokes2cniTestProblem, Problem, Stokes2cniTestProblem<TypeTag>);
 
 // Select the fluid system
 SET_TYPE_PROP(Stokes2cniTestProblem, FluidSystem,
-              Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Use Pardiso as linear solver, if available
 #if HAVE_PARDISO

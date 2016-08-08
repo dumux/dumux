@@ -36,7 +36,7 @@ namespace Dumux
  *        \ingroup fluidmatrixinteractionsparams
  */
 template <class ScalarT>
-class RegularizedParkerVanGen3PParams : public Dumux::ParkerVanGen3PParams<ScalarT>
+class RegularizedParkerVanGen3PParams : public ParkerVanGen3PParams<ScalarT>
 {
     typedef Dumux::ParkerVanGen3PParams<ScalarT> ParkerVanGen3PParams;
 

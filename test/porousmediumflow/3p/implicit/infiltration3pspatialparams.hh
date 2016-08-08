@@ -44,7 +44,7 @@ namespace Properties
 NEW_TYPE_TAG(InfiltrationThreePSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationThreePSpatialParams, SpatialParams, Dumux::InfiltrationThreePSpatialParams<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePSpatialParams, SpatialParams, InfiltrationThreePSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)

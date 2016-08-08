@@ -192,7 +192,7 @@ protected:
         if (sat <= 0)
             return 0;
 
-        static const Dumux::Spline<Scalar> sp(0, eps, // x0, x1
+        static const Spline<Scalar> sp(0, eps, // x0, x1
                                               0, 0.5, // y0, y1
                                               0, 0); // m0, m1
         return sp.eval(sat);
@@ -239,7 +239,7 @@ protected:
                     {
                         auto porousDiffI = volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * volVarsI.diffCoeff(phaseIdx, compIdx);
                         auto porousDiffJ = volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * volVarsJ.diffCoeff(phaseIdx, compIdx);
-                        porousDiffCoeff_[phaseIdx][compIdx] = Dumux::harmonicMean(porousDiffI, porousDiffJ);
+                        porousDiffCoeff_[phaseIdx][compIdx] = harmonicMean(porousDiffI, porousDiffJ);
                     }
                 }
             }

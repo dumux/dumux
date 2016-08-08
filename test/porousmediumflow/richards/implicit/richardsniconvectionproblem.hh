@@ -52,7 +52,7 @@ SET_TYPE_PROP(RichardsNIConvectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(RichardsNIConvectionProblem, Problem,
-              Dumux::RichardsNIConvectionProblem<TypeTag>);
+              RichardsNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(RichardsNIConvectionProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
@@ -60,7 +60,7 @@ SET_TYPE_PROP(RichardsNIConvectionProblem, FluidSystem, FluidSystems::H2ON2<type
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsNIConvectionProblem,
               SpatialParams,
-              Dumux::RichardsNISpatialParams<TypeTag>);
+              RichardsNISpatialParams<TypeTag>);
 }
 
 
@@ -102,7 +102,7 @@ class RichardsNIConvectionProblem : public RichardsProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef Dumux::H2O<Scalar> IapwsH2O;
+    typedef H2O<Scalar> IapwsH2O;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

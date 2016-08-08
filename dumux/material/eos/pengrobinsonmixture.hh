@@ -104,7 +104,7 @@ public:
         Scalar bi_b = params.bPure(phaseIdx, compIdx) / params.b(phaseIdx);
 
         // Calculate the compressibility factor
-        Scalar RT = Dumux::Constants<Scalar>::R*fs.temperature(phaseIdx);
+        Scalar RT = Constants<Scalar>::R*fs.temperature(phaseIdx);
         Scalar p = fs.pressure(phaseIdx); // molar volume in [bar]
         Scalar Z = p*Vm/RT; // compressibility factor
 

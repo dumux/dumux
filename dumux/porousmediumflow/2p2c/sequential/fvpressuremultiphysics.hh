@@ -546,7 +546,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
 
         // compute vectorized permeabilities
         DimMatrix meanPermeability(0);
-        Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
+        harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
 
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitDistVec, permeability);

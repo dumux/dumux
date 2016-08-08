@@ -57,7 +57,7 @@ SET_TYPE_PROP(TwoCZeroEqTwoPTwoCTestProblem, SubDomain2TypeTag, TTAG(TwoPTwoCSub
 
 // Set the local coupling operator
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCTestProblem, MultiDomainCouplingLocalOperator,
-              Dumux::TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
+              TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
 
 // Set the global problem in the context of the two sub-problems
 SET_TYPE_PROP(ZeroEq2cSubProblem, MultiDomainTypeTag, TTAG(TwoCZeroEqTwoPTwoCTestProblem));
@@ -68,12 +68,12 @@ SET_TYPE_PROP(ZeroEq2cSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCSubProblem
 SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(ZeroEq2cSubProblem));
 
 // Set the same spatial parameters for both sub-problems
-SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, Dumux::TwoCZeroEqTwoPTwoCSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, TwoCZeroEqTwoPTwoCSpatialParams<TypeTag>);
 
 // Set the fluid system to use simple relations (last argument)
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCTestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
+                                   H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
 
 // If SuperLU is not available, the UMFPack solver is used:
 #ifdef HAVE_SUPERLU
@@ -188,7 +188,7 @@ public:
     void episodeEnd()
     { this->timeManager().startNextEpisode(episodeLength_); }
 
-    //! \copydoc Dumux::ImplicitProblem::shouldWriteRestartFile()
+    //! \copydoc ImplicitProblem::shouldWriteRestartFile()
     bool shouldWriteRestartFile() const
     {
         return ( ((this->timeManager().timeStepIndex() > 0)
@@ -198,7 +198,7 @@ public:
                 || this->timeManager().willBeFinished());
     }
 
-    //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
+    //! \copydoc ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     {
         return (this->timeManager().timeStepIndex() % freqOutput_ == 0

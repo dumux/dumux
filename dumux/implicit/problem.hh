@@ -134,7 +134,7 @@ public:
     }
 
     /*!
-     * \brief Called by the Dumux::TimeManager in order to
+     * \brief Called by the TimeManager in order to
      *        initialize the problem.
      *
      * If you overload this method don't forget to call
@@ -437,7 +437,7 @@ public:
      * \brief Applies a vector of point sources. The point sources
      *        are possibly solution dependent.
      *
-     * \param pointSources A vector of Dumux::PointSource s that contain
+     * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
      *
      * For this method, the \a values method of the point source
@@ -594,7 +594,7 @@ public:
     }
 
     /*!
-     * \brief Called by Dumux::TimeManager in order to do a time
+     * \brief Called by TimeManager in order to do a time
      *        integration on the model.
      */
     void timeIntegration()
@@ -664,7 +664,7 @@ public:
     { return newtonCtl_; }
 
     /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
+     * \brief Called by TimeManager whenever a solution for a
      *        time step has been computed and the simulation time has
      *        been updated.
      *
@@ -875,11 +875,11 @@ public:
      * The file will start with the prefix returned by the name()
      * method, has the current time of the simulation clock in it's
      * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Dumux::Restart for details.
+     * file.)  See Restart for details.
      */
     void serialize()
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
         Restarter res;
         res.serializeBegin(asImp_());
         if (gridView().comm().rank() == 0)
@@ -897,7 +897,7 @@ public:
      * The file will start with the prefix returned by the name()
      * method, has the current time of the simulation clock in it's
      * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Dumux::Restart for details.
+     * file.)  See Restart for details.
      *
      * \tparam Restarter The serializer type
      *
@@ -920,7 +920,7 @@ public:
      */
     void restart(const Scalar tRestart)
     {
-        typedef Dumux::Restart Restarter;
+        typedef Restart Restarter;
 
         Restarter res;
 
@@ -1052,7 +1052,7 @@ public:
             {
                 // Note: two concepts are implemented here. The PointSource property can be set to a
                 // customized point source function achieving variable point sources,
-                // see Dumux::TimeDependentPointSource for an example. The second imitated the standard
+                // see TimeDependentPointSource for an example. The second imitated the standard
                 // dumux source interface with solDependentPointSource / pointSourceAtPos, methods
                 // that can be overloaded in the actual problem class also achieving variable point sources.
                 // The first one is more convenient for simple function like a time dependent source.
@@ -1105,7 +1105,7 @@ protected:
         createResultWriter_();
         return *resultWriter_;
     }
-    //! \copydoc Dumux::IMPETProblem::resultWriter()
+    //! \copydoc IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
         createResultWriter_();

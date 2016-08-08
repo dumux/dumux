@@ -71,9 +71,9 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
-SET_TYPE_PROP( FVPressureVelocityTwoP, Velocity, Dumux::FVVelocity2P<TypeTag> );
+SET_TYPE_PROP( FVPressureVelocityTwoP, Velocity, FVVelocity2P<TypeTag> );
 //! Set finite volume implementation of the one-phase pressure equation as default pressure model
-SET_TYPE_PROP(FVPressureVelocityTwoP, PressureModel, Dumux::FVPressureVelocity2P<TypeTag>);
+SET_TYPE_PROP(FVPressureVelocityTwoP, PressureModel, FVPressureVelocity2P<TypeTag>);
 //! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
 SET_BOOL_PROP(FVPressureVelocityTwoP, VisitFacesOnlyOnce, true);
 // \}

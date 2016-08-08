@@ -50,17 +50,17 @@ SET_TYPE_PROP(OnePNIConductionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePNIConductionProblem, Problem,
-              Dumux::OnePNIConductionProblem<TypeTag>);
+              OnePNIConductionProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(OnePNIConductionProblem, Fluid,
-              Dumux::FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                               Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                               H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConductionProblem,
               SpatialParams,
-              Dumux::OnePNISpatialParams<TypeTag>);
+              OnePNISpatialParams<TypeTag>);
 
 }
 

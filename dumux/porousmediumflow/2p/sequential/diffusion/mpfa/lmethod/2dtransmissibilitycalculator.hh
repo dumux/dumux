@@ -57,7 +57,7 @@ class FvMpfaL2dTransmissibilityCalculator
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
-    typedef typename Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
+    typedef FVMPFALInteractionVolume<TypeTag> InteractionVolume;
 
 public:
     typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix

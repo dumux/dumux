@@ -230,7 +230,7 @@ public:
         if (formulation == plSg) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
             if (priVars[pressureIdx] + pc < 0.0)
-                 DUNE_THROW(Dumux::NumericalProblem,"Capillary pressure is too low");
+                 DUNE_THROW(NumericalProblem,"Capillary pressure is too low");
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
         else if (formulation == pgSl) {
@@ -239,7 +239,7 @@ public:
             if (priVars[pressureIdx] - pc < 0.0)
             {
                 std::cout<< "p_g: "<< priVars[pressureIdx]<<" Cap_press: "<< pc << std::endl;
-                DUNE_THROW(Dumux::NumericalProblem,"Capillary pressure is too high");
+                DUNE_THROW(NumericalProblem,"Capillary pressure is too high");
             }
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
         }

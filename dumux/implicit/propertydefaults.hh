@@ -52,7 +52,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! Set the default type for the time manager
-SET_TYPE_PROP(ImplicitBase, TimeManager, Dumux::TimeManager<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, TimeManager, TimeManager<TypeTag>);
 
 //////////////////////////////////////////////////////////////////
 // Properties
@@ -64,10 +64,10 @@ SET_TYPE_PROP(ImplicitBase,
               typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
 
 //! use the plain newton method by default
-SET_TYPE_PROP(ImplicitBase, NewtonMethod, Dumux::NewtonMethod<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, NewtonMethod, NewtonMethod<TypeTag>);
 
 //! use the plain newton controller by default
-SET_TYPE_PROP(ImplicitBase, NewtonController, Dumux::NewtonController<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, NewtonController, NewtonController<TypeTag>);
 
 //! Mapper for the grid view's vertices.
 SET_TYPE_PROP(ImplicitBase,
@@ -82,13 +82,13 @@ SET_TYPE_PROP(ImplicitBase,
                                                         Dune::MCMGElementLayout>);
 
 //! Set the BaseModel to ImplicitModel
-SET_TYPE_PROP(ImplicitBase, BaseModel, Dumux::ImplicitModel<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, BaseModel, ImplicitModel<TypeTag>);
 
 //! The volume variable class, to be overloaded by the model
-SET_TYPE_PROP(ImplicitBase, VolumeVariables, Dumux::ImplicitVolumeVariables<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);
 
 //! The local jacobian operator
-SET_TYPE_PROP(ImplicitBase, LocalJacobian, Dumux::ImplicitLocalJacobian<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, LocalJacobian, ImplicitLocalJacobian<TypeTag>);
 
 //! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,
@@ -109,7 +109,7 @@ SET_TYPE_PROP(ImplicitBase,
 //! Boundary types at a single degree of freedom
 SET_TYPE_PROP(ImplicitBase,
               BoundaryTypes,
-              Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
+              BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
 //! use forward differences to calculate the jacobian by default
 SET_INT_PROP(ImplicitBase, ImplicitNumericDifferenceMethod, +1);
@@ -135,7 +135,7 @@ public:
 };
 
 //! use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(ImplicitBase, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 // if the deflection of the newton method is large, we do not
 // need to solve the linear approximation accurately. Assuming

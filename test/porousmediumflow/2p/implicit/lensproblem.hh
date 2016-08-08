@@ -67,7 +67,7 @@ SET_TYPE_PROP(LensCCAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune:
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
+SET_TYPE_PROP(LensProblem, Problem, LensProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(LensProblem, WettingPhase)
@@ -75,7 +75,7 @@ SET_PROP(LensProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -84,15 +84,15 @@ SET_PROP(LensProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 // Linear solver settings
-SET_TYPE_PROP(LensCCProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
-SET_TYPE_PROP(LensBoxProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensCCProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensBoxProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
-SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);

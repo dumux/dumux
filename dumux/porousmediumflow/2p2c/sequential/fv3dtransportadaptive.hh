@@ -114,7 +114,7 @@ public:
     /*!
      * The compositional transport scheme can not be applied with a global pressure / total velocity
      * formulation. This is a 3D-specific implementation! In case of 2d, use the class
-     * Dumux::FV2dTransport2P2CAdaptive
+     * FV2dTransport2P2CAdaptive
      *
      * \param problem a problem class object
      */

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief Dumux::FluidSystems::BrineAir
+ * \brief @copybrief FluidSystems::BrineAir
  */
 #ifndef DUMUX_BRINE_AIR_SYSTEM_HH
 #define DUMUX_BRINE_AIR_SYSTEM_HH
@@ -68,7 +68,7 @@ namespace FluidSystems
  * {
  *     // e.g. to use a simple version of H2O
  *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
+ *     typedef FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar> > type;
  * };
  * \endcode
  *
@@ -77,12 +77,12 @@ namespace FluidSystems
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
+ * additional namespace FluidSystem::.
+ * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
 template <class Scalar,
-          class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
+          class H2Otype = TabulatedComponent<Scalar, H2O<Scalar>>,
           bool useComplexRelations=true>
 class BrineAir
 : public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, useComplexRelations>>
@@ -95,14 +95,14 @@ class BrineAir
 public:
 
     typedef H2Otype H2O;
-    typedef Dumux::BinaryCoeff::H2O_Air H2O_Air;
+    typedef BinaryCoeff::H2O_Air H2O_Air;
     typedef Dumux::Air<Scalar> Air;
-    typedef Dumux::BinaryCoeff::Brine_Air<Scalar, Air> Brine_Air;
+    typedef BinaryCoeff::Brine_Air<Scalar, Air> Brine_Air;
     typedef Dumux::Brine<Scalar, H2Otype> Brine;
     typedef Dumux::NaCl<Scalar> NaCl;
 
     // the type of parameter cache objects. this fluid system does not
-    typedef Dumux::NullParameterCache ParameterCache;
+    typedef NullParameterCache ParameterCache;
 
     /****************************************
      * Fluid phase related static parameters
@@ -473,7 +473,7 @@ public:
         if (compIdx == H2OIdx)
             return Brine::vaporPressure(T)/p;
         else if (compIdx == AirIdx)
-            return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
+            return BinaryCoeff::H2O_Air::henry(T)/p;
         else
             return 1/p;
         }

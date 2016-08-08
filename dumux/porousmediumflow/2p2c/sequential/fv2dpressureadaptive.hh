@@ -117,7 +117,7 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
 
-    typedef Dumux::FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    typedef FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 protected:
     Problem& problem()
     {
@@ -188,7 +188,7 @@ private:
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 
@@ -543,7 +543,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
-    Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
+    harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitDistVec, permeability);
@@ -1179,7 +1179,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     /**** end find 4 faces **/
 
     // create Interaction Volume object
-    Dumux::FVMPFALInteractionVolume<TypeTag> interactionVolume;
+    FVMPFALInteractionVolume<TypeTag> interactionVolume;
 
     interactionVolume.setCenterPosition(corner1234);
 

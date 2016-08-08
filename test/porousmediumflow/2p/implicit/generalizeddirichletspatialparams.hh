@@ -45,7 +45,7 @@ NEW_TYPE_TAG(GeneralizedDirichletSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(GeneralizedDirichletSpatialParams, SpatialParams,
-        Dumux::GeneralizedDirichletSpatialParams<TypeTag>);
+        GeneralizedDirichletSpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(GeneralizedDirichletSpatialParams, MaterialLaw)

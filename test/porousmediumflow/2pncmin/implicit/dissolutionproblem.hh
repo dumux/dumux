@@ -46,17 +46,17 @@ NEW_TYPE_TAG(DissolutionCCProblem, INHERITS_FROM(CCModel, DissolutionProblem));
 SET_TYPE_PROP(DissolutionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(DissolutionProblem, Problem, Dumux::DissolutionProblem<TypeTag>);
+SET_TYPE_PROP(DissolutionProblem, Problem, DissolutionProblem<TypeTag>);
 
 // Set fluid configuration
 SET_PROP(DissolutionProblem, FluidSystem)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::BrineAir<Scalar, Dumux::H2O<Scalar>, true/*useComplexrelations=*/> type;
+    typedef FluidSystems::BrineAir<Scalar, H2O<Scalar>, true/*useComplexrelations=*/> type;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(DissolutionProblem, SpatialParams, Dumux::DissolutionSpatialparams<TypeTag>);
+SET_TYPE_PROP(DissolutionProblem, SpatialParams, DissolutionSpatialparams<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(DissolutionProblem, ProblemEnableGravity, true);

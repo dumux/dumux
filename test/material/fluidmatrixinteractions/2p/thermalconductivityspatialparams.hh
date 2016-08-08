@@ -44,7 +44,7 @@ namespace Properties
 NEW_TYPE_TAG(ThermalConductivitySpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThermalConductivitySpatialParams, SpatialParams, Dumux::ThermalConductivitySpatialParams<TypeTag>);
+SET_TYPE_PROP(ThermalConductivitySpatialParams, SpatialParams, ThermalConductivitySpatialParams<TypeTag>);
 
 // Set the material law parameterized by absolute saturations
 SET_TYPE_PROP(ThermalConductivitySpatialParams,

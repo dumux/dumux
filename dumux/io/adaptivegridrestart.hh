@@ -132,7 +132,7 @@ private:
             std::string name = GET_RUNTIME_PARAM_FROM_GROUP(TTAG(NumericModel), std::string, Problem, Name);
             oss << name;
         }
-        catch (Dumux::ParameterException &e)
+        catch (ParameterException &e)
         {
             std::cerr << e.what() << std::endl;
             std::cerr << "Taking name from problem.name(): " << problem.name() << std::endl;

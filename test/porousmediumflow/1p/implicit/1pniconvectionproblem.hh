@@ -50,17 +50,17 @@ SET_TYPE_PROP(OnePNIConvectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePNIConvectionProblem, Problem,
-              Dumux::OnePNIConvectionProblem<TypeTag>);
+              OnePNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(OnePNIConvectionProblem, Fluid,
-              Dumux::FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                               Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                               H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConvectionProblem,
               SpatialParams,
-              Dumux::OnePNISpatialParams<TypeTag>);
+              OnePNISpatialParams<TypeTag>);
 
 }
 
@@ -104,7 +104,7 @@ class OnePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef Dumux::H2O<Scalar> IapwsH2O;
+    typedef H2O<Scalar> IapwsH2O;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

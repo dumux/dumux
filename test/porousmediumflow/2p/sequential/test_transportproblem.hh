@@ -52,7 +52,7 @@ NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(FVTransportTwoP, TestTransportS
 SET_TYPE_PROP(TransportTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TransportTestProblem, Problem, Dumux::TestTransportProblem<TypeTag>);
+SET_TYPE_PROP(TransportTestProblem, Problem, TestTransportProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(TransportTestProblem, WettingPhase)
@@ -60,7 +60,7 @@ SET_PROP(TransportTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -69,7 +69,7 @@ SET_PROP(TransportTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
 };
 
 SET_INT_PROP(TransportTestProblem, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);

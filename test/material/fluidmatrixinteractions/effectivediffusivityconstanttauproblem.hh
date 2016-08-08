@@ -47,10 +47,10 @@ NEW_TYPE_TAG(EffectiveDiffusivityConstantTauProblem, INHERITS_FROM(BoxModel, Two
 SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, Problem, Dumux::EffectiveDiffusivityConstantTauProblem<TypeTag>);
+SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, Problem, EffectiveDiffusivityConstantTauProblem<TypeTag>);
 
 // Set the wetting phase
-SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, FluidSystem, Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set thermal conductivity law
 SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, EffectiveDiffusivityModel,
@@ -135,7 +135,7 @@ public:
     { return "test_effectivediffusivity_ct"; }
 
 
-    //! \copydoc Dumux::ImplicitProblem::sourceAtPos()
+    //! \copydoc ImplicitProblem::sourceAtPos()
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
@@ -150,7 +150,7 @@ public:
     // \{
 
 
-    //! \copydoc Dumux::ImplicitProblem::boundaryTypesAtPos()
+    //! \copydoc ImplicitProblem::boundaryTypesAtPos()
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
@@ -158,14 +158,14 @@ public:
     }
 
 
-    //! \copydoc Dumux::ImplicitProblem::dirichletAtPos()
+    //! \copydoc ImplicitProblem::dirichletAtPos()
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         initial_(values, globalPos);
     }
 
 
-    //! \copydoc Dumux::ImplicitProblem::neumann()
+    //! \copydoc ImplicitProblem::neumann()
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
@@ -184,14 +184,14 @@ public:
     // \{
 
 
-    //! \copydoc Dumux::ImplicitProblem::initialAtPos()
+    //! \copydoc ImplicitProblem::initialAtPos()
     void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         initial_(values, globalPos);
     }
 
 
-    //! \copydoc Dumux::InjectionProblem::initialPhasePresence()
+    //! \copydoc InjectionProblem::initialPhasePresence()
     int initialPhasePresence(const Vertex &vertex,
                              int &vIdxGlobal,
                              const GlobalPosition &globalPos) const

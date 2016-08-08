@@ -305,7 +305,7 @@ public:
 };
 
 template <class Scalar>
-const Scalar SimpleH2O<Scalar>::R = Dumux::Constants<Scalar>::R / 18e-3;
+const Scalar SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
 
 } // end namespace
 

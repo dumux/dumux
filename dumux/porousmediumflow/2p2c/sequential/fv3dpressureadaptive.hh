@@ -46,8 +46,8 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolume, Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, Dumux::FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolume, FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
 }
 
 //! The finite volume model for the solution of the compositional pressure equation
@@ -263,7 +263,7 @@ private:
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_()
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 
@@ -308,7 +308,7 @@ protected:
     //! A pointer to the adaptive interaction volumes container
     InteractionVolumeContainer* interactionVolumesContainer_;
     //! The common implementation to calculate the Transmissibility with the mpfa-L-method
-    Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> mpfal3DTransmissibilityCalculator_;
+    FvMpfaL3dTransmissibilityCalculator<TypeTag> mpfal3DTransmissibilityCalculator_;
 };
 
 //! \copydoc FV2dPressure2P2CAdaptive::initializeMatrix()
@@ -826,7 +826,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
-    Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
+    harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitDistVec, permeability);
@@ -1313,7 +1313,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
  * by the common mpfa-l--implementation of the 2p models. The latter is established via the
  * protected method FV3dPressure2P2CAdaptive::transmissibilityAdapter_().
  * The calculated Transmissivity Matrices are (along with some geometric information)
- * stored for later use in Dumux::Variableclass2p2cadaptive .
+ * stored for later use in Variableclass2p2cadaptive .
  *
 * \param isIt Iterator to the current intersection
 * \param T Transmissitivity matrix of the first unique interaction volume
@@ -1799,7 +1799,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
 //! Adapter to use the general implementation of the mpfa-l for the compositional models
 /*! Depending on the subVolumeFaceIdx, the appropriate method in
- * Dumux::FvMpfaL2dTransmissibilityCalculator (potentially specifying certain cases)
+ * FvMpfaL2dTransmissibilityCalculator (potentially specifying certain cases)
  * gets called and the transmissibility and geometric information of the applied additional
  * cells of the interaction regions are passed back.
  *

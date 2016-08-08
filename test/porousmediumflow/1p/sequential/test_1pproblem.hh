@@ -55,14 +55,14 @@ SET_PROP(TestProblemOneP, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestProblemOneP, SpatialParams, Dumux::TestOnePSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestProblemOneP, SpatialParams, TestOnePSpatialParams<TypeTag>);
 
 //Set the problem
-SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TypeTag>);
+SET_TYPE_PROP(TestProblemOneP, Problem, TestProblemOneP<TypeTag>);
 }
 
 /*!
@@ -255,7 +255,7 @@ private:
     }
 
     double delta_;
-    Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
+    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
 };
 } //end namespace
 
