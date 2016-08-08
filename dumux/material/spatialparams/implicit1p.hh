@@ -114,8 +114,8 @@ public:
      *
      * \return the intrinsic permeability
      */
-    const DimWorldMatrix intrinsicPermeability (const SubControlVolume &scv,
-                                                const VolumeVariables &volVars) const
+    auto solDependentIntrinsicPermeability (const SubControlVolume &scv,
+                                            const VolumeVariables &volVars) const
     {
         return asImp_().intrinsicPermeability(scv);
     }
@@ -126,7 +126,7 @@ public:
      *
      * \return the intrinsic permeability
      */
-    const DimWorldMatrix intrinsicPermeability (const SubControlVolume &scv) const
+    auto intrinsicPermeability (const SubControlVolume &scv) const
     {
         return asImp_().intrinsicPermeabilityAtPos(scv.dofPosition());
     }
@@ -137,7 +137,7 @@ public:
      * \return intrinsic (absolute) permeability
      * \param globalPos The position of the center of the element
      */
-    const DimWorldMatrix intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    DimWorldMatrix intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
