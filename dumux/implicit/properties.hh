@@ -85,6 +85,7 @@ NEW_PROP_TAG(EnableGlobalFluxVariablesCache); //! specifies if data on flux vars
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
 NEW_PROP_TAG(ConstantBoundaryConditions); //!< boundary data is stored in case the BC are constant
 NEW_PROP_TAG(DiscretizationMethod); //!< Property for the used discretization method
+NEW_PROP_TAG(PrimaryVariableSwitch); //!< The primary variable switch needed for compositional models
 
 // Specify the forms of fluxes that should be considered in the model
 // also, specify their corresponding flux variables
@@ -138,9 +139,6 @@ NEW_PROP_TAG(ImplicitMaxTimeStepDivisions);
 
 //! indicate whether discretization is box or not
 NEW_PROP_TAG(ImplicitIsBox);
-
-//! The type of primary variable switch for compositional models
-NEW_PROP_TAG(PrimaryVariableSwitch);
 
 //! the local fem space used for the AMG backend
 NEW_PROP_TAG(ImplicitLocalFemMap);

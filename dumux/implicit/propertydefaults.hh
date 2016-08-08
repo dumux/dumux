@@ -38,6 +38,7 @@
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/localresidual.hh>
+#include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 #include <dumux/discretization/volumevariables.hh>
 #include <dumux/discretization/darcyslaw.hh>
@@ -153,6 +154,8 @@ SET_BOOL_PROP(ImplicitBase, EnableGlobalFluxVariablesCache, false);
 
 //! boundary conditions are not stationary by default
 SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);
+
+SET_TYPE_PROP(ImplicitBase, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag> );
 
 //! Set the type of a global jacobian matrix from the solution types
 SET_PROP(ImplicitBase, JacobianMatrix)

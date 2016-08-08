@@ -51,6 +51,10 @@ class ImplicitModel
     // The local jacobian needs to be able to modify objects during the assembly
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
 
+    // the primary variable need to modify the volume variables when global caching is enabled
+    friend class PrimaryVariableSwitch<TypeTag>;
+    friend typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
+
     using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -87,10 +91,11 @@ class ImplicitModel
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
-    // copying a model is not a good idea
-    ImplicitModel(const ImplicitModel &);
-
 public:
+
+    // copying a model is not a good idea
+    ImplicitModel(const ImplicitModel &) = delete;
+
     /*!
      * \brief The constructor.
      */
@@ -172,7 +177,7 @@ public:
 
             if (isBox)
             {
-                for (int i = 0; i < element.subEntities(dim); ++i)
+                for (unsigned int i = 0; i < element.subEntities(dim); ++i)
                 {
                     int globalI = vertexMapper().subIndex(element, i, dim);
                     residual[globalI] += localResidual().residual(i);

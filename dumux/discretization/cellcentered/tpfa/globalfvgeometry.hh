@@ -166,7 +166,7 @@ public:
     friend inline FVElementGeometry localView(const CCTpfaGlobalFVGeometry& global)
     { return FVElementGeometry(global); }
 
-private:
+//private:
 
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(IndexType scvIdx) const
@@ -186,6 +186,7 @@ private:
         return scvfIndicesOfScv_[scvIdx];
     }
 
+private:
     const Problem& problem_() const
     { return *problemPtr_; }
 

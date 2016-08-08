@@ -30,6 +30,14 @@ namespace Dumux
 {
 /*!
  * \ingroup ImplicitModel
+ * \brief Empty class for models without pri var switch
+ */
+template<class TypeTag>
+class NoPrimaryVariableSwitch
+{};
+
+/*!
+ * \ingroup ImplicitModel
  * \brief The primary variable switch controlling the phase presence state variable
  */
 template<class TypeTag>
@@ -115,7 +123,9 @@ public:
      * \param problem The problem
      * \param curSol The current solution to be updated / modified
      */
-    bool update(Problem& problem, SolutionVector& curSol)
+    template<class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), bool>::type
+    update(Problem& problem, SolutionVector& curSol)
     {
         bool switched = false;
         visited_.assign(phasePresence_.size(), false);
@@ -142,6 +152,48 @@ public:
                     const auto& globalPos = scv.dofPosition();
 
                     if (asImp_().update_(curSol[dofIdxGlobal], elemVolVars[dofIdxGlobal], dofIdxGlobal, globalPos))
+                        switched = true;
+
+                }
+            }
+        }
+
+        // make sure that if there was a variable switch in an
+        // other partition we will also set the switch flag for our partition.
+        if (problem.gridView().comm().size() > 1)
+            switched = problem.gridView().comm().max(switched);
+
+        return switched;
+    }
+
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), bool>::type
+    update(Problem& problem, SolutionVector& curSol)
+    {
+        bool switched = false;
+        visited_.assign(phasePresence_.size(), false);
+        for (const auto& element : elements(problem.gridView()))
+        {
+            // make sure FVElementGeometry is bound to the element
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto& curGlobalVolVars = problem.model().nonConstCurGlobalVolVars();
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto dofIdxGlobal = scv.dofIndex();
+                if (!visited_[dofIdxGlobal])
+                {
+                    // Note this implies that volume variables don't differ
+                    // in any sub control volume associated with the dof!
+                    visited_[dofIdxGlobal] = true;
+                    // Compute temporary volVars on which grounds we decide
+                    // if we need to switch the primary variables
+                    curGlobalVolVars.volVars(dofIdxGlobal).update(curSol[dofIdxGlobal], problem, element, scv);
+                    const auto& globalPos = scv.dofPosition();
+
+                    if (asImp_().update_(curSol[dofIdxGlobal], curGlobalVolVars.volVars(dofIdxGlobal), dofIdxGlobal, globalPos))
                         switched = true;
 
                 }
