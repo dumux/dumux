@@ -90,37 +90,68 @@ public:
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     PrimaryVariables computeStorage(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+                                    const VolumeVariables& volVars,
+                                    bool useMoles = true) const
     {
         PrimaryVariables storage(0.0);
 
-        // compute storage term of all components within all phases
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        // formulation with mole balances
+        if (useMoles)
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            // compute storage term of all components within all phases
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                auto eqIdx = conti0EqIdx + compIdx;
-                if (replaceCompEqIdx != eqIdx)
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
-                    storage[eqIdx] += volVars.porosity()
-                                      * volVars.saturation(phaseIdx)
-                                      * volVars.molarDensity(phaseIdx)
-                                      * volVars.moleFraction(phaseIdx, compIdx);
+                    auto eqIdx = conti0EqIdx + compIdx;
+                    auto s = volVars.porosity()
+                             * volVars.saturation(phaseIdx)
+                             * volVars.molarDensity(phaseIdx)
+                             * volVars.moleFraction(phaseIdx, compIdx);
+
+                    if (eqIdx != replaceCompEqIdx)
+                        storage[eqIdx] += s;
+
+                    // in case one balance is substituted by the total mass balance
+                    if (replaceCompEqIdx < numComponents)
+                        storage[replaceCompEqIdx] += s;
                 }
-                else
-                {
-                    storage[eqIdx] += volVars.molarDensity(phaseIdx)
-                                      * volVars.saturation(phaseIdx)
-                                      * volVars.porosity();
-                }
+
+                //! The energy storage in the fluid phase with index phaseIdx
+                EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
             }
 
-            //! The energy storage in the fluid phase with index phaseIdx
-            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+            //! The energy storage in the solid matrix
+            EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
         }
+        // formulation with mass balances
+        else
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    auto eqIdx = conti0EqIdx + compIdx;
+                    auto s = volVars.porosity()
+                             * volVars.saturation(phaseIdx)
+                             * volVars.density(phaseIdx)
+                             * volVars.massFraction(phaseIdx, compIdx);
 
-        //! The energy storage in the solid matrix
-        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+                    if (eqIdx != replaceCompEqIdx)
+                        storage[eqIdx] += s;
+
+                    // in case one balance is substituted by the total mass balance
+                    if (replaceCompEqIdx < numComponents)
+                        storage[replaceCompEqIdx] += s;
+                }
+
+                //! The energy storage in the fluid phase with index phaseIdx
+                EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+            }
+
+            //! The energy storage in the solid matrix
+            EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+        }
 
         return storage;
     }
@@ -138,7 +169,8 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const FluxVariablesCache& fluxVarsCache)
+                                 const FluxVariablesCache& fluxVarsCache,
+                                 bool useMoles = true)
     {
         FluxVariables fluxVars;
         fluxVars.initAndComputeFluxes(this->problem(),
@@ -152,55 +184,100 @@ public:
         auto w = upwindWeight_;
         PrimaryVariables flux(0.0);
 
-        // advective fluxes
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        // formulation with mole balances
+        if (useMoles)
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            // advective fluxes
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
-                    return ( w )*up.molarDensity(phaseIdx)
-                                *up.moleFraction(phaseIdx, compIdx)
-                                *up.mobility(phaseIdx)
-                          +(1-w)*dn.molarDensity(phaseIdx)
-                                *dn.moleFraction(phaseIdx, compIdx)
-                                *dn.mobility(phaseIdx);
-                };
-
-                // get equation index
-                auto eqIdx = conti0EqIdx + compIdx;
-                if (eqIdx != replaceCompEqIdx)
-                {
-                    flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRule);
-
-                    if (phaseIdx != compIdx)
-                    {
-                        const auto diffFlux = fluxVars.molecularDiffusionFlux(phaseIdx, compIdx);
-                        flux[eqIdx] += diffFlux;
-                        flux[conti0EqIdx + phaseIdx] -= diffFlux;
-                    }
-                }
-                else
-                {
-                    auto upwindRuleTotal = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
+                    // get equation index
+                    auto eqIdx = conti0EqIdx + compIdx;
+                    auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
                     {
                         return ( w )*up.molarDensity(phaseIdx)
+                                    *up.moleFraction(phaseIdx, compIdx)
                                     *up.mobility(phaseIdx)
                               +(1-w)*dn.molarDensity(phaseIdx)
+                                    *dn.moleFraction(phaseIdx, compIdx)
                                     *dn.mobility(phaseIdx);
                     };
 
-                    flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRuleTotal);
+                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindRule);
 
+                    if (eqIdx != replaceCompEqIdx)
+                        flux[eqIdx] += advFlux;
+
+                    // in case one balance is substituted by the total mass balance
+                    if (replaceCompEqIdx < numComponents)
+                        flux[replaceCompEqIdx] += advFlux;
+
+                    // diffusive fluxes (only for the component balances)
+                    if (phaseIdx != compIdx)
+                    {
+                        const auto diffFlux = fluxVars.molecularDiffusionFlux(phaseIdx, compIdx);
+                        if (eqIdx != replaceCompEqIdx)
+                            flux[eqIdx] += diffFlux;
+                        if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
+                            flux[conti0EqIdx + phaseIdx] -= diffFlux;
+                    }
                 }
+
+                //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+                EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
             }
 
-            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
+            //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+            EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
         }
+        // formulation with mass balances
+        else
+        {
+            // advective fluxes
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    // get equation index
+                    auto eqIdx = conti0EqIdx + compIdx;
+                    auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
+                    {
+                        return ( w )*up.density(phaseIdx)
+                                    *up.massFraction(phaseIdx, compIdx)
+                                    *up.mobility(phaseIdx)
+                              +(1-w)*dn.density(phaseIdx)
+                                    *dn.massFraction(phaseIdx, compIdx)
+                                    *dn.mobility(phaseIdx);
+                    };
 
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindRule);
+
+                    if (eqIdx != replaceCompEqIdx)
+                        flux[eqIdx] += advFlux;
+
+                    // in case one balance is substituted by the total mass balance
+                    if (replaceCompEqIdx < numComponents)
+                        flux[replaceCompEqIdx] += advFlux;
+
+                    // diffusive fluxes (only for the component balances)
+                    if (phaseIdx != compIdx)
+                    {
+                        const auto diffFlux = fluxVars.molecularDiffusionFlux(phaseIdx, compIdx);
+                        if (eqIdx != replaceCompEqIdx)
+                            flux[eqIdx] += diffFlux;
+                        if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
+                            flux[conti0EqIdx + phaseIdx] -= diffFlux;
+                    }
+                }
+
+                //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+                EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
+            }
+
+            //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+            EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+        }
 
         return flux;
     }
