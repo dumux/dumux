@@ -447,7 +447,7 @@ public:
     const TwoPNCPrimaryVariableSwitch<TypeTag>& priVarSwitch() const
     { return switch_; }
 
-protected:
+private:
 
     TwoPNCPrimaryVariableSwitch<TypeTag>& priVarSwitch_()
     { return switch_; }
@@ -470,7 +470,6 @@ protected:
     TwoPNCPrimaryVariableSwitch<TypeTag> switch_;
     bool switchFlag_;
 
-private:
     Tensor perm_(Scalar perm) const
     {
         Tensor K(0.0);

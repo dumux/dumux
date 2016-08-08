@@ -119,7 +119,7 @@ public:
     {
         ParentType::update(priVars, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, scv, fluidState_);
+        Implementation::completeFluidState(priVars, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
@@ -198,7 +198,8 @@ public:
                 Sg = priVars[switchIdx];
             else if (formulation == pgSl)
                 Sg = 1.0 - priVars[switchIdx];
-            else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else
         {
@@ -262,14 +263,13 @@ public:
             }
 
             Miscible2pNCComposition::solve(fluidState,
-                        paramCache,
-                        wPhaseIdx,  //known phaseIdx
-                        /*setViscosity=*/true,
-                        /*setEnthalpy=*/false);
+                                           paramCache,
+                                           wPhaseIdx,  //known phaseIdx
+                                           /*setViscosity=*/true,
+                                           /*setInternalEnergy=*/false);
         }
         else if (phasePresence == nPhaseOnly)
         {
-
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
             moleFrac[wCompIdx] =  priVars[switchIdx];
@@ -339,9 +339,11 @@ public:
         {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
 
             fluidState.setDensity(phaseIdx, rho);
             fluidState.setViscosity(phaseIdx, mu);
+            fluidState.setEnthalpy(phaseIdx, h);
         }
     }
 
@@ -370,6 +372,21 @@ public:
     {
         if (phaseIdx < numPhases)
             return fluidState_.density(phaseIdx);
+
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
+    /*!
+     * \brief Returns the kinematic viscosity of a given phase within the
+     *        control volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar viscosity(int phaseIdx) const
+    {
+        if (phaseIdx < numPhases)
+            return fluidState_.viscosity(phaseIdx);
 
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);

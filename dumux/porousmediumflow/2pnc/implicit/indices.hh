@@ -33,7 +33,7 @@ namespace Dumux
  * \brief Enumerates the formulations which the two-phase n-component model accepts.
  *
  */
-struct TwoPNCFormulation//TODO: This might need to be change similar to 2p2c indices
+struct TwoPNCFormulation
 {
     enum {
             plSg,
