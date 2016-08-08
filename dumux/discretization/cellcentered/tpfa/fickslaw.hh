@@ -79,7 +79,8 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
                        int phaseIdx, int compIdx,
-                       const FluxVarsCache& fluxVarsCache)
+                       const FluxVarsCache& fluxVarsCache,
+                       bool useMoles = true)
     {
         // diffusion tensors are always solution dependent
         Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvFace, phaseIdx, compIdx);
@@ -91,12 +92,24 @@ public:
         // and the outside volume variables
         const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
 
-        // compute the diffusive flux
-        const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
-        const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
-        const auto rho = 0.5*(insideVolVars.molarDensity(phaseIdx) + outsideVolVars.molarDensity(phaseIdx));
+        // compute the diffusive flux using mole fractions
+        if (useMoles)
+        {
+            const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto rho = 0.5*(insideVolVars.molarDensity(phaseIdx) + outsideVolVars.molarDensity(phaseIdx));
 
-        return rho*tij*(xInside - xOutside);
+            return rho*tij*(xInside - xOutside);
+        }
+        // compute the diffusive flux using mass fractions
+        else
+        {
+            const auto xInside = insideVolVars.massFraction(phaseIdx, compIdx);
+            const auto xOutside = outsideVolVars.massFraction(phaseIdx, compIdx);
+            const auto rho = 0.5*(insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx));
+
+            return rho*tij*(xInside - xOutside);
+        }
     }
 
     static Stencil stencil(const Problem& problem,
