@@ -69,8 +69,145 @@ namespace Dumux
  */
 template<class TypeTag >
 class TwoPDFMModel : public TwoPModel<TypeTag>
-{};
+{
+typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    enum {
+        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx
+    };
+
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
+
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
+
+public:
+    /*!
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer.
+     *
+     *        \param sol The global solution vector
+     *        \param writer The writer for multi-file VTK datasets
+     */
+    template<class MultiWriter>
+    void addOutputVtkFields(const SolutionVector &sol,
+                            MultiWriter &writer)
+    {
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+
+        // get the number of degrees of freedom
+        unsigned numDofs = this->numDofs();
+        unsigned numElements = this->gridView_().size(0);
+
+        // create the required scalar fields
+        ScalarField *pw = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pn = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pc = writer.allocateManagedBuffer(numDofs);
+        ScalarField *swFracture = writer.allocateManagedBuffer(numDofs);
+        ScalarField *snFracture = writer.allocateManagedBuffer(numDofs);
+        ScalarField *swMatrix = writer.allocateManagedBuffer(numElements);
+        ScalarField *snMatrix = writer.allocateManagedBuffer(numElements);
+        ScalarField *rhoW = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
+        ScalarField *Te = writer.allocateManagedBuffer(numDofs);
+        VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+
+        if (velocityOutput.enableOutput()) // check if velocity output is demanded
+        {
+            // initialize velocity fields
+            for (unsigned int i = 0; i < numDofs; ++i)
+            {
+                (*velocityN)[i] = Scalar(0);
+                (*velocityW)[i] = Scalar(0);
+            }
+        }
+
+        ScalarField *rank = writer.allocateManagedBuffer(numElements);
+
+        for (const auto& element : elements(this->gridView_()))
+        {
+            if(element.partitionType() == Dune::InteriorEntity)
+            {
+                int eIdx = this->elementMapper().index(element);
+
+                (*rank)[eIdx] = this->gridView_().comm().rank();
+
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(this->gridView_(), element);
+
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                   element,
+                                   fvGeometry,
+                                   false /* oldSol? */);
+                (*swMatrix)[eIdx] = 0;
+                (*snMatrix)[eIdx] = 0;
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+
+                    (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                    (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                    (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
+                    (*swMatrix)[eIdx] += elemVolVars[scvIdx].saturationMatrix(wPhaseIdx)*fvGeometry.subContVol[scvIdx].volume;
+                    (*snMatrix)[eIdx] += elemVolVars[scvIdx].saturationMatrix(nPhaseIdx)*fvGeometry.subContVol[scvIdx].volume;
+                    (*swFracture)[dofIdxGlobal] = elemVolVars[scvIdx].saturationFracture(wPhaseIdx);
+                    (*snFracture)[dofIdxGlobal] = elemVolVars[scvIdx].saturationFracture(nPhaseIdx);
+                    (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
+                    (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
+                    (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                    (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
+                    (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                }
+                (*swMatrix)[eIdx] /= fvGeometry.elementVolume;
+                (*snMatrix)[eIdx] /= fvGeometry.elementVolume;
+                // velocity output
+                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+            }
+        }
+
+        writer.attachDofData(*snFracture, "SnFracture", isBox);
+        writer.attachDofData(*swFracture, "SwFracture", isBox);
+        writer.attachCellData(*snMatrix, "SnMatrix", isBox);
+        writer.attachCellData(*swMatrix, "SwMatrix", isBox);
+        writer.attachDofData(*pn, "pn", isBox);
+        writer.attachDofData(*pw, "pw", isBox);
+        writer.attachDofData(*pc, "pc", isBox);
+        writer.attachDofData(*rhoW, "rhoW", isBox);
+        writer.attachDofData(*rhoN, "rhoN", isBox);
+        writer.attachDofData(*mobW, "mobW", isBox);
+        writer.attachDofData(*mobN, "mobN", isBox);
+        writer.attachDofData(*poro, "porosity", isBox);
+        writer.attachDofData(*Te, "temperature", isBox);
+
+        if (velocityOutput.enableOutput()) // check if velocity output is demanded
+        {
+            writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
+            writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
+        }
+
+        writer.attachCellData(*rank, "process rank");
+    }
+
+};
 } // end namespace
 
 #include "propertydefaults.hh"
