@@ -31,9 +31,9 @@
 #include "indices.hh"
 #include "model.hh"
 #include "indices.hh"
-#include "fluxvariables.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
+#include "primaryvariableswitch.hh"
 
 #include <dumux/porousmediumflow/2pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -119,8 +119,8 @@ SET_TYPE_PROP(TwoPNCMin, Model, TwoPNCMinModel<TypeTag>);
 //! the VolumeVariables property
 SET_TYPE_PROP(TwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);
 
-//! the FluxVariables property
-SET_TYPE_PROP(TwoPNCMin, FluxVariables, TwoPNCMinFluxVariables<TypeTag>);
+//! the primary variable switch
+SET_TYPE_PROP(TwoPNCMin, PrimaryVariableSwitch, TwoPNCMinPrimaryVariableSwitch<TypeTag>);
 
 //! The indices required by the isothermal 2pNcMin model
 SET_TYPE_PROP(TwoPNCMin, Indices, TwoPNCMinIndices <TypeTag, /*PVOffset=*/0>);
@@ -135,6 +135,33 @@ SET_BOOL_PROP(TwoPNCMin, useSalinity, false);
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(TwoPNCMin, SpatialParamsForchCoeff, 0.55);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(TwoPNCMinNI, ThermalConductivityModel)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+public:
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
+};
+
+/*!
+ * \brief Set the property for the number of equations.
+ * For each component and each precipitated mineral/solid phase one equation has to
+ * be solved.
+ */
+SET_PROP(TwoPNCMinNI, IsothermalNumEq)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+public:
+    static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
+};
+
+//! The indices required by the isothermal 2pNcMin model
+SET_TYPE_PROP(TwoPNCMinNI, IsothermalIndices, TwoPNCMinIndices <TypeTag, /*PVOffset=*/0>);
 
 }
 

@@ -25,9 +25,6 @@
 #ifndef DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
 #define DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
 
-#include <vector>
-#include <iostream>
-
 #include <dumux/common/math.hh>
 #include <dumux/implicit/model.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -50,19 +47,22 @@ namespace Dumux
 template <class TypeTag>
 class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
 {
-    typedef TwoPNCVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
+    // base type is used for energy related quantites
+    using BaseType = ImplicitVolumeVariables<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = TwoPNCVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -99,17 +99,18 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
         useSalinity = GET_PROP_VALUE(TypeTag, useSalinity)
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef typename Grid::ctype CoordScalar;
-    typedef Dumux::Miscible2pNCComposition<Scalar, FluidSystem> Miscible2pNCComposition;
-    typedef Dumux::ComputeFromReferencePhase2pNCMin<Scalar, FluidSystem> ComputeFromReferencePhase2pNCMin;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CoordScalar = typename Grid::ctype;
+    using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
+    using ComputeFromReferencePhase2pNCMin = Dumux::ComputeFromReferencePhase2pNCMin<Scalar, FluidSystem>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
+
 public:
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -117,21 +118,14 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                int scvIdx,
-                bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
-        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState_, isOldSol);
+        // Update parent type (also completes the fluid state)
+        ParentType::update(priVars, problem, element, scv);
 
         /////////////
         // calculate the remaining quantities
         /////////////
-
-        // porosity evaluation
-        initialPorosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
-        minimumPorosity_ = problem.spatialParams().porosityMin(element, fvGeometry, scvIdx);
-
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -151,73 +145,39 @@ public:
         // porosity value, as the porous media media properties change related to salt precipitation will not be
         // accounted otherwise.
 
-        // this->porosity_ = initialPorosity_ - sumPrecipitates_;
-
-        this->porosity_ = std::max(minimumPorosity_, std::max(0.0, initialPorosity_ - sumPrecipitates_));
+        // overwrite porosity
+        // porosity evaluation
+        auto initialPorosity = problem.spatialParams().porosity(scv);
+        auto minimumPorosity = problem.spatialParams().porosityMin(scv);
+        this->porosity_ = std::max(minimumPorosity, std::max(0.0, initialPorosity - sumPrecipitates_));
 
         salinity_= 0.0;
         moleFractionSalinity_ = 0.0;
         for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
         {
-            if(this->fluidState_.moleFraction(wPhaseIdx, compIdx)> 0)
+            if(this->fluidState_.moleFraction(wPhaseIdx, compIdx) > 0)
             {
                 salinity_+= this->fluidState_.massFraction(wPhaseIdx, compIdx);
                 moleFractionSalinity_ += this->fluidState_.moleFraction(wPhaseIdx, compIdx);
             }
         }
-
-        // TODO/FIXME: Different relations for the porosoty-permeability changes are given here. We have to fins a way
-        // so that one can select the relation form the input file.
-
-        // kozeny-Carman relation
-        permeabilityFactor_  =  std::pow(((1-initialPorosity_)/(1-this->porosity_)), 2)
-                                * std::pow((this->porosity_/initialPorosity_), 3);
-
-        // Verma-Pruess relation
-        // permeabilityFactor_  =  100 * std::pow(((this->porosity_/initialPorosity_)-0.9),2);
-
-        // Modified Fair-Hatch relation with final porosity set to 0.2 and E1=1
-        // permeabilityFactor_  =  std::pow((this->porosity_/initialPorosity_),3)
-        //                         * std::pow((std::pow((1 - initialPorosity_),2/3))+(std::pow((0.2 - initialPorosity_),2/3)),2)
-        //                         / std::pow((std::pow((1 -this->porosity_),2/3))+(std::pow((0.2 -this->porosity_),2/3)),2);
-
-        //Timur relation with residual water saturation set to 0.001
-        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (2000 * (std::pow(0.001,2)));
-
-        //Timur relation1 with residual water saturation set to 0.001
-        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (200000 * (std::pow(0.001,2)));
-
-        // Bern. relation
-        // permeabilityFactor_ = std::pow((this->porosity_/initialPorosity_),8);
-
-        //Tixier relation with residual water saturation set to 0.001
-        // permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
-
-        //Coates relation with residual water saturation set to 0.001
-        // permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
-
-        // energy related quantities not contained in the fluid state
-        //asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
     }
 
-   /*!
-    * \copydoc ImplicitModel::completeFluidState
-    * \param isOldSol Specifies whether this is the previous solution or the current one
-    */
+    /*!
+     * \copydoc ImplicitModel::completeFluidState
+     * \param isOldSol Specifies whether this is the previous solution or the current one
+     */
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   int scvIdx,
-                                   FluidState& fluidState,
-                                   bool isOldSol = false)
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
 
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,fvGeometry, scvIdx);
+        Scalar t = BaseType::temperature(priVars, problem, element, scv);
         fluidState.setTemperature(t);
 
-        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
+        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
 
         /////////////
         // set the saturations
@@ -242,7 +202,10 @@ public:
                 DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else
+        {
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        }
+
         fluidState.setSaturation(nPhaseIdx, Sg);
         fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
 
@@ -251,19 +214,32 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar pc = MaterialLaw::pc(materialParams, 1 - Sg);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        auto pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures
-        if (formulation == plSg) {
+        if (formulation == plSg)
+        {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
+            if (priVars[pressureIdx] + pc < 0.0)
+                 DUNE_THROW(Dumux::NumericalProblem, "Capillary pressure is too low");
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
-        else if (formulation == pgSl) {
+        else if (formulation == pgSl)
+        {
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
+            // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
+            if (priVars[pressureIdx] - pc < 0.0)
+            {
+                std::cout<< " The gas pressure is p_g = "<< priVars[pressureIdx]<<", the capillary pressure p_c = "<< pc << std::endl;
+                DUNE_THROW(Dumux::NumericalProblem, "Capillary pressure is too high");
+            }
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
         }
-        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+        else
+        {
+            DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+        }
 
         /////////////
         // calculate the phase compositions
@@ -287,10 +263,10 @@ public:
             }
 
             Miscible2pNCComposition::solve(fluidState,
-                                            paramCache,
-                                            wPhaseIdx,  //known phaseIdx
-                                            /*setViscosity=*/true,
-                                            /*  =*/false);
+                                           paramCache,
+                                           wPhaseIdx,  //known phaseIdx
+                                           /*setViscosity=*/true,
+                                           /*setInternalEnergy=*/false);
         }
         else if (phasePresence == nPhaseOnly)
         {
@@ -301,24 +277,23 @@ public:
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
             {
                 fugCoeffL[compIdx] = FluidSystem::fugacityCoefficient(fluidState,
-                                        paramCache,
-                                        wPhaseIdx,
-                                        compIdx);
+                                                                      paramCache,
+                                                                      wPhaseIdx,
+                                                                      compIdx);
                 fugCoeffG[compIdx] = FluidSystem::fugacityCoefficient(fluidState,
-                                        paramCache,
-                                        nPhaseIdx,
-                                        compIdx);
+                                                                      paramCache,
+                                                                      nPhaseIdx,
+                                                                      compIdx);
             }
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
                 moleFrac[compIdx] = (priVars[compIdx]*fugCoeffL[compIdx]*fluidState.pressure(wPhaseIdx))
-                /(fugCoeffG[compIdx]*fluidState.pressure(nPhaseIdx));
+                                    /(fugCoeffG[compIdx]*fluidState.pressure(nPhaseIdx));
 
             moleFrac[wCompIdx] =  priVars[switchIdx];
             Scalar sumMoleFracNotGas = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-            {
                     sumMoleFracNotGas+=moleFrac[compIdx];
-            }
+
             sumMoleFracNotGas += moleFrac[wCompIdx];
             moleFrac[nCompIdx] = 1 - sumMoleFracNotGas;
 
@@ -338,10 +313,9 @@ public:
                                                     /*setViscosity=*/true,
                                                     /*setEnthalpy=*/false);
 
-            }
+        }
         else if (phasePresence == wPhaseOnly)
         {
-
             // only the liquid phase is present, i.e. liquid phase
             // composition is stored explicitly.
             // extract _mass_ fractions in the gas phase
@@ -379,7 +353,12 @@ public:
         paramCache.updateAll(fluidState);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+            Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            Scalar h = BaseType::enthalpy(fluidState, paramCache, phaseIdx);
+
+            fluidState.setDensity(phaseIdx, rho);
+            fluidState.setViscosity(phaseIdx, mu);
             fluidState.setEnthalpy(phaseIdx, h);
         }
     }
@@ -396,38 +375,24 @@ public:
      * \brief Returns the inital porosity of the
      * pure, precipitate-free porous medium
      */
-    Scalar initialPorosity() const
-    { return initialPorosity_;}
+    // Scalar initialPorosity() const
+    // { return initialPorosity_;}
 
-    /*!
-     * \brief Returns the inital permeability of the
-     * pure, precipitate-free porous medium
-     */
-    Scalar initialPermeability() const
-    { return initialPermeability_;}
+    // /*!
+    //  * \brief Returns the mole fraction of the salinity in the liquid phase
+    //  */
+    // Scalar moleFracSalinity() const
+    // {
+    //     return moleFractionSalinity_;
+    // }
 
-    /*!
-     * \brief Returns the factor for the reduction of the initial permeability
-     * due precipitates in the porous medium
-     */
-    Scalar permeabilityFactor() const
-    { return permeabilityFactor_; }
-
-    /*!
-     * \brief Returns the mole fraction of the salinity in the liquid phase
-     */
-    Scalar moleFracSalinity() const
-    {
-        return moleFractionSalinity_;
-    }
-
-    /*!
-     * \brief Returns the salinity (mass fraction) in the liquid phase
-     */
-    Scalar salinity() const
-    {
-        return salinity_;
-    }
+    // /*!
+    //  * \brief Returns the salinity (mass fraction) in the liquid phase
+    //  */
+    // Scalar salinity() const
+    // {
+    //     return salinity_;
+    // }
 
     /*!
      * \brief Returns the density of the phase for all fluid and solid phases
@@ -470,56 +435,18 @@ public:
      * phase is equal to the phaseIdx
      */
     Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
-    { return this->fluidState_.moleFraction(phaseIdx, compIdx)
-                  /(fluidState_.moleFraction(phaseIdx, phaseIdx)
-                  * FluidSystem::molarMass(phaseIdx));}
+    {
+        return this->fluidState_.moleFraction(phaseIdx, compIdx)
+                  /(this->fluidState_.moleFraction(phaseIdx, phaseIdx)
+                  * FluidSystem::molarMass(phaseIdx));
+    }
 
 protected:
-    friend class TwoPNCVolumeVariables<TypeTag>;
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                                const Problem& problem,
-                                const Element &element,
-                                const FVElementGeometry &fvGeometry,
-                                int scvIdx)
-    {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            int phaseIdx)
-    {
-        return 0;
-    }
-
-   /*!
-    * \brief Update all quantities for a given control volume.
-    *
-    * \param priVars The solution primary variables
-    * \param problem The problem
-    * \param element The element
-    * \param fvGeometry Evaluate function with solution of current or previous time step
-    * \param scvIdx The local index of the SCV (sub-control volume)
-    * \param isOldSol Evaluate function with solution of current or previous time step
-    */
-    void updateEnergy_(const PrimaryVariables &priVars,
-                       const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       bool isOldSol)
-    {};
 
     Scalar precipitateVolumeFraction_[numSPhases];
-    Scalar permeabilityFactor_;
-    Scalar initialPorosity_;
-    Scalar initialPermeability_;
-    Scalar minimumPorosity_;
     Scalar sumPrecipitates_;
     Scalar salinity_;
     Scalar moleFractionSalinity_;
-    FluidState fluidState_;
 
 private:
     Implementation &asImp_()

@@ -19,78 +19,44 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \brief Element-wise calculation of the local residual for problems
  *        using the two-phase n-component mineralisation box model.
  */
 
-#ifndef DUMUX_2PNCMIN_LOCAL_RESIDUAL_BASE_HH
-#define DUMUX_2PNCMIN_LOCAL_RESIDUAL_BASE_HH
+#ifndef DUMUX_2PNCMIN_LOCAL_RESIDUAL_HH
+#define DUMUX_2PNCMIN_LOCAL_RESIDUAL_HH
 
 #include "properties.hh"
-#include <dumux/porousmediumflow/2pnc/implicit/localresidual.hh>
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup TwoPNCMinModel
  * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \brief Element-wise calculation of the local residual for problems
  *        using the two-phase n-component mineralization fully implicit model.
  *
  * This class is used to fill the gaps in ImplicitLocalResidual for the two-phase n-component flow.
  */
 template<class TypeTag>
-class TwoPNCMinLocalResidual: public TwoPNCLocalResidual<TypeTag>
+class TwoPNCMinLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
-protected:
-    typedef TwoPNCLocalResidual<TypeTag> ParentType;
-    typedef TwoPNCMinLocalResidual<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-
+    using ParentType = CompositionalLocalResidual<TypeTag>;
+    using ThisType = TwoPNCMinLocalResidual<TypeTag>;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx),
-
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        conti0EqIdx = Indices::conti0EqIdx,
-
-        wPhaseOnly = Indices::wPhaseOnly,
-        nPhaseOnly = Indices::nPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        plSg = TwoPNCFormulation::plSg,
-        pgSl = TwoPNCFormulation::pgSl,
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        conti0EqIdx = Indices::conti0EqIdx
     };
-
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     /*!
@@ -101,17 +67,14 @@ public:
      * inside a sub control volume divided by the volume).
      * In contrast to the 2pnc model, here, the storage of solid phases is included too.
      *
-     *  \param storage the mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *  \param scv the SCV (sub-control-volume)
+     *  \param volVars The volume variables of the right time step
      */
-    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
+    PrimaryVariables computeStorage(const SubControlVolume& scv,
+                                    const VolumeVariables& volVars) const
     {
-        //call parenttype function
-        ParentType::computeStorage(storage, scvIdx, usePrevSol);
-
-        const auto& elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
+        // call parenttype function
+        auto storage = ParentType::computeStorage(scv, volVars);
 
         // Compute storage term of all solid (precipitated) phases (excluding the non-reactive matrix)
         for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)
@@ -120,10 +83,10 @@ public:
             storage[eqIdx] += volVars.precipitateVolumeFraction(phaseIdx)*volVars.molarDensity(phaseIdx);
         }
 
-        Valgrind::CheckDefined(storage);
+        return storage;
     }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

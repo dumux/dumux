@@ -45,6 +45,11 @@ NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(BoxTwoPNCMin, INHERITS_FROM(BoxModel, TwoPNCMin));
 NEW_TYPE_TAG(CCTwoPNCMin, INHERITS_FROM(CCModel, TwoPNCMin));
 
+//! The type tag for the non-isothermal two phase n component mineralisation problems
+NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin, NonIsothermal));
+NEW_TYPE_TAG(BoxTwoPNCMinNI, INHERITS_FROM(BoxModel, TwoPNCMinNI));
+NEW_TYPE_TAG(CCTwoPNCMinNI, INHERITS_FROM(CCModel, TwoPNCMinNI));
+
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////

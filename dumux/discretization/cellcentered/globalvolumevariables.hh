@@ -45,6 +45,9 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     friend CCElementVolumeVariables<TypeTag, true>;
     // The local jacobian needs to access and change volVars for derivative calculation
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    // as does the primary variable switch
+    friend class PrimaryVariableSwitch<TypeTag>;
+    friend typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -103,13 +106,12 @@ public:
     friend inline ElementVolumeVariables localView(const CCGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-private:
     const VolumeVariables& volVars(const IndexType scvIdx) const
     { return volumeVariables_[scvIdx]; }
 
     VolumeVariables& volVars(const IndexType scvIdx)
     { return volumeVariables_[scvIdx]; }
-
+private:
     const Problem& problem_() const
     { return *problemPtr_; }
 

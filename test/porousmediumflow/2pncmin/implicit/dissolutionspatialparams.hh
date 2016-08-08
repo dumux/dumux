@@ -44,12 +44,13 @@ SET_PROP(DissolutionSpatialparams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<RegularizedBrooksCorey<Scalar> > type;
+    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
 };
-}
+
+} // end namespace Properties
 
 /**
  * \brief Definition of the spatial parameters for the brine-co2 problem
@@ -58,36 +59,39 @@ public:
 template<class TypeTag>
 class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GridView::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using CoordScalar = typename GridView::ctype;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = FluidSystem::wPhaseIdx,
         nPhaseIdx = FluidSystem::nPhaseIdx,
     };
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    DissolutionSpatialparams(const GridView &gridView)
-        : ParentType(gridView), K_(0.0)
+    DissolutionSpatialparams(const Problem& problem, const GridView &gridView)
+    : ParentType(problem, gridView), initialPermeability_(0.0)
     {
         // set main diagonal entries of the permeability tensor to a value
         // setting to one value means: isotropic, homogeneous
         for (int i = 0; i < dim; i++)
-            K_[i][i] = 2.23e-14;
+            initialPermeability_[i][i] = 2.23e-14;
 
         // residual saturations
         materialParams_.setSwr(0.2);
@@ -105,15 +109,22 @@ public:
      *  \param fvGeometry The finite-volume geometry in the box scheme
      *  \param scvIdx The local vertex index
      *
-     *  Alternatively, the function intrinsicPermeabilityAtPos(const GlobalPosition& globalPos)
-     *  could be defined, where globalPos is the vector including the global coordinates
-     *  of the finite volume.
+     *  Solution dependent permeability function
      */
-    const Tensor& intrinsicPermeability(const Element &element,
-                                        const FVElementGeometry &fvGeometry,
-                                        const int scvIdx) const
+    Tensor solDependentIntrinsicPermeability(const SubControlVolume& scv,
+                                             const VolumeVariables& volVars) const
     {
-        return K_;
+        // Kozeny-Carman relation
+        auto initialPorosity = porosity(scv);
+        auto factor = std::pow((1-initialPorosity)/(1-volVars.porosity()), 2)
+                      * std::pow(volVars.porosity()/initialPorosity, 3);
+
+        auto perm = initialPermeability_;
+
+        for (int i = 0; i < dim; i++)
+            perm[i][i] *= factor;
+
+        return perm;
     }
 
     /*!
@@ -124,12 +135,10 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    Scalar porosityMin(const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       int scvIdx) const
-     {
+    Scalar porosityMin(const SubControlVolume &scv) const
+    {
         return 1e-5;
-     }
+    }
 
     /*!
      * \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
@@ -139,30 +148,24 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
-     {
-        return 0.11;
-     }
-
-
-    Scalar solidity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosity(const SubControlVolume &scv) const
     {
-
-        return 1.0 - porosity(element, fvGeometry, scvIdx);
+        return 0.11;
     }
 
-    Scalar SolubilityLimit() const
+
+    Scalar solidity(const SubControlVolume &scv) const
+    {
+
+        return 1.0 - porosity(scv);
+    }
+
+    Scalar solubilityLimit() const
     {
         return 0.26;
     }
 
-    Scalar theta(const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 int scvIdx) const
+    Scalar theta(const SubControlVolume &scv) const
     {
         return 10.0;
     }
@@ -170,17 +173,16 @@ public:
 
     // return the brooks-corey context depending on the position
     const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeometry,
-                                               int scvIdx) const
+                                               const SubControlVolume &scv) const
     {
         return materialParams_;
     }
 
 private:
-    Tensor K_;
+    Tensor initialPermeability_;
     MaterialLawParams materialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
