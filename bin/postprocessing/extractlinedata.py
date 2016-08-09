@@ -9,9 +9,8 @@ parser = argparse.ArgumentParser(
   description='Extract data from the paraview plotOverLine filter.'
 )
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--inputDirectory', help="Directory in which the .vtu are located")
 parser.add_argument('-f', '--files', nargs='+', required=True, help="vtu files to be processed")
-parser.add_argument('-o', '--outputDirectory', help="Directory to which the data files are written")
+parser.add_argument('-o', '--outputDirectory', default='', help="Directory to which the data files are written")
 parser.add_argument('-p1', '--point1', type=float, nargs=3, required=True, help='Coordinates of the first point (in 3D)')
 parser.add_argument('-p2', '--point2', type=float, nargs=3, required=True, help='Coordinates of the second point (in 3D)')
 parser.add_argument('-r', '--resolution', type=int, default=1000, help='Resolution of the line (number of data points written to data file)')
@@ -21,12 +20,11 @@ args = vars(parser.parse_args())
 from paraview.simple import *
 
 # import locations
-inDirectory = args['inputDirectory']
+commonOutDirectory = False
 outDirectory = args['outputDirectory']
-if not inDirectory == '':
-    inDirectory += '/'
 if not outDirectory == '':
     outDirectory += '/'
+    commonOutDirectory = True
     if not os.path.exists(outDirectory):
         os.makedirs(outDirectory)
 
@@ -35,13 +33,16 @@ counter = 1
 for curFile in args['files']:
     # print progress to command line
     fileWithoutPath = os.path.basename(curFile)
+    if not commonOutDirectory:
+        abspath = os.path.abspath(curFile)
+        outDirectory = os.path.dirname(abspath) + '/'
     basename = os.path.splitext(fileWithoutPath)[0]
     if args['verbosity'] == 1:
         print("Processing file ({}/{}): {}".format(counter, len(args['files']), fileWithoutPath))
     counter += 1
 
     # load vtk file
-    vtkFile = XMLUnstructuredGridReader(FileName=inDirectory+curFile)
+    vtkFile = XMLUnstructuredGridReader(FileName=curFile)
     SetActiveSource(vtkFile)
 
     # apply and configure PlotOverLine filter
