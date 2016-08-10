@@ -128,7 +128,6 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(eIdx);
-        assert(scv.dofIndex() == eIdx);
         volumeVariables_[localIdx].update(sol[eIdx], globalVolVars().problem_(), element, scvI);
         volVarIndices_[localIdx] = scvI.index();
         ++localIdx;
