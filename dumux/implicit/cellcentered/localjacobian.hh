@@ -124,23 +124,28 @@ public:
             for (auto globalJ : neighborStencil)
             {
                 const auto& elementJ = fvGeometryJ.globalFvGeometry().element(globalJ);
-                fvGeometryJ.bindElement(elementJ);
 
                 // find the flux vars needed for the calculation of the flux into element
                 std::vector<IndexType> fluxVarIndices;
-                for (auto&& scvFaceJ : scvfs(fvGeometryJ))
+
+                // only non-ghost neighbors (J) have to be considered, derivatives from non-ghost to ghost dofs
+                // are assembled when assembling the ghost element (I)
+                if (elementJ.partitionType() != Dune::GhostEntity)
                 {
-                    auto fluxVarsIdx = scvFaceJ.index();
+                    fvGeometryJ.bindElement(elementJ);
+                    for (auto&& scvFaceJ : scvfs(fvGeometryJ))
+                    {
+                        auto fluxVarsIdx = scvFaceJ.index();
 
-                    // if globalI is in flux var stencil, add to list
-                    FluxVariables fluxVars;
-                    const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, fvGeometryJ, scvFaceJ);
+                        // if globalI is in flux var stencil, add to list
+                        FluxVariables fluxVars;
+                        const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, fvGeometryJ, scvFaceJ);
 
-                    for (auto globalIdx : fluxStencil)
-                        if (globalIdx == globalI)
-                            fluxVarIndices.push_back(fluxVarsIdx);
+                        for (auto globalIdx : fluxStencil)
+                            if (globalIdx == globalI)
+                                fluxVarIndices.push_back(fluxVarsIdx);
+                    }
                 }
-
                 assemblyMap_[globalI].emplace_back(std::move(fluxVarIndices));
             }
         }
@@ -227,10 +232,6 @@ private:
         const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
         const auto numNeighbors = neighborStencil.size();
 
-        // derivatives in the element and the neighbors
-        PrimaryVariables partialDeriv(isGhost ? 1.0 : 0.0);
-        Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
-
         // the localresidual class used for the flux calculations
         LocalResidual localRes;
         localRes.init(this->problem_());
@@ -263,8 +264,16 @@ private:
         // save a copy of the original vol vars
         VolumeVariables origVolVars(curVolVars);
 
+        // derivatives in the neighbors with repect to the current elements
+        Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
         {
+            // derivatives of element dof with respect to itself
+            PrimaryVariables partialDeriv(0.0);
+
+            if (isGhost)
+                partialDeriv[pvIdx] = 1.0;
+
             neighborDeriv = 0.0;
             PrimaryVariables priVars(this->model_().curSol()[globalI_]);
 
@@ -363,6 +372,9 @@ private:
 
             // restore the original state of the scv's volume variables
             curVolVars = origVolVars;
+
+            if (isGhost)
+                std::cout << "asseemble ghost: " << globalI_ << std::endl;
 
             // update the global jacobian matrix with the current partial derivatives
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);

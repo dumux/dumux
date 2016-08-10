@@ -69,15 +69,8 @@ public:
         neighborStencil_ = elementStencil_;
 
         // remove the element itself and possible ghost neighbors from the neighbor stencil
-        auto pred = [&fvGeometry, globalI](const int i) -> bool
-        {
-            if (i == globalI)
-                return true;
-            if (fvGeometry.globalFvGeometry().element(i).partitionType() == Dune::GhostEntity)
-                return true;
-            return false;
-        };
-        neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(), pred),
+        neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(),
+                                             [globalI](int i){ return (i == globalI); }),
                                neighborStencil_.end());
     }
 
