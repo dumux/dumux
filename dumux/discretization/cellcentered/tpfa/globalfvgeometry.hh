@@ -121,7 +121,7 @@ public:
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
-            scvs_[eIdx] = SubControlVolume(std::move(element.geometry()), eIdx);
+            scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
 
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
