@@ -57,18 +57,24 @@ public:
     //! Constructor with intersection
     template <class Intersection>
     CCTpfaSubControlVolumeFace(const Intersection& is,
-                               typename Intersection::Geometry&& isGeometry,
+                               const typename Intersection::Geometry& isGeometry,
                                IndexType scvfIndex,
                                const std::vector<IndexType>& scvIndices)
     : ParentType(),
-      geometry_(std::move(isGeometry)),
+      geomType_(isGeometry.type()),
+      area_(isGeometry.volume()),
+      center_(isGeometry.center()),
       unitOuterNormal_(is.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       boundary_(is.boundary())
-      {}
+      {
+          corners_.resize(isGeometry.corners());
+          for (int i = 0; i < isGeometry.corners(); ++i)
+              corners_[i] = isGeometry.corner(i);
+      }
 
-    //! The copy constrcutor
+    /*//! The copy constrcutor
     CCTpfaSubControlVolumeFace(const CCTpfaSubControlVolumeFace& other) = delete;
 
     //! The move constrcutor
@@ -78,37 +84,37 @@ public:
     CCTpfaSubControlVolumeFace& operator=(const CCTpfaSubControlVolumeFace& other) = delete;
 
     //! The move assignment operator
-    CCTpfaSubControlVolumeFace& operator=(CCTpfaSubControlVolumeFace&& other)
-    {
-        // We want to use the default copy/move assignment.
-        // But since geometry is not copy assignable :( we
-        // have to construct it again
-        geometry_.release();
-        geometry_.emplace(other.geometry_.value());
-        unitOuterNormal_ = std::move(other.unitOuterNormal_);
-        scvfIndex_ = std::move(other.scvfIndex_);
-        scvIndices_ = std::move(other.scvIndices_);
-        boundary_ = std::move(other.boundary_);
-        return *this;
-    }
+    // CCTpfaSubControlVolumeFace& operator=(CCTpfaSubControlVolumeFace&& other)
+    // {
+    //     // We want to use the default copy/move assignment.
+    //     // But since geometry is not copy assignable :( we
+    //     // have to construct it again
+    //     geometry_.release();
+    //     geometry_.emplace(other.geometry_.value());
+    //     unitOuterNormal_ = std::move(other.unitOuterNormal_);
+    //     scvfIndex_ = std::move(other.scvfIndex_);
+    //     scvIndices_ = std::move(other.scvIndices_);
+    //     boundary_ = std::move(other.boundary_);
+    //     return *this;
+    // }*/
 
     //! The center of the sub control volume face
     GlobalPosition center() const
     {
-        return geometry().center();
+        return center_;
     }
 
     //! The integration point for flux evaluations in global coordinates
     GlobalPosition ipGlobal() const
     {
         // Return center for now
-        return center();
+        return center_;
     }
 
     //! The area of the sub control volume face
     Scalar area() const
     {
-        return geometry().volume();
+        return area_;
     }
 
     //! returns bolean if the sub control volume face is on the boundary
@@ -143,18 +149,21 @@ public:
 
     GlobalPosition corner(unsigned int localIdx) const
     {
-        assert(localIdx < geometry().corners() && "provided index exceeds the number of corners");
-        return geometry().corner(localIdx);
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
     }
 
     //! The geometry of the sub control volume face
-    const Geometry& geometry() const
+    const Geometry geometry() const
     {
-        return geometry_.value();
+        return Geometry(geomType_, corners_);
     }
 
 private:
-    Optional<Geometry> geometry_;
+    Dune::GeometryType geomType_;
+    std::vector<GlobalPosition> corners_;
+    Scalar area_;
+    GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     IndexType scvfIndex_;
     std::vector<IndexType> scvIndices_;
