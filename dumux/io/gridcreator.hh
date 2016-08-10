@@ -254,11 +254,27 @@ protected:
             if(domainMarkers)
             {
                 enableGmshDomainMarkers_ = true;
-                gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments));
+                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
+                {
+                    gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments));
+                }
+                else
+                {
+                    Dune::GridFactory<Grid> factory;
+                    gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
+                }
             }
             else
             {
-                gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, verbose, boundarySegments));
+                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
+                {
+                    gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, verbose, boundarySegments));
+                }
+                else
+                {
+                    Dune::GridFactory<Grid> factory;
+                    gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
+                }
             }
         }
     }
