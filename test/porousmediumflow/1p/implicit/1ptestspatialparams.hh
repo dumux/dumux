@@ -55,24 +55,23 @@ SET_BOOL_PROP(OnePTestSpatialParams, SpatialParamsRandomField, false);
 template<class TypeTag>
 class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
-    typedef ImplicitSpatialParamsOneP<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef std::vector<Scalar> ScalarVector;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::IndexSet IndexSet;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using IndexSet = typename GridView::IndexSet;
+    using ScalarVector = std::vector<Scalar>;
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
     OnePTestSpatialParams(const GridView& gridView)
@@ -99,7 +98,8 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    Scalar intrinsicPermeability(const SubControlVolume &scv) const
+    Scalar intrinsicPermeability(const SubControlVolume& scv,
+                                 const VolumeVariables& volVars) const
     {
         if (isInLens_(scv.dofPosition()))
         {

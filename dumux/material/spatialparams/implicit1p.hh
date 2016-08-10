@@ -114,19 +114,8 @@ public:
      *
      * \return the intrinsic permeability
      */
-    auto solDependentIntrinsicPermeability (const SubControlVolume &scv,
-                                            const VolumeVariables &volVars) const
-    {
-        return asImp_().intrinsicPermeability(scv);
-    }
-
-    /*!
-     * \brief Function for defining the intrinsic (absolute) permeability.
-     *        That is possibly solution dependent.
-     *
-     * \return the intrinsic permeability
-     */
-    auto intrinsicPermeability (const SubControlVolume &scv) const
+    DimWorldMatrix intrinsicPermeability (const SubControlVolume &scv,
+                                          const VolumeVariables &volVars) const
     {
         return asImp_().intrinsicPermeabilityAtPos(scv.dofPosition());
     }
