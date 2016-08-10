@@ -462,6 +462,7 @@ private:
         }
         wijk *= localScvf.area();
         wijk /= localScv.detX();
+        wijk *= -1.0;
 
         return wijk;
     }
@@ -478,6 +479,7 @@ private:
             wijk[dir] = tmp*localScv.innerNormal(dir);
         wijk *= localScvf.area();
         wijk /= localScv.detX();
+        wijk *= -1.0;
 
         return wijk;
     }
