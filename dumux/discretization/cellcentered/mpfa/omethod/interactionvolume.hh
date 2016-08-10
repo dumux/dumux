@@ -162,6 +162,7 @@ public:
                 const auto& element = localElement_(localScvf.insideLocalScvIndex());
                 const auto& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];
+                neumannFlux *= globalScvf.area();
 
                 const auto& insideScv = fvGeometry_().scv(globalScvf.insideScvIdx());
                 const auto& volVars = elemVolVars_()[insideScv];
