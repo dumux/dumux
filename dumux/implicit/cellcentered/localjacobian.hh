@@ -373,9 +373,6 @@ private:
             // restore the original state of the scv's volume variables
             curVolVars = origVolVars;
 
-            if (isGhost)
-                std::cout << "asseemble ghost: " << globalI_ << std::endl;
-
             // update the global jacobian matrix with the current partial derivatives
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
 
