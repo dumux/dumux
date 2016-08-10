@@ -150,7 +150,7 @@ public:
 
     LocalIndexType outsideLocalScvIndex() const
     {
-        assert(faceType_ != MpfaFaceTypes::neumann && faceType_ != MpfaFaceTypes::dirichlet);
+        assert(faceType() != MpfaFaceTypes::neumann && faceType() != MpfaFaceTypes::dirichlet);
         return scvfSeed_().localScvIndices()[1];
     }
 
