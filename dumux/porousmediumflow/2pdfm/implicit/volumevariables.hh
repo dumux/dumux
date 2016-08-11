@@ -138,83 +138,114 @@ public:
                         int scvIdx,
                         bool isOldSol)
     {
-        // the scv is on a fracture, the actual solution corresponds to the solution in the fracture
+        bool hasFractureFaces = problem.spatialParams().hasFractureFaces(element, fvGeometry, scvIdx);
+        // if the scv contains fracture scvs, the actual solution corresponds to the solution in the fracture
         // the matrix saturation will be modified below if interface condition is used
-        satNFracture_ = priVars[saturationIdx];
-        satWFracture_ = 1.0 - satNFracture_;
+        if (hasFractureFaces)
+        {
+            satNFracture_ = priVars[saturationIdx];
+            satWFracture_ = 1.0 - satNFracture_;
+        }
 
         //update fracture saturation using interface condition
         const VertexMapper &vertexMapper = problem.vertexMapper();
         int globalIdx = vertexMapper.subIndex(element, scvIdx, dim);
+
+        const MaterialLawParams &materialParamsMatrix = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         const MaterialLawParams &materialParamsFracture = problem.spatialParams().materialLawParamsFracture(element, fvGeometry, scvIdx);
 
         // this mapper provides access to the minimum pc for neighboring elements
-        const VertIdxToMinPcMapper &vertIdxToMinPcMapper = problem.vertIdxToMinPcMapper();
+        const auto &vertIdxToMinPcMapper = problem.vertIdxToMinPcFractureMapper();
 
-        //calculates capillary pressure and entry pressure for current scv
-        Scalar pc = MaterialLaw::pc(materialParamsFracture, satWFracture_);
-        Scalar pe = MaterialLaw::pc(materialParamsFracture, 1-materialParamsFracture.snr());
+        //calculate capillary pressure and entry pressure for current scv
+        Scalar pc, pe;
+        if (hasFractureFaces)
+        {
+            pc = MaterialLaw::pc(materialParamsFracture, satWFracture_);
+            pe = MaterialLaw::pc(materialParamsFracture, 1.0-materialParamsFracture.snr());
+        }
+        else
+        {
+            pc = MaterialLaw::pc(materialParamsMatrix, satWMatrix_);
+            pe = MaterialLaw::pc(materialParamsMatrix, 1.0-materialParamsMatrix.snr());
+        }
 
         FVElementGeometry minPcElemFvGeometry;
         Element minPcElem = vertIdxToMinPcMapper.vertexElement(globalIdx);
         minPcElemFvGeometry.update(problem.gridView(), minPcElem);
-        //choose materialLawParamsFracture as fracture has higher pe
-        MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParamsFracture(minPcElem, minPcElemFvGeometry, scvIdx);
+        //choose materialLawParamsFracture as fracture has lower pe
+        // we set an scvIdx of 0, because we don't know the actual scv idx and assume element wise parameters anyway
+        MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParamsFracture(minPcElem, minPcElemFvGeometry, /*dummy*/0);
         //calculate capillary pressure based on the pc-sw relation of the minPc element
-        Scalar pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWFracture_);
-        // update fracture saturation
-        if (std::abs(pc-pcmin) < 1e-6){
-            }
-        else if (pcmin < pe){
-            satNFracture_ = std::min(materialParamsFracture.snr(), 0.0 /* SnInitial*/);
-        }
-        else{
-            satNFracture_ = 1 - MaterialLaw::sw(materialParamsFracture, pcmin);
-        }
-        satWFracture_ = 1.0 - satNFracture_;
-        //primary variables for update of fluid state for fracture
-        PrimaryVariables priVarsFracture = priVars;
-       if (int(formulation) == pwsn) {
-            priVarsFracture[saturationIdx]= satNFracture_;
-            }
-       else if (int(formulation) == pnsw) {
-            priVarsFracture[saturationIdx]= satWFracture_;}
+        Scalar pcmin;
+        if (hasFractureFaces)
+            pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWFracture_);
+        else
+            pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWMatrix_);
 
-        const MaterialLawParams &materialParamsMatrix =
-                    problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-
-        // the fluid state of the fracture
-        this->completeFluidState(priVarsFracture, problem, element, fvGeometry, scvIdx, fluidStateFracture_);
-
-
-        // use interface condition - extended capillary pressure inteface condition
-        if (problem.useInterfaceCondition())
+        // update fracture saturation for scvs containing fracture scvs, otherwise update matrix saturations
+        if (hasFractureFaces)
         {
-            std::cout << " old satM: "<< satNMatrix_ << std::endl;
-            // updated solution in the fracture is used for the interface condition
-            interfaceCondition(priVarsFracture, materialParamsMatrix, materialParamsFracture);
-            std::cout << " new satM: "<< satNMatrix_ << std::endl;
-            // After modifying the matrix saturations we have to update the fluid state and the matrix mobilities
-            PrimaryVariables updatedMatrixPriVars(priVarsFracture);
-            updatedMatrixPriVars[saturationIdx] = satNMatrix_;
-            this->completeFluidState(updatedMatrixPriVars, problem, element, fvGeometry, scvIdx, fluidState_);
-
-            mobilityMatrix_[wPhaseIdx] = MaterialLaw::krw(materialParamsMatrix, satWMatrix_) / fluidState_.viscosity(wPhaseIdx);
-            mobilityMatrix_[nPhaseIdx] = MaterialLaw::krn(materialParamsMatrix, satWMatrix_) / fluidState_.viscosity(nPhaseIdx);
+            if (std::abs(pc-pcmin) < 1e-6) {}
+            else if (pcmin < pe)
+                satNFracture_ = std::min(materialParamsFracture.snr(), 0.0 /* SnInitial*/);
+            else
+               satNFracture_ = 1.0 - MaterialLaw::sw(materialParamsFracture, pcmin);
+            satWFracture_ = 1.0 - satNFracture_;
+        }
+        else
+        {
+            if (std::abs(pc-pcmin) < 1e-6) {}
+            else if (pcmin < pe)
+                satNMatrix_ = std::min(materialParamsMatrix.snr(), 0.0 /* SnInitial*/);
+            else
+               satNMatrix_ = 1.0 - MaterialLaw::sw(materialParamsMatrix, pcmin);
+            satWMatrix_ = 1.0 - satNMatrix_;
         }
 
-        // calculate the mobilities in the fracture using the material parameters in the fracture
-        mobilityFracture_[wPhaseIdx] =
-                MaterialLaw::krw(materialParamsFracture, fluidStateFracture_.saturation(wPhaseIdx))
-                / fluidStateFracture_.viscosity(wPhaseIdx);
 
-        mobilityFracture_[nPhaseIdx] =
-                MaterialLaw::krn(materialParamsFracture, fluidStateFracture_.saturation(wPhaseIdx))
-                    / fluidStateFracture_.viscosity(nPhaseIdx);
+        // update fracture mobilities if we are on an scv containing fracture scvs
+        if (hasFractureFaces)
+        {
+            //primary variables for update of fluid state for fracture
+            PrimaryVariables priVarsFracture = priVars;
+            if (int(formulation) == pwsn)
+                priVarsFracture[saturationIdx]= satNFracture_;
+            else if (int(formulation) == pnsw)
+                priVarsFracture[saturationIdx]= satWFracture_;
+
+            // the fluid state of the fracture
+            this->completeFluidState(priVarsFracture, problem, element, fvGeometry, scvIdx, fluidStateFracture_);
+
+            // calculate the mobilities in the fracture using the material parameters in the fracture
+            mobilityFracture_[wPhaseIdx] =
+                    MaterialLaw::krw(materialParamsFracture, fluidStateFracture_.saturation(wPhaseIdx))
+                    / fluidStateFracture_.viscosity(wPhaseIdx);
+
+            mobilityFracture_[nPhaseIdx] =
+                    MaterialLaw::krn(materialParamsFracture, fluidStateFracture_.saturation(wPhaseIdx))
+                        / fluidStateFracture_.viscosity(nPhaseIdx);
+
+            // use interface condition - extended capillary pressure inteface condition
+            if (problem.useInterfaceCondition())
+                // updated solution in the fracture is used for the interface condition
+                interfaceCondition(priVarsFracture, materialParamsMatrix, materialParamsFracture);
+        }
+
+        // After modifying the matrix saturations we have to update the fluid state and the matrix mobilities
+        PrimaryVariables updatedMatrixPriVars(priVars);
+        updatedMatrixPriVars[saturationIdx] = satNMatrix_;
+        this->completeFluidState(updatedMatrixPriVars, problem, element, fvGeometry, scvIdx, fluidState_);
+
+        mobilityMatrix_[wPhaseIdx] = MaterialLaw::krw(materialParamsMatrix, satWMatrix_) / fluidState_.viscosity(wPhaseIdx);
+        mobilityMatrix_[nPhaseIdx] = MaterialLaw::krn(materialParamsMatrix, satWMatrix_) / fluidState_.viscosity(nPhaseIdx);
 
         // set the porosity and permeability
-        porosityFracture_ = problem.spatialParams().porosityFracture(element, fvGeometry, scvIdx);
-        permeabilityFracture_ = problem.spatialParams().intrinsicPermeabilityFracture(element, fvGeometry, scvIdx);
+        if (hasFractureFaces)
+        {
+            porosityFracture_ = problem.spatialParams().porosityFracture(element, fvGeometry, scvIdx);
+            permeabilityFracture_ = problem.spatialParams().intrinsicPermeabilityFracture(element, fvGeometry, scvIdx);
+        }
     }
 
     /*!
