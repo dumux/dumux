@@ -30,7 +30,7 @@ add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generali
                          ${CMAKE_CURRENT_BINARY_DIR}/generalizeddirichlet-00034.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_generalizeddirichlet")
 
-if(HAVE_DUNE_CORNERPOINT)
+if(HAVE_OPM_GRID)
 add_dumux_test(test_cc2pcornerpoint test_cc2pcornerpoint test_cc2pcornerpoint.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy

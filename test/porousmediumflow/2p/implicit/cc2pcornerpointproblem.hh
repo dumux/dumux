@@ -19,7 +19,7 @@
 #ifndef DUMUX_CC2P_CORNERPOINT_PROBLEM_HH
 #define DUMUX_CC2P_CORNERPOINT_PROBLEM_HH
 
-#if HAVE_DUNE_CORNERPOINT
+#if HAVE_OPM_GRID
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
@@ -338,6 +338,6 @@ private:
 };
 } //end namespace
 
-#endif // HAVE_DUNE_CORNERPOINT
+#endif // HAVE_OPM_GRID
 
 #endif
