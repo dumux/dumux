@@ -161,14 +161,19 @@ public:
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
                     int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                    bool isVertFracture = this->problem_().spatialParams().isVertexFracture(element, scvIdx);
+                    int eIdxMinPc = this->problem_().elementMapper().index(this->problem_().vertIdxToMinPcFractureMapper().vertexElement(dofIdxGlobal));
 
                     (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                     (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
                     (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
                     (*swMatrix)[eIdx] += elemVolVars[scvIdx].saturationMatrix(wPhaseIdx)*fvGeometry.subContVol[scvIdx].volume;
                     (*snMatrix)[eIdx] += elemVolVars[scvIdx].saturationMatrix(nPhaseIdx)*fvGeometry.subContVol[scvIdx].volume;
-                    (*swFracture)[dofIdxGlobal] = elemVolVars[scvIdx].saturationFracture(wPhaseIdx);
-                    (*snFracture)[dofIdxGlobal] = elemVolVars[scvIdx].saturationFracture(nPhaseIdx);
+                    if(isVertFracture && eIdx == eIdxMinPc)
+                    {
+                        (*swFracture)[dofIdxGlobal] = elemVolVars[scvIdx].saturationFracture(wPhaseIdx);
+                        (*snFracture)[dofIdxGlobal] = elemVolVars[scvIdx].saturationFracture(nPhaseIdx);
+                    }
                     (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
                     (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
                     (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
