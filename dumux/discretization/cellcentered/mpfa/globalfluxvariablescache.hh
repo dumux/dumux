@@ -122,7 +122,7 @@ private:
                 iv.solveLocalSystem(permFunction);
 
                 // lambda function defining the upwind factor of the advective flux
-                auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars) { return volVars.density(eqIdx)*volVars.mobility(eqIdx); };
+                auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars) { return volVars.density(eqIdx)/volVars.viscosity(eqIdx); };
                 iv.assembleNeumannFluxes(advectionUpwindFunction, eqIdx);
 
                 // update flux variables cache

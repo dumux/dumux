@@ -25,6 +25,7 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -99,6 +100,16 @@ public:
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
         const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+
+        // When using an mpfa methods, we have to take special care of neumann boundaries
+        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCMpfa)
+        {
+            auto bcTypes = this->problem().boundaryTypes(this->element(), this->scvFace());
+            if (this->scvFace().boundary() && bcTypes.isNeumann(phaseIdx))
+            {
+                return flux*insideVolVars.density(phaseIdx)/insideVolVars.viscosity(phaseIdx);
+            }
+        }
 
         if (std::signbit(flux))
             return flux*upwindFunction(outsideVolVars, insideVolVars);
