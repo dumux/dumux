@@ -58,7 +58,7 @@ public:
                                IndexType scvfIndex,
                                std::array<IndexType, 2>&& scvIndices,
                                Scalar q,
-                               bool boundary = false)
+                               bool boundary)
     : ParentType(),
       boundary_(boundary),
       vertexIndex_(vertexIndex),
