@@ -161,18 +161,24 @@ public:
             // construct the sub control volume faces
             for (const auto& intersection : intersections(gridView_, element))
             {
+                // get the intersection geometry and some of its bools
+                auto isGeometry = intersection.geometry();
+                bool boundary = intersection.boundary();
+                bool neighbor = intersection.neighbor();
+
+                if (neighbor &&
+                    element.partitionType() == Dune::GhostEntity &&
+                    intersection.outside().partitionType() == Dune::GhostEntity)
+                    continue;
+
                 // determine the outside volvar idx
                 IndexType nIdx;
-                if (intersection.neighbor())
+                if (neighbor)
                     nIdx = problem.elementMapper().index(intersection.outside());
                 else if (intersection.boundary())
                     nIdx = numScvs + numBoundaryScvf_++;
                 else
                     continue;
-
-                // get the intersection goemetry
-                auto isGeometry = intersection.geometry();
-                bool boundary = intersection.boundary();
 
                 // make the scv faces of the intersection
                 for (unsigned int faceScvfIdx = 0; faceScvfIdx < isGeometry.corners(); ++faceScvfIdx)
