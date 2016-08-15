@@ -78,9 +78,15 @@ public:
         const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions(phaseIdx);
         const auto& tij = fluxVarsCache.advectionTij(phaseIdx);
 
-        Scalar rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
-        rho += elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
-        rho /= 2.0;
+        Scalar rho;
+        if (!scvf.boundary())
+        {
+            rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
+            rho += elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
+            rho /= 2.0;
+        }
+        else
+            rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
 
         // calculate Tij*pj
         Scalar flux(0.0);
