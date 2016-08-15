@@ -51,7 +51,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIdxType = unsigned int;
+    using LocalIdxType = std::uint8_t;
 
     using LocalScvSeedType = CCMpfaOLocalScvSeed<GlobalIndexType, LocalIdxType>;
     using LocalScvfSeedType = CCMpfaOLocalScvfSeed<GlobalIndexType, LocalIdxType>;
