@@ -159,6 +159,10 @@ public:
             const auto faceType = localScvf.faceType();
             if (faceType == MpfaFaceTypes::neumann || faceType == MpfaFaceTypes::interiorNeumann)
             {
+                // boundary neumann fluxes stay zero when tpfa boundary handling is on
+                if (GET_PROP_VALUE(TypeTag, UseTpfaBoundary) && faceType == MpfaFaceTypes::neumann)
+                    continue;
+
                 const auto& element = localElement_(localScvf.insideLocalScvIndex());
                 const auto& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];

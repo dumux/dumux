@@ -110,6 +110,9 @@ SET_SCALAR_PROP(CCMpfaModel, QuadraturePoint, 0.0);
 // Facet coupling is deactivated by default
 SET_BOOL_PROP(CCMpfaModel, FacetCoupling, false);
 
+// By default, we use tpfa on the boundaries
+SET_BOOL_PROP(CCMpfaModel, UseTpfaBoundary, true);
+
 // By default, set the coupling parameter to 1.0
 SET_SCALAR_PROP(CCMpfaModel, Xi, 1.0);
 
