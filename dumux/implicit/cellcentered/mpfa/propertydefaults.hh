@@ -32,6 +32,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalfvgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
@@ -74,6 +75,9 @@ SET_TYPE_PROP(CCMpfaModel, GlobalInteractionVolumeSeeds, CCMpfaGlobalInteraction
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(CCMpfaModel, GlobalFVGeometry, CCMpfaGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+
+//! The global current volume variables vector class
+SET_TYPE_PROP(CCMpfaModel, GlobalVolumeVariables, Dumux::CCMpfaGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel, GlobalFluxVariablesCache, CCMpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
