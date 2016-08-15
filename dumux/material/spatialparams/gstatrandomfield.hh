@@ -38,7 +38,8 @@ namespace Dumux
  * \brief Creating random fields using gstat
  *
  * gstat is an open source software tool which can (among other things) generate
- * geostatistical random fields (see <a href="http://www.gstat.org">http://www.gstat.org</a>).
+ * geostatistical random fields (see <a href="http://www.gstat.org">http://www.gstat.org</a>
+ * or \cite Pebesma1998a).
  *
  * To use this class, execute the installexternal.sh from your DuMuX root
  * directory or donwload, unpack and install the tarball from the gstat-website.
