@@ -253,10 +253,10 @@ private:
     const LocalScvType& localScv_(const LocalIndexType localScvIdx) const
     { return localScvs_[localScvIdx]; }
 
-    const Stencil& fluxScvfIndexSet_() const
+    const LocalIndexSet& fluxScvfIndexSet_() const
     { return fluxFaceIndexSet_; }
 
-    const Stencil& dirichletScvfIndexSet_() const
+    const LocalIndexSet& dirichletScvfIndexSet_() const
     { return dirichletFaceIndexSet_; }
 
     const Element& localElement_(const LocalIndexType localScvIdx) const
@@ -488,8 +488,8 @@ private:
         return wijk;
     }
 
-    template<class IdxType>
-    LocalIndexType findLocalIndex_(const std::vector<IdxType>& vector, const IdxType globalIdx) const
+    template<typename IdxType1, typename IdxType2>
+    LocalIndexType findLocalIndex_(const std::vector<IdxType1>& vector, const IdxType2 globalIdx) const
     {
         auto it = std::find(vector.begin(), vector.end(), globalIdx);
         assert(it != vector.end() && "could not find local index in the vector for the given global index!");

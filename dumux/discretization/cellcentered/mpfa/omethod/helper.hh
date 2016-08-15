@@ -159,7 +159,7 @@ private:
             IndexType globalScvfIdx = curScvf.index();
             IndexType insideGlobalScvIdx = curScvf.insideScvIdx();
             IndexType outsideGlobalScvIdx = curScvf.outsideScvIdx();
-            IndexType insideLocalScvIdx = firstIteration ? 0 : localScvIdx;
+            LocalIndexType insideLocalScvIdx = firstIteration ? 0 : localScvIdx;
 
             // the current element inside of the scv face
             auto insideElement = problem.model().globalFvGeometry().element(insideGlobalScvIdx);
@@ -210,7 +210,7 @@ private:
 
             // create local scv face entity of the current scvf
             IndexType commonGlobalScvfIdx = commonScvf.index();
-            IndexType outsideLocalScvIdx = outsideGlobalScvIdx == scvIdx0 ? 0 : localScvIdx+1;
+            LocalIndexType outsideLocalScvIdx = outsideGlobalScvIdx == scvIdx0 ? 0 : localScvIdx+1;
 
             scvfSeeds.emplace_back(ScvfSeed(curScvf,
                                             LocalIndexSet({insideLocalScvIdx, outsideLocalScvIdx}),
