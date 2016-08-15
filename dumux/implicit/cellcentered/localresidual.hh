@@ -88,7 +88,7 @@ protected:
                                   const ElementBoundaryTypes& bcTypes,
                                   const FluxVariablesCache& fluxVarsCache)
     {
-        if (!scvf.boundary() /*TODO: || GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
+        if (!scvf.boundary())
             return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
         else
             return PrimaryVariables(0.0);
@@ -134,11 +134,11 @@ protected:
     {
         // evaluate the Neumann conditions at the boundary face
         PrimaryVariables flux(0);
-        if (bcTypes.hasNeumann() /*TODO: && !GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
+        if (bcTypes.hasNeumann())
             flux += this->asImp_().evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
 
         // TODO: evaluate the outflow conditions at the boundary face
-        //if (bcTypes.hasOutflow() /*TODO: && !GET_PROP_VALUE(TypeTag, BoundaryReconstruction)*/)
+        //if (bcTypes.hasOutflow())
         //    flux += this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
 
         // evaluate the pure Dirichlet conditions at the boundary face

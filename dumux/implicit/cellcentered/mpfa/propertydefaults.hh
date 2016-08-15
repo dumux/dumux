@@ -41,6 +41,7 @@
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseeds.hh>
+#include <dumux/implicit/cellcentered/mpfa/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 
 namespace Dumux {
@@ -54,6 +55,9 @@ SET_PROP(CCMpfaModel, DiscretizationMethod)
 {
     static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
 };
+
+//! Set the BaseLocalResidual to CCLocalResidual
+SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCMpfaLocalResidual<TypeTag>);
 
 //! By default we set the o-method as the Mpfa method of choice
 SET_PROP(CCMpfaModel, MpfaMethod)
