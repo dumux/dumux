@@ -6,6 +6,7 @@ add_subdirectory("mp")
 
 #install headers
 install(FILES
+diffusivityconstant.hh
 diffusivityconstanttau.hh
 diffusivitymillingtonquirk.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions)
