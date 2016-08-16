@@ -201,27 +201,21 @@ public:
                                          const LocalIndexType eqIdx)
     {
         auto bcTypes = problem.boundaryTypes(element, scvf);
-        auto onBoundary = scvf.boundary();
+        if (!scvf.boundary())
+            return MpfaFaceTypes::interior;
 
         assert(!bcTypes.hasOutflow() && "Outflow boundaries not implemented for mpfa methods");
         assert(!(bcTypes.hasDirichlet() && bcTypes.hasNeumann()) && "Mixed boundary conditions are not valid for mpfa methods!");
 
         if (bcTypes.isNeumann(eqIdx))
-        {
-            if (onBoundary)
-                return MpfaFaceTypes::neumann;
-            else
-                return MpfaFaceTypes::interiorNeumann;
-        }
+            return MpfaFaceTypes::neumann;
         if (bcTypes.isDirichlet(eqIdx))
-        {
-            if (onBoundary)
-                return MpfaFaceTypes::dirichlet;
-            else
-                return MpfaFaceTypes::interiorDirichlet;
-        }
+            return MpfaFaceTypes::dirichlet;
 
-        return MpfaFaceTypes::interior;
+        if (bcTypes.isOutflow(eqIdx))
+            DUNE_THROW(Dune::NotImplemented, "outflow BC for mpfa schemes");
+
+        DUNE_THROW(Dune::InvalidStateException, "unknown boundary condition type");
     }
 };
 } // end namespace
