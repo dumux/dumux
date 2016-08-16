@@ -87,7 +87,7 @@ public:
     Scalar area() const
     { return area_; }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! returns bolean if the sub control volume face is on the domain boundary
     bool boundary() const
     { return boundary_; }
 
