@@ -99,7 +99,7 @@ private:
     {
         // The vertex index around which we construct the interaction volume
         auto vIdxGlobal = scvf.vertexIndex();
-        bool onBoundary = problem.model().globalFvGeometry().isBoundaryVertex(vIdxGlobal);
+        bool onBoundary = problem.model().globalFvGeometry().isDomainBoundaryVertex(vIdxGlobal);
 
         // Get the two scv faces in the first scv
         auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
@@ -199,7 +199,7 @@ private:
 
             // If we get here, there are outside entities
             auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
-            outsideFvGeometry.bind(outsideElement);
+            outsideFvGeometry.bindElement(outsideElement);
 
             // get the two scv faces in the outside element that share the vertex
             auto outsideScvfVector = Implementation::getCommonAndNextScvFace(curScvf, outsideFvGeometry, clockWise);
@@ -221,7 +221,7 @@ private:
             // create duplicate face if it is an interior boundary,
             if (faceType != MpfaFaceTypes::interior)
             {
-                // face from "outside" to "inside", local index set changes
+                // face from "outside" to "inside", index sets change
                 scvfSeeds.emplace_back(ScvfSeed(commonScvf,
                                                 LocalIndexSet({outsideLocalScvIdx, insideLocalScvIdx}),
                                                 GlobalIndexSet({commonGlobalScvfIdx, globalScvfIdx}),
