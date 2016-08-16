@@ -44,6 +44,7 @@ class CCMpfaGlobalInteractionVolumeSeeds
     using InteractionVolumeSeed = typename InteractionVolume::Seed;
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     using IndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
@@ -55,13 +56,14 @@ public:
     CCMpfaGlobalInteractionVolumeSeeds(const GridView gridView) : gridView_(gridView) {}
 
     // initializes the interaction volumes or the seeds
-    void update(const Problem& problem)
+    template<typename BoolVector>
+    void update(const Problem& problem, BoolVector& vertexTouchesBoundary)
     {
         problemPtr_ = &problem;
         seeds_.clear();
         boundarySeeds_.clear();
         scvfIndexMap_.clear();
-        initializeSeeds_();
+        initializeSeeds_(vertexTouchesBoundary);
     }
 
     const InteractionVolumeSeed& seed(const SubControlVolumeFace& scvf) const
@@ -73,8 +75,20 @@ public:
         return boundarySeeds_[scvfIndexMap_[scvf.index()]][eqIdx];
     }
 
+    //! returns whether or not an scvf is on an interior or outer boundary
+    bool isScvfOnInteriorBoundary(const Problem& problem,
+                                  const Element& element,
+                                  const SubControlVolumeFace& scvf)
+    {
+        for (LocalIndexType eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            if (Helper::getMpfaFaceType(problem_(), element, scvf, eqIdx) != MpfaFaceTypes::interior)
+                return true;
+        return false;
+    }
+
 private:
-    void initializeSeeds_()
+    template<typename BoolVector>
+    void initializeSeeds_(BoolVector& vertexTouchesBoundary)
     {
         seeds_.reserve(gridView_.size(dim));
 
@@ -93,19 +107,12 @@ private:
                 if (scvfIndexMap_[scvf.index()] != -1)
                     continue;
 
-                // also, skip the rest if this face doesn't touch a boundary
-                bool touchesBoundary = false;
-                for (LocalIndexType eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                {
-                    if (Helper::getMpfaFaceType(problem_(), element, scvf, eqIdx) != MpfaFaceTypes::interior)
-                    {
-                        touchesBoundary = true;
-                        break;
-                    }
-                }
-
-                if (!touchesBoundary)
+                // also, skip the rest if this face is not on a boundary
+                if (!scvf.boundary() && !isScvfOnInteriorBoundary(problem_(), element, scvf))
                     continue;
+
+                // the vertex connected to this scvf touches an interior or outer boundary
+                vertexTouchesBoundary[scvf.vertexIndex()] = true;
 
                 // container to store the interaction volume seeds
                 std::vector<BoundaryInteractionVolumeSeed> seedVector;
@@ -115,13 +122,8 @@ private:
 
                 // update the index map entries for the global scv faces in the interaction volume
                 for (const auto& localScvf : seedVector[0].scvfSeeds())
-                {
                     for (const auto scvfIdxGlobal : localScvf.globalScvfIndices())
-                    {
-                        assert(scvfIndexMap_[scvfIdxGlobal] == -1);
                         scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
-                    }
-                }
 
                 // store interaction volume and increment counter
                 boundarySeeds_.emplace_back(std::move(seedVector));
@@ -156,6 +158,9 @@ private:
                 seedIndex++;
             }
         }
+
+        // shrink seed vector to actual size
+        seeds_.shrink_to_fit();
     }
 
     const Problem& problem_() const
