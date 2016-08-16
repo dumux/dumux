@@ -87,23 +87,28 @@ public:
         // create local sub control entities from the seed
         createLocalEntities_(seed);
 
-        // fill the dof stencil
-        stencil_.reserve(localScvs_.size());
-        volVarsPositions_.reserve(localScvs_.size());
+        // fill info on the dof stencil
+        const auto numLocalScvs = localScvs_.size();
+        stencil_.reserve(numLocalScvs);
+        volVarsStencil_.reserve(numLocalScvs);
+        volVarsPositions_.reserve(numLocalScvs);
         for (const auto& localScv : localScvs_)
         {
-            stencil_.push_back(localScv.globalIndex());
+            const auto globalScvIdx = localScv.globalIndex();
+            stencil_.push_back(globalScvIdx);
+            volVarsStencil_.push_back(globalScvIdx);
             volVarsPositions_.push_back(localScv.center());
         }
 
-        // fill vol vars stencil
-        volVarsStencil_ = stencil_;
+        // eventually add dirichlet vol var indices
         for (const auto& localScvf : localScvfs_)
+        {
             if (localScvf.faceType() == MpfaFaceTypes::dirichlet || localScvf.faceType() == MpfaFaceTypes::interiorDirichlet)
             {
                 volVarsStencil_.push_back(localScvf.outsideGlobalScvIndex());
                 volVarsPositions_.push_back(localScvf.ip());
             }
+        }
 
         // set up local index sets of flux and dirichlet faces
         LocalIndexType localScvfIdx = 0;
@@ -180,7 +185,7 @@ public:
         }
     }
 
-    const bool onBoundary() const
+    bool onBoundary() const
     { return onBoundary_; }
 
     const Stencil& stencil() const
@@ -192,7 +197,7 @@ public:
     const std::vector<DimVector>& volVarsPositions() const
     { return volVarsPositions_; }
 
-    const Stencil globalScvfs() const
+    Stencil globalScvfs() const
     {
         Stencil stencil;
         stencil.reserve(localScvfs_.size());
