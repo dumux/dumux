@@ -174,9 +174,13 @@ public:
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];
                 neumannFlux *= globalScvf.area();
 
-                const auto& insideScv = fvGeometry_().scv(globalScvf.insideScvIdx());
-                const auto& volVars = elemVolVars_()[insideScv];
-                neumannFlux /= upwindFactor(volVars);
+                // if we are not on an interior neumann boundary, we have to recover -k*gradh
+                if (faceType == MpfaFaceTypes::neumann)
+                {
+                    const auto& insideScv = fvGeometry_().scv(globalScvf.insideScvIdx());
+                    const auto& volVars = elemVolVars_()[insideScv];
+                    neumannFlux /= upwindFactor(volVars);
+                }
 
                 neumannFluxes_[fluxFaceIdx] = neumannFlux;
             }
