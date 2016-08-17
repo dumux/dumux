@@ -185,9 +185,10 @@ public:
     }
 
     template<typename UpwindFactorFunction>
-    void assembleNeumannFluxes(const UpwindFactorFunction& upwindFactor,
-                               const unsigned int eqIdx)
+    void assembleNeumannFluxes(const UpwindFactorFunction& upwindFactor, const unsigned int eqIdx)
     {
+        if (!onBoundary())
+            return;
 
         LocalIdxType fluxFaceIdx = 0;
         for (const auto localFluxFaceIdx : fluxFaceIndexSet_)
