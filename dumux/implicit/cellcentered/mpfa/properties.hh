@@ -25,10 +25,9 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup CCTpfaModel
+ * \ingroup CCMpfaModel
  * \file
- * \brief Specify the shape functions, operator assemblers, etc
- *        used for the CCTpfaModel.
+ * \brief Specify classes used in Mpfa models.
  */
 namespace Dumux
 {
