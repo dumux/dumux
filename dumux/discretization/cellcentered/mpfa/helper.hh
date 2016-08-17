@@ -89,9 +89,6 @@ public:
         static const Dune::FieldMatrix<Scalar, dim, dim> R = {{0.0, 1.0}, {-1.0, 0.0}};
 
         LocalBasis innerNormals;
-        for (auto& basisVector : innerNormals)
-            basisVector = 0.0;
-
         R.mv(localBasis[1], innerNormals[0]);
         R.mv(localBasis[0], innerNormals[1]);
         innerNormals[1] *= -1;
@@ -118,7 +115,6 @@ public:
         return true;
     }
 };
-
 
 /*!
  * \ingroup Mpfa
