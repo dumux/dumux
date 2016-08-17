@@ -93,8 +93,9 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : pub
     using IVSeed = typename Traits::Seed;
 
     using GlobalPosition = typename Traits::GlobalPosition;
-    using Vector = typename Traits::Vector;
-    using Matrix = typename Traits::Matrix;
+    using PosVector = typename Traits::PositionVector;
+    using DynamicVector = typename Traits::Vector;
+    using DynamicMatrix = typename Traits::Matrix;
     using Tensor = typename Traits::Tensor;
 
     using LocalScvType = CCMpfaOLocalScv<TypeTag>;
@@ -151,7 +152,7 @@ public:
                 hasInteriorBoundary_ = true;
         }
 
-        neumannFluxes_ = Vector(fluxFaceIndexSet_.size(), 0.0);
+        neumannFluxes_ = DynamicVector(fluxFaceIndexSet_.size(), 0.0);
     }
 
     template<typename GetTensorFunction>
@@ -167,15 +168,15 @@ public:
         const std::size_t numPotentials = volVarsStencil().size();
 
         // the local matrices
-        Matrix A(numFluxFaces, numFluxFaces, 0.0);
-        Matrix B(numFluxFaces, numPotentials, 0.0);
-        Matrix C(numFaces, numFluxFaces, 0.0);
-        Matrix D(numFaces, numPotentials, 0.0);
+        DynamicMatrix A(numFluxFaces, numFluxFaces, 0.0);
+        DynamicMatrix B(numFluxFaces, numPotentials, 0.0);
+        DynamicMatrix C(numFaces, numFluxFaces, 0.0);
+        DynamicMatrix D(numFaces, numPotentials, 0.0);
 
         assembleLocalMatrices_(getTensor, A, B, C, D);
 
         // solve local system and store matrices
-        Matrix copy(B);
+        DynamicMatrix copy(B);
         A.invert();
         AinvB_ = B.leftmultiply(A);
         CAinv_ = C.rightmultiply(A);
@@ -231,7 +232,7 @@ public:
     const GlobalIdxSet& volVarsStencil() const
     { return volVarsStencil_; }
 
-    const std::vector<GlobalPosition>& volVarsPositions() const
+    const PosVector& volVarsPositions() const
     { return volVarsPositions_; }
 
     GlobalIdxSet globalScvfs() const
@@ -276,7 +277,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Could not find the local scv face in the interaction volume for the given scvf with index: " << scvf.index());
     }
 
-    Vector getTransmissibilities(const std::pair<LocalIdxType, bool>& localIndexPair) const
+    DynamicVector getTransmissibilities(const std::pair<LocalIdxType, bool>& localIndexPair) const
     {
         auto tij = T_[localIndexPair.first];
 
@@ -339,7 +340,10 @@ private:
 
     template<typename GetTensorFunction>
     void assembleLocalMatrices_(const GetTensorFunction& getTensor,
-                                Matrix& A, Matrix& B, Matrix& C, Matrix& D)
+                                DynamicMatrix& A,
+                                DynamicMatrix& B,
+                                DynamicMatrix& C,
+                                DynamicMatrix& D)
     {
         const Scalar xi = GET_PROP_VALUE(TypeTag, Xi);
         const std::size_t numLocalScvs = localScvs_.size();
@@ -563,16 +567,16 @@ private:
     GlobalIdxSet globalScvfIndices_;
     GlobalIdxSet stencil_;
     GlobalIdxSet volVarsStencil_;
-    std::vector<GlobalPosition> volVarsPositions_;
+    PosVector volVarsPositions_;
 
     LocalIdxSet fluxFaceIndexSet_;
     LocalIdxSet dirichletFaceIndexSet_;
 
-    Matrix T_;
-    Matrix AinvB_;
-    Matrix CAinv_;
+    DynamicMatrix T_;
+    DynamicMatrix AinvB_;
+    DynamicMatrix CAinv_;
 
-    Vector neumannFluxes_;
+    DynamicVector neumannFluxes_;
 };
 
 } // end namespace
