@@ -104,7 +104,7 @@ public:
         DimVector tmp(0.0);
         R.mv(localBasis[1], tmp);
 
-        assert(tmp*localBasis[0] > 0 && "Local basis seems to not form a right hand system");
+        assert(tmp*localBasis[0] > 0 && "Local basis seems not to form a right hand system");
         return tmp*localBasis[0];
     }
 
