@@ -24,6 +24,7 @@
 #define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -173,6 +174,8 @@ class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -183,22 +186,22 @@ class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dim>;
 
-    using Stencil = std::vector<IndexType>;
-    using TransmissibilityVector = typename Dune::DynamicMatrix<Scalar>::row_type;
-    using PositionVector = std::vector<GlobalPosition>;
+    // We always use the dynamic types here to be compatible on the boundary
+    using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
+    using TransmissibilityVector = typename BoundaryInteractionVolume::Vector;
+    using PositionVector = typename BoundaryInteractionVolume::PositionVector;
 
 public:
     // the constructor
     PorousMediumMpfaFluxVariablesCache() : isUpdated_(false) {}
 
     // update cached objects
-    template<class InteractionVolume>
     void updateBoundaryAdvection(const Problem& problem,
                                  const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace &scvf,
-                                 const InteractionVolume& interactionVolume,
+                                 const BoundaryInteractionVolume& interactionVolume,
                                  const unsigned int phaseIdx)
     {
         phaseVolVarsStencil_[phaseIdx] = interactionVolume.volVarsStencil();
@@ -209,7 +212,6 @@ public:
         phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localIndexPair);
     }
 
-    template<class InteractionVolume>
     void updateInnerAdvection(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
@@ -217,11 +219,21 @@ public:
                               const SubControlVolumeFace &scvf,
                               const InteractionVolume& interactionVolume)
     {
+        const auto& volVarsStencil = interactionVolume.volVarsStencil();
+        const auto& volVarsPositions = interactionVolume.volVarsPositions();
+        const auto& localIndexPair = interactionVolume.getLocalIndexPair(scvf);
+        const auto& tij = interactionVolume.getTransmissibilities(localIndexPair);
+
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            phaseVolVarsStencil_[phaseIdx] = interactionVolume.volVarsStencil();
-            phaseVolVarsPositions_[phaseIdx] = interactionVolume.volVarsPositions();
-            phaseTij_[phaseIdx] = interactionVolume.getTransmissibilities(interactionVolume.getLocalIndexPair(scvf));
+            // the types coming from the inner interaction volumes might differ (thus, = assignment is not possible)
+            phaseVolVarsStencil_[phaseIdx].insert(phaseVolVarsStencil_[phaseIdx].begin(), volVarsStencil.begin(), volVarsStencil.end());
+            phaseVolVarsPositions_[phaseIdx].insert(phaseVolVarsPositions_[phaseIdx].begin(), volVarsPositions.begin(), volVarsPositions.end());
+
+            // resize the transmissibilities and copy the values
+            phaseTij_[phaseIdx].resize(tij.size());
+            for (std::size_t i = 0; i < tij.size(); ++i)
+                phaseTij_[phaseIdx][i] = tij[i];
             phaseNeumannFluxes_[phaseIdx] = 0.0;
         }
     }
