@@ -46,8 +46,8 @@ class CCMpfaOLocalScv
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
-    using LocalBasis = std::array<DimVector, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using LocalBasis = std::array<GlobalPosition, dim>;
 
 public:
     // constructor has the same signature as the LocalScv entity
@@ -83,10 +83,10 @@ public:
         return scvSeed_().localScvfIndices()[coordDir];
     }
 
-    DimVector center() const
+    GlobalPosition center() const
     { return center_; }
 
-    DimVector innerNormal(const LocalIndexType coordDir) const
+    GlobalPosition innerNormal(const LocalIndexType coordDir) const
     {
         assert(coordDir < dim);
         return innerNormals_[coordDir];
@@ -100,7 +100,7 @@ private:
     { return seed_; }
 
     const LocalScvSeed& seed_;
-    DimVector center_;
+    GlobalPosition center_;
     LocalBasis innerNormals_;
     Scalar detX_;
 };
@@ -124,7 +124,7 @@ struct CCMpfaOLocalScvf
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     CCMpfaOLocalScvf(const LocalScvfSeed& scvfSeed,
@@ -163,13 +163,13 @@ public:
     MpfaFaceTypes faceType() const
     { return scvfSeed_().faceType(); }
 
-    DimVector center() const
+    GlobalPosition center() const
     { return center_; }
 
-    DimVector ip() const
+    GlobalPosition ip() const
     { return ip_; }
 
-    DimVector unitOuterNormal() const
+    GlobalPosition unitOuterNormal() const
     { return normal_; }
 
     Scalar area() const
@@ -183,9 +183,9 @@ private:
     { return seed_; }
 
     const LocalScvfSeed& seed_;
-    DimVector center_;
-    DimVector ip_;
-    DimVector normal_;
+    GlobalPosition center_;
+    GlobalPosition ip_;
+    GlobalPosition normal_;
     Scalar area_;
 };
 } // end namespace
