@@ -363,7 +363,7 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     (*molarity[compIdx])[dofIdxGlobal] = (volVars.molarity(wPhaseIdx, compIdx));
 
-                auto K = this->perm_(this->problem_().spatialParams().solDependentIntrinsicPermeability(scv, volVars));
+                auto K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(scv, volVars));
 
                 for (int j = 0; j<dim; ++j)
                     (*Perm[j])[dofIdxGlobal] = K[j][j];
