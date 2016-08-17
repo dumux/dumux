@@ -28,28 +28,16 @@
 
 namespace Dumux
 {
-//! Implementation of the traits class for interaction volumes
-template<class TypeTag, MpfaMethods method, int dim>
-class CCMpfaInteractionVolumeTraitsImplementation
-{};
-
-//! traits class for interaction volumes
-template<class TypeTag>
-using CCMpfaInteractionVolumeTraits = CCMpfaInteractionVolumeTraitsImplementation<TypeTag,
-                                                                                  GET_PROP_VALUE(TypeTag, MpfaMethod),
-                                                                                  GET_PROP_TYPE(TypeTag, GridView)::dimension>;
-
 /*!
  * \ingroup Mpfa
  * \brief Base class for the interaction volumes of mpfa methods.
  *        It defines the interface. Actual implementations should derive from this class.
  */
-template<class TypeTag>
+template<class TypeTag, typename Traits>
 class CCMpfaInteractionVolumeBase
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Traits = CCMpfaInteractionVolumeTraits<TypeTag>;
 
 public:
     // some types to be exported

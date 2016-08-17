@@ -36,12 +36,13 @@
 namespace Dumux
 {
 //! Specialization of the interaction volume traits clas
-template<class TypeTag, int dim>
-class CCMpfaInteractionVolumeTraitsImplementation<TypeTag, MpfaMethods::oMethod, dim>
+template<class TypeTag>
+class CCMpfaOInteractionVolumeTraits
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
+    static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 public:
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -68,7 +69,7 @@ public:
  * \brief Base class for the interaction volumes of the mpfa-o method
  */
 template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaInteractionVolumeBase<TypeTag>
+class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaInteractionVolumeBase<TypeTag, CCMpfaOInteractionVolumeTraits<TypeTag>>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -83,7 +84,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : pub
 
     // choose names different from those in the base class
     // base class typedefs are public to be used by other classes
-    using Traits = CCMpfaInteractionVolumeTraits<TypeTag>;
+    using Traits = CCMpfaOInteractionVolumeTraits<TypeTag>;
     using GlobalIdxType = typename Traits::GlobalIndexType;
     using LocalIdxType = typename Traits::LocalIndexType;
     using GlobalIdxSet = typename Traits::GlobalIndexSet;
