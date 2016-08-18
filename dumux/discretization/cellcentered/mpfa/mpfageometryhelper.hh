@@ -53,22 +53,23 @@ private:
     using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
 
 public:
-    using CornerList = std::vector<GlobalPosition>;
+    using PointVector = std::vector<GlobalPosition>;
 
     MpfaGeometryHelper(const typename Element::Geometry& elemGeom) : gt(elemGeom.type()) {}
 
-    //! get sub control volume face geometries of an intersection for dim = 2
-    static CornerList getScvfCorners(const typename Intersection::Geometry& geometry, unsigned int localIdx)
+    //! get sub control volume face corners of an intersection for the given local index
+    static PointVector getScvfCorners(const typename Intersection::Geometry& geometry,
+                                      unsigned int indexOnIntersection)
     {
-        if (localIdx == 0)
-            return CornerList({geometry.center(), geometry.corner(0)});
-        else if (localIdx == 1)
-            return CornerList({geometry.center(), geometry.corner(1)});
+        if (indexOnIntersection == 0)
+            return PointVector({geometry.center(), geometry.corner(0)});
+        else if (indexOnIntersection == 1)
+            return PointVector({geometry.center(), geometry.corner(1)});
         else
             DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
     }
 
-    static GlobalPosition getScvfIntegrationPoint(const CornerList& scvfCorners, Scalar q)
+    static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
     {
         auto d = scvfCorners[1];
         auto ip = scvfCorners[0];
@@ -79,7 +80,7 @@ public:
         return ip;
     }
 
-    static Scalar getScvfArea(const CornerList& scvfCorners)
+    static Scalar getScvfArea(const PointVector& scvfCorners)
     {
         return (scvfCorners[1]-scvfCorners[0]).two_norm();
     }
