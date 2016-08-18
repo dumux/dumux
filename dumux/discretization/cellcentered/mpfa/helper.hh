@@ -87,6 +87,8 @@ public:
     static LocalBasis calculateInnerNormals(const LocalBasis& localBasis)
     {
         static const Dune::FieldMatrix<Scalar, dim, dim> R = {{0.0, 1.0}, {-1.0, 0.0}};
+        // make sure the basis forms a right hand system
+        assert(isRightHandSystem(localBasis) > 0 && "Local basis does not form a right hand system");
 
         LocalBasis innerNormals;
         R.mv(localBasis[1], innerNormals[0]);
@@ -100,11 +102,12 @@ public:
     static Scalar calculateDetX(const LocalBasis& localBasis)
     {
         static const Dune::FieldMatrix<Scalar, dim, dim> R = {{0.0, 1.0}, {-1.0, 0.0}};
+        // make sure the basis forms a right hand system
+        assert(isRightHandSystem(localBasis) > 0 && "Local basis does not form a right hand system");
 
         DimVector tmp(0.0);
         R.mv(localBasis[1], tmp);
 
-        assert(tmp*localBasis[0] > 0 && "Local basis seems not to form a right hand system");
         return tmp*localBasis[0];
     }
 
@@ -186,8 +189,7 @@ public:
             if (insideScvFaces[i]->outsideScvIdx() == outsideScvf.insideScvIdx())
                 return i;
 
-        DUNE_THROW(Dune::InvalidStateException, "Could not find scv face that shares a facet with the provided outside scv face. " <<
-                                                "Make sure to provide the scv faces of the neighbouring element");
+        DUNE_THROW(Dune::InvalidStateException, "Could not find corresponding scvf in the provided vector of scvfs.");
     }
 
     // Returns the MpfaFaceType of an scv face
