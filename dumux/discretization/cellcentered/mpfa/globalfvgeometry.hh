@@ -75,7 +75,7 @@ class CCMpfaGlobalFVGeometry<TypeTag, true>
 
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using MpfaGeometryHelper = MpfaGeometryHelper<GridView, dim>;
+    using MpfaGeometryHelper = Dumux::MpfaGeometryHelper<GridView, dim>;
 
 public:
     //! Constructor
@@ -225,7 +225,7 @@ public:
     friend inline FVElementGeometry localView(const CCMpfaGlobalFVGeometry& global)
     { return FVElementGeometry(global); }
 
-private:
+//private:
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(IndexType scvIdx) const
     { return scvs_[scvIdx]; }

@@ -60,8 +60,8 @@ class CCMpfaFVElementGeometry<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
 
-    using ScvIterator = ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
+    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
 public:
     //! Constructor
@@ -155,8 +155,8 @@ class CCMpfaFVElementGeometry<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
 
-    using ScvIterator = ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
+    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
 public:
     //! Constructor
