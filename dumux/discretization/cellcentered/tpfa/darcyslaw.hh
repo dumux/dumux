@@ -169,7 +169,11 @@ public:
             const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv, outsideVolVars);
             Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideElement, outsideScv);
 
-            tij = scvFace.area()*(ti * tj)/(ti + tj);
+            // check for division by zero!
+            if (ti*tj <= 0.0)
+                tij = 0;
+            else
+                tij = scvFace.area()*(ti * tj)/(ti + tj);
         }
         else
         {

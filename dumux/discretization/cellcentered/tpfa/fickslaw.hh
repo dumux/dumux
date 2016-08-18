@@ -159,7 +159,11 @@ private:
             outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
             Scalar tj = -1.0*calculateOmega_(problem, element, scvFace, outsideD, outsideScv);
 
-            tij = scvFace.area()*(ti * tj)/(ti + tj);
+            // check if we are dividing by zero!
+            if (ti*tj <= 0.0)
+                tij = 0;
+            else
+                tij = scvFace.area()*(ti * tj)/(ti + tj);
         }
         else
         {

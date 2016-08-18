@@ -140,7 +140,11 @@ private:
             auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
             Scalar tj = -1.0*calculateOmega_(problem, element, scvFace, outsideLambda, outsideScv);
 
-            tij = scvFace.area()*(ti * tj)/(ti + tj);
+            // check for division by zero!
+            if (ti*tj <= 0.0)
+                tij = 0;
+            else
+                tij = scvFace.area()*(ti * tj)/(ti + tj);
         }
         else
         {
