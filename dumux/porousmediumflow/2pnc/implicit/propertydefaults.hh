@@ -120,7 +120,8 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(TwoPNC, FluidState){
+SET_PROP(TwoPNC, FluidState)
+{
     private:
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

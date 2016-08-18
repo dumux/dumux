@@ -392,6 +392,6 @@ private:
     Scalar pO2Inlet_;
 };
 
-} //end namespace
+} //end namespace Dumux
 
 #endif

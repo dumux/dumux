@@ -31,11 +31,11 @@
 #include "properties.hh"
 #include "model.hh"
 #include "indices.hh"
-#include "fluxvariables.hh"
 #include "volumevariables.hh"
-#include "localresidual.hh"
 #include "newtoncontroller.hh"
+#include "primaryvariableswitch.hh"
 
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -121,9 +121,16 @@ SET_PROP(TwoPTwoC, MaterialLawParams)
 };
 
 //! Use the 2p2c local residual operator
-SET_TYPE_PROP(TwoPTwoC,
-              LocalResidual,
-              TwoPTwoCLocalResidual<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+
+//! Enable advection
+SET_BOOL_PROP(TwoPTwoC, EnableAdvection, true);
+
+//! Enable molecular diffusion
+SET_BOOL_PROP(TwoPTwoC, EnableMolecularDiffusion, true);
+
+//! Isothermal model by default
+SET_BOOL_PROP(TwoPTwoC, EnableEnergyBalance, false);
 
 //! Use the 2p2c Newton controller
 SET_TYPE_PROP(TwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
@@ -131,14 +138,11 @@ SET_TYPE_PROP(TwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
 //! Use the 2p2c model
 SET_TYPE_PROP(TwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
 
+//! The primary variable switch for the 2p2c model
+SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<TypeTag>);
+
 //! Use the 2p2c VolumeVariables
 SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
-
-//! Use the 2p2c FluxVariables
-SET_TYPE_PROP(TwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
-
-//! Set the BaseFluxVariables to realize Darcy flow
-SET_TYPE_PROP(TwoPTwoC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! Set the upwind weight for the mass conservation equations
 SET_SCALAR_PROP(TwoPTwoC, ImplicitMassUpwindWeight, 1.0);
@@ -208,18 +212,6 @@ SET_BOOL_PROP(TwoPTwoCNI, NiOutputLevel, 0);
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-
-// set isothermal Model
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalModel, TwoPTwoCModel<TypeTag>);
-
-// set isothermal FluxVariables
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalFluxVariables, TwoPTwoCFluxVariables<TypeTag>);
-
-//set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalVolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
-
-//set isothermal LocalResidual
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalLocalResidual, TwoPTwoCLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_PROP(TwoPTwoCNI, IsothermalIndices)

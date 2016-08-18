@@ -24,6 +24,7 @@
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
@@ -40,7 +41,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
-NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
+NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCTpfaModel, InjectionProblem));
 
 // Set the grid type
 SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
@@ -84,11 +85,10 @@ SET_BOOL_PROP(InjectionProblem, UseMoles, true);
 template <class TypeTag>
 class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
         // Grid and world dimension
@@ -97,7 +97,7 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -111,18 +111,17 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
@@ -136,19 +135,18 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem(TimeManager &timeManager,
-                     const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    InjectionProblem(TimeManager &timeManager, const GridView &gridView)
+    : ParentType(timeManager, gridView)
     {
-            nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, Problem.NTemperature);
-            nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, Problem.NPressure);
-            pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureLow);
-            pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureHigh);
-            temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureLow);
-            temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureHigh);
-            temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InitialTemperature);
-            depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
-            name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, Problem.NTemperature);
+        nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, Problem.NPressure);
+        pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureLow);
+        pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureHigh);
+        temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureLow);
+        temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureHigh);
+        temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InitialTemperature);
+        depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
+        name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
 
         /* Alternative syntax:
          * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
@@ -161,7 +159,7 @@ public:
          */
 
 
-        eps_ = 1e-6;
+        eps_ = 1.5e-7;
 
         // initialize the tables of the fluid system
         FluidSystem::init(/*Tmin=*/temperatureLow_,
@@ -190,14 +188,13 @@ public:
     void postTimeStep()
     {
         // Calculate storage terms
-        PrimaryVariables storageW, storageN;
-        this->model().globalPhaseStorage(storageW, wPhaseIdx);
-        this->model().globalPhaseStorage(storageN, nPhaseIdx);
+        PrimaryVariables storage;
+        this->model().globalStorage(storage);
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: wetting=[" << storageW << "]"
-                     << " nonwetting=[" << storageN << "]\n";
+            std::cout<<"Storage: wetting=[" << storage[wPhaseIdx] << "]"
+                     << " nonwetting=[" << storage[nPhaseIdx] << "]\n";
         }
     }
 
@@ -212,7 +209,7 @@ public:
      *
      * This is used as a prefix for files generated by the simulation.
      */
-    const std::string name() const
+    const std::string& name() const
     { return name_; }
 
     /*!
@@ -228,10 +225,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0;
+        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -248,13 +244,14 @@ public:
      * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes bcTypes;
         if (globalPos[0] < eps_)
-            values.setAllDirichlet();
+            bcTypes.setAllDirichlet();
         else
-            values.setAllNeumann();
+            bcTypes.setAllNeumann();
+        return bcTypes;
     }
 
     /*!
@@ -265,9 +262,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        return initial_(globalPos);
     }
 
     /*!
@@ -288,28 +285,23 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-     void solDependentNeumann(PrimaryVariables &values,
-                      const Element &element,
-                      const FVElementGeometry &fvGeometry,
-                      const Intersection &intersection,
-                      const int scvIdx,
-                      const int boundaryFaceIdx,
-                      const ElementVolumeVariables &elemVolVars) const
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
     {
-         values = 0;
+        PrimaryVariables values(0.0);
 
-         GlobalPosition globalPos;
-         if (isBox)
-             globalPos = element.geometry().corner(scvIdx);
-         else
-             globalPos = intersection.geometry().center();
+        const auto& globalPos = scvf.ipGlobal();
 
-         Scalar injectedPhaseMass = 1e-3;
-         Scalar moleFracW = elemVolVars[scvIdx].moleFraction(nPhaseIdx, wCompIdx);
-         if (globalPos[1] < 15 && globalPos[1] > 7) {
-             values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
-             values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(wCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
-         }
+        Scalar injectedPhaseMass = 1e-3;
+        Scalar moleFracW = elemVolVars[scvf.insideScvIdx()].moleFraction(nPhaseIdx, wCompIdx);
+        if (globalPos[1] < 15 -eps_ && globalPos[1] > 7 - eps_)
+        {
+            values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
+            values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(wCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
+        }
+        return values;
     }
 
     // \}
@@ -326,9 +318,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        return initial_(globalPos);
     }
 
     /*!
@@ -338,9 +330,7 @@ public:
      * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vertex,
-                             int &vIdxGlobal,
-                             const GlobalPosition &globalPos) const
+    int initialPhasePresence(const SubControlVolume& scv) const
     { return Indices::wPhaseOnly; }
 
     // \}
@@ -355,9 +345,9 @@ private:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables priVars(0.0);
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
         Scalar pl = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
@@ -370,15 +360,16 @@ private:
         if(useMoles)
         {
             //mole-fraction formulation
-            values[Indices::switchIdx] = moleFracLiquidN2;
+            priVars[Indices::switchIdx] = moleFracLiquidN2;
         }
         else
         {
             //mass fraction formulation
             Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
-            values[Indices::switchIdx] = massFracLiquidN2;
+            priVars[Indices::switchIdx] = massFracLiquidN2;
         }
-        values[Indices::pressureIdx] = pl;
+        priVars[Indices::pressureIdx] = pl;
+        return priVars;
     }
 
     Scalar temperature_;
@@ -393,6 +384,7 @@ private:
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
 };
-} //end namespace
+
+} //end namespace Dumux
 
 #endif

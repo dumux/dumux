@@ -51,43 +51,6 @@ public:
     {}
 
     /*!
-     * \brief Suggest a new time step size based either on the number of Newton
-     *        iterations required or on the variable switch
-     *
-     * \param uCurrentIter The current global solution vector
-     * \param uLastIter The previous global solution vector
-     *
-     */
-    void newtonEndStep(SolutionVector &uCurrentIter,
-                       const SolutionVector &uLastIter)
-    {
-        int succeeded;
-        try {
-            // call the method of the base class
-            this->method().model().updateStaticData(uCurrentIter, uLastIter);
-            ParentType::newtonEndStep(uCurrentIter, uLastIter);
-
-            succeeded = 1;
-            if (this->gridView_().comm().size() > 1)
-                succeeded = this->gridView_().comm().min(succeeded);
-        }
-        catch (NumericalProblem &e)
-        {
-            std::cout << "rank " << this->problem_().gridView().comm().rank()
-                      << " caught an exception while updating:" << e.what()
-                      << "\n";
-            succeeded = 0;
-            if (this->gridView_().comm().size() > 1)
-                succeeded = this->gridView_().comm().min(succeeded);
-        }
-
-        if (!succeeded) {
-            DUNE_THROW(NumericalProblem,
-                       "A process did not succeed in linearizing the system");
-        }
-    }
-
-    /*!
      * \brief Returns true if the current solution can be considered to
      *        be accurate enough
      */
@@ -99,6 +62,7 @@ public:
         return ParentType::newtonConverged();
     }
 };
-}
+
+} // end namespace Dumux
 
 #endif

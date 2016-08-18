@@ -27,6 +27,8 @@
 
 #include "properties.hh"
 #include "indices.hh"
+#include "primaryvariableswitch.hh"
+
 #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 namespace Dumux
@@ -92,21 +94,25 @@ namespace Dumux
 template<class TypeTag>
 class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
+    // the parent class needs to access the variable switch
+    friend typename GET_PROP_TYPE(TypeTag, BaseModel);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         switchIdx = Indices::switchIdx,
 
@@ -124,14 +130,13 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -139,77 +144,73 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
     /*!
-     * \brief Initialize the static data with the initial solution.
-     *
-     * \param problem The problem to be solved
+     * \brief One Newton iteration was finished.
+     * \param uCurrent The solution after the current Newton iteration
      */
-    void init(Problem &problem)
+    template<typename T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), void>::type
+    newtonEndStep()
     {
-        ParentType::init(problem);
+        // \todo resize volvars vector if grid was adapted
 
-        unsigned numDofs = this->numDofs();
+        // update the variable switch
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
 
-        staticDat_.resize(numDofs);
-
-        setSwitched_(false);
-
-        // check, if velocity output can be used (works only for cubes so far)
-        for (const auto& element : elements(this->gridView_()))
+        // update the secondary variables if global caching is enabled
+        // \note we only updated if phase presence changed as the volume variables
+        //       are already updated once by the switch
+        for (const auto& element : elements(this->problem_().gridView()))
         {
-            if (!isBox) // i.e. cell-centered discretization
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            if (switchFlag_)
             {
-                int eIdxGlobal = this->dofMapper().index(element);
-                const GlobalPosition &globalPos = element.geometry().center();
-
-                // initialize phase presence
-                staticDat_[eIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(*(this->gridView_().template begin<dim>()),
-                                                            eIdxGlobal, globalPos);
-                staticDat_[eIdxGlobal].wasSwitched = false;
-
-                staticDat_[eIdxGlobal].oldPhasePresence
-                    = staticDat_[eIdxGlobal].phasePresence;
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    auto dofIdxGlobal = scv.dofIndex();
+                    if (priVarSwitch_().wasSwitched(dofIdxGlobal))
+                    {
+                        this->nonConstCurGlobalVolVars().volVars(dofIdxGlobal).update(this->curSol()[dofIdxGlobal],
+                                                                                      this->problem_(),
+                                                                                      element,
+                                                                                      scv);
+                    }
+                }
             }
-        }
 
-        if (isBox) // i.e. vertex-centered discretization
-        {
-            for (const auto& vertex : vertices(this->gridView_()))
+            // handle the boundary volume variables
+            for (auto&& scvf : scvfs(fvGeometry))
             {
-                int vIdxGlobal = this->dofMapper().index(vertex);
-                const GlobalPosition &globalPos = vertex.geometry().corner(0);
+                // if we are not on a boundary, skip the rest
+                if (!scvf.boundary())
+                    continue;
 
-                // initialize phase presence
-                staticDat_[vIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(vertex, vIdxGlobal,
-                                                            globalPos);
-                staticDat_[vIdxGlobal].wasSwitched = false;
+                // check if boundary is a pure dirichlet boundary
+                const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                if (bcTypes.hasOnlyDirichlet())
+                {
+                    const auto insideScvIdx = scvf.insideScvIdx();
+                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                    const auto dirichletPriVars = this->problem_().dirichlet(element, scvf);
 
-                staticDat_[vIdxGlobal].oldPhasePresence
-                    = staticDat_[vIdxGlobal].phasePresence;
+                    this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), element, insideScv);
+                }
             }
         }
     }
 
     /*!
-     * \brief Compute the total storage of all conservation quantities in one phase
-     *
-     * \param storage Contains the storage of each component in one phase
-     * \param phaseIdx The phase index
+     * \brief One Newton iteration was finished.
+     * \param uCurrent The solution after the current Newton iteration
      */
-    void globalPhaseStorage(PrimaryVariables &storage, const int phaseIdx)
+    template<typename T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), void>::type
+    newtonEndStep()
     {
-        storage = 0;
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-            this->localResidual().evalPhaseStorage(element, phaseIdx);
-
-            for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
-                storage += this->localResidual().storageTerm()[i];
-        }
-        if (this->gridView_().comm().size() > 1)
-            storage = this->gridView_().comm().sum(storage);
+        // update the variable switch
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
     }
 
     /*!
@@ -220,8 +221,8 @@ public:
     {
         ParentType::updateFailed();
 
-        setSwitched_(false);
-        resetPhasePresence_();
+        switchFlag_ = false;
+        priVarSwitch_().resetPhasePresence();
     }
 
     /*!
@@ -236,29 +237,17 @@ public:
         ParentType::advanceTimeLevel();
 
         // update the phase state
-        updateOldPhasePresence_();
-        setSwitched_(false);
+        priVarSwitch_().updateOldPhasePresence();
+        switchFlag_ = false;
     }
 
     /*!
      * \brief Returns true if the primary variables were switched for
-     *        at least one vertex after the last timestep.
+     *        at least one dof after the last timestep.
      */
     bool switched() const
     {
         return switchFlag_;
-    }
-
-    /*!
-     * \brief Returns the phase presence of the current or the old solution of a degree of freedom.
-     *
-     * \param dofIdxGlobal The global index of the degree of freedom
-     * \param oldSol Based on oldSol current or previous time step is used
-     */
-    int phasePresence(int dofIdxGlobal, bool oldSol) const
-    {
-        return oldSol ? staticDat_[dofIdxGlobal].oldPhasePresence
-            : staticDat_[dofIdxGlobal].phasePresence;
     }
 
     /*!
@@ -273,11 +262,11 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                                 MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        using ScalarField = Dune::BlockVector<Dune::FieldVector<double, 1> >;
+        // using VectorField = Dune::BlockVector<Dune::FieldVector<double, dim>>;
 
         // get the number of degrees of freedom
-        unsigned numDofs = this->numDofs();
+        auto numDofs = this->numDofs();
 
         // create the required scalar fields
         ScalarField *sN    = writer.allocateManagedBuffer(numDofs);
@@ -300,75 +289,72 @@ public:
                         moleFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
         ScalarField *temperature = writer.allocateManagedBuffer(numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
-        VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+        // VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        // VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
-        if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        {
-            // initialize velocity fields
-            for (unsigned int i = 0; i < numDofs; ++i)
-            {
-                (*velocityN)[i] = Scalar(0);
-                (*velocityW)[i] = Scalar(0);
-            }
-        }
+        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
+        // {
+        //     // initialize velocity fields
+        //     for (unsigned int i = 0; i < numDofs; ++i)
+        //     {
+        //         (*velocityN)[i] = Scalar(0);
+        //         (*velocityW)[i] = Scalar(0);
+        //     }
+        // }
 
-        unsigned numElements = this->gridView_().size(0);
+        auto numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            int eIdx = this->elementMapper().index(element);
-            (*rank)[eIdx] = this->gridView_().comm().rank();
+            auto eIdxGlobal = this->problem_().elementMapper().index(element);
+            (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
 
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), element);
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               element,
-                               fvGeometry,
-                               false /* oldSol? */);
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            for (auto&& scv : scvs(fvGeometry))
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                const auto& volVars = elemVolVars[scv];
+                auto dofIdxGlobal = scv.dofIndex();
 
-                (*sN)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                (*sW)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*pn)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pw)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                (*pc)[dofIdxGlobal]    = elemVolVars[scvIdx].capillaryPressure();
-                (*rhoW)[dofIdxGlobal]  = elemVolVars[scvIdx].density(wPhaseIdx);
-                (*rhoN)[dofIdxGlobal]  = elemVolVars[scvIdx].density(nPhaseIdx);
-                (*mobW)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                (*mobN)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                (*sN)[dofIdxGlobal]    = volVars.saturation(nPhaseIdx);
+                (*sW)[dofIdxGlobal]    = volVars.saturation(wPhaseIdx);
+                (*pn)[dofIdxGlobal]    = volVars.pressure(nPhaseIdx);
+                (*pw)[dofIdxGlobal]    = volVars.pressure(wPhaseIdx);
+                (*pc)[dofIdxGlobal]    = volVars.capillaryPressure();
+                (*rhoW)[dofIdxGlobal]  = volVars.density(wPhaseIdx);
+                (*rhoN)[dofIdxGlobal]  = volVars.density(nPhaseIdx);
+                (*mobW)[dofIdxGlobal]  = volVars.mobility(wPhaseIdx);
+                (*mobN)[dofIdxGlobal]  = volVars.mobility(nPhaseIdx);
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
-                        (*massFrac[phaseIdx][compIdx])[dofIdxGlobal]
-                            = elemVolVars[scvIdx].massFraction(phaseIdx, compIdx);
-
+                        (*massFrac[phaseIdx][compIdx])[dofIdxGlobal] = volVars.massFraction(phaseIdx, compIdx);
                         Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
                     }
+                }
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
-                        (*moleFrac[phaseIdx][compIdx])[dofIdxGlobal]
-                            = elemVolVars[scvIdx].moleFraction(phaseIdx, compIdx);
-
+                        (*moleFrac[phaseIdx][compIdx])[dofIdxGlobal] = volVars.moleFraction(phaseIdx, compIdx);
                         Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
                     }
-                (*poro)[dofIdxGlobal]  = elemVolVars[scvIdx].porosity();
-                (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                (*phasePresence)[dofIdxGlobal]
-                    = staticDat_[dofIdxGlobal].phasePresence;
+                }
+                (*poro)[dofIdxGlobal]  = volVars.porosity();
+                (*temperature)[dofIdxGlobal] = volVars.temperature();
+                (*phasePresence)[dofIdxGlobal]= priVarSwitch().phasePresence(dofIdxGlobal);
             }
 
-            // velocity output
-            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+            // // velocity output
+            // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
 
         } // loop over elements
 
@@ -403,11 +389,11 @@ public:
         writer.attachDofData(*temperature,    "temperature", isBox);
         writer.attachDofData(*phasePresence,  "phase presence", isBox);
 
-        if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        {
-            writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
-            writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
-        }
+        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
+        // {
+        //     writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
+        //     writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
+        // }
 
         writer.attachCellData(*rank, "process rank");
     }
@@ -415,7 +401,7 @@ public:
     /*!
      * \brief Write the current solution to a restart file.
      *
-     * \param outStream The output stream of one vertex for the restart file
+     * \param outStream The output stream of one entity for the restart file
      * \param entity The entity, either a vertex or an element
      */
     template<class Entity>
@@ -429,13 +415,13 @@ public:
         if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
 
-        outStream << staticDat_[dofIdxGlobal].phasePresence << " ";
+        outStream << priVarSwitch().phasePresence(dofIdxGlobal) << " ";
     }
 
     /*!
      * \brief Reads the current solution from a restart file.
      *
-     * \param inStream The input stream of one vertex from the restart file
+     * \param inStream The input stream of one entity from the restart file
      * \param entity The entity, either a vertex or an element
      */
     template<class Entity>
@@ -448,271 +434,43 @@ public:
         int dofIdxGlobal = this->dofMapper().index(entity);
 
         if (!inStream.good())
-            DUNE_THROW(Dune::IOError,
-                       "Could not deserialize entity " << dofIdxGlobal);
+            DUNE_THROW(Dune::IOError, "Could not deserialize entity " << dofIdxGlobal);
 
-        inStream >> staticDat_[dofIdxGlobal].phasePresence;
-        staticDat_[dofIdxGlobal].oldPhasePresence
-            = staticDat_[dofIdxGlobal].phasePresence;
-
-    }
-
-    /*!
-     * \brief Update the static data of all vertices in the grid.
-     *
-     * \param curGlobalSol The current global solution
-     * \param oldGlobalSol The previous global solution
-     */
-    void updateStaticData(SolutionVector &curGlobalSol,
-                          const SolutionVector &oldGlobalSol)
-    {
-        bool wasSwitched = false;
-        int succeeded;
-        try
-        {
-            for (unsigned i = 0; i < staticDat_.size(); ++i)
-                staticDat_[i].visited = false;
-
-            FVElementGeometry fvGeometry;
-            static VolumeVariables volVars;
-            for (const auto& element : elements(this->gridView_()))
-            {
-                fvGeometry.update(this->gridView_(), element);
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                    if (!staticDat_[dofIdxGlobal].visited)
-                    {
-                        staticDat_[dofIdxGlobal].visited = true;
-                        volVars.update(curGlobalSol[dofIdxGlobal],
-                                      this->problem_(),
-                                      element,
-                                      fvGeometry,
-                                      scvIdx,
-                                      false);
-                        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-                        if (primaryVarSwitch_(curGlobalSol,
-                                              volVars,
-                                              dofIdxGlobal,
-                                              globalPos))
-                        {
-                            this->jacobianAssembler().markDofRed(dofIdxGlobal);
-                            wasSwitched = true;
-                        }
-                    }
-                }
-            }
-            succeeded = 1;
-        }
-        catch (NumericalProblem &e)
-        {
-            std::cout << "\n"
-                      << "Rank " << this->problem_().gridView().comm().rank()
-                      << " caught an exception while updating the static data." << e.what()
-                      << "\n";
-            succeeded = 0;
-        }
-        //make sure that all processes succeeded. If not throw a NumericalProblem to decrease the time step size.
-        if (this->gridView_().comm().size() > 1)
-            succeeded = this->gridView_().comm().min(succeeded);
-
-        if (!succeeded)
-        {
-            DUNE_THROW(NumericalProblem,
-                       "A process did not succeed in updating the static data.");
-        }
-
-        // make sure that if there was a variable switch in an
-        // other partition we will also set the switch flag
-        // for our partition.
-        if (this->gridView_().comm().size() > 1)
-            wasSwitched = this->gridView_().comm().max(wasSwitched);
-
-        setSwitched_(wasSwitched);
-    }
-
- protected:
-    /*!
-     * \brief Data which is attached to each vertex and is not only
-     *        stored locally.
-     */
-    struct StaticVars
-    {
         int phasePresence;
-        bool wasSwitched;
+        inStream >> phasePresence;
 
-        int oldPhasePresence;
-        bool visited;
-    };
-
-    /*!
-     * \brief Resets the current phase presence of all vertices to the old one.
-     *
-     * This is done after an update failed.
-     */
-    void resetPhasePresence_()
-    {
-        for (unsigned int idx = 0; idx < staticDat_.size(); ++idx)
-        {
-            staticDat_[idx].phasePresence
-                = staticDat_[idx].oldPhasePresence;
-            staticDat_[idx].wasSwitched = false;
-        }
+        priVarSwitch_().setPhasePresence(dofIdxGlobal, phasePresence);
+        priVarSwitch_().setOldPhasePresence(dofIdxGlobal, phasePresence);
     }
 
-    /*!
-     * \brief Sets the phase presence of all vertices state to the current one.
-     */
-    void updateOldPhasePresence_()
-    {
-        for (unsigned int idx = 0; idx < staticDat_.size(); ++idx)
-        {
-            staticDat_[idx].oldPhasePresence
-                = staticDat_[idx].phasePresence;
-            staticDat_[idx].wasSwitched = false;
-        }
-    }
-
-    /*!
-     * \brief Sets whether there was a primary variable switch after
-     *        the last timestep.
-     */
-    void setSwitched_(bool yesno)
-    {
-        switchFlag_ = yesno;
-    }
-
-    /*!
-     * \brief Performs variable switch at a vertex, returns true if a
-     *        variable switch was performed.
-     */
-    bool primaryVarSwitch_(SolutionVector &globalSol,
-                           const VolumeVariables &volVars,
-                           int dofIdxGlobal,
-                           const GlobalPosition &globalPos)
-    {
-        // evaluate primary variable switch
-        bool wouldSwitch = false;
-        int phasePresence = staticDat_[dofIdxGlobal].phasePresence;
-        int newPhasePresence = phasePresence;
-
-        // check if a primary var switch is necessary
-        if (phasePresence == nPhaseOnly)
-        {
-            // calculate mole fraction in the hypothetic wetting phase
-            Scalar xww = volVars.moleFraction(wPhaseIdx, wCompIdx);
-            Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
-
-            Scalar xwMax = 1.0;
-            if (xww + xwn > xwMax)
-                wouldSwitch = true;
-            if (staticDat_[dofIdxGlobal].wasSwitched)
-                xwMax *= 1.02;
-
-            // if the sum of the mole fractions is larger than
-            // 100%, wetting phase appears
-            if (xww + xwn > xwMax)
-            {
-                // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xww + xwn: "
-                          << xww + xwn << std::endl;
-                newPhasePresence = bothPhases;
-                if (formulation == pnsw)
-                    globalSol[dofIdxGlobal][switchIdx] = 0.0;
-                else if (formulation == pwsn)
-                    globalSol[dofIdxGlobal][switchIdx] = 1.0;
-            }
-        }
-        else if (phasePresence == wPhaseOnly)
-        {
-            // calculate fractions of the partial pressures in the
-            // hypothetic nonwetting phase
-            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
-            Scalar xnn = volVars.moleFraction(nPhaseIdx, nCompIdx);
-
-            Scalar xgMax = 1.0;
-            if (xnw + xnn > xgMax)
-                wouldSwitch = true;
-            if (staticDat_[dofIdxGlobal].wasSwitched)
-                xgMax *= 1.02;
-
-            // if the sum of the mole fractions is larger than
-            // 100%, nonwetting phase appears
-            if (xnw + xnn > xgMax)
-            {
-                // nonwetting phase appears
-                std::cout << "nonwetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnw + xnn: "
-                          << xnw + xnn << std::endl;
-                newPhasePresence = bothPhases;
-                if (formulation == pnsw)
-                    globalSol[dofIdxGlobal][switchIdx] = 0.999;
-                else if (formulation == pwsn)
-                    globalSol[dofIdxGlobal][switchIdx] = 0.001;
-            }
-        }
-        else if (phasePresence == bothPhases)
-        {
-            Scalar Smin = 0.0;
-            if (staticDat_[dofIdxGlobal].wasSwitched)
-                Smin = -0.01;
-
-            if (volVars.saturation(nPhaseIdx) <= Smin)
-            {
-                wouldSwitch = true;
-                // nonwetting phase disappears
-                std::cout << "Nonwetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sn: "
-                          << volVars.saturation(nPhaseIdx) << std::endl;
-                newPhasePresence = wPhaseOnly;
-
-                if(useMoles) // mole-fraction formulation
-                {
-                    globalSol[dofIdxGlobal][switchIdx]
-                        = volVars.moleFraction(wPhaseIdx, nCompIdx);
-                }
-                else // mass-fraction formulation
-                {
-                    globalSol[dofIdxGlobal][switchIdx]
-                        = volVars.massFraction(wPhaseIdx, nCompIdx);
-                }
-            }
-            else if (volVars.saturation(wPhaseIdx) <= Smin)
-            {
-                wouldSwitch = true;
-                // wetting phase disappears
-                std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(wPhaseIdx) << std::endl;
-                newPhasePresence = nPhaseOnly;
-
-                if(useMoles) // mole-fraction formulation
-                {
-                    globalSol[dofIdxGlobal][switchIdx]
-                        = volVars.moleFraction(nPhaseIdx, wCompIdx);
-                }
-                else // mass-fraction formulation
-                {
-                    globalSol[dofIdxGlobal][switchIdx]
-                        = volVars.massFraction(nPhaseIdx, wCompIdx);
-                }
-            }
-        }
-
-        staticDat_[dofIdxGlobal].phasePresence = newPhasePresence;
-        staticDat_[dofIdxGlobal].wasSwitched = wouldSwitch;
-        return phasePresence != newPhasePresence;
-    }
+    const Dumux::TwoPTwoCPrimaryVariableSwitch<TypeTag>& priVarSwitch() const
+    { return switch_; }
 
 protected:
-    // parameters given in constructor
-    std::vector<StaticVars> staticDat_;
+
+    Dumux::TwoPTwoCPrimaryVariableSwitch<TypeTag>& priVarSwitch_()
+    { return switch_; }
+
+    /*!
+     * \brief Applies the initial solution for all vertices of the grid.
+     *
+     * \todo the initial condition needs to be unique for
+     *       each vertex. we should think about the API...
+     */
+    void applyInitialSolution_()
+    {
+        ParentType::applyInitialSolution_();
+
+        // initialize the primary variable switch
+        priVarSwitch_().init(this->problem_());
+    }
+
+    //! the class handling the primary variable switch
+    TwoPTwoCPrimaryVariableSwitch<TypeTag> switch_;
     bool switchFlag_;
 };
 
-}
+} // end namespace Dumux
 
 #include "propertydefaults.hh"
 

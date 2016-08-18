@@ -44,19 +44,19 @@ namespace Dumux
 template <class TypeTag>
 class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wCompIdx = Indices::wCompIdx,
         nCompIdx = Indices::nCompIdx,
@@ -84,25 +84,25 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     enum { dim = GridView::dimension};
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
     static_assert(useMoles || (!useMoles && useConstraintSolver),
                   "if UseMoles is set false, UseConstraintSolver has to be set to true");
-    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -110,27 +110,16 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(priVars, problem, element, scv);
 
-        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-        phasePresence_ = problem.model().phasePresence(dofIdxGlobal, isOldSol);
-
-        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
+        completeFluidState(priVars, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
         /////////////
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -150,23 +139,15 @@ public:
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
 
             // binary diffusion coefficients
-            diffCoeff_[phaseIdx] =
-            FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                    paramCache,
-                                                    phaseIdx,
-                                                    wCompIdx,
-                                                    nCompIdx);
-            Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
+            diffCoeff_[phaseIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                                           paramCache,
+                                                                           phaseIdx,
+                                                                           wCompIdx,
+                                                                           nCompIdx);
         }
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                     fvGeometry,
-                                                     scvIdx);
-        Valgrind::CheckDefined(porosity_);
-
-        // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        porosity_ = problem.spatialParams().porosity(scv);
     }
 
     /*!
@@ -176,16 +157,13 @@ public:
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   int scvIdx,
-                                   FluidState& fluidState,
-                                   bool isOldSol = false)
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                fvGeometry, scvIdx);
+        Scalar t = ParentType::temperature(priVars, problem, element, scv);
         fluidState.setTemperature(t);
-        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
+
+        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
 
         /////////////
         // set the saturations
@@ -212,8 +190,7 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
         Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
 
         if (formulation == pwsn) {
@@ -308,7 +285,8 @@ public:
                 fluidState.setDensity(nPhaseIdx, rhoN);
             }
         }
-        else if (phasePresence == nPhaseOnly) {
+        else if (phasePresence == nPhaseOnly)
+        {
             // only the nonwetting phase is present, i.e. nonwetting phase
             // composition is stored explicitly.
             if(useMoles)
@@ -373,7 +351,8 @@ public:
                 fluidState.setDensity(nPhaseIdx, rhoN);
             }
         }
-        else if (phasePresence == wPhaseOnly) {
+        else if (phasePresence == wPhaseOnly)
+        {
             // only the wetting phase is present, i.e. wetting phase
             // composition is stored explicitly.
             if(useMoles) // mole-fraction formulation
@@ -398,7 +377,8 @@ public:
                                                  /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
-            else {
+            else
+            {
                 // note that the gas phase is actually not existing!
                 // thus, this is used as phase switch criterion
                 Scalar xwn = priVars[switchIdx];
@@ -434,17 +414,16 @@ public:
             }
         }
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             //set the viscosity here if constraintsolver is not used
-            if(!useConstraintSolver) {
-                const Scalar mu =
-                FluidSystem::viscosity(fluidState,
-                                       paramCache,
-                                       phaseIdx);
+            if(!useConstraintSolver)
+            {
+                const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
                 fluidState.setViscosity(phaseIdx,mu);
             }
             // compute and set the enthalpy
-            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+            Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
    }
@@ -455,12 +434,6 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
-
-    /*!
-     * \brief Returns the phase presence within the control volume.
-     */
-    int phasePresence() const
-    { return phasePresence_; }
 
     /*!
      * \brief Returns the saturation of a given phase within
@@ -575,44 +548,16 @@ public:
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar diffCoeff(const int phaseIdx) const
+    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     { return diffCoeff_[phaseIdx]; }
 
 
 protected:
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                               const Problem& problem,
-                               const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               int scvIdx)
-    {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities
-     */
-    void updateEnergy_(const PrimaryVariables &sol,
-                       const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       bool isOldSol)
-    { }
 
     Scalar porosity_; //!< Effective porosity within the control volume
     Scalar relativePermeability_[numPhases]; //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;
-    int phasePresence_;
 
 private:
     Implementation &asImp_()
@@ -620,10 +565,8 @@ private:
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
-
-
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

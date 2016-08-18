@@ -63,33 +63,34 @@ SET_TYPE_PROP(WaterAirSpatialParams,
 template<class TypeTag>
 class WaterAirSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CoordScalar = typename Grid::ctype;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    WaterAirSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    WaterAirSpatialParams(const Problem& problem, const GridView &gridView)
+    : ParentType(problem, gridView)
     {
         layerBottom_ = 22.0;
 
@@ -161,11 +162,10 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       const int scvIdx) const
+    Scalar intrinsicPermeability(const SubControlVolume& scv,
+                                 const VolumeVariables& volVars) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        const auto& globalPos = scv.center();
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
@@ -179,11 +179,9 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    Scalar porosity(const SubControlVolume& scv) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        const auto& globalPos = scv.center();
         if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
@@ -199,10 +197,9 @@ public:
      * \param scvIdx The index of the sub-control volume
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeometry,
-                                               const int scvIdx) const
+                                               const SubControlVolume& scv) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        const auto& globalPos = scv.center();
         if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
@@ -219,8 +216,7 @@ public:
      * \param scvIdx The local index of the sub-control volume
      */
     Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
+                             const SubControlVolume& scv) const
     {
         return 790; // specific heat capacity of granite [J / (kg K)]
     }
@@ -235,8 +231,7 @@ public:
      * \param scvIdx The local index of the sub-control volume
      */
     Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
+                        const SubControlVolume& scv) const
     {
         return 2700; // density of granite [kg/m^3]
     }
@@ -250,8 +245,7 @@ public:
      *                    the heat capacity needs to be defined
      */
     Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
+                                    const SubControlVolume& scv) const
     {
         return lambdaSolid_;
     }
@@ -276,6 +270,6 @@ private:
     bool plotFluidMatrixInteractions_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
