@@ -51,14 +51,14 @@ class MpfaHelperBase<TypeTag, MpfaMethods::oMethod, 2>
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GlobalIndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     using InteractionVolumeSeed = typename InteractionVolume::Seed;
     using ScvSeed = typename InteractionVolumeSeed::LocalScvSeed;
     using ScvfSeed = typename InteractionVolumeSeed::LocalScvfSeed;
 
-    using GlobalIndexSet = std::vector<IndexType>;
+    using GlobalIndexSet = std::vector<GlobalIndexType>;
     using LocalIndexSet = std::vector<LocalIndexType>;
 
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
@@ -103,7 +103,6 @@ private:
 
         // Get the two scv faces in the first scv
         auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
-        GlobalIndexSet globalScvfIndices({scvfVector[0]->index(), scvfVector[1]->index()});
 
         // The global index of the first scv of the interaction region
         auto scvIdx0 = scvf.insideScvIdx();
@@ -119,13 +118,13 @@ private:
             performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0, eqIdx, /*clockwise*/true);
 
             // Finish by creating the first scv
-            scvSeeds.emplace(scvSeeds.begin(), ScvSeed(std::move(globalScvfIndices),
+            scvSeeds.emplace(scvSeeds.begin(), ScvSeed(GlobalIndexSet({scvfVector[0]->index(), scvfVector[1]->index()}),
                                                        LocalIndexSet({0, storeIdx}),
                                                        scvIdx0));
         }
         else
             // Finish by creating the first scv
-            scvSeeds.emplace(scvSeeds.begin(), ScvSeed(std::move(globalScvfIndices),
+            scvSeeds.emplace(scvSeeds.begin(), ScvSeed(GlobalIndexSet({scvfVector[0]->index(), scvfVector[1]->index()}),
                                                        LocalIndexSet({0, static_cast<LocalIndexType>(scvfSeeds.size()-1)}),
                                                        scvIdx0));
     }
@@ -136,19 +135,19 @@ private:
                                  const ScvfPointerVector& scvfVector,
                                  std::vector<ScvSeed>& scvSeeds,
                                  std::vector<ScvfSeed>& scvfSeeds,
-                                 const IndexType scvIdx0,
+                                 const GlobalIndexType scvIdx0,
                                  const LocalIndexType eqIdx,
                                  const bool clockWise = false)
     {
         // extract the actual local indices from the containers
-        IndexType localScvIdx = scvSeeds.size();
-        IndexType localScvfIdx = scvfSeeds.size();
+        LocalIndexType localScvIdx = scvSeeds.size();
+        LocalIndexType localScvfIdx = scvfSeeds.size();
 
         // fvGeometry object to bind the neighbouring element during rotation
         auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
 
         // Start/continue interaction region construction from the given scv face
-        IndexType startScvfIdx = clockWise ? 1 : 0;
+        LocalIndexType startScvfIdx = clockWise ? 1 : 0;
         auto curScvf = *scvfVector[startScvfIdx];
         bool firstIteration = true;
         bool finished = false;
@@ -156,9 +155,9 @@ private:
         while (!finished)
         {
             // Get some indices beforehand
-            IndexType globalScvfIdx = curScvf.index();
-            IndexType insideGlobalScvIdx = curScvf.insideScvIdx();
-            IndexType outsideGlobalScvIdx = curScvf.outsideScvIdx();
+            GlobalIndexType globalScvfIdx = curScvf.index();
+            GlobalIndexType insideGlobalScvIdx = curScvf.insideScvIdx();
+            GlobalIndexType outsideGlobalScvIdx = curScvf.outsideScvIdx();
             LocalIndexType insideLocalScvIdx = firstIteration ? 0 : localScvIdx;
 
             // the current element inside of the scv face
@@ -203,14 +202,14 @@ private:
 
             // get the two scv faces in the outside element that share the vertex
             auto outsideScvfVector = Implementation::getCommonAndNextScvFace(curScvf, outsideFvGeometry, clockWise);
-            IndexType commonFaceCoordIdx = clockWise ? 0 : 1;
-            IndexType nextFaceCoordIdx = clockWise ? 1 : 0;
+            GlobalIndexType commonFaceCoordIdx = clockWise ? 0 : 1;
+            GlobalIndexType nextFaceCoordIdx = clockWise ? 1 : 0;
             auto& commonScvf = *outsideScvfVector[commonFaceCoordIdx];
             auto& nextScvf = *outsideScvfVector[nextFaceCoordIdx];
 
             // create local scv face entity of the current scvf
-            IndexType commonGlobalScvfIdx = commonScvf.index();
-            LocalIndexType outsideLocalScvIdx = outsideGlobalScvIdx == scvIdx0 ? 0 : localScvIdx+1;
+            GlobalIndexType commonGlobalScvfIdx = commonScvf.index();
+            LocalIndexType outsideLocalScvIdx = localScvIdx+1;
 
             scvfSeeds.emplace_back(ScvfSeed(curScvf,
                                             LocalIndexSet({insideLocalScvIdx, outsideLocalScvIdx}),
