@@ -129,8 +129,8 @@ public:
     {
         auto upwindRule = [upwindWeight, phaseIdx](const VolumeVariables& up, const VolumeVariables& dn)
         {
-            return (up.density(phaseIdx)/up.viscosity(phaseIdx)*up.enthalpy(phaseIdx))*(upwindWeight)
-                 + (dn.density(phaseIdx)/dn.viscosity(phaseIdx)*dn.enthalpy(phaseIdx))*(1-upwindWeight);
+            return (up.density(phaseIdx)*up.mobility(phaseIdx)*up.enthalpy(phaseIdx))*(upwindWeight)
+                 + (dn.density(phaseIdx)*dn.mobility(phaseIdx)*dn.enthalpy(phaseIdx))*(1-upwindWeight);
         };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRule);
