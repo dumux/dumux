@@ -119,6 +119,56 @@ public:
     }
 };
 
+// Specialization for dim == 3
+template<class TypeTag>
+class MpfaHelperImplementation<TypeTag, 3> : public MpfaHelperBase<TypeTag,
+                                                                   GET_PROP_VALUE(TypeTag, MpfaMethod),
+                                                                   3>
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+
+    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
+    using LocalBasis = std::array<DimVector, dim>;
+
+public:
+
+    // calculates the inner normal vectors
+    static LocalBasis calculateInnerNormals(const LocalBasis& localBasis)
+    {
+        LocalBasis innerNormals;
+
+        innerNormals[0] = crossProduct<Scalar>(localBasis[1], localBasis[2]);
+        innerNormals[1] = crossProduct<Scalar>(localBasis[2], localBasis[0]);
+        innerNormals[2] = crossProduct<Scalar>(localBasis[0], localBasis[1]);
+
+        return innerNormals;
+    }
+
+    // calculates the determinant of the local basis
+    static Scalar calculateDetX(const LocalBasis& localBasis)
+    {
+        assert(isRightHandSystem(localBasis) && "Local basis does not form a right hand system");
+        return tripleProduct<Scalar>(localBasis[0], localBasis[1], localBasis[2]);
+    }
+
+    static bool isRightHandSystem(const LocalBasis& localBasis)
+    {
+        if (std::signbit(tripleProduct<Scalar>(localBasis[0], localBasis[1], localBasis[2])))
+            return false;
+        return true;
+    }
+};
+
 /*!
  * \ingroup Mpfa
  * \brief Helper class to get the required information on an interaction volume.
@@ -198,13 +248,10 @@ public:
                                          const SubControlVolumeFace& scvf,
                                          const LocalIndexType eqIdx)
     {
-        auto bcTypes = problem.boundaryTypes(element, scvf);
         if (!scvf.boundary())
             return MpfaFaceTypes::interior;
 
-        assert(!bcTypes.hasOutflow() && "Outflow boundaries not implemented for mpfa methods");
-        assert(!(bcTypes.hasDirichlet() && bcTypes.hasNeumann()) && "Mixed boundary conditions are not valid for mpfa methods!");
-
+        auto bcTypes = problem.boundaryTypes(element, scvf);
         if (bcTypes.isNeumann(eqIdx))
             return MpfaFaceTypes::neumann;
         if (bcTypes.isDirichlet(eqIdx))
