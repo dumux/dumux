@@ -344,50 +344,23 @@ public:
         else if (globalPos[1] > 2.5 + eps_ && globalPos[1] < 3.5 - eps_) // production well
         {
 
-            //Scalar satWBound = 1.0;
-            // const Scalar satW = elemVolVars[scvIdx].saturation(wPhaseIdx);                // Saturations
-            // const Scalar satG = elemVolVars[scvIdx].saturation(gPhaseIdx);
-            // const Scalar satN = elemVolVars[scvIdx].saturation(nPhaseIdx);
-
             const Scalar elemPressW = elemVolVars[scvIdx].pressure(wPhaseIdx);            //Pressures
-            // const Scalar elemPressG = elemVolVars[scvIdx].pressure(gPhaseIdx);
             const Scalar elemPressN = elemVolVars[scvIdx].pressure(nPhaseIdx);
 
             const Scalar densityW = elemVolVars[scvIdx].fluidState().density(wPhaseIdx);  //Densities
-            // const Scalar densityG = elemVolVars[scvIdx].fluidState().density(gPhaseIdx);
             const Scalar densityN = elemVolVars[scvIdx].fluidState().density(nPhaseIdx);
 
-            // const Scalar moDensityW = elemVolVars[scvIdx].fluidState().molarDensity(wPhaseIdx);   //Molar Densities
-            // const Scalar moDensityG = elemVolVars[scvIdx].fluidState().molarDensity(gPhaseIdx);
-            // const Scalar moDensityN = elemVolVars[scvIdx].fluidState().molarDensity(nPhaseIdx);
-
-
-            // const Scalar maDensityW = elemVolVars[scvIdx].fluidState().density(wPhaseIdx);   //Molar Densities
-            // const Scalar maDensityG = elemVolVars[scvIdx].fluidState().density(gPhaseIdx);
-            // const Scalar maDensityN = elemVolVars[scvIdx].fluidState().density(nPhaseIdx);
-
             const Scalar elemMobW = elemVolVars[scvIdx].mobility(wPhaseIdx);      //Mobilities
-            // const Scalar elemMobG = elemVolVars[scvIdx].mobility(gPhaseIdx);
             const Scalar elemMobN = elemVolVars[scvIdx].mobility(nPhaseIdx);
 
-            // const Scalar molFracWinW = elemVolVars[scvIdx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
-            // const Scalar molFracWinN = elemVolVars[scvIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
-            // const Scalar molFracWinG = elemVolVars[scvIdx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
-            // const Scalar molFracNinW = elemVolVars[scvIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
-            // const Scalar molFracNinN = elemVolVars[scvIdx].fluidState().moleFraction(nPhaseIdx, nCompIdx);
-            // const Scalar molFracNinG = elemVolVars[scvIdx].fluidState().moleFraction(gPhaseIdx, nCompIdx);
-
-            const Scalar enthW = elemVolVars[scvIdx].enthalpy(wPhaseIdx);      //Mobilities
-            // const Scalar enthG = elemVolVars[scvIdx].enthalpy(gPhaseIdx);
+            const Scalar enthW = elemVolVars[scvIdx].enthalpy(wPhaseIdx);      //Enthalpies
             const Scalar enthN = elemVolVars[scvIdx].enthalpy(nPhaseIdx);
 
             const Scalar wellRadius = 0.50 * 0.3048; // 0.50 ft as specified by SPE9
-            // const Scalar wellArea = M_PI*std::pow(wellRadius,2);  // [m^2]
 
 
             const Scalar gridHeight_ = 0.5;
             const Scalar effectiveRadius_ = 0.208 * gridHeight_;  //Peaceman's Well Model
-            // const Scalar effectiveRadius_ = 0.56;
 
             //divided by molarMass() of water to convert from kg/m s to mol/m s
             const Scalar qW = (((2*3.1415*0.5*4e-14)/(std::log(effectiveRadius_/wellRadius))) *
@@ -396,12 +369,12 @@ public:
             const Scalar qN = (((2*3.1415*0.5*4e-14)/(std::log(effectiveRadius_/wellRadius))) *
                                 densityN * elemMobN  * (elemPressN-pOut_))/0.35;
 
+            Scalar qE;
             //without cooling:
-            // const Scalar qE = qW*0.018*enthW + qN*enthN*0.350;
+            // qE = qW*0.018*enthW + qN*enthN*0.350;
 
             //with cooling: see Diplomarbeit Stefan Roll, Sept. 2015
             Scalar wT = elemVolVars[scvIdx].temperature(); // well temperature
-            Scalar qE;
             if ( wT > 495. )
             {
               qE = qW*0.018*enthW + qN*enthN*0.350 + (wT-495.)*5000.; // ~3x injected enthalpy
@@ -490,11 +463,7 @@ private:
     // TODO this is a very evil hack
     mutable Scalar massProducedOil_;
     mutable Scalar massProducedWater_;
-    //Scalar  maxDepth_;
-    //Scalar episodeLength_;
-    //Scalar nEpisodes_ ;
-    //int indexEpisode;
-    //int episodeType_;
+
     std::string name_;
 
     std::ofstream massBalance;
