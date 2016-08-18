@@ -183,14 +183,14 @@ public:
         // update the secondary variables if global caching is enabled
         // \note we only updated if phase presence changed as the volume variables
         //       are already updated once by the switch
-        if (switchFlag_)
+        for (const auto& element : elements(this->problem_().gridView()))
         {
-            for (const auto& element : elements(this->problem_().gridView()))
-            {
-                // make sure FVElementGeometry & vol vars are bound to the element
-                auto fvGeometry = localView(this->globalFvGeometry());
-                fvGeometry.bindElement(element);
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
 
+            if (switchFlag_)
+            {
                 for (auto&& scv : scvs(fvGeometry))
                 {
                     auto dofIdxGlobal = scv.dofIndex();
@@ -202,7 +202,25 @@ public:
                                                                                       scv);
                     }
                 }
+            }
 
+            // handle the boundary volume variables
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // if we are not on a boundary, skip the rest
+                if (!scvf.boundary())
+                    continue;
+
+                // check if boundary is a pure dirichlet boundary
+                const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                if (bcTypes.hasOnlyDirichlet())
+                {
+                    const auto insideScvIdx = scvf.insideScvIdx();
+                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                    const auto dirichletPriVars = this->problem_().dirichlet(element, scvf);
+
+                    this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), element, insideScv);
+                }
             }
         }
     }
