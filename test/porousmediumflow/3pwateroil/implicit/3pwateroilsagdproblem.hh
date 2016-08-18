@@ -425,20 +425,7 @@ public:
                              const GlobalPosition &globalPos) const
     {
         return wnPhaseOnly;
-        //return threePhases;
     }
-
-    void setMassProd (Scalar value) const
-    {
-        massProducedOil_ = value;
-    }
-
-    Scalar getMassProd ()
-    {
-        return massProducedOil_;
-    }
-
-
 
 private:
     // internal method for the initial condition (reused for the
@@ -460,7 +447,6 @@ private:
     Scalar totalMassProducedOil_;
     Scalar totalMassProducedWater_;
 
-    // TODO this is a very evil hack
     mutable Scalar massProducedOil_;
     mutable Scalar massProducedWater_;
 
