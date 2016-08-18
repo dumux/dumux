@@ -62,8 +62,14 @@ public:
         problemPtr_ = &problem;
         seeds_.clear();
         boundarySeeds_.clear();
-        scvfIndexMap_.clear();
-        initializeSeeds_(vertexTouchesBoundary);
+
+        // -1 indicates that the scvf has not been handled yet
+        auto numScvf = problem_().model().globalFvGeometry().numScvf();
+        scvfIndexMap_.resize(numScvf, -1);
+
+        // detect and handle the boundary first
+        initializeBoundarySeeds_(vertexTouchesBoundary);
+        initializeInteriorSeeds_();
     }
 
     const InteractionVolumeSeed& seed(const SubControlVolumeFace& scvf) const
@@ -88,14 +94,11 @@ public:
 
 private:
     template<typename BoolVector>
-    void initializeSeeds_(BoolVector& vertexTouchesBoundary)
+    void initializeBoundarySeeds_(BoolVector& vertexTouchesBoundary)
     {
-        seeds_.reserve(gridView_.size(dim));
+        auto numBoundaryScvf = problem_().model().globalFvGeometry().numBoundaryScvf();
+        boundarySeeds_.reserve(numBoundaryScvf);
 
-        auto numScvf = problem_().model().globalFvGeometry().numScvf();
-        scvfIndexMap_.resize(numScvf, -1);
-
-        // first we have to construct all the interaction volumes that touch an inner or outer boundary
         IndexType boundarySeedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
@@ -121,8 +124,8 @@ private:
                     seedVector.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(problem_(), element, fvGeometry, scvf, eqIdx));
 
                 // update the index map entries for the global scv faces in the interaction volume
-                for (const auto& localScvf : seedVector[0].scvfSeeds())
-                    for (const auto scvfIdxGlobal : localScvf.globalScvfIndices())
+                for (const auto& localScvfSeed : seedVector[0].scvfSeeds())
+                    for (const auto scvfIdxGlobal : localScvfSeed.globalScvfIndices())
                         scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
 
                 // store interaction volume and increment counter
@@ -131,7 +134,15 @@ private:
             }
         }
 
-        // Now we construct the inner interaction volume seeds
+        // shrink boundary seed vector to actual size
+        boundarySeeds_.shrink_to_fit();
+    }
+
+    void initializeInteriorSeeds_()
+    {
+        auto numScvf = problem_().model().globalFvGeometry().numScvf();
+        seeds_.reserve(numScvf);
+
         IndexType seedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
@@ -148,10 +159,7 @@ private:
                 // update the index map entries for the global scv faces in the interaction volume
                 for (const auto& localScvf : seed.scvfSeeds())
                     for (const auto scvfIdxGlobal : localScvf.globalScvfIndices())
-                    {
-                        assert(scvfIndexMap_[scvfIdxGlobal] == -1);
                         scvfIndexMap_[scvfIdxGlobal] = seedIndex;
-                    }
 
                 // store interaction volume and increment counter
                 seeds_.emplace_back(std::move(seed));
