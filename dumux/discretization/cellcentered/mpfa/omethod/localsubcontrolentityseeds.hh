@@ -37,6 +37,7 @@ class CCMpfaOLocalScvSeed
     using LocalIndexSet = std::vector<LocalIndexType>;
 
 public:
+    //! constructor fully defining the scv seed
     CCMpfaOLocalScvSeed(GlobalIndexSet&& globalScvfIndices,
                         LocalIndexSet&& localScvfIndices,
                         GlobalIndexType globalScvIndex)
@@ -44,6 +45,15 @@ public:
       localScvfIndices_(std::move(localScvfIndices)),
       globalScvfIndices_(std::move(globalScvfIndices))
     {}
+
+    //! Constructor when the local scvf indices are not known at this point
+    CCMpfaOLocalScvSeed(GlobalIndexSet&& globalScvfIndices,
+                        GlobalIndexType globalScvIndex)
+    : globalScvIndex_(globalScvIndex),
+      globalScvfIndices_(std::move(globalScvfIndices))
+    {
+        localScvfIndices_.resize(globalScvfIndices_.size(), -1);
+    }
 
     GlobalIndexType globalIndex() const
     { return globalScvIndex_; }
@@ -53,6 +63,11 @@ public:
 
     const GlobalIndexSet& globalScvfIndices() const
     { return globalScvfIndices_; }
+
+    void setLocalScvfIndex(int coordDir, LocalIndexType localScvfIdx)
+    {
+        localScvfIndices_[coordDir] = localScvfIdx;
+    }
 
 private:
     GlobalIndexType globalScvIndex_;
