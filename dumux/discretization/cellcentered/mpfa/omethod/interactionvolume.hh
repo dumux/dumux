@@ -251,7 +251,6 @@ public:
         // if interior boundaries are present we have to make the entries unique
         if (hasInteriorBoundary())
         {
-            // make values in elementstencil unique
             std::sort(globalScvfs.begin(), globalScvfs.end());
             globalScvfs.erase(std::unique(globalScvfs.begin(), globalScvfs.end()), globalScvfs.end());
         }
