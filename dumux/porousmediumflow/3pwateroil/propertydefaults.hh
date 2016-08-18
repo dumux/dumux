@@ -139,7 +139,7 @@ SET_BOOL_PROP(ThreePWaterOil, UseMoles, true); //!< Define that mole fractions a
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(ThreePWaterOil, SpatialParamsForchCoeff, 0.55);
 
 }
 

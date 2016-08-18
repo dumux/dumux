@@ -229,29 +229,11 @@ public:
         const Scalar A = 8.25990;
         const Scalar B = 2830.065;
         const Scalar C = 42.95101;
-        /*const Scalar A = 7.00909;;
-        const Scalar B = 1462.266;;
-        const Scalar C = 215.110;;*/
-        //const Scalar A = 6.90027;   //n-Heptane http://tinyurl.com/lpo2h3s
-        //const Scalar B = 1266.871;
-        //const Scalar C = 216.757;
 
         Scalar T = temperature - 273.15;
         return 100*1.334*std::pow(10.0, (A - (B/(T + C))));  // in [Pa]
 
-       // return value2;
-
     }
-
-
- /*     P = 100 * 1.334 * (10.0)^(A - (B / (T + C)) =>
-  *     P/(100*1.334)=(10.0)^(A - (B / (T + C)) =>
-  *     P/133.4=(10.0)^(A - (B / (T + C)) =>
-  *     log(10)(P/133.4)=A - B / (T + C) =>
-  *     B / (T + C) =A-log(10) (P/133.4) =>
-  *     B/(A-log(10) (P/133.4))=T+C =>
-  *     T=B/(A-log(10) (P/133.4))-C
-  */
 
     static Scalar vaporTemperature(Scalar pressure)
     {
@@ -261,8 +243,8 @@ public:
 
         const Scalar P = pressure;
 
-        return  Scalar ((B/(A-std::log10(P/100*1.334)))-C);                 //T=B/(A-log(10) (P/133.4))-C
-                                                                           //std::log(arg) / std::log(base);
+        return  Scalar ((B/(A-std::log10(P/100*1.334)))-C);
+
     }
 
     /*!
@@ -363,7 +345,6 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-       // return molarLiquidDensity_(temperature)*molarMass(); // [kg/m^3]
 
         /* according to Lashanizadegan et al (2008) in Chemical Engineering Communications:  */
         /* Simultaneous Heat and Fluid Flow in Porous Media: Case Study: Steam Injection for Tertiary Oil Recovery */
@@ -425,22 +406,6 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-   // static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
-   // {
-
-        /* according to Lashanizadegan et al (2008) in Chemical Engineering Communications:  */
-        /* Simultaneous Heat and Fluid Flow in Porous Media: Case Study: Steam Injection for Tertiary Oil Recovery */
-
-        //return 1027919.422*std::exp(-0.04862*temperature); // [Pa s]
-
-        //according to http://www.ecltechnology.com/subsur/reports/pvt_tgb.pdf[Page 10]
-
-    //    Scalar temperatureFahrenheit = ((temperature-273.15)*1.8)+32;
-     //   Scalar API = 15;
-      //  return (std::pow(10,0.052*std::pow(API,2)-2.2704*API-5.7567)*std::pow(temperatureFahrenheit,-0.0222*std::pow(API,2)+0.9415*API-12.839))*0.001; // [Pa s]
-
-   // }
-
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
 
