@@ -103,6 +103,129 @@ private:
     const Dune::GeometryType gt;
 };
 
+//! Specialization for dim == 3
+template <class GridView>
+class MpfaGeometryHelper<GridView, 3>
+{
+private:
+    using Scalar = typename GridView::ctype;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
+    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+
+    using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
+
+public:
+    using PointVector = std::vector<GlobalPosition>;
+
+    MpfaGeometryHelper(const typename Element::Geometry& elemGeom) : gt(elemGeom.type()) {}
+
+    //! get sub control volume face corners of an intersection for the given local index
+    static PointVector getScvfCorners(const typename Intersection::Geometry& geometry,
+                                      unsigned int indexOnIntersection)
+    {
+        // extract the corners of the sub control volumes
+        const auto& referenceElement = FaceReferenceElements::general(geometry.type());
+
+        // maximum number of necessary points is 9 (for quadrilateral)
+        GlobalPosition p[9];
+        auto corners = geometry.corners();
+
+        // the intersection center
+        p[0] = geometry.center();
+
+        // vertices
+        for (int i = 0; i < corners; ++i)
+            p[i+1] = geometry.corner(i);
+
+        // edge midpoints
+        for (int i = 0; i < referenceElement.size(1); ++i)
+            p[i+corners+1] = geometry.global(referenceElement.position(i, 1));
+
+        // proceed according to number of corners
+        switch (corners)
+        {
+        case 3: // triangle
+        {
+            //! Only build the maps the first time we encounter a triangle
+            static const std::uint8_t vo = 1; //! vertex offset in point vector p
+            static const std::uint8_t eo = 4; //! edge offset in point vector p
+            static const std::uint8_t map[3][4] =
+            {
+                {0, eo+1, eo+0, vo+0},
+                {0, eo+0, eo+2, vo+1},
+                {0, eo+2, eo+1, vo+2}
+            };
+
+            return PointVector( {p[map[indexOnIntersection][0]],
+                                 p[map[indexOnIntersection][1]],
+                                 p[map[indexOnIntersection][2]],
+                                 p[map[indexOnIntersection][3]]} );
+        }
+        case 4: // quadrilateral
+        {
+            //! Only build the maps the first time we encounter a quadrilateral
+            static const std::uint8_t vo = 1; //! vertex offset in point vector p
+            static const std::uint8_t eo = 5; //! face offset in point vector p
+            static const std::uint8_t map[4][4] =
+            {
+                {0, eo+0, eo+2, vo+0},
+                {0, eo+2, eo+1, vo+1},
+                {0, eo+3, eo+0, vo+2},
+                {0, eo+1, eo+3, vo+3}
+            };
+
+            return PointVector( {p[map[indexOnIntersection][0]],
+                                 p[map[indexOnIntersection][1]],
+                                 p[map[indexOnIntersection][2]],
+                                 p[map[indexOnIntersection][3]]} );
+        }
+        default:
+            DUNE_THROW(Dune::NotImplemented, "Box scvf boundary geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
+                                                            << " corners=" << corners);
+        }
+    }
+
+    static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
+    {
+        // in 3d, the integration point can not be moved from the midpoint
+        return scvfCorners[0];
+    }
+
+    static Scalar getScvfArea(const PointVector& scvfCorners)
+    {
+        // after Wolfram alpha quadrilateral area
+        return 0.5*Dumux::crossProduct(scvfCorners[3]-scvfCorners[0], scvfCorners[2]-scvfCorners[1]).two_norm();
+    }
+
+    std::size_t getNumLocalScvfs()
+    {
+        Dune::GeometryType tetrahedron, pyramid, prism, hexahedron;
+        tetrahedron.makeTetrahedron();
+        pyramid.makePyramid();
+        prism.makePrism();
+        hexahedron.makeHexahedron();
+
+        if (gt == tetrahedron)
+            return 12;
+        else if (gt == pyramid)
+            return 16;
+        else if (gt == prism)
+            return 18;
+        else if (gt == hexahedron)
+            return 24;
+        else
+            DUNE_THROW(Dune::InvalidStateException, "unknown 3d geometry type " << gt);
+    }
+
+private:
+    const Dune::GeometryType gt; // the geometry type of the element
+};
+
 } // end namespace
 
 #endif
