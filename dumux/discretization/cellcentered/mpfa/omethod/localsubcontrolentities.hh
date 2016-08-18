@@ -140,25 +140,19 @@ public:
     { return scvfSeed_().insideGlobalScvfIndex(); }
 
     GlobalIndexType outsideGlobalScvfIndex() const
-    {
-        assert(!boundary());
-        return scvfSeed_().globalScvfIndices()[1];
-    }
+    { return scvfSeed_().outsideGlobalScvfIndex(); }
 
     LocalIndexType insideLocalScvIndex() const
     { return scvfSeed_().insideLocalScvIndex(); }
 
     LocalIndexType outsideLocalScvIndex() const
-    {
-        assert(faceType() != MpfaFaceTypes::neumann && faceType() != MpfaFaceTypes::dirichlet);
-        return scvfSeed_().localScvIndices()[1];
-    }
+    { return scvfSeed_().outsideLocalScvIndex(); }
 
     GlobalIndexType insideGlobalScvIndex() const
-    { return scvfSeed_().globalScvIndices()[0]; }
+    { return scvfSeed_().insideGlobalScvIndex(); }
 
     GlobalIndexType outsideGlobalScvIndex() const
-    { return scvfSeed_().globalScvIndices()[1];}
+    { return scvfSeed_().outsideGlobalScvIndex();}
 
     MpfaFaceTypes faceType() const
     { return scvfSeed_().faceType(); }
@@ -176,7 +170,7 @@ public:
     { return area_; }
 
     bool boundary() const
-    { return faceType() != MpfaFaceTypes::interior; }
+    { return scvfSeed_().boundary(); }
 
 private:
     const LocalScvfSeed& scvfSeed_() const

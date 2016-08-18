@@ -109,8 +109,26 @@ public:
     LocalIndexType insideLocalScvIndex() const
     { return scvIndicesLocal_[0]; }
 
+    LocalIndexType outsideLocalScvIndex() const
+    {
+        assert(!boundary() && "There is no outside local scv for boundary scvfs");
+        return scvIndicesLocal_[1];
+    }
+
+    GlobalIndexType insideGlobalScvIndex() const
+    { return scvIndicesGlobal_[0]; }
+
+    GlobalIndexType outsideGlobalScvIndex() const
+    { return scvIndicesGlobal_[1]; }
+
     GlobalIndexType insideGlobalScvfIndex() const
     { return scvfIndicesGlobal_[0]; }
+
+    GlobalIndexType outsideGlobalScvfIndex() const
+    {
+        assert(!boundary() && "There is no outside global scvf for boundary scvfs");
+        return scvfIndicesGlobal_[1];
+    }
 
     MpfaFaceTypes faceType() const
     { return faceType_; }
