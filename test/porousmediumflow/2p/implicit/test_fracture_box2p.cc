@@ -41,6 +41,12 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
+#if HAVE_DUNE_FOAMGRID
     typedef TTAG(FractureBoxProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
+#else
+#warning External grid module dune-foamgrid needed to run this example.
+    std::cerr << "Test skipped, it needs dune-foamgrid!" << std::endl;
+    return 77;
+#endif
 }

@@ -45,7 +45,11 @@ namespace Properties
 NEW_TYPE_TAG(FractureProblem, INHERITS_FROM(TwoP, FractureSpatialParams));
 NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
 
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureBoxProblem, Grid, Dune::FoamGrid<2, 3>);
+#else
+SET_TYPE_PROP(FractureBoxProblem, Grid, Dune::YaspGrid<3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureProblem, Problem, Dumux::FractureProblem<TypeTag>);
@@ -241,7 +245,7 @@ public:
         values.setAllDirichlet();
 
         if (onInlet_(globalPos))
-            values.setNeumann(contiNEqIdx);
+            values.setAllNeumann();
         if (globalPos[2] > 1.0-eps_ || globalPos[2] < eps_)
             values.setAllNeumann();
     }
