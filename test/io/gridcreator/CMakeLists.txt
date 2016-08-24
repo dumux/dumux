@@ -1,8 +1,10 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
+add_executable(test_gridcreator_gmsh EXCLUDE_FROM_ALL test_gridcreator_gmsh.cc)
+
 dune_add_test(NAME test_gridcreator_gmsh
-              SOURCES test_gridcreator_gmsh.cc
+              TARGET test_gridcreator_gmsh
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -11,6 +13,17 @@ dune_add_test(NAME test_gridcreator_gmsh
                                ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00000.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference-refined.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00001.vtu)
+
+dune_add_test(NAME test_gridcreator_gmsh_parallel
+              TARGET test_gridcreator_gmsh
+              CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference-parallel.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation-00000.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference-refined-parallel.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation-00001.vtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh")
 
 dune_add_test(NAME test_gridcreator_cake
               SOURCES test_gridcreator_cake.cc

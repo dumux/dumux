@@ -59,36 +59,42 @@ class GridCreatorGmshTest
 
 public:
 
-    static void getBoundaryDomainMarkers(std::vector<int>& boundaryMarker)
+    static void getBoundaryDomainMarkers(std::vector<int>& boundaryMarker,
+                                         std::vector<int>& rank)
     {
         const auto& gridView = GridCreator::grid().leafGridView();
         VertexMapper vertexMapper(gridView, Dune::mcmgVertexLayout());
 
         boundaryMarker.clear();
         boundaryMarker.resize(gridView.size(dim));
-        for(auto eIt = gridView.template begin<0>(); eIt != gridView.template end<0>(); ++eIt)
+        rank.clear();
+        rank.resize(gridView.size(0));
+        for(const auto& element : elements(gridView))
         {
-            for(auto isIt = gridView.ibegin(*eIt); isIt != gridView.iend(*eIt); ++isIt)
+            auto eIdx = gridView.indexSet().index(element);
+            rank[eIdx] = gridView.comm().rank();
+            for(const auto& intersection : intersections(gridView, element))
             {
-                if(!isIt->boundary())
+                if(!intersection.boundary())
                     continue;
 
+                // get the reference element
                 const auto refElement = ReferenceElements::general(eIt->geometry().type());
 
                 // loop over vertices of the intersection facet
-                for(int vIdx = 0; vIdx < refElement.size(isIt->indexInInside(), 1, dim); vIdx++)
+                for(int vIdx = 0; vIdx < refElement.size(intersection.indexInInside(), 1, dim); vIdx++)
                 {
                     // get local vertex index with respect to the element
-                    int vIdxLocal = refElement.subEntity(isIt->indexInInside(), 1, vIdx, dim);
-                    int vIdxGlobal = vertexMapper.subIndex(*eIt, vIdxLocal, dim);
+                    int vIdxLocal = refElement.subEntity(intersection.indexInInside(), 1, vIdx, dim);
+                    int vIdxGlobal = gridView.indexSet().subIndex(element, vIdxLocal, dim);
 
                     // make sure we always take the lowest non-zero marker (problem dependent!)
                     if (boundaryMarker[vIdxGlobal] == 0)
-                        boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());
+                        boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(intersection.boundarySegmentIndex());
                     else
                     {
-                        if (boundaryMarker[vIdxGlobal] > GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex()))
-                            boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());
+                        if (boundaryMarker[vIdxGlobal] > GridCreator::getBoundaryDomainMarker(intersection.boundarySegmentIndex()))
+                            boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(intersection.boundarySegmentIndex());
                     }
                 }
             }
@@ -115,19 +121,23 @@ int main(int argc, char** argv) try
     // Make the grid
     GridCreator::makeGrid("Bifurcation");
 
+    // Load balancing if parallel
+    GridCreator::loadBalance();
+
     // Read the boundary markers and convert them to vertex flags (e.g. for use in a box method)
     // Write a map from vertex position to boundaryMarker
-    std::vector<int> boundaryMarker;
-    Dumux::GridCreatorGmshTest<TypeTag>::getBoundaryDomainMarkers(boundaryMarker);
+    std::vector<int> boundaryMarker, rank;
+    Dumux::GridCreatorGmshTest<TypeTag>::getBoundaryDomainMarkers(boundaryMarker, rank);
 
     // construct a vtk output writer and attach the boundaryMakers
     Dune::VTKSequenceWriter<Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView(), "bifurcation", ".", "");
     vtkWriter.addVertexData(boundaryMarker, "boundaryMarker");
+    vtkWriter.addCellData(rank, "rank");
     vtkWriter.write(0);
 
     // refine grid once. Due to parametrized boundaries this will result in a grid closer to the orginal geometry.
     GridCreator::grid().globalRefine(1);
-    Dumux::GridCreatorGmshTest<TypeTag>::getBoundaryDomainMarkers(boundaryMarker);
+    Dumux::GridCreatorGmshTest<TypeTag>::getBoundaryDomainMarkers(boundaryMarker, rank);
     vtkWriter.write(1);
 }
 catch (Dumux::ParameterException &e) {
