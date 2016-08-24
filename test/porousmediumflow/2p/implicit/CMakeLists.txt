@@ -72,6 +72,13 @@ add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni")
 endif()
 
+add_dumux_test(test_fracture_box2p test_fracture_box2p test_fracture_box2p.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/fracturebox2p-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/fracturebox-00024.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_fracture_box2p")
+
 #install sources
 install(FILES
 cc2pcornerpointproblem.hh

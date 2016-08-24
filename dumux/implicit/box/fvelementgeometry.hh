@@ -873,7 +873,7 @@ public:
                 scvFace.normal = subContVol[j].global - subContVol[i].global;
                 scvFace.normal /= scvFace.normal.two_norm();
             }
-            else if (dim==2) {
+            else if (dim==2 && dimWorld ==2) {
                 ipLocal = referenceElement.position(scvfIdx, dim-1) + elementLocal;
                 ipLocal *= 0.5;
                 scvFace.ipLocal = ipLocal;
@@ -882,6 +882,23 @@ public:
                 scvFace.normal[1] = -diffVec[0];
 
                 diffVec = subContVol[j].global - subContVol[i].global;
+                // make sure the normal points to the right direction
+                if (scvFace.normal * diffVec < 0)
+                    scvFace.normal *= -1.0;
+            }
+            else if (dim==2 && dimWorld==3) {
+                ipLocal = referenceElement.position(scvfIdx, dim-1) + elementLocal;
+                ipLocal *= 0.5;
+                scvFace.ipLocal = ipLocal;
+                // normal in 3d world
+                const auto faceVec = elementGlobal - edgeCoordinates[scvfIdx];
+                const auto elemVec1 = elementGlobal - geometry.corner(0);
+                const auto elemVec2 = elementGlobal - geometry.corner(1);
+                GlobalPosition elemNormal;
+                this->crossProduct(elemNormal, elemVec1, elemVec2);
+                this->crossProduct(scvFace.normal, faceVec, elemNormal);
+
+                const auto diffVec = subContVol[j].global - subContVol[i].global;
                 // make sure the normal points to the right direction
                 if (scvFace.normal * diffVec < 0)
                     scvFace.normal *= -1.0;
