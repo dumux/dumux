@@ -82,6 +82,8 @@ namespace Dumux
 template <class Grid>
 class GridCreatorBase
 {
+    using Intersection = typename Grid::LeafIntersection;
+    using Element = typename Grid::template Codim<0>::Entity;
 public:
     /*!
      * \brief Make the grid. Implement this method in the specialization of this class for a grid type.
@@ -135,7 +137,11 @@ public:
     static int getBoundaryDomainMarker(int boundarySegmentIndex)
     {
         if(enableGmshDomainMarkers_)
+        {
+            if (boundarySegmentIndex >= grid().numBoundarySegments())
+                DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of bonudary segments in grid!");
             return boundaryMarkers_[boundarySegmentIndex];
+        }
         else
             DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
                                                      << " If your Gmsh file contains domain markers / physical entities,"
@@ -147,6 +153,7 @@ public:
               Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
      * \param elementIdx The element index
      */
+    DUNE_DEPRECATED_MSG("This will often produce wrong parameters in case the grid implementation resorts the elements after insertion. Use getElementDomainMarker(element) instead!")
     static int getElementDomainMarker(int elementIdx)
     {
         if(enableGmshDomainMarkers_)
@@ -159,6 +166,26 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
                                                      << " If your Gmsh file contains domain markers / physical entities,"
                                                      << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
+    }
+
+    /*!
+     * \brief Return the element domain marker (Gmsh physical entity number) of an element.
+              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
+     * \param elementIdx The element index
+     */
+    static int getElementDomainMarker(const Element& element)
+    {
+        if(enableGmshDomainMarkers_)
+        {
+            auto insertionIndex = gridFactory().insertionIndex(element);
+            if(insertionIndex >= grid().levelGridView(0).size(0))
+                DUNE_THROW(Dune::RangeError, "Requested element index "<< insertionIndex <<" is bigger than the number of level 0 elements!");
+            return elementMarkers_[insertionIndex];
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
+                                                    << " If your Gmsh file contains domain markers / physical entities,"
+                                                    << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
     }
 
     /*!
@@ -186,6 +213,15 @@ protected:
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "You are using DGF. To get the grid pointer use method dgfGridPtr()!");
+    }
+
+    /*!
+     * \brief Returns a reference to the grid factory
+     */
+    static Dune::GridFactory<Grid> &gridFactory()
+    {
+        static Dune::GridFactory<Grid> gridFactory_;
+        return gridFactory_;
     }
 
     /*!
@@ -243,30 +279,19 @@ protected:
             const bool boundarySegments = getParamFromGroup<bool>(modelParamGroup, "Grid.BoundarySegments", false);
             const bool domainMarkers = getParamFromGroup<bool>(modelParamGroup, "Grid.DomainMarkers", false);
 
+            if (domainMarkers)
+                enableGmshDomainMarkers_ = true;
+
+            // as default read it on all processes in parallel
             if(domainMarkers)
             {
-                enableGmshDomainMarkers_ = true;
-                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-                {
-                    gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments));
-                }
-                else
-                {
-                    Dune::GridFactory<Grid> factory;
-                    gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
-                }
+                Dune::GmshReader<Grid>::read(gridFactory(), fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments);
+                gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
             }
             else
             {
-                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-                {
-                    gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, verbose, boundarySegments));
-                }
-                else
-                {
-                    Dune::GridFactory<Grid> factory;
-                    gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
-                }
+                Dune::GmshReader<Grid>::read(gridFactory(), fileName, verbose, boundarySegments);
+                gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
             }
         }
     }
@@ -1123,6 +1148,51 @@ public:
                                            << prefix + "Grid.UpperRight"
                                            << ", or a grid file in " << prefix + "Grid.File");
 
+        }
+    }
+
+    /*!
+     * \brief Makes a grid from a file. We currently support *.dgf (Dune Grid Format) and *.msh (Gmsh mesh format).
+     */
+    static void makeGridFromFile(const std::string& fileName,
+                                 const std::string& modelParamGroup)
+    {
+        // We found a file in the input file...does it have a supported extension?
+        const std::string extension = ParentType::getFileExtension(fileName);
+        if(extension != "dgf" && extension != "msh")
+            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
+
+        // make the grid
+        if(extension == "dgf")
+        {
+            ParentType::enableDgfGridPointer_ = true;
+            ParentType::dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
+        }
+        if(extension == "msh")
+        {
+            // get some optional parameters
+            const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
+            const bool boundarySegments = getParamFromGroup<bool>(modelParamGroup, "Grid.BoundarySegments", false);
+            const bool domainMarkers = getParamFromGroup<bool>(modelParamGroup, "Grid.DomainMarkers", false);
+
+            if (domainMarkers)
+                ParentType::enableGmshDomainMarkers_ = true;
+
+            // only filll the factory for rank 0
+            if(domainMarkers)
+            {
+                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
+                    Dune::GmshReader<Grid>::read(ParentType::gridFactory(), fileName, ParentType::boundaryMarkers_, ParentType::elementMarkers_, verbose, boundarySegments);
+
+                ParentType::gridPtr() = std::shared_ptr<Grid>(ParentType::gridFactory().createGrid());
+            }
+            else
+            {
+                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
+                    Dune::GmshReader<Grid>::read(ParentType::gridFactory(), fileName, verbose, boundarySegments);
+
+                ParentType::gridPtr() = std::shared_ptr<Grid>(ParentType::gridFactory().createGrid());
+            }
         }
     }
 };
