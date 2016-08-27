@@ -1,3 +1,4 @@
+add_subdirectory(reordering)
 
 #install headers
 install(FILES
