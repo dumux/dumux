@@ -54,7 +54,7 @@
 
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/plotoverline2d.hh>
+#include "plotoverline2d.hh"
 
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 //#include <dumux/material/fluidstates/nonequilibriumenergy.hh>

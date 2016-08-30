@@ -282,11 +282,13 @@ public:
             }
 
             //VOLUME FRACTION
-            for (int nC= 0; nC<numContinua; nC++)
+            for (int nC= 0; nC<numContinua-1; nC++)
             {
                 volFraction_[nC] = volContinuum[nC] - volContinuum[nC+1];
                 volFraction_[nC] /= volContinuum[0];
             }
+            volFraction_[numContinua-1] = volContinuum[numContinua-1]/volContinuum[0];
+
             }
             break;
         // EquidistantNestedVolumeElements
