@@ -436,6 +436,48 @@ public:
             fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
             break;
             }
+        case 6: // element is prism
+            {
+            Dune::GeometryType type; type.makeHexahedron();
+
+            std::vector<GlobalPosition>
+            corners = {{fvGeometry.subContVol[0].global, edgeCoord[3],
+                        edgeCoord[4], faceCoord[3],
+                        edgeCoord[0], faceCoord[0],
+                        faceCoord[1], fvGeometry.elementGlobal}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[3], fvGeometry.subContVol[1].global,
+                        faceCoord[3], edgeCoord[5],
+                        faceCoord[0], edgeCoord[1],
+                        fvGeometry.elementGlobal, faceCoord[2]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[4], faceCoord[3],
+                        fvGeometry.subContVol[2].global, edgeCoord[5],
+                        faceCoord[1], fvGeometry.elementGlobal,
+                        edgeCoord[2], faceCoord[2]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{edgeCoord[0], faceCoord[0],
+                        faceCoord[1], fvGeometry.elementGlobal,
+                        fvGeometry.subContVol[3].global, edgeCoord[6],
+                        edgeCoord[7], faceCoord[4]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{faceCoord[0], edgeCoord[1],
+                        fvGeometry.elementGlobal, faceCoord[2],
+                        edgeCoord[6], fvGeometry.subContVol[4].global,
+                        faceCoord[4], edgeCoord[8]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+
+            corners = {{faceCoord[1], fvGeometry.elementGlobal,
+                        edgeCoord[2], faceCoord[2],
+                        edgeCoord[7], faceCoord[4],
+                        fvGeometry.subContVol[5].global, edgeCoord[8]}};
+            fvGeometry.subContVolGeometries.push_back(SCVGeometry(type, corners));
+            break;
+            }
         case 8: // element is hexahedron
             {
             Dune::GeometryType type; type.makeHexahedron();
