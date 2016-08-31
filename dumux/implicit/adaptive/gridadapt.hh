@@ -24,7 +24,6 @@
 #define DUMUX_IMPLICIT_GRIDADAPT_HH
 
 #include "gridadaptproperties.hh"
-#include "adaptionhelper.hh"
 #include <unordered_map>
 
 #include <dune/common/exceptions.hh>
@@ -62,6 +61,7 @@ class ImplicitGridAdapt
 
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptionHelper) AdaptionHelper;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
@@ -71,8 +71,8 @@ public:
      * @param problem The problem
      */
     ImplicitGridAdapt (Problem& problem)
-        : adaptionHelper_(problem.gridView()),
-          problem_(problem),
+        : problem_(problem),
+          adaptionHelper_(problem.gridView()),
           adaptionIndicator_(problem),
           marked_(0),
           coarsened_(0)
@@ -324,9 +324,6 @@ public:
     }
 
 private:
-    AdaptionHelper<TypeTag> adaptionHelper_;
-
-
     /*!
      * @brief Method ensuring the refinement ratio of 2:1
      *
@@ -418,6 +415,7 @@ private:
 
     // private Variables
     Problem& problem_;
+    AdaptionHelper adaptionHelper_;
     AdaptionIndicator adaptionIndicator_;
 
     int marked_;

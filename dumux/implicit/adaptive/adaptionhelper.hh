@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_ADAPTIONHELPER_HH
-#define DUMUX_ADAPTIONHELPER_HH
+#ifndef DUMUX_IMPLICIT_ADAPTIONHELPER_HH
+#define DUMUX_IMPLICIT_ADAPTIONHELPER_HH
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/rangegenerators.hh>
@@ -46,23 +46,13 @@ NEW_PROP_TAG(Scalar);
  * \brief Base class holding the variables for implicit models.
  */
 template<class TypeTag>
-class AdaptionHelper
+class ImplicitAdaptionHelper
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-    struct AdaptedValues
-    {
-        PrimaryVariables u;
-        int count;
-        AdaptedValues()
-        {
-            count = 0;
-        }
-    };
 
     enum {
         // Grid and world dimension
@@ -77,7 +67,6 @@ private:
     typedef typename Grid::LevelGridView LevelGridView;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dofCodim>::Entity DofEntity;
-    typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::ctype CoordScalar;
@@ -86,9 +75,21 @@ private:
     typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
     typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
 
-private:
+protected:
     const GridView gridView_;
     const Grid& grid_;
+
+    struct AdaptedValues
+    {
+        PrimaryVariables u;
+        int count;
+        AdaptedValues()
+        {
+            count = 0;
+        }
+    };
+
+    typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
     PersistentContainer adaptionMap_;
 
 public:
@@ -99,7 +100,7 @@ public:
      *
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
-    AdaptionHelper(const GridView& gridView) :
+    ImplicitAdaptionHelper(const GridView& gridView) :
         gridView_(gridView), grid_(gridView.grid()), adaptionMap_(grid_, dofCodim)
     {}
 
