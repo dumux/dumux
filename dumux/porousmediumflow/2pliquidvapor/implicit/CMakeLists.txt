@@ -1,10 +1,10 @@
 
 #install headers
 install(FILES
-fluxvariables.hh
 indices.hh
 localresidual.hh
 model.hh
+newtoncontroller.hh
 properties.hh
 propertydefaults.hh
 volumevariables.hh

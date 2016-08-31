@@ -7,4 +7,4 @@ UpperRight = 5 7
 Cells = 50 70
 
 [Problem]
-Name = test_boxsteaminjection # name passed to the output routines
+Name = test_ccsteaminjection # name passed to the output routines

@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief Injection of superheated water
+ * \brief Validation of the 2p1cni model
  */
 #include "config.h"
-#include "conceptsuperheatedproblem.hh"
+#include "steaminjectionproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -61,6 +61,6 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    typedef TTAG(InjectionBoxProblem) TypeTag;
+    typedef TTAG(InjectionCCProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 }

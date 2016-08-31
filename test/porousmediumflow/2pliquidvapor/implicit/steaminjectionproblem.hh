@@ -28,7 +28,7 @@
 #include <dumux/porousmediumflow/2pliquidvapor/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include "conceptspatialparams.hh"
+#include "steaminjectionspatialparams.hh"
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/h2o.hh>
 

@@ -126,8 +126,8 @@ public:
                            onBoundary);
 
         flux = 0;
-        asImp_()->computeMyAdvectiveFlux(flux, fluxVars); //Method is called "computeMyAdvectiveFlux"
-                                                          // to prevent overwrite by nilocalresidual.hh
+        asImp_()->computeAdvectiveMassFlux(flux, fluxVars); //Method is called "computeAdvectiveMassFlux"
+                                                            // to prevent overwrite by nilocalresidual.hh
         asImp_()->computeDiffusiveFlux(flux, fluxVars);
     }
 
@@ -139,7 +139,7 @@ public:
      * \param fluxVars The flux variables at the current SCV
      */
 
-    void computeMyAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    void computeAdvectiveMassFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
 
