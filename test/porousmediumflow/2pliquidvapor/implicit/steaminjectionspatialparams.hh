@@ -19,11 +19,11 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for various steam injection problems
+ * \brief Definition of the spatial parameters for the steam injection problem
  */
 
-#ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
-#define DUMUX_INJECTION_SPATIAL_PARAMS_HH
+#ifndef DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
+#define DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>

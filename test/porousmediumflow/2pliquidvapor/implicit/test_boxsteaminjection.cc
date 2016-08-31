@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Validation of the 2p1cni model
+ * \brief Test for the 2p1cni box model
  */
 #include "config.h"
 #include "steaminjectionproblem.hh"
@@ -43,12 +43,8 @@ void usage(const char *progName, const std::string &errorMsg)
         errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
                            "\t-TimeManager.TEnd              End of the simulation [s] \n"
                            "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                           "\t-Grid.File                     Name of the file containing the grid \n"
-                           "\t                               definition in DGF format\n"
-                           "\t-SpatialParams.LensLowerLeftX  x-coordinate of the lower left corner of the lens [m] \n"
-                           "\t-SpatialParams.LensLowerLeftY  y-coordinate of the lower left corner of the lens [m] \n"
-                           "\t-SpatialParams.LensUpperRightX x-coordinate of the upper right corner of the lens [m] \n"
-                           "\t-SpatialParams.LensUpperRightY y-coordinate of the upper right corner of the lens [m] \n"
+                           "\t-Grid.UpperRight               coordinates of the upper right corner of the grid [m] \n"
+                           "\t-Grid.Cells                    Number of cells in respective coordinate directions\n"
                            "\t-Problem.Name                  String for naming of the output files \n"
                            "\n";
 

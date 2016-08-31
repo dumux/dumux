@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Non-isothermal steam injection problem for the validation of the 2p1cni model against the data provided by Ochs, 2006.
+ * \brief Non-isothermal steam injection test problem for the 2p1cni model.
  *
  */
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_HH
@@ -64,26 +64,20 @@ public:
 // Enable gravity
 SET_BOOL_PROP(InjectionProblem, ProblemEnableGravity, true);
 
-// Use forward differences instead of central differences
-SET_INT_PROP(InjectionProblem, ImplicitNumericDifferenceMethod, +1);
-
-// Write newton convergence
-SET_BOOL_PROP(InjectionProblem, NewtonWriteConvergence, false);
-
 //Define whether spurious cold-water flow into the steam is blocked
 SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
 }
 
-
+//TODO: Names
 /*!
  * \ingroup ThreePTwoCNIBoxModel
  * \ingroup ImplicitTestProblems
- * \brief Non-isothermal problem where ...
+ * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
  * This problem uses the \ref ThreePTwoCNIModel.
  *
  *  */
-template <class TypeTag >
+template <class TypeTag>
 class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -104,7 +98,6 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
 
-
         // Phase State
         wPhaseOnly = Indices::wPhaseOnly,
         gPhaseOnly = Indices::gPhaseOnly,
@@ -115,20 +108,16 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar,dim> Vector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -154,8 +143,6 @@ public:
 
         FluidSystem::init();
     }
-
-
 
     /*!
      * \name Problem parameters
@@ -226,7 +213,6 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-
       void neumannAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
