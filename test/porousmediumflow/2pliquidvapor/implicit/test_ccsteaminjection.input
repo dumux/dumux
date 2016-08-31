@@ -1,10 +1,10 @@
 [TimeManager]
-DtInitial = 250 # [s]
-TEnd = 129600 # [s]
+DtInitial = 50 # [s]
+TEnd = 300 # [s]
 
 [Grid]
-UpperRight = 5 7
-Cells = 50 70
+UpperRight = 4 8
+Cells = 20 40
 
 [Problem]
 Name = test_ccsteaminjection # name passed to the output routines
