@@ -57,9 +57,8 @@ protected:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
-        energyEqIdx = Indices::energyEqIdx,
-
+        conti0EqIdx = Indices::conti0EqIdx, //!< Index of the mass conservation equation for the water component
+        energyEqIdx = Indices::energyEqIdx, //!< Index of the energy conservation equation
         wPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
     };
@@ -97,13 +96,12 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute storage term of all components within all phases
-        storage = 0;
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {
-                storage[conti0EqIdx] +=
-                    volVars.porosity()
-                    * volVars.saturation(phaseIdx) * volVars.density(phaseIdx);
-            }
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            storage[conti0EqIdx] +=
+                volVars.porosity()
+                * volVars.saturation(phaseIdx) * volVars.density(phaseIdx);
+        }
     }
 
     /*!
@@ -126,8 +124,7 @@ public:
                            onBoundary);
 
         flux = 0;
-        asImp_()->computeAdvectiveMassFlux(flux, fluxVars); //Method is called "computeAdvectiveMassFlux"
-                                                            // to prevent overwrite by nilocalresidual.hh
+        computeAdvectiveFlux(flux, fluxVars);
         asImp_()->computeDiffusiveFlux(flux, fluxVars);
     }
 
@@ -139,13 +136,11 @@ public:
      * \param fluxVars The flux variables at the current SCV
      */
 
-    void computeAdvectiveMassFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
 
-        ////////
-        // advective fluxes of all components in all phases
-        ////////
+        // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // data attached to upstream and the downstream vertices
@@ -160,41 +155,23 @@ public:
             { factor = factor_(up, dn, phaseIdx); }
 
 
-                // add advective flux of current component in current
-                // phase
-                // if alpha > 0 und alpha < 1 then both upstream and downstream
-                // nodes need their contribution
-                // if alpha == 1 (which is mostly the case) then, the downstream
-                // node is not evaluated
-                int eqIdx = conti0EqIdx;
-                flux[eqIdx] +=  fluxVars.volumeFlux(phaseIdx)
-                        * (massUpwindWeight * up.fluidState().density(phaseIdx)
-                        + (1.0 - massUpwindWeight) * dn.fluidState().density(phaseIdx) )
-                        * factor ;
-        }
+            // advective mass flux
+            flux[conti0EqIdx] +=  fluxVars.volumeFlux(phaseIdx)
+                                  * (massUpwindWeight
+                                  * up.fluidState().density(phaseIdx)
+                                  + (1.0 - massUpwindWeight)
+                                  * dn.fluidState().density(phaseIdx))
+                                  * factor ;
 
-        // advective heat flux in all phases
-        flux[energyEqIdx] = 0;
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // vertex data of the upstream and the downstream vertices
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
-
-            Scalar factor = 1.0;
-
-            if(useBlockingOfSpuriousFlow)
-            { factor = factor_(up, dn, phaseIdx); }
-
-            flux[energyEqIdx] +=
-                fluxVars.volumeFlux(phaseIdx) * (
-                                              massUpwindWeight * // upstream vertex
-                                              up.density(phaseIdx) *
-                                              up.enthalpy(phaseIdx)
-                                              +
-                                              (1-massUpwindWeight) * // downstream vertex
-                                              dn.density(phaseIdx) *
-                                              dn.enthalpy(phaseIdx) )
-                                              * factor ;
+            // advective heat flux
+            flux[energyEqIdx] += fluxVars.volumeFlux(phaseIdx)
+                                 *  (massUpwindWeight
+                                 *  up.density(phaseIdx)
+                                 *  up.enthalpy(phaseIdx)
+                                 +  (1.0 - massUpwindWeight)
+                                 *  dn.density(phaseIdx)
+                                 *  dn.enthalpy(phaseIdx))
+                                 *  factor ;
         }
     }
 
@@ -219,24 +196,6 @@ public:
     }
 
 protected:
-
-    void evalPhaseStorage_(const int phaseIdx)
-    {
-        // evaluate the storage terms of a single phase
-        for (int i=0; i < this->fvGeometry_().numScv; i++) {
-            PrimaryVariables &storage = this->storageTerm_[i];
-            const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-             const VolumeVariables &volVars = elemVolVars[i];
-
-            // compute storage term of all components within all phases
-           storage = 0;
-           storage[conti0EqIdx] += volVars.density(phaseIdx)
-                        * volVars.saturation(phaseIdx);
-
-           storage *= volVars.porosity();
-           storage *= this->fvGeometry_().subContVol[i].volume;
-          }
-    }
 
     /*!
      * \brief Calculate the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg, 2005)
