@@ -39,6 +39,9 @@ NEW_TYPE_TAG(GridAdapt);
 //! Defines if the grid is h-adaptive
 NEW_PROP_TAG(AdaptiveGrid);
 
+//! Class which stores data and reconstructs primary variables for adapted grid
+NEW_PROP_TAG(AdaptionHelper);
+
 //! Class defining the refinement/coarsening indicator
 NEW_PROP_TAG(AdaptionIndicator);
 

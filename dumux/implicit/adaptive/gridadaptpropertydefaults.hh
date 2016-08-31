@@ -31,6 +31,7 @@
 #include "gridadaptproperties.hh"
 #include "gridadaptindicatordefault.hh"
 #include "gridadaptinitializationindicator.hh"
+#include "adaptionhelper.hh"
 
 namespace Dumux
 {
@@ -60,6 +61,8 @@ SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtSource, false);
 SET_TYPE_PROP(GridAdapt, AdaptionIndicator, ImplicitGridAdaptIndicatorDefault<TypeTag>);
 //!Set default class for adaption initialization indicator
 SET_TYPE_PROP(GridAdapt,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicatorDefault<TypeTag>);
+//!Set default class for adaption helper
+SET_TYPE_PROP(GridAdapt, AdaptionHelper, ImplicitAdaptionHelper<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
