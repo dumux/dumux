@@ -22,7 +22,7 @@
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase one-component fully implicit model.
  *
- *Important note: The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal
+ * Important note: The 2p1c model requires the use of the non-isothermal extension found in dumux/porousmediumflow/nonisothermal/implicit/
  */
 #ifndef DUMUX_2P1C_LOCAL_RESIDUAL_HH
 #define DUMUX_2P1C_LOCAL_RESIDUAL_HH
@@ -37,7 +37,8 @@ namespace Dumux
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase one-component fully implicit model.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the 2P1C flow.
+ * This class depends on the non-isothermal model.
+ *
  */
 template<class TypeTag>
 class TwoPOneCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
@@ -185,11 +186,19 @@ public:
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {}
 
+    /*!
+     * \brief Returns true if a spurious flow has been detected
+     *
+     */
     const bool spuriousFlowDetected() const
     {
         return spuriousFlowDetected_;
     }
 
+    /*!
+     * \brief Used to reset the respective flag
+     *
+     */
     void resetSpuriousFlowDetected()
     {
         spuriousFlowDetected_ = false;
@@ -198,7 +207,7 @@ public:
 protected:
 
     /*!
-     * \brief Calculate the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg, 2005)
+     * \brief Calculate the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg et al., 2005) \cite gudbjerg <BR>
      *
      * \param up The upstream volume variables
      * \param dn The downstream volume variables

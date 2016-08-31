@@ -38,49 +38,32 @@ namespace Dumux
  * \ingroup TwoPOneCNIModel
  * \brief Adaption of the fully implicit scheme to the two-phase one-component flow model.
  *
- * This model implements two-phase one-component flow of three fluid phases
- * \f$\alpha \in \{ water, gas, NAPL \}\f$ each composed of up to two components
- * \f$\kappa \in \{ water, contaminant \}\f$. The standard multiphase Darcy
- * approach is used as the equation for the conservation of momentum:
- * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
- * \f]
+ * This model implements the flow of two phases and one component, i.e. a pure liquid (e.g. water)
+ * and its vapor (e.g. steam),
+ * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
+ * approach as the equation for the conservation of momentum, i.e.
+ \f[
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
+ \f]
  *
- * By inserting this into the equations for the conservation of the
- * components, one transport equation for each component is obtained as
- * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa
- S_\alpha )}{\partial t}
- - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
- \varrho_\alpha x_\alpha^\kappa \mbox{\bf K}
- (\textbf{grad}\, p_\alpha - \varrho_\alpha \mbox{\bf g}) \right\}
- \nonumber \\
- \nonumber \\
- && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \varrho_\alpha \frac{M^\kappa}{M_\alpha}
- \textbf{grad} x^\kappa_{\alpha} \right\}
- - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
- \f}
- *
- * Note that these balance equations are molar.
+ * By inserting this into the equation for the conservation of the
+ * phase mass, one gets
+ \f[
+\phi \frac{\partial\ \sum_\alpha (\rho_\alpha S_\alpha)}{\partial t} \\-\sum \limits_ \alpha \text{div} \left \{\rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
+\mathbf{K} (\mathbf{grad}p_\alpha - \rho_\alpha \mathbf{g}) \right \} -q^w =0
+ \f]
  *
  * All equations are discretized using a vertex-centered finite volume (box)
  * or cell-centered finite volume scheme as spatial
  * and the implicit Euler method as time discretization.
  *
- * The model uses commonly applied auxiliary conditions like
- * \f$S_w + S_n + S_g = 1\f$ for the saturations and
- * \f$x^w_\alpha + x^c_\alpha = 1\f$ for the mole fractions.
- * Furthermore, the phase pressures are related to each other via
- * capillary pressures between the fluid phases, which are functions of
- * the saturation, e.g. according to the approach of Parker et al.
- *
- * The used primary variables are dependent on the locally present fluid phases
- * An adaptive primary variable switch is included. The phase state is stored for all nodes
- * of the system. Different cases can be distinguished:
- * <ul>
- *  <li> ... to be completed ... </li>
- * </ul>
+ * By using constitutive relations for the capillary pressure \f$p_c =
+ * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
+ * advantage of the fact that \f$S_w + S_n = 1\f$, the number of
+ * unknowns can be reduced to two. The model features a primary variable switch.
+ * If only one phase is present, \f$p_g\f$ and \fT\f$ are the primary variables.
+ * In the presence of two phases, \f$p_g\f$ and \f$S_w\f$ become the new primary variables.
  */
 template<class TypeTag>
 class TwoPOneCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
