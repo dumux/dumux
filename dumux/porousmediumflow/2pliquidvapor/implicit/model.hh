@@ -180,31 +180,6 @@ public:
     }
 
     /*!
-     * \brief Compute the total storage inside one phase of all
-     *        conservation quantities.
-     *
-     * \param storage Contains the storage of each component for one phase
-     * \param phaseIdx The phase index
-     */
-    void globalPhaseStorage(PrimaryVariables &storage, const int phaseIdx)
-    {
-        storage = 0;
-
-        for (const auto& element : elements(this->gridView_())) {
-        if(element.partitionType() == Dune::InteriorEntity)
-           {
-            this->localResidual().evalPhaseStorage(element, phaseIdx);
-
-            for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
-                storage += this->localResidual().storageTerm()[i];
-           }
-    }
-        if (this->gridView_().comm().size() > 1)
-            storage = this->gridView_().comm().sum(storage);
-    }
-
-
-    /*!
      * \brief Called by the update() method if applying the newton
      *         method was unsuccessful.
      */
@@ -348,14 +323,15 @@ public:
                                                                                        fvGeometry,
                                                                                        scvIdx);
                 (*permXX)[globalIdx] = K[0][0];
-                (*permYY)[globalIdx] = K[1][1];
-                (*permZZ)[globalIdx] = K[2][2];
+                if(dimWorld > 1)
+                    (*permYY)[globalIdx] = K[1][1];
+                if(dimWorld > 2)
+                    (*permZZ)[globalIdx] = K[2][2];
             }
 
             // velocity output
             velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
             velocityOutput.calculateVelocity(*velocityG, elemVolVars, fvGeometry, element, gPhaseIdx);
-
         }
 
         writer.attachDofData(*saturation[wPhaseIdx], "sw", isBox);
@@ -373,8 +349,10 @@ public:
 
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*permXX, "permeabilityXX", isBox);
-        writer.attachDofData(*permYY, "permeabilityYY", isBox);
-        writer.attachDofData(*permZZ, "permeabilityZZ", isBox);
+        if(dimWorld > 1)
+            writer.attachDofData(*permYY, "permeabilityYY", isBox);
+        if(dimWorld > 2)
+            writer.attachDofData(*permZZ, "permeabilityZZ", isBox);
         writer.attachDofData(*phasePresence, "phase presence", isBox);
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
@@ -384,49 +362,6 @@ public:
         }
 
         writer.attachCellData(*rank, "process rank");
-    }
-
-    /*!
-     * \brief Write the current solution to a restart file.
-     *
-     * \param outStream The output stream of one entity for the restart file
-     * \param entity The entity, either a vertex or an element
-     */
-    template<class Entity>
-    void serializeEntity(std::ostream &outStream, const Entity &entity)
-    {
-        // write primary variables
-        ParentType::serializeEntity(outStream, entity);
-
-        int globalIdx = this->dofMapper().index(entity);
-        if (!outStream.good())
-            DUNE_THROW(Dune::IOError, "Could not serialize entity " << globalIdx);
-
-        outStream << staticDat_[globalIdx].phasePresence << " ";
-    }
-
-    /*!
-     * \brief Reads the current solution from a restart file.
-     *
-     * \param inStream The input stream of one entity from the restart file
-     * \param entity The entity, either a vertex or an element
-     */
-    template<class Entity>
-    void deserializeEntity(std::istream &inStream, const Entity &entity)
-    {
-        // read primary variables
-        ParentType::deserializeEntity(inStream, entity);
-
-        // read phase presence
-        int globalIdx = this->dofMapper().index(entity);
-        if (!inStream.good())
-            DUNE_THROW(Dune::IOError,
-                       "Could not deserialize entity " << globalIdx);
-
-        inStream >> staticDat_[globalIdx].phasePresence;
-        staticDat_[globalIdx].oldPhasePresence
-            = staticDat_[globalIdx].phasePresence;
-
     }
 
     /*!
@@ -608,7 +543,6 @@ protected:
         else if (phasePresence == wPhaseOnly)
         {
             Scalar temp = volVars.fluidState().temperature();
-            Scalar pg = volVars.fluidState().pressure(gPhaseIdx); //TODO: wPhaseIndex für Brooks Corey?
             Scalar tempVap = volVars.vaporTemperature();
 
             // if the the temperature would be larger than
@@ -630,7 +564,6 @@ protected:
         {
 
             Scalar temp = volVars.fluidState().temperature();
-            Scalar pg = volVars.fluidState().pressure(gPhaseIdx); //TODO: wPhaseIndex für Brooks Corey?
             Scalar tempVap = volVars.vaporTemperature();
 
             if (temp < tempVap)
