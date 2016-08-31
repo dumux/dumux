@@ -1,0 +1,52 @@
+###############################################################
+# Parameter file for test_2p.
+# Everything behind a '#' is a comment.
+# Type "./test_2p --help" for more information.
+###############################################################
+
+###############################################################
+# Mandatory arguments
+###############################################################
+
+[TimeManager]
+DtInitial = 250 # [s]
+TEnd = 129600 # [s]
+
+[Grid]
+UpperRight = 5 7
+Cells = 50 70
+
+
+[Problem]
+Name = test_boxsteaminjection # name passed to the output routines
+
+
+[SpatialParams]
+KHorToKVert = 3
+Well = Br38 # choose the well to simulate: Br38 / I6 / EK2 /default
+Porosity = 0.4
+Permeability = 1e-11 # default permeability of no well is chosen
+
+
+[ Newton ]
+#MaxIterations = 1000
+#AbsTolerance = 9e-1
+#EnableAbsoluteCriterion = 1
+EnableShiftCriterion = 1
+MaxRelativeShift = 1e-06
+UseLineSearch = 0
+MaxSteps = 15
+#SatisfyAbsAndRel = 0
+WriteConvergence = 0
+
+###############################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
+# Restart = ...
