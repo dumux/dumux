@@ -72,19 +72,19 @@ public:
      */
     ImplicitGridAdapt (Problem& problem)
         : problem_(problem),
-          adaptionHelper_(problem.gridView()),
+          adaptionHelper_(problem),
           adaptionIndicator_(problem),
           marked_(0),
           coarsened_(0)
     {
-        if(isBox)
-        {
-            DUNE_THROW(Dune::NotImplemented,
-                       "Grid adaption is not yet mass conservative for Box method! "
-                        << "Use cell-centered scheme instead!");
-        }
-        else
-        {
+//        if(isBox)
+//        {
+//            DUNE_THROW(Dune::NotImplemented,
+//                       "Grid adaption is not yet mass conservative for Box method! "
+//                        << "Use cell-centered scheme instead!");
+//        }
+//        else
+//        {
             levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
             levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
             adaptionInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptionInterval);
@@ -93,7 +93,7 @@ public:
             {
                 DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible! Choose MinLevel >= 0");
             }
-        }
+//        }
     }
 
     /*!
