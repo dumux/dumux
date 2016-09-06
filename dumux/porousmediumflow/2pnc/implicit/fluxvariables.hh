@@ -103,24 +103,39 @@ public:
     }
 
 protected:
+
+    void calculateIpDensities_(const Problem &problem,
+                               const Element &element,
+                               const ElementVolumeVariables &elemVolVars)
+    {
+        // calculate densities at the integration points of the face
+        density_.fill(0.0);
+        molarDensity_.fill(0.0);
+        for (unsigned int idx = 0; idx < this->face().numFap; idx++) // loop over adjacent vertices
+        {
+            // index for the element volume variables
+            int volVarsIdx = this->face().fapIndices[idx];
+
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            {
+                density_[phaseIdx] += elemVolVars[volVarsIdx].density(phaseIdx)*this->face().shapeValue[idx];
+                molarDensity_[phaseIdx] += elemVolVars[volVarsIdx].molarDensity(phaseIdx)*this->face().shapeValue[idx];
+            }
+        }
+    }
+
     void calculateGradients_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemVolVars)
     {
+        calculateIpDensities_(problem, element, elemVolVars);
         BaseFluxVariables::calculateGradients_(problem, element, elemVolVars);
 
-        // initialize to mole/mass fraction gradients to zero
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                moleFractionGrad_[phaseIdx][compIdx] = 0.0; // deprecated
-                massFractionGrad_[phaseIdx][compIdx] = 0.0; // deprecated
-            }
+            concentrationGrad_[phaseIdx].fill(GlobalPosition(0.0)); // TODO: deprecated, remove this once the interface function gets removed
+            moleFractionGrad_[phaseIdx].fill(GlobalPosition(0.0));
         }
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            concentrationGrad_[phaseIdx].fill(GlobalPosition(0.0));
 
          // loop over number of flux approximation points
         for (unsigned int idx = 0; idx < this->face().numFap; ++idx)
@@ -139,17 +154,10 @@ protected:
                 {
                     if(compIdx != phaseIdx) //No grad is needed for this case
                     {
-                        GlobalPosition tmp(feGrad); // deprecated
-                        tmp *= elemVolVars[volVarsIdx].massFraction(phaseIdx, compIdx);
-                        massFractionGrad_[phaseIdx][compIdx] += tmp;
-
-                        tmp = feGrad; // deprecated
-                        tmp *= elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx);
-                        moleFractionGrad_[phaseIdx][compIdx] += tmp;
-
-                        tmp = feGrad;
-                        tmp *= elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx)*elemVolVars[volVarsIdx].molarDensity(phaseIdx);
-                        concentrationGrad_[phaseIdx][compIdx] += tmp;
+                        moleFractionGrad_[phaseIdx][compIdx].axpy(elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx), feGrad);
+                        // TODO: deprecated, remove this once the interface function gets removed
+                        concentrationGrad_[phaseIdx][compIdx].axpy(elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx)
+                                                                   *elemVolVars[volVarsIdx].molarDensity(phaseIdx), feGrad);
                     }
                 }
             }
@@ -238,23 +246,32 @@ public:
      * \param phaseIdx The phase index
      * \param compIdx The component index
      */
+    DUNE_DEPRECATED_MSG("Don't use concentration gradient. Fick's law is based on mole fraction gradients!")
     const GlobalPosition &concentrationGrad(int phaseIdx, int compIdx) const
     { return concentrationGrad_[phaseIdx][compIdx]; }
 
+    /*!
+     * \brief The mole fraction gradient of a component in a phase.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    const GlobalPosition &moleFractionGrad(int phaseIdx, int compIdx) const
+    { return moleFractionGrad_[phaseIdx][compIdx]; }
+
 protected:
 
-    // gradients
-    GlobalPosition massFractionGrad_[numPhases][numComponents]; // deprecated
-    GlobalPosition moleFractionGrad_[numPhases][numComponents]; // deprecated
-    std::array<std::array<GlobalPosition, numComponents>, numPhases> concentrationGrad_;
+    // mole fraction gradient
+    std::array<std::array<GlobalPosition, numComponents>, numPhases> moleFractionGrad_;
+    std::array<std::array<GlobalPosition, numComponents>, numPhases> concentrationGrad_; // TODO: deprecated
 
     // density of each face at the integration point
-    Scalar density_[numPhases], molarDensity_[numPhases];
+    std::array<Scalar, numPhases> density_, molarDensity_;
 
     // the diffusion coefficient for the porous medium
     Dune::FieldMatrix<Scalar, numPhases, numComponents> porousDiffCoeff_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

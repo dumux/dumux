@@ -301,14 +301,14 @@ public:
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
+                const auto diffCont = - fluxVars.porousDiffCoeff(phaseIdx, compIdx) * fluxVars.molarDensity(phaseIdx)
+                                        *(fluxVars.moleFractionGrad(phaseIdx, compIdx) * fluxVars.face().normal);
+
                 //add diffusive fluxes only to the component balances
                 if (replaceCompEqIdx != (conti0EqIdx + compIdx))
-                {
-                    Scalar diffCont = - fluxVars.porousDiffCoeff(phaseIdx, compIdx)
-                                        * (fluxVars.concentrationGrad(phaseIdx, compIdx) * fluxVars.face().normal);
                     flux[conti0EqIdx + compIdx] += diffCont;
+                if (replaceCompEqIdx != (conti0EqIdx + phaseIdx))
                     flux[conti0EqIdx + phaseIdx] -= diffCont;
-                }
             }
         }
     }
