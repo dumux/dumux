@@ -72,6 +72,7 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(Scaling); //!< Defines Scaling of the model
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
+NEW_PROP_TAG(TauTortuosity); //!< Tortuosity value (tau) used in macroscopic diffusion
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 
 }

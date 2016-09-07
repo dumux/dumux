@@ -75,6 +75,7 @@ NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility 
 NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether a constraint solver should be used explicitly
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
+NEW_PROP_TAG(TauTortuosity); //!< Tortuosity value (tau) used in macroscopic diffusion
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 }
 }

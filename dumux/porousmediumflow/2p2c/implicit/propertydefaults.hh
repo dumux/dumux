@@ -184,6 +184,14 @@ SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(TwoPTwoC, SpatialParamsForchCoeff, 0.55);
 
+/*!
+ * \brief default value for tortuosity value (tau) used in macroscopic diffusion
+ *
+ * Value is 0.5 according to Carman 1937: <i>Fluid flow through granular beds</i>
+ * \cite carman1937
+ */
+SET_SCALAR_PROP(TwoPTwoC, TauTortuosity, 0.5);
+
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPTwoCNI, ThermalConductivityModel)
 {

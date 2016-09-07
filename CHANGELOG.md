@@ -12,6 +12,8 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
 * IMPROVEMENTS and ENHANCEMENTS:
     - Integrated geostatistical tool gstat for generating random fields
     - multidomain should now work with all compilers (optimzed) without segfaults
+    - The computation of the tortuosity tau with the Millington Quirk model
+      was optimized. Tests show an speedup of up to 5% for a 2p2c simulation.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - The problem class interface needs to provide the method maxTimeStepSize().
@@ -23,8 +25,13 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
   compiler will not print any warning if a deprecated property or parameter name
   is used. However, a run-time warning should appear in the summary lines after
   the corresponding run.
+    - The property tau was renamed to TauTortuosity to make the name more telling.
+      For the models 1p2c, 2p2c, 3p3c it got the default value 0.5.
 
 * Deprecated CLASSES/FILES, to be removed after 2.10:
+    - The class `DiffusivityConstantTau<TypeTag, Scalar>` was renamed to
+      `DiffusivityConstant<TypeTag>` and is located in a according new header. The
+      old class, its header and the property `tau` are deprecated.
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.10:
 

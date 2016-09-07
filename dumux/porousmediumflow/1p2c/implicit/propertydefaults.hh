@@ -120,6 +120,14 @@ SET_BOOL_PROP(OnePTwoC, ProblemEnableGravity, true);
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(OnePTwoC, SpatialParamsForchCoeff, 0.55);
 
+/*!
+ * \brief default value for tortuosity value (tau) used in macroscopic diffusion
+ *
+ * Value is 0.5 according to Carman 1937: <i>Fluid flow through granular beds</i>
+ * \cite carman1937
+ */
+SET_SCALAR_PROP(OnePTwoC, TauTortuosity, 0.5);
+
 //! average is used as default model to compute the effective thermal heat conductivity
 SET_PROP(OnePTwoCNI, ThermalConductivityModel)
 { private :

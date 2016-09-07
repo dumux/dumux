@@ -21,10 +21,11 @@
  *
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
-#ifndef DIFFUSIVITY_MILLINGTON_QUIRK_HH
-#define DIFFUSIVITY_MILLINGTON_QUIRK_HH
+#ifndef DIFFUSIVITY_CONSTANT_HH
+#define DIFFUSIVITY_CONSTANT_HH
 
-#include <cmath>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {
@@ -33,44 +34,40 @@ namespace Dumux
  *
  * \brief Relation for the saturation-dependent effective diffusion coefficient
  *
- *
  * The material law is:
  * \f[
  *  D_\text{eff,pm} = \phi * S_w * \tau * D
  * \f]
  *
- * with
- * \f[
- *  \tau = \frac{1}{\phi^2} * \left(\phi S_w\right)^{7/3}
- * \f]
+ * with a constant tau.
  *
- * after Millington and Quirk 1961: <i>Permeability of porous solids</i> \cite millington1961
- * and Helmig 1997: <i>Multiphase Flow and Transport Processes in the Subsurface: A Contribution
- * to the Modeling of Hydrosystems</i>, page 129 \cite helmig1997
+ * The default value is 0.5, empirically obtained in Carman 1937:
+ * <i>Fluid flow through granular beds</i> \cite carman1937
+ * Additionally, Bear 1972 \cite bear1972 mentions values 0.4 and in the
+ * range of 0.56 to 0.8.
  */
-template<class Scalar>
-class DiffusivityMillingtonQuirk
+template<class TypeTag>
+class DiffusivityConstant
 {
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ after Millington Quirk.
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
+     *        on a constant tortuosity value
      *
      * \param porosity The porosity
-     * \param saturation The saturation of the phase
-     * \param diffCoeff The diffusion coefficient of the phase \f$\mathrm{[m^2/s]}\f$
+     * \param saturation The saturation of the wetting phase
+     * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
 
     {
-        // instead of D_eff,pm = phi * Sw * 1/phi^2 * (phi * Sw)^(7/3) * D
-        // we calculate the more efficient
-        // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
+        Scalar tau = GET_PARAM(TypeTag, Scalar, TauTortuosity);
 
-        return porosity * (saturation * saturation * saturation)
-               * cbrt(porosity * saturation) * diffCoeff;
+        return porosity * saturation * tau * diffCoeff;
     }
 };
 }
-#endif
+#endif // DIFFUSIVITY_CONSTANT_HH

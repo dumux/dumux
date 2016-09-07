@@ -1,0 +1,13 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+UpperRight = 6 4
+Cells = 48 32
+
+[Diffusivity]
+File = constant
+
+[]
+TauTortuosity = 0.3
