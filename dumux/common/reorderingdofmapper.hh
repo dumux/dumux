@@ -28,7 +28,7 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/common/mapper.hh>
 
-#include <dumux/linear/reordering/scotchbackend.hh>
+#include <dumux/linear/scotchbackend.hh>
 
 namespace Dumux
 {
