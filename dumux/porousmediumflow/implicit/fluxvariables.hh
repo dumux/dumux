@@ -104,12 +104,22 @@ public:
         // When using an mpfa methods, we have to take special care of neumann boundaries
         if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCMpfa)
         {
-          if (this->scvFace().boundary())
-          {
-            auto bcTypes = this->problem().boundaryTypes(this->element(), this->scvFace());
-            if (bcTypes.isNeumann(phaseIdx))
-                return flux*insideVolVars.density(phaseIdx)/insideVolVars.viscosity(phaseIdx);
-          }
+            if (this->scvFace().boundary())
+            {
+                auto bcTypes = this->problem().boundaryTypes(this->element(), this->scvFace());
+                if (bcTypes.isNeumann(phaseIdx))
+                {
+                    if (GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache))
+                    {
+                        auto initPriVars = this->problem().initialAtPos(insideScv.center());
+                        VolumeVariables volVars;
+                        volVars.update(initPriVars, this->problem(), this->element(), insideScv);
+                        return flux*volVars.density(phaseIdx)/volVars.viscosity(phaseIdx);
+                    }
+                    else
+                        return flux*insideVolVars.density(phaseIdx)/insideVolVars.viscosity(phaseIdx);
+                }
+            }
         }
 
         if (std::signbit(flux))
