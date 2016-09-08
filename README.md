@@ -5,7 +5,7 @@ What is DuMuX?
 --------------
 
 [DuMuX][0] is a simulation toolbox mainly aimed at flow and transport
-processes in porous media. DuMuX is build on top of the [DUNE][1]
+processes in porous media. DuMuX is based on the [DUNE][1]
 framework and aims to provide a multitude of numerical models as well
 as flexible discretization methods for complex non-linear phenomena,
 such as CO2 sequestration, soil remediation, drug delivery in cancer
