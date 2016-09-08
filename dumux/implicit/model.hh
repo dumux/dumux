@@ -535,10 +535,7 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        if (isBox)
-            res.template serializeEntities<dim>(asImp_(), this->gridView_());
-        else
-            res.template serializeEntities<0>(asImp_(), this->gridView_());
+        res.template serializeEntities<dofCodim>(asImp_(), this->gridView_());
     }
 
     /*!
@@ -551,11 +548,7 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        if (isBox)
-            res.template deserializeEntities<dim>(asImp_(), this->gridView_());
-        else
-            res.template deserializeEntities<0>(asImp_(), this->gridView_());
-
+        res.template deserializeEntities<dofCodim>(asImp_(), this->gridView_());
         prevSol() = curSol();
     }
 
@@ -617,10 +610,7 @@ public:
      */
     size_t numDofs() const
     {
-        if (isBox)
-            return gridView_().size(dim);
-        else
-            return gridView_().size(0);
+        return gridView_().size(dofCodim);
     }
 
     /*!

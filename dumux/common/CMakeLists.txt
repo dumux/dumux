@@ -13,6 +13,7 @@ math.hh
 parameters.hh
 propertysystem.hh
 quad.hh
+reorderingdofmapper.hh
 splinecommon_.hh
 spline.hh
 start.hh
