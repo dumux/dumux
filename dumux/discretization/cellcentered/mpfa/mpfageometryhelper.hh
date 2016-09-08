@@ -192,8 +192,13 @@ public:
 
     static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
     {
-        // in 3d, the integration point can not be moved from the midpoint
-        return scvfCorners[0];
+        auto d = scvfCorners[3];
+        auto ip = scvfCorners[0];
+        d -= ip;
+        d *= q;
+        ip += d;
+
+        return ip;
     }
 
     static Scalar getScvfArea(const PointVector& scvfCorners)
