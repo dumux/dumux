@@ -111,7 +111,7 @@ public:
                 {
                     if (GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache))
                     {
-                        auto initPriVars = this->problem().initialAtPos(insideScv.center());
+                        auto initPriVars = this->problem().initial(insideScv);
                         VolumeVariables volVars;
                         volVars.update(initPriVars, this->problem(), this->element(), insideScv);
                         return flux*volVars.density(phaseIdx)/volVars.viscosity(phaseIdx);
