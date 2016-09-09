@@ -66,12 +66,40 @@ public:
     using LocalScvfSeedType = CCMpfaOLocalScvfSeed<GlobalIndexType, LocalIndexType>;
     using Seed = CCMpfaInteractionVolumeSeed<LocalScvSeedType, LocalScvfSeedType>;
 };
+
+//! Forward declaration of the mpfa-o interaction volume
+template<class TypeTag, class Traits> class CCMpfaOInteractionVolume;
+
 /*!
  * \ingroup Mpfa
- * \brief Base class for the interaction volumes of the mpfa-o method
+ * \brief Base class for the interaction volumes of the mpfa-o method.
+ *        We introduce one more level of inheritance here because the o-method with
+ *        full pressure support uses the mpfa-o interaction volume but uses a different
+ *        traits class.
  */
 template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaInteractionVolumeBase<TypeTag, CCMpfaOInteractionVolumeTraits<TypeTag>>
+class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaOInteractionVolume<TypeTag, CCMpfaOInteractionVolumeTraits<TypeTag>>
+{
+    using Traits = CCMpfaOInteractionVolumeTraits<TypeTag>;
+    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits>;
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    using IVSeed = typename Traits::Seed;
+public:
+    CCMpfaInteractionVolumeImplementation(const IVSeed& seed,
+                                          const Problem& problem,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars)
+    : ParentType(seed, problem, fvGeometry, elemVolVars)
+    {}
+
+};
+
+template<class TypeTag, class Traits>
+class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Traits>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -86,7 +114,6 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : pub
 
     // choose names different from those in the base class
     // base class typedefs are public to be used by other classes
-    using Traits = CCMpfaOInteractionVolumeTraits<TypeTag>;
     using GlobalIdxType = typename Traits::GlobalIndexType;
     using LocalIdxType = typename Traits::LocalIndexType;
     using GlobalIdxSet = typename Traits::GlobalIndexSet;
@@ -104,10 +131,10 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : pub
     using LocalScvfType = CCMpfaOLocalScvf<TypeTag>;
 
 public:
-    CCMpfaInteractionVolumeImplementation(const IVSeed& seed,
-                                          const Problem& problem,
-                                          const FVElementGeometry& fvGeometry,
-                                          const ElementVolumeVariables& elemVolVars)
+    CCMpfaOInteractionVolume(const IVSeed& seed,
+                             const Problem& problem,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars)
     : problemRef_(problem),
       fvGeometryRef_(fvGeometry),
       elemVolVarsRef_(elemVolVars),
