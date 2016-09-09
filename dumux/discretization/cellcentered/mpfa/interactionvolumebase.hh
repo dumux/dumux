@@ -41,6 +41,7 @@ class CCMpfaInteractionVolumeBase
 
 public:
     // some types to be exported
+    using BoundaryInteractionVolume = typename Traits::BoundaryInteractionVolume;
     using LocalIndexType = typename Traits::LocalIndexType;
     using LocalIndexSet = typename Traits::LocalIndexSet;
     using LocalIndexPair = typename Traits::LocalIndexPair;

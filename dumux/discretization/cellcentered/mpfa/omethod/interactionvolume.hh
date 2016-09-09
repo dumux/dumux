@@ -45,6 +45,8 @@ class CCMpfaOInteractionVolumeTraits
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 public:
+    using BoundaryInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using Tensor = Dune::FieldMatrix<Scalar, dim, dim>;
