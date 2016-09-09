@@ -83,6 +83,7 @@ NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(TwoPMincTestBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 SET_TYPE_PROP(TwoPMincTestProblem, VolumeVariables, TwoPMincVolumeVariables<TypeTag>);
 
+SET_TYPE_PROP(TwoPMincTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 }
 
 /*!
