@@ -493,7 +493,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
                 properFluxDirection = false;
                 return 2;
             }
-            else if(mapJ== 3)
+            else if(mapI== 3)
                 return 2;
             else if(mapI == 6){
                 properFluxDirection = false;
