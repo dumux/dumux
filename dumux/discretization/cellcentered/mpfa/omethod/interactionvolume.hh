@@ -62,6 +62,9 @@ public:
 
     using PositionVector = std::vector<GlobalPosition>;
 
+    using LocalScvType = CCMpfaOLocalScv<TypeTag>;
+    using LocalScvfType = CCMpfaOLocalScvf<TypeTag>;
+
     using LocalScvSeedType = CCMpfaOLocalScvSeed<GlobalIndexType, LocalIndexType>;
     using LocalScvfSeedType = CCMpfaOLocalScvfSeed<GlobalIndexType, LocalIndexType>;
     using Seed = CCMpfaInteractionVolumeSeed<LocalScvSeedType, LocalScvfSeedType>;
@@ -127,8 +130,8 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     using DynamicMatrix = typename Traits::Matrix;
     using Tensor = typename Traits::Tensor;
 
-    using LocalScvType = CCMpfaOLocalScv<TypeTag>;
-    using LocalScvfType = CCMpfaOLocalScvf<TypeTag>;
+    using LocalScvType = typename Traits::LocalScvType;
+    using LocalScvfType = typename Traits::LocalScvfType;
 
 public:
     CCMpfaOInteractionVolume(const IVSeed& seed,
