@@ -8,4 +8,4 @@ newtoncontroller.hh
 properties.hh
 propertydefaults.hh
 volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2pliquidvapour/implicit)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p1c/implicit)

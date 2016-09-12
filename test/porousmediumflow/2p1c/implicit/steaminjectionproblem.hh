@@ -25,7 +25,7 @@
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_HH
 #define DUMUX_STEAM_INJECTIONPROBLEM_HH
 
-#include <dumux/porousmediumflow/2pliquidvapor/implicit/model.hh>
+#include <dumux/porousmediumflow/2p1c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "steaminjectionspatialparams.hh"
