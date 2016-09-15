@@ -18,7 +18,7 @@
  *****************************************************************************/
 
 /*!
- * \file An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
+ * \file
  * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
  * \note The reordering needs the SCOTCH library
  */
