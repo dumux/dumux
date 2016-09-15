@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPOneCNIModel
+ * \ingroup TwoPOneCModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase one-component fully implicit model.
@@ -207,7 +207,7 @@ public:
 protected:
 
     /*!
-     * \brief Calculate the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg et al., 2005) \cite gudbjerg <BR>
+     * \brief Calculate the blocking factor which prevents spurious cold water fluxes into the steam zone (Gudbjerg et al., 2005) \cite gudbjerg2004 <BR>
      *
      * \param up The upstream volume variables
      * \param dn The downstream volume variables

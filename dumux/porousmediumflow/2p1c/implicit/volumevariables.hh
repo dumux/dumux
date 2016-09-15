@@ -22,7 +22,7 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase, one-component model.
  *
- *Important note: The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal
+ * \note The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal
  */
 #ifndef DUMUX_2P1C_VOLUME_VARIABLES_HH
 #define DUMUX_2P1C_VOLUME_VARIABLES_HH
@@ -35,7 +35,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPOneCNIModel
+ * \ingroup TwoPOneCModel
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */
@@ -278,7 +279,7 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
-      /*!
+    /*!
      * \brief Returns the vapor temperature (T_{vap}(p_g) of the fluid within the control volume.
      */
     Scalar vaporTemperature() const

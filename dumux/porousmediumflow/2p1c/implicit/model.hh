@@ -21,10 +21,6 @@
  *
  * \brief Adaption of the fully implicit scheme to the two-phase one-component flow model.
  *
- * Important note: The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal
- *
- * The model is designed for simulating two fluid phases with water as the only component.
- * This model is  particularly suitable for the simulation of steam injection in saturated conditions.
  */
 #ifndef DUMUX_2P1C_MODEL_HH
 #define DUMUX_2P1C_MODEL_HH
@@ -35,10 +31,15 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPOneCNIModel
+ * \ingroup TwoPOneCModel
  * \brief Adaption of the fully implicit scheme to the two-phase one-component flow model.
  *
- * This model implements the flow of two phases and one component, i.e. a pure liquid (e.g. water)
+ * \note The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal.
+ *
+ * This model is designed for simulating two fluid phases with water as the only component.
+ * It is particularly suitable for the simulation of steam injection in saturated conditions.
+ *
+ * The model implements the flow of two phases and one component, i.e. a pure liquid (e.g. water)
  * and its vapor (e.g. steam),
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
  * approach as the equation for the conservation of momentum, i.e.
@@ -62,7 +63,7 @@ namespace Dumux
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
  * advantage of the fact that \f$S_w + S_n = 1\f$, the number of
  * unknowns can be reduced to two. The model features a primary variable switch.
- * If only one phase is present, \f$p_g\f$ and \fT\f$ are the primary variables.
+ * If only one phase is present, \f$p_g\f$ and \f$T\f$ are the primary variables.
  * In the presence of two phases, \f$p_g\f$ and \f$S_w\f$ become the new primary variables.
  */
 template<class TypeTag>

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A two-phase fluid system with only one component.
+ * \brief @copybrief Dumux::FluidSystems::TwoPLiquidVaporFluidsystem
  */
 #ifndef DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HH
 #define DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HHH
@@ -561,9 +561,9 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Components);
 }
 /*!
- * \brief A two-phase fluid system with water as the only component.
+ * \brief A two-phase fluid system with only one component.
  *
- * This is an adapter to use Dumux::H2ON2FluidSystem<TypeTag>, as is
+ * This is an adapter to use Dumux::TwoPLiquidVaporFluidsystem<TypeTag>, as is
  * done with most other classes in Dumux.
  */
 template<class TypeTag>

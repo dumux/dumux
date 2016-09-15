@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 2p1cni specific controller for the newton solver.
+ * \brief A 2p1c specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -34,7 +34,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPOneCNIModel
+ * \ingroup TwoPOneCModel
  * \brief A 2p1cni specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is

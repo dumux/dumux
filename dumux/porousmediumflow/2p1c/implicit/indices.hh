@@ -31,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPOneCNIModel
+ * \ingroup TwoPOneCModel
  * \ingroup ImplicitIndices
  * \brief The indices for the isothermal 2p1cni model.
  *
