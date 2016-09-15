@@ -519,6 +519,7 @@ protected:
             PrimaryVariables values(0.0);
 
             asImp_()->computeFlux(values, boundaryFaceIdx, /*onBoundary=*/true);
+            values *= this->curVolVars_(scvIdx).extrusionFactor();
             Valgrind::CheckDefined(values);
 
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

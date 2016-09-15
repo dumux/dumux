@@ -204,6 +204,7 @@ protected:
             //calculate outflow fluxes
             PrimaryVariables values(0.0);
             this->asImp_().computeFlux(values, boundaryFaceIdx, true);
+            values *= this->curVolVars_(scvIdx).extrusionFactor();
             Valgrind::CheckDefined(values);
 
             for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
