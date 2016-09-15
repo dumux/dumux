@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::LiquidPhase
+ * \brief @copybrief Dumux::FluidSystems::LiquidPhase
  */
 #ifndef DUMUX_LIQUID_PHASE_HH
 #define DUMUX_LIQUID_PHASE_HH

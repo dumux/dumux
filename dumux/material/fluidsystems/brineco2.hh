@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::BrineCO2
+ * \brief @copybrief Dumux::FluidSystems::BrineCO2
  */
 #ifndef DUMUX_BRINE_CO2_SYSTEM_HH
 #define DUMUX_BRINE_CO2_SYSTEM_HH

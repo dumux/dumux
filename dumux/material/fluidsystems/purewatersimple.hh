@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::PureWaterSimpleFluidSystem
+ * \brief @copybrief Dumux::FluidSystems::PureWaterSimpleFluidSystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
 #define DUMUX_PURE_WATER_FLUID_SYSTEM_HH

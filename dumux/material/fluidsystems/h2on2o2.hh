@@ -20,7 +20,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::H2ON2O2
+ * \brief @copybrief Dumux::FluidSystems::H2ON2O2
  */
 #ifndef DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
