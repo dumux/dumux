@@ -220,7 +220,6 @@ public:
     friend inline FVElementGeometry localView(const CCMpfaGlobalFVGeometry& global)
     { return FVElementGeometry(global); }
 
-//private:
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(IndexType scvIdx) const
     { return scvs_[scvIdx]; }
@@ -231,9 +230,7 @@ public:
 
     //! Get the sub control volume face indices of an scv by global index
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
-    {
-        return scvfIndicesOfScv_[scvIdx];
-    }
+    { return scvfIndicesOfScv_[scvIdx]; }
 
     template<int d = dim>
     typename std::enable_if<d == 2, IndexType>::type getNumScvf_() const
@@ -257,6 +254,7 @@ public:
         return gridView_.size(simplex)*12 + gridView_.size(pyramid)*16 + gridView_.size(prism)*18 + gridView_.size(cube)*24;
     }
 
+private:
     const Problem& problem_() const
     { return *problemPtr_; }
 
