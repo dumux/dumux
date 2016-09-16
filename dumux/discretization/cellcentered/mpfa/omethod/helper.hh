@@ -97,18 +97,18 @@ private:
                                  const SubControlVolumeFace& scvf,
                                  const LocalIndexType eqIdx)
     {
-        // The vertex index around which we construct the interaction volume
-        auto vIdxGlobal = scvf.vertexIndex();
-        bool onBoundary = problem.model().globalFvGeometry().isDomainBoundaryVertex(vIdxGlobal);
+        // Check whether or not we are touching the boundary here
+        bool onBoundary = problem.model().globalFvGeometry().scvfTouchesBoundary(scvf);
 
         // Get the two scv faces in the first scv
-        auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
+        auto scvfVector = Implementation::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
 
         // The global index of the first scv of the interaction region
         auto scvIdx0 = scvf.insideScvIdx();
 
         // rotate counter clockwise and create the entities
         performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0, eqIdx);
+
         if (onBoundary)
         {
             // the local scvf index of the second local face of the first local scv
@@ -185,13 +185,6 @@ private:
                                                 GlobalIndexSet({globalScvfIdx, scvfVector[1]->index()}),
                                                 faceType));
 
-                // create duplicate face if it is an interior boundary,
-                if (faceType != MpfaFaceTypes::interior)
-                    scvfSeeds.emplace_back(ScvfSeed(curScvf,
-                                                    LocalIndexSet({0, insideLocalScvIdx}),
-                                                    GlobalIndexSet({scvfVector[1]->index(), globalScvfIdx}),
-                                                    faceType));
-
                 // rotation loop is finished
                 finished = true; return;
             }
@@ -216,17 +209,6 @@ private:
                                             GlobalIndexSet({globalScvfIdx, commonGlobalScvfIdx}),
                                             faceType));
             localScvfIdx++;
-
-            // create duplicate face if it is an interior boundary,
-            if (faceType != MpfaFaceTypes::interior)
-            {
-                // face from "outside" to "inside", index sets change
-                scvfSeeds.emplace_back(ScvfSeed(commonScvf,
-                                                LocalIndexSet({outsideLocalScvIdx, insideLocalScvIdx}),
-                                                GlobalIndexSet({commonGlobalScvfIdx, globalScvfIdx}),
-                                                faceType));
-                localScvfIdx++;
-            }
 
             // create index set storing the two local scvf indices
             LocalIndexSet localScvfs(2);
@@ -383,8 +365,7 @@ private:
                 {
                     if (scvSeed.globalIndex() == outsideGlobalScvIdx)
                     {
-                        outsideExists = true;
-                        break;
+                        outsideExists = true; break;
                     }
                     // keep track of local index
                     outsideLocalScvIdx++;
@@ -426,22 +407,8 @@ private:
                         // boundary scvf seeds have no outside scvf
                         if (!scvfSeed.boundary() && scvfSeed.outsideGlobalScvfIndex() == globalScvfIndex)
                         {
-                            auto faceType = scvfSeed.faceType();
-
-                            // on interior boundaries we have to create a new face
-                            if (faceType != MpfaFaceTypes::interior)
-                            {
-                                // set the local scvfIndex of the face that is about to created
-                                actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
-
-                                // some data on the face
-                                LocalIndexSet scvIndicesLocal({actualLocalScvIdx, scvfSeed.insideLocalScvIndex()});
-                                GlobalIndexSet scvfIndicesGlobal({globalScvfIndex, scvfSeed.insideGlobalScvfIndex()});
-                                scvfSeeds.emplace_back(*scvfVector[coordDir], std::move(scvIndicesLocal), std::move(scvfIndicesGlobal), faceType);
-                            }
                             // pass local scvf index to local scv
-                            else
-                                actualScvSeed.setLocalScvfIndex(coordDir, localScvfIdx);
+                            actualScvSeed.setLocalScvfIndex(coordDir, localScvfIdx);
 
                             // we found the corresponding face
                             found = true; break;

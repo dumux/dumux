@@ -141,8 +141,7 @@ public:
     : problemRef_(problem),
       fvGeometryRef_(fvGeometry),
       elemVolVarsRef_(elemVolVars),
-      onBoundary_(seed.onBoundary()),
-      hasInteriorBoundary_(false)
+      onBoundary_(seed.onBoundary())
     {
         // create local sub control entities from the seed
         createLocalEntities_(seed);
@@ -167,21 +166,14 @@ public:
             auto faceType = localScvf.faceType();
 
             // eventually add vol var index and corresponding position
-            if (faceType == MpfaFaceTypes::dirichlet || faceType == MpfaFaceTypes::interiorDirichlet)
+            if (faceType == MpfaFaceTypes::dirichlet)
             {
                 volVarsStencil_.push_back(localScvf.outsideGlobalScvIndex());
                 volVarsPositions_.push_back(localScvf.ip());
-            }
-
-            // fill local scvf type index sets accordingly
-            if (faceType != MpfaFaceTypes::dirichlet && faceType != MpfaFaceTypes::interiorDirichlet)
-                fluxFaceIndexSet_.push_back(localScvfIdx++);
-            else
                 dirichletFaceIndexSet_.push_back(localScvfIdx++);
-
-            // if face is on an interior boundary, save this information
-            if (!hasInteriorBoundary_ && (faceType == MpfaFaceTypes::interiorDirichlet || faceType == MpfaFaceTypes::interiorNeumann))
-                hasInteriorBoundary_ = true;
+            }
+            else
+                fluxFaceIndexSet_.push_back(localScvfIdx++);
         }
 
         neumannFluxes_ = DynamicVector(fluxFaceIndexSet_.size(), 0.0);
@@ -227,7 +219,7 @@ public:
         {
             const auto& localScvf = localScvf_(localFluxFaceIdx);
             const auto faceType = localScvf.faceType();
-            if (faceType == MpfaFaceTypes::neumann || faceType == MpfaFaceTypes::interiorNeumann)
+            if (faceType == MpfaFaceTypes::neumann)
             {
                 // boundary neumann fluxes stay zero when tpfa boundary handling is on
                 if (GET_PROP_VALUE(TypeTag, UseTpfaBoundary) && faceType == MpfaFaceTypes::neumann)
@@ -238,13 +230,10 @@ public:
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];
                 neumannFlux *= globalScvf.area();
 
-                // if we are not on an interior neumann boundary, we have to recover -k*gradh
-                if (faceType == MpfaFaceTypes::neumann)
-                {
-                    const auto& insideScv = fvGeometry_().scv(globalScvf.insideScvIdx());
-                    const auto& volVars = elemVolVars_()[insideScv];
-                    neumannFlux /= upwindFactor(volVars);
-                }
+                // recover -k*gradh
+                const auto& insideScv = fvGeometry_().scv(globalScvf.insideScvIdx());
+                const auto& volVars = elemVolVars_()[insideScv];
+                neumannFlux /= upwindFactor(volVars);
 
                 neumannFluxes_[fluxFaceIdx] = neumannFlux;
             }
@@ -255,9 +244,6 @@ public:
 
     bool onBoundary() const
     { return onBoundary_; }
-
-    bool hasInteriorBoundary() const
-    { return hasInteriorBoundary_; }
 
     const GlobalIdxSet& stencil() const
     { return stencil_; }
@@ -278,13 +264,6 @@ public:
             globalScvfs.push_back(localScvf.insideGlobalScvfIndex());
             if (!localScvf.boundary())
                 globalScvfs.push_back(localScvf.outsideGlobalScvfIndex());
-        }
-
-        // if interior boundaries are present we have to make the entries unique
-        if (hasInteriorBoundary())
-        {
-            std::sort(globalScvfs.begin(), globalScvfs.end());
-            globalScvfs.erase(std::unique(globalScvfs.begin(), globalScvfs.end()), globalScvfs.end());
         }
 
         return globalScvfs;
@@ -377,7 +356,6 @@ private:
                                 DynamicMatrix& C,
                                 DynamicMatrix& D)
     {
-        const Scalar xi = GET_PROP_VALUE(TypeTag, Xi);
         const std::size_t numLocalScvs = localScvs_.size();
 
         // loop over the local faces
@@ -385,7 +363,7 @@ private:
         for (const auto& localScvf : localScvfs_)
         {
             auto faceType = localScvf.faceType();
-            bool hasUnknown = faceType != MpfaFaceTypes::dirichlet && faceType != MpfaFaceTypes::interiorDirichlet;
+            bool hasUnknown = faceType != MpfaFaceTypes::dirichlet;
             LocalIdxType idxInFluxFaces = hasUnknown ? this->findLocalIndex(fluxScvfIndexSet_(), rowIdx) : -1;
 
             // get diffusion tensor in "positive" sub volume
@@ -405,7 +383,7 @@ private:
                 auto curLocalScvfIdx = posLocalScv.localScvfIndex(localDir);
                 const auto& curLocalScvf = localScvf_(curLocalScvfIdx);
                 auto curFaceType = curLocalScvf.faceType();
-                bool curFaceHasUnknown = curFaceType != MpfaFaceTypes::dirichlet && curFaceType != MpfaFaceTypes::interiorDirichlet;
+                bool curFaceHasUnknown = curFaceType != MpfaFaceTypes::dirichlet;
 
                 // First, add the entries associated with face pressures (unkown or dirichlet)
                 if (curFaceHasUnknown)
@@ -415,24 +393,14 @@ private:
 
                     C[rowIdx][curIdxInFluxFaces] += posWijk[localDir];
                     if (hasUnknown)
-                    {
-                        if (faceType == MpfaFaceTypes::interiorNeumann)
-                        {
-                            A[idxInFluxFaces][curIdxInFluxFaces] += xi*posWijk[localDir];
-                            // If facet coupling active, eventually add entry coming from the lowdim domain
-                            if (GET_PROP_VALUE(TypeTag, FacetCoupling) && curIdxInFluxFaces == idxInFluxFaces)
-                                DUNE_THROW(Dune::NotImplemented, "Facet coupling");
-                        }
-                        else
-                            A[idxInFluxFaces][curIdxInFluxFaces] += posWijk[localDir];
-                    }
+                        A[idxInFluxFaces][curIdxInFluxFaces] += posWijk[localDir];
                 }
                 else
                 {
                     // the current face is a Dirichlet face and creates entries in D & eventually B
                     auto curIdxInDiriFaces = this->findLocalIndex(dirichletScvfIndexSet_(), curLocalScvfIdx);
-                    D[rowIdx][numLocalScvs + curIdxInDiriFaces] += posWijk[localDir];
 
+                    D[rowIdx][numLocalScvs + curIdxInDiriFaces] += posWijk[localDir];
                     if (hasUnknown)
                         B[idxInFluxFaces][numLocalScvs + curIdxInDiriFaces] -= posWijk[localDir];
                 }
@@ -441,16 +409,11 @@ private:
                 D[rowIdx][posLocalScvIdx] -= posWijk[localDir];
 
                 if (hasUnknown)
-                {
-                    if (faceType == MpfaFaceTypes::interiorNeumann)
-                        B[idxInFluxFaces][posLocalScvIdx] += xi*posWijk[localDir];
-                    else
-                        B[idxInFluxFaces][posLocalScvIdx] += posWijk[localDir];
-                }
+                    B[idxInFluxFaces][posLocalScvIdx] += posWijk[localDir];
             }
 
             // If not on a boundary or interior dirichlet face, add entries for the "negative" scv
-            if (faceType == MpfaFaceTypes::interior || faceType == MpfaFaceTypes::interiorNeumann)
+            if (faceType == MpfaFaceTypes::interior)
             {
                 const auto negLocalScvIdx = localScvf.outsideLocalScvIndex();
                 const auto& negLocalScv = localScv_(negLocalScvIdx);
@@ -474,11 +437,7 @@ private:
                     {
                         // we need the index of the current local scvf in the flux face indices
                         auto curIdxInFluxFaces = this->findLocalIndex(fluxScvfIndexSet_(), curLocalScvfIdx);
-
-                        if (faceType == MpfaFaceTypes::interiorNeumann)
-                            A[idxInFluxFaces][curIdxInFluxFaces] -= (1.0-xi)*negWijk[localDir];
-                        else
-                            A[idxInFluxFaces][curIdxInFluxFaces] -= negWijk[localDir];
+                        A[idxInFluxFaces][curIdxInFluxFaces] -= negWijk[localDir];
                     }
                     else
                     {
@@ -488,10 +447,7 @@ private:
                     }
 
                     // add entries to matrix B
-                    if (faceType == MpfaFaceTypes::interiorNeumann)
-                        B[idxInFluxFaces][negLocalScvIdx] -= (1.0-xi)*negWijk[localDir];
-                    else
-                        B[idxInFluxFaces][negLocalScvIdx] -= negWijk[localDir];
+                    B[idxInFluxFaces][negLocalScvIdx] -= negWijk[localDir];
                 }
             }
             // go to the next face
@@ -589,7 +545,6 @@ private:
     const ElementVolumeVariables& elemVolVarsRef_;
 
     bool onBoundary_;
-    bool hasInteriorBoundary_;
     LocalIdxType eqIdx_;
 
     std::vector<Element> localElements_;

@@ -56,8 +56,7 @@ public:
     CCMpfaGlobalInteractionVolumeSeeds(const GridView gridView) : gridView_(gridView) {}
 
     // initializes the interaction volumes or the seeds
-    template<typename BoolVector>
-    void update(const Problem& problem, BoolVector& vertexTouchesBoundary)
+    void update(const Problem& problem)
     {
         problemPtr_ = &problem;
         seeds_.clear();
@@ -68,7 +67,7 @@ public:
         scvfIndexMap_.resize(numScvf, -1);
 
         // detect and handle the boundary first
-        initializeBoundarySeeds_(vertexTouchesBoundary);
+        initializeBoundarySeeds_();
         initializeInteriorSeeds_();
     }
 
@@ -81,20 +80,8 @@ public:
         return boundarySeeds_[scvfIndexMap_[scvf.index()]][eqIdx];
     }
 
-    //! returns whether or not an scvf is on an interior or outer boundary
-    bool isScvfOnInteriorBoundary(const Problem& problem,
-                                  const Element& element,
-                                  const SubControlVolumeFace& scvf)
-    {
-        for (LocalIndexType eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            if (Helper::getMpfaFaceType(problem_(), element, scvf, eqIdx) != MpfaFaceTypes::interior)
-                return true;
-        return false;
-    }
-
 private:
-    template<typename BoolVector>
-    void initializeBoundarySeeds_(BoolVector& vertexTouchesBoundary)
+    void initializeBoundarySeeds_()
     {
         auto numBoundaryScvf = problem_().model().globalFvGeometry().numBoundaryScvf();
         boundarySeeds_.reserve(numBoundaryScvf);
@@ -106,16 +93,9 @@ private:
             fvGeometry.bind(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                // skip the rest if we already handled this face
-                if (scvfIndexMap_[scvf.index()] != -1)
+                // skip the rest if we already handled this face or if face is not on boundary
+                if (scvfIndexMap_[scvf.index()] != -1 || !scvf.boundary())
                     continue;
-
-                // also, skip the rest if this face is not on a boundary
-                if (!scvf.boundary() && !isScvfOnInteriorBoundary(problem_(), element, scvf))
-                    continue;
-
-                // the vertex connected to this scvf touches an interior or outer boundary
-                vertexTouchesBoundary[scvf.vertexIndex()] = true;
 
                 // container to store the interaction volume seeds
                 std::vector<BoundaryInteractionVolumeSeed> seedVector;

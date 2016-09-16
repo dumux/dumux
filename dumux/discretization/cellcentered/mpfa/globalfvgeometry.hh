@@ -114,10 +114,6 @@ public:
     bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
     { return boundaryVertices_[scvf.vertexIndex()]; }
 
-    //! returns true if the vertex touches the domain boundary
-    bool isDomainBoundaryVertex(const IndexType vIdxGlobal) const
-    { return outerBoundaryVertices_[vIdxGlobal]; }
-
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
     {
@@ -130,7 +126,6 @@ public:
         scvfs_.reserve(getNumScvf_());
         scvfIndicesOfScv_.resize(numScvs);
         boundaryVertices_.resize(gridView_.size(dim), false);
-        outerBoundaryVertices_.resize(gridView_.size(dim), false);
         elementMap_.resize(numScvs);
 
         // the quadrature point to be used on the scvf
@@ -190,7 +185,7 @@ public:
                     const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
 
                     if (boundary)
-                        outerBoundaryVertices_[vIdxGlobal] = true;
+                        boundaryVertices_[vIdxGlobal] = true;
 
                     // make the scv face
                     scvfIndexSet.push_back(scvfIdx);
@@ -214,7 +209,7 @@ public:
         }
 
         // Initialize the interaction volume seeds, this will also initialize the vector of boundary vertices
-        globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
+        globalInteractionVolumeSeeds_.update(problem);
     }
 
     /*!
@@ -272,7 +267,6 @@ public:
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<bool> boundaryVertices_;
-    std::vector<bool> outerBoundaryVertices_;
     IndexType numBoundaryScvf_;
     GlobalInteractionVolumeSeeds globalInteractionVolumeSeeds_;
 };
