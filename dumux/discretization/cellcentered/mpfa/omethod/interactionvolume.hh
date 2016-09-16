@@ -104,6 +104,9 @@ public:
 template<class TypeTag, class Traits>
 class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Traits>
 {
+    // The interaction volume of the mpfa-o fps method has to be friend
+    friend CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>;
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -337,7 +340,7 @@ private:
         for (const auto& scvSeed : seed.scvSeeds())
         {
             auto element = problem_().model().globalFvGeometry().element(scvSeed.globalIndex());
-            localScvs_.emplace_back(LocalScvType(element, fvGeometry_(), scvSeed));
+            localScvs_.emplace_back(LocalScvType(problem_(), element, fvGeometry_(), scvSeed));
             localElements_.emplace_back(std::move(element));
         }
 

@@ -267,5 +267,6 @@ public:
 
 // The implemented helper classes need to be included here
 #include <dumux/discretization/cellcentered/mpfa/omethod/helper.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethodfps/helper.hh>
 
 #endif

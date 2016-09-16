@@ -106,6 +106,11 @@ public:
     IndexType index() const
     { return scvfIndex_; }
 
+    //! Returns the number of corners
+    std::size_t corners() const
+    { return corners_.size(); }
+
+    //! Returns the corner for a given local index
     GlobalPosition corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");

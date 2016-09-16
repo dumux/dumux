@@ -18,31 +18,24 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base classes for interaction volume of mpfa methods.
+ * \brief Helper class to get the required information on an interaction volume.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFAO_FPS_HELPER_HH
+#define DUMUX_DISCRETIZATION_CC_MPFAO_FPS_HELPER_HH
 
-#include "methods.hh"
+#include <dumux/discretization/cellcentered/mpfa/omethod/helper.hh>
 
 namespace Dumux
 {
-// forward declaration of the base class
-template<class TypeTag, MpfaMethods MpfaMethod>
-class CCMpfaInteractionVolumeImplementation
-{};
-
 /*!
  * \ingroup Mpfa
- * \brief Base class for the interaction volumes of the mpfa method
+ * \brief Helper class to get the required information on an interaction volume.
+ *        Specialization for the Mpfa-O method in two dimensions.
  */
-template<class TypeTag>
-using CCMpfaInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
+template<class TypeTag, int dim>
+class MpfaHelperBase<TypeTag, MpfaMethods::oMethodFps, dim> : public MpfaHelperBase<TypeTag, MpfaMethods::oMethod, dim>
+{};
 
 } // end namespace
-
-// the specializations of this class for the available methods have to be included here
-#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/interactionvolume.hh>
 
 #endif

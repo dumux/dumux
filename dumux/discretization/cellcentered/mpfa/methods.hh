@@ -27,7 +27,8 @@ namespace Dumux
 {
     enum class MpfaMethods : unsigned int
     {
-        oMethod
+        oMethod,
+        oMethodFps
     };
 } // end namespace
 

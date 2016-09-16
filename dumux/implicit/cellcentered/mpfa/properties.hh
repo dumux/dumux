@@ -50,6 +50,8 @@ NEW_PROP_TAG(BoundaryInteractionVolume); //! The interaction volume type used on
 NEW_PROP_TAG(GlobalInteractionVolumeSeeds); //! Class storing and managing the interaction volume seeds
 NEW_PROP_TAG(UseTpfaBoundary); //! This property specifies whether or not tpfa is to be used to handle the boundary fluxes
 NEW_PROP_TAG(MpfaQ); //! The quadrature point on the sub control volume faces (0.0 <= q <= 1.0)
+NEW_PROP_TAG(MpfaC); //! Parameterisation of the size of the auxiliary volume in the FPS scheme
+NEW_PROP_TAG(MpfaP); //! The quadrature point on the auxiliary sub faces in the FPS scheme
 }
 }
 

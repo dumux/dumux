@@ -513,6 +513,22 @@ Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
 {   return crossProduct<Scalar>(vec1, vec2)*vec3; }
 
 /*!
+ * \brief Transpose a FieldMatrix
+ *
+ * \param M The matrix to be transposed
+ */
+template <class Scalar, int m, int n>
+Dune::FieldMatrix<Scalar, m, n> getTransposed(const Dune::FieldMatrix<Scalar, m, n>& M)
+{
+    Dune::FieldMatrix<Scalar, m, n> T;
+    for (std::size_t i = 0; i < n; ++i)
+        for (std::size_t j = 0; j < m; ++j)
+            T[j][i] = M[i][j];
+
+    return T;
+}
+
+/*!
  * \brief Multiply two dynamic matrices
  *
  * \param M1 The first dynamic matrix

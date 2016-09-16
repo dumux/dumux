@@ -32,6 +32,7 @@ template<class TypeTag>
 class CCMpfaOLocalScv
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -51,7 +52,8 @@ class CCMpfaOLocalScv
 
 public:
     // constructor has the same signature as the LocalScv entity
-    CCMpfaOLocalScv(const Element& element,
+    CCMpfaOLocalScv(const Problem& problem,
+                    const Element& element,
                     const FVElementGeometry& fvGeometry,
                     const LocalScvSeed& scvSeed)
     : seed_(scvSeed)
