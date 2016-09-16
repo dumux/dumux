@@ -129,7 +129,7 @@ public:
         elementMap_.resize(numScvs);
 
         // the quadrature point to be used on the scvf
-        const Scalar q = GET_PROP_VALUE(TypeTag, QuadraturePoint);
+        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
         // Build the SCVs and SCV faces
         IndexType scvfIdx = 0;

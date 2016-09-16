@@ -48,10 +48,8 @@ NEW_PROP_TAG(MpfaHelper); //! A Helper class depending on the mpfa method and gr
 NEW_PROP_TAG(InteractionVolume); //! The inner interaction volume type
 NEW_PROP_TAG(BoundaryInteractionVolume); //! The interaction volume type used on the boundaries
 NEW_PROP_TAG(GlobalInteractionVolumeSeeds); //! Class storing and managing the interaction volume seeds
-NEW_PROP_TAG(QuadraturePoint); //! The quadrature point on the sub control volume faces (0.0 <= q <= 1.0)
-NEW_PROP_TAG(FacetCoupling); //! This property has to be set to true if a sub model on the element facets should be existing
 NEW_PROP_TAG(UseTpfaBoundary); //! This property specifies whether or not tpfa is to be used to handle the boundary fluxes
-NEW_PROP_TAG(Xi); //! Parameter used for interior neumann boundaries or coupling terms on the element facets (0.0 <= xi <= 1.0)
+NEW_PROP_TAG(MpfaQ); //! The quadrature point on the sub control volume faces (0.0 <= q <= 1.0)
 }
 }
 
