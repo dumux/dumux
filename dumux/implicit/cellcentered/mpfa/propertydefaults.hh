@@ -117,8 +117,8 @@ SET_SCALAR_PROP(CCMpfaModel, MpfaQ, 0.0);
 // By default, the auxiliary volume size is half of the interaction region
 SET_SCALAR_PROP(CCMpfaModel, MpfaC, 0.5);
 
-// By default, we set the quadrature point to the mid point of the auxiliary sub faces
-SET_SCALAR_PROP(CCMpfaModel, MpfaP, 0.5);
+// By default, we set the quadrature point 1/2 away from the mid point of the auxiliary sub faces
+SET_SCALAR_PROP(CCMpfaModel, MpfaP, 0.75);
 
 } // namespace Properties
 
