@@ -143,7 +143,8 @@ public:
             1.16145*std::pow(Tstar, -0.14874) +
             0.52487*std::exp(- 0.77320*Tstar) +
             2.16178*std::exp(- 2.43787*Tstar);
-        Scalar mu = 40.785*Fc*std::sqrt(M*temperature)/(std::pow(Vc, 2./3)*Omega_v);
+        Scalar mu = 40.785 * Fc * std::sqrt(M * temperature)
+                    / (std::cbrt(Vc * Vc) * Omega_v);
 
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
@@ -152,14 +153,12 @@ public:
     // simpler method, from old constrelAir.hh
     static Scalar simpleGasViscosity(Scalar temperature, Scalar pressure)
     {
-        Scalar r;
         if(temperature < 273.15 || temperature > 660.)
         {
             DUNE_THROW(NumericalProblem,
                 "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
         }
-        r = 1.496*1.E-6*std::pow(temperature,1.5)/(temperature+120.);
-        return (r);
+        return 1.496e-6 * std::cbrt(temperature * temperature) / (temperature + 120.);
 
     }
 
