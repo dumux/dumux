@@ -82,6 +82,7 @@ class ImplicitForchheimerFluxVariables
 {
     friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
     typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -125,6 +126,32 @@ public:
      * \note This can be removed when the deprecated constructor is removed.
      */
     ImplicitForchheimerFluxVariables() = default;
+
+    /*! \copydoc ParentType::update() */
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        ParentType::setFVGeometryPtr_(fvGeometry);
+        ParentType::onBoundary_ = onBoundary;
+        ParentType::faceIdx_ = fIdx;
+
+        ParentType::mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
+        asImp_().calculateGradients_(problem, element, elemVolVars);
+        asImp_().calculateNormalVelocity_(problem, element, elemVolVars);
+    }
+
+private:
+    //! Returns the implementation of the flux variables (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
 protected:
     /*!

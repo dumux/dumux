@@ -360,6 +360,10 @@ protected:
         }// loop all phases
     }
 
+    // set const reference to the fvGeometry
+    const void setFVGeometryPtr_(const FVElementGeometry& fvGeometry)
+    { fvGeometryPtr_ = &fvGeometry; }
+
     // return const reference to the fvGeometry
     const FVElementGeometry& fvGeometry_() const
     { return *fvGeometryPtr_; }
