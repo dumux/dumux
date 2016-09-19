@@ -73,32 +73,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
- public:
-    /*!
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param fIdx The local index of the sub-control-volume face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    TwoPTwoCFluxVariables(const Problem &problem,
-                          const Element &element,
-                          const FVElementGeometry &fvGeometry,
-                          const int fIdx,
-                          const ElementVolumeVariables &elemVolVars,
-                          const bool onBoundary = false)
-        : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    TwoPTwoCFluxVariables() = default;
-
+public:
     /*!
      * \brief Compute / update the flux variables
      *
@@ -185,22 +160,6 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
             tmp *= elemVolVars[volVarsIdx].moleFraction(nPhaseIdx, wCompIdx);
             moleFractionGrad_[nPhaseIdx] += tmp;
         }
-    }
-
-    DUNE_DEPRECATED_MSG("This method will be removed without replacement!")
-    Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementVolumeVariables &vDat)
-    {
-        static const Scalar eps = 1e-2;
-        const Scalar sat = vDat[scvIdx].density(phaseIdx);
-        if (sat > eps)
-            return 0.5;
-        if (sat <= 0)
-            return 0;
-
-        static const Spline<Scalar> sp(0, eps, // x0, x1
-                                              0, 0.5, // y0, y1
-                                              0, 0); // m0, m1
-        return sp.eval(sat);
     }
 
     void calculatePorousDiffCoeff_(const Problem &problem,

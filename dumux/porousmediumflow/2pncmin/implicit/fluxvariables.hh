@@ -55,13 +55,11 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     enum {
         dim = GridView::dimension,
@@ -70,13 +68,7 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> DimWorldMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -85,32 +77,6 @@ class TwoPNCMinFluxVariables : public TwoPNCFluxVariables<TypeTag>
         nPhaseIdx = FluidSystem::nPhaseIdx,
         wCompIdx  = FluidSystem::wCompIdx,
     };
-
-public:
-    /*!
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param fIdx The local index of the sub-control-volume face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    TwoPNCMinFluxVariables(const Problem &problem,
-                     const Element &element,
-                     const FVElementGeometry &fvGeometry,
-                     const int fIdx,
-                     const ElementVolumeVariables &elemVolVars,
-                     const bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    TwoPNCMinFluxVariables() = default;
 
 protected:
     /*!
@@ -128,10 +94,10 @@ protected:
                                   const ElementVolumeVariables &elemVolVars)
     {
         // calculate the mean intrinsic permeability
-        const SpatialParams &spatialParams = problem.spatialParams();
+        const auto& spatialParams = problem.spatialParams();
         DimWorldMatrix K(0.0);
-        const VolumeVariables &volVarsI = elemVolVars[this->face().i];
-        const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
+        const auto& volVarsI = elemVolVars[this->face().i];
+        const auto& volVarsJ = elemVolVars[this->face().j];
 
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
@@ -192,8 +158,8 @@ protected:
             }
 
             // obtain the upwind volume variables
-            const VolumeVariables& upVolVars = elemVolVars[ this->upstreamIdx(phaseIdx) ];
-            const VolumeVariables& downVolVars = elemVolVars[ this->downstreamIdx(phaseIdx) ];
+            const auto& upVolVars = elemVolVars[ this->upstreamIdx(phaseIdx) ];
+            const auto& downVolVars = elemVolVars[ this->downstreamIdx(phaseIdx) ];
 
             // the minus comes from the Darcy relation which states that
             // the flux is from high to low potentials.

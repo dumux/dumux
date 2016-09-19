@@ -58,32 +58,6 @@ class NIFluxVariables : public GET_PROP_TYPE(TypeTag, IsothermalFluxVariables)
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-
-    /*!
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param fIdx The local index of the sub-control-volume face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary Distinguishes if we are on a sub-control-volume face or on a boundary face
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    NIFluxVariables(const Problem &problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int fIdx,
-                            const ElementVolumeVariables &elemVolVars,
-                            bool onBoundary = false)
-    : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    NIFluxVariables() = default;
-
     /*!
      * \brief Compute / update the flux variables
      *
