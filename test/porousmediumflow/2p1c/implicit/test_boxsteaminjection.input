@@ -1,0 +1,10 @@
+[TimeManager]
+DtInitial = 50 # [s]
+TEnd = 300 # [s]
+
+[Grid]
+UpperRight = 4 8
+Cells = 10 20
+
+[Problem]
+Name = test_boxsteaminjection # name passed to the output routines

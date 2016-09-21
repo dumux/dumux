@@ -54,6 +54,12 @@
      * # Saturation
      * \copydetails Dumux::FVSaturation2P
          */
+     /*!
+     * \ingroup Porousmediaflow
+     * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
+     *
+     * \copydetails Dumux::TwoPOneCModel
+     */
     /*!
      * \ingroup Porousmediaflow
      * \defgroup TwoPTwoCModels 2p2c (two-phase, two-component Darcy flow)
