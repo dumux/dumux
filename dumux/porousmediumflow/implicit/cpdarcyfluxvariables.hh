@@ -77,39 +77,6 @@ class CpDarcyFluxVariables
 
 public:
     /*!
-     * \brief The old constructor
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param fIdx The local index of the SCV (sub-control-volume) face
-     * \param elemVolVars The volume variables of the current element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     * are calculated for interior SCV faces or boundary faces, default=false
-     */
-    DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    CpDarcyFluxVariables(const Problem &problem,
-                         const Element &element,
-                         const FVElementGeometry &fvGeometry,
-                         const int fIdx,
-                         const ElementVolumeVariables &elemVolVars,
-                         const bool onBoundary = false)
-    {
-        DUNE_THROW(Dune::InvalidStateException, "The FluxVariables now have to be default contructed. "
-                                                << "In case you have your own FluxVariables you have to make them default "
-                                                << " constructable too. All calls to the old constructor will throw this error. "
-                                                << "Everywhere you instantiate FluxVariables do this now by default constructing "
-                                                << "a FluxVariables object (FluxVariables fluxVars;) and then updating it where "
-                                                << "the update method has the same signature as the old constructor (fluxVars.update(...).)");
-    }
-
-    /*!
-     * \brief Default constructor
-     * \note This can be removed when the deprecated constructor is removed.
-     */
-    CpDarcyFluxVariables() = default;
-
-    /*!
      * \brief Compute / update the flux variables
      *
      * \param problem The problem

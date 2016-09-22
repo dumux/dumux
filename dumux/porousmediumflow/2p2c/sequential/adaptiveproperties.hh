@@ -55,9 +55,6 @@ namespace Properties
 //! The type tag for the compositional two-phase problems
 NEW_TYPE_TAG(SequentialTwoPTwoCAdaptive, INHERITS_FROM(SequentialTwoPTwoC));
 
-//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
-NEW_TYPE_TAG(DecoupledTwoPTwoCAdaptive, INHERITS_FROM(SequentialTwoPTwoCAdaptive));
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
@@ -109,10 +106,6 @@ struct SequentialTwoPTwoCIndicesAdaptive : public SequentialTwoPTwoCIndices<Type
     static const int pressureEqIdx = 0;
     static const int satEqIdx = 0;
 };
-
-template <class TypeTag>
-struct DecoupledTwoPTwoCIndicesAdaptive : public SequentialTwoPTwoCIndicesAdaptive<TypeTag>
-{} DUNE_DEPRECATED_MSG("Use SequentialTwoPTwoCIndicesAdaptive instead.");
 
 // \}
 

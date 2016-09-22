@@ -273,18 +273,7 @@ public:
        return vaporPressure_(Temperature,salinity);
      }
 
-     /*!
-     * \brief Return the salt specific heat capacity \f$\mathrm{[J/(kg K)]}\f$.
-     *
-     * \param phaseIdx The index of the precipitated phase to consider
-     */
-     DUNE_DEPRECATED_MSG("saltSpecificHeatCapacity(int phaseIdx) is deprecated. Use precipitateSpecificHeatCapacity(int sPhaseIdx) instead.")
-     static Scalar saltSpecificHeatCapacity(int phaseIdx)//Specific heat capacity per unit mole of solid salt phase (J/Kkg)
-    {
-        return 36.79/molarMass(phaseIdx);
-    }
-
-     /*!
+    /*!
      * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider

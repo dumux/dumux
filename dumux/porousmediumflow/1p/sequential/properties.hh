@@ -54,9 +54,6 @@ namespace Properties
 //! The type tag for the single-phase problem
 NEW_TYPE_TAG(SequentialOneP, INHERITS_FROM(SequentialModel));
 
-//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
-NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(SequentialOneP));
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////

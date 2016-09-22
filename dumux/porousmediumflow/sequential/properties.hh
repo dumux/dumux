@@ -43,9 +43,6 @@ namespace Properties
 //! Create a type tag for all sequential models
 NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
 
-//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(SequentialModel));
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////

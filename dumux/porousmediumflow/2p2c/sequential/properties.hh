@@ -61,9 +61,6 @@ namespace Properties
 //! The type tag for the compositional two-phase problems
 NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 
-//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
-NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(SequentialTwoPTwoC));
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
@@ -220,10 +217,6 @@ public:
     static const int satDependent = 0;
     static const int permDependent = 1;
 };
-
-template <class TypeTag>
-struct DecoupledTwoPTwoCIndices : public SequentialTwoPTwoCIndices<TypeTag>
-{} DUNE_DEPRECATED_MSG("Use SequentialTwoPTwoCIndices instead.");
 
 // \}
 

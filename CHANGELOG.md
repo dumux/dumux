@@ -60,21 +60,29 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.10: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
-  is used. However, a run-time warning should appear in the summary lines after
-  the corresponding run.
-    - The property `tau` was renamed to `TauTortuosity` to make the name more telling.
-      For the models 1p2c, 2p2c, 3p3c it got the default value 0.5.
+  is used. If possible, a run-time warning will appear in the summary lines
+  after the corresponding run.
+    - The pure run-time parameter `tau` has been renamed to the property and
+      run-time parameter `TauTortuosity`. For the models 1p2c, 2p2c, 3p3c it got
+      the default value 0.5.
 
 * Deprecated CLASSES/FILES, to be removed after 2.10:
     - The class `DiffusivityConstantTau<TypeTag, Scalar>` was renamed to
       `DiffusivityConstant<TypeTag>` and is located in a according new header. The
       old class, its header and the property `tau` are deprecated.
 
-* Deprecated MEMBER FUNCTIONS, to be removed after 2.10:
+    - `PointSourceHelper<TypeTag>` has been deprecated. Use
+      `BoundingBoxTreePointSourceHelper<TypeTag>` instead.
 
-* Deprecated protected MEMBER VARIABLES, to be removed after 2.10: BEWARE: Older
-  compilers will not print any warning if a deprecated protected member variable
-  is used.
+    - The classes `Dumux::Liquid/GasPhase<Scalar, Component>` have been moved to
+      the namespace `Dumux::FluidSystems`.
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.10:
+    - `checkEffectiveSaturation` of the classes `PlotMaterialLaw<TypeTag>` in
+      `dumux/io`.
+
+    - `concentrationGrad` of the class `TwoPNCFluxVariables<TypeTag>`. Use
+      `moleFractionGrad` instead, with the obviously different physical meaning.
 
 * DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.9:
