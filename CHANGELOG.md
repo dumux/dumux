@@ -7,25 +7,62 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
       technically feasible and our resources allow it. If you want to use Dumux
       multidomain models, you have to stick with the Dune 2.4 core and specific
       versions of other modules, see `test/multidomain/README` for details.
+
     - DuMux 2.10 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
+    - For employing corner-point grids by means of opm-grid (former
+      dune-cornerpoint), the OPM release 2016.04 has to be used.
+
 * IMPROVEMENTS and ENHANCEMENTS:
-    - Integrated geostatistical tool gstat for generating random fields
-    - multidomain should now work with all compilers (optimzed) without segfaults
-    - The computation of the tortuosity tau with the Millington Quirk model
-      was optimized. Tests show an speedup of up to 5% for a 2p2c simulation.
+    - Two new fully-implicit models have been added: `ThreePWaterOil` and
+      `TwoPOneC`. The first one admits two components water and oil that may be
+      present in two liquid and one gaseous phase, see `test_box3pwateroil` in
+      `test/porousmediumflow/3pwateroil/implicit` for details. The second one is
+      dedicated to one generic component that may be present in liquid and
+      gaseous state, see `test_boxsteaminjection` in
+      `test/porousmediumflow/2p1c/implicit` for an example.
+
+    - Numbering of the VTK files starts with `0` now.
+
+    - Using the geostatistical tool gstat for generating random fields has been
+      facilitated. See `test_cc1pwithgstat` in
+      `test/porousmediumflow/1p/implicit`.
+
+    - The multidomain models should now run with all compilers without
+      segfaults, both with optimization and debug options.
+
+    - Computation for two-dimensional fracture networks in three-dimensional
+      space has been fixed and is tested now in
+      `test/porousmediumflow/2p/implicit/test_fracture_box2p`.
+
+    - The `bin` folder containing various helper scripts has been restructured.
+      For example, the scripts `fuzzycompare.py` and `runtest.py` are now
+      contained in the subfolder `testing`.
+
+    - Two new scripts `extractlinedata.py` and `extractpointdataovertime.py`
+      have been added to `bin/postprocessing`. They realize what their names
+      suggest.
+
+    - The computation of the tortuosity tau with the Millington-Quirk model has
+      been optimized. Tests show a speedup of up to 5% for a 2p2c simulation.
+
+    - The fully-implicit box scheme now fully supports prism-shaped elements.
+
+    - Convenience functions for reading values from a file to a container and
+      for writing values to a file from a container have been added, see
+      `test_container_io` in `test/io/container`.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - The problem class interface needs to provide the method maxTimeStepSize().
       This is important if you implement problem classes not deriving from the base
-      problem classes in Dumux (ImplicitProblem, OneModelProblem,
-      ImpetProblem, and MultidomainProblem).
+      problem classes in Dumux (`ImplicitProblem`, `OneModelProblem`,
+      `ImpetProblem`, and `MultidomainProblem`).
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.10: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
   is used. However, a run-time warning should appear in the summary lines after
   the corresponding run.
-    - The property tau was renamed to TauTortuosity to make the name more telling.
+    - The property `tau` was renamed to `TauTortuosity` to make the name more telling.
       For the models 1p2c, 2p2c, 3p3c it got the default value 0.5.
 
 * Deprecated CLASSES/FILES, to be removed after 2.10:
