@@ -34,20 +34,14 @@ LensPermeabilityXY = 0
 LensPermeabilityYX = 0
 LensPermeabilityYY = 1e-14
 
-LensOneLowerLeftX = 7
-LensOneLowerLeftY = 6
-LensOneUpperRightX = 13
-LensOneUpperRightY = 7
+LensOneLowerLeft = 7 6
+LensOneUpperRight = 13 7
 
-LensTwoLowerLeftX = 2
-LensTwoLowerLeftY = 4
-LensTwoUpperRightX = 8
-LensTwoUpperRightY = 5
+LensTwoLowerLeft = 2 4
+LensTwoUpperRight = 8 5
 
-LensThreeLowerLeftX = 10
-LensThreeLowerLeftY = 2
-LensThreeUpperRightX = 18
-LensThreeUpperRightY = 3
+LensThreeLowerLeft = 10 2
+LensThreeUpperRight = 18 3
 
 BackgroundEntryPressure = 500
 LenseEntryPressure = 5000

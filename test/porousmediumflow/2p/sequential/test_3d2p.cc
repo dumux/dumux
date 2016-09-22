@@ -43,12 +43,8 @@ void usage(const char *progName, const std::string &errorMsg)
                 "\t-TEnd                          The end of the simulation. [s] \n"
                 "\t-DtInitial                     The initial timestep size. [s] \n"
 #if STRUCTUREDGRID
-                "\t-Grid.NumberOfCellsX           Resolution in x-direction [-]\n"
-                "\t-Grid.NumberOfCellsY           Resolution in y-direction [-]\n"
-                "\t-Grid.NumberOfCellsZ           Resolution in y-direction [-]\n"
-                "\t-Grid.UpperRightX              Dimension of the grid [m]\n"
-                "\t-Grid.UpperRightY              Dimension of the grid [m]\n"
-                "\t-Grid.UpperRightZ              Dimension of the grid [m]\n";
+                "\t-Grid.Cells                    Number of cells in respective coordinate directions\n"
+                "\t-Grid.UpperRight               Upper right corner coordinates\n";
 #else
                 "\t-Grid.File                     Name of the grid file (*.dgf)";
 #endif
