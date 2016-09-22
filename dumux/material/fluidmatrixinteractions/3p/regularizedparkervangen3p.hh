@@ -274,35 +274,11 @@ public:
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
-     * \param swe Wetting liquid saturation
-    */
-    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
-    {
-        return dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     * \param params Array of parameters
      * \param swe Effective wetting liquid saturation
     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         return ParkerVanGen3P::dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the effective
-     *        saturation to the capillary pressure.
-     * \param params Array of parameters
-     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
-     */
-    DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, Scalar pc) is deprecated. Use dswe_dpc(const Params &params, Scalar pc) instead.")
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
-    {
-        return dswe_dpc(params, pc);
     }
 
     /*!

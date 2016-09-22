@@ -163,26 +163,6 @@ public:
      *
      * For the non-regularized part:
      *
-     * \copydetails BrooksCorey::dpc_dsw()
-     */
-    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
-    {
-        return dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
-     *        according to Brooks & Corey.
-     *
-     * regularized part:
-     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
-     *
-     * For the non-regularized part:
-     *
      * \copydetails BrooksCorey::dpc_dswe()
      */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
@@ -202,26 +182,6 @@ public:
         }
 
         return BrooksCorey::dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
-     *        according to Brooks & Corey.
-     *
-     *  regularized part:
-     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
-     *
-     * For the non-regularized part:
-     *
-     * \copydetails BrooksCorey::dsw_dpc()
-     */
-    DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, Scalar pc) is deprecated. Use dswe_dpc(const Params &params, Scalar pc) instead.")
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
-    {
-        return dswe_dpc(params, pc);
     }
 
     /*!
