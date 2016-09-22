@@ -11,14 +11,9 @@ Grading1 = 1.2 0.833333
 Positions0 = 0.0 1.0
 Positions1 = 0.0 0.25 0.5
 
-NumberOfCellsX = 14 #
-NumberOfCellsY = 30 #
-LowerLeftX = 0.0
-UpperRightX = 1.0
-LowerLeftY = 0.0
-UpperRightY = 0.5
+Cells = 14 30
+UpperRight = 1.0 0.5
 InterfacePosY = 0.25
-GradingFactorY = 1.13
 RefineTop = false
 
 [InitialConditions]

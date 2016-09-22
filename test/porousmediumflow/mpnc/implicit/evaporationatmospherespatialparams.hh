@@ -200,7 +200,7 @@ public:
         {
                 eps_                    = 1e-6;
                 heightPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.InterfacePosY);
-                heightDomain_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
+                heightDomain_           = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
                 // BEWARE! First the input values have to be set, than the material parameters can be set
 
                 // this is the parameter value from file part
