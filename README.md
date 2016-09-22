@@ -9,8 +9,7 @@ processes in porous media. DuMuX is based on the [DUNE][1]
 framework and aims to provide a multitude of numerical models as well
 as flexible discretization methods for complex non-linear phenomena,
 such as CO2 sequestration, soil remediation, drug delivery in cancer
-therapy and more. Multi-scale and multi-physics methods are currently
-actively worked on. See [our publication][2] for a more detailed
+therapy and more. See [our publication][2] for a more detailed
 description of the goals and motivations behind DuMuX.
 
 

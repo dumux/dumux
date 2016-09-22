@@ -14,9 +14,6 @@ the script located in:
 Install the external grid manager UG and a direct linear solver like SuperLU
 or UMFPACK. You need Boost fusion for dune-multidomaingrid.
 
-On some machines, some compilers with full optimization -O3 might produce
-executables that yield segmentation faults (we encountered this behavior with
-gcc-4.8). In this case, reduce the optimization level or try a different
-compiler. If you still encounter segmentation faults, make sure that UG, all
-DUNE libraries and the executable in question are built with the same compiler.
+If you encounter segmentation faults, make sure that UG, all DUNE libraries and
+the executable in question are built with the same compiler.
 
