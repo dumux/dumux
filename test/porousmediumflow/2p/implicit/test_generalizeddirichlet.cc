@@ -31,8 +31,8 @@ void usage(const char *progName, const std::string &errorMsg)
         << "The list of mandatory arguments for this program is:\n"
         << "\t-TEnd                The end of the simulation [s]\n"
         << "\t-DtInitial           The initial timestep size [s]\n"
-        << "\t-Grid.UpperRightX    The coordinate of the right corner [m]\n"
-        << "\t-Grid.NumberOfCellsX The grid's resolution\n"
+        << "\t-Grid.UpperRight     Upper right corner coordinates\n"
+        << "\t-Grid.Cells          Number of cells in respective coordinate directions\n"
         << "\n";
 }
 
