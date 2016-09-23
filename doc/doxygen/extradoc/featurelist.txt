@@ -11,88 +11,103 @@
  * <div style="width:100%;overflow:auto;">
  *
  * \section  Freeflow
- * |Tests | |Fluidsystem | Gridmanager | Mass-/Molefractionfraction | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | Gravity | TurbulenceModels | Comments |
+ * |Tests | |Fluidsystem | Gridmanager | Mass-/Molefraction | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | Gravity | TurbulenceModels | Comments |
  * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |:- |
- * | \c navierstokes | \ref Dumux::IMPETProblem2P2C "test" | - | ALUGrid/UGGrid/YaspGrid | - | i | box | SuperLU, UMFPack | - | TRUE | - | uses constant, runtime-specified fluidproperties |
- * | \c navierstokes | navierstokes | - | ALUGrid/UGGrid/YaspGrid | - | i | box | SuperLU, UMFPack | - | TRUE | - | uses constant, runtime-specified fluidproperties |
- * | \c stokes | \ref BoxStokesModel "stokes" | - | YaspGrid | - | i | box | SuperLU, UMFPack | - | TRUE | - | |
- * | \c stokes2c | stokes2c | H2OAir | YaspGrid | Mole | i | box | SuperLU, UMFPack | - | TRUE | - | two tests: diffusion and diffusion+advection |
- * | \c stokes2cni | stokes2cni | H2OAir | YaspGrid | Mole | ni | box | Pardiso, UMFPack | - | TRUE | - | two tests: conduction and conduction+convection |
- * | \c zeroeq | zeroeq | - | UGGrid/YaspGrid | - | i | box | SuperLU, UMFPack | - | FALSE | BaldwinLomax | |
- * | \c zeroeq | zeroeq_channel | - | UGGrid/YaspGrid | - | i | box | UMFPack | - | FALSE | modified VanDriest | includes surface roughness, only one wall |
- * | \c zeroeq2c | zeroeq2c | H2OAir | UGGrid/YaspGrid | Mole | i | box | SuperLU, UMFPack | - | FALSE | Prandtl, Meier-Rotta | |
- * | \c zeroeq2cni | zeroeq2cni | H2OAir | UGGrid/YaspGrid | Mole | ni | box | SuperLU, UMFPack | - | FALSE | Prandtl, modified VanDriest | includes surface roughness |
+ * | \c navierstokes | \ref Dumux::NavierStokesTestProblem "navierstokes" | - | ALUGrid/UGGrid/YaspGrid | - | i | box | SuperLU, UMFPack | - | TRUE | - | uses constant, runtime-specified fluidproperties |
+ * | \c stokes | \ref Dumux::StokesTestProblem "stokes" | - | YaspGrid | - | i | box | SuperLU, UMFPack | - | TRUE | - | |
+ * | \c stokes2c | \ref Dumux::Stokes2cTestProblem "stokes2c" | H2OAir | YaspGrid | Mole | i | box | SuperLU, UMFPack | - | TRUE | - | two tests: diffusion and diffusion+advection |
+ * | \c stokes2cni | \ref Dumux::Stokes2cniTestProblem "stokes2cni" | H2OAir | YaspGrid | Mole | ni | box | Pardiso, UMFPack | - | TRUE | - | two tests: conduction and conduction+convection |
+ * | \c zeroeq | \ref Dumux::ZeroEqTestProblem "zeroeq" | - | UGGrid/YaspGrid | - | i | box | SuperLU, UMFPack | - | FALSE | BaldwinLomax | |
+ * | \c zeroeq | \ref Dumux::ZeroEqChannelTestProblem "zeroeq_channel" | - | UGGrid/YaspGrid | - | i | box | UMFPack | - | FALSE | modified VanDriest | includes surface roughness, only one wall |
+ * | \c zeroeq2c | \ref Dumux::ZeroEq2cTestProblem "zeroeq2c" | H2OAir | UGGrid/YaspGrid | Mole | i | box | SuperLU, UMFPack | - | FALSE | Prandtl, Meier-Rotta | |
+ * | \c zeroeq2cni | \ref Dumux::ZeroEq2cniTestProblem "zeroeq2cni" | H2OAir | UGGrid/YaspGrid | Mole | ni | box | SuperLU, UMFPack | - | FALSE | Prandtl, modified VanDriest | includes surface roughness |
  *
  * \section Io
  * |Tests | Comments |
  * | :- | :- |
+ * | \c container/test_container_io | Test for writing and reading sequence container to and from file |
  * | \c gnuplotinterface/test_gnuplotinterface | tests the plotting of data sets, functions, and files |
+ * | \c gridcreator/test_gridcreator_gmsh | Test for gmsh interface of the grid creator | 
  *
  * \section Implicit
  * | Tests | | Fluidsystem | Gridmanager | Mass/Mole | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | JacobianRecycling | PartialReassemble | Comments |
  * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
- * | \ref OnePModel "1p" |test | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
- * | | convection | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
- * | | conduction | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
- * | \ref OnePTwoCModel "1p2c" | outflow | H2ON2LiquidPhase | UGGrid/YaspGrid | Mole/Mass | i/ni | box/cc | - | - | dirichletAtPos, neumann | homogeneous | - | Scalar | FALSE | - | - | - |
- * | | convection | H2ON2LiquidPhase | YaspGrid | Mole | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | - | Scalar | FALSE | - | - | - |
- * | | conduction | H2ON2LiquidPhase | YaspGrid | Mole | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | - | Scalar | FALSE | - | - | - |
- * | \ref TwoPModel "2p" | injection | H2ON2, SimpleH2O | UGGrid/YaspGrid | - | i/ni | box/cc | - | TRUE | dirichletAtPos, neumannAtPos | Lense-Problem | Brooks-Corey | Scalar | TRUE | - | - | - |
- * | | generalizeddirichlet | H2O, LNAPL | YaspGrid | - | i/ni | box/cc | - | TRUE | dirichletAtPos, neumannAtPos | homogeneous | Brooks-Corey | Matrix | FALSE | TRUE | TRUE | - |
- * | | cc2pcornerpoint | SimpleH2O | CpGrid | - | i/ni | box/cc | AMGbackend | TRUE | dirichletAtPos, neumannAtPos | homogeneous | van Genuchten | Matrix | FALSE | TRUE | TRUE | - |
- * | | lens | SimpleH2O, DNAPL | UGGrid/YaspGrid/ALUGrid | - | i/ni | box/cc | SuperLuBackend | TRUE | dirichletAtPos, neumannAtPos | Lense-Problem | Brooks-Corey | Scalar | TRUE | TRUE | TRUE | - |
- * | \ref TwoPTwoCModel "2p2c" | injection | H2ON2 | YaspGrid | Mole | i/ni | box/cc | - | - | dirichletAtPos,solDependentNeumann | Lense-Problem | Brooks-Corey | Scalar | TRUE | TRUE | - | - |
- * | | waterair | H2ON2 | YaspGrid | Mole | i/ni | box/cc | - | - | diricheltAtPos, neumann, sourceAtPos | Lense-Problem | Brooks-Corey | Scalar | FALSE | TRUE | - | - |
+ * | \ref OnePModel "1p" | \ref Dumux::OnePTestProblem "test" | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
+ * | | \ref Dumux::OnePNIConvectionProblem "convection" | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
+ * | | \ref Dumux::OnePNIConductionProblem "conduction" | - | YaspGrid | - | ni | box/cc | AMGbackend | - | dirichletAtPos, neumannAtPos | Lense-Problem | - | Scalar | TRUE | - | - | - |
+ * | \ref OnePTwoCModel "1p2c" | \ref Dumux::OnePTwoCOutflowProblem "outflow" | H2ON2LiquidPhase | UGGrid/YaspGrid | Mole/Mass | i/ni | box/cc | - | - | dirichletAtPos, neumann | homogeneous | - | Scalar | FALSE | - | - | - |
+ * | | \ref Dumux::OnePTwoCNIConvectionProblem "convection" | H2ON2LiquidPhase | YaspGrid | Mole | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | - | Scalar | FALSE | - | - | - |
+ * | | \ref Dumux::OnePTwoCNIConductionProblem "conduction" | H2ON2LiquidPhase | YaspGrid | Mole | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | - | Scalar | FALSE | - | - | - |
+ * | \ref TwoPModel "2p" | \ref Dumux::InjectionProblem2PNI "injection" | H2ON2, SimpleH2O | UGGrid/YaspGrid | - | i/ni | box/cc | - | TRUE | dirichletAtPos, neumannAtPos | Lense-Problem | Brooks-Corey | Scalar | TRUE | - | - | - |
+ * | | \ref Dumux::GeneralizedDirichletProblem "generalizeddirichlet" | H2O, LNAPL | YaspGrid | - | i/ni | box/cc | - | TRUE | dirichletAtPos, neumannAtPos | homogeneous | Brooks-Corey | Matrix | FALSE | TRUE | TRUE | - |
+ * | | \ref Dumux::CC2PCornerPointProblem "cc2pcornerpoint" | SimpleH2O | CpGrid | - | i/ni | box/cc | AMGbackend | TRUE | dirichletAtPos, neumannAtPos | homogeneous | van Genuchten | Matrix | FALSE | TRUE | TRUE | - |
+ * | | \ref Dumux::LensProblem "lens" | SimpleH2O, DNAPL | UGGrid/YaspGrid/ALUGrid | - | i/ni | box/cc | SuperLuBackend | TRUE | dirichletAtPos, neumannAtPos | Lense-Problem | Brooks-Corey | Scalar | TRUE | TRUE | TRUE | - |
+ * | | \ref Dumux::FractureProblem "fracture" | SimpleH2O, DNAPL | FoamGrid/YaspGrid | - | i/ni | box | - | - | dirichlet, neumannAtPos | Fracture/Matrix | van Genuchten | Scalar | FALSE |  |  | - |
+ * | \ref TwoPOneCModel "2p1c" | \ref Dumux::InjectionProblem "steaminjection" | TwoPLiquidVapor | | | ni | box/cc | - | | dirichletAtPos, neumannAtPos |  | van Genuchten | Matrix | TRUE | - | - | - |
+ * | \ref TwoPTwoCModel "2p2c" | \ref Dumux::InjectionProblem "injection" | H2ON2 | YaspGrid | Mole | i/ni | box/cc | - | - | dirichletAtPos,solDependentNeumann | Lense-Problem | Brooks-Corey | Scalar | TRUE | TRUE | - | - |
+ * | | \ref Dumux::WaterAirProblem "waterair" | H2ON2 | YaspGrid | Mole | i/ni | box/cc | - | - | diricheltAtPos, neumann, sourceAtPos | Lense-Problem | Brooks-Corey | Scalar | FALSE | TRUE | - | - |
  * | \ref TwoPDFMModel "2pdfm" | - | SimpleH2O, DNAPL | UGGrid/YaspGrid | - | ni | - | BoxBiCGStabILU0Solver | - | dirichletAtPos, neumannAtPos | Fracture/Matrix | regularizedbrookscorey | Scalar | FALSE | TRUE | TRUE | - |
  * | \ref TwoPMincModel "2pminc" | - | SimpleH2O, DNAPL | YaspGrid | - | i | box  | - |  FALSE | neumannAtPos, dirichletAtPos | Fracture | Brooks-Corey  | Matrix | TRUE | TRUE |  TRUE | 2D-Problem |
- * | \ref TwoPNCModel "2pnc" | fuelcell | H2ON2O2 | UGGrid | - | ni | box | - |  FALSE | dirichletAtPos, solDependentNeumann |  homogeneous | Brooks-Corey/Van Genuchten| Matrix | FALSE | FALSE | FALSE | water management in PEM-fuel cells |
- * | \ref TwoPNCMinModel "2pncmin" | dissolution | BrineAir | YaspGrid |  Mole/Mass | ni | box  | - | FALSE | dirichlet, neumann |  homogeneous | Brooks-Corey| Scalar | TRUE | FALSE | FALSE | flushing precipitated salt |
- * | \ref ThreePModel "3p" | infiltration | H2OAirMesitylene | YaspGrid | - | i | cc | - | - | dirichletAtPos, neumann, sourceAtPos | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | - |
- * | | convection | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, solDependentNeumann, sourceAtPos | homogeneous | van Genuchten | Scalar | FALSE | - | - | - |
- * | | conduction | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | van Genuchten | Scalar | FALSE | - | - | - |
- * | \ref ThreePThreeCModel "3p3c" | infiltration | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | backward/central/forward differences |
- * | | columnxylol | H2OAirXylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | backward/central/forward differences |
- * | | kuevette | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | backward/central/forward differences |
- * | \ref CO2Model "co2" | heterogeneous | BrineCO2FluidSystem | ALUGrid/YaspGrid | Mole/Mass | i/ni | box/cc | - | - | dirichletAtPos, neumann | layered system | van Genuchten | Scalar | TRUE | - | - | - |
- * | \ref MPNCModel "mpnc" | combustion | PureWaterSimpleFluidSystem | OneDGrid | Mole | ni | box/cc | SuperLuBackend | - | dirichletAtPos, solDependentNeumann, source | homogeneous | van Genuchten | Scalar | TRUE | - | - | - |
- * | | evaporationatmosphere | H2ON2Kinetic | UGGrid/ALUGrid/YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | homogeneous | Brooks-Corey | Scalar | FALSE | - | - | - |
- * | | forchheimer1p | SimpleH2O | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | linear law | Scalar | FALSE | - | TRUE | - |
- * | | forchheimer2p | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | linear law | Scalar | TRUE | - | TRUE | - |
- * | | obstacle | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | Lense-Problem | linear law | Scalar | TRUE | - | TRUE | smoothUpwinding |
- * | \ref RichardsModel "richards" | lens | SimpleH2O | YaspGrid | - | i | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
- * | | conduction | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
- * | | convection | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
+ * | \ref TwoPNCModel "2pnc" | \ref Dumux::FuelCellProblem "fuelcell" | H2ON2O2 | UGGrid | - | ni | box | - |  FALSE | dirichletAtPos, solDependentNeumann |  homogeneous | Brooks-Corey/Van Genuchten| Matrix | FALSE | FALSE | FALSE | water management in PEM-fuel cells |
+ * | \ref TwoPNCMinModel "2pncmin" | \ref Dumux::DissolutionProblem "dissolution" | BrineAir | YaspGrid |  Mole/Mass | ni | box  | - | FALSE | dirichlet, neumann |  homogeneous | Brooks-Corey| Scalar | TRUE | FALSE | FALSE | flushing precipitated salt |
+ * | \ref ThreePModel "3p" | \ref Dumux::InfiltrationThreePProblem "infiltration" | H2OAirMesitylene | YaspGrid | - | i | cc | - | - | dirichletAtPos, neumann, sourceAtPos | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | - |
+ * | | \ref Dumux::ThreePNIConvectionProblem "convection" | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, solDependentNeumann, sourceAtPos | homogeneous | van Genuchten | Scalar | FALSE | - | - | - |
+ * | | \ref Dumux::ThreePNIConductionProblem "conduction" | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | van Genuchten | Scalar | FALSE | - | - | - |
+ * | \ref ThreePThreeCModel "3p3c" | \ref Dumux::InfiltrationProblem "infiltration" | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | backward/central/forward differences |
+ * | | \ref Dumux::ColumnProblem "columnxylol" | H2OAirXylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | backward/central/forward differences |
+ * | | \ref Dumux::KuevetteProblem "kuevette" | H2OAirMesitylene | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | Lense-Problem | van Genuchten | Scalar | FALSE | - | - | backward/central/forward differences |
+ * | \ref ThreePWaterOilModel "3pwateroil" | \ref Dumux::SagdProblem "sagd" | H2OHeavyOil | YaspGrid | - | ni | box | - | - | dirichletAtPos,solDependentNeumann | | van Genuchten | Scalar | TRUE |  |  | - |
+ * | \ref CO2Model "co2" | \ref Dumux::HeterogeneousProblem "heterogeneous" | BrineCO2FluidSystem | ALUGrid/YaspGrid | Mole/Mass | i/ni | box/cc | - | - | dirichletAtPos, neumann | layered system | van Genuchten | Scalar | TRUE | - | - | - |
+ * | \ref MPNCModel "mpnc" | \ref Dumux::CombustionProblemOneComponent "combustion" | PureWaterSimpleFluidSystem | OneDGrid | Mole | ni | box/cc | SuperLuBackend | - | dirichletAtPos, solDependentNeumann, source | homogeneous | van Genuchten | Scalar | TRUE | - | - | - |
+ * | | \ref Dumux::EvaporationAtmosphereProblem "evaporationatmosphere" | H2ON2Kinetic | UGGrid/ALUGrid/YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann | homogeneous | Brooks-Corey | Scalar | FALSE | - | - | - |
+ * | | \ref Dumux::Forchheimer1pProblem "forchheimer1p" | SimpleH2O | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | linear law | Scalar | FALSE | - | TRUE | - |
+ * | | \ref Dumux::Forchheimer2pProblem "forchheimer2p" | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | homogeneous | linear law | Scalar | TRUE | - | TRUE | - |
+ * | | \ref Dumux::ObstacleProblem "obstacle" | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumann, sourceAtPos | Lense-Problem | linear law | Scalar | TRUE | - | TRUE | smoothUpwinding |
+ * | \ref RichardsModel "richards" | \ref Dumux::RichardsAnalyticalProblem "analytical" | SimpleH2O | YaspGrid | - | i | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
+ * | | \ref Dumux::RichardsLensProblem "lens" | SimpleH2O | YaspGrid | - | i | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
+ * | | \ref Dumux::RichardsNIConductionProblem "conduction" | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
+ * | | \ref Dumux::RichardsNIConvectionProblem "convection" | H2ON2 | YaspGrid | - | ni | box/cc | - | - | dirichletAtPos, neumannAtPos | Lense-Problem | van Genuchten | Scalar | TRUE | - | TRUE | - |
  *
  * \section Sequential
  * | Tests | | Fluidsystem | Gridmanager | Primaryvariables | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | JacobianRecycling | PartialReassemble | Comments |
  * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
- * | 1p | dec1p | Liquidphase | YaspGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | TRUE | dirichletAtPos, neumannAtPos | homogeneous | - | Matrix | FALSE | - | - | TPFA flux |
- * | | diffusion | - | ALUGrid/UGGrid | pw, sw | i | cc | SSORBiCGSTABBackend | TRUE | neumannAPos, dirichletAtPos, sourceAtPos | homogeneous| - | Matrix | FALSE | - | - | - |
- * | | diffusion 3d | - | ALUGrid/UGGrid | pw, sw | i | cc | SuperLUBackend/ILUnRestartedGMResBackend | TRUE | neumannAPos, dirichletAtPos, sourceAtPos | homogeneous | - | Matrix | FALSE | - | - | TPFA, MPFA, Mimetic flux |
- * | 2p | 3c2p | - | ALUGrid | pn/pw, sw | i | cc | ILU0BiCGSTABBackend | TRUE/FALSE | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Matrix | FALSE | - | - | TPFA, MPFA, Mimetic flux |
- * | | impesadaptive | - | ALUGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | TRUE | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Scalar | FALSE | - | - | TPFA flux |
- * | | impes | - | ALUGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | FALSE | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Scalar | FALSE | - | - | TPFA flux |
- * | | mpfa2p | - | ALUGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | FALSE | dirichletAtPos, neumannAtPos | Lense-Problem | RegularizedBrooksCorey | Matrix | TRUE/FALSE | - | - | TPFA/MPFA flux  |
- * | | transport | - | YaspGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | FALSE | dirichletAtPos, neumannAtPos | homogeneous | Linear| Scalar | FALSE | - | - | TPFA flux  |
- * | 2p2c | multiphysics2p2c | H2OAir | YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | FALSE |  dirichletAtPos, neumannAtPos | homogeneous | Linear| Matrix | TRUE | - | - | TPFA flux |
- * | | adaptive2p2c2d | H2OAir/H2ON2 | ALUGrid/YaspGrid | pn, sn | i | cc | ILU0BiCGSTABBackend | TRUE | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | TRUE | - | - | TPFA (MPFA on hanging FALSEdes) flux  |
- * | | dec2p2c | H2OAir | YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | FALSE | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | TRUE | - | - | TPFA flux |
- * | | adaptive2p2c3d | H2OAir | ALUGrid/YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | TRUE | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | FALSE | - | - | TPFA (MPFA on hanging FALSEdes) flux |
+ * | \ref OnePhase "1p" | \ref Dumux::TestProblemOneP "dec1p" | Liquidphase | YaspGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | TRUE | dirichletAtPos, neumannAtPos | homogeneous | - | Matrix | FALSE | - | - | TPFA flux |
+ * | | \ref Dumux::TestDiffusionProblem "diffusion" | - | ALUGrid/UGGrid | pw, sw | i | cc | SSORBiCGSTABBackend | TRUE | neumannAPos, dirichletAtPos, sourceAtPos | homogeneous| - | Matrix | FALSE | - | - | - |
+ * | | \ref Dumux::TestDiffusion3DProblem "diffusion 3d" | - | ALUGrid/UGGrid | pw, sw | i | cc | SuperLUBackend/ILUnRestartedGMResBackend | TRUE | neumannAPos, dirichletAtPos, sourceAtPos | homogeneous | - | Matrix | FALSE | - | - | TPFA, MPFA, Mimetic flux |
+ * | \ref IMPES "2p" | \ref Dumux::Test3D2PProblem "3d2p" | - | ALUGrid | pn/pw, sw | i | cc | ILU0BiCGSTABBackend | TRUE/FALSE | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Matrix | FALSE | - | - | TPFA, MPFA, Mimetic flux |
+ * | | \ref Dumux::TestIMPESAdaptiveProblem "impesadaptive" | - | ALUGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | TRUE | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Scalar | FALSE | - | - | TPFA flux |
+ * | | \ref Dumux::IMPESTestProblem "impes" | - | ALUGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | FALSE | dirichletAtPos, neumannAtPos | homogeneous | RegularizedBrooksCorey | Scalar | FALSE | - | - | TPFA flux |
+ * | | \ref Dumux::MPFATwoPTestProblem "mpfa2p" | - | ALUGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | FALSE | dirichletAtPos, neumannAtPos | Lense-Problem | RegularizedBrooksCorey | Matrix | TRUE/FALSE | - | - | TPFA/MPFA flux  |
+ * | | \ref Dumux::TestTransportProblem "transport" | - | YaspGrid | pw, sw | i | cc | ILU0BiCGSTABBackend | FALSE | dirichletAtPos, neumannAtPos | homogeneous | Linear| Scalar | FALSE | - | - | TPFA flux  |
+ * | \ref IMPEC "2p2c" | \ref Dumux::TestMultTwoPTwoCProblem "multiphysics2p2c" | H2OAir | YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | FALSE |  dirichletAtPos, neumannAtPos | homogeneous | Linear| Matrix | TRUE | - | - | TPFA flux |
+ * | | \ref Dumux::Adaptive2p2c2d "adaptive2p2c2d" | H2OAir/H2ON2 | ALUGrid/YaspGrid | pn, sn | i | cc | ILU0BiCGSTABBackend | TRUE | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | TRUE | - | - | TPFA (MPFA on hanging FALSEdes) flux  |
+ * | | \ref Dumux::TestDecTwoPTwoCProblem "dec2p2c" | H2OAir | YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | FALSE | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | TRUE | - | - | TPFA flux |
+ * | | \ref Dumux::Adaptive2p2c3d "adaptive2p2c3d" | H2OAir | ALUGrid/YaspGrid | pn, sw | i | cc | ILU0BiCGSTABBackend | TRUE | diricheltAtPos, neumann, sourceAtPos | homogeneous | Brooks-Corey | Matrix | FALSE | - | - | TPFA (MPFA on hanging FALSEdes) flux |
+ *
+ * \section Geomechanics
+ * | Tests | | Fluidsystem | Gridmanager | Mass/Mole | Non-/Isothermal | Discretization | linearSolver | AdaptiveGrid | BoundaryCondition | Homogeneity | MaterialLaw | Permeability | Gravity | Comments |
+ * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
+ * | \ref ElOnePTwoCBoxModel "el1p2c" | \ref Dumux::El1P2CProblem "el1pc" | H2ON2 | YaspGrid |   |   |   | AMGBackend |   | dirichlet, neumann |  | RegularizedBrooksCorey | Matrix | FALSE | - |
+ * | \ref ElTwoPBoxModel "el2p" | \ref Dumux::El2P_TestProblem "el2p" | BrineCO2 | YaspGrid |  | |  | El2PAMGBackend |  | dirichlet, dirichletAtPos, neumannAtPos |  | RegularizedBrooksCorey | Matrix | TRUE | - |
+ * | \ref ElasticBoxModel "elastic" | \ref Dumux::ElasticMatrixProblem "elastic" |  | YaspGrid |  |  |  | - | - | dirichlet, neumann |  |  |  | FALSE | - |
  *
  * \section  Material
  * |Tests | |Comments |
  * | :- | :- |:- |
+ * | \c fluidmatrixinteractions | effectivediffusivityconstant | tests the constant effective diffusivity law |
  * | \c fluidmatrixinteractions | effectivediffusivityconstanttau | tests the constanttau effective diffusivity law |
  * | \c fluidmatrixinteractions | effectivediffusivitymillingtonquirk | tests the millington-quirk effective diffusivity law |
+ * | \c fluidmatrixinteractions | thermalconductivityjohansen | 2p, tests the Johansen thermal conductivity law |
+ * | \c fluidmatrixinteractions | thermalconductivitysomerton | 2p, tests the Somerton thermal conductivity law |
  *
  * \section Multidomain
  * |Tests | | Fluidsystem | Gridmanager | Mass/Mole | Non-/Isothermal | Discretization | linearSolver | Gravity | MaterialLaws | StokesStabilization | Comments |
  * | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |:- |
- * | \c 2cstokes2p2c | 2cstokes2p2c  | H2OAir | UGGrid/ALUGrid/YaspGrid | Mass | i | box | Pardiso, SuperLU | TRUE/FALSE | RegularizedVanGenuchten | FALSE | |
- * | \c 2cnistokes2p2cni|2cnistokes2p2cni  | H2OAir | UGGrid/ALUGrid/YaspGrid | Mass | ni | box | Pardiso, SuperLU | TRUE/FALSE | RegularizedVanGenuchten, ThermalConductivitySomerton | FALSE | uses the gnuplotinterface for graphical live output |
+ * | \c 2cstokes2p2c | \ref Dumux::TwoCStokesTwoPTwoCTestProblem "2cstokes2p2c"  | H2OAir | UGGrid/ALUGrid/YaspGrid | Mass | i | box | Pardiso, SuperLU | TRUE/FALSE | RegularizedVanGenuchten | FALSE | |
+ * | \c 2cnistokes2p2cni| \ref Dumux::TwoCNIStokesTwoPTwoCNITestProblem "2cnistokes2p2cni"  | H2OAir | UGGrid/ALUGrid/YaspGrid | Mass | ni | box | Pardiso, SuperLU | TRUE/FALSE | RegularizedVanGenuchten, ThermalConductivitySomerton | FALSE | uses the gnuplotinterface for graphical live output |
  * | \c 2cnistokes2p2cni| boundarylayer | H2OAir | UGGrid/ALUGrid/YaspGrid | Mass | ni | box | Pardiso, SuperLU | TRUE/FALSE | RegularizedVanGenuchten, ThermalConductivitySomerton | FALSE | uses boundarylayer models to calculate the interface fluxes |
- * | \c 2czeroeq2p2c |2czeroeq2p2c | H2OAir | UGGrid/ALUGrid | Mass | i | box | SuperLU, UMFPack | TRUE/FALSE | RegularizedVanGenuchten | FALSE | |
- * | \c 2cnizeroeq2p2cni|2cnizeroeq2p2cni | H2OAir | UGGrid/ALUGrid | Mass | ni | box | SuperLU, UMFPack | TRUE/FALSE | RegularizedVanGenuchten, ThermalConductivityJohansen | FALSE | |
+ * | \c 2czeroeq2p2c | \ref Dumux::TwoCZeroEqTwoPTwoCTestProblem "2czeroeq2p2c" | H2OAir | UGGrid/ALUGrid | Mass | i | box | SuperLU, UMFPack | TRUE/FALSE | RegularizedVanGenuchten | FALSE | |
+ * | \c 2cnizeroeq2p2cni| \ref Dumux::TwoCNIZeroEqTwoPTwoCNITestProblem "2cnizeroeq2p2cni" | H2OAir | UGGrid/ALUGrid | Mass | ni | box | SuperLU, UMFPack | TRUE/FALSE | RegularizedVanGenuchten, ThermalConductivityJohansen | FALSE | |
  *
  * </div>
  */

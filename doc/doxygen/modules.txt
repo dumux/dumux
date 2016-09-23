@@ -56,6 +56,12 @@
          */
     /*!
      * \ingroup Porousmediaflow
+     * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
+     *
+     * \copydetails Dumux::TwoPOneCModel
+     */
+    /*!
+     * \ingroup Porousmediaflow
      * \defgroup TwoPTwoCModels 2p2c (two-phase, two-component Darcy flow)
      */
         /*!
@@ -109,6 +115,12 @@
      * \defgroup ThreePThreeCModel 3p3c (three-phase, three-component Darcy flow)
      *
      * \copydetails Dumux::ThreePThreeCModel
+     */
+    /*!
+     * \ingroup Porousmediaflow
+     * \defgroup ThreePWaterOilModel 3pwateroil (three-phase, two-component Darcy flow)
+     *
+     * \copydetails Dumux::ThreePWaterOilModel
      */
     /*!
      * \ingroup Porousmediaflow
