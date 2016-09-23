@@ -25,8 +25,6 @@
 #ifndef DUMUX_SEQUENTIAL_2P_INDICES_HH
 #define DUMUX_SEQUENTIAL_2P_INDICES_HH
 
-#include <dune/common/deprecated.hh>
-
 namespace Dumux
 {
 /*!
@@ -70,9 +68,6 @@ struct SequentialTwoPCommonIndices
     static const int velocityNw = velocityN; //!<  Indicates non-wetting phase velocity
     static const int velocityTotal = 2; //!<  Indicates total velocity
 };
-
-struct DecoupledTwoPCommonIndices : public SequentialTwoPCommonIndices
-{} DUNE_DEPRECATED_MSG("Use SequentialTwoPCommonIndices instead.");
 
 /*!
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
@@ -274,10 +269,6 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSn, PVOffset>
     static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
-
-template <int formulation = SequentialTwoPCommonIndices::pwsn, int PVOffset = 0>
-struct DecoupledTwoPIndices : public SequentialTwoPIndices<formulation, PVOffset>
-{} DUNE_DEPRECATED_MSG("Use SequentialTwoPIndices instead.");
 
 // \}
 } // namespace Dumux

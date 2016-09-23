@@ -199,27 +199,6 @@ public:
     *
     *        For not-regularized part:
     *
-      \copydetails VanGenuchten::dpc_dsw()
-    *
-    */
-    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
-    {
-        return dpc_dswe(params, swe);
-    }
-
-    /*!
-    * \brief A regularized version of the partial derivative
-    *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
-    *        according to van Genuchten.
-    *
-    * regularized part:
-    *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-    *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-    *                       by a straight line and use that slope (yes, there is a kink :-( ).
-    *
-    *        For not-regularized part:
-    *
       \copydetails VanGenuchten::dpc_dswe()
     *
     */
@@ -236,25 +215,6 @@ public:
         }
 
         return VanGenuchten::dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
-     *        according to van Genuchten.
-     *
-     *  regularized part:
-     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
-     *
-     *        For not-regularized part:
-        \copydetails VanGenuchten::dsw_dpc()
-     */
-    DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, Scalar pc) is deprecated. Use dswe_dpc(const Params &params, Scalar pc) instead.")
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
-    {
-        return dswe_dpc(params, pc);
     }
 
     /*!

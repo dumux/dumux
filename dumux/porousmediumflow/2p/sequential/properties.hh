@@ -55,9 +55,6 @@ namespace Properties
 //! The TypeTag for sequential two-phase problems
 NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
 
-//! DEPRECATED Since compile-time detection is "impossible," a run-time check will be performed in start.hh
-NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(SequentialTwoP));
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////

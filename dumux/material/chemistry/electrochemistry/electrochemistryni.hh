@@ -114,13 +114,6 @@ public:
         values[contiO2EqIdx]  = -currentDensity/(4*Constant::F);                 //O2-equation
         values[energyEqIdx] = (thermoneutralVoltage - cellVoltage)*currentDensity; //energy equation
     }
-
-    DUNE_DEPRECATED_MSG("First compute the currentDensity with calculateCurrentDensity(const VolumeVariables&) and then use the method reactionSource(PrimaryVariables&, Scalar) instead")
-    static void reactionSource(PrimaryVariables &values,
-                               const VolumeVariables &volVars)
-    {
-        reactionSource(values, ParentType::calculateCurrentDensity(volVars));
-    }
 };
 
 }// end namespace

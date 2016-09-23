@@ -116,44 +116,9 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
-    DUNE_DEPRECATED_MSG("dpc_dsw(const Params &params, Scalar swe) is deprecated. Use dpc_dswe(const Params &params, Scalar swe) instead.")
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
-    {
-        return dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the capillary
-     *        pressure to the effective saturation.
-     *
-     * This is equivalent to
-     * \f$\mathrm{
-     \frac{\partial p_C}{\partial \overline{S}_w} =
-     - (p_{C,max} - p_{C,min})
-     }\f$
-     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$ conversion from absolute saturation happened in EffToAbsLaw.
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
-    */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         return LinearMaterial::dpc_dswe(params, swe);
-    }
-
-    /*!
-     * \brief Returns the partial derivative of the effective
-     *        saturation to the capillary pressure.
-     *
-     * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
-     */
-    DUNE_DEPRECATED_MSG("dsw_dpc(const Params &params, Scalar pc) is deprecated. Use dswe_dpc(const Params &params, Scalar pc) instead.")
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
-    {
-        return dswe_dpc(params, pc);
     }
 
     /*!

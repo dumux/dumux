@@ -25,8 +25,6 @@
 #ifndef DUMUX_SEQUENTIAL_1P_INDICES_HH
 #define DUMUX_SEQUENTIAL_1P_INDICES_HH
 
-#include <dune/common/deprecated.hh>
-
 namespace Dumux
 {
 /*!
@@ -41,9 +39,6 @@ struct SequentialOnePCommonIndices
 {
    static const int pressureEqIdx = 0;//!< Index of the pressure equation
 };
-
-struct DecoupledOnePCommonIndices : public SequentialOnePCommonIndices
-{} DUNE_DEPRECATED_MSG("Use SequentialOnePCommonIndices instead.");
 
 // \}
 } // namespace Dumux
