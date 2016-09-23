@@ -235,59 +235,40 @@ public:
             permLenses_[1][1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensPermeabilityYY);
         }
 
-        if (ParameterTree::tree().hasKey("SpatialParams.LensOneLowerLeftX"))
+        if (ParameterTree::tree().hasKey("SpatialParams.LensOneLowerLeft"))
         {
-            lensOneLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensOneLowerLeftX);
+            lensOneLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneLowerLeft)[0];
+            lensOneLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneLowerLeft)[1];
         }
 
-        if (ParameterTree::tree().hasKey("SpatialParams.LensOneUpperRightX"))
+        if (ParameterTree::tree().hasKey("SpatialParams.LensOneUpperRight"))
         {
-            lensOneUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensOneUpperRightX);
+            lensOneUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneUpperRight)[0];
+            lensOneUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneUpperRight)[1];
         }
 
-        if (ParameterTree::tree().hasKey("SpatialParams.LensTwoLowerLeftX"))
+        if (ParameterTree::tree().hasKey("SpatialParams.LensTwoLowerLeft"))
         {
-            lensTwoLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensTwoLowerLeftX);
-        }
-        if (ParameterTree::tree().hasKey("SpatialParams.LensTwoUpperRightX"))
-        {
-            lensTwoUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensTwoUpperRightX);
+            lensTwoLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoLowerLeft)[0];
+            lensTwoLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoLowerLeft)[1];
         }
 
-        if (ParameterTree::tree().hasKey("SpatialParams.LensThreeLowerLeftX"))
+        if (ParameterTree::tree().hasKey("SpatialParams.LensTwoUpperRight"))
         {
-            lensThreeLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensThreeLowerLeftX);
-        }
-        if (ParameterTree::tree().hasKey("SpatialParams.LensThreeUpperRightX"))
-        {
-            lensThreeUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensThreeUpperRightX);
+            lensTwoUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoUpperRight)[0];
+            lensTwoUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoUpperRight)[1];
         }
 
-        if (ParameterTree::tree().hasKey("SpatialParams.LensOneLowerLeftY"))
+        if (ParameterTree::tree().hasKey("SpatialParams.LensThreeLowerLeft"))
         {
-            lensOneLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensOneLowerLeftY);
-        }
-        if (ParameterTree::tree().hasKey("SpatialParams.LensOneUpperRightY"))
-        {
-            lensOneUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensOneUpperRightY);
+            lensThreeLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeLowerLeft)[0];
+            lensThreeLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeLowerLeft)[1];
         }
 
-        if (ParameterTree::tree().hasKey("SpatialParams.LensTwoLowerLeftY"))
+        if (ParameterTree::tree().hasKey("SpatialParams.LensThreeUpperRight"))
         {
-            lensTwoLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensTwoLowerLeftY);
-        }
-        if (ParameterTree::tree().hasKey("SpatialParams.LensTwoUpperRightY"))
-        {
-            lensTwoUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensTwoUpperRightY);
-        }
-
-        if (ParameterTree::tree().hasKey("SpatialParams.LensThreeLowerLeftY"))
-        {
-            lensThreeLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensThreeLowerLeftY);
-        }
-        if (ParameterTree::tree().hasKey("SpatialParams.LensThreeUpperRightY"))
-        {
-            lensThreeUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensThreeUpperRightY);
+            lensThreeUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeUpperRight)[0];
+            lensThreeUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeUpperRight)[1];
         }
 #endif
     }

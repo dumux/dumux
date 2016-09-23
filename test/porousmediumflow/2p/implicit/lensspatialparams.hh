@@ -98,10 +98,10 @@ public:
     LensSpatialParams(const GridView& gridView)
     : ParentType(gridView)
     {
-            lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
-            lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
-            lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightX);
-            lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightY);
+            lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[0];
+            lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[1];
+            lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[0];
+            lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[1];
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);

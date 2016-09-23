@@ -47,7 +47,7 @@ void usage(const char *progName, const std::string &errorMsg)
                                         "\t-Grid.UpperRight                Upper right corner coordinates\n"
                                         "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
                                         "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightX  coordinates of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
                                         "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
                                         "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
 

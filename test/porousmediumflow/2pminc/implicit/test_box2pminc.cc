@@ -43,10 +43,8 @@ void usage(const char *progName, const std::string &errorMsg)
         errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
                            "\t-TimeManager.TEnd              End of the simulation [s] \n"
                            "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                           "\t-Grid.NumberOfCellsX           Number of Cells in x \n"
-                           "\t-Grid.NumberOfCellsY           Number of Cells in y \n"
-                           "\t-Grid.UpperRightX              Upper right domain boundary x \n"
-                           "\t-Grid.UpperRightY              Upper right domain boundary y \n"
+                           "\t-Grid.Cells                    Number of cells in respective coordinate directions\n"
+                           "\t-Grid.UpperRight               Upper right corner coordinates\n"
                            "\t-Problem.Name                  String for naming of the output files \n"
                            "\n";
 

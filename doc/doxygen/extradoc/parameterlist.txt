@@ -20,20 +20,13 @@
  * | | RefTemperature | Scalar | - | free stream temperature |
  * | | RefVelocity | Scalar | - | free stream velocity |
  * | \b Grid | File | std::string | - | name of the grid file, if a corresponding GridCreator is used |
- * | | GradingFactorX | Scalar | 1.0 | Grid factor for the cells on the x-coordinate (only Interface-GridCreator) |
- * | | GradingFactorY | Scalar | 1.0 | Grid factor for the cells on the y-coordinate (only Interface-GridCreator) |
  * | | InterfacePosX | Scalar | 0.0 | x-coordinate of the refinement point/line (only Interface-GridCreator) |
  * | | InterfacePosY | Scalar | 0.0 | y-coordinate of the refinement point/line (only Interface-GridCreator) |
- * | | LowerLeftX | Scalar | - | x-coordinate of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
- * | | LowerLeftY | Scalar | - | y-coordinate of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
- * | | NumberOfCellsX | int | - | number of cells in x direction for the Cube/SimplexGridCreator |
- * | | NumberOfCellsY | int | - | number of cells in y direction for the Cube/SimplexGridCreator |
- * | | NumberOfCellsZ | int | - | number of cells in z direction for the Cube/SimplexGridCreator |
+ * | | LowerLeft | globalPosition | - | coordinates of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
+ * | | Cells | globalPosition | - | number of cells in respective coordinate directions for the Cube/SimplexGridCreator |
  * | | RefineTopX | bool | false | Refine to the right of the domain (only Interface-GridCreator) |
  * | | RefineTopY | bool | false | Refine to the top of the domain (only Interface-GridCreator) |
- * | | UpperRightX | Scalar | - | x-coordinate of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
- * | | UpperRightY | Scalar | - | y-coordinate of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
- * | | UpperRightZ | Scalar | - | z-coordinate of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
+ * | | UpperRight | globalPosition | - | coordinates of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
  * | \b GridAdapt | AdaptionInterval | int | 1 | time step interval for adaption |
  * | | CoarsenPercentileFlux | Scalar | 0.2 | percentile of cells coarsened because of flux criterion |
  * | | CoarsenPercentileSat | Scalar | 0.2 | percentile of cells coarsened because of saturation criterion |

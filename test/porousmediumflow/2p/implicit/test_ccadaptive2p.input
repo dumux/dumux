@@ -6,10 +6,8 @@ TEnd = 3000 # [s]
 File = ./grids/rectangle-domain.msh
 
 [SpatialParams]
-LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner
-LensLowerLeftY = 2.0 # [m] y-coordinate of the lower left lens corner
-LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
-LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
+LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
+LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
 
 [Problem]
 Name = lensccadaptive # name passed to the output routines
