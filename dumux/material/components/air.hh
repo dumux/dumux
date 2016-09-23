@@ -158,7 +158,7 @@ public:
             DUNE_THROW(NumericalProblem,
                 "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
         }
-        return 1.496e-6 * std::cbrt(temperature * temperature) / (temperature + 120.);
+        return 1.496e-6 * std::sqrt(temperature * temperature * temperature) / (temperature + 120.);
 
     }
 
