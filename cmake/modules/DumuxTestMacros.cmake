@@ -43,7 +43,7 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   endif()
 
   # add test
-  if(DUNE_COMMON_VERSION VERSION_LESS 3.0)
+  if(DUNE_COMMON_VERSION VERSION_LESS 2.5)
     # add test
     add_test(${dumux_test} ${dumux_test_args})
 
