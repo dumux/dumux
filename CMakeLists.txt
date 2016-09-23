@@ -32,7 +32,7 @@ add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(tutorial EXCLUDE_FROM_ALL)
 
-if(DUNE_COMMON_VERSION_MAJOR VERSION_LESS 3)
+if(DUNE_COMMON_VERSION VERSION_LESS 2.5)
   # de-activate testing the DUNE way
   # now ctest (aka make test) does not build the tests
   set(DUNE_TEST_MAGIC OFF)
