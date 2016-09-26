@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::GasPhase
+ * \brief @copybrief Dumux::FluidSystems::GasPhase
  */
 #ifndef DUMUX_GAS_PHASE_HH
 #define DUMUX_GAS_PHASE_HH

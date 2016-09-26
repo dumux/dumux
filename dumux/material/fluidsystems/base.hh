@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::BaseFluidSystem
+ * \brief @copybrief Dumux::FluidSystems::BaseFluidSystem
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
 #define DUMUX_BASE_FLUID_SYSTEM_HH

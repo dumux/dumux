@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::OneP
+ * \brief @copybrief Dumux::FluidSystems::OneP
  */
 #ifndef DUMUX_1P_FLUIDSYSTEM_HH
 #define DUMUX_1P_FLUIDSYSTEM_HH

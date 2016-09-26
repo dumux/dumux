@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief @copybrief FluidSystems::H2OAirMesitylene
+ * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
  */
 #ifndef DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH

@@ -18,7 +18,7 @@
  *****************************************************************************/
 
 /*!
- * \file An interface to the scotch library for matrix reordering
+ * \file
  * \brief An interface to the scotch library for matrix reordering
  * \note This is adapted from the FEniCS implementation of the scotch interface
  */
