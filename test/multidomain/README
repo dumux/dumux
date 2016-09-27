@@ -4,7 +4,6 @@ You need the following versions of the required Dune modules:
 Dune core modules: 2.4
 dune-typetree, dune-multidomaingrid: release (branch) 2.3
 Dune-PDELab, dune-multidomain: release (branch) 2.0
-dune-multidomaingrid has to be patched, see patches/README for details.
 
 The necessary modules and the correct versions can be obtained by using
 the script located in:
