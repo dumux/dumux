@@ -143,7 +143,7 @@ public:
      *
      * \param phaseIdx index of the phase
      */
-    const unsigned int downstreamIdx(const unsigned phaseIdx) const
+    unsigned int downstreamIdx(const unsigned phaseIdx) const
     { return downstreamIdx_[phaseIdx]; }
 
     /*!
@@ -152,7 +152,7 @@ public:
      *
      * \param phaseIdx index of the phase
      */
-    const unsigned int upstreamIdx(const unsigned phaseIdx) const
+    unsigned int upstreamIdx(const unsigned phaseIdx) const
     { return upstreamIdx_[phaseIdx]; }
 
     /*!
@@ -325,7 +325,7 @@ protected:
     }
 
     // set const reference to the fvGeometry
-    const void setFVGeometryPtr_(const FVElementGeometry& fvGeometry)
+    void setFVGeometryPtr_(const FVElementGeometry& fvGeometry)
     { fvGeometryPtr_ = &fvGeometry; }
 
     // return const reference to the fvGeometry

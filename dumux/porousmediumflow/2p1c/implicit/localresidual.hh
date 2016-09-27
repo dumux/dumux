@@ -190,7 +190,7 @@ public:
      * \brief Returns true if a spurious flow has been detected
      *
      */
-    const bool spuriousFlowDetected() const
+    bool spuriousFlowDetected() const
     {
         return spuriousFlowDetected_;
     }

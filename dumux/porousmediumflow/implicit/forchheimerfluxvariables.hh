@@ -390,7 +390,7 @@ protected:
       * \return True if all off-diagonals are zero.
       *
      */
-     const bool isDiagonal_(const DimWorldMatrix & K) const
+     bool isDiagonal_(const DimWorldMatrix & K) const
      {
          for (int i = 0; i < dim; i++) {
              for (int k = 0; k < dim; k++) {

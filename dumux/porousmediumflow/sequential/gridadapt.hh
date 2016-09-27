@@ -317,7 +317,7 @@ public:
      * not the actual maximum level of the grid.
      * @return levelMax_ maximum level for refinement
      */
-    const int getMaxLevel() const
+    int getMaxLevel() const
     {
         return levelMax_;
     }
@@ -328,7 +328,7 @@ public:
      * not the actual minimum level of the grid.
      * @return levelMin_ minimum level for coarsening
      */
-    const int getMinLevel() const
+    int getMinLevel() const
     {
         return levelMin_;
     }
@@ -474,7 +474,7 @@ public:
     {}
     void setTolerance(int, int)
     {}
-    const void setIndicator(const ScalarSolutionType&,
+    void setIndicator(const ScalarSolutionType&,
                             const Scalar&, const Scalar&)
     {}
     GridAdapt (Problem& problem)

@@ -311,7 +311,7 @@ public:
     }
 
     //! Returns the type of the fluidState
-    const bool fluidStateType() const
+    bool fluidStateType() const
     { return fluidStateType_;}
 
 };
