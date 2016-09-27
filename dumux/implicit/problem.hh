@@ -1115,6 +1115,9 @@ protected:
         //! Compute the point source map, i.e. which scvs have point source contributions
     void computePointSourceMap_()
     {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+
         // get and apply point sources if any given in the problem
         std::vector<PointSource> sources;
         asImp_().addPointSources(sources);
