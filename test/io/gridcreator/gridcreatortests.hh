@@ -96,7 +96,6 @@ private:
     {
         const auto& gridView = GridCreator::grid().leafGridView();
 
-        Dune::MultipleCodimMultipleGeomTypeMapper<GridView> elementMapper(gridView, Dune::mcmgElementLayout());
         elementMarker.clear();
         elementMarker.resize(gridView.size(0));
         rank.clear();
@@ -104,7 +103,7 @@ private:
 
         for(const auto& element : elements(gridView))
         {
-            auto eIdx = elementMapper.index(element);
+            auto eIdx = gridView.indexSet().index(element);
             rank[eIdx] = gridView.comm().rank();
 
             if (type == "gmsh")
@@ -121,9 +120,6 @@ private:
     {
         const auto& gridView = GridCreator::grid().leafGridView();
 
-        Dune::MultipleCodimMultipleGeomTypeMapper<GridView> elementMapper(gridView, Dune::mcmgElementLayout());
-        Dune::MultipleCodimMultipleGeomTypeMapper<GridView> vertexMapper(gridView, Dune::mcmgVertexLayout());
-
         boundaryMarker.clear();
         boundaryMarker.resize(gridView.size(dim));
         rank.clear();
@@ -131,7 +127,7 @@ private:
 
         for(const auto& element : elements(gridView))
         {
-            auto eIdx = elementMapper.index(element);
+            auto eIdx = gridView.indexSet().index(element);
             rank[eIdx] = gridView.comm().rank();
             for(const auto& intersection : intersections(gridView, element))
             {
@@ -145,7 +141,7 @@ private:
                 {
                     // get local vertex index with respect to the element
                     auto vIdxLocal = refElement.subEntity(intersection.indexInInside(), 1, vIdx, dim);
-                    auto vIdxGlobal = vertexMapper.subIndex(element, vIdxLocal, dim);
+                    auto vIdxGlobal = gridView.indexSet().subIndex(element, vIdxLocal, dim);
 
                     // make sure we always take the lowest non-zero marker (problem dependent!)
                     if (boundaryMarker[vIdxGlobal] == 0)
