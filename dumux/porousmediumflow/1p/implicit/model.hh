@@ -100,33 +100,30 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            int eIdx = this->problem_().model().elementMapper().index(element);
+            (*rank)[eIdx] = this->gridView_().comm().rank();
+
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               element,
+                               fvGeometry,
+                               false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int eIdx = this->problem_().model().elementMapper().index(element);
-                (*rank)[eIdx] = this->gridView_().comm().rank();
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                (*p)[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
+            }
 
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), element);
-
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                   element,
-                                   fvGeometry,
-                                   false /* oldSol? */);
-
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-                    (*p)[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
-                }
-
-                // velocity output
-                if (velocityOutput.enableOutput())
-                {
-                    velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
-                }
+            // velocity output
+            if (velocityOutput.enableOutput())
+            {
+                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
             }
         }
 

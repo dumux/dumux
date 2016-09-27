@@ -246,130 +246,127 @@ public:
 
         // initialize start and end of element iterator
         // loop over all elements (cells)
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            unsigned int eIdx = this->problem_().model().elementMapper().index(element);
+            rank[eIdx] = this->gridView_().comm().rank();
+
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element, fvGeometry);
+            elemVolVars.update(this->problem_(), element, fvGeometry, false);
+
+            // loop over all local vertices of the cell
+            int numScv = element.subEntities(dim);
+
+            for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {
-                unsigned int eIdx = this->problem_().model().elementMapper().index(element);
-                rank[eIdx] = this->gridView_().comm().rank();
+                unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
 
-                fvGeometry.update(this->gridView_(), element);
-                elemBcTypes.update(this->problem_(), element, fvGeometry);
-                elemVolVars.update(this->problem_(), element, fvGeometry, false);
-
-                // loop over all local vertices of the cell
-                int numScv = element.subEntities(dim);
-
-                for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-                {
-                    unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
-
-                    pressure[vIdxGlobal] = elemVolVars[scvIdx].pressure();
-                    moleFraction0[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
-                    moleFraction1[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
-                    massFraction0[vIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
-                    massFraction1[vIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
-                    // in case of rock mechanics sign convention solid displacement is
-                    // defined to be negative if it points in positive coordinate direction
-                    if(rockMechanicsSignConvention_){
-                        DimVector tmpDispl;
-                        tmpDispl = Scalar(0);
-                        tmpDispl -= elemVolVars[scvIdx].displacement();
-                        displacement[vIdxGlobal] = tmpDispl;
-                        }
-
-                    else
-                        displacement[vIdxGlobal] = elemVolVars[scvIdx].displacement();
-
-                    density[vIdxGlobal] = elemVolVars[scvIdx].density();
-                    viscosity[vIdxGlobal] = elemVolVars[scvIdx].viscosity();
-                    porosity[vIdxGlobal] = elemVolVars[scvIdx].porosity();
-                    Kx[vIdxGlobal] =    this->problem_().spatialParams().intrinsicPermeability(
-                                    element, fvGeometry, scvIdx)[0][0];
-                    // calculate cell quantities by adding up scv quantities and dividing through numScv
-                    cellPorosity[eIdx] += elemVolVars[scvIdx].porosity()    / numScv;
-                    cellKx[eIdx] += this->problem_().spatialParams().intrinsicPermeability(
-                                    element, fvGeometry, scvIdx)[0][0] / numScv;
-                    cellPressure[eIdx] += elemVolVars[scvIdx].pressure()    / numScv;
-                };
-
-                // calculate cell quantities for variables which are defined at the integration point
-                Scalar tmpEffPoro;
-                DimMatrix tmpEffStress;
-                tmpEffStress = Scalar(0);
-                tmpEffPoro = Scalar(0);
-
-                // loop over all scv-faces of the cell
-                for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++) {
-
-                    //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                    FluxVariables fluxVars;
-                    fluxVars.update(this->problem_(),
-                                    element, fvGeometry,
-                                    fIdx,
-                                    elemVolVars);
-
-                    // divide by number of scv-faces and sum up edge values
-                    tmpEffPoro = fluxVars.effPorosity() / fvGeometry.numScvf;
-                    tmpEffStress = fluxVars.sigma();
-                    tmpEffStress /= fvGeometry.numScvf;
-
-                    effPorosity[eIdx] += tmpEffPoro;
-
-                    // in case of rock mechanics sign convention compressive stresses
-                    // are defined to be positive
-                    if(rockMechanicsSignConvention_){
-                        effStressX[eIdx] -= tmpEffStress[0];
-                        if (dim >= 2) {
-                            effStressY[eIdx] -= tmpEffStress[1];
-                        }
-                        if (dim >= 3) {
-                            effStressZ[eIdx] -= tmpEffStress[2];
-                        }
-                    }
-                    else{
-                        effStressX[eIdx] += tmpEffStress[0];
-                        if (dim >= 2) {
-                            effStressY[eIdx] += tmpEffStress[1];
-                        }
-                        if (dim >= 3) {
-                            effStressZ[eIdx] += tmpEffStress[2];
-                        }
-                    }
-                }
-
-                // calculate total stresses
-                // in case of rock mechanics sign convention compressive stresses
-                // are defined to be positive and total stress is calculated by adding the pore pressure
+                pressure[vIdxGlobal] = elemVolVars[scvIdx].pressure();
+                moleFraction0[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
+                moleFraction1[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
+                massFraction0[vIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
+                massFraction1[vIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
+                // in case of rock mechanics sign convention solid displacement is
+                // defined to be negative if it points in positive coordinate direction
                 if(rockMechanicsSignConvention_){
-                    totalStressX[eIdx][0] = effStressX[eIdx][0]    + cellPressure[eIdx];
-                    totalStressX[eIdx][1] = effStressX[eIdx][1];
-                    totalStressX[eIdx][2] = effStressX[eIdx][2];
+                    DimVector tmpDispl;
+                    tmpDispl = Scalar(0);
+                    tmpDispl -= elemVolVars[scvIdx].displacement();
+                    displacement[vIdxGlobal] = tmpDispl;
+                    }
+
+                else
+                    displacement[vIdxGlobal] = elemVolVars[scvIdx].displacement();
+
+                density[vIdxGlobal] = elemVolVars[scvIdx].density();
+                viscosity[vIdxGlobal] = elemVolVars[scvIdx].viscosity();
+                porosity[vIdxGlobal] = elemVolVars[scvIdx].porosity();
+                Kx[vIdxGlobal] =    this->problem_().spatialParams().intrinsicPermeability(
+                                element, fvGeometry, scvIdx)[0][0];
+                // calculate cell quantities by adding up scv quantities and dividing through numScv
+                cellPorosity[eIdx] += elemVolVars[scvIdx].porosity()    / numScv;
+                cellKx[eIdx] += this->problem_().spatialParams().intrinsicPermeability(
+                                element, fvGeometry, scvIdx)[0][0] / numScv;
+                cellPressure[eIdx] += elemVolVars[scvIdx].pressure()    / numScv;
+            };
+
+            // calculate cell quantities for variables which are defined at the integration point
+            Scalar tmpEffPoro;
+            DimMatrix tmpEffStress;
+            tmpEffStress = Scalar(0);
+            tmpEffPoro = Scalar(0);
+
+            // loop over all scv-faces of the cell
+            for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++) {
+
+                //prepare the flux calculations (set up and prepare geometry, FE gradients)
+                FluxVariables fluxVars;
+                fluxVars.update(this->problem_(),
+                                element, fvGeometry,
+                                fIdx,
+                                elemVolVars);
+
+                // divide by number of scv-faces and sum up edge values
+                tmpEffPoro = fluxVars.effPorosity() / fvGeometry.numScvf;
+                tmpEffStress = fluxVars.sigma();
+                tmpEffStress /= fvGeometry.numScvf;
+
+                effPorosity[eIdx] += tmpEffPoro;
+
+                // in case of rock mechanics sign convention compressive stresses
+                // are defined to be positive
+                if(rockMechanicsSignConvention_){
+                    effStressX[eIdx] -= tmpEffStress[0];
                     if (dim >= 2) {
-                        totalStressY[eIdx][0] = effStressY[eIdx][0];
-                        totalStressY[eIdx][1] = effStressY[eIdx][1]    + cellPressure[eIdx];
-                        totalStressY[eIdx][2] = effStressY[eIdx][2];
+                        effStressY[eIdx] -= tmpEffStress[1];
                     }
                     if (dim >= 3) {
-                        totalStressZ[eIdx][0] = effStressZ[eIdx][0];
-                        totalStressZ[eIdx][1] = effStressZ[eIdx][1];
-                        totalStressZ[eIdx][2] = effStressZ[eIdx][2]    + cellPressure[eIdx];
+                        effStressZ[eIdx] -= tmpEffStress[2];
                     }
                 }
                 else{
-                    totalStressX[eIdx][0] = effStressX[eIdx][0]    - cellPressure[eIdx];
-                    totalStressX[eIdx][1] = effStressX[eIdx][1];
-                    totalStressX[eIdx][2] = effStressX[eIdx][2];
+                    effStressX[eIdx] += tmpEffStress[0];
                     if (dim >= 2) {
-                        totalStressY[eIdx][0] = effStressY[eIdx][0];
-                        totalStressY[eIdx][1] = effStressY[eIdx][1]    - cellPressure[eIdx];
-                        totalStressY[eIdx][2] = effStressY[eIdx][2];
+                        effStressY[eIdx] += tmpEffStress[1];
                     }
                     if (dim >= 3) {
-                        totalStressZ[eIdx][0] = effStressZ[eIdx][0];
-                        totalStressZ[eIdx][1] = effStressZ[eIdx][1];
-                        totalStressZ[eIdx][2] = effStressZ[eIdx][2]    - cellPressure[eIdx];
+                        effStressZ[eIdx] += tmpEffStress[2];
                     }
+                }
+            }
+
+            // calculate total stresses
+            // in case of rock mechanics sign convention compressive stresses
+            // are defined to be positive and total stress is calculated by adding the pore pressure
+            if(rockMechanicsSignConvention_){
+                totalStressX[eIdx][0] = effStressX[eIdx][0]    + cellPressure[eIdx];
+                totalStressX[eIdx][1] = effStressX[eIdx][1];
+                totalStressX[eIdx][2] = effStressX[eIdx][2];
+                if (dim >= 2) {
+                    totalStressY[eIdx][0] = effStressY[eIdx][0];
+                    totalStressY[eIdx][1] = effStressY[eIdx][1]    + cellPressure[eIdx];
+                    totalStressY[eIdx][2] = effStressY[eIdx][2];
+                }
+                if (dim >= 3) {
+                    totalStressZ[eIdx][0] = effStressZ[eIdx][0];
+                    totalStressZ[eIdx][1] = effStressZ[eIdx][1];
+                    totalStressZ[eIdx][2] = effStressZ[eIdx][2]    + cellPressure[eIdx];
+                }
+            }
+            else{
+                totalStressX[eIdx][0] = effStressX[eIdx][0]    - cellPressure[eIdx];
+                totalStressX[eIdx][1] = effStressX[eIdx][1];
+                totalStressX[eIdx][2] = effStressX[eIdx][2];
+                if (dim >= 2) {
+                    totalStressY[eIdx][0] = effStressY[eIdx][0];
+                    totalStressY[eIdx][1] = effStressY[eIdx][1]    - cellPressure[eIdx];
+                    totalStressY[eIdx][2] = effStressY[eIdx][2];
+                }
+                if (dim >= 3) {
+                    totalStressZ[eIdx][0] = effStressZ[eIdx][0];
+                    totalStressZ[eIdx][1] = effStressZ[eIdx][1];
+                    totalStressZ[eIdx][2] = effStressZ[eIdx][2]    - cellPressure[eIdx];
                 }
             }
         }

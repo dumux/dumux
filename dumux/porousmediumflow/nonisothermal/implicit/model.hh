@@ -95,24 +95,21 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         ScalarField &temperature = *writer.allocateManagedBuffer(numDofs);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               element,
+                               fvGeometry,
+                               false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), element);
-
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                   element,
-                                   fvGeometry,
-                                   false /* oldSol? */);
-
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-                    temperature[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                }
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                temperature[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
             }
         }
 

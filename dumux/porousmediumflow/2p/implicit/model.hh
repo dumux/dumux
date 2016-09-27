@@ -138,44 +138,41 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            int eIdx = this->elementMapper().index(element);
+
+            (*rank)[eIdx] = this->gridView_().comm().rank();
+
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               element,
+                               fvGeometry,
+                               false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int eIdx = this->elementMapper().index(element);
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                (*rank)[eIdx] = this->gridView_().comm().rank();
-
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), element);
-
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                   element,
-                                   fvGeometry,
-                                   false /* oldSol? */);
-
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                    (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                    (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                    (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
-                    (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                    (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                    (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
-                    (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
-                    (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                    (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
-                    (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                }
-
-                // velocity output
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
+                (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
+                (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
+                (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
             }
+
+            // velocity output
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
         }
 
         writer.attachDofData(*sn, "Sn", isBox);

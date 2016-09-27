@@ -156,16 +156,14 @@ public:
 
         if (isBox)
         {
-            VertexIterator vIt = this->gridView_().template begin<dim> ();
-            const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
-            for (; vIt != vEndIt; ++vIt)
+            for (const auto& vertex : vertices(this->gridView_()))
             {
-                int globalIdx = this->dofMapper().index(*vIt);
-                const GlobalPosition &globalPos = vIt->geometry().corner(0);
+                int globalIdx = this->dofMapper().index(vertex);
+                const GlobalPosition &globalPos = vertex.geometry().corner(0);
 
                 // initialize phase presence
                 staticDat_[globalIdx].phasePresence
-                    = this->problem_().initialPhasePresence(*vIt, globalIdx,
+                    = this->problem_().initialPhasePresence(vertex, globalIdx,
                                                         globalPos);
                 staticDat_[globalIdx].wasSwitched = false;
 
@@ -175,12 +173,10 @@ public:
         }
         else
         {
-            ElementIterator eIt = this->gridView_().template begin<0> ();
-            const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-            for (; eIt != eEndIt; ++eIt)
+            for (const auto& element : elements(this->gridView_()))
             {
-                int globalIdx = this->dofMapper().index(*eIt);
-                const GlobalPosition &globalPos = eIt->geometry().center();
+                int globalIdx = this->dofMapper().index(element);
+                const GlobalPosition &globalPos = element.geometry().center();
 
                 // initialize phase presence
                 staticDat_[globalIdx].phasePresence
@@ -205,16 +201,12 @@ public:
     {
         storage = 0;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            if(eIt->partitionType() == Dune::InteriorEntity)
-            {
-                this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
+        {
+            this->localResidual().evalPhaseStorage(element, phaseIdx);
 
-                for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
-                    storage += this->localResidual().storageTerm()[i];
-            }
+            for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
+                storage += this->localResidual().storageTerm()[i];
         }
         if (this->gridView_().comm().size() > 1)
             storage = this->gridView_().comm().sum(storage);
@@ -335,26 +327,24 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            int idx = this->problem_().elementMapper().index(*eIt);
+            int idx = this->problem_().elementMapper().index(element);
             (*rank)[idx] = this->gridView_().comm().rank();
 
             FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
 
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                int globalIdx = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                     (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().saturation(phaseIdx);
@@ -382,9 +372,9 @@ public:
             }
 
             // velocity output
-            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, gPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
 
         }
 
@@ -493,14 +483,12 @@ public:
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
-        ElementIterator eIt = this->gridView_().template begin<0> ();
-        const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : elements(this->gridView_()))
         {
-            fvGeometry.update(this->gridView_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                int globalIdx = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 if (staticDat_[globalIdx].visited)
                     continue;
@@ -508,7 +496,7 @@ public:
                 staticDat_[globalIdx].visited = true;
                 volVars.update(curGlobalSol[globalIdx],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                scvIdx,
                                false);

@@ -196,15 +196,12 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
-                this->localResidual().evalPhaseStorage(element, phaseIdx);
+            this->localResidual().evalPhaseStorage(element, phaseIdx);
 
-                for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
-                    storage += this->localResidual().storageTerm()[i];
-            }
+            for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
+                storage += this->localResidual().storageTerm()[i];
         }
 
         this->gridView_().comm().sum(storage);

@@ -201,16 +201,12 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : elements(this->gridView_())) {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
+        {
+            this->localResidual().evalPhaseStorage(element, phaseIdx);
 
-
-                this->localResidual().evalPhaseStorage(element, phaseIdx);
-
-                for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
-                    storage += this->localResidual().storageTerm()[i];
-            }
+            for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
+                storage += this->localResidual().storageTerm()[i];
         }
         if (this->gridView_().comm().size() > 1)
             storage = this->gridView_().comm().sum(storage);
@@ -321,61 +317,58 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            int eIdx = this->elementMapper().index(element);
+            (*rank)[eIdx] = this->gridView_().comm().rank();
+
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               element,
+                               fvGeometry,
+                               false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int eIdx = this->elementMapper().index(element);
-                (*rank)[eIdx] = this->gridView_().comm().rank();
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), element);
+                (*sN)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                (*sW)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                (*pn)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pw)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*pc)[dofIdxGlobal]    = elemVolVars[scvIdx].capillaryPressure();
+                (*rhoW)[dofIdxGlobal]  = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoN)[dofIdxGlobal]  = elemVolVars[scvIdx].density(nPhaseIdx);
+                (*mobW)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                (*mobN)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    {
+                        (*massFrac[phaseIdx][compIdx])[dofIdxGlobal]
+                            = elemVolVars[scvIdx].massFraction(phaseIdx, compIdx);
 
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                   element,
-                                   fvGeometry,
-                                   false /* oldSol? */);
+                        Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
+                    }
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    {
+                        (*moleFrac[phaseIdx][compIdx])[dofIdxGlobal]
+                            = elemVolVars[scvIdx].moleFraction(phaseIdx, compIdx);
 
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                    (*sN)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                    (*sW)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                    (*pn)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                    (*pw)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                    (*pc)[dofIdxGlobal]    = elemVolVars[scvIdx].capillaryPressure();
-                    (*rhoW)[dofIdxGlobal]  = elemVolVars[scvIdx].density(wPhaseIdx);
-                    (*rhoN)[dofIdxGlobal]  = elemVolVars[scvIdx].density(nPhaseIdx);
-                    (*mobW)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                    (*mobN)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                        {
-                            (*massFrac[phaseIdx][compIdx])[dofIdxGlobal]
-                                = elemVolVars[scvIdx].massFraction(phaseIdx, compIdx);
-
-                            Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
-                        }
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                        {
-                            (*moleFrac[phaseIdx][compIdx])[dofIdxGlobal]
-                                = elemVolVars[scvIdx].moleFraction(phaseIdx, compIdx);
-
-                            Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
-                        }
-                    (*poro)[dofIdxGlobal]  = elemVolVars[scvIdx].porosity();
-                    (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                    (*phasePresence)[dofIdxGlobal]
-                        = staticDat_[dofIdxGlobal].phasePresence;
-                }
-
-                // velocity output
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                        Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
+                    }
+                (*poro)[dofIdxGlobal]  = elemVolVars[scvIdx].porosity();
+                (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                (*phasePresence)[dofIdxGlobal]
+                    = staticDat_[dofIdxGlobal].phasePresence;
             }
+
+            // velocity output
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
 
         } // loop over elements
 

@@ -104,11 +104,8 @@ public:
         ElementVolumeVariables elemVolVars;
 
         // Loop over elements
-        for (const auto& element : elements(this->problem_.gridView()))
+        for (const auto& element : elements(this->problem_.gridView(), Dune::Partitions::interior))
         {
-            if (element.partitionType() != Dune::InteriorEntity)
-                continue;
-
             fvGeometry.update(this->gridView_(), element);
             elemVolVars.update(this->problem_(), element, fvGeometry);
             this->localResidual().evalFluxes(element, elemVolVars);

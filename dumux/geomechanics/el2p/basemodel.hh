@@ -242,21 +242,18 @@ public:
     {
         storage = 0;
 
-        for (const auto& element : elements(gridView_()))
+        for (const auto& element : elements(gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
-                localResidual().evalStorage(element);
+            localResidual().evalStorage(element);
 
-                if (isBox)
-                {
-                    for (int i = 0; i < element.subEntities(dim); ++i)
-                        storage += localResidual().storageTerm()[i];
-                }
-                else
-                {
-                    storage += localResidual().storageTerm()[0];
-                }
+            if (isBox)
+            {
+                for (int i = 0; i < element.subEntities(dim); ++i)
+                    storage += localResidual().storageTerm()[i];
+            }
+            else
+            {
+                storage += localResidual().storageTerm()[0];
             }
         }
 
