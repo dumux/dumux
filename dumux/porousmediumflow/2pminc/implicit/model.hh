@@ -38,7 +38,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPMincModel
  */
 template<class TypeTag >
 class TwoPMincModel : public TwoPModel<TypeTag>

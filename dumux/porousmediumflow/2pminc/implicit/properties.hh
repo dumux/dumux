@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPTwoCModel
+ * \ingroup TwoPMincModel
  *
  * \brief Defines the properties required for the isothermal two-phase,
  * two-component BOX model.
