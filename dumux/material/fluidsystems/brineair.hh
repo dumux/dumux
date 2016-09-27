@@ -347,10 +347,8 @@ public:
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * \param phaseIdx index of the phase
-     * \param temperature phase temperature in \f$\mathrm{[K]}\f$
-     * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      * \param fluidState the fluid state
+     * \param phaseIdx index of the phase
      *
      * Equation given in:
      * - Batzle & Wang (1992) \cite batzle1992

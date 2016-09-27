@@ -207,7 +207,6 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param tInitEnd End of initialization period
      */
     El2P_TestProblem(TimeManager &timeManager,
                     const GridView &gridView)
