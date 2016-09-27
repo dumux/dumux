@@ -294,7 +294,7 @@ public:
 
     // returns the coupled_ variable which defines if geomechanical feedback on flow is taken
     // into account
-    const bool coupled() const
+    bool coupled() const
     {
         return coupled_;
     }

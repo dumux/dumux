@@ -789,7 +789,7 @@ public:
      *
      * Level is set by property or input file.
      */
-    const int vtkOutputLevel() const
+    int vtkOutputLevel() const
     {
         return vtkOutputLevel_;
     }

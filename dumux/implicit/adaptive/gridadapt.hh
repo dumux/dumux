@@ -268,7 +268,7 @@ public:
         return (sumMarked != 0 || sumCoarsened != 0);
     }
 
-    const bool wasAdapted() const
+    bool wasAdapted() const
     {
         int sumMarked = problem_.grid().comm().sum(marked_);
         int sumCoarsened = problem_.grid().comm().sum(coarsened_);
@@ -297,7 +297,7 @@ public:
      * not the actual maximum level of the grid.
      * @return levelMax_ maximum level for refinement
      */
-    const int getMaxLevel() const
+    int getMaxLevel() const
     {
         return levelMax_;
     }
@@ -308,7 +308,7 @@ public:
      * not the actual minimum level of the grid.
      * @return levelMin_ minimum level for coarsening
      */
-    const int getMinLevel() const
+    int getMinLevel() const
     {
         return levelMin_;
     }
@@ -456,7 +456,7 @@ public:
     {}
     void setTolerance(int, int)
     {}
-    const void setIndicator(const SolutionVector&,
+    void setIndicator(const SolutionVector&,
                             const Scalar&, const Scalar&)
     {}
     ImplicitGridAdapt (Problem& problem)

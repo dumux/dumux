@@ -87,11 +87,11 @@ struct TwoPMincIndices
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
     static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
 
-    static const int pIdxc(int numC) {return pwIdx + 2 *numC;} //!< index of the wetting phase pressure for continuum numC
-    static const int sIdxc(int numC) {return snIdx + 2 *numC;} //!< index of the non-wetting phase saturation for continuum numC
+    static int pIdxc(int numC) {return pwIdx + 2 *numC;} //!< index of the wetting phase pressure for continuum numC
+    static int sIdxc(int numC) {return snIdx + 2 *numC;} //!< index of the non-wetting phase saturation for continuum numC
 
-    static const int contiWEqIdxc(int numC) {return contiWEqIdx + 2 *numC;} //!< Index of the continuity equation of the wetting phase for continuum numC
-    static const int contiNEqIdxc(int numC) {return contiNEqIdx + 2 *numC;} //!< Index of the continuity equation of the non-wetting phase for continuum numC
+    static int contiWEqIdxc(int numC) {return contiWEqIdx + 2 *numC;} //!< Index of the continuity equation of the wetting phase for continuum numC
+    static int contiNEqIdxc(int numC) {return contiNEqIdx + 2 *numC;} //!< Index of the continuity equation of the non-wetting phase for continuum numC
 };
 
 /*!
@@ -118,11 +118,11 @@ struct TwoPMincIndices<TypeTag, TwoPMincFormulation::pnsw, PVOffset>
     static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
     static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
 
-    static const int pIdxc(int numC) {return pnIdx + 2 *numC;} //!< index of the nonwetting phase pressure for continuum numC
-    static const int sIdxc(int numC) {return swIdx + 2 *numC;} //!< index of the wetting phase saturation for continuum numC
+    static int pIdxc(int numC) {return pnIdx + 2 *numC;} //!< index of the nonwetting phase pressure for continuum numC
+    static int sIdxc(int numC) {return swIdx + 2 *numC;} //!< index of the wetting phase saturation for continuum numC
 
-    static const int contiWEqIdxc(int numC) {return contiWEqIdx + 2 *numC;} //!< Index of the continuity equation of the wetting phase for continuum numC
-    static const int contiNEqIdxc(int numC) {return contiNEqIdx + 2 *numC;} //!< Index of the continuity equation of the non-wetting phase for continuum numC
+    static int contiWEqIdxc(int numC) {return contiWEqIdx + 2 *numC;} //!< Index of the continuity equation of the wetting phase for continuum numC
+    static int contiNEqIdxc(int numC) {return contiNEqIdx + 2 *numC;} //!< Index of the continuity equation of the non-wetting phase for continuum numC
 };
 
 // \}

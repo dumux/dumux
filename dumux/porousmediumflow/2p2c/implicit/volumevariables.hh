@@ -459,7 +459,7 @@ public:
     /*!
      * \brief Returns the phase presence within the control volume.
      */
-    const int phasePresence() const
+    int phasePresence() const
     { return phasePresence_; }
 
     /*!

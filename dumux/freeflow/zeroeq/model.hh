@@ -467,7 +467,7 @@ public:
      *
      * \param globalPos Global Position.
      */
-    const int getPosIdx(const GlobalPosition &globalPos) const
+    int getPosIdx(const GlobalPosition &globalPos) const
     {
         int posIdx = int (intervals * (globalPos[flowNormal_] - this->problem_().bBoxMin()[flowNormal_]))
                          / (this->problem_().bBoxMax()[flowNormal_] - this->problem_().bBoxMin()[flowNormal_]);
@@ -482,7 +482,7 @@ public:
      * \param posIdx Position Index of current Global Position.
      * \param globalPos Global Position.
      */
-    const int getWallIdx(const GlobalPosition &globalPos, const int posIdx) const
+    int getWallIdx(const GlobalPosition &globalPos, const int posIdx) const
     {
         if (walls == 0)
             DUNE_THROW(Dune::NotImplemented, "Eddy viscosity models are not implemented for use without walls.");
@@ -574,7 +574,7 @@ public:
      * \param globalPos Global Position.
      * \param posIdx Position Index of current Global Position.
      */
-    const bool useViscosityInner(const GlobalPosition &globalPos, const int posIdx) const
+    bool useViscosityInner(const GlobalPosition &globalPos, const int posIdx) const
     {
         for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
             if ((wall[wallIdx].isBBoxMinWall && globalPos[wallNormal_] < wall[wallIdx].wallPos[posIdx] + wall[wallIdx].crossLength[posIdx])
@@ -813,7 +813,7 @@ public:
      *
      * \param wallIdx Wall Index of current Global Position.
      */
-    const void interpolateWallProperties(const int wallIdx)
+    void interpolateWallProperties(const int wallIdx)
     {
         const int startInterpolation = 0;
         const int endInterpolation = intervals;
@@ -894,7 +894,7 @@ public:
      * \param prevIdx Position Index with value.
      * \param nextIdx Position Index with value.
      */
-    const void doInterpolationFluxValues(const int wallIdx, const int posIdx, const int prevIdx, const int nextIdx)
+    void doInterpolationFluxValues(const int wallIdx, const int posIdx, const int prevIdx, const int nextIdx)
     {
         wall[wallIdx].boundaryLayerThickness[posIdx] = interpolation(posIdx, prevIdx, wall[wallIdx].boundaryLayerThickness[prevIdx], nextIdx, wall[wallIdx].boundaryLayerThickness[nextIdx]);
         wall[wallIdx].boundaryLayerThicknessCalculated[posIdx] = interpolation(posIdx, prevIdx, wall[wallIdx].boundaryLayerThicknessCalculated[prevIdx], nextIdx, wall[wallIdx].boundaryLayerThicknessCalculated[nextIdx]);
@@ -920,7 +920,7 @@ public:
      * \param prevIdx Position Index with value.
      * \param nextIdx Position Index with value.
      */
-    const void doInterpolationWallValues(const int wallIdx, const int posIdx, const int prevIdx, const int nextIdx)
+    void doInterpolationWallValues(const int wallIdx, const int posIdx, const int prevIdx, const int nextIdx)
     {
         wall[wallIdx].wallDensity[posIdx] = interpolation(posIdx, prevIdx, wall[wallIdx].wallDensity[prevIdx], nextIdx, wall[wallIdx].wallDensity[nextIdx]);
         wall[wallIdx].wallKinematicViscosity[posIdx] = interpolation(posIdx, prevIdx, wall[wallIdx].wallKinematicViscosity[prevIdx], nextIdx, wall[wallIdx].wallKinematicViscosity[nextIdx]);
@@ -952,7 +952,7 @@ public:
      *
      * Surface roughness is not included in the Baldwin Lomax model
      */
-    const bool surfaceRoughnessNotImplemented() const
+    bool surfaceRoughnessNotImplemented() const
     {
         switch (GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel))
         {

@@ -546,7 +546,7 @@ public:
      * That does not work.
      * -> be careful with neumannAtPos
      */
-    const bool inPM_(const GlobalPosition & globalPos) const
+    bool inPM_(const GlobalPosition & globalPos) const
     {       return ( (globalPos[dimWorld-1] > 0. - 1e-6) and (globalPos[dimWorld-1] < (heightPM_ + 1e-6 ) ) );   }
 
     /*!
@@ -560,7 +560,7 @@ public:
      * That does not work.
      * -> be careful with neumannAtPos
      */
-    const bool inFF_(const GlobalPosition & globalPos) const
+    bool inFF_(const GlobalPosition & globalPos) const
     {       return ( (globalPos[dimWorld-1] < heightDomain_ + 1e-6) and (globalPos[dimWorld-1] > (heightPM_ + 1e-6) ) );   }
 
     /*!
@@ -574,7 +574,7 @@ public:
      * That does not work.
      * -> be careful with neumannAtPos
      */
-    const bool inInjection_(const GlobalPosition & globalPos) const
+    bool inInjection_(const GlobalPosition & globalPos) const
     {       return ( (globalPos[dimWorld-1] < heightDomain_ - 0.25*heightDomain_  + 1e-6) and (globalPos[dimWorld-1] > (heightPM_ + 1e-6) ) );   }
 
     /*! \brief access function for the depth / height of the porous medium */
