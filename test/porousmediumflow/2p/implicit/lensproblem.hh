@@ -32,6 +32,7 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
+#include <dumux/porousmediumflow/2p/implicit/adaptionhelper.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 
 #include "lensspatialparams.hh"
@@ -61,8 +62,9 @@ SET_TYPE_PROP(LensCCProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(LensBoxProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
+SET_TYPE_PROP(LensBoxAdaptiveProblem, Grid, Dune::UGGrid<2>);
+
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(LensBoxAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>);
 SET_TYPE_PROP(LensCCAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
 
@@ -97,10 +99,12 @@ SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag>);
 
 SET_BOOL_PROP(LensBoxAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
-SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+//SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag>);
 #endif
 
 NEW_PROP_TAG(BaseProblem);
@@ -363,6 +367,29 @@ public:
         values[snIdx] = 0.0;
     }
     // \}
+
+    void addOutputVtkFields()
+    {
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+
+        unsigned numElements = this->gridView().size(0);
+        ScalarField *isNew = this->resultWriter().allocateManagedBuffer(numElements);
+        ScalarField *gridLevel = this->resultWriter().allocateManagedBuffer(numElements);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            if(element.partitionType() == Dune::InteriorEntity)
+            {
+                int eIdx = this->elementMapper().index(element);
+
+                (*isNew)[eIdx] = element.isNew();
+                (*gridLevel)[eIdx] = element.level();
+            }
+        }
+
+        this->resultWriter().attachCellData(*isNew, "isNew");
+        this->resultWriter().attachCellData(*gridLevel, "gridLevel");
+    }
 
 private:
 
