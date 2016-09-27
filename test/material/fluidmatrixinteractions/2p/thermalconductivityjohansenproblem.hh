@@ -191,7 +191,13 @@ public:
     }
 
 
-    //! \copydoc InjectionProblem::initialPhasePresence()
+    /*!
+    * \brief Returns the initial phase state for a control volume.
+    *
+    * \param vertex The vertex
+    * \param vIdxGlobal The global index of the vertex
+    * \param globalPos The position of the center of the element
+    */
     int initialPhasePresence(const Vertex &vertex,
                              int &vIdxGlobal,
                              const GlobalPosition &globalPos) const

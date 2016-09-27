@@ -87,7 +87,7 @@ SET_BOOL_PROP(TwoPTwoCNISubProblem, ProblemEnableGravity, true);
  * subdomain. At the bottom of the porous-medium subdomain a constant temperature is
  * set.
  *
- * This subproblem uses the \ref TwoPTwoCNIModel. It is part of a multidomain model and
+ * This subproblem uses the \ref TwoPTwoCModel. It is part of a multidomain model and
  * combined with the zeroeq2cnisubproblem for the free flow domain.
  */
 template <class TypeTag = TTAG(TwoPTwoCNISubProblem) >
