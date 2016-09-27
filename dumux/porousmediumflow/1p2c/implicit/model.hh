@@ -129,40 +129,37 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+           int eIdx = this->problem_().model().elementMapper().index(element);
+
+            rank[eIdx] = this->gridView_().comm().rank();
+
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               element,
+                               fvGeometry,
+                               false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int eIdx = this->problem_().model().elementMapper().index(element);
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                rank[eIdx] = this->gridView_().comm().rank();
-
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), element);
-
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                   element,
-                                   fvGeometry,
-                                   false /* oldSol? */);
-
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                    pressure[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
-                    delp[dofIdxGlobal] = elemVolVars[scvIdx].pressure() - 1e5;
-                    moleFraction0[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
-                    moleFraction1[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
-                    massFraction0[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
-                    massFraction1[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
-                    rho[dofIdxGlobal] = elemVolVars[scvIdx].density();
-                    mu[dofIdxGlobal] = elemVolVars[scvIdx].viscosity();
-                }
-
-                // velocity output
-                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
+                pressure[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
+                delp[dofIdxGlobal] = elemVolVars[scvIdx].pressure() - 1e5;
+                moleFraction0[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
+                moleFraction1[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
+                massFraction0[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
+                massFraction1[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
+                rho[dofIdxGlobal] = elemVolVars[scvIdx].density();
+                mu[dofIdxGlobal] = elemVolVars[scvIdx].viscosity();
             }
+
+            // velocity output
+            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
         }
 
         writer.attachDofData(pressure, "P", isBox);

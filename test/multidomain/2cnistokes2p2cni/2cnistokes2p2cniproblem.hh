@@ -174,12 +174,8 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        for (const auto& element : elements(mdGrid.leafGridView()))
+        for (const auto& element : elements(mdGrid.leafGridView(), Dune::Partitions::interior))
         {
-            // this is required for parallelization, checks if element is within a partition
-            if (element.partitionType() != Dune::InteriorEntity)
-                continue;
-
             GlobalPosition globalPos = element.geometry().center();
 
             if (globalPos[1] > interfacePosY_)

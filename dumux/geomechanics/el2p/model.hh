@@ -326,10 +326,8 @@ public:
         const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
         // initialize start and end of element iterator
         // loop over all elements (cells)
-        for (const auto& element : elements(this->gridView_())) {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
-
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
+        {
             // get FE function spaces to calculate gradients (gradient data of momentum balance
             // equation is not stored in fluxvars since it is not evaluated at box integration point)
             // copy the values of the sol vector to the localFunctionSpace values of the current element
@@ -526,7 +524,6 @@ public:
                     totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - deltaEffPressure[eIdx];
                 }
             }
-        }
         }
 
         // calculate principal stresses i.e. the eigenvalues of the total stress tensor

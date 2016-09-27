@@ -118,10 +118,8 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
             int eIdx = this->problem_().model().elementMapper().index(element);
             rank[eIdx] = this->gridView_().comm().rank();
 
@@ -182,7 +180,6 @@ public:
                 {
                     sigmaz[eIdx] += stress[2];
                 }
-            }
             }
         }
 
