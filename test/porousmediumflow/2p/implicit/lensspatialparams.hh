@@ -161,10 +161,10 @@ public:
                                                 const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
-        const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
+        const GlobalPosition& globalPos = element.geometry().center();
 
-//        if (isInLens_(globalPos))
-//            return lensMaterialParams_;
+        if (isInLens_(globalPos))
+            return lensMaterialParams_;
         return outerMaterialParams_;
     }
 
