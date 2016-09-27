@@ -119,14 +119,14 @@ a problem class is attached to the new type tag, while the grid which
 is going to be used is defined in line \ref{tutorial-sequential:set-grid-type} --
 in this case an \texttt{YaspGrid} is created. Since there's no uniform mechanism to
 allocate grids in \Dune, \Dumux features the concept of grid creators.
-In this case the generic \texttt{CubeGridCreator} (line \ref{tutorial-sequential:set-gridcreator}) which creates a
+In this case the generic \texttt{CubeGridCreator} which creates a
 structured hexahedron grid of a specified size and resolution. For
 this grid creator the  physical domain of the grid is specified via the
 run-time parameters \texttt{Grid.UpperRight} and
 \texttt{Grid.Cells}. These parameters can be specified via
 the command-line or in a parameter file.
 For more information about the \Dune grid interface, the different grid types
-that are supported and the generation of different grids consult
+that are supported and the generation of different grids, consult chapter \ref{sec:gridhandling} of this document and
 the \textit{Dune Grid Interface HOWTO} \cite{DUNE-HP}.
 
 Next, we select the material of the simulation: In the case of a pure two-phase
@@ -408,7 +408,7 @@ As you have experienced, compilation takes quite some time. Therefore, \Dumux
 provides a simple method to read in parameters (such as simulation end time or
 modelling parameters) via \texttt{Paramter Input Files}. The tests in the Test-folder
 \texttt{/test/} already use this system.\\
-If you look at the Application in \texttt{/test/implicit/2p/}, you see that
+If you look at the Application in \texttt{/test/porousmediumflow/2p/sequential/}, you see that
 the main file looks rather empty: The parameter file \texttt{test\_box2p.input}
 is read by a standard start procedure, which is called in the main function.
 This should be adapted for your problem at hand. The program run has to be
