@@ -1178,7 +1178,7 @@ public:
 
 private:
     /*!
-     * \brief Do some operatrion before making the grid
+     * \brief Do some operations before making the grid
      */
     static void preProcessing_(const std::string& modelParamGroup)
     {
