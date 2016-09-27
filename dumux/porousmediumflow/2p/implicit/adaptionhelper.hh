@@ -66,7 +66,6 @@ private:
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LevelGridView LevelGridView;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<dofCodim>::Entity DofEntity;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::ctype CoordScalar;
@@ -123,7 +122,7 @@ public:
                 //get your map entry
                 AdaptedValues &adaptedValues = adaptionMap_[element];
 
-                // put your value in the map
+                // put values in the map
                 if (element.isLeaf())
                 {
                     FVElementGeometry fvGeometry;
@@ -157,9 +156,17 @@ public:
                 //Average in father
                 if (element.level() > 0)
                 {
+                    if(!element.hasFather())
+                        DUNE_THROW(Dune::InvalidStateException, "Element on level > 0 has no father element!");
+
                     AdaptedValues& adaptedValuesFather = adaptionMap_[element.father()];
-                    adaptedValuesFather.count += 1;
-                    storeAdaptionValues(adaptedValues, adaptedValuesFather);
+                    //For some grids the father element is identical to the son element.
+                    //For that case averaging is not necessary.
+                    if(&adaptedValues != &adaptedValuesFather)
+                    {
+                        adaptedValuesFather.count += 1;
+                        storeAdaptionValues(adaptedValues, adaptedValuesFather);
+                    }
                 }
 
                 if(isBox && !element.isLeaf())
@@ -173,40 +180,6 @@ public:
                         int dofIdx = this->dofIndex(problem, subEntity);
 
                         adaptedValues.u.push_back(problem.model().curSol()[dofIdx]);
-                    }
-                }
-
-            }
-        }
-    }
-
-    void dataOutput(Problem& problem)
-    {
-        // loop over all levels of the grid
-        for (int level = problem.grid().maxLevel(); level >= 0; level--)
-        {
-            //get grid view on level grid
-            LevelGridView levelView = problem.grid().levelGridView(level);
-
-            for (const auto& element : elements(levelView))
-            {
-                AdaptedValues &adaptedValues = adaptionMap_[element];
-                if (element.level() > 0 && !element.isNew())
-                {
-                    AdaptedValues& adaptedValuesFather = adaptionMap_[element.father()];
-                    for(int i=0; i<adaptedValues.u.size(); i++)
-                    {
-                        auto subEntity = element.template subEntity <dofCodim>(i);
-                        int dofIdx = this->dofIndex(problem, subEntity);
-                        std::cout << "SonValues:" << std::endl;
-                        std::cout << "u: " << dofIdx <<"___" << adaptedValues.u[i] << std::endl;
-                    }
-                    for(int i=0; i<adaptedValuesFather.u.size(); i++)
-                    {
-                        auto subEntity = element.father().template subEntity <dofCodim>(i);
-                        int dofIdx = this->dofIndex(problem, subEntity);
-                        std::cout << "FatherValues:" << std::endl;
-                        std::cout << "u: " << dofIdx <<"___" << adaptedValuesFather.u[i] << std::endl;
                     }
                 }
 
@@ -249,7 +222,7 @@ public:
                 if (element.partitionType() == Dune::GhostEntity)
                     continue;
 
-                if (!element.isNew())
+                if (!element.isNew() || element.level() == 0)
                 {
                     //entry is in map, write in leaf
                     if (element.isLeaf())
@@ -263,7 +236,7 @@ public:
                         {
                             // get index
                             auto subEntity = element.template subEntity <dofCodim>(scvIdx);
-                            int dofIdx = problem.model().dofMapper().subIndex(element,scvIdx,dofCodim);
+                            int dofIdx = problem.model().dofMapper().index(subEntity);
 
                             this->setAdaptionValues(adaptedValues, problem.model().curSol()[dofIdx],scvIdx);
 
@@ -299,19 +272,16 @@ public:
                 else
                 {
                     // value is not in map, interpolate from father element
-                    if (element.level() > 0 && element.hasFather())
+                    if (element.hasFather())
                     {
                         auto eFather = element.father();
+                        while(eFather.isNew() && eFather.level() > 0) eFather = eFather.father();
                         FVElementGeometry fvGeometryFather;
                         fvGeometryFather.update(problem.gridView(), eFather);
                         Scalar massFather = 0.0;
 
                         if(!isBox)
                         {
-                            // create new entry: reconstruct from adaptionMap_[*father] to a new
-                            // adaptionMap_[*son]
-                            //this->reconstructAdaptionValues(this->adaptionMap_, eFather, element, problem);
-
                             AdaptedValues& adaptedValuesFather = adaptionMap_[eFather];
 
                             if (int(formulation) == pwsn)
@@ -427,13 +397,16 @@ public:
                             }
                         }
                     }
+                    else
+                    {
+                        DUNE_THROW(Dune::InvalidStateException, "Element is new but has no father element!");
+                    }
 
                 }
             }
 
         }
 
-        std::cout << "End of reconstructon" << std::endl;
         if(isBox)
         {
             for(int dofIdx = 0; dofIdx < problem.model().numDofs(); dofIdx++)
@@ -441,7 +414,6 @@ public:
                 problem.model().curSol()[dofIdx][saturationIdx] = associatedMass[dofIdx]/massCoeff[dofIdx];
             }
         }
-
 
         // reset entries in restrictionmap
         adaptionMap_.resize( typename PersistentContainer::Value() );
