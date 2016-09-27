@@ -173,7 +173,7 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
+     * \param bcTypes The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
    void boundaryTypesAtPos(BoundaryTypes &bcTypes,
