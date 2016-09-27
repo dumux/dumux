@@ -5,7 +5,8 @@ add_dumux_test(test_stokes test_stokes test_stokes.cc
                   --script fuzzy
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes"
                   --files ${CMAKE_SOURCE_DIR}/test/references/stokes-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/stokes-00013.vtu)
+                          ${CMAKE_CURRENT_BINARY_DIR}/stokes-00013.vtu
+                  --zeroThreshold {"v_1":1e5,"delP":1e5})
 
 #install sources
 install(FILES
