@@ -61,27 +61,30 @@ public:
     enum FieldType { scalar, log10 };
 
     /*!
-     * \brief Constructor.
-     *
-     * Creates a new field with random variables, if desired.
-     * Otherwise creates a data field from already available data.
-     *
-     * For the random field generation three files are necessary.
-     * A \a gstatControlFile in which all commands and in/output files for gstat are specified.
-     * A \a gstatInputFile contains all coordinates (cell centers) of the grid, so that
-     * gstat can perform its random realization. The filename must be same as in the gstatControlFile.
-     * A \a gstatOutputFile in which gstat writes the random values to this file.
-     * The filename must be the same as in the gstatControlFile.
+     * \brief Constructor
      *
      * \param gridView the used gridView
-     * \param gstatControlFile name of control file for gstat
-     * \param gstatInputFile name of input file for gstat
-     * \param gstatOutputFile name of the gstat output file
-     * \param createNew set true to create a new field
      */
     GstatRandomField(const GridView& gridView)
     : gridView_(gridView), elementMapper_(gridView),
       data_(gridView.size(0)) {}
+
+      /*!
+       * \brief Creates a new field with random variables, if desired.
+       * Otherwise creates a data field from already available data.
+       * For the random field generation three files are necessary.
+       *
+       * A \a gstatControlFile in which all commands and in/output files for gstat are specified.
+       * A \a gstatInputFile contains all coordinates (cell centers) of the grid, so that
+       * gstat can perform its random realization. The filename must be same as in the gstatControlFile.
+       * A \a gstatOutputFile in which gstat writes the random values to this file.
+       * The filename must be the same as in the gstatControlFile.
+       * \param fieldType
+       * \param gstatControlFile name of control file for gstat
+       * \param gstatInputFile name of input file for gstat
+       * \param gstatOutputFile name of the gstat output file
+       * \param createNew set true to create a new field
+       */
 
     void create(const std::string& gstatControlFile,
                 const std::string& gstatInputFile = "gstatInput.txt",

@@ -565,7 +565,7 @@ public:
 
     using Base::heatCapacity;
     /*!
-     * \copydoc BaseFluidSystem::heatCapacity
+     * \copybrief BaseFluidSystem::heatCapacity
      *
      * \note We employ the heat capacity of the pure phases.
      *

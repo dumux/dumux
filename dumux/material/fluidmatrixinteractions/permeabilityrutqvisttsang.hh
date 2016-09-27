@@ -52,10 +52,10 @@ public:
      * \brief effective permeability tensor \f$\mathrm{[m^{2})]}\f$ after Rutqvist and Tsang (2002) \cite rutqvist2002 <BR>
      *
      * \param volVars volume variables
-     * \param fluxVars flux variables
      * \param spatialParams spatial parameters
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
+     * \param scvIdx control volumne
      *
      * \return effective permeability tensor \f$\mathrm{[m^{2})]}\f$ after Rutqvist and Tsang (2002) \cite rutqvist2002 <BR>
      *

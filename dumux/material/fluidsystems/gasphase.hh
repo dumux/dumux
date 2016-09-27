@@ -238,7 +238,11 @@ public:
 
     using Base::fugacityCoefficient;
     /*!
-     * \copydoc Base::fugacityCoefficient
+     * \copybrief Base::fugacityCoefficient
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
      */
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
@@ -259,7 +263,11 @@ public:
 
     using Base::diffusionCoefficient;
     /*!
-     * \copydoc Base::diffusionCoefficient
+     *  \copybrief Base::diffusionCoefficient
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
      */
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
@@ -271,7 +279,12 @@ public:
 
     using Base::binaryDiffusionCoefficient;
     /*!
-     * \copydoc Base::binaryDiffusionCoefficient
+     * \copybrief Base::binaryDiffusionCoefficient
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIIdx The index of the component to consider
+     * \param compJIdx The index of the component to consider
      */
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,

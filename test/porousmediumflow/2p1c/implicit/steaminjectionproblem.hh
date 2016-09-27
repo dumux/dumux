@@ -173,7 +173,7 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
+     * \param bcTypes The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
    void boundaryTypesAtPos(BoundaryTypes &bcTypes,
@@ -203,12 +203,8 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
-     * \param element The finite element
-     * \param fvGeomtry The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
