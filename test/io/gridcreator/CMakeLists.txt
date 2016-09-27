@@ -46,29 +46,30 @@ dune_add_test(NAME test_gridcreator_subgrid
 dune_symlink_to_source_files(FILES "test_gridcreator_gmsh_e_markers.input"
                                    "test_gridcreator_dgf_e_markers.input")
 
-add_executable(test_gridcreator_gmsh_e_markers_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers_ug.cc)
+# UG currently doesn't implement element data load balancing
+# add_executable(test_gridcreator_gmsh_e_markers_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers_ug.cc)
 
-dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug
-              TARGET test_gridcreator_gmsh_e_markers_ug
-              CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug"
-                      --files ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/fracture_ug-00000.vtu
-                              ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/fracture_ug-00001.vtu)
-
-dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_parallel
-              TARGET test_gridcreator_gmsh_e_markers_ug
-              CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_ug-00000.vtu
-                               ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_ug-00001.vtu)
+# dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug
+              # TARGET test_gridcreator_gmsh_e_markers_ug
+              # CMAKE_GUARD dune-uggrid_FOUND
+              # COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              # CMD_ARGS --script fuzzy
+                      # --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug"
+                      # --files ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference.vtu
+                              # ${CMAKE_CURRENT_BINARY_DIR}/fracture_ug-00000.vtu
+                              # ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined.vtu
+                            # ${CMAKE_CURRENT_BINARY_DIR}/fracture_ug-00001.vtu)
+# 
+# dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_parallel
+              # TARGET test_gridcreator_gmsh_e_markers_ug
+              # CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
+              # COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              # CMD_ARGS --script fuzzy
+                       # --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug"
+                       # --files ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-parallel.vtu
+                               # ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_ug-00000.vtu
+                               # ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined-parallel.vtu
+                             # ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_ug-00001.vtu)
 
 add_executable(test_gridcreator_gmsh_e_markers_alu EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers_alu.cc)
 

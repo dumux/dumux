@@ -1149,10 +1149,13 @@ public:
               Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
      * \param elementIdx The element index
      */
-    static const int getElementDomainMarker(const Element& element)
+    static int getElementDomainMarker(const Element& element)
     {
         if(ParentType::enableGmshDomainMarkers_)
         {
+            if(ParentType::grid().comm().size() > 1)
+                DUNE_THROW(Dune::NotImplemented, "UGGrid currently doesn't support element data load balancing.");
+
             // parameters are only given for level 0 elements
             if (element.hasFather())
             {
