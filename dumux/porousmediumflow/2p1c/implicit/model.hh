@@ -349,6 +349,51 @@ public:
     }
 
     /*!
+     * \brief Write the current solution to a restart file.
+     *
+     * \param outStream The output stream of one vertex for the restart file
+     * \param entity The entity, either a vertex or an element
+     */
+    template<class Entity>
+    void serializeEntity(std::ostream &outStream, const Entity &entity)
+    {
+        // write primary variables
+        ParentType::serializeEntity(outStream, entity);
+
+        int dofIdxGlobal = this->dofMapper().index(entity);
+
+        if (!outStream.good())
+            DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
+
+        outStream << staticDat_[dofIdxGlobal].phasePresence << " ";
+    }
+
+    /*!
+     * \brief Reads the current solution from a restart file.
+     *
+     * \param inStream The input stream of one vertex from the restart file
+     * \param entity The entity, either a vertex or an element
+     */
+    template<class Entity>
+    void deserializeEntity(std::istream &inStream, const Entity &entity)
+    {
+        // read primary variables
+        ParentType::deserializeEntity(inStream, entity);
+
+        // read phase presence
+        int dofIdxGlobal = this->dofMapper().index(entity);
+
+        if (!inStream.good())
+            DUNE_THROW(Dune::IOError,
+                       "Could not deserialize entity " << dofIdxGlobal);
+
+        inStream >> staticDat_[dofIdxGlobal].phasePresence;
+        staticDat_[dofIdxGlobal].oldPhasePresence
+            = staticDat_[dofIdxGlobal].phasePresence;
+
+    }
+
+    /*!
      * \brief Update the static data of all vertices in the grid.
      *
      * \param curGlobalSol The current global solution
