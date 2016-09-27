@@ -1,19 +1,22 @@
 [TimeManager]
-DtInitial = 250 # [s]
-TEnd = 3000 # [s]
+DtInitial = 1.0e2 # [s]
+TEnd = 1.0e8 # [s]
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 6 4
-Cells = 48 32
+UpperRight = 100 100
+Cells = 100 100
 
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
 LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
 
 [Problem]
-Name = lenscc # name passed to the output routines
+Name = FiveSpot # name passed to the output routines
+InjectionRate = 1.5e-3
+InjectionRadius = 5.0
+
 
 [Implicit]
-EnablePartialReassemble = 1 # enable partial reassembly of the jacobian matrix?
-EnableJacobianRecycling = 1 # Enable reuse of jacobian matrices?
+EnablePartialReassemble = 0 # enable partial reassembly of the jacobian matrix?
+EnableJacobianRecycling = 0 # Enable reuse of jacobian matrices?
