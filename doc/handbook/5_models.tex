@@ -138,9 +138,9 @@ method as temporal discretization. The fully-implicit models are located in
 subdirectories of \texttt{dumux/freeflow}, \texttt{dumux/geomechanics}, 
 and \texttt{dumux/porousmediumflow}.
 
-Gridadaption is available for both discretization schemes, box and cc, for the incompressible
-2p-model. An \texttt{adaptionhelper}-method has to be adjusted to the respective model in order to ensure conservation 
-of mass. To receive good results the parameters, especially the porosity, have to be assigned on 
+Grid adaption is available for both discretization schemes, box and cc.  The \texttt{adaptionhelper}-method has to be adjusted to the respective model.
+Note that the current implementation only ensures mass conservation for incompressible fluids.
+In general, the spatial  parameters, especially the porosity, have to be assigned on
 the coarsest level of discretization.
 
 \subsubsection{Sequential Models}
