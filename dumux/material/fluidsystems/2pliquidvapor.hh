@@ -22,7 +22,7 @@
  * \brief @copybrief Dumux::FluidSystems::TwoPLiquidVaporFluidsystem
  */
 #ifndef DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HH
-#define DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HHH
+#define DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HH
 
 #include <limits>
 #include <cassert>
