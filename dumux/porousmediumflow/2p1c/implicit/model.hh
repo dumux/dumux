@@ -272,53 +272,50 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            int eIdx = this->elementMapper().index(element);
+            (*rank)[eIdx] = this->gridView_().comm().rank();
+
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), element);
+
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                            element,
+                            fvGeometry,
+                            false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int eIdx = this->elementMapper().index(element);
-                (*rank)[eIdx] = this->gridView_().comm().rank();
+                int globalIdx = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), element);
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+                    (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().saturation(phaseIdx);
+                    (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().pressure(phaseIdx);
+                    (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().density(phaseIdx);
 
-
-                ElementVolumeVariables elemVolVars;
-                elemVolVars.update(this->problem_(),
-                                element,
-                                fvGeometry,
-                                false /* oldSol? */);
-
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int globalIdx = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                        (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().saturation(phaseIdx);
-                        (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().pressure(phaseIdx);
-                        (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().density(phaseIdx);
-
-                        (*mobility[phaseIdx])[globalIdx] = elemVolVars[scvIdx].mobility(phaseIdx);
-                        (*viscosity[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().viscosity(phaseIdx);
-                    }
-
-                    (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
-                    (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
-
-                    FieldMatrix K = this->problem_().spatialParams().intrinsicPermeability(element,
-                                                                                        fvGeometry,
-                                                                                        scvIdx);
-                    (*permXX)[globalIdx] = K[0][0];
-                    if(dimWorld > 1)
-                        (*permYY)[globalIdx] = K[1][1];
-                    if(dimWorld > 2)
-                        (*permZZ)[globalIdx] = K[2][2];
+                    (*mobility[phaseIdx])[globalIdx] = elemVolVars[scvIdx].mobility(phaseIdx);
+                    (*viscosity[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().viscosity(phaseIdx);
                 }
 
-                // velocity output
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityG, elemVolVars, fvGeometry, element, gPhaseIdx);
+                (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
+                (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
+
+                FieldMatrix K = this->problem_().spatialParams().intrinsicPermeability(element,
+                                                                                    fvGeometry,
+                                                                                    scvIdx);
+                (*permXX)[globalIdx] = K[0][0];
+                if(dimWorld > 1)
+                    (*permYY)[globalIdx] = K[1][1];
+                if(dimWorld > 2)
+                    (*permZZ)[globalIdx] = K[2][2];
             }
+
+            // velocity output
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityG, elemVolVars, fvGeometry, element, gPhaseIdx);
         }
 
         writer.attachDofData(*saturation[wPhaseIdx], "sw", isBox);
