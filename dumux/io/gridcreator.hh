@@ -76,10 +76,10 @@ namespace Dumux
 {
 
 template<class GridPtr, class GridCreator>
-struct DataHandle : public Dune::CommDataHandleIF<DataHandle<GridPtr, GridCreator>, int>
+struct GridDataHandle : public Dune::CommDataHandleIF<GridDataHandle<GridPtr, GridCreator>, int>
 {
     using GridType = typename GridPtr::element_type;
-    DataHandle( GridPtr& gridPtr)
+    GridDataHandle( GridPtr& gridPtr)
     :  gridPtr_(gridPtr), idSet_(gridPtr->localIdSet())
     {
         auto gridView = gridPtr_->levelGridView(0);
@@ -88,7 +88,7 @@ struct DataHandle : public Dune::CommDataHandleIF<DataHandle<GridPtr, GridCreato
            std::swap(GridCreator::elementMarkers_[GridCreator::gridFactory().insertionIndex(element)], elData_[idSet_.id(element)]);
     }
 
-    ~DataHandle()
+    ~GridDataHandle()
     {
         auto gridView = gridPtr_->levelGridView(0);
         const auto& indexSet = gridView.indexSet();
@@ -99,7 +99,7 @@ struct DataHandle : public Dune::CommDataHandleIF<DataHandle<GridPtr, GridCreato
            std::swap(GridCreator::elementMarkers_[indexSet.index(element)], elData_[idSet_.id(element)]);
     }
 
-    Dune::CommDataHandleIF<DataHandle<GridPtr, GridCreator>, int>& interface()
+    Dune::CommDataHandleIF<GridDataHandle<GridPtr, GridCreator>, int>& interface()
     { return *this; }
 
     bool contains (int dim, int codim) const
@@ -138,7 +138,7 @@ class GridCreatorBase
 {
     using Intersection = typename Grid::LeafIntersection;
     using Element = typename Grid::template Codim<0>::Entity;
-    friend class DataHandle<std::shared_ptr<Grid>, GridCreatorBase>;
+    friend class GridDataHandle<std::shared_ptr<Grid>, GridCreatorBase>;
 public:
     /*!
      * \brief Make the grid. Implement this method in the specialization of this class for a grid type.
@@ -287,7 +287,7 @@ public:
         // if we have gmsh parameters we have to manually load balance the data
         else if (enableGmshDomainMarkers_)
         {
-            DataHandle<std::shared_ptr<Grid>, GridCreatorBase<Grid>> dh(gridPtr());
+            GridDataHandle<std::shared_ptr<Grid>, GridCreatorBase<Grid>> dh(gridPtr());
             gridPtr()->loadBalance(dh.interface());
             gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
         }
