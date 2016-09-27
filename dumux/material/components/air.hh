@@ -121,6 +121,11 @@ public:
      * Accentric factor taken from: <BR>
      * Adebiyi (2003) \cite adebiyi2003
      *
+     * air is a non-polar substance,
+     * thus dipole moment mu is zero, as well the dimensionless dipole moment mu_r
+     * therefore not considered below
+     * the same holds for the correction value kappa for highly polar substances
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
@@ -131,13 +136,8 @@ public:
         const Scalar Vc = 84.525138; // critical specific volume [cm^3/mol]
         const Scalar omega = 0.078; // accentric factor
         const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
-        const Scalar dipole = 0.0; // dipole moment [debye]
 
-        Scalar mu_r4 = 131.3 * dipole / std::sqrt(Vc * Tc);
-        mu_r4 *= mu_r4;
-        mu_r4 *= mu_r4;
-
-        Scalar Fc = 1 - 0.2756*omega + 0.059035*mu_r4;
+        Scalar Fc = 1 - 0.2756*omega;
         Scalar Tstar = 1.2593 * temperature/Tc;
         Scalar Omega_v =
             1.16145*std::pow(Tstar, -0.14874) +
