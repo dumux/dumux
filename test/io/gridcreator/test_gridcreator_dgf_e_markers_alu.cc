@@ -21,22 +21,37 @@
  */
 #include <config.h>
 #include <iostream>
-
 #include <dune/common/parallel/mpihelper.hh>
-#include <dumux/common/parameters.hh>
+#include <dumux/common/basicproperties.hh>
 
 #include "gridcreatortests.hh"
 
-int main(int argc, char** argv) try
+namespace Dumux {
+namespace Properties {
+
+    NEW_TYPE_TAG(GridCreatorGmshTest, INHERITS_FROM(NumericModel));
+#if HAVE_DUNE_ALUGRID
+    SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>);
+    SET_BOOL_PROP(GridCreatorGmshTest, AdaptiveGrid, false);
+#else
+    SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::YaspGrid<2>);
+#endif
+    // Change the default "Grid" to customized "BifurcationGrid", merely for demonstration purposes.
+    SET_STRING_PROP(GridCreatorGmshTest, GridParameterGroup, "BifurcationGrid");
+}
+}
+
+int main(int argc, char** argv)
 {
-    using namespace Dumux;
+#if HAVE_DUNE_ALUGRID
+try {
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
-    Parameters::init(argc, argv, "test_gridcreator_gmsh.input");
-    GridCreatorTests<Dune::UGGrid<3>>::testBoundaryDomainMarkers();
+    Dumux::GridCreatorTests<TTAG(GridCreatorGmshTest)>::testElementDomainMarkers("test_gridcreator_dgf_e_markers.input", "dgf", "co2_alu");
     return 0;
 }
 catch (Dumux::ParameterException &e) {
+    Dumux::Parameters::print<TTAG(GridCreatorGmshTest)>();
     std::cerr << e << ". Abort!\n";
     return 1;
 }
@@ -44,7 +59,9 @@ catch (Dune::Exception &e) {
     std::cerr << "Dune reported error: " << e << std::endl;
     return 3;
 }
-catch (...) {
-    std::cerr << "Unknown exception thrown!\n";
-    return 4;
+#else
+#warning "You need to have dune-alugrid installed to run this test."
+    std::cerr << "You need to have dune-alugrid installed to run this test\n";
+    return 77;
+#endif
 }

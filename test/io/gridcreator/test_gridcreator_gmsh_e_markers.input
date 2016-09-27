@@ -1,0 +1,4 @@
+[Grid]
+File = ./grids/complex_equi_coarse_tri.msh
+Verbosity = 1 # verbose grid file parsing
+DomainMarkers = true # read domain markers (gmsh physical entities)
