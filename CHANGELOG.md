@@ -26,9 +26,11 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
     - Numbering of the VTK files starts with `0` now.
 
     - Using the geostatistical tool gstat for generating random fields has been
-      facilitated. See `test_cc1pwithgstat` in
-      `test/porousmediumflow/1p/implicit`.
-
+      facilitated. See `test_cc1pwithgstat` in `test/porousmediumflow/1p/implicit`.
+      This tool can be installed using the `bin/installexternal.sh` script.
+      If cmake does not find gstat, one has to specify the GSTAT_ROOT variable, 
+      see the standard optim.opts or debug.opts. 
+      
     - The multidomain models should now run with all compilers without
       segfaults, both with optimization and debug options.
 
