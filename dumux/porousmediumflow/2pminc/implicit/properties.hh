@@ -18,8 +18,7 @@
  * \file
  * \ingroup TwoPMincModel
  *
- * \brief Defines the properties required for the isothermal two-phase,
- * two-component BOX model.
+ * \brief Defines the properties required for the isothermal two-phase minc model.
  */
 #ifndef DUMUX_2PMINC_PROPERTIES_HH
 #define DUMUX_2PMINC_PROPERTIES_HH
