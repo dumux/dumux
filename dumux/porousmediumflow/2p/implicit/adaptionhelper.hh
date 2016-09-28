@@ -43,6 +43,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     enum {
@@ -94,7 +95,10 @@ public:
      *  @param gridView a DUNE gridview object
      */
     TwoPAdaptionHelper(Problem& problem) : ParentType(problem), adaptionMap_(problem.grid(), 0)
-    {}
+    {
+        if(FluidSystem::isCompressible(wPhaseIdx) || FluidSystem::isCompressible(nPhaseIdx))
+            DUNE_THROW(Dune::InvalidStateException, "Adaptionhelper is only for incompressible fluids mass-conservative!");
+    }
 
     /*!
      * Store primary variables
@@ -131,8 +135,7 @@ public:
                     for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                     {
                         // get index
-                        auto subEntity = element.template subEntity <dofCodim>(scvIdx);
-                        int dofIdx = this->dofIndex(problem, subEntity);
+                        int dofIdx = this->dofIndex(problem, element, scvIdx);
 
                         adaptedValues.u.push_back(problem.model().curSol()[dofIdx]);
 
@@ -176,8 +179,7 @@ public:
 
                     for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                     {
-                        auto subEntity = element.template subEntity <dofCodim>(scvIdx);
-                        int dofIdx = this->dofIndex(problem, subEntity);
+                        int dofIdx = this->dofIndex(problem, element, scvIdx);
 
                         adaptedValues.u.push_back(problem.model().curSol()[dofIdx]);
                     }
@@ -203,6 +205,7 @@ public:
     void reconstructPrimVars(Problem& problem)
     {
         adaptionMap_.resize();
+        //vectors storing the mass associated with each vertex, when using the box method
         std::vector<Scalar> massCoeff;
         std::vector<Scalar> associatedMass;
 
@@ -235,24 +238,34 @@ public:
                         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                         {
                             // get index
-                            auto subEntity = element.template subEntity <dofCodim>(scvIdx);
-                            int dofIdx = problem.model().dofMapper().index(subEntity);
+                            int dofIdx = this->dofIndex(problem, element, scvIdx);
+
+                            VolumeVariables volVars;
+                            volVars.update(adaptedValues.u[scvIdx],
+                                          problem,
+                                          element,
+                                          fvGeometry,
+                                          scvIdx,
+                                          false);
+
+                            Scalar volumeElement = fvGeometry.elementVolume;
 
                             this->setAdaptionValues(adaptedValues, problem.model().curSol()[dofIdx],scvIdx);
 
+                            if (int(formulation) == pwsn)
+                            {
+                                problem.model().curSol()[dofIdx][saturationIdx] = adaptedValues.associatedMass[nPhaseIdx];
+                                problem.model().curSol()[dofIdx][saturationIdx] /= volumeElement * volVars.density(nPhaseIdx) * volVars.porosity();
+                            }
+                            else if (int(formulation) == pnsw)
+                            {
+                                problem.model().curSol()[dofIdx][saturationIdx] = adaptedValues.associatedMass[wPhaseIdx];
+                                problem.model().curSol()[dofIdx][saturationIdx] /= volumeElement * volVars.density(wPhaseIdx) * volVars.porosity();
+                            }
+
                             if(isBox)
                             {
-                                VolumeVariables volVars;
-                                volVars.update(adaptedValues.u[scvIdx],
-                                              problem,
-                                              element,
-                                              fvGeometry,
-                                              scvIdx,
-                                              false);
-
                                 Scalar volume = fvGeometry.subContVol[scvIdx].volume;
-                                Scalar volumeElement = fvGeometry.elementVolume;
-
                                 if (int(formulation) == pwsn)
                                 {
                                     massCoeff[dofIdx] += volume * volVars.density(nPhaseIdx) * volVars.porosity();
@@ -321,12 +334,12 @@ public:
                                 massCoeffSon = volume * volVars.density(wPhaseIdx) * volVars.porosity();
                             }
                             Scalar volumeFather = eFather.geometry().volume();
-                            adaptedValues.u[0][saturationIdx] = volume/volumeFather*massFather/massCoeffSon;
+                            adaptedValues.u[0][saturationIdx] = (volume/volumeFather*massFather)/massCoeffSon;
 
                             // if we are on leaf, store reconstructed values of son in CellData object
                             if (element.isLeaf())
                             {
-                                // acess new CellData object
+                                // access new CellData object
                                 int newIdxI = this->elementIndex(problem, element);
 
                                 this->setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI],0);
@@ -353,6 +366,7 @@ public:
                                 const LocalFiniteElementCache feCache;
                                 Dune::GeometryType geomType = eFather.geometry().type();
 
+                                // Interpolate values from father element by using ansatz functions
                                 const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
                                 std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
                                 localFiniteElement.localBasis().evaluateFunction(dofCenterPos, shapeVal);
@@ -378,8 +392,7 @@ public:
                                     Scalar volume = fvGeometry.subContVol[scvIdx].volume;
                                     Scalar volumeFather = eFather.geometry().volume();
 
-                                    //int dofIdx = this->dofIndex(problem, subEntity);
-                                    int dofIdx = problem.model().dofMapper().subIndex(element,scvIdx,dofCodim);
+                                    int dofIdx = this->dofIndex(problem, element, scvIdx);
                                     if (int(formulation) == pwsn)
                                     {
                                         massCoeff[dofIdx] += volume * volVars.density(nPhaseIdx) * volVars.porosity();
@@ -446,7 +459,8 @@ public:
     {
         if(!isBox)
         {
-            if(adaptedValuesFather.u.size() == 0) adaptedValuesFather.u.resize(1);
+            if(adaptedValuesFather.u.size() == 0)
+                adaptedValuesFather.u.resize(1);
 
             adaptedValuesFather.u[0] += adaptedValues.u[0];
             adaptedValuesFather.u[0] /= adaptedValues.count;
@@ -454,7 +468,6 @@ public:
         }
         else
         {
-            //adaptedValuesFather.u = adaptedValues.u;
             adaptedValuesFather.associatedMass += adaptedValues.associatedMass;
         }
     }
@@ -482,30 +495,6 @@ public:
 
         u = uNew;
     }
-
-    //! Reconstructs sons entries from data of father cell
-    /**
-     * Reconstructs a new solution from a father cell into a newly
-     * generated son cell. New cell is stored into the global
-     * adaptionMap.
-     *
-     * \param adaptionMap Global map storing all values to be adapted
-     * \param father Entity Pointer to the father cell
-     * \param son Entity Pointer to the newly created son cell
-     * \param problem The problem
-     */
-    static void reconstructAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap,
-            const Element& father, const Element& son, const Problem& problem)
-    {
-        AdaptedValues& adaptedValues = adaptionMap[son];
-        AdaptedValues& adaptedValuesFather = adaptionMap[father];
-
-        adaptedValues.u = adaptedValuesFather.u;
-        adaptedValues.u /= adaptedValuesFather.count;
-    }
-
-
-
 };
 }
 #endif
