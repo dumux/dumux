@@ -446,7 +446,7 @@ public:
     {}
     void setTolerance(int, int)
     {}
-    const void setIndicator(const SolutionVector&,
+    void setIndicator(const SolutionVector&,
                             const Scalar&, const Scalar&)
     {}
     ImplicitGridAdapt (Problem& problem)

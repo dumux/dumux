@@ -44,7 +44,7 @@ add_dumux_test(test_boxmpncthermalnonequil test_boxmpncthermalnonequil test_boxm
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/combustion-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/combustion-00077.vtp
+                         ${CMAKE_CURRENT_BINARY_DIR}/combustion-00079.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil")
 
 #install sources

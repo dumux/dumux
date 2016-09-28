@@ -361,7 +361,7 @@ public:
     int& globalIdx()
     { return globalIdx_;}
     //! Indicates if volume derivatives are computed and available
-    const bool hasVolumeDerivatives() const
+    bool hasVolumeDerivatives() const
     { return volumeDerivativesAvailable_;}
     //! Specifies that volume derivatives are computed and available
     void confirmVolumeDerivatives()

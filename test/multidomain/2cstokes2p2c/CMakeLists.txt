@@ -7,8 +7,8 @@ add_dumux_test(test_2cstokes2p2c test_2cstokes2p2c test_2cstokes2p2c.cc
                   --files ${CMAKE_SOURCE_DIR}/test/references/2cstokes2p2c-ff-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/stokes2c-00007.vtu
                           ${CMAKE_SOURCE_DIR}/test/references/2cstokes2p2c-pm-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/2p2c-00007.vtu)
-
+                          ${CMAKE_CURRENT_BINARY_DIR}/2p2c-00007.vtu
+                  --zeroThreshold {"velocityN_0":1e-8,"velocityN_1":1e-8,"velocityW_0":1e-8,"velocityW_1":1e-8,"pc":1e2})
 #install sources
 install(FILES
 2cstokes2p2cproblem.hh

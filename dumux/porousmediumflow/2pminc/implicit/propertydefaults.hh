@@ -15,13 +15,13 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *****************************************************************************/
 /*!
- * \ingroup TwoPTwoCModel
+ * \ingroup TwoPMincModel
  */
 /*!
  * \file
  *
  * \brief Defines additional default values for the properties
- *        required for the coupling of the 2p2cni box model
+ *        required for the coupling of the 2pminc box model
  */
 #ifndef DUMUX_2PMIN_PROPERTY_DEFAULTS_HH
 #define DUMUX_2PMIN_PROPERTY_DEFAULTS_HH

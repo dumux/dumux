@@ -131,7 +131,7 @@ public:
               Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
      * \param boundarySegmentIndex The boundary segment index of the intersection (intersection.boundarySegmentIndex()
      */
-    static const int getBoundaryDomainMarker(int boundarySegmentIndex)
+    static int getBoundaryDomainMarker(int boundarySegmentIndex)
     {
         if(enableGmshDomainMarkers_)
             return boundaryMarkers_[boundarySegmentIndex];
@@ -147,7 +147,7 @@ public:
               Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
      * \param elementIdx The element index
      */
-    static const int getElementDomainMarker(int elementIdx)
+    static int getElementDomainMarker(int elementIdx)
     {
         if(enableGmshDomainMarkers_)
         {

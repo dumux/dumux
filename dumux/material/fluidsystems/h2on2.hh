@@ -401,7 +401,7 @@ public:
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * Compositional effects in the gas phase are accounted by the Wilke method.
-     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * See Reid et al. (1987)  \cite reid1987 <BR>
      * 4th edition, McGraw-Hill, 1987, 407-410
      * 5th edition, McGraw-Hill, 20001, p. 9.21/22
      * \note Compositional effects for a liquid mixture have to be implemented.

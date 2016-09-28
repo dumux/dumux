@@ -130,6 +130,7 @@ public:
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
+     * \param nC Index of the continuum
      * \return Intrinsic permeability
      */
     Scalar intrinsicPermeability(const Element &element,
@@ -148,6 +149,7 @@ public:
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
+     * \param nC Index of the continuum
      * \return Porosity
      */
     Scalar porosity(const Element &element,

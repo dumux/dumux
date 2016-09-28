@@ -1,9 +1,10 @@
 set(modules
+  AddGstatFileLinks.cmake
   AddInputFileLinks.cmake
-  CheckConstexpr.cmake
-  CopyOfDuneSymlinkOrCopy.cmake
   DumuxDoxygen.cmake
   DumuxMacros.cmake
-  DumuxTestMacros.cmake)
+  DumuxTestMacros.cmake
+  FindGstat.cmake
+  FindValgrind.cmake)
 include(GNUInstallDirs)
 install(FILES ${modules} DESTINATION ${DUNE_INSTALL_MODULEDIR})

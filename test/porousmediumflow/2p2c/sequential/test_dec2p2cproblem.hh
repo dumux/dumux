@@ -183,7 +183,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
  * \param bcFormulation The boundary formulation for the conservation equations.
  * \param intersection The intersection on the boundary.
  */
-const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
+void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
     bcFormulation = Indices::concentration;
 }
@@ -247,7 +247,7 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
  * a component per total mass inside the control volume) or by means
  * of a saturation.
  */
-const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
+void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
     initialFormulation = Indices::concentration;
 }

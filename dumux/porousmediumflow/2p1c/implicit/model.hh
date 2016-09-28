@@ -272,10 +272,10 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            int idx = this->dofMapper().index(element);
-            (*rank)[idx] = this->gridView_().comm().rank();
+            int eIdx = this->elementMapper().index(element);
+            (*rank)[eIdx] = this->gridView_().comm().rank();
 
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), element);
@@ -283,9 +283,9 @@ public:
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               element,
-                               fvGeometry,
-                               false /* oldSol? */);
+                            element,
+                            fvGeometry,
+                            false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
@@ -304,8 +304,8 @@ public:
                 (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
 
                 FieldMatrix K = this->problem_().spatialParams().intrinsicPermeability(element,
-                                                                                       fvGeometry,
-                                                                                       scvIdx);
+                                                                                    fvGeometry,
+                                                                                    scvIdx);
                 (*permXX)[globalIdx] = K[0][0];
                 if(dimWorld > 1)
                     (*permYY)[globalIdx] = K[1][1];
@@ -346,6 +346,51 @@ public:
         }
 
         writer.attachCellData(*rank, "process rank");
+    }
+
+    /*!
+     * \brief Write the current solution to a restart file.
+     *
+     * \param outStream The output stream of one vertex for the restart file
+     * \param entity The entity, either a vertex or an element
+     */
+    template<class Entity>
+    void serializeEntity(std::ostream &outStream, const Entity &entity)
+    {
+        // write primary variables
+        ParentType::serializeEntity(outStream, entity);
+
+        int dofIdxGlobal = this->dofMapper().index(entity);
+
+        if (!outStream.good())
+            DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
+
+        outStream << staticDat_[dofIdxGlobal].phasePresence << " ";
+    }
+
+    /*!
+     * \brief Reads the current solution from a restart file.
+     *
+     * \param inStream The input stream of one vertex from the restart file
+     * \param entity The entity, either a vertex or an element
+     */
+    template<class Entity>
+    void deserializeEntity(std::istream &inStream, const Entity &entity)
+    {
+        // read primary variables
+        ParentType::deserializeEntity(inStream, entity);
+
+        // read phase presence
+        int dofIdxGlobal = this->dofMapper().index(entity);
+
+        if (!inStream.good())
+            DUNE_THROW(Dune::IOError,
+                       "Could not deserialize entity " << dofIdxGlobal);
+
+        inStream >> staticDat_[dofIdxGlobal].phasePresence;
+        staticDat_[dofIdxGlobal].oldPhasePresence
+            = staticDat_[dofIdxGlobal].phasePresence;
+
     }
 
     /*!

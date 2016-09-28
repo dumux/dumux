@@ -385,8 +385,6 @@ public:
      * for the liquid density.
      *
      * \param phaseIdx index of the phase
-     * \param temperature phase temperature in \f$\mathrm{[K]}\f$
-     * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      * \param fluidState the fluid state
      *
      */
@@ -445,7 +443,7 @@ public:
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * Compositional effects in the gas phase are accounted by the Wilke method.
-     * See \cite reid1987R Reid, et al.: The Properties of Gases and Liquids,
+     * See Reid et al. (1987)  \cite reid1987 <BR>
      * 4th edition, McGraw-Hill, 1987, 407-410
      * 5th edition, McGraw-Hill, 20001, p. 9.21/22
      * \note Compositional effects for a liquid mixture have to be implemented.
@@ -744,7 +742,7 @@ public:
      * \todo Check whether the gas phase enthalpy is a linear mixture of the component
      *       enthalpies and the mole fractions is a good assumption.
      *
-     * \param params    mutable parameters
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx  for which phase to give back the heat capacity
      */
     template <class FluidState>

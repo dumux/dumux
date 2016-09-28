@@ -207,7 +207,6 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param tInitEnd End of initialization period
      */
     El2P_TestProblem(TimeManager &timeManager,
                     const GridView &gridView)
@@ -294,7 +293,7 @@ public:
 
     // returns the coupled_ variable which defines if geomechanical feedback on flow is taken
     // into account
-    const bool coupled() const
+    bool coupled() const
     {
         return coupled_;
     }

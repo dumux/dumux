@@ -179,7 +179,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
 /*!
  * \copydoc TestDecTwoPTwoCProblem::boundaryFormulation()
  */
-const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
+void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
     bcFormulation = Indices::concentration;
 }
@@ -220,7 +220,7 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
 /*!
  * \copydoc TestDecTwoPTwoCProblem::initialFormulation()
  */
-const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
+void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
     initialFormulation = Indices::concentration;
 }

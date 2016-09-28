@@ -209,7 +209,7 @@ public:
     /*!
      * \brief   Check whether the current point is on a line between two points
      */
-    const bool isBetween(const GlobalPosition & globalPosCurrent,
+    bool isBetween(const GlobalPosition & globalPosCurrent,
                          const GlobalPosition & pointOne,
                          const GlobalPosition & pointTwo) const
     {
