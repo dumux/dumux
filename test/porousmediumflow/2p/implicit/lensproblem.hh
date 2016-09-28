@@ -181,7 +181,7 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
 
         // world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -385,29 +385,6 @@ public:
     }
     // \}
 
-    void addOutputVtkFields()
-    {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-
-        unsigned numElements = this->gridView().size(0);
-        ScalarField *isNew = this->resultWriter().allocateManagedBuffer(numElements);
-        ScalarField *gridLevel = this->resultWriter().allocateManagedBuffer(numElements);
-
-        for (const auto& element : elements(this->gridView()))
-        {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
-                int eIdx = this->elementMapper().index(element);
-
-                (*isNew)[eIdx] = element.isNew();
-                (*gridLevel)[eIdx] = element.level();
-            }
-        }
-
-        this->resultWriter().attachCellData(*isNew, "isNew");
-        this->resultWriter().attachCellData(*gridLevel, "gridLevel");
-    }
-
 private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -441,34 +418,30 @@ private:
     {
         PrimaryVariables totalMass(0);
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->gridView(),Dune::Partitions::interior))
         {
-            if(element.partitionType() == Dune::InteriorEntity)
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView(), element);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView(), element);
+                // get index
+                int dofIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    // get index
-                    int dofIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+                VolumeVariables volVars;
+                volVars.update(this->model().curSol()[dofIdx],
+                              this->asImp_(),
+                              element,
+                              fvGeometry,
+                              scvIdx,
+                              false);
 
-                    VolumeVariables volVars;
-                    volVars.update(this->model().curSol()[dofIdx],
-                                  *this,
-                                  element,
-                                  fvGeometry,
-                                  scvIdx,
-                                  false);
+                Scalar volume = fvGeometry.subContVol[scvIdx].volume;
 
-                    Scalar volume = fvGeometry.subContVol[scvIdx].volume;
-
-                    totalMass[nPhaseIdx] += volume*volVars.density(nPhaseIdx)
-                                        * volVars.porosity() * volVars.saturation(nPhaseIdx);
-                    totalMass[wPhaseIdx] += volume*volVars.density(wPhaseIdx)
-                                        * volVars.porosity() * volVars.saturation(wPhaseIdx);
-                }
-
+                totalMass[nPhaseIdx] += volume*volVars.density(nPhaseIdx)
+                                    * volVars.porosity() * volVars.saturation(nPhaseIdx);
+                totalMass[wPhaseIdx] += volume*volVars.density(wPhaseIdx)
+                                    * volVars.porosity() * volVars.saturation(wPhaseIdx);
             }
         }
 
