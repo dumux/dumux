@@ -6,6 +6,7 @@ Copyright holders
 
 | Year       | Name                       |
 |------------|----------------------------|
+| 2016       | Sina Ackermann             |
 | 2010-2014  | Katherina Baber            |
 | 2015-2016  | Martin Beck                |
 | 2013-2016  | Beatrix Becker             |
