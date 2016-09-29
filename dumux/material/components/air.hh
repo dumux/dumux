@@ -110,6 +110,7 @@ public:
         // Assume an ideal gas
         return IdealGas::pressure(temperature, density/molarMass());
     }
+
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
      *
@@ -126,10 +127,14 @@ public:
      * therefore not considered below
      * the same holds for the correction value kappa for highly polar substances
      *
+     * This calculation war introduced into Dumux in 2012 although the method here
+     * is designed for general polar substances. Air, however, is (a) non-polar,
+     * and (b) there are more precise methods available
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    static Scalar oldGasViscosity(Scalar temperature, Scalar pressure)
     {
 
         const Scalar Tc = criticalTemperature();
@@ -153,15 +158,45 @@ public:
         return mu/1e6 / 10;
     }
 
-    // simpler method, from old constrelAir.hh
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
+     *
+     * Simple method, already implemented in MUFTE-UG, but pretty accurate.
+     *
+     * The pressure correction is even simpler and developed and tested by
+     * Holger Class in 2016 against the results of the Lemmon and Jacobsen (2004)
+     * approach \cite LemmonJacobsen2004
+     * It shows very reasonable results throughout realistic pressure and
+     * temperature ranges up to several hundred Kelvin and up to 500 bar
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    {
+        // above 1200 K, the function becomes inaccurate
+        // since this should realistically never happen, we can live with it
+        Scalar mu = 1.496e-6 * std::sqrt(temperature * temperature * temperature) / (temperature + 120.);
+        Scalar tempCelsius = temperature-273.15;
+        Scalar pressureCorrectionFactor = 9.7115e-9*tempCelsius*tempCelsius-5.5e-6*tempCelsius+0.0010809;
+
+        return mu*(1.+(pressure/1.e5-1)*pressureCorrectionFactor);
+    }
+
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
+     *
+     * Simple method, already implemented in MUFTE, but precise.
+     * Gas viscosity is not very dependent on pressure. Thus, for
+     * low pressures one might switch the pressure correction off
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
     static Scalar simpleGasViscosity(Scalar temperature, Scalar pressure)
     {
-        if(temperature < 273.15 || temperature > 660.)
-        {
-            DUNE_THROW(NumericalProblem,
-                "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
-        }
-
+        // above 1200 K, the function becomes inaccurate
+        // since this should realistically never happen, we can live with it
         using std::sqrt;
         return 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.);
     }
