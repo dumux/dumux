@@ -1,14 +1,12 @@
-
-#install headers
 install(FILES
-fluxvariablesenergy.hh
-fluxvariablesenergykinetic.hh
-indicesenergy.hh
-indicesenergykinetic.hh
-localresidualenergy.hh
-localresidualenergykinetic.hh
-volumevariablesenergy.hh
-volumevariablesenergykinetic.hh
-vtkwriterenergy.hh
-vtkwriterenergykinetic.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/mpnc/implicit/energy)
+  fluxvariables.hh
+  fluxvariableskinetic.hh
+  indices.hh
+  indiceskinetic.hh
+  localresidual.hh
+  localresidualkinetic.hh
+  volumevariables.hh
+  volumevariableskinetic.hh
+  vtkwriter.hh
+  vtkwriterkinetic.hh
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/mpnc/implicit/energy)
