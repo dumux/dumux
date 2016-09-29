@@ -32,6 +32,7 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
+#include <dumux/porousmediumflow/2p/implicit/adaptionhelper.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 
 #include "lensspatialparams.hh"
@@ -62,9 +63,10 @@ SET_TYPE_PROP(LensBoxProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(LensBoxAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>);
 SET_TYPE_PROP(LensCCAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
+
+SET_TYPE_PROP(LensBoxAdaptiveProblem, Grid, Dune::UGGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(LensProblem, Problem, LensProblem<TypeTag>);
@@ -92,16 +94,19 @@ SET_TYPE_PROP(LensCCProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 SET_TYPE_PROP(LensBoxProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag>);
+#endif
+
+SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 SET_BOOL_PROP(LensBoxAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
-#endif
+SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag>);
 
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
@@ -175,11 +180,18 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
 
 
         // world dimension
+        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
+
+    enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -221,19 +233,28 @@ public:
     }
 
     /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
+     * \brief User defined output before the time integration
      */
-    void postTimeStep()
+    void preTimeStep()
     {
-        // Calculate storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
+        if(adaptiveGrid)
+        {
+            PrimaryVariables totalMass = calculateTotalMass();
+            std::cout << "Total mass before grid adaption: " << std::endl;
+            std::cout << "wPhaseIdx: " << totalMass[wPhaseIdx] << "    "  << "nPhaseIdx: " << totalMass[nPhaseIdx] << std::endl;
 
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: " << storage << std::endl;
+            ParentType::preTimeStep();
+
+            totalMass = calculateTotalMass();
+            std::cout << "Total mass after grid adaption: " << std::endl;
+            std::cout << "wPhaseIdx: " << totalMass[wPhaseIdx] << "    "  << "nPhaseIdx: " << totalMass[nPhaseIdx] << std::endl;
+        }
+        else
+        {
+            ParentType::preTimeStep();
+            PrimaryVariables totalMass = calculateTotalMass();
+            std::cout << "Total mass: " << std::endl;
+            std::cout << "wPhaseIdx: " << totalMass[wPhaseIdx] << "    "  << "nPhaseIdx: " << totalMass[nPhaseIdx] << std::endl;
         }
     }
 
@@ -391,6 +412,43 @@ private:
         Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
         Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
+    }
+
+    PrimaryVariables calculateTotalMass()
+    {
+        PrimaryVariables totalMass(0);
+
+        for (const auto& element : elements(this->gridView(),Dune::Partitions::interior))
+        {
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView(), element);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            {
+                // get index
+                int dofIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+
+                VolumeVariables volVars;
+                volVars.update(this->model().curSol()[dofIdx],
+                              this->asImp_(),
+                              element,
+                              fvGeometry,
+                              scvIdx,
+                              false);
+
+                Scalar volume = fvGeometry.subContVol[scvIdx].volume;
+
+                totalMass[nPhaseIdx] += volume*volVars.density(nPhaseIdx)
+                                    * volVars.porosity() * volVars.saturation(nPhaseIdx);
+                totalMass[wPhaseIdx] += volume*volVars.density(wPhaseIdx)
+                                    * volVars.porosity() * volVars.saturation(wPhaseIdx);
+            }
+        }
+
+        if (this->gridView().comm().size() > 1)
+            totalMass = this->gridView().comm().sum(totalMass);
+
+        return totalMass;
     }
 
     Scalar temperature_;

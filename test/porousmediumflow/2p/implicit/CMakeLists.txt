@@ -6,7 +6,7 @@ add_dumux_test(test_box2p test_box2p test_box2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/lensbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/lensbox-00008.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/lensbox-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2p")
 
 add_dumux_test(test_cc2p test_cc2p test_cc2p.cc
@@ -22,6 +22,13 @@ add_dumux_test(test_ccadaptive2p test_ccadaptive2p test_ccadaptive2p.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/lensccadaptive-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/lensccadaptive-00017.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccadaptive2p")
+
+add_dumux_test(test_boxadaptive2p test_boxadaptive2p test_boxadaptive2p.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/lensboxadaptive-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/lensboxadaptive-00015.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxadaptive2p")
 
 add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generalizeddirichlet.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

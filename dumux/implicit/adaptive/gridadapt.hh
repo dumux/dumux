@@ -24,7 +24,6 @@
 #define DUMUX_IMPLICIT_GRIDADAPT_HH
 
 #include "gridadaptproperties.hh"
-#include "adaptionhelper.hh"
 #include <unordered_map>
 
 #include <dune/common/exceptions.hh>
@@ -62,6 +61,7 @@ class ImplicitGridAdapt
 
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptionHelper) AdaptionHelper;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
@@ -71,20 +71,12 @@ public:
      * @param problem The problem
      */
     ImplicitGridAdapt (Problem& problem)
-        : adaptionHelper_(problem.gridView()),
-          problem_(problem),
+        : problem_(problem),
+          adaptionHelper_(problem),
           adaptionIndicator_(problem),
           marked_(0),
           coarsened_(0)
     {
-        if(isBox)
-        {
-            DUNE_THROW(Dune::NotImplemented,
-                       "Grid adaption is not yet mass conservative for Box method! "
-                        << "Use cell-centered scheme instead!");
-        }
-        else
-        {
             levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
             levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
             adaptionInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptionInterval);
@@ -93,7 +85,6 @@ public:
             {
                 DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible! Choose MinLevel >= 0");
             }
-        }
     }
 
     /*!
@@ -149,9 +140,77 @@ public:
      */
     void adaptGrid()
     {
-        adaptGrid(adaptionIndicator_) ;
+        if(levelMax_ > levelMin_)
+            adaptGrid(adaptionIndicator_) ;
     }
 
+    /*!
+     * @brief Returns true if grid cells have been marked for adaption
+     */
+    bool wasAdapted()
+    {
+        int sumMarked = problem_.grid().comm().sum(marked_);
+        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
+
+        return (sumMarked != 0 || sumCoarsened != 0);
+    }
+
+    const bool wasAdapted() const
+    {
+        int sumMarked = problem_.grid().comm().sum(marked_);
+        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
+
+        return (sumMarked != 0 || sumCoarsened != 0);
+    }
+
+    /*!
+     * Sets minimum and maximum refinement levels
+     *
+     * @param levMin minimum level for coarsening
+     * @param levMax maximum level for refinement
+     */
+    void setLevels(int levMin, int levMax)
+    {
+        if (levMin < 0)
+            DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible!");
+        levelMin_ = levMin;
+        levelMax_ = levMax;
+    }
+
+    /*!
+     * @brief Returns maximum refinement level
+     *
+     * The value is the assign maximum possible level,
+     * not the actual maximum level of the grid.
+     * @return levelMax_ maximum level for refinement
+     */
+    const int getMaxLevel() const
+    {
+        return levelMax_;
+    }
+    /*!
+     * @brief Returns minimum refinement level
+     *
+     * The value is the assign minimum possible level,
+     * not the actual minimum level of the grid.
+     * @return levelMin_ minimum level for coarsening
+     */
+    const int getMinLevel() const
+    {
+        return levelMin_;
+    }
+
+    AdaptionIndicator& adaptionIndicator()
+    {
+        return adaptionIndicator_;
+    }
+
+    AdaptionIndicator& adaptionIndicator() const
+    {
+        return adaptionIndicator_;
+    }
+
+private:
     /*!
      * @brief Method to adapt the grid with individual indicator vector
      *
@@ -258,76 +317,6 @@ public:
     }
 
     /*!
-     * @brief Returns true if grid cells have been marked for adaption
-     */
-    bool wasAdapted()
-    {
-        int sumMarked = problem_.grid().comm().sum(marked_);
-        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
-
-        return (sumMarked != 0 || sumCoarsened != 0);
-    }
-
-    bool wasAdapted() const
-    {
-        int sumMarked = problem_.grid().comm().sum(marked_);
-        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
-
-        return (sumMarked != 0 || sumCoarsened != 0);
-    }
-
-    /*!
-     * Sets minimum and maximum refinement levels
-     *
-     * @param levMin minimum level for coarsening
-     * @param levMax maximum level for refinement
-     */
-    void setLevels(int levMin, int levMax)
-    {
-        if (levMin < 0)
-            DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible!");
-        levelMin_ = levMin;
-        levelMax_ = levMax;
-    }
-
-    /*!
-     * @brief Returns maximum refinement level
-     *
-     * The value is the assign maximum possible level,
-     * not the actual maximum level of the grid.
-     * @return levelMax_ maximum level for refinement
-     */
-    int getMaxLevel() const
-    {
-        return levelMax_;
-    }
-    /*!
-     * @brief Returns minimum refinement level
-     *
-     * The value is the assign minimum possible level,
-     * not the actual minimum level of the grid.
-     * @return levelMin_ minimum level for coarsening
-     */
-    int getMinLevel() const
-    {
-        return levelMin_;
-    }
-
-    AdaptionIndicator& adaptionIndicator()
-    {
-        return adaptionIndicator_;
-    }
-
-    AdaptionIndicator& adaptionIndicator() const
-    {
-        return adaptionIndicator_;
-    }
-
-private:
-    AdaptionHelper<TypeTag> adaptionHelper_;
-
-
-    /*!
      * @brief Method ensuring the refinement ratio of 2:1
      *
      * For any given element, a loop over the neighbors checks weather the
@@ -418,6 +407,7 @@ private:
 
     // private Variables
     Problem& problem_;
+    AdaptionHelper adaptionHelper_;
     AdaptionIndicator adaptionIndicator_;
 
     int marked_;
