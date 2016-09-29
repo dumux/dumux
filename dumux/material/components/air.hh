@@ -63,7 +63,7 @@ public:
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of Air.
      */
     static Scalar criticalTemperature()
-    { return 132.531 ; /* [K] */ }
+    { return 132.6312; /* [K] */ }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of Air.
@@ -127,7 +127,7 @@ public:
      * therefore not considered below
      * the same holds for the correction value kappa for highly polar substances
      *
-     * This calculation war introduced into Dumux in 2012 although the method here
+     * This calculation was introduced into Dumux in 2012 although the method here
      * is designed for general polar substances. Air, however, is (a) non-polar,
      * and (b) there are more precise methods available
      *
@@ -179,14 +179,16 @@ public:
         Scalar mu = 1.496e-6 * std::sqrt(temperature * temperature * temperature) / (temperature + 120.);
         Scalar tempCelsius = temperature-273.15;
         Scalar pressureCorrectionFactor = 9.7115e-9*tempCelsius*tempCelsius-5.5e-6*tempCelsius+0.0010809;
+        mu*=1.+(pressure/1.e5-1)*pressureCorrectionFactor;
 
-        return mu*(1.+(pressure/1.e5-1)*pressureCorrectionFactor);
+        return mu;
     }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
      *
-     * Simple method, already implemented in MUFTE, but precise.
+     * Simple method, already implemented in MUFTE-UG, but pretty accurate
+     * at atmospheric pressures.
      * Gas viscosity is not very dependent on pressure. Thus, for
      * low pressures one might switch the pressure correction off
      *
@@ -199,6 +201,41 @@ public:
         // since this should realistically never happen, we can live with it
         using std::sqrt;
         return 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.);
+    }
+
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
+     *
+     * This is a very exact approach by Lemmon and Jacobsen (2004) \cite LemmonJacobsen2004
+     * All the values and parameters used below are explained in their paper
+     * Since they use ''eta'' for dyn. viscosity, we do it as well for easier
+     * comparison with the paper
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar exactGasViscosity(Scalar temperature, Scalar pressure)
+    {
+        Scalar epsk = 103.3; // [K]
+        Scalar T_stern = temperature/epsk;
+        Scalar Omega = std::exp(0.431*std::pow(std::log(T_stern),0.)
+                              - 0.4623*std::pow(std::log(T_stern),1.)
+                              + 0.08406*std::pow(std::log(T_stern),2.)
+                              + 0.005341 * std::pow(std::log(T_stern),3.)
+                              - 0.00331*std::pow(std::log(T_stern),4.));
+        Scalar sigma = 0.36; // [nm]
+        Scalar eta0 = 0.0266958*std::sqrt(1000.*molarMass()*temperature)/(sigma*sigma*Omega);
+
+        Scalar tau = criticalTemperature()/temperature;
+        Scalar rhoc = 10.4477; // [mol/m^3]
+        Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;
+        Scalar etaR = 10.72*std::pow(tau,0.2)*std::pow(delta,1)*std::exp(-0*std::pow(delta,0))
+                    + 1.122*std::pow(tau,0.05)*std::pow(delta,4)*std::exp(-0*std::pow(delta,0))
+                    + 0.002019*std::pow(tau,2.4)*std::pow(delta,9)*std::exp(-0*std::pow(delta,0))
+                    - 8.876*std::pow(tau,0.6)*std::pow(delta,1)*std::exp(-1*std::pow(delta,1))
+                    - 0.02916*std::pow(tau,3.6)*std::pow(delta,8)*std::exp(-1*std::pow(delta,1));
+
+        return (eta0+etaR)*1e-6;
     }
 
     /*!
