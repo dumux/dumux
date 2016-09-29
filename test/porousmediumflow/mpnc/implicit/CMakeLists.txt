@@ -41,11 +41,7 @@ add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
 
 # build target for the energy kinetic test problem, two energy balance equations
 add_dumux_test(test_boxmpncthermalnonequil test_boxmpncthermalnonequil test_boxmpncthermalnonequil.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/combustion-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/combustion-00079.vtp
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil")
+               "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil")
 
 #install sources
 install(FILES
