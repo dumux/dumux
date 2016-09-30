@@ -59,12 +59,12 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-#if HAVE_DUNE_ALUGRID
+#if HAVE_UG
     typedef TTAG(LensBoxAdaptiveProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 #else
-#warning You need dune-ALUGrid to run this test.
-    std::cerr << "You need dune-ALUGrid to run this test." << std::endl;
+#warning You need UGGrid to run this test.
+    std::cerr << "You need UGGrid to run this test." << std::endl;
     return 77;
 #endif
 }
