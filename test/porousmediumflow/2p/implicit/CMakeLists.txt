@@ -27,7 +27,7 @@ add_dumux_test(test_boxadaptive2p test_boxadaptive2p test_boxadaptive2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/lensboxadaptive-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/lensboxadaptive-00015.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/lensboxadaptive-00014.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxadaptive2p")
 
 add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generalizeddirichlet.cc
