@@ -119,9 +119,9 @@ public:
                                                const Scalar rhoSolid = 0.0 /*unused*/)
     {
         const Scalar satW = std::max<Scalar>(0.0, sw);
-        // geometric mean
-        const Scalar lSat = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaW, porosity);
-        const Scalar lDry = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaN, porosity);
+        // geometric mean, using ls^(1-p)*l^p = ls*(l/ls)^p
+        const Scalar lSat = lambdaSolid * std::pow(lambdaW / lambdaSolid, porosity);
+        const Scalar lDry = lambdaSolid * std::pow(lambdaN / lambdaSolid, porosity);
 
         return lDry + std::sqrt(satW) * (lSat - lDry);
     }
