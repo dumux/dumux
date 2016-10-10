@@ -148,7 +148,7 @@ void dumuxMessage_(bool start)
     {
         std::srand(std::time(0));
         // roll the dice to decide which start message will be displayed:
-        dice_ = std::rand() % 13; // has to be n+1
+        dice_ = std::rand() % 12; // has to be n+1
     }
 
 
@@ -223,10 +223,10 @@ void dumuxMessage_(bool start)
             std::cout << "             ###   #                @   @         @@ @@          @ " << std::endl;
             std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @" << std::endl;
             std::cout << "         ##          #              @   @  @   @  @   @  @   @     " << std::endl;
-            std::cout << "        #             #             @@@@    @@@   @   @   @@@  2.10" << std::endl;
+            std::cout << "        #             #             @@@@    @@@   @   @   @@@      " << std::endl;
             std::cout << "       #               #                                           " << std::endl;
             std::cout << "      #                 #                                          " << std::endl;
-            std::cout << "     #                   ##        %%%                             " << std::endl;
+            std::cout << "     #                   ##        %%%                     " << std::setw(8) << std::right << DUMUX_VERSION << std::endl;
             std::cout << "    #                      ###    %   %  %%     %%                 " << std::endl;
             std::cout << "####                          #%%%     %%  %%%%%  %%%%%%%%%%%%%%%%%" << std::endl;
         break;
@@ -264,16 +264,6 @@ void dumuxMessage_(bool start)
             {
                 std::cout << "Chuck Norris has compiled DuMuX even two times in a row!" << std::endl;
             }
-        break;
-        case 12:
-            std::cout << " Thank you all for joining  and contributing to the first" << std::endl;
-            std::cout << "" << std::endl;
-            std::cout << "     ____        __  ___     __ __"  << std::endl;
-            std::cout << "    / __ \\__  __/  |/  /_  _ \\ \\ /" << std::endl;
-            std::cout << "   / / / / / / / /|_/ / / / /_\\_\\" << std::endl;
-            std::cout << "  /_____/\\__,_/_/  /_/\\__,_/        User Meeting 2015 in Stuttgart" << std::endl;
-            std::cout << "" << std::endl;
-            std::cout << "For more information visit dumux.org or contact the mailing list." << std::endl;
         break;
         // Note: If you add a case, you have to increase the modulus at the beginning of this function!
 
