@@ -223,10 +223,10 @@ void dumuxMessage_(bool start)
             std::cout << "             ###   #                @   @         @@ @@          @ " << std::endl;
             std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @" << std::endl;
             std::cout << "         ##          #              @   @  @   @  @   @  @   @     " << std::endl;
-            std::cout << "        #             #             @@@@    @@@   @   @   @@@  2.10" << std::endl;
+            std::cout << "        #             #             @@@@    @@@   @   @   @@@      " << std::endl;
             std::cout << "       #               #                                           " << std::endl;
             std::cout << "      #                 #                                          " << std::endl;
-            std::cout << "     #                   ##        %%%                             " << std::endl;
+            std::cout << "     #                   ##        %%%                     " << std::setw(8) << std::right << DUMUX_VERSION << std::endl;
             std::cout << "    #                      ###    %   %  %%     %%                 " << std::endl;
             std::cout << "####                          #%%%     %%  %%%%%  %%%%%%%%%%%%%%%%%" << std::endl;
         break;
