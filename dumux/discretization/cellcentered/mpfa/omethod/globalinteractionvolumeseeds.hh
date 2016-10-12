@@ -20,30 +20,29 @@
  * \file
  * \brief Base class for the global interaction volume seeds of mpfa methods.
  */
-#ifndef DUMUX_DISCRETIZATION_MPFA_GLOBALINTERACTIONVOLUMESEEDS_HH
-#define DUMUX_DISCRETIZATION_MPFA_GLOBALINTERACTIONVOLUMESEEDS_HH
+#ifndef DUMUX_DISCRETIZATION_MPFA_O_GLOBALINTERACTIONVOLUMESEEDS_HH
+#define DUMUX_DISCRETIZATION_MPFA_O_GLOBALINTERACTIONVOLUMESEEDS_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include "methods.hh"
+#include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseedsbase.hh>
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 namespace Dumux
 {
-//! forward declaration of the actual implementation
-template<class TypeTag, MpfaMethods method>
-class CCMpfaGlobalInteractionVolumeSeedsImplementation
-{};
-
 /*!
  * \ingroup Mpfa
- * \brief Base class for the creation and storage of the interaction volume seeds for mpfa methods.
+ * \brief Specialization of the class for the mpfa-o method.
  */
 template<class TypeTag>
-using CCMpfaGlobalInteractionVolumeSeeds = CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
+class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>
+{
+    using ParentType = CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+public:
+    CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView gridView) : ParentType(gridView)  {}
+};
 
 } // end namespace
 
-// the specializations of this class for the available methods have to be included here
-#include <dumux/discretization/cellcentered/mpfa/omethod/globalinteractionvolumeseeds.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/globalinteractionvolumeseeds.hh>
 
 #endif
