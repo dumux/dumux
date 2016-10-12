@@ -59,12 +59,12 @@ public:
      * \param porosity The porosity of the porous medium
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotdeff(Scalar porosity,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
-                  std::string plotName = "")
+                  std::string curveTitle = "")
     {
         std::vector<Scalar> sw(numIntervals_+1);
         std::vector<Scalar> deff(numIntervals_+1);
@@ -85,7 +85,7 @@ public:
         gnuplot_.setYRange(deffMin, deffMax);
         gnuplot_.setXlabel("phase saturation [-]");
         gnuplot_.setYlabel("effective diffusion/molecular diffusion [-]");
-        gnuplot_.addDataSetToPlot(sw, deff, plotName + "_d_eff");
+        gnuplot_.addDataSetToPlot(sw, deff, curveTitle + "_d_eff");
         gnuplot_.plot("deff");
     }
 

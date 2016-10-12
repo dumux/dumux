@@ -63,12 +63,12 @@ public:
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
         plotStyle_("lines"), pipe_(0),
-        fileName_(0), plotOptions_(0), plotName_(0),
+        curveFile_(0), curveOptions_(0), curveTitle_(0),
         interaction_(true),
         xRangeMin_(1e100), xRangeMax_(-1e100),
         yRangeMin_(1e100), yRangeMax_(-1e100),
         xLabel_(""), yLabel_(""),
-        options_(""),
+        plotOptions_(""),
         datafileSeparator_(' '),
         gnuplotPath_(GNUPLOT_EXECUTABLE)
     {
@@ -113,16 +113,16 @@ public:
         plot += "set ylabel \"" + yLabel_ + "\"\n";
 
         // set user defined options
-        plot += options_ + "\n";
+        plot += plotOptions_ + "\n";
 
         // plot curves
         plot += "plot";
-        for (unsigned int i = 0; i < fileName_.size(); ++i)
+        for (unsigned int i = 0; i < curveFile_.size(); ++i)
         {
-            plot += + " " + fileName_[i]
-                    + " " + plotOptions_[i]
-                    + " title '" + plotName_[i] + "'";
-            if (i < fileName_.size()-1)
+            plot += + " " + curveFile_[i]
+                    + " " + curveOptions_[i]
+                    + " title '" + curveTitle_[i] + "'";
+            if (i < curveFile_.size()-1)
                 plot += ",\\";
             plot += "\n";
         }
@@ -150,14 +150,14 @@ public:
      */
     void reset()
     {
-        fileName_.resize(0);
-        plotOptions_.resize(0);
-        plotName_.resize(0);
-        options_ = "";
+        curveFile_.resize(0);
+        curveOptions_.resize(0);
+        curveTitle_.resize(0);
+        plotOptions_ = "";
     }
 
     /*!
-     * \brief Adds a function to list of plotted lines for specific window number
+     * \brief Adds a function to list of plotted lines
      *
      * \param function Function to be plotted
      * \param plotName The name of the data set
@@ -167,13 +167,13 @@ public:
                            const std::string plotName,
                            const std::string plotOptions = "with lines")
     {
-        fileName_.push_back(function);
-        plotOptions_.push_back(plotOptions);
-        plotName_.push_back(plotName);
+        curveFile_.push_back(function);
+        curveOptions_.push_back(plotOptions);
+        curveTitle_.push_back(plotName);
     }
 
     /*!
-     * \brief Adds a file to list of plotted lines for specific window number
+     * \brief Adds a file to list of plotted lines
      *
      * \param file Function to be plotted
      * \param plotName The name of the data set
@@ -183,13 +183,13 @@ public:
                        const std::string plotName,
                        const std::string plotOptions = "with lines")
     {
-        fileName_.push_back("'" + file + "'");
-        plotOptions_.push_back(plotOptions);
-        plotName_.push_back(plotName);
+        curveFile_.push_back("'" + file + "'");
+        curveOptions_.push_back(plotOptions);
+        curveTitle_.push_back(plotName);
     }
 
     /*!
-     * \brief Adds a data set for specific window number and writes a data file
+     * \brief Adds a data set and writes a data file
      *
      * \param x Vector containing the x-axis data points
      * \param y Vector containing the y-axis data points
@@ -216,9 +216,9 @@ public:
         file.close();
 
         // adding file to list of plotted lines
-        fileName_.push_back("'" + fileName + "'");
-        plotOptions_.push_back(plotOptions);
-        plotName_.push_back(plotName);
+        curveFile_.push_back("'" + fileName + "'");
+        curveOptions_.push_back(plotOptions);
+        curveTitle_.push_back(plotName);
     }
 
     /*!
@@ -282,7 +282,7 @@ public:
      */
     void setOption(std::string option)
     {
-        options_ += option + "\n";
+        plotOptions_ += option + "\n";
     }
 
     /*!
@@ -323,9 +323,9 @@ private:
 
     std::string plotStyle_;
     std::FILE * pipe_;
-    StringVector fileName_;
-    StringVector plotOptions_;
-    StringVector plotName_;
+    StringVector curveFile_;
+    StringVector curveOptions_;
+    StringVector curveTitle_;
     bool interaction_;
     Scalar xRangeMin_;
     Scalar xRangeMax_;
@@ -333,7 +333,7 @@ private:
     Scalar yRangeMax_;
     std::string xLabel_;
     std::string yLabel_;
-    std::string options_;
+    std::string plotOptions_;
     char datafileSeparator_;
     std::string gnuplotPath_;
 };
