@@ -81,7 +81,7 @@ public:
             // we assume phaseIdx = eqIdx here for purely advective problems
             for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
-                auto boundarySeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf, eqIdx);
+                const auto& boundarySeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf, eqIdx);
                 BoundaryInteractionVolume iv(boundarySeed, problem, fvGeometry, elemVolVars);
                 iv.solveLocalSystem(permFunction);
 
@@ -108,7 +108,7 @@ public:
         }
         else
         {
-            auto seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
+            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
             InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
             iv.solveLocalSystem(permFunction);
 
