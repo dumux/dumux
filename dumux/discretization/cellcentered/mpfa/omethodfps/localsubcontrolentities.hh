@@ -129,15 +129,9 @@ public:
 
     LocalIndexType getScvfIdxInScv(const LocalIndexType localScvfIndex) const
     {
-        LocalIndexType count = 0;
-        for (auto&& localIdx : scvSeed_().localScvfIndices())
-        {
-            if (localIdx == localScvfIndex)
-                return count;
-            count++;
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Could not find the local coordinate of the local scvf");
+        auto it = std::find(scvSeed_().localScvfIndices().begin(), scvSeed_().localScvfIndices().end(), localScvfIndex);
+        assert(it != scvSeed_().localScvfIndices().end() && "Could not find the local coordinate of the local scvf");
+        return std::distance(scvSeed_().localScvfIndices().begin(), it);
     }
 
     //! Returns the center of the element the scv is embedded in
