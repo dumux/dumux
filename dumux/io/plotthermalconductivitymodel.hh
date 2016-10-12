@@ -88,14 +88,14 @@ public:
      * \param lambdaSolid The thermal conductivity of the solid material
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotlambdaeff(Scalar porosity,
                        Scalar rhoSolid,
                        Scalar lambdaSolid,
                        Scalar lowerSat = 0.0,
                        Scalar upperSat = 1.0,
-                       std::string plotName = "")
+                       std::string curveTitle = "")
     {
         std::vector<Scalar> sw(numIntervals_+1);
         std::vector<Scalar> lambda(numIntervals_+1);
@@ -117,7 +117,7 @@ public:
         gnuplot_.setYRange(lambdaMin, lambdaMax);
         gnuplot_.setXlabel("wetting phase saturation [-]");
         gnuplot_.setYlabel("effective thermal conductivity [W/(m K)]");
-        gnuplot_.addDataSetToPlot(sw, lambda, plotName + "_lambda_eff");
+        gnuplot_.addDataSetToPlot(sw, lambda, curveTitle + "_lambda_eff");
         gnuplot_.plot("lambdaeff");
     }
 

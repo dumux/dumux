@@ -68,12 +68,12 @@ public:
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotpcsw(const MaterialLawParams &params,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
-                  std::string plotName = "")
+                  std::string curveTitle = "")
     {
         std::vector<Scalar> sw;
         std::vector<Scalar> pc;
@@ -99,7 +99,7 @@ public:
         gnuplotpcsw_.setYRange(pcMin, pcMax);
         gnuplotpcsw_.setXlabel("wetting phase saturation [-]");
         gnuplotpcsw_.setYlabel("capillary pressure [Pa]");
-        gnuplotpcsw_.addDataSetToPlot(sw, pc, plotName + "_pc-Sw");
+        gnuplotpcsw_.addDataSetToPlot(sw, pc, curveTitle + "_pc-Sw");
         gnuplotpcsw_.plot("pc-Sw");
     }
 
@@ -109,12 +109,12 @@ public:
      * \param params The material law parameters
      * \param lowerpc Minimum x-value
      * \param upperpc Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotswpc(const MaterialLawParams &params,
                   Scalar lowerpc = 0.0,
                   Scalar upperpc = 5000.0,
-                  std::string plotName = "")
+                  std::string curveTitle = "")
     {
         std::vector<Scalar> sw;
         std::vector<Scalar> pc;
@@ -140,7 +140,7 @@ public:
         gnuplotswpc_.setYRange(swMin, swMax);
         gnuplotswpc_.setXlabel("capillary pressure [Pa]");
         gnuplotswpc_.setYlabel("wetting phase saturation [-]");
-        gnuplotswpc_.addDataSetToPlot(pc, sw, plotName + "_Sw-pc");
+        gnuplotswpc_.addDataSetToPlot(pc, sw, curveTitle + "_Sw-pc");
         gnuplotswpc_.plot("sw-pc");
     }
 
@@ -150,12 +150,12 @@ public:
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotdpcdsw(const MaterialLawParams &params,
                     Scalar lowerSat = 0.0,
                     Scalar upperSat = 1.0,
-                    std::string plotName = "")
+                    std::string curveTitle = "")
     {
         std::vector<Scalar> sw;
         std::vector<Scalar> dpcdsw;
@@ -181,7 +181,7 @@ public:
         gnuplotdpcdsw_.setYRange(dpcdswMin, dpcdswMax);
         gnuplotdpcdsw_.setXlabel("wetting phase saturation [-]");
         gnuplotdpcdsw_.setYlabel("gradient of the pc-Sw curve [Pa]");
-        gnuplotdpcdsw_.addDataSetToPlot(sw, dpcdsw, plotName + "_dpcdSw-Sw");
+        gnuplotdpcdsw_.addDataSetToPlot(sw, dpcdsw, curveTitle + "_dpcdSw-Sw");
         gnuplotdpcdsw_.plot("dpcdsw");
     }
 
@@ -191,12 +191,12 @@ public:
      * \param params The material law parameters
      * \param lowerpc Minimum x-value
      * \param upperpc Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotdswdpc(const MaterialLawParams &params,
                     Scalar lowerpc = 0.0,
                     Scalar upperpc = 5000.0,
-                    std::string plotName = "")
+                    std::string curveTitle = "")
     {
         std::vector<Scalar> pc;
         std::vector<Scalar> dswdpc;
@@ -222,7 +222,7 @@ public:
         gnuplotdswdpc_.setYRange(dswdpcMin, dswdpcMax);
         gnuplotdswdpc_.setXlabel("capillary pressure [Pa]");
         gnuplotdswdpc_.setYlabel("gradient of the Sw-pc curve [1/Pa]");
-        gnuplotdswdpc_.addDataSetToPlot(pc, dswdpc, plotName + "_dSwdpc-pc");
+        gnuplotdswdpc_.addDataSetToPlot(pc, dswdpc, curveTitle + "_dSwdpc-pc");
         gnuplotdswdpc_.plot("dswdpc");
     }
 
@@ -232,12 +232,12 @@ public:
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotkr(const MaterialLawParams &params,
                 Scalar lowerSat = 0.0,
                 Scalar upperSat = 1.0,
-                std::string plotName = "")
+                std::string curveTitle = "")
     {
         std::vector<Scalar> sw;
         std::vector<Scalar> krw;
@@ -266,8 +266,8 @@ public:
         gnuplotkr_.setYRange(krMin, krMax);
         gnuplotkr_.setXlabel("wetting phase saturation [-]");
         gnuplotkr_.setYlabel("relative permeability [-]");
-        gnuplotkr_.addDataSetToPlot(sw, krw, plotName + "_krw");
-        gnuplotkr_.addDataSetToPlot(sw, krn, plotName + "_krn");
+        gnuplotkr_.addDataSetToPlot(sw, krw, curveTitle + "_krw");
+        gnuplotkr_.addDataSetToPlot(sw, krn, curveTitle + "_krn");
         gnuplotkr_.plot("kr");
     }
 
@@ -277,12 +277,12 @@ public:
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     void plotdkrdsw(const MaterialLawParams &params,
                     Scalar lowerSat = 0.0,
                     Scalar upperSat = 1.0,
-                    std::string plotName = "")
+                    std::string curveTitle = "")
     {
         std::vector<Scalar> sw;
         std::vector<Scalar> dkrw_dsw;
@@ -311,8 +311,8 @@ public:
         gnuplotkrdsw_.setYRange(dkrdswMin, dkrdswMax);
         gnuplotkrdsw_.setXlabel("wetting phase saturation [-]");
         gnuplotkrdsw_.setYlabel("gradient of the kr-Sw function [-]");
-        gnuplotkrdsw_.addDataSetToPlot(sw, dkrw_dsw, plotName + "_dkrw_dsw");
-        gnuplotkrdsw_.addDataSetToPlot(sw, dkrn_dsw, plotName + "_dkrn_dsw");
+        gnuplotkrdsw_.addDataSetToPlot(sw, dkrw_dsw, curveTitle + "_dkrw_dsw");
+        gnuplotkrdsw_.addDataSetToPlot(sw, dkrn_dsw, curveTitle + "_dkrn_dsw");
         gnuplotkrdsw_.plot("dkrndsw");
     }
 
@@ -323,18 +323,18 @@ public:
      * \param params The material law parameters
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
-     * \param plotName Name of the plotted curve
+     * \param curveTitle Name of the plotted curve
      */
     DUNE_DEPRECATED_MSG("checkEffectiveSaturation is deprecated.")
     void checkEffectiveSaturation(const MaterialLawParams &params,
                                   Scalar lowerSat,
                                   Scalar upperSat,
-                                  std::string plotName = "")
+                                  std::string curveTitle = "")
     {
         if (lowerSat < params.swr())
-            Dune::dwarn << "warning: fluid-matrix law " << plotName << " can only be plotted for sw > swr" << std::endl;
+            Dune::dwarn << "warning: fluid-matrix law " << curveTitle << " can only be plotted for sw > swr" << std::endl;
         if (upperSat > (1.0 - params.snr()))
-            Dune::dwarn << "warning: fluid-matrix law " << plotName << " can only be plotted for sw < 1.0 - snr" << std::endl;
+            Dune::dwarn << "warning: fluid-matrix law " << curveTitle << " can only be plotted for sw < 1.0 - snr" << std::endl;
     }
 
 private:
