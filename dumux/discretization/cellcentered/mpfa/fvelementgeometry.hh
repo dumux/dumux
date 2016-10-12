@@ -32,11 +32,6 @@
 
 namespace Dumux
 {
-
-//! forward declaration of the global finite volume geometry
-template<class TypeTag, bool EnableGlobalFVGeometryCache>
-class CCMpfaGlobalFVGeometry;
-
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the finite volume geometry vector for cell-centered TPFA models

@@ -22,31 +22,25 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_GLOBALFVGEOMETRY_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_GLOBALFVGEOMETRY_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_FPS_GLOBALFVGEOMETRY_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_O_FPS_GLOBALFVGEOMETRY_HH
 
-#include "methods.hh"
+#include <dumux/discretization/cellcentered/mpfa/globalfvgeometrybase.hh>
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 namespace Dumux
 {
-//! forward declaration of the method-specific specialization
-template<class TypeTag, MpfaMethods method, bool EnableFVElementGeometryCache>
-class CCMpfaGlobalFVGeometryImplementation
-{};
+//! Specialization for the mpfa-o scheme with full pressure support.
+template<class TypeTag, bool EnableCache>
+class CCMpfaGlobalFVGeometryImplementation<TypeTag, MpfaMethods::oMethodFps, EnableCache> : public CCMpfaGlobalFVGeometryBase<TypeTag, EnableCache>
+{
+    using ParentType = CCMpfaGlobalFVGeometryBase<TypeTag, EnableCache>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-/*!
- * \ingroup ImplicitModel
- * \brief Base class for the finite volume geometry vector for mpfa models
- *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
- */
-template<class TypeTag, bool EnableFVElementGeometryCache>
-using CCMpfaGlobalFVGeometry = CCMpfaGlobalFVGeometryImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod), EnableFVElementGeometryCache>;
+public:
+    CCMpfaGlobalFVGeometryImplementation(const GridView gridView) : ParentType(gridView) {}
+};
 
 } // end namespace
-
-// the specializations of this class for the available methods have to be included here
-#include <dumux/discretization/cellcentered/mpfa/omethod/globalfvgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/globalfvgeometry.hh>
 
 #endif
