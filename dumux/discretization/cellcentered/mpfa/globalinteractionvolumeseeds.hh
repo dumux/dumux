@@ -74,18 +74,13 @@ public:
     const InteractionVolumeSeed& seed(const SubControlVolumeFace& scvf) const
     { return seeds_[scvfIndexMap_[scvf.index()]]; }
 
-    const BoundaryInteractionVolumeSeed& boundarySeed(const SubControlVolumeFace& scvf, const LocalIndexType eqIdx) const
-    {
-        assert(boundarySeeds_[scvfIndexMap_[scvf.index()]].size() > eqIdx);
-        return boundarySeeds_[scvfIndexMap_[scvf.index()]][eqIdx];
-    }
+    const BoundaryInteractionVolumeSeed& boundarySeed(const SubControlVolumeFace& scvf) const
+    { return boundarySeeds_[scvfIndexMap_[scvf.index()]]; }
 
 private:
     void initializeBoundarySeeds_()
     {
-        auto numBoundaryScvf = problem_().model().globalFvGeometry().numBoundaryScvf();
-        boundarySeeds_.reserve(numBoundaryScvf);
-
+        boundarySeeds_.reserve(problem_().model().globalFvGeometry().numBoundaryScvf());
         IndexType boundarySeedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
@@ -97,19 +92,16 @@ private:
                 if (scvfIndexMap_[scvf.index()] != -1 || !scvf.boundary())
                     continue;
 
-                // container to store the interaction volume seeds
-                std::vector<BoundaryInteractionVolumeSeed> seedVector;
-                seedVector.reserve(numEq);
-                for (LocalIndexType eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    seedVector.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(problem_(), element, fvGeometry, scvf, eqIdx));
+                // the boundary interaction volume seed
+                auto seed = Helper::makeBoundaryInteractionVolumeSeed(problem_(), element, fvGeometry, scvf);
 
                 // update the index map entries for the global scv faces in the interaction volume
-                for (const auto& localScvfSeed : seedVector[0].scvfSeeds())
+                for (const auto& localScvfSeed : seed.scvfSeeds())
                     for (const auto scvfIdxGlobal : localScvfSeed.globalScvfIndices())
                         scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
 
                 // store interaction volume and increment counter
-                boundarySeeds_.emplace_back(std::move(seedVector));
+                boundarySeeds_.emplace_back(std::move(seed));
                 boundarySeedIndex++;
             }
         }
@@ -120,13 +112,13 @@ private:
 
     void initializeInteriorSeeds_()
     {
-        auto numScvf = problem_().model().globalFvGeometry().numScvf();
-        seeds_.reserve(numScvf);
+        const auto& globalFvGeometry = problem_().model().globalFvGeometry();
+        seeds_.reserve(globalFvGeometry.numScvf() - globalFvGeometry.numBoundaryScvf());
 
         IndexType seedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
-            auto fvGeometry = localView(problem_().model().globalFvGeometry());
+            auto fvGeometry = localView(globalFvGeometry);
             fvGeometry.bind(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
@@ -158,7 +150,7 @@ private:
     GridView gridView_;
     std::vector<IndexType> scvfIndexMap_;
     std::vector<InteractionVolumeSeed> seeds_;
-    std::vector<std::vector<BoundaryInteractionVolumeSeed>> boundarySeeds_;
+    std::vector<BoundaryInteractionVolumeSeed> boundarySeeds_;
 };
 } // end namespace
 

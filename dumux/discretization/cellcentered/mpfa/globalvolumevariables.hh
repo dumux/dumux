@@ -95,25 +95,6 @@ public:
 
                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
                 }
-                else if (bcTypes.hasDirichlet())
-                {
-                    const auto insideScvIdx = scvf.insideScvIdx();
-                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
-
-                    PrimaryVariables priVars(0.0);
-                    for (unsigned int eqIdx = 0; eqIdx < GET_PROP_VALUE(TypeTag, NumEq); ++eqIdx)
-                    {
-                        auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-
-                        if (bcTypes.isDirichlet(eqIdx))
-                            priVars[pvIdx] = dirichletPriVars[pvIdx];
-                        else
-                            priVars[pvIdx] = volumeVariables_[scvf.insideScvIdx()].priVar(pvIdx);
-                    }
-
-                    volumeVariables_[scvf.outsideScvIdx()].update(priVars, problem, element, insideScv);
-                }
                 else
                 {
                     volumeVariables_[scvf.outsideScvIdx()] = volumeVariables_[scvf.insideScvIdx()];

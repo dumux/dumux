@@ -245,20 +245,22 @@ public:
     // Returns the MpfaFaceType of an scv face
     static MpfaFaceTypes getMpfaFaceType(const Problem& problem,
                                          const Element& element,
-                                         const SubControlVolumeFace& scvf,
-                                         const LocalIndexType eqIdx)
+                                         const SubControlVolumeFace& scvf)
     {
         if (!scvf.boundary())
             return MpfaFaceTypes::interior;
 
         auto bcTypes = problem.boundaryTypes(element, scvf);
-        if (bcTypes.isNeumann(eqIdx))
+        if (bcTypes.hasOnlyNeumann())
             return MpfaFaceTypes::neumann;
-        if (bcTypes.isDirichlet(eqIdx))
+        if (bcTypes.hasOnlyDirichlet())
             return MpfaFaceTypes::dirichlet;
 
-        if (bcTypes.isOutflow(eqIdx))
+        // throw for outflow or mixed boundary conditions
+        if (bcTypes.hasOutflow())
             DUNE_THROW(Dune::NotImplemented, "outflow BC for mpfa schemes");
+        if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
+            DUNE_THROW(Dune::InvalidStateException, "Mixed BC are not allowed for cellcentered schemes");
 
         DUNE_THROW(Dune::InvalidStateException, "unknown boundary condition type");
     }

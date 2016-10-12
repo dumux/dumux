@@ -71,20 +71,19 @@ public:
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
-        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf, /*dummy*/0);
+        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf);
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), false);
     }
 
     static InteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
                                                                    const Element& element,
                                                                    const FVElementGeometry& fvGeometry,
-                                                                   const SubControlVolumeFace& scvf,
-                                                                   const LocalIndexType eqIdx)
+                                                                   const SubControlVolumeFace& scvf)
     {
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
-        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf, eqIdx);
+        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf);
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
     }
 
@@ -94,8 +93,7 @@ private:
                                  const Problem& problem,
                                  const Element& element,
                                  const FVElementGeometry& fvGeometry,
-                                 const SubControlVolumeFace& scvf,
-                                 const LocalIndexType eqIdx)
+                                 const SubControlVolumeFace& scvf)
     {
         // Check whether or not we are touching the boundary here
         bool onBoundary = problem.model().globalFvGeometry().scvfTouchesBoundary(scvf);
@@ -107,7 +105,7 @@ private:
         auto scvIdx0 = scvf.insideScvIdx();
 
         // rotate counter clockwise and create the entities
-        performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0, eqIdx);
+        performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0);
 
         if (onBoundary)
         {
@@ -115,7 +113,7 @@ private:
             LocalIndexType storeIdx = scvfSeeds.size();
 
             // clockwise rotation until hitting the boundary again
-            performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0, eqIdx, /*clockwise*/true);
+            performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0, /*clockwise*/true);
 
             // Finish by creating the first scv
             scvSeeds.emplace(scvSeeds.begin(), ScvSeed(GlobalIndexSet({scvfVector[0]->index(), scvfVector[1]->index()}),
@@ -136,7 +134,6 @@ private:
                                  std::vector<ScvSeed>& scvSeeds,
                                  std::vector<ScvfSeed>& scvfSeeds,
                                  const GlobalIndexType scvIdx0,
-                                 const LocalIndexType eqIdx,
                                  const bool clockWise = false)
     {
         // extract the actual local indices from the containers
@@ -162,7 +159,7 @@ private:
 
             // the current element inside of the scv face
             auto insideElement = problem.model().globalFvGeometry().element(insideGlobalScvIdx);
-            auto faceType = Implementation::getMpfaFaceType(problem, insideElement, curScvf, eqIdx);
+            auto faceType = Implementation::getMpfaFaceType(problem, insideElement, curScvf);
 
             // if the face touches the boundary, create a boundary scvf entity
             if (curScvf.boundary())
@@ -287,8 +284,7 @@ public:
     static InteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
                                                                    const Element& element,
                                                                    const FVElementGeometry& fvGeometry,
-                                                                   const SubControlVolumeFace& scvf,
-                                                                   const LocalIndexType eqIdx)
+                                                                   const SubControlVolumeFace& scvf)
     {
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
@@ -301,7 +297,7 @@ public:
         auto vIdxGlobal = scvf.vertexIndex();
 
         // create the scv entity seeds
-        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf, eqIdx, vIdxGlobal);
+        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf, vIdxGlobal);
 
         // shrink containers to necessary size
         scvSeeds.shrink_to_fit();
@@ -317,7 +313,6 @@ private:
                                  const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const SubControlVolumeFace& scvf,
-                                 const LocalIndexType eqIdx,
                                  const GlobalIndexType vIdxGlobal)
     {
         // Get the three scv faces in the scv
@@ -347,7 +342,7 @@ private:
                 actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
                 // create the scvf seed
-                auto faceType = Implementation::getMpfaFaceType(problem, element, *scvfVector[coordDir], eqIdx);
+                auto faceType = Implementation::getMpfaFaceType(problem, element, *scvfVector[coordDir]);
                 scvfSeeds.emplace_back( actualScvf,
                                         LocalIndexSet({actualLocalScvIdx}),
                                         GlobalIndexSet({scvfVector[coordDir]->index()}),
@@ -388,13 +383,13 @@ private:
                     const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
 
                     // create scvf seed
-                    auto faceType = Implementation::getMpfaFaceType(problem, element, actualScvf, eqIdx);
+                    auto faceType = Implementation::getMpfaFaceType(problem, element, actualScvf);
                     LocalIndexSet scvIndicesLocal({actualLocalScvIdx, static_cast<LocalIndexType>(scvSeeds.size())});
                     GlobalIndexSet scvfIndicesGlobal({globalScvfIndex, outsideScvf.index()});
                     scvfSeeds.emplace_back(actualScvf, std::move(scvIndicesLocal), std::move(scvfIndicesGlobal), faceType);
 
                     // make outside scv by recursion
-                    fillEntitySeeds_(scvSeeds, scvfSeeds, problem, outsideElement, outsideFvGeometry, outsideScvf, eqIdx, vIdxGlobal);
+                    fillEntitySeeds_(scvSeeds, scvfSeeds, problem, outsideElement, outsideFvGeometry, outsideScvf, vIdxGlobal);
                 }
                 // we have to find out if it is necessary to create a new scvf
                 else
@@ -434,7 +429,7 @@ private:
                         const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
 
                         // some data on the face
-                        auto faceType = Implementation::getMpfaFaceType(problem, element, *scvfVector[coordDir], eqIdx);
+                        auto faceType = Implementation::getMpfaFaceType(problem, element, *scvfVector[coordDir]);
                         LocalIndexSet scvIndicesLocal( {actualLocalScvIdx, outsideLocalScvIdx} );
                         GlobalIndexSet scvfIndicesGlobal( {globalScvfIndex, outsideScvf.index()} );
                         scvfSeeds.emplace_back(*scvfVector[coordDir], std::move(scvIndicesLocal), std::move(scvfIndicesGlobal), faceType);

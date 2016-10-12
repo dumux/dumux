@@ -278,10 +278,8 @@ public:
     { return boundaryInfo_[eqIdx].isDirichlet; }
 
     /*!
-     * \brief Returns true if an equation is used to specify a
+     * \brief Returns true if all equations are used to specify a
      *        Dirichlet condition.
-     *
-     * \param eqIdx The index of the equation
      */
     bool hasOnlyDirichlet() const
     {
@@ -311,6 +309,18 @@ public:
      */
     bool isNeumann(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isNeumann; }
+
+    /*!
+     * \brief Returns true if all equations are used to specify a
+     *        Neumann condition.
+     */
+    bool hasOnlyNeumann() const
+    {
+        return std::all_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isNeumann; }
+                           );
+    }
 
     /*!
      * \brief Returns true if some equation is used to specify a

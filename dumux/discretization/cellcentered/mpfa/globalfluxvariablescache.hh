@@ -78,13 +78,13 @@ public:
         // update the flux var caches for this scvf
         if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
         {
+            const auto& boundarySeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
+            BoundaryInteractionVolume iv(boundarySeed, problem, fvGeometry, elemVolVars);
+            iv.solveLocalSystem(permFunction);
+
             // we assume phaseIdx = eqIdx here for purely advective problems
             for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
-                const auto& boundarySeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf, eqIdx);
-                BoundaryInteractionVolume iv(boundarySeed, problem, fvGeometry, elemVolVars);
-                iv.solveLocalSystem(permFunction);
-
                 // lambda function defining the upwind factor of the advective flux
                 auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars) { return volVars.density(eqIdx)/volVars.viscosity(eqIdx); };
                 iv.assembleNeumannFluxes(advectionUpwindFunction, eqIdx);

@@ -107,8 +107,8 @@ public:
     { return globalInteractionVolumeSeeds_.seed(scvf); }
 
     //! Get the boundary interaction volume seed corresponding to an scvf
-    const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf, const LocalIndexType eqIdx) const
-    { return globalInteractionVolumeSeeds_.boundarySeed(scvf, eqIdx); }
+    const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
+    { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
     //! Returns whether or not a scvf touches the boundary (has to be called before getting an interaction volume)
     bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
