@@ -95,6 +95,13 @@ public:
             }
         }
 
+        // use log scale for very high capillary pressures
+        if (pcMax / std::max(pcMin, 1.0) > 1e6)
+        {
+            gnuplotpcsw_.setOption("set log y");
+            pcMin = std::max(pcMin, 1.0);
+        }
+
         gnuplotpcsw_.setXRange(lowerSat, upperSat);
         gnuplotpcsw_.setYRange(pcMin, pcMax);
         gnuplotpcsw_.setXlabel("wetting phase saturation [-]");
