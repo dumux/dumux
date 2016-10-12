@@ -75,16 +75,11 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename LocalScvType::Geometry::JacobianInverseTransposed;
 
-    using GlobalIdxType = typename Traits::GlobalIndexType;
-    using LocalIdxType = typename Traits::LocalIndexType;
     using GlobalPosition = typename Traits::GlobalPosition;
     using LocalPosition = typename LocalScvType::Geometry::LocalCoordinate;
-    using PosVector = typename Traits::PositionVector;
     using DynamicVector = typename Traits::Vector;
     using DynamicMatrix = typename Traits::Matrix;
     using Tensor = typename Traits::Tensor;
-
-    using IVSeed = typename Traits::Seed;
 
     enum
     {
@@ -106,8 +101,10 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
     };
 
 public:
+    using typename ParentType::LocalIndexType;
+    using typename ParentType::Seed;
 
-    CCMpfaInteractionVolumeImplementation(const IVSeed& seed,
+    CCMpfaInteractionVolumeImplementation(const Seed& seed,
                                           const Problem& problem,
                                           const FVElementGeometry& fvGeometry,
                                           const ElementVolumeVariables& elemVolVars)
@@ -145,7 +142,7 @@ public:
         this->T_ += mc.BF;
     }
 
-    Scalar getNeumannFlux(const std::pair<LocalIdxType, bool>& localIndexPair) const
+    Scalar getNeumannFlux(const std::pair<LocalIndexType, bool>& localIndexPair) const
     { return 0.0; }
 
 private:
@@ -155,7 +152,7 @@ private:
                                 LocalMatrixContainer& mc)
     {
         // loop over the local faces
-        LocalIdxType localFaceIdx = 0;
+        LocalIndexType localFaceIdx = 0;
         for (const auto& localScvf : this->localScvfs_)
         {
             if (localScvf.boundary())
@@ -174,7 +171,7 @@ private:
     template<typename GetTensorFunction>
     void assemblePositiveScv(const GetTensorFunction& getTensor,
                              const LocalScvfType& localScvf,
-                             const LocalIdxType localScvfIdx,
+                             const LocalIndexType localScvfIdx,
                              LocalMatrixContainer& mc,
                              const bool boundary = false)
     {
@@ -194,7 +191,7 @@ private:
         auto ipLocal = localScv.geometry().local(localScvf.ip());
 
         // find normal coordinate direction and integration point for divergence condition
-        LocalIdxType divEqNormalDir = normalDir == 1 ? 0 : 1;
+        LocalIndexType divEqNormalDir = normalDir == 1 ? 0 : 1;
         LocalPosition divEqIpLocal(0.0);
         divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
         divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
@@ -221,7 +218,7 @@ private:
     template<typename GetTensorFunction>
     void assembleNegativeScv(const GetTensorFunction& getTensor,
                              const LocalScvfType& localScvf,
-                             const LocalIdxType localScvfIdx,
+                             const LocalIndexType localScvfIdx,
                              LocalMatrixContainer& mc)
     {
         // get diffusion tensor in "negative" sub volume
@@ -240,7 +237,7 @@ private:
         auto ipLocal = localScv.geometry().local(localScvf.ip());
 
         // find normals and integration points in the two scvs for condition of zero divergence
-        LocalIdxType divEqNormalDir = normalDir == 1 ? 0 : 1;
+        LocalIndexType divEqNormalDir = normalDir == 1 ? 0 : 1;
         LocalPosition divEqIpLocal(0.0);
         divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
         divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
@@ -258,15 +255,15 @@ private:
     void addFaceFluxCoefficients_(const LocalScvType& localScv,
                                   const FeLocalBasis& localBasis,
                                   const Tensor& D,
-                                  const LocalIdxType rowIdx,
+                                  const LocalIndexType rowIdx,
                                   const LocalPosition& ipLocal,
-                                  const LocalIdxType normalDir,
+                                  const LocalIndexType normalDir,
                                   LocalMatrixContainer& mc,
                                   const bool isFluxEq,
                                   const bool isRHS = false)
     {
         // In case we're on a flux continuity face, get local index
-        LocalIdxType eqSystemIdx = isFluxEq ? this->findLocalIndex(this->fluxScvfIndexSet_(), rowIdx) : -1;
+        LocalIndexType eqSystemIdx = isFluxEq ? this->findLocalIndex(this->fluxScvfIndexSet_(), rowIdx) : -1;
 
         // Fluxes stemming from the RHS have to have the opposite sign
         Scalar factor = isRHS ? 1.0 : -1.0;
@@ -325,7 +322,7 @@ private:
                                      const FeLocalBasis& localBasis,
                                      const Tensor& D,
                                      const LocalPosition& ipLocal,
-                                     const LocalIdxType normalDir,
+                                     const LocalIndexType normalDir,
                                      LocalMatrixContainer& mc,
                                      const bool isBoundary = false)
     {
@@ -383,7 +380,7 @@ private:
 
     const Scalar c_;
     const Scalar p_;
-    const LocalIdxType divEqIdx_;
+    const LocalIndexType divEqIdx_;
 };
 
 } // end namespace
