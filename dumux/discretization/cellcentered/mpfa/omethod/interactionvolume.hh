@@ -225,7 +225,7 @@ public:
     template<typename UpwindFactorFunction>
     void assembleNeumannFluxes(const UpwindFactorFunction& upwindFactor, const unsigned int eqIdx)
     {
-        if (!onBoundary())
+        if (!onBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return;
 
         LocalIndexType fluxFaceIdx = 0;
@@ -235,10 +235,6 @@ public:
             const auto faceType = localScvf.faceType();
             if (faceType == MpfaFaceTypes::neumann)
             {
-                // boundary neumann fluxes stay zero when tpfa boundary handling is on
-                if (GET_PROP_VALUE(TypeTag, UseTpfaBoundary) && faceType == MpfaFaceTypes::neumann)
-                    continue;
-
                 const auto& element = localElement_(localScvf.insideLocalScvIndex());
                 const auto& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];
@@ -301,7 +297,7 @@ public:
 
     Scalar getNeumannFlux(const LocalIndexPair& localIndexPair) const
     {
-        if (fluxScvfIndexSet_().size() == 0)
+        if (fluxScvfIndexSet_().size() == 0 || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return 0.0;
 
         auto flux = CAinv_[localIndexPair.first] * neumannFluxes_;
