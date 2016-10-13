@@ -123,7 +123,7 @@ public:
 
     //! Returns the global position of the vertex the scvf is connected to
     GlobalPosition vertexCorner() const
-    { return corner(corners_.size()-1); }
+    { return corners_.back(); }
 
     //! Returns the global position of the center of the element facet this scvf is embedded in
     GlobalPosition facetCorner() const
