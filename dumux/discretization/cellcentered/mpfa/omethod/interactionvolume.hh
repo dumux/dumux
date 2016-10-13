@@ -243,18 +243,6 @@ public:
         }
     }
 
-    bool onBoundary() const
-    { return onBoundary_; }
-
-    const GlobalIndexSet& stencil() const
-    { return stencil_; }
-
-    const GlobalIndexSet& volVarsStencil() const
-    { return volVarsStencil_; }
-
-    const PositionVector& volVarsPositions() const
-    { return volVarsPositions_; }
-
     GlobalIndexSet globalScvfs() const
     {
         GlobalIndexSet globalScvfs;
@@ -308,6 +296,18 @@ public:
             return -1.0*flux;
         return flux;
     }
+
+    bool onBoundary() const
+    { return onBoundary_; }
+
+    const GlobalIndexSet& stencil() const
+    { return stencil_; }
+
+    const GlobalIndexSet& volVarsStencil() const
+    { return volVarsStencil_; }
+
+    const PositionVector& volVarsPositions() const
+    { return volVarsPositions_; }
 
 private:
 
