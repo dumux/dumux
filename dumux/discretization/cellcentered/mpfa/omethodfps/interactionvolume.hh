@@ -149,8 +149,7 @@ public:
 private:
 
     template<typename GetTensorFunction>
-    void assembleLocalMatrices_(const GetTensorFunction& getTensor,
-                                LocalMatrixContainer& mc)
+    void assembleLocalMatrices_(const GetTensorFunction& getTensor, LocalMatrixContainer& mc)
     {
         // loop over the local faces
         LocalIndexType localFaceIdx = 0;
