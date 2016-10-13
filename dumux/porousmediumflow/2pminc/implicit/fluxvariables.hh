@@ -28,7 +28,6 @@
 #define DUMUX_TWOPMINC_FLUX_VARIABLES_HH
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/deprecated.hh>
 
 #include "properties.hh"
 
