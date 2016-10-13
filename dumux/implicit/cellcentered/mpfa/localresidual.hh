@@ -141,7 +141,7 @@ protected:
         // return the boundary fluxes
         if (bcTypes.hasOnlyDirichlet())
             return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
-        else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+        else if (bcTypes.hasOnlyNeumann())
             return this->asImp_().evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
         else if (bcTypes.hasOutflow())
             DUNE_THROW(Dune::NotImplemented, "Outflow BC for mpfa methods.");
