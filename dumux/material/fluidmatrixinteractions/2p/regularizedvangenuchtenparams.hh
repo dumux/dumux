@@ -46,71 +46,106 @@ public:
     typedef VanGenuchtenParams<Scalar> Parent;
 
     RegularizedVanGenuchtenParams()
-    {}
-
-    RegularizedVanGenuchtenParams(Scalar vgAlpha,
-                                  Scalar vgN)
-        : Parent(vgAlpha, vgN)
-    {}
-
-    /*!
-     * \brief Threshold saturation below which the capillary pressure
-     *        is regularized.
-     *
-     * This is just 1%. If you need a different value, overload this
-     * class.
-     */
-    Scalar pcLowSw() const
     {
-        // Most problems are very sensitive to this value
-        // (e.g. making it smaller might result in negative
-        // pressures)
-        //
-        // If you want to use a different regularization threshold,
-        // overload this class and supply the new class as second
-        // template parameter for the RegularizedVanGenuchten law!
-        return 1e-2;
+        initialize();
+    }
+
+    RegularizedVanGenuchtenParams(Scalar vgAlpha, Scalar vgN)
+        : Parent(vgAlpha, vgN)
+    {
+        initialize();
     }
 
     /*!
-     * \brief Threshold saturation above which the capillary pressure
-     *        is regularized.
+     * \brief Sets some default regularization thresholds
+     */
+    void initialize()
+    {
+        setPcLowSw(0.01);
+        setPcHighSw(0.99);
+        setKrnLowSw(0.1);
+        setKrwHighSw(0.9);
+    }
+
+    /*!
+     * \brief Set the threshold saturation below which the capillary pressure is regularized.
      *
-     * This is just 99%. If you need a different value, overload this
-     * class.
+     * Most problems are very sensitive to this value (e.g. making it smaller might
+     * result in very high capillary pressures)
+     */
+    void setPcLowSw(Scalar pcLowSw)
+    {
+        pcLowSw_ = pcLowSw;
+    }
+
+    /*!
+     * \brief Threshold saturation below which the capillary pressure is regularized.
+     */
+    Scalar pcLowSw() const
+    {
+        return pcLowSw_;
+    }
+
+    /*!
+     * \brief Set the threshold saturation above which the capillary pressure is regularized.
+     */
+    void setPcHighSw(Scalar pcHighSw)
+    {
+        pcHighSw_ = pcHighSw;
+    }
+
+    /*!
+     * \brief Threshold saturation above which the capillary pressure is regularized.
+     *
+     * Most problems are very sensitive to this value (e.g. making it smaller might
+     * result in negative capillary pressures).
      */
     Scalar pcHighSw() const
     {
-        // Most problems are very sensitive to this value
-        // (e.g. making it smaller might result in negative
-        // pressures)
-        //
-        // If you want to use a different regularization threshold,
-        // overload this class and supply the new class as second
-        // template parameter for the RegularizedVanGenuchten law!
-        return 99e-2;
+        return pcHighSw_;
+    }
+
+    /*!
+     * \brief Set the threshold saturation below which the relative
+     *        permeability of the non-wetting phase gets regularized.
+     */
+    void setKrnLowSw(Scalar krnLowSw)
+    {
+        krnLowSw_ = krnLowSw;
     }
 
     /*!
      * \brief Threshold saturation below which the relative
      *        permeability of the non-wetting phase gets regularized.
-     *
-     * This is just 10%. If you need a different value, overload this
-     * class.
      */
     Scalar krnLowSw() const
-    { return 0.10; }
+    {
+        return krnLowSw_;
+    }
+
+    /*!
+     * \brief Set the threshold saturation above which the relative
+     *        permeability of the wetting phase gets regularized.
+     */
+    void setKrwHighSw(Scalar krwHighSw)
+    {
+        krwHighSw_ = krwHighSw;
+    }
 
     /*!
      * \brief Threshold saturation above which the relative
      *        permeability of the wetting phase gets regularized.
-     *
-     * This is just 90%. If you need a different value, overload this
-     * class.
      */
     Scalar krwHighSw() const
-    { return 0.90; }
+    {
+        return krwHighSw_;
+    }
 
+private:
+    Scalar pcLowSw_;
+    Scalar pcHighSw_;
+    Scalar krnLowSw_;
+    Scalar krwHighSw_;
 };
 } // namespace Dumux
 

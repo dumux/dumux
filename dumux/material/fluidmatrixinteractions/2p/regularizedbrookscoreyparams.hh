@@ -46,32 +46,38 @@ public:
     RegularizedBrooksCoreyParams()
         : BrooksCoreyParams()
     {
+        setThresholdSw(0.01);
     }
 
     RegularizedBrooksCoreyParams(Scalar pe, Scalar lambda)
         : BrooksCoreyParams(pe, lambda)
     {
+        setThresholdSw(0.01);
+    }
+
+    /*!
+     * \brief Set the threshold saturation below which the capillary pressure
+     *        is regularized.
+     *
+     * Most problems are very sensitive to this value (e.g. making it smaller
+     * might result in negative pressures).
+     */
+    void setThresholdSw(Scalar thresholdSw)
+    {
+        thresholdSw_ = thresholdSw;
     }
 
     /*!
      * \brief Threshold saturation below which the capillary pressure
      *        is regularized.
-     *
-     * This is just 1%. If you need a different value, overload this
-     * class.
      */
     Scalar thresholdSw() const
     {
-        // Most problems are very sensitive to this value
-        // (e.g. making it smaller might result in negative
-        // pressures)
-        //
-        // If you want to use a different regularization threshold,
-        // overload this class and supply the new class as second
-        // template parameter for the RegularizedVanGenuchten law!
-        return 1e-2;
+        return thresholdSw_;
     }
 
+private:
+    Scalar thresholdSw_;
 };
 } // namespace Dumux
 

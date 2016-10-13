@@ -43,28 +43,50 @@ public:
     typedef ScalarT Scalar;
 
     RegularizedLinearMaterialParams()
-    {}
+    {
+        setKrLowS(0.05);
+        setKrHighS(0.95);
+    }
+
+    /*!
+     * \brief Set the threshold saturation respective phase below
+     *        which the relative permeability gets regularized.
+     */
+    void setKrLowS(Scalar krLowS)
+    {
+        krLowS_ = krLowS;
+    }
 
     /*!
      * \brief Return the threshold saturation respective phase below
      *        which the relative permeability gets regularized.
-     *
-     * This is just 5%. If you need a different value, write your own
-     * parameter class.
      */
     Scalar krLowS() const
-    { return 0.05; }
+    {
+        return krLowS_;
+    }
+
+    /*!
+     * \brief Set the threshold saturation of the respective phase
+     *        above which the relative permeability gets regularized.
+     */
+    void setKrHighS(Scalar krHighS)
+    {
+        krHighS_ = krHighS;
+    }
 
     /*!
      * \brief Return the threshold saturation of the respective phase
      *        above which the relative permeability gets regularized.
-     *
-     * This is just 95%. If you need a different value, write your own
-     * parameter class.
      */
     Scalar krHighS() const
-    { return 0.95; }
+    {
+        return krHighS_;
+    }
 
+private:
+    Scalar krLowS_;
+    Scalar krHighS_;
 };
 } // namespace Dumux
 
