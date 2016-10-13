@@ -147,11 +147,17 @@ public:
         // create local sub control entities from the seed
         createLocalEntities_(seed);
 
-        // fill info on the dof stencil
+        // reserve memory
         const auto numLocalScvs = localScvs_.size();
+        const auto numLocalScvfs = localScvfs_.size();
+        const auto maxNumVolVars = numLocalScvs + numLocalScvfs;
         stencil_.reserve(numLocalScvs);
-        volVarsStencil_.reserve(numLocalScvs);
-        volVarsPositions_.reserve(numLocalScvs);
+        volVarsStencil_.reserve(maxNumVolVars);
+        volVarsPositions_.reserve(maxNumVolVars);
+        dirichletFaceIndexSet_.reserve(numLocalScvfs);
+        fluxFaceIndexSet_.reserve(numLocalScvfs);
+
+        // fill info on the dof stencil
         for (const auto& localScv : localScvs_)
         {
             const auto globalScvIdx = localScv.globalIndex();
@@ -177,6 +183,13 @@ public:
                 fluxFaceIndexSet_.push_back(localScvfIdx++);
         }
 
+        // shrink containers to actual size
+        volVarsStencil_.shrink_to_fit();
+        volVarsPositions_.shrink_to_fit();
+        dirichletFaceIndexSet_.shrink_to_fit();
+        fluxFaceIndexSet_.shrink_to_fit();
+
+        // initialize the neumann fluxes vector to zero
         neumannFluxes_ = DynamicVector(fluxFaceIndexSet_.size(), 0.0);
     }
 
