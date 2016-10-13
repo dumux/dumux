@@ -202,11 +202,10 @@ private:
 
         // assemble coefficients for the face fluxes
         addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace);
-
         // assemble matrix entries for the condition of zero divergence
         addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir, mc);
 
-        // on boundary faces, add the fluxes from dirichlet boundary conditions
+        // on dirichlet boundary faces, add coefficients for the boundary fluxes
         if (boundary && !isFluxFace)
         {
             LocalPosition bcIpLocal(0.0);
