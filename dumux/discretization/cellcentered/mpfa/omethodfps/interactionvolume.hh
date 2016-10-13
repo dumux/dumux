@@ -113,7 +113,10 @@ public:
       c_(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C)),
       p_(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, P)),
       divEqIdx_(this->fluxScvfIndexSet_().size())
-    {}
+    {
+        if (dim == 3)
+            DUNE_THROW(Dune::NotImplemented, "Fps scheme in 3d");
+    }
 
     template<typename GetTensorFunction>
     void solveLocalSystem(const GetTensorFunction& getTensor)
