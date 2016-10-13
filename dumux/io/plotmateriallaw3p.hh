@@ -24,8 +24,6 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
@@ -294,27 +292,6 @@ public:
         gnuplotpcAlpha_.setYlabel("transition function [-]");
         gnuplotpcAlpha_.addDataSetToPlot(sn, alpha, curveTitle + "_alpha");
         gnuplotpcAlpha_.plot("alpha");
-    }
-
-    /*!
-     * \brief Check the validity range for wetting saturation, to avoid an
-     *        assert of the used material laws
-     *
-     * \param params The material law parameters
-     * \param lowerSat Minimum x-value
-     * \param upperSat Maximum x-value
-     * \param curveTitle Name of the plotted curve
-     */
-    DUNE_DEPRECATED_MSG("checkEffectiveSaturation is deprecated.")
-    void checkEffectiveSaturation(const MaterialLawParams &params,
-                                  Scalar lowerSat,
-                                  Scalar upperSat,
-                                  std::string curveTitle = "")
-    {
-        if (lowerSat < params.swr())
-            Dune::dwarn << "warning: fluid-matrix law " << curveTitle << " can only be plotted for sw > swr" << std::endl;
-        if (upperSat > (1.0 - params.snr()))
-            Dune::dwarn << "warning: fluid-matrix law " << curveTitle << " can only be plotted for sw < 1.0 - snr" << std::endl;
     }
 
 private:

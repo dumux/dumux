@@ -173,8 +173,6 @@ int main()
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
-    {   typedef Dumux::GasPhase<Scalar, H2O> FluidSystem;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::GasPhase<Scalar, H2O> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
@@ -205,8 +203,6 @@ int main()
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase
-    {   typedef Dumux::LiquidPhase<Scalar, H2O> FluidSystem;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
     {   typedef Dumux::FluidSystems::LiquidPhase<Scalar, H2O> FluidSystem;
         success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 

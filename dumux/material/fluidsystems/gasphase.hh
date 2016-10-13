@@ -27,7 +27,6 @@
 #include <cassert>
 #include <limits>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
@@ -338,18 +337,6 @@ public:
 };
 
 } // namespace FluidSystems
-
-/*!
- * \ingroup Fluidsystems
- * \brief A gaseous phase consisting of a single component
- */
-template <class Scalar, class ComponentT>
-class
-DUNE_DEPRECATED_MSG("Class GasPhase is deprecated. Use FluidSystems::GasPhase instead.")
-GasPhase
-: public FluidSystems::GasPhase<Scalar, ComponentT>
-{ };
-
 } // namespace
 
 #endif

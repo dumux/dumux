@@ -133,7 +133,6 @@ protected:
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            concentrationGrad_[phaseIdx].fill(GlobalPosition(0.0)); // TODO: deprecated, remove this once the interface function gets removed
             moleFractionGrad_[phaseIdx].fill(GlobalPosition(0.0));
         }
 
@@ -155,9 +154,6 @@ protected:
                     if(compIdx != phaseIdx) //No grad is needed for this case
                     {
                         moleFractionGrad_[phaseIdx][compIdx].axpy(elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx), feGrad);
-                        // TODO: deprecated, remove this once the interface function gets removed
-                        concentrationGrad_[phaseIdx][compIdx].axpy(elemVolVars[volVarsIdx].moleFraction(phaseIdx, compIdx)
-                                                                   *elemVolVars[volVarsIdx].molarDensity(phaseIdx), feGrad);
                     }
                 }
             }
@@ -241,16 +237,6 @@ public:
     { return molarDensity_[phaseIdx]; }
 
     /*!
-     * \brief The concentration gradient of a component in a phase.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
-    DUNE_DEPRECATED_MSG("Don't use concentration gradient. Fick's law is based on mole fraction gradients!")
-    const GlobalPosition &concentrationGrad(int phaseIdx, int compIdx) const
-    { return concentrationGrad_[phaseIdx][compIdx]; }
-
-    /*!
      * \brief The mole fraction gradient of a component in a phase.
      *
      * \param phaseIdx The phase index
@@ -263,7 +249,6 @@ protected:
 
     // mole fraction gradient
     std::array<std::array<GlobalPosition, numComponents>, numPhases> moleFractionGrad_;
-    std::array<std::array<GlobalPosition, numComponents>, numPhases> concentrationGrad_; // TODO: deprecated
 
     // density of each face at the integration point
     std::array<Scalar, numPhases> density_, molarDensity_;
