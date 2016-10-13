@@ -396,11 +396,9 @@ private:
             {
                 auto curLocalScvfIdx = posLocalScv.localScvfIndex(localDir);
                 const auto& curLocalScvf = localScvf_(curLocalScvfIdx);
-                auto curFaceType = curLocalScvf.faceType();
-                bool curFaceHasUnknown = curFaceType != MpfaFaceTypes::dirichlet;
 
                 // First, add the entries associated with face pressures (unkown or dirichlet)
-                if (curFaceHasUnknown)
+                if (curLocalScvf.faceType() != MpfaFaceTypes::dirichlet)
                 {
                     // we need the index of the current local scvf in the flux face indices
                     auto curIdxInFluxFaces = this->findLocalIndex(fluxScvfIndexSet_(), curLocalScvfIdx);
@@ -444,10 +442,8 @@ private:
                 {
                     auto curLocalScvfIdx = negLocalScv.localScvfIndex(localDir);
                     const auto& curLocalScvf = localScvf_(curLocalScvfIdx);
-                    auto curFaceType = curLocalScvf.faceType();
-                    bool curFaceHasUnknown = curFaceType != MpfaFaceTypes::dirichlet && curFaceType != MpfaFaceTypes::interiorDirichlet;
 
-                    if (curFaceHasUnknown)
+                    if (curLocalScvf.faceType() != MpfaFaceTypes::dirichlet)
                     {
                         // we need the index of the current local scvf in the flux face indices
                         auto curIdxInFluxFaces = this->findLocalIndex(fluxScvfIndexSet_(), curLocalScvfIdx);

@@ -200,7 +200,7 @@ private:
         divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
 
         // does the face has an unknown associated with it?
-        bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet && localScvf.faceType() != MpfaFaceTypes::interiorDirichlet;
+        bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
 
         // assemble coefficients for the face fluxes
         addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace);
@@ -245,7 +245,7 @@ private:
         divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
 
         // does the face has an unknown associated with it?
-        bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet && localScvf.faceType() != MpfaFaceTypes::interiorDirichlet;
+        bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
 
         // assemble coefficients for the face fluxes
         addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace, true);
@@ -295,10 +295,8 @@ private:
         for (int localDir = 0; localDir < dim; localDir++)
         {
             auto localScvfIdx = localScv.localScvfIndex(localDir);
-            auto faceType = this->localScvf_(localScvfIdx).faceType();
-            bool otherHasUnknown = faceType != MpfaFaceTypes::dirichlet && faceType != MpfaFaceTypes::interiorDirichlet;
 
-            if (otherHasUnknown)
+            if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
                 Scalar aij = factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
                 auto colIdx = this->findLocalIndex(this->fluxScvfIndexSet_(), localScvfIdx);
@@ -353,10 +351,8 @@ private:
         for (int localDir = 0; localDir < dim; localDir++)
         {
             auto localScvfIdx = localScv.localScvfIndex(localDir);
-            auto faceType = this->localScvf_(localScvfIdx).faceType();
-            bool otherHasUnknown = faceType != MpfaFaceTypes::dirichlet && faceType != MpfaFaceTypes::interiorDirichlet;
 
-            if (otherHasUnknown)
+            if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
                 auto colIdx = this->findLocalIndex(this->fluxScvfIndexSet_(), localScvfIdx);
                 mc.AL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
