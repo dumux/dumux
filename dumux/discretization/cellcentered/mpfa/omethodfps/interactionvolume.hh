@@ -45,7 +45,7 @@ public:
     // the fps method uses its own interaction volumes at the boundary
     using BoundaryInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>;
 
-    // The local sub-control volume type differ from the standard mpfa-o method
+    // The local sub-control volume type differs from the standard mpfa-o method
     using LocalScvType = CCMpfaOFpsLocalScv<TypeTag>;
 };
 /*!
