@@ -104,8 +104,8 @@ public:
 template<class TypeTag, class Traits>
 class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Traits>
 {
-    // The interaction volume of the mpfa-o fps method has to be friend
-    friend CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>;
+    // The interaction volume implementation has to be friend
+    friend typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using ParentType = CCMpfaInteractionVolumeBase<TypeTag, Traits>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
