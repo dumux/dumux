@@ -142,12 +142,23 @@ public:
         mc.AL -= mc.AR;
         mc.BR -= mc.BL;
         mc.AL.invert();
+        this->CAinv_ = Dumux::multiplyMatrices(mc.AF, mc.AL);
         this->T_ = Dumux::multiplyMatrices(mc.AF, Dumux::multiplyMatrices(mc.AL, mc.BR));
         this->T_ += mc.BF;
     }
 
-    Scalar getNeumannFlux(const LocalIndexPair& localIndexPair) const
-    { return 0.0; }
+    template<typename UpwindFactorFunction>
+    void assembleNeumannFluxes(const UpwindFactorFunction& upwindFactor, const unsigned int eqIdx)
+    {
+        ParentType::assembleNeumannFluxes(upwindFactor, eqIdx);
+
+        if (!this->onBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
+            return;
+
+        auto& neumannFluxes = this->neumannFluxes_;
+        neumannFluxes.resize(neumannFluxes.size() + 1);
+        neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end(), 0.0);
+    }
 
 private:
 
