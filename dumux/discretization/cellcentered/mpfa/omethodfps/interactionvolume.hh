@@ -372,7 +372,13 @@ private:
     { return std::move(tensor); }
 
     Tensor makeTensor_(Scalar&& t) const
-    { return Tensor(t); }
+    {
+        Tensor T(0.0);
+        for (int i = 0; i < dim; ++i)
+            T[i][i] = t;
+
+        return T;
+    }
 
     const FeCache feCache_;
 
