@@ -102,6 +102,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
 
 public:
     using typename ParentType::LocalIndexType;
+    using typename ParentType::LocalIndexPair;
     using typename ParentType::Seed;
 
     CCMpfaInteractionVolumeImplementation(const Seed& seed,
@@ -142,7 +143,7 @@ public:
         this->T_ += mc.BF;
     }
 
-    Scalar getNeumannFlux(const std::pair<LocalIndexType, bool>& localIndexPair) const
+    Scalar getNeumannFlux(const LocalIndexPair& localIndexPair) const
     { return 0.0; }
 
 private:

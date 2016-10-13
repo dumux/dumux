@@ -277,7 +277,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Could not find the local scv face in the interaction volume for the given scvf with index: " << scvf.index());
     }
 
-    DynamicVector getTransmissibilities(const std::pair<LocalIndexType, bool>& localIndexPair) const
+    DynamicVector getTransmissibilities(const LocalIndexPair& localIndexPair) const
     {
         auto tij = T_[localIndexPair.first];
 
@@ -286,7 +286,7 @@ public:
         return tij;
     }
 
-    Scalar getNeumannFlux(const std::pair<LocalIndexType, bool>& localIndexPair) const
+    Scalar getNeumannFlux(const LocalIndexPair& localIndexPair) const
     {
         if (fluxScvfIndexSet_().size() == 0)
             return 0.0;
