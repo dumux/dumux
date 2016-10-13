@@ -82,6 +82,9 @@ private:
         IndexType boundarySeedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
+            if (!element.hasBoundaryIntersections())
+                continue;
+
             auto fvGeometry = localView(problem_().model().globalFvGeometry());
             fvGeometry.bind(element);
             for (const auto& scvf : scvfs(fvGeometry))
