@@ -72,17 +72,13 @@ public:
         datafileSeparator_(' '),
         gnuplotPath_(GNUPLOT_EXECUTABLE)
     {
-        if (persist)
-            pipe_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
-        else
-            pipe_ = popen((gnuplotPath_).c_str(), "w");
+        open(persist);
     }
 
     //! \brief The destructor
     ~GnuplotInterface()
     {
-        if (pclose(pipe_) == -1)
-            assert("Could not close pipe to Gnuplot!");
+        close();
     }
 
     /*!
@@ -148,12 +144,34 @@ public:
     /*!
      * \brief Deletes all plots from a plotting window and resets user-defined options
      */
-    void reset()
+    void reset(const bool persist = true)
     {
+        close();
+        open(persist);
         curveFile_.resize(0);
         curveOptions_.resize(0);
         curveTitle_.resize(0);
         plotOptions_ = "";
+    }
+
+    /*!
+     * \brief Closes gnuplot
+     */
+    void open(const bool persist = true)
+    {
+        if (persist)
+            pipe_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
+        else
+            pipe_ = popen((gnuplotPath_).c_str(), "w");
+    }
+
+    /*!
+     * \brief Closes gnuplot
+     */
+    void close()
+    {
+        if (pclose(pipe_) == -1)
+            assert("Could not close pipe to Gnuplot!");
     }
 
     /*!
