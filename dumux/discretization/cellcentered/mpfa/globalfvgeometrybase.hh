@@ -210,11 +210,14 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfIndexSet;
         }
 
+        // the number of actual boundary scvf is two times the number of boundary intersections
+        numBoundaryScvf_ *= 2;
+
         // in parallel problems we might have reserved more scvfs than we actually use
         scvfs_.shrink_to_fit();
 
         // Initialize the interaction volume seeds, this will also initialize the vector of boundary vertices
-        globalInteractionVolumeSeeds_.update(problem);
+        globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
     }
 
     /*!
