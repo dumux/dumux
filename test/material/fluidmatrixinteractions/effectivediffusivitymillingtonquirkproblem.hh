@@ -117,7 +117,7 @@ public:
     EffectiveDiffusivityMillingtonQuirkProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        FluidSystem::init();
+        FluidSystem::init(273.15, 298.15, 5, 9e4, 5e5, 5);
         this->spatialParams().plotMaterialLaw();
     }
 

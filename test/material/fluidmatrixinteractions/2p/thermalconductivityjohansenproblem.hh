@@ -117,7 +117,7 @@ public:
     ThermalConductivityJohansenProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        FluidSystem::init();
+        FluidSystem::init(273.15, 298.15, 5, 0.99e5, 1.11e5 , 3);
         this->spatialParams().plotMaterialLaw();
     }
 
