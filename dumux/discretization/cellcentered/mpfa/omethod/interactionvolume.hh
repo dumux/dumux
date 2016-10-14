@@ -297,7 +297,7 @@ public:
 
     Scalar getNeumannFlux(const LocalIndexPair& localIndexPair) const
     {
-        if (fluxScvfIndexSet_().size() == 0 || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
+        if (!onBoundary() || fluxScvfIndexSet_().size() == 0 || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return 0.0;
 
         auto flux = CAinv_[localIndexPair.first] * neumannFluxes_;
