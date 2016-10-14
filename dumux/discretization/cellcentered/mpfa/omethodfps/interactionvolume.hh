@@ -156,7 +156,7 @@ public:
             return;
 
         auto& neumannFluxes = this->neumannFluxes_;
-        neumannFluxes.resize(neumannFluxes.size() + 1);
+        neumannFluxes.resize(this->fluxScvfIndexSet_().size() + 1);
         neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end(), 0.0);
     }
 
