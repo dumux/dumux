@@ -42,8 +42,8 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
      * Henry coefficient See:
-     * Stefan Finsterle (1993, page 29 Formula (2.9)) \cite finsterle1993 <BR>
-     * (nach Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985 )
+     * Stefan Finsterle (1993, page 33 Formula (2.9)) \cite finsterle1993 <BR>
+     * (fitted to data from Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985 )
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
