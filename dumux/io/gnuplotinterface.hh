@@ -42,6 +42,7 @@
 #include <string>
 #include <vector>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/stdstreams.hh>
 
 namespace Dumux
@@ -144,10 +145,30 @@ public:
     /*!
      * \brief Deletes all plots from a plotting window and resets user-defined options
      */
-    void reset(const bool persist = true)
+    DUNE_DEPRECATED_MSG("reset() is deprecated. Use resetPlot() instead.")
+    void reset()
+    {
+        curveFile_.resize(0);
+        curveOptions_.resize(0);
+        curveTitle_.resize(0);
+        plotOptions_ = "";
+    }
+
+    /*!
+     * \brief Restarts gnuplot
+     */
+    void resetAll(const bool persist = true)
     {
         close();
         open(persist);
+        resetPlot();
+    }
+
+    /*!
+     * \brief Deletes all plots from a plotting window and resets user-defined options
+     */
+    void resetPlot()
+    {
         curveFile_.resize(0);
         curveOptions_.resize(0);
         curveTitle_.resize(0);

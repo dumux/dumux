@@ -7,7 +7,7 @@ UpperRight = 6 4
 Cells = 48 32
 
 [Diffusivity]
-File = constant
+File = constant_d_eff
 
 []
 TauTortuosity = 0.3

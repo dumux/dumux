@@ -24,6 +24,8 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -68,7 +70,9 @@ public:
      * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
      * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
-    PlotThermalConductivityModel(Scalar temperature, Scalar pressure, bool interaction = true)
+    PlotThermalConductivityModel(Scalar temperature = 283.15,
+                                 Scalar pressure = 1e5,
+                                 bool interaction = true)
     : numIntervals_(1000)
     {
         FluidState fluidstate;
@@ -81,6 +85,42 @@ public:
     }
 
     /*!
+     * \brief Add a effective thermal conductivity-saturation curve to the plot
+     *
+     * \param gnuplot The gnuplot interface
+     * \param params The material law parameters
+     * \param lowerSat Minimum x-value for data set
+     * \param upperSat Maximum x-value for data set
+     * \param curveName Name of the data set
+     * \param curveOptions Plotting options associated with that data set
+     */
+    void addlambdaeffcurve(GnuplotInterface<Scalar> &gnuplot,
+                           Scalar porosity,
+                           Scalar rhoSolid,
+                           Scalar lambdaSolid,
+                           Scalar lowerSat = 0.0,
+                           Scalar upperSat = 1.0,
+                           std::string curveName = "lambdaeff",
+                           std::string curveOptions = "w l")
+    {
+        std::vector<Scalar> sw(numIntervals_+1);
+        std::vector<Scalar> lambda(numIntervals_+1);
+        Scalar satInterval = upperSat - lowerSat;
+
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            lambda[i] = ThermalConductivityModel::effectiveThermalConductivity(sw[i], lambdaW_,
+                                                                               lambdaN_, lambdaSolid,
+                                                                               porosity, rhoSolid);
+        }
+
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("effective thermal conductivity [W/(m K)]");
+        gnuplot.addDataSetToPlot(sw, lambda, curveName, curveOptions);
+    }
+
+    /*!
      * \brief Plot the effective thermal conductivity-saturation curve
      *
      * \param porosity The porosity of the porous medium
@@ -90,6 +130,7 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
+    DUNE_DEPRECATED_MSG("plotlambdaeff() is deprecated. Use addlambdaeffcurve() instead.")
     void plotlambdaeff(Scalar porosity,
                        Scalar rhoSolid,
                        Scalar lambdaSolid,

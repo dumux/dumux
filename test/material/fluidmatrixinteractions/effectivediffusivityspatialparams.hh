@@ -106,9 +106,10 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel(false);
+        GnuplotInterface<Scalar> gnuplot(false);
+        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Diffusivity, File);
-        plotEffectiveDiffusivityModel.plotdeff(porosity_, 0.0, 1.0, fileName);
+        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity_, 0.0, 1.0, fileName);
     }
 
     /*!

@@ -8,4 +8,4 @@ UpperRight = 6 4
 Cells = 48 32
 
 [Conductivity]
-File = johansen
+File = johansen_lambda_eff

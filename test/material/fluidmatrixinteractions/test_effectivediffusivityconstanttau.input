@@ -10,4 +10,4 @@ UpperRight = 6 4
 Cells = 48 32
 
 [Diffusivity]
-File = constanttau
+File = constanttau_d_eff

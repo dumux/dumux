@@ -126,21 +126,31 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotMaterialLaw<TypeTag> plotMaterialLaw(plotFluidMatrixInteractions_);
-        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel(plotFluidMatrixInteractions_);
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel(283.15/*temperature*/, 1e5/*pressure*/,
-                                                                           plotFluidMatrixInteractions_);
+        PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
+        gnuplot.setInteraction(plotFluidMatrixInteractions_);
+        plotMaterialLaw.addpcswcurve(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine", "w lp");
+        plotMaterialLaw.addpcswcurve(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse", "w l");
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("pc-Sw");
 
-        plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.2, 1.0, "fine");
-        plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.2, 1.0, "coarse");
-        plotMaterialLaw.plotkr(fineMaterialParams_, 0.2, 1.0, "fine");
-        plotMaterialLaw.plotkr(coarseMaterialParams_, 0.2, 1.0, "coarse");
+        gnuplot.resetAll();
+        plotMaterialLaw.addkrcurves(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine");
+        plotMaterialLaw.addkrcurves(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse");
+        gnuplot.plot("kr");
 
-        plotEffectiveDiffusivityModel.plotdeff(finePorosity_, 0.0, 1.0, "fine");
-        plotEffectiveDiffusivityModel.plotdeff(coarsePorosity_, 0.0, 1.0, "coarse");
+        gnuplot.resetAll();
+        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, finePorosity_, 0.0, 1.0, "fine");
+        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, coarsePorosity_, 0.0, 1.0, "coarse");
+        gnuplot.plot("deff");
 
-        plotThermalConductivityModel.plotlambdaeff(finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
-        plotThermalConductivityModel.plotlambdaeff(coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
+        gnuplot.resetAll();
+        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel;
+        plotThermalConductivityModel.addlambdaeffcurve(gnuplot, finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
+        plotThermalConductivityModel.addlambdaeffcurve(gnuplot, coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
+        gnuplot.plot("lambdaeff");
     }
 
     /*!
