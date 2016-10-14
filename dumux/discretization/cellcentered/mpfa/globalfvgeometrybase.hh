@@ -129,6 +129,9 @@ public:
         boundaryVertices_.resize(gridView_.size(dim), false);
         elementMap_.resize(numScvs);
 
+        // find vertices on processor boundaries
+        auto ghostVertices = findGhostVertices();
+
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
@@ -164,19 +167,12 @@ public:
                 bool boundary = intersection.boundary();
                 bool neighbor = intersection.neighbor();
 
-                if (neighbor &&
-                    element.partitionType() == Dune::GhostEntity &&
-                    intersection.outside().partitionType() == Dune::GhostEntity)
-                    continue;
-
                 // determine the outside volvar idx
                 IndexType nIdx;
                 if (neighbor)
                     nIdx = problem.elementMapper().index(intersection.outside());
                 else if (boundary)
                     nIdx = numScvs + numBoundaryScvf_++;
-                else
-                    continue;
 
                 // make the scv faces of the intersection
                 for (unsigned int faceScvfIdx = 0; faceScvfIdx < isGeometry.corners(); ++faceScvfIdx)
@@ -185,6 +181,11 @@ public:
                     const auto vIdxLocal = referenceElement.subEntity(intersection.indexInInside(), 1, faceScvfIdx, dim);
                     const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
 
+                    // do not built scvfs connected to a processor boundary
+                    if (ghostVertices[vIdxGlobal])
+                        continue;
+
+                    // store info on which vertices are on the domain boundary
                     if (boundary)
                         boundaryVertices_[vIdxGlobal] = true;
 
@@ -208,6 +209,9 @@ public:
             // Save the scvf indices belonging to this scv to build up fv element geometries fast
             scvfIndicesOfScv_[eIdx] = scvfIndexSet;
         }
+
+        // in parallel problems we might have reserved more scvfs than we actually use
+        scvfs_.shrink_to_fit();
 
         // Initialize the interaction volume seeds, this will also initialize the vector of boundary vertices
         globalInteractionVolumeSeeds_.update(problem);
@@ -256,6 +260,44 @@ public:
     }
 
 private:
+    //! Method that determines which vertices should be skipped during interaction volume creation when running in parallel
+    std::vector<bool> findGhostVertices()
+    {
+        std::vector<bool> ghostVertices(gridView_.size(dim), false);
+
+        // if not run in parallel, skip the rest
+        if (Dune::MPIHelper::getCollectiveCommunication().size() == 1)
+            return ghostVertices;
+
+        // mpfa methods cannot handle ghost cells
+        if (gridView_.ghostSize(0) > 0)
+            DUNE_THROW(Dune::InvalidStateException, "Mpfa methods in parallel do not work with ghost cells. Use overlap cells instead.");
+
+        // mpfa methods have to have overlapping cells
+        if (gridView_.overlapSize(0) == 0)
+            DUNE_THROW(Dune::InvalidStateException, "Grid no overlaping cells. This is required by mpfa methods in parallel.");
+
+        for (const auto& element : elements(gridView_))
+        {
+            for (const auto& is : intersections(gridView_, element))
+            {
+                if (!is.neighbor() && !is.boundary())
+                {
+                    const auto& refElement = ReferenceElements::general(element.geometry().type());
+                    for (unsigned int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
+                    {
+                        const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);
+                        const auto vIdxGlobal = problem_().vertexMapper().subIndex(element, vIdxLocal, dim);
+
+                        ghostVertices[vIdxGlobal] = true;
+                    }
+                }
+            }
+        }
+
+        return ghostVertices;
+    }
+
     const Problem& problem_() const
     { return *problemPtr_; }
 
