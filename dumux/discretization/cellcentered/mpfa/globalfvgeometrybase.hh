@@ -35,6 +35,78 @@
 
 namespace Dumux
 {
+//! Helper class for the global fv geometries
+template<class TypeTag>
+class CCMpfaGlobalFVGeometryHelper
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using CoordScalar = typename GridView::ctype;
+
+    static const int dim = GridView::dimension;
+    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+
+public:
+    static std::vector<bool> findGhostVertices(const Problem& problem, const GridView& gridView)
+    {
+        std::vector<bool> ghostVertices(gridView.size(dim), false);
+
+        // if not run in parallel, skip the rest
+        if (Dune::MPIHelper::getCollectiveCommunication().size() == 1)
+            return ghostVertices;
+
+        // mpfa methods can not yet handle ghost cells
+        if (gridView.ghostSize(0) > 0)
+            DUNE_THROW(Dune::InvalidStateException, "Mpfa methods in parallel do not work with ghost cells. Use overlap cells instead.");
+
+        // mpfa methods have to have overlapping cells
+        if (gridView.overlapSize(0) == 0)
+            DUNE_THROW(Dune::InvalidStateException, "Grid no overlaping cells. This is required by mpfa methods in parallel.");
+
+        for (const auto& element : elements(gridView))
+        {
+            for (const auto& is : intersections(gridView, element))
+            {
+                if (!is.neighbor() && !is.boundary())
+                {
+                    const auto& refElement = ReferenceElements::general(element.geometry().type());
+                    for (unsigned int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
+                    {
+                        const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);
+                        const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
+
+                        ghostVertices[vIdxGlobal] = true;
+                    }
+                }
+            }
+        }
+
+        return ghostVertices;
+    }
+
+    template<int d = dim>
+    static typename std::enable_if<d == 2, std::size_t>::type getGlobalNumScvf(const GridView& gridView)
+    {
+        Dune::GeometryType triangle, quadrilateral;
+        triangle.makeTriangle();
+        quadrilateral.makeQuadrilateral();
+
+        return gridView.size(triangle)*6 + gridView.size(quadrilateral)*8;
+    }
+
+    template<int d = dim>
+    static typename std::enable_if<d == 3, std::size_t>::type getGlobalNumScvf(const GridView& gridView)
+    {
+        Dune::GeometryType simplex, pyramid, prism, cube;
+        simplex.makeTetrahedron();
+        pyramid.makePyramid();
+        prism.makePrism();
+        cube.makeHexahedron();
+
+        return gridView.size(simplex)*12 + gridView.size(pyramid)*16 + gridView.size(prism)*18 + gridView.size(cube)*24;
+    }
+};
+
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the finite volume geometry vector for mpfa models
@@ -122,15 +194,16 @@ public:
 
         scvfs_.clear();
         // reserve memory
-        IndexType numScvs = gridView_.size(0);
+        std::size_t numScvs = gridView_.size(0);
+        std::size_t numScvfs = CCMpfaGlobalFVGeometryHelper<TypeTag>::getGlobalNumScvf(gridView_);
         scvs_.resize(numScvs);
-        scvfs_.reserve(getNumScvf_());
+        scvfs_.reserve(numScvfs);
         scvfIndicesOfScv_.resize(numScvs);
         boundaryVertices_.resize(gridView_.size(dim), false);
         elementMap_.resize(numScvs);
 
         // find vertices on processor boundaries
-        auto ghostVertices = findGhostVertices();
+        auto ghostVertices = CCMpfaGlobalFVGeometryHelper<TypeTag>::findGhostVertices(problem, gridView_);
 
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
@@ -240,66 +313,7 @@ public:
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
 
-    template<int d = dim>
-    typename std::enable_if<d == 2, IndexType>::type getNumScvf_() const
-    {
-        Dune::GeometryType triangle, quadrilateral;
-        triangle.makeTriangle();
-        quadrilateral.makeQuadrilateral();
-
-        return gridView_.size(triangle)*6 + gridView_.size(quadrilateral)*8;
-    }
-
-    template<int d = dim>
-    typename std::enable_if<d == 3, IndexType>::type getNumScvf_() const
-    {
-        Dune::GeometryType simplex, pyramid, prism, cube;
-        simplex.makeTetrahedron();
-        pyramid.makePyramid();
-        prism.makePrism();
-        cube.makeHexahedron();
-
-        return gridView_.size(simplex)*12 + gridView_.size(pyramid)*16 + gridView_.size(prism)*18 + gridView_.size(cube)*24;
-    }
-
 private:
-    //! Method that determines which vertices should be skipped during interaction volume creation when running in parallel
-    std::vector<bool> findGhostVertices()
-    {
-        std::vector<bool> ghostVertices(gridView_.size(dim), false);
-
-        // if not run in parallel, skip the rest
-        if (Dune::MPIHelper::getCollectiveCommunication().size() == 1)
-            return ghostVertices;
-
-        // mpfa methods cannot handle ghost cells
-        if (gridView_.ghostSize(0) > 0)
-            DUNE_THROW(Dune::InvalidStateException, "Mpfa methods in parallel do not work with ghost cells. Use overlap cells instead.");
-
-        // mpfa methods have to have overlapping cells
-        if (gridView_.overlapSize(0) == 0)
-            DUNE_THROW(Dune::InvalidStateException, "Grid no overlaping cells. This is required by mpfa methods in parallel.");
-
-        for (const auto& element : elements(gridView_))
-        {
-            for (const auto& is : intersections(gridView_, element))
-            {
-                if (!is.neighbor() && !is.boundary())
-                {
-                    const auto& refElement = ReferenceElements::general(element.geometry().type());
-                    for (unsigned int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
-                    {
-                        const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);
-                        const auto vIdxGlobal = problem_().vertexMapper().subIndex(element, vIdxLocal, dim);
-
-                        ghostVertices[vIdxGlobal] = true;
-                    }
-                }
-            }
-        }
-
-        return ghostVertices;
-    }
 
     const Problem& problem_() const
     { return *problemPtr_; }
