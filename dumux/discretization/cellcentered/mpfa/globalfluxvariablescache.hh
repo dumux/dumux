@@ -25,6 +25,8 @@
 
 #include <dumux/implicit/properties.hh>
 
+#include "fluxvariablescachefiller.hh"
+
 namespace Dumux
 {
 
@@ -35,103 +37,6 @@ namespace Dumux
 template<class TypeTag, bool EnableGlobalFluxVariablesCache>
 class CCMpfaGlobalFluxVariablesCache;
 
-/*!
- * \ingroup ImplicitModel
- * \brief Helper class to fill the flux var caches
- */
-template<class TypeTag>
-class CCMpfaFluxVariablesCacheFiller
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static const bool advection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static const bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static const bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
-    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
-
-public:
-    // functions to fill the flux var caches in the case of pure advection
-    template<class FluxVarsCacheVector, class T = TypeTag>
-    static typename std::enable_if<advection && !diffusion && !energy>::type
-    fillFluxVarCache(const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolumeFace& scvf,
-                     FluxVarsCacheVector& fluxVarsCache)
-    {
-        // lambda function to get the permeability tensor
-        const auto* prob = &problem;
-        auto permFunction = [prob](const Element& element, const VolumeVariables& volVars, const SubControlVolume& scv)
-                            { return prob->spatialParams().intrinsicPermeability(scv, volVars); };
-
-        // update the flux var caches for this scvf
-        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
-        {
-            const auto& boundarySeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            BoundaryInteractionVolume iv(boundarySeed, problem, fvGeometry, elemVolVars);
-            iv.solveLocalSystem(permFunction);
-
-            // we assume phaseIdx = eqIdx here for purely advective problems
-            for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            {
-                // lambda function defining the upwind factor of the advective flux
-                auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars) { return volVars.density(eqIdx)/volVars.viscosity(eqIdx); };
-                iv.assembleNeumannFluxes(advectionUpwindFunction, eqIdx);
-
-                // update flux variables cache
-                fluxVarsCache[scvf.index()].updateBoundaryAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv, eqIdx);
-
-                // update flux variable caches of the other scvfs of the interaction volume
-                for (const auto& scvfIdx : iv.globalScvfs())
-                {
-                    if (scvfIdx != scvf.index())
-                    {
-                        const auto& scvfJ = fvGeometry.scvf(scvfIdx);
-                        const auto elementJ = problem.model().globalFvGeometry().element(scvfJ.insideScvIdx());
-                        fluxVarsCache[scvfIdx].updateBoundaryAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv, eqIdx);
-                        if (eqIdx == numEq - 1)
-                            fluxVarsCache[scvfIdx].setUpdated();
-                    }
-                }
-            }
-        }
-        else
-        {
-            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
-            InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-            iv.solveLocalSystem(permFunction);
-
-            // update flux variables cache
-            fluxVarsCache[scvf.index()].updateInnerAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
-
-            // update flux variable caches of the other scvfs of the interaction volume
-            for (const auto& scvfIdx : iv.globalScvfs())
-            {
-                if (scvfIdx != scvf.index())
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdx);
-                    const auto elementJ = problem.model().globalFvGeometry().element(scvfJ.insideScvIdx());
-                    fluxVarsCache[scvfIdx].updateInnerAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
-                    fluxVarsCache[scvfIdx].setUpdated();
-                }
-            }
-        }
-
-        // the flux var cache has been updated
-        fluxVarsCache[scvf.index()].setUpdated();
-    }
-};
 
 /*!
  * \ingroup ImplicitModel
