@@ -192,7 +192,7 @@ public:
             {
                 auto&& ivScvf = fvGeometry.scvf(scvfIdx);
 
-                if (!ivScvf.boundary() || existsLocalIndex(ivScvf.outsideScvIdx(), finishedBoundaries).second)
+                if (!ivScvf.boundary() || contains(ivScvf.outsideScvIdx(), finishedBoundaries))
                     continue;
 
                 // that means we are on a not yet handled boundary scvf
@@ -260,16 +260,9 @@ private:
         return std::distance(volVarIndices_.begin(), it);
     }
 
-    const std::pair<IndexType, bool> existsLocalIndex(const IndexType idx,
-                                                      const std::vector<IndexType>& indices) const
-    {
-        auto it = std::find(indices.begin(), indices.end(), idx);
-        if (it != indices.end())
-            return std::make_pair<IndexType, bool>(std::distance(indices.begin(), it), true);
-        else
-            return std::make_pair<IndexType, bool>(0, false);
-
-    }
+    const bool contains(const IndexType idx,
+                        const std::vector<IndexType>& indices) const
+    { return std::find(indices.begin(), indices.end(), idx) != indices.end(); }
 
     std::vector<IndexType> volVarIndices_;
     std::vector<VolumeVariables> volumeVariables_;

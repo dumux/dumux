@@ -240,7 +240,7 @@ public:
         const auto eIdx = globalFvGeometry().problem_().elementMapper().index(element);
         for (auto&& scvf : scvfs_)
         {
-            if (existsLocalIndex(scvf.vertexIndex(), finishedVertices).second)
+            if (contains(scvf.vertexIndex(), finishedVertices))
                 continue;
 
             const bool boundary = globalFvGeometry().scvfTouchesBoundary(scvf);
@@ -352,8 +352,7 @@ private:
     void makeNeighborGeometries(const Element& element, IndexType eIdxGlobal, const IndexVector& ivScvfs)
     {
         // create the neighbor scv if it doesn't exist yet
-        auto pair = existsLocalIndex(eIdxGlobal, neighborScvIndices_);
-        if (!pair.second)
+        if (!contains(eIdxGlobal, neighborScvIndices_))
         {
             neighborScvs_.emplace_back(element.geometry(), eIdxGlobal);
             neighborScvIndices_.push_back(eIdxGlobal);
@@ -389,7 +388,7 @@ private:
                     continue;
 
                 // if the actual global scvf index is in the container, make scvf
-                if (existsLocalIndex(scvFaceIndices[scvfCounter], ivScvfs).second)
+                if (contains(scvFaceIndices[scvfCounter], ivScvfs))
                 {
                     neighborScvfs_.emplace_back(geomHelper,
                                                 geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
@@ -415,19 +414,12 @@ private:
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
         return std::distance(indices.begin(), it);
-
     }
 
-    const std::pair<IndexType, bool> existsLocalIndex(const IndexType idx,
-                                                      const std::vector<IndexType>& indices) const
-    {
-        auto it = std::find(indices.begin(), indices.end(), idx);
-        if (it != indices.end())
-            return std::make_pair<IndexType, bool>(std::distance(indices.begin(), it), true);
-        else
-            return std::make_pair<IndexType, bool>(0, false);
-
-    }
+    //! Returns whether or not an index is stored in a given vector
+    const bool contains(const IndexType idx,
+                        const std::vector<IndexType>& indices) const
+    { return std::find(indices.begin(), indices.end(), idx) != indices.end(); }
 
     void clear()
     {
