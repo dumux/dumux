@@ -25,6 +25,8 @@
 
 #include <dumux/implicit/properties.hh>
 
+#include "fluxvariablescachefiller.hh"
+
 namespace Dumux
 {
 
@@ -91,7 +93,108 @@ private:
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, false>
 {
-    // TODO: implement
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
+
+public:
+    CCMpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
+    : globalFluxVarsCachePtr_(&global) {}
+
+    // This function has to be called prior to flux calculations on the element.
+    // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars)
+    {
+        DUNE_THROW(Dune::InvalidStateException, "Does local flux var cache binding make sense in general?");
+    }
+
+    // This function is called by the CCLocalResidual before flux calculations during assembly.
+    // Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars)
+    {
+        clear();
+        const auto& problem = globalFluxVarsCache().problem_();
+        const auto& globalFvGeometry = problem.model().globalFvGeometry();
+
+        // // first prepare all the global indices
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
+            const auto& ivSeed = boundary ? globalFvGeometry.boundaryInteractionVolumeSeed(scvf) : globalFvGeometry.interactionVolumeSeed(scvf);
+
+            // loop over all the scvfs in the interaction region
+            for (auto scvfIdx : ivSeed.globalScvfIndices())
+                globalScvfIndices_.push_back(scvfIdx);
+        }
+        // make global indices unique
+        std::sort(globalScvfIndices_.begin(), globalScvfIndices_.end());
+        globalScvfIndices_.erase(std::unique(globalScvfIndices_.begin(), globalScvfIndices_.end()), globalScvfIndices_.end());
+
+        // prepare all the caches of the scvfs inside the corresponding interaction volume using helper class
+        fluxVarsCache_.resize(globalScvfIndices_.size());
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (!(*this)[scvf].isUpdated())
+                FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, *this);
+        }
+    }
+
+    void bindScvf(const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const SubControlVolumeFace& scvf)
+    {
+        DUNE_THROW(Dune::InvalidStateException, "Does binding of one scvf make sense in general?");
+    }
+
+    // access operators in the case of no caching
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
+
+    const FluxVariablesCache& operator [](const IndexType scvfIdx) const
+    { return fluxVarsCache_[getLocalScvfIdx_(scvfIdx)]; }
+
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
+
+    FluxVariablesCache& operator [](const IndexType scvfIdx)
+    { return fluxVarsCache_[getLocalScvfIdx_(scvfIdx)]; }
+
+    //! The global object we are a restriction of
+    const GlobalFluxVariablesCache& globalFluxVarsCache() const
+    {  return *globalFluxVarsCachePtr_; }
+
+private:
+    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+
+    void clear()
+    {
+        fluxVarsCache_.clear();
+        globalScvfIndices_.clear();
+    }
+
+    // get index of scvf in the local container
+    int getLocalScvfIdx_(const int scvfIdx) const
+    {
+        auto it = std::lower_bound(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
+        assert(it != globalScvfIndices_.end() && "Could not find the flux vars cache for scvfIdx");
+        assert(globalScvfIndices_[std::distance(globalScvfIndices_.begin(), it)] == scvfIdx && "Could not find the flux vars cache for scvfIdx");
+        return std::distance(globalScvfIndices_.begin(), it);
+    }
+
+    std::vector<FluxVariablesCache> fluxVarsCache_;
+    std::vector<IndexType> globalScvfIndices_;
 };
 
 } // end namespace
