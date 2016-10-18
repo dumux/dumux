@@ -218,6 +218,15 @@ public:
     { return fluidState_.temperature(/*phaseIdx=*/0); }
 
     /*!
+     * \brief Returns the dynamic viscosity of the fluid within the
+     *        control volume in \f$\mathrm{[Pa s]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar viscosity(int phaseIdx) const
+    { return fluidState_.viscosity(phaseIdx); }
+
+    /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume in \f$[s*m/kg]\f$.
      *
