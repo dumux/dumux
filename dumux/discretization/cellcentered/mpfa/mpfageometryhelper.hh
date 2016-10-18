@@ -184,7 +184,7 @@ public:
                                  p[map[indexOnIntersection][3]]} );
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scvf boundary geometries for dim=" << dim
+            DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " corners=" << corners);
         }

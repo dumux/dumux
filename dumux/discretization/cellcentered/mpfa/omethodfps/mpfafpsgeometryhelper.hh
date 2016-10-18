@@ -123,7 +123,7 @@ public:
                                  p[map[localScvIdx][3]]} );
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+            DUNE_THROW(Dune::NotImplemented, "Mpfa-Fps scv corners for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " corners=" << corners_);
         }
@@ -237,7 +237,7 @@ public:
                                  p[map[localScvIdx][7]]} );
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+            DUNE_THROW(Dune::NotImplemented, "Mpfa-Fps scv corners for dim=" << dim
                                                             << " dimWorld=" << dimWorld
                                                             << " corners=" << corners_);
         }

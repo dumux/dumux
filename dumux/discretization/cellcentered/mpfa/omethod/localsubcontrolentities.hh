@@ -58,8 +58,7 @@ public:
                     const LocalScvSeed& scvSeed)
     : seed_(scvSeed)
     {
-
-        // et up local basis
+        // set up local basis
         center_ = element.geometry().center();
         LocalBasis localBasis;
 
