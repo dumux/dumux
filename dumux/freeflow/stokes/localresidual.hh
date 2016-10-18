@@ -328,6 +328,12 @@ protected:
         {
             source[momentumXIdx + dimIdx] -= pressureGradAtSCVCenter[dimIdx];
             source[momentumXIdx + dimIdx] += volVars.density()*this->problem_().gravity()[dimIdx];
+
+            // add a wall friction term to account for a dimensional reduction from 3d to 2d
+            const auto pos = this->element_().geometry().corner(scvIdx);
+            const Scalar height = this->problem_().extrusionFactorAtPos(pos);
+            const Scalar wallFriction = 12*volVars.velocity()[dimIdx]*volVars.dynamicViscosity()/(height*height);
+            source[momentumXIdx + dimIdx] -= wallFriction;
         }
     }
 
