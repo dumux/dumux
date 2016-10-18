@@ -192,7 +192,13 @@ public:
     {
         problemPtr_ = &problem;
 
+        // clear containers (necessary after grid refinement)
+        scvs_.clear();
         scvfs_.clear();
+        scvfIndicesOfScv_.clear();
+        boundaryVertices_.clear();
+        elementMap_.clear();
+
         // reserve memory
         std::size_t numScvs = gridView_.size(0);
         std::size_t numScvfs = CCMpfaGlobalFVGeometryHelper<TypeTag>::getGlobalNumScvf(gridView_);
@@ -222,11 +228,11 @@ public:
             auto elemGeometry = element.geometry();
             const auto& referenceElement = ReferenceElements::general(elemGeometry.type());
 
-            // create sub control volume for this element
-            scvs_[eIdx] = SubControlVolume(std::move(elemGeometry), eIdx);
-
             // The geometry helper class
             MpfaGeometryHelper geomHelper(elemGeometry);
+
+            // create sub control volume for this element
+            scvs_[eIdx] = SubControlVolume(std::move(elemGeometry), eIdx);
 
             // The local scvf index set
             std::vector<IndexType> scvfIndexSet;
@@ -238,11 +244,10 @@ public:
                 // get the intersection geometry and some of its bools
                 auto isGeometry = intersection.geometry();
                 bool boundary = intersection.boundary();
-                bool neighbor = intersection.neighbor();
 
                 // determine the outside volvar idx
                 IndexType nIdx;
-                if (neighbor)
+                if (intersection.neighbor())
                     nIdx = problem.elementMapper().index(intersection.outside());
                 else if (boundary)
                     nIdx = numScvs + numBoundaryScvf_++;
@@ -254,7 +259,7 @@ public:
                     const auto vIdxLocal = referenceElement.subEntity(intersection.indexInInside(), 1, faceScvfIdx, dim);
                     const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
 
-                    // do not built scvfs connected to a processor boundary
+                    // do not build scvfs connected to a processor boundary
                     if (ghostVertices[vIdxGlobal])
                         continue;
 
@@ -264,15 +269,15 @@ public:
 
                     // make the scv face
                     scvfIndexSet.push_back(scvfIdx);
-                    scvfs_.emplace_back(SubControlVolumeFace(geomHelper,
-                                                             geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
-                                                             intersection.centerUnitOuterNormal(),
-                                                             vIdxGlobal,
-                                                             scvfIdx,
-                                                             std::array<IndexType, 2>({{eIdx, nIdx}}),
-                                                             q,
-                                                             boundary
-                                                             ));
+                    scvfs_.emplace_back(geomHelper,
+                                        geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
+                                        intersection.centerUnitOuterNormal(),
+                                        vIdxGlobal,
+                                        scvfIdx,
+                                        std::array<IndexType, 2>({{eIdx, nIdx}}),
+                                        q,
+                                        boundary
+                                        );
 
                     // increment scvf counter
                     scvfIdx++;
@@ -289,7 +294,7 @@ public:
         // in parallel problems we might have reserved more scvfs than we actually use
         scvfs_.shrink_to_fit();
 
-        // Initialize the interaction volume seeds, this will also initialize the vector of boundary vertices
+        // Initialize the interaction volume seeds
         globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
     }
 
@@ -320,9 +325,13 @@ private:
 
     const Problem* problemPtr_;
     GridView gridView_;
+
+    // vectors that store the geometries
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+
+    // vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<bool> boundaryVertices_;
     IndexType numBoundaryScvf_;
