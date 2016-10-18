@@ -272,7 +272,7 @@ public:
         auto vIdxGlobal = scvf.vertexIndex();
 
         // create the scv entity seeds
-        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf, /*dummy*/0, vIdxGlobal);
+        fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf, vIdxGlobal);
 
         // shrink containers to necessary size
         scvSeeds.shrink_to_fit();
