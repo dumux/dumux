@@ -31,12 +31,12 @@ namespace Dumux
 template<typename G, typename L>
 class CCMpfaOLocalScvSeed
 {
+public:
     using GlobalIndexType = G;
     using LocalIndexType = L;
     using GlobalIndexSet = std::vector<GlobalIndexType>;
     using LocalIndexSet = std::vector<LocalIndexType>;
 
-public:
     //! constructor fully defining the scv seed
     CCMpfaOLocalScvSeed(GlobalIndexSet&& globalScvfIndices,
                         LocalIndexSet&& localScvfIndices,
@@ -79,12 +79,12 @@ private:
 template<typename G, typename L>
 class CCMpfaOLocalScvfSeed
 {
+public:
     using GlobalIndexType = G;
     using LocalIndexType = L;
     using GlobalIndexSet = std::vector<GlobalIndexType>;
     using LocalIndexSet = std::vector<LocalIndexType>;
 
-public:
     template<class SubControlVolumeFace>
     CCMpfaOLocalScvfSeed(const SubControlVolumeFace& scvf,
                          LocalIndexSet&& scvIndicesLocal,

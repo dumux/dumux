@@ -30,6 +30,8 @@
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
+#include "mpfageometryhelper.hh"
+
 namespace Dumux
 {
 /*!
@@ -143,6 +145,7 @@ class CCMpfaFVElementGeometry<TypeTag, false>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -152,6 +155,12 @@ class CCMpfaFVElementGeometry<TypeTag, false>
 
     using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
     using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+
+    static const int dim = GridView::dimension;
+    using CoordScalar = typename GridView::ctype;
+    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+
+    using MpfaGeometryHelper = Dumux::MpfaGeometryHelper<GridView, dim>;
 
 public:
     //! Constructor
@@ -216,13 +225,47 @@ public:
     void bind(const Element& element)
     {
         bindElement(element);
-        for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
+
+        // reserve memory
+        auto numNeighbors = globalFvGeometry().problem_().model().stencils(element).neighborStencil().size();
+        auto numNeighborScvf = numNeighbors*dim*(2*dim-2);
+        neighborScvs_.reserve(numNeighbors);
+        neighborScvIndices_.reserve(numNeighbors);
+        neighborScvfIndices_.reserve(numNeighborScvf);
+        neighborScvfs_.reserve(numNeighborScvf);
+
+        // build scvfs connected to the interaction regions around the element vertices
+        std::vector<IndexType> finishedVertices;
+        finishedVertices.reserve(element.geometry().corners());
+        const auto eIdx = globalFvGeometry().problem_().elementMapper().index(element);
+        for (auto&& scvf : scvfs_)
         {
-            neighborScvs_.reserve(element.subEntities(1));
-            neighborScvfIndices_.reserve(element.subEntities(1));
-            if (intersection.neighbor())
-                makeNeighborGeometries(intersection.outside());
+            if (existsLocalIndex(scvf.vertexIndex(), finishedVertices).second)
+                continue;
+
+            const bool boundary = globalFvGeometry().scvfTouchesBoundary(scvf);
+            const auto& ivSeed = boundary ? globalFvGeometry().boundaryInteractionVolumeSeed(scvf) : globalFvGeometry().interactionVolumeSeed(scvf);
+
+            auto scvfIndices = ivSeed.globalScvfIndices();
+            // make the scv for each element in the interaction region
+            // and the corresponding scv faces in that scv
+            for (auto eIdxGlobal : ivSeed.globalScvIndices())
+            {
+                if (eIdxGlobal != eIdx)
+                {
+                    auto element = globalFvGeometry().element(eIdxGlobal);
+                    makeNeighborGeometries(element, eIdxGlobal, scvfIndices);
+                }
+            }
+
+            finishedVertices.push_back(scvf.vertexIndex());
         }
+
+        // free unused memory
+        neighborScvs_.shrink_to_fit();
+        neighborScvIndices_.shrink_to_fit();
+        neighborScvfIndices_.shrink_to_fit();
+        neighborScvfs_.shrink_to_fit();
     }
 
     //! Binding of an element preparing the geometries only inside the element
@@ -242,62 +285,125 @@ private:
     //! create scvs and scvfs of the bound element
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = globalFvGeometry().problem_().elementMapper().index(element);
+        // the problem
+        const auto& problem = globalFvGeometry().problem_();
+
+        auto eIdx = problem.elementMapper().index(element);
         scvs_.emplace_back(element.geometry(), eIdx);
         scvIndices_.emplace_back(eIdx);
 
         const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdx);
 
+        // the element geometry and reference element
+        auto g = element.geometry();
+        const auto& referenceElement = ReferenceElements::general(g.type());
+
+        // The geometry helper class
+        MpfaGeometryHelper geomHelper(g);
+
+        // the quadrature point to be used on the scvf
+        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+
+        // reserve memory for the scv faces
+        auto numLocalScvf = scvFaceIndices.size();
+        scvfIndices_.reserve(numLocalScvf);
+        scvfs_.reserve(numLocalScvf);
+
         int scvfCounter = 0;
-        for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
+        for (const auto& is : intersections(globalFvGeometry().gridView(), element))
         {
-            if (intersection.neighbor() || intersection.boundary())
+            auto isGeometry = is.geometry();
+
+            // make the scv faces of the intersection
+            for (unsigned int faceScvfIdx = 0; faceScvfIdx < isGeometry.corners(); ++faceScvfIdx)
             {
-                scvfs_.emplace_back(intersection,
-                                    intersection.geometry(),
+                // get the global vertex index the scv face is connected to (mpfa-o method does not work for hanging nodes!)
+                const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, faceScvfIdx, dim);
+                const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
+
+                // do not build scvfs connected to a processor boundary
+                if (globalFvGeometry().isGhostVertex(vIdxGlobal))
+                    continue;
+
+                scvfs_.emplace_back(geomHelper,
+                                    geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
+                                    is.centerUnitOuterNormal(),
+                                    vIdxGlobal,
                                     scvFaceIndices[scvfCounter],
-                                    std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
+                                    std::array<IndexType, 2>({{eIdx, neighborVolVarIndices[scvfCounter]}}),
+                                    q,
+                                    is.boundary()
                                     );
 
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
+
             }
         }
+
+        // free unused memory
+        scvfs_.shrink_to_fit();
+        scvfIndices_.shrink_to_fit();
     }
 
     //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
-    void makeNeighborGeometries(const Element& element)
+    template<class IndexVector>
+    void makeNeighborGeometries(const Element& element, IndexType eIdxGlobal, const IndexVector& ivScvfs)
     {
-        // create the neighbor scv
-        auto eIdx = globalFvGeometry().problem_().elementMapper().index(element);
-        neighborScvs_.emplace_back(element.geometry(), eIdx);
-        neighborScvIndices_.push_back(eIdx);
+        // create the neighbor scv if it doesn't exist yet
+        auto pair = existsLocalIndex(eIdxGlobal, neighborScvIndices_);
+        if (!pair.second)
+        {
+            neighborScvs_.emplace_back(element.geometry(), eIdxGlobal);
+            neighborScvIndices_.push_back(eIdxGlobal);
+        }
 
-        const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdx);
+        const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdxGlobal);
+        const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdxGlobal);
+
+        // the element geometry and reference element
+        auto g = element.geometry();
+        const auto& referenceElement = ReferenceElements::general(g.type());
+
+        // The geometry helper class
+        MpfaGeometryHelper geomHelper(g);
+
+        // the quadrature point to be used on the scvf
+        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
         int scvfCounter = 0;
-        for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
+        for (const auto& is : intersections(globalFvGeometry().gridView(), element))
         {
-            if (intersection.neighbor())
+            auto isGeometry = is.geometry();
+
+            // make the scv faces of the intersection
+            for (unsigned int faceScvfIdx = 0; faceScvfIdx < isGeometry.corners(); ++faceScvfIdx)
             {
-                // only create subcontrol faces where the outside element is the bound element
-                if (intersection.outside() == *elementPtr_)
+                // get the global vertex index the scv face is connected to (mpfa-o method does not work for hanging nodes!)
+                const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, faceScvfIdx, dim);
+                const auto vIdxGlobal = globalFvGeometry().problem_().vertexMapper().subIndex(element, vIdxLocal, dim);
+
+                // do not build scvfs connected to a processor boundary
+                if (globalFvGeometry().isGhostVertex(vIdxGlobal))
+                    continue;
+
+                // if the actual global scvf index is in the container, make scvf
+                if (existsLocalIndex(scvFaceIndices[scvfCounter], ivScvfs).second)
                 {
-                    neighborScvfs_.emplace_back(intersection,
-                                                intersection.geometry(),
+                    neighborScvfs_.emplace_back(geomHelper,
+                                                geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
+                                                is.centerUnitOuterNormal(),
+                                                vIdxGlobal,
                                                 scvFaceIndices[scvfCounter],
-                                                std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
+                                                std::array<IndexType, 2>({{eIdxGlobal, neighborVolVarIndices[scvfCounter]}}),
+                                                q,
+                                                is.boundary()
                                                 );
 
-                    neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
+                    neighborScvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 }
-                // always increase local counter
-                scvfCounter++;
-            }
-            else if (intersection.boundary())
-            {
+
                 scvfCounter++;
             }
         }
@@ -309,6 +415,17 @@ private:
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
         return std::distance(indices.begin(), it);
+
+    }
+
+    const std::pair<IndexType, bool> existsLocalIndex(const IndexType idx,
+                                                      const std::vector<IndexType>& indices) const
+    {
+        auto it = std::find(indices.begin(), indices.end(), idx);
+        if (it != indices.end())
+            return std::make_pair<IndexType, bool>(std::distance(indices.begin(), it), true);
+        else
+            return std::make_pair<IndexType, bool>(0, false);
 
     }
 

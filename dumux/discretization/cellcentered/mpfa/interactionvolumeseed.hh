@@ -36,6 +36,9 @@ namespace Dumux
 template<class ScvSeedType, class ScvfSeedType>
 class CCMpfaInteractionVolumeSeed
 {
+    using GlobalScvIdxType = typename ScvSeedType::GlobalIndexType;
+    using GlobalScvfIdxType = typename ScvfSeedType::GlobalIndexType;
+
 public:
     using LocalScvSeed = ScvSeedType;
     using LocalScvfSeed = ScvfSeedType;
@@ -56,6 +59,30 @@ public:
 
     const std::vector<LocalScvfSeed>& scvfSeeds() const
     { return scvfSeeds_; }
+
+    std::vector<GlobalScvIdxType> globalScvIndices() const
+    {
+        std::vector<GlobalScvIdxType> globalIndices;
+        globalIndices.reserve(scvSeeds().size());
+
+        for (auto&& localScvSeed : scvSeeds())
+            globalIndices.push_back(localScvSeed.globalIndex());
+
+        return globalIndices;
+    }
+
+    std::vector<GlobalScvfIdxType> globalScvfIndices() const
+    {
+        std::vector<GlobalScvfIdxType> globalIndices;
+        globalIndices.reserve(scvfSeeds().size() * 2);
+
+        for (auto&& localScvfSeed : scvfSeeds())
+            for (auto scvfIdxGlobal : localScvfSeed.globalScvfIndices())
+                globalIndices.push_back(scvfIdxGlobal);
+
+        globalIndices.shrink_to_fit();
+        return globalIndices;
+    }
 
 private:
     bool onBoundary_;

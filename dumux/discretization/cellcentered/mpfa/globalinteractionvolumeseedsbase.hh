@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_MPFA_GLOBALINTERACTIONVOLUMESEEDS_BASE_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include "globalfvgeometry.hh"
 
 namespace Dumux
 {
@@ -34,6 +35,11 @@ namespace Dumux
 template<class TypeTag>
 class CCMpfaGlobalInteractionVolumeSeedsBase
 {
+    //! the globalFvGeometry and the FVElementGeometry needs access to the private seed return functions
+    //! in case caching is disabled
+    friend CCMpfaGlobalFVGeometryBase<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>;
+    friend typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -48,7 +54,6 @@ class CCMpfaGlobalInteractionVolumeSeedsBase
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     static const int dim = GridView::dimension;
-    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
 public:
     CCMpfaGlobalInteractionVolumeSeedsBase(const GridView gridView) : gridView_(gridView) {}
@@ -75,6 +80,7 @@ public:
     { return boundarySeeds_[scvfIndexMap_[scvf.index()]]; }
 
 private:
+
     void initializeSeeds_(std::vector<bool>& boundaryVertices)
     {
         const auto numScvf = problem_().model().globalFvGeometry().numScvf();
@@ -89,7 +95,7 @@ private:
         for (const auto& element : elements(gridView_))
         {
             auto fvGeometry = localView(problem_().model().globalFvGeometry());
-            fvGeometry.bind(element);
+            fvGeometry.bindElement(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // skip the rest if we already handled this face
@@ -98,30 +104,26 @@ private:
 
                 if (boundaryVertices[scvf.vertexIndex()])
                 {
-                    // the boundary interaction volume seed
-                    auto seed = Helper::makeBoundaryInteractionVolumeSeed(problem_(), element, fvGeometry, scvf);
+                    // make the boundary interaction volume seed
+                    boundarySeeds_.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(problem_(), element, fvGeometry, scvf));
 
                     // update the index map entries for the global scv faces in the interaction volume
-                    for (const auto& localScvfSeed : seed.scvfSeeds())
-                        for (const auto scvfIdxGlobal : localScvfSeed.globalScvfIndices())
-                            scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
+                    for (auto scvfIdxGlobal : boundarySeeds_.back().globalScvfIndices())
+                        scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
 
-                    // store interaction volume and increment counter
-                    boundarySeeds_.emplace_back(std::move(seed));
+                    // increment counter
                     boundarySeedIndex++;
                 }
                 else
                 {
-                    // the inner interaction volume seed
-                    auto seed = Helper::makeInnerInteractionVolumeSeed(problem_(), element, fvGeometry, scvf);
+                    // make the inner interaction volume seed
+                    seeds_.emplace_back(Helper::makeInnerInteractionVolumeSeed(problem_(), element, fvGeometry, scvf));
 
                     // update the index map entries for the global scv faces in the interaction volume
-                    for (const auto& localScvf : seed.scvfSeeds())
-                        for (const auto scvfIdxGlobal : localScvf.globalScvfIndices())
-                            scvfIndexMap_[scvfIdxGlobal] = seedIndex;
+                    for (auto scvfIdxGlobal : seeds_.back().globalScvfIndices())
+                        scvfIndexMap_[scvfIdxGlobal] = seedIndex;
 
-                    // store interaction volume and increment counter
-                    seeds_.emplace_back(std::move(seed));
+                    // increment counter
                     seedIndex++;
                 }
             }
