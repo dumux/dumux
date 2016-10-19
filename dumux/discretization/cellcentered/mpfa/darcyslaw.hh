@@ -118,15 +118,14 @@ public:
     }
 
     static Stencil stencil(const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf)
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf)
     {
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
-        const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
 
         // return the scv (element) indices in the interaction region
-        if (boundary)
+        if (globalFvGeometry.scvfTouchesBoundary(scvf))
             return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
         else
             return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
