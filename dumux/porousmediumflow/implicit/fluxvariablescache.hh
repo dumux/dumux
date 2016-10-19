@@ -254,6 +254,11 @@ public:
         isUpdated_ = true;
     }
 
+    void setOutdated()
+    {
+        isUpdated_ = false;
+    }
+
 private:
     bool isUpdated_;
     Stencil volVarsStencil_;

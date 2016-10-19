@@ -152,8 +152,8 @@ SET_BOOL_PROP(ImplicitBase, EnableGlobalVolumeVariablesCache, false);
 //! disable flux variables data caching by default
 SET_BOOL_PROP(ImplicitBase, EnableGlobalFluxVariablesCache, false);
 
-//! boundary conditions are not stationary by default
-SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);
+//! by default, parameters are solution-dependent
+SET_BOOL_PROP(ImplicitBase, SolutionDependentParameters, true);
 
 SET_TYPE_PROP(ImplicitBase, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag> );
 

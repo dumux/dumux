@@ -67,6 +67,11 @@ public:
               const ElementVolumeVariables& elemVolVars) {}
 
     // Specialization for the global caching being enabled - do nothing here
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
+
+    // Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
@@ -101,6 +106,8 @@ class CCTpfaElementFluxVariablesCache<TypeTag, false>
     using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
+    static const bool solDependentParams = GET_PROP_VALUE(TypeTag, SolutionDependentParameters);
+
 public:
     CCTpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
     : globalFluxVarsCachePtr_(&global) {}
@@ -124,6 +131,15 @@ public:
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
+    }
+
+    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        if (solDependentParams)
+            bind(element, fvGeometry, elemVolVars);
     }
 
     // This function is called by the CCLocalResidual before flux calculations during assembly.

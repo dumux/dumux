@@ -289,9 +289,9 @@ private:
                 priVars[pvIdx] += eps;
                 delta += eps;
 
-                // update the volume variables and bind the flux var cache again
+                // update the volume variables and the flux var cache
                 curVolVars.update(priVars, this->problem_(), element, scv);
-                elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
@@ -331,9 +331,9 @@ private:
                 priVars[pvIdx] -= delta + eps;
                 delta += eps;
 
-                // update the volume variables and bind the flux var cache again
+                // update the volume variables and the flux var cache
                 curVolVars.update(priVars, this->problem_(), element, scv);
-                elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {

@@ -58,6 +58,7 @@ class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, false, false>
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static const bool solDependentParams = GET_PROP_VALUE(TypeTag, SolutionDependentParameters);
 
 public:
     //! function to fill the flux var caches
@@ -123,23 +124,39 @@ public:
             iv.solveLocalSystem(permFunction);
 
             // update flux variables cache
-            auto& cache = fluxVarsCache[scvf.index()];
-            cache.updateInnerAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
+            const auto scvfIdx = scvf.index();
+            auto& cache = fluxVarsCache[scvfIdx];
+            cache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
             cache.setUpdated();
 
             // update flux variable caches of the other scvfs of the interaction volume
-            for (const auto& scvfIdx : iv.globalScvfs())
+            for (const auto scvfIdxJ : iv.globalScvfs())
             {
-                if (scvfIdx != scvf.index())
+                if (scvfIdxJ != scvfIdx)
                 {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdx);
+                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
                     const auto elementJ = problem.model().globalFvGeometry().element(scvfJ.insideScvIdx());
-                    auto& cacheJ = fluxVarsCache[scvfIdx];
-                    cacheJ.updateInnerAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
+                    auto& cacheJ = fluxVarsCache[scvfIdxJ];
+                    cacheJ.updateAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
                     cacheJ.setUpdated();
                 }
             }
         }
+    }
+
+    //! function to update the flux var caches during derivative calculation
+    template<class FluxVarsCacheVector>
+    static void updateFluxVarCache(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolumeFace& scvf,
+                                   FluxVarsCacheVector& fluxVarsCache)
+    {
+        if (!solDependentParams)
+            fluxVarsCache[scvf.index()].setUpdated();
+        else
+            fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
     }
 };
 

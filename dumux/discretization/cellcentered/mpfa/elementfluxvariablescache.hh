@@ -69,6 +69,11 @@ public:
               const ElementVolumeVariables& elemVolVars) {}
 
     // Specialization for the global caching being enabled - do nothing here
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
+
+    // Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
@@ -147,6 +152,21 @@ public:
         {
             if (!(*this)[scvf].isUpdated())
                 FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, *this);
+        }
+    }
+
+    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        for (auto&& scvf : scvfs(fvGeometry))
+            (*this)[scvf].setOutdated();
+
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (!(*this)[scvf].isUpdated())
+                FluxVariablesCacheFiller::updateFluxVarCache(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf, *this);
         }
     }
 
