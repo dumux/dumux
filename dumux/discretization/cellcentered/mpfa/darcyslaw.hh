@@ -114,31 +114,18 @@ public:
     }
 
     static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const SubControlVolumeFace& scvf)
     {
-        Stencil stencil;
-        if(problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
-        {
-            const auto& ivSeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            const auto& localScvSeeds = ivSeed.scvSeeds();
+        const auto& globalFvGeometry = problem.model().globalFvGeometry();
+        const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
 
-            stencil.reserve(localScvSeeds.size());
-            for (const auto& localScvSeed : ivSeed.scvSeeds())
-                stencil.push_back(localScvSeed.globalIndex());
-        }
+        // return the scv (element) indices in the interaction region
+        if (boundary)
+            return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
         else
-        {
-            const auto& ivSeed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
-            const auto& localScvSeeds = ivSeed.scvSeeds();
-
-            stencil.reserve(localScvSeeds.size());
-            for (const auto& localScvSeed : ivSeed.scvSeeds())
-                stencil.push_back(localScvSeed.globalIndex());
-        }
-
-        return stencil;
+            return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
     }
 };
 
