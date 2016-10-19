@@ -71,7 +71,16 @@ public:
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
+        // reserve sufficient memory
+        scvSeeds.reserve(20);
+        scvfSeeds.reserve(20);
+
         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf);
+
+        // shrink containers to necessary size
+        scvSeeds.shrink_to_fit();
+        scvfSeeds.shrink_to_fit();
+
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), false);
     }
 
@@ -83,7 +92,16 @@ public:
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
+        // reserve sufficient memory
+        scvSeeds.reserve(20);
+        scvfSeeds.reserve(20);
+
         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvf);
+
+        // shrink containers to necessary size
+        scvSeeds.shrink_to_fit();
+        scvfSeeds.shrink_to_fit();
+
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
     }
 
@@ -265,8 +283,8 @@ public:
         std::vector<ScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
-        scvSeeds.reserve(100);
-        scvfSeeds.reserve(100);
+        scvSeeds.reserve(50);
+        scvfSeeds.reserve(50);
 
         // The vertex index around which we construct the interaction volume
         auto vIdxGlobal = scvf.vertexIndex();
@@ -290,8 +308,8 @@ public:
         std::vector<ScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
-        scvSeeds.reserve(100);
-        scvfSeeds.reserve(100);
+        scvSeeds.reserve(50);
+        scvfSeeds.reserve(50);
 
         // The vertex index around which we construct the interaction volume
         auto vIdxGlobal = scvf.vertexIndex();
@@ -360,7 +378,8 @@ private:
                 {
                     if (scvSeed.globalIndex() == outsideGlobalScvIdx)
                     {
-                        outsideExists = true; break;
+                        outsideExists = true;
+                        break;
                     }
                     // keep track of local index
                     outsideLocalScvIdx++;
