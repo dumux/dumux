@@ -51,7 +51,8 @@ class PlotMaterialLaw
 
 public:
     //! Constructor
-    PlotMaterialLaw(bool interaction = true)
+    DUNE_DEPRECATED_MSG("PlotMaterialLaw(bool) is deprecated. Use PlotMaterialLaw() instead.")
+    PlotMaterialLaw(bool interaction)
     : numIntervals_(1000)
     {
         gnuplotpcsw_.setInteraction(interaction);
@@ -61,6 +62,11 @@ public:
         gnuplotkr_.setInteraction(interaction);
         gnuplotkrdsw_.setInteraction(interaction);
     }
+
+    //! Constructor
+    PlotMaterialLaw()
+    : numIntervals_(1000)
+    { }
 
     /*!
      * \brief Add a capillary pressure-saturation data set to the plot

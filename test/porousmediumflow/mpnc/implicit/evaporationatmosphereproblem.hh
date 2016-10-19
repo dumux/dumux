@@ -346,7 +346,6 @@ public:
 
         // use gnuplot for plotting the line data
         gnuplot_.resetPlot();
-        gnuplot_.setInteraction(true);
         gnuplot_.setXlabel("xN2w [-]");
         gnuplot_.setYlabel("y [m]");
         std::ostringstream stream;

@@ -70,9 +70,10 @@ public:
      * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
      * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
-    PlotThermalConductivityModel(Scalar temperature = 283.15,
-                                 Scalar pressure = 1e5,
-                                 bool interaction = true)
+    DUNE_DEPRECATED_MSG("PlotThermalConductivityModel(Scalar, Scalar, bool) is deprecated. Use PlotThermalConductivityModel(Scalar, Scalar) instead.")
+    PlotThermalConductivityModel(Scalar temperature,
+                                 Scalar pressure,
+                                 bool interaction)
     : numIntervals_(1000)
     {
         FluidState fluidstate;
@@ -82,6 +83,26 @@ public:
         lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
         lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
         gnuplot_.setInteraction(interaction);
+    }
+
+    /*!
+     * \brief Constructor
+     *
+     * Initializes the fluid system.
+     *
+     * \param temperature temperature in \f$\mathrm{[K]}\f$
+     * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
+     */
+    PlotThermalConductivityModel(Scalar temperature = 283.15,
+                                 Scalar pressure = 1e5)
+    : numIntervals_(1000)
+    {
+        FluidState fluidstate;
+        fluidstate.setTemperature(temperature);
+        fluidstate.setPressure(wPhaseIdx, pressure);
+        fluidstate.setPressure(nPhaseIdx, pressure);
+        lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
+        lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
     }
 
     /*!

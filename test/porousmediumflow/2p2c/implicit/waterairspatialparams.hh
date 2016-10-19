@@ -128,7 +128,7 @@ public:
     {
         PlotMaterialLaw<TypeTag> plotMaterialLaw;
         GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
-        gnuplot.setInteraction(plotFluidMatrixInteractions_);
+        gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
         plotMaterialLaw.addpcswcurve(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine", "w lp");
         plotMaterialLaw.addpcswcurve(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse", "w l");
         gnuplot.setOption("set xrange [0:1]");

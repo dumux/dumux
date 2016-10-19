@@ -31,6 +31,7 @@
 int main()
 {
     Dumux::GnuplotInterface<double> gnuplot(false);
+    gnuplot.setOpenPlotWindow(false);
 
     unsigned int numIntervals = 100;
     std::vector<double> x(101);

@@ -49,11 +49,17 @@ class PlotEffectiveDiffusivityModel
 
 public:
     //! Constructor
-    PlotEffectiveDiffusivityModel(bool interaction = true)
+    DUNE_DEPRECATED_MSG("PlotEffectiveDiffusivityModel(bool) is deprecated. Use PlotEffectiveDiffusivityModel() instead.")
+    PlotEffectiveDiffusivityModel(bool interaction)
     : numIntervals_(1000)
     {
         gnuplot_.setInteraction(interaction);
     }
+
+    //! Constructor
+    PlotEffectiveDiffusivityModel()
+    : numIntervals_(1000)
+    { }
 
     /*!
      * \brief Add a effective diffusion factor-saturation data set to the plot

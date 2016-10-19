@@ -63,17 +63,16 @@ public:
 
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
-        plotStyle_("lines"), pipe_(0),
+        pipe_(0), openPlotWindow_(true), persist_(persist),
+        datafileSeparator_(' '), plotStyle_("lines"),
         curveFile_(0), curveOptions_(0), curveTitle_(0),
-        interaction_(true),
         xRangeMin_(1e100), xRangeMax_(-1e100),
         yRangeMin_(1e100), yRangeMax_(-1e100),
         xLabel_(""), yLabel_(""),
         plotOptions_(""),
-        datafileSeparator_(' '),
         gnuplotPath_(GNUPLOT_EXECUTABLE)
     {
-        open(persist);
+        open(persist_);
     }
 
     //! \brief The destructor
@@ -126,7 +125,7 @@ public:
 
         // live plot of the results if gnuplot is installed
 #ifdef HAVE_GNUPLOT
-        if (interaction_)
+        if (openPlotWindow_)
             executeGnuplot(plot.c_str());
 #endif
 
@@ -265,9 +264,10 @@ public:
      *
      * \param interaction Open window or not
      */
+    DUNE_DEPRECATED_MSG("setInteraction() is deprecated. Use setOpenPlotWindow() instead.")
     void setInteraction(bool interaction)
     {
-        interaction_ = interaction;
+        setOpenPlotWindow(interaction);
     }
 
     /*!
@@ -325,6 +325,16 @@ public:
     }
 
     /*!
+     * \brief Define whether the gnuplot window should be opened
+     *
+     * \param openPlotWindow Open gnuplot or not
+     */
+    void setOpenPlotWindow(bool openPlotWindow)
+    {
+        openPlotWindow_ = openPlotWindow;
+    }
+
+    /*!
      * \brief Sets the datafile separator
      *
      * \param separator The separator sign between two data columns
@@ -360,8 +370,11 @@ private:
         return stream.str();
     }
 
-    std::string plotStyle_;
     std::FILE * pipe_;
+    bool openPlotWindow_;
+    bool persist_;
+    char datafileSeparator_;
+    std::string plotStyle_;
     StringVector curveFile_;
     StringVector curveOptions_;
     StringVector curveTitle_;
@@ -373,7 +386,6 @@ private:
     std::string xLabel_;
     std::string yLabel_;
     std::string plotOptions_;
-    char datafileSeparator_;
     std::string gnuplotPath_;
 };
 } // end of namespace

@@ -388,7 +388,7 @@ public:
 
                     evaporationFile << time/86400.0 << " " << storageChange[contiWEqIdx]*86400.0 << std::endl;
                     gnuplot_.resetPlot();
-                    gnuplot_.setInteraction(liveEvaporationRates_);
+                    gnuplot_.setOpenPlotWindow(liveEvaporationRates_);
                     gnuplot_.setXRange(0.0, time/86400.0);
                     gnuplot_.setYRange(0.0, 12.0);
                     gnuplot_.setXlabel("time [d]");

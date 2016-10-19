@@ -50,6 +50,10 @@ SET_TYPE_PROP(EffectiveDiffusivitySpatialParams, SpatialParams, EffectiveDiffusi
 SET_TYPE_PROP(EffectiveDiffusivitySpatialParams,
               MaterialLaw,
               EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+
+// Define whether to open a gnuplot window
+NEW_PROP_TAG(OutputOpenPlotWindow);
+SET_BOOL_PROP(EffectiveDiffusivitySpatialParams, OutputOpenPlotWindow, false);
 }
 
 /*!
@@ -106,10 +110,12 @@ public:
      */
     void plotMaterialLaw()
     {
-        GnuplotInterface<Scalar> gnuplot(false);
+        GnuplotInterface<Scalar> gnuplot;
+        gnuplot.setOpenPlotWindow(GET_PARAM_FROM_GROUP(TypeTag, bool, Output, OpenPlotWindow));
         PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Diffusivity, File);
         plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity_, 0.0, 1.0, fileName);
+        gnuplot.plot("d_eff");
     }
 
     /*!
