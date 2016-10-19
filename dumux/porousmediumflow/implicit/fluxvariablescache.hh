@@ -193,59 +193,55 @@ class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
 
 public:
     // the constructor
-    PorousMediumMpfaFluxVariablesCache() : isUpdated_(false) {}
+    PorousMediumMpfaFluxVariablesCache() : isUpdated_(false)
+    {
+        for (auto& nFlux : phaseNeumannFluxes_)
+            nFlux = 0.0;
+    }
 
     // update cached objects
-    void updateBoundaryAdvection(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace &scvf,
-                                 const BoundaryInteractionVolume& interactionVolume,
-                                 const unsigned int phaseIdx)
+    void updateAdvection(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace &scvf,
+                         const InteractionVolume& interactionVolume)
     {
-        phaseVolVarsStencil_[phaseIdx] = interactionVolume.volVarsStencil();
-        phaseVolVarsPositions_[phaseIdx] = interactionVolume.volVarsPositions();
+        const auto& localIndexPair = interactionVolume.getLocalIndexPair(scvf);
+        const auto& volVarsStencil = interactionVolume.volVarsStencil();
+        const auto& volVarsPositions = interactionVolume.volVarsPositions();
 
-        auto localIndexPair = interactionVolume.getLocalIndexPair(scvf);
-        phaseTij_[phaseIdx] = interactionVolume.getTransmissibilities(localIndexPair);
+        // the types coming from the inner interaction volumes might differ (thus, = assignment is not possible)
+        const auto numVolVars = volVarsStencil.size();
+        volVarsStencil_.clear();
+        volVarsStencil_.reserve(numVolVars);
+        volVarsPositions_.clear();
+        volVarsPositions_.reserve(numVolVars);
+        volVarsStencil_.insert(volVarsStencil_.begin(), volVarsStencil.begin(), volVarsStencil.end());
+        volVarsPositions_.insert(volVarsPositions_.begin(), volVarsPositions.begin(), volVarsPositions.end());
+        tij_ = interactionVolume.getTransmissibilities(localIndexPair);
+    }
+
+    void updatePhaseNeumannFlux(const Problem& problem,
+                                const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolumeFace &scvf,
+                                const InteractionVolume& interactionVolume,
+                                const unsigned int phaseIdx)
+    {
+        const auto& localIndexPair = interactionVolume.getLocalIndexPair(scvf);
         phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localIndexPair);
     }
 
-    void updateInnerAdvection(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvf,
-                              const InteractionVolume& interactionVolume)
-    {
-        const auto& volVarsStencil = interactionVolume.volVarsStencil();
-        const auto& volVarsPositions = interactionVolume.volVarsPositions();
-        const auto& localIndexPair = interactionVolume.getLocalIndexPair(scvf);
-        const auto& tij = interactionVolume.getTransmissibilities(localIndexPair);
-
-        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            // the types coming from the inner interaction volumes might differ (thus, = assignment is not possible)
-            phaseVolVarsStencil_[phaseIdx].insert(phaseVolVarsStencil_[phaseIdx].begin(), volVarsStencil.begin(), volVarsStencil.end());
-            phaseVolVarsPositions_[phaseIdx].insert(phaseVolVarsPositions_[phaseIdx].begin(), volVarsPositions.begin(), volVarsPositions.end());
-
-            // resize the transmissibilities and copy the values
-            phaseTij_[phaseIdx].resize(tij.size());
-            for (std::size_t i = 0; i < tij.size(); ++i)
-                phaseTij_[phaseIdx][i] = tij[i];
-            phaseNeumannFluxes_[phaseIdx] = 0.0;
-        }
-    }
-
     const Stencil& advectionVolVarsStencil(const unsigned int phaseIdx) const
-    { return phaseVolVarsStencil_[phaseIdx]; }
+    { return volVarsStencil_; }
 
     const PositionVector& advectionVolVarsPositions(const unsigned int phaseIdx) const
-    { return phaseVolVarsPositions_[phaseIdx]; }
+    { return volVarsPositions_; }
 
     const TransmissibilityVector& advectionTij(const unsigned int phaseIdx) const
-    { return phaseTij_[phaseIdx]; }
+    { return tij_; }
 
     Scalar advectionNeumannFlux(const unsigned int phaseIdx) const
     { return phaseNeumannFluxes_[phaseIdx]; }
@@ -260,9 +256,9 @@ public:
 
 private:
     bool isUpdated_;
-    std::array<Stencil, numPhases> phaseVolVarsStencil_;
-    std::array<PositionVector, numPhases> phaseVolVarsPositions_;
-    std::array<TransmissibilityVector, numPhases> phaseTij_;
+    Stencil volVarsStencil_;
+    PositionVector volVarsPositions_;
+    TransmissibilityVector tij_;
     std::array<Scalar, numPhases> phaseNeumannFluxes_;
 };
 

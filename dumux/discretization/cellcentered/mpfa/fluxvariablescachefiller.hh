@@ -88,22 +88,30 @@ public:
                 auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars) { return volVars.density(eqIdx)/volVars.viscosity(eqIdx); };
                 iv.assembleNeumannFluxes(advectionUpwindFunction, eqIdx);
 
-                // update flux variables cache
-                auto& cache = fluxVarsCache[scvf.index()];
-                cache.updateBoundaryAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv, eqIdx);
-                cache.setUpdated();
+                // update flux variables cache, only the neumann fluxes have to be set for each phase
+                const auto scvfIdx = scvf.index();
+                auto& cache = fluxVarsCache[scvfIdx];
+                if (eqIdx == 0)
+                {
+                    cache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
+                    cache.setUpdated();
+                }
+                cache.updatePhaseNeumannFlux(problem, element, fvGeometry, elemVolVars, scvf, iv, eqIdx);
 
                 // update flux variable caches of the other scvfs of the interaction volume
-                for (const auto& scvfIdx : iv.globalScvfs())
+                for (const auto scvfIdxJ : iv.globalScvfs())
                 {
-                    if (scvfIdx != scvf.index())
+                    if (scvfIdxJ != scvfIdx)
                     {
-                        const auto& scvfJ = fvGeometry.scvf(scvfIdx);
+                        const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
                         const auto elementJ = problem.model().globalFvGeometry().element(scvfJ.insideScvIdx());
-                        auto& cacheJ = fluxVarsCache[scvfIdx];
-                        cacheJ.updateBoundaryAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv, eqIdx);
-                        if (eqIdx == numEq - 1)
+                        auto& cacheJ = fluxVarsCache[scvfIdxJ];
+                        if (eqIdx == 0)
+                        {
+                            cacheJ.updateAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
                             cacheJ.setUpdated();
+                        }
+                        cacheJ.updatePhaseNeumannFlux(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv, eqIdx);
                     }
                 }
             }
