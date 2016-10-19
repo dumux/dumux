@@ -78,16 +78,6 @@ public:
         const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions(phaseIdx);
         const auto& tij = fluxVarsCache.advectionTij(phaseIdx);
 
-        Scalar rho;
-        if (!scvf.boundary())
-        {
-            rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
-            rho += elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
-            rho /= 2.0;
-        }
-        else
-            rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
-
         // calculate Tij*pj
         Scalar flux(0.0);
         unsigned int localIdx = 0;
@@ -96,8 +86,20 @@ public:
             const auto& volVars = elemVolVars[volVarIdx];
             Scalar h = volVars.pressure(phaseIdx);
 
+            // if gravity is enabled, add gravitational acceleration
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
+                // interface density as arithmetic mean of the two neighbors
+                Scalar rho;
+                if (!scvf.boundary())
+                {
+                    rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
+                    rho += elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
+                    rho /= 2.0;
+                }
+                else
+                    rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
+
                 // gravitational acceleration in the center of the actual element
                 const auto x = volVarsPositions[localIdx];
                 const auto g = problem.gravityAtPos(x);
