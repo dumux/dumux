@@ -142,7 +142,8 @@ public:
     : problemRef_(problem),
       fvGeometryRef_(fvGeometry),
       elemVolVarsRef_(elemVolVars),
-      onBoundary_(seed.onBoundary())
+      onBoundary_(seed.onBoundary()),
+      globalScvfIndices_(seed.globalScvfIndices())
     {
         // create local sub control entities from the seed
         createLocalEntities_(seed);
@@ -151,29 +152,22 @@ public:
         const auto numLocalScvs = localScvs_.size();
         const auto numLocalScvfs = localScvfs_.size();
         const auto maxNumVolVars = numLocalScvs + numLocalScvfs;
-        stencil_.reserve(numLocalScvs);
+        volVarsStencil_ = seed.globalScvIndices(); // boundary vol vars are placed at the end
         volVarsStencil_.reserve(maxNumVolVars);
         volVarsPositions_.reserve(maxNumVolVars);
         dirichletFaceIndexSet_.reserve(numLocalScvfs);
         fluxFaceIndexSet_.reserve(numLocalScvfs);
 
-        // fill info on the dof stencil
+        // the positions where the vol vars are defined at (required for the gravitational acceleration)
         for (const auto& localScv : localScvs_)
-        {
-            const auto globalScvIdx = localScv.globalIndex();
-            stencil_.push_back(globalScvIdx);
-            volVarsStencil_.push_back(globalScvIdx);
             volVarsPositions_.push_back(localScv.center());
-        }
 
         // eventually add dirichlet vol var indices and set up local index sets of flux and dirichlet faces
         LocalIndexType localScvfIdx = 0;
         for (const auto& localScvf : localScvfs_)
         {
-            auto faceType = localScvf.faceType();
-
             // eventually add vol var index and corresponding position
-            if (faceType == MpfaFaceTypes::dirichlet)
+            if (localScvf.faceType() == MpfaFaceTypes::dirichlet)
             {
                 volVarsStencil_.push_back(localScvf.outsideGlobalScvIndex());
                 volVarsPositions_.push_back(localScvf.ip());
@@ -182,12 +176,6 @@ public:
             else
                 fluxFaceIndexSet_.push_back(localScvfIdx++);
         }
-
-        // shrink containers to actual size
-        volVarsStencil_.shrink_to_fit();
-        volVarsPositions_.shrink_to_fit();
-        dirichletFaceIndexSet_.shrink_to_fit();
-        fluxFaceIndexSet_.shrink_to_fit();
 
         // initialize the neumann fluxes vector to zero
         neumannFluxes_ = DynamicVector(fluxFaceIndexSet_.size(), 0.0);
@@ -252,21 +240,6 @@ public:
         }
     }
 
-    GlobalIndexSet globalScvfs() const
-    {
-        GlobalIndexSet globalScvfs;
-        globalScvfs.reserve(localScvfs_.size());
-
-        for (const auto& localScvf : localScvfs_)
-        {
-            globalScvfs.push_back(localScvf.insideGlobalScvfIndex());
-            if (!localScvf.boundary())
-                globalScvfs.push_back(localScvf.outsideGlobalScvfIndex());
-        }
-
-        return globalScvfs;
-    }
-
     LocalIndexPair getLocalIndexPair(const SubControlVolumeFace& scvf) const
     {
         auto scvfGlobalIdx = scvf.index();
@@ -309,14 +282,14 @@ public:
     bool onBoundary() const
     { return onBoundary_; }
 
-    const GlobalIndexSet& stencil() const
-    { return stencil_; }
-
     const GlobalIndexSet& volVarsStencil() const
     { return volVarsStencil_; }
 
     const PositionVector& volVarsPositions() const
     { return volVarsPositions_; }
+
+    const GlobalIndexSet& globalScvfs() const
+    { return globalScvfIndices_; }
 
 private:
 
@@ -558,7 +531,6 @@ private:
     std::vector<LocalScvfType> localScvfs_;
 
     GlobalIndexSet globalScvfIndices_;
-    GlobalIndexSet stencil_;
     GlobalIndexSet volVarsStencil_;
     PositionVector volVarsPositions_;
 

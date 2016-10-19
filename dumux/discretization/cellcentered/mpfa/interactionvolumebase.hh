@@ -56,10 +56,6 @@ public:
     void solveLocalSystem(const GetTensorFunction& getTensor)
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a solveLocalSystem() method."); }
 
-    //! returns the dof indices in the stencil of the interaction volume
-    const GlobalIndexSet& stencil() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a stencil() method."); }
-
     //! returns the indices of the volvars in the stencil of the interaction volume
     const GlobalIndexSet& volVarsStencil() const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsStencil() method."); }
@@ -69,7 +65,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsPositions() method."); }
 
     //! returns a list of global scvf indices that are connected to this interaction volume
-    GlobalIndexSet globalScvfs() const
+    const GlobalIndexSet& globalScvfs() const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a globalScvfs() method."); }
 
     //! returns the local index of an scvf in the IV and a boolean whether or not it is on the negative side of the local scvf (flux has to be inverted)
