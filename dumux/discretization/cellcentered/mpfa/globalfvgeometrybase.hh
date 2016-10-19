@@ -523,14 +523,6 @@ public:
 
 private:
 
-    //! Get the inner interaction volume seed corresponding to an scvf
-    const InteractionVolumeSeed& interactionVolumeSeed(const IndexType vIdxGlobal) const
-    { return globalInteractionVolumeSeeds_.seed(vIdxGlobal); }
-
-    //! Get the boundary interaction volume seed corresponding to an scvf
-    const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const IndexType vIdxGlobal) const
-    { return globalInteractionVolumeSeeds_.boundarySeed(vIdxGlobal); }
-
     const Problem& problem_() const
     { return *problemPtr_; }
 
