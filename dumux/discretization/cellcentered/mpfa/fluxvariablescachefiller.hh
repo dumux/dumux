@@ -27,12 +27,23 @@
 
 namespace Dumux
 {
+//! Forward declaration of the actual implementation
+template<class TypeTag, bool advection, bool diffusion, bool energy>
+class CCMpfaFluxVariablesCacheFillerImplementation;
+
 /*!
  * \ingroup ImplicitModel
  * \brief Helper class to fill the flux var caches
  */
 template<class TypeTag>
-class CCMpfaFluxVariablesCacheFiller
+using CCMpfaFluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFillerImplementation<TypeTag,
+                                                                                    GET_PROP_VALUE(TypeTag, EnableAdvection),
+                                                                                    GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
+                                                                                    GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+
+//! Implementation for only advection
+template<class TypeTag>
+class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, false, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -46,21 +57,17 @@ class CCMpfaFluxVariablesCacheFiller
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const bool advection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static const bool diffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static const bool energy = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
     static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
 public:
-    // functions to fill the flux var caches in the case of pure advection
-    template<class FluxVarsCacheVector, class T = TypeTag>
-    static typename std::enable_if<advection && !diffusion && !energy>::type
-    fillFluxVarCache(const Problem& problem,
-                     const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolumeFace& scvf,
-                     FluxVarsCacheVector& fluxVarsCache)
+    //! function to fill the flux var caches
+    template<class FluxVarsCacheVector>
+    static void fillFluxVarCache(const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolumeFace& scvf,
+                                 FluxVarsCacheVector& fluxVarsCache)
     {
         // lambda function to get the permeability tensor
         const auto* prob = &problem;
