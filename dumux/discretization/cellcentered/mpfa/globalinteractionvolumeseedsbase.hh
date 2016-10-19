@@ -35,11 +35,6 @@ namespace Dumux
 template<class TypeTag>
 class CCMpfaGlobalInteractionVolumeSeedsBase
 {
-    //! the globalFvGeometry and the FVElementGeometry needs access to the private seed return functions
-    //! in case caching is disabled
-    friend CCMpfaGlobalFVGeometryBase<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>;
-    friend typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
-
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -48,10 +43,8 @@ class CCMpfaGlobalInteractionVolumeSeedsBase
     using InteractionVolumeSeed = typename InteractionVolume::Seed;
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
-    using Element = typename GridView::template Codim<0>::Entity;
 
     using IndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     static const int dim = GridView::dimension;
 
