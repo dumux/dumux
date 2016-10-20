@@ -57,6 +57,7 @@ NEW_PROP_TAG(StokesStabilizationAlpha); //!< The parameter for the stabilization
 NEW_PROP_TAG(StokesStabilizationBeta); //!< The parameter for the stabilization at boundaries
 NEW_PROP_TAG(EnableUnsymmetrizedVelocityGradient); //!< Returns whether unsymmetrized velocity gradient for viscous term is used
 NEW_PROP_TAG(EnableNavierStokes); //!< Returns whether Navier-Stokes should be solved instead of plain Stokes
+NEW_PROP_TAG(EnablePseudoThreeDWallFriction); //!< Returns whether an additional wall friction term should be considered to mimic 3D behavior
 NEW_PROP_TAG(UseMoles); //!< Defines whether molar (true) or mass (false) density is used
 
 NEW_PROP_TAG(PhaseIdx); //!< A phase index in case that a two-phase fluidsystem is used
