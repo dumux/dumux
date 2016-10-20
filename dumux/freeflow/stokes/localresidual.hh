@@ -171,6 +171,8 @@ protected:
      *
      * \param flux The advective flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current SCV/boundary face
+     *
+     * An additional wall friction term can be added to account for a dimensional reduction from 3d to 2d (Kunz et al., 2016) \cite Kunz2016 <BR>
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
