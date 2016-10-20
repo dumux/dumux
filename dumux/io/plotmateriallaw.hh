@@ -428,7 +428,7 @@ public:
         gnuplot.setXlabel("wetting phase saturation [-]");
         gnuplot.setYlabel("relative permeability [-]");
         gnuplot.addDataSetToPlot(sw, krw, curveName + "_krw", curveOptions);
-        gnuplot.addDataSetToPlot(sw, krn, curveName + "_krw", curveOptions);
+        gnuplot.addDataSetToPlot(sw, krn, curveName + "_krn", curveOptions);
     }
 
     /*!
