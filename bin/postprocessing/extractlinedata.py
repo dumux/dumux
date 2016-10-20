@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--files', nargs='+', required=True, help="vtu files to be processed")
 parser.add_argument('-o', '--outputDirectory', default='', help="Directory to which the data files are written")
+parser.add_argument('-of', '--outFile', default='', help="Basename of the written csv file")
 parser.add_argument('-p1', '--point1', type=float, nargs=3, required=True, help='Coordinates of the first point (in 3D)')
 parser.add_argument('-p2', '--point2', type=float, nargs=3, required=True, help='Coordinates of the second point (in 3D)')
 parser.add_argument('-r', '--resolution', type=int, default=1000, help='Resolution of the line (number of data points written to data file)')
@@ -52,6 +53,8 @@ for curFile in args['files']:
     plotOverLine.Source.Point2 = args['point2']
 
     # write output to csv writer
+    if not args['outFile'] == '':
+        basename = args['outFile']
     csvFile = outDirectory + basename + '.csv'
     writer = CreateWriter(csvFile, plotOverLine)
     writer.UpdatePipeline()
