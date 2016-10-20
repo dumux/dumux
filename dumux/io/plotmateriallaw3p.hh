@@ -198,7 +198,7 @@ public:
         gnuplotpc_.setXlabel("wetting phase saturation [-]");
         gnuplotpc_.setYlabel("capillary pressure [Pa]");
         gnuplotpc_.addDataSetToPlot(st, pc, curveTitle + "_pcgn-St");
-        gnuplotpc_.plot("pcgn-St (St=Sw+Sn)");
+        gnuplotpc_.plot("pcgn-St");
     }
 
 
