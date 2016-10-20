@@ -135,6 +135,9 @@ SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 //! Use symmetrizedVelocityGradient by default
 SET_BOOL_PROP(BoxStokes, EnableUnsymmetrizedVelocityGradient, false);
 
+//! Disbale additional wall friction term by default
+SET_BOOL_PROP(BoxStokes, EnablePseudoThreeDWallFriction, false);
+
 //! Set calculation to Stokes, not Navier-Stokes
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);
 
