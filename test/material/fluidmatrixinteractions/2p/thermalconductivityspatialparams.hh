@@ -50,6 +50,10 @@ SET_TYPE_PROP(ThermalConductivitySpatialParams, SpatialParams, ThermalConductivi
 SET_TYPE_PROP(ThermalConductivitySpatialParams,
               MaterialLaw,
               EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+
+// Define whether to open a gnuplot window
+NEW_PROP_TAG(OutputOpenPlotWindow);
+SET_BOOL_PROP(ThermalConductivitySpatialParams, OutputOpenPlotWindow, false);
 }
 
 /*!
@@ -106,10 +110,13 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel_(293.15, 1e5, false);
+        GnuplotInterface<Scalar> gnuplot;
+        gnuplot.setOpenPlotWindow(GET_PARAM_FROM_GROUP(TypeTag, bool, Output, OpenPlotWindow));
+        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel_(293.15, 1e5);
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Conductivity, File);
-        plotThermalConductivityModel_.plotlambdaeff(porosity_, rhoSolid_, lambdaSolid_,
-                                                    0.0, 1.0, fileName);
+        plotThermalConductivityModel_.addlambdaeffcurve(gnuplot, porosity_, rhoSolid_, lambdaSolid_,
+                                                        0.0, 1.0, fileName);
+        gnuplot.plot("lambda_eff");
     }
 
     /*!

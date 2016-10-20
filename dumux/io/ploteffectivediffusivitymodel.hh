@@ -24,6 +24,8 @@
 #ifndef DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 #define DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
@@ -47,10 +49,49 @@ class PlotEffectiveDiffusivityModel
 
 public:
     //! Constructor
-    PlotEffectiveDiffusivityModel(bool interaction = true)
+    DUNE_DEPRECATED_MSG("PlotEffectiveDiffusivityModel(bool) is deprecated. Use PlotEffectiveDiffusivityModel() instead.")
+    PlotEffectiveDiffusivityModel(bool interaction)
     : numIntervals_(1000)
     {
         gnuplot_.setInteraction(interaction);
+    }
+
+    //! Constructor
+    PlotEffectiveDiffusivityModel()
+    : numIntervals_(1000)
+    { }
+
+    /*!
+     * \brief Add a effective diffusion factor-saturation data set to the plot
+     *
+     * \param gnuplot The gnuplot interface
+     * \param params The material law parameters
+     * \param lowerSat Minimum x-value for data set
+     * \param upperSat Maximum x-value for data set
+     * \param curveName Name of the data set
+     * \param curveOptions Plotting options associated with that data set
+     */
+    void adddeffcurve(GnuplotInterface<Scalar> &gnuplot,
+                      Scalar porosity,
+                      Scalar lowerSat = 0.0,
+                      Scalar upperSat = 1.0,
+                      std::string curveName = "deff",
+                      std::string curveOptions = "w l")
+    {
+        std::vector<Scalar> sw(numIntervals_+1);
+        std::vector<Scalar> deff(numIntervals_+1);
+        Scalar satInterval = upperSat - lowerSat;
+
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            deff[i] = EffectiveDiffusivityModel::effectiveDiffusivity(porosity, sw[i],
+                                                                      1.0 /*Diffusion Coefficient*/);
+        }
+
+        gnuplot.setXlabel("phase saturation [-]");
+        gnuplot.setYlabel("effective diffusion/molecular diffusion [-]");
+        gnuplot.addDataSetToPlot(sw, deff, curveName, curveOptions);
     }
 
     /*!
@@ -61,6 +102,7 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
+    DUNE_DEPRECATED_MSG("plotdeff() is deprecated. Use adddeffcurve() instead.")
     void plotdeff(Scalar porosity,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,

@@ -54,10 +54,10 @@ public:
     PlotMaterialLaw(bool interaction = true)
     : numIntervals_(1000)
     {
-        gnuplotpc_.setInteraction(interaction);
-        gnuplotpcAlpha_.setInteraction(interaction);
-        gnuplotkr_.setInteraction(interaction);
-        gnuplotkrn_.setInteraction(interaction);
+        gnuplotpc_.setOpenPlotWindow(interaction);
+        gnuplotpcAlpha_.setOpenPlotWindow(interaction);
+        gnuplotkr_.setOpenPlotWindow(interaction);
+        gnuplotkrn_.setOpenPlotWindow(interaction);
     }
 
     /*!
@@ -198,7 +198,7 @@ public:
         gnuplotpc_.setXlabel("wetting phase saturation [-]");
         gnuplotpc_.setYlabel("capillary pressure [Pa]");
         gnuplotpc_.addDataSetToPlot(st, pc, curveTitle + "_pcgn-St");
-        gnuplotpc_.plot("pcgn-St (St=Sw+Sn)");
+        gnuplotpc_.plot("pcgn-St");
     }
 
 
