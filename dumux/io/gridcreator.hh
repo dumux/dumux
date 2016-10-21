@@ -103,6 +103,15 @@ public:
     }
 
     /*!
+     * \brief Returns a reference to the grid factory
+     */
+    static Dune::GridFactory<Grid> &gridFactory()
+    {
+        static Dune::GridFactory<Grid> gridFactory_;
+        return gridFactory_;
+    }
+
+    /*!
      * \brief Call the parameters function of the DGF grid pointer if available
      */
     template <class Entity>
@@ -256,12 +265,12 @@ protected:
                 enableGmshDomainMarkers_ = true;
                 if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
                 {
-                    gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments));
+                    Dune::GmshReader<Grid>::read(gridFactory(), fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments);
+                    gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
                 }
                 else
                 {
-                    Dune::GridFactory<Grid> factory;
-                    gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
+                    gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
                 }
             }
             else
@@ -272,8 +281,7 @@ protected:
                 }
                 else
                 {
-                    Dune::GridFactory<Grid> factory;
-                    gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
+                    gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
                 }
             }
         }
