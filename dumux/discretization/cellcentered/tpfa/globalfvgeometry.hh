@@ -59,7 +59,7 @@ class CCTpfaGlobalFVGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    CCTpfaGlobalFVGeometry(const GridView gridView)
+    CCTpfaGlobalFVGeometry(const GridView& gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
@@ -193,7 +193,7 @@ private:
 
     const Problem* problemPtr_;
 
-    GridView gridView_;
+    const GridView& gridView_;
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
@@ -217,7 +217,7 @@ class CCTpfaGlobalFVGeometry<TypeTag, false>
 
 public:
     //! Constructor
-    CCTpfaGlobalFVGeometry(const GridView gridView)
+    CCTpfaGlobalFVGeometry(const GridView& gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
@@ -274,23 +274,23 @@ public:
 
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = element.subEntities(1);
-            std::vector<IndexType> scvfsIndexSet(numLocalFaces);
-            std::vector<IndexType> neighborVolVarIndexSet(numLocalFaces);
-            IndexType localFaceIdx = 0;
+            std::vector<IndexType> scvfsIndexSet;
+            std::vector<IndexType> neighborVolVarIndexSet;
+            scvfsIndexSet.reserve(numLocalFaces);
+            neighborVolVarIndexSet.reserve(numLocalFaces);
             for (const auto& intersection : intersections(gridView_, element))
             {
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
-                    scvfsIndexSet[localFaceIdx] = numScvf_++;
-                    auto nIdx = problem.elementMapper().index(intersection.outside());
-                    neighborVolVarIndexSet[localFaceIdx++] = nIdx;
+                    scvfsIndexSet.push_back(numScvf_++);
+                    neighborVolVarIndexSet.push_back(problem.elementMapper().index(intersection.outside()));
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
-                    scvfsIndexSet[localFaceIdx] = numScvf_++;
-                    neighborVolVarIndexSet[localFaceIdx++] = numScvs_ + numBoundaryScvf_++;
+                    scvfsIndexSet.push_back(numScvf_++);
+                    neighborVolVarIndexSet.push_back(numScvs_ + numBoundaryScvf_++);
                 }
             }
 
@@ -320,7 +320,7 @@ private:
 
     const Problem* problemPtr_;
 
-    GridView gridView_;
+    const GridView& gridView_;
 
     // Information on the global number of geometries
     IndexType numScvs_;
