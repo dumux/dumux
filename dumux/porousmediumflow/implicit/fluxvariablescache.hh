@@ -175,7 +175,6 @@ class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -195,11 +194,13 @@ public:
     // the constructor
     PorousMediumMpfaFluxVariablesCache() : isUpdated_(false)
     {
+        // We have to initialize to zero (for inner interaction volumes)
         for (auto& nFlux : phaseNeumannFluxes_)
             nFlux = 0.0;
     }
 
     // update cached objects
+    template<typename InteractionVolume>
     void updateAdvection(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -222,6 +223,7 @@ public:
         tij_ = interactionVolume.getTransmissibilities(localIndexPair);
     }
 
+    template<typename InteractionVolume>
     void updatePhaseNeumannFlux(const Problem& problem,
                                 const Element& element,
                                 const FVElementGeometry& fvGeometry,

@@ -58,6 +58,7 @@ class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, false, false>
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static const bool solDependentParams = GET_PROP_VALUE(TypeTag, SolutionDependentParameters);
 
 public:
@@ -68,36 +69,46 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 FluxVarsCacheVector& fluxVarsCache)
+                                 FluxVarsCacheVector& fluxVarsCache,
+                                 const bool updateNeumannOnly = false)
     {
+        // if we only want to update the neumann fluxes, skip the rest if we don't touch the boundary
+        const bool boundary = problem.model().globalFvGeometry().scvfTouchesBoundary(scvf);
+        if (updateNeumannOnly && !boundary)
+            return;
+
         // lambda function to get the permeability tensor
         const auto* prob = &problem;
-        auto permFunction = [prob](const Element& element, const VolumeVariables& volVars, const SubControlVolume& scv)
+        auto permFunction = [prob](const Element& element,
+                                   const VolumeVariables& volVars,
+                                   const SubControlVolume& scv)
                             { return prob->spatialParams().intrinsicPermeability(scv, volVars); };
 
-        // update the flux var caches for this scvf
-        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
+        // get the interaction volume seed and update flux var caches
+        const auto& seed = boundary ? problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf) : problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
+        if (boundary)
         {
-            const auto& boundarySeed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            BoundaryInteractionVolume iv(boundarySeed, problem, fvGeometry, elemVolVars);
+            BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
             iv.solveLocalSystem(permFunction);
 
             // we assume phaseIdx = eqIdx here for purely advective problems
             for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
                 // lambda function defining the upwind factor of the advective flux
-                auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars) { return volVars.density(eqIdx)/volVars.viscosity(eqIdx); };
+                auto advectionUpwindFunction = [eqIdx](const VolumeVariables& volVars)
+                                               { return volVars.density(eqIdx)/volVars.viscosity(eqIdx); };
                 iv.assembleNeumannFluxes(advectionUpwindFunction, eqIdx);
 
-                // update flux variables cache, only the neumann fluxes have to be set for each phase
+                // update flux variables cache for the scvf
                 const auto scvfIdx = scvf.index();
                 auto& cache = fluxVarsCache[scvfIdx];
-                if (eqIdx == 0)
+                cache.updatePhaseNeumannFlux(problem, element, fvGeometry, elemVolVars, scvf, iv, eqIdx);
+                if (eqIdx == numEq-1)
                 {
-                    cache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
+                    if (!updateNeumannOnly)
+                        cache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
                     cache.setUpdated();
                 }
-                cache.updatePhaseNeumannFlux(problem, element, fvGeometry, elemVolVars, scvf, iv, eqIdx);
 
                 // update flux variable caches of the other scvfs of the interaction volume
                 for (const auto scvfIdxJ : iv.globalScvfs())
@@ -107,19 +118,19 @@ public:
                         const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
                         const auto elementJ = problem.model().globalFvGeometry().element(scvfJ.insideScvIdx());
                         auto& cacheJ = fluxVarsCache[scvfIdxJ];
-                        if (eqIdx == 0)
+                        cacheJ.updatePhaseNeumannFlux(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv, eqIdx);
+                        if (eqIdx == numEq-1)
                         {
-                            cacheJ.updateAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
+                            if (!updateNeumannOnly)
+                                cacheJ.updateAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
                             cacheJ.setUpdated();
                         }
-                        cacheJ.updatePhaseNeumannFlux(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv, eqIdx);
                     }
                 }
             }
         }
         else
         {
-            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
             InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
             iv.solveLocalSystem(permFunction);
 
@@ -154,7 +165,13 @@ public:
                                    FluxVarsCacheVector& fluxVarsCache)
     {
         if (!solDependentParams)
+        {
             fluxVarsCache[scvf.index()].setUpdated();
+
+            // if we do not use tpfa on the boundary, we have to update the neumann fluxes
+            if (!useTpfaBoundary)
+                fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCache, true);
+        }
         else
             fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
     }
