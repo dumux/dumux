@@ -83,6 +83,7 @@ NEW_PROP_TAG(GlobalFluxVariablesCache); //!< The global vector of flux variable 
 NEW_PROP_TAG(ElementFluxVariablesCache); //!< A local vector of flux variable caches per element
 NEW_PROP_TAG(EnableGlobalFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
+NEW_PROP_TAG(ConstantBoundaryConditions); //!< specifies whether or not the boundary conditions are constant over time
 NEW_PROP_TAG(SolutionDependentParameters); //!< specifies if spatial parameters depend on the solution
 NEW_PROP_TAG(DiscretizationMethod); //!< Property for the used discretization method
 NEW_PROP_TAG(PrimaryVariableSwitch); //!< The primary variable switch needed for compositional models

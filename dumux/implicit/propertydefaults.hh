@@ -155,6 +155,9 @@ SET_BOOL_PROP(ImplicitBase, EnableGlobalFluxVariablesCache, false);
 //! by default, parameters are solution-dependent
 SET_BOOL_PROP(ImplicitBase, SolutionDependentParameters, true);
 
+//! by default, boundary conditions are not constant over time
+SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);
+
 SET_TYPE_PROP(ImplicitBase, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag> );
 
 //! Set the type of a global jacobian matrix from the solution types
