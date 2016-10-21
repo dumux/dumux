@@ -246,7 +246,9 @@ public:
                 bool boundary = intersection.boundary();
 
                 // determine the outside volvar idx
-                IndexType nIdx;
+                // we initialize nIdx so that the compiler does not complain in overlap elements in parallel
+                // nIdx will not be used in this case anyway (see continue call below)
+                IndexType nIdx = eIdx;
                 if (intersection.neighbor())
                     nIdx = problem.elementMapper().index(intersection.outside());
                 else if (boundary)
@@ -468,7 +470,9 @@ public:
                 bool neighbor = intersection.neighbor();
 
                 // determine the outside volvar idx
-                IndexType nIdx;
+                // we initialize nIdx so that the compiler does not complain in overlap elements in parallel
+                // nIdx will not be used in this case anyway (see continue call below)
+                IndexType nIdx = eIdx;
                 if (neighbor)
                     nIdx = problem.elementMapper().index(intersection.outside());
                 else if (boundary)
