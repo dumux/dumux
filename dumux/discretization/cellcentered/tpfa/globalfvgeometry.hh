@@ -59,7 +59,7 @@ class CCTpfaGlobalFVGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    CCTpfaGlobalFVGeometry(const GridView gridView)
+    CCTpfaGlobalFVGeometry(const GridView& gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
@@ -217,7 +217,7 @@ class CCTpfaGlobalFVGeometry<TypeTag, false>
 
 public:
     //! Constructor
-    CCTpfaGlobalFVGeometry(const GridView gridView)
+    CCTpfaGlobalFVGeometry(const GridView& gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
