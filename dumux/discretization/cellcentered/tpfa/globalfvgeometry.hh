@@ -59,7 +59,7 @@ class CCTpfaGlobalFVGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    CCTpfaGlobalFVGeometry(const GridView& gridView)
+    CCTpfaGlobalFVGeometry(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
@@ -193,7 +193,7 @@ private:
 
     const Problem* problemPtr_;
 
-    const GridView& gridView_;
+    const GridView gridView_;
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
@@ -217,7 +217,7 @@ class CCTpfaGlobalFVGeometry<TypeTag, false>
 
 public:
     //! Constructor
-    CCTpfaGlobalFVGeometry(const GridView& gridView)
+    CCTpfaGlobalFVGeometry(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView) {}
 
     //! The total number of sub control volumes
@@ -320,7 +320,7 @@ private:
 
     const Problem* problemPtr_;
 
-    const GridView& gridView_;
+    const GridView gridView_;
 
     // Information on the global number of geometries
     IndexType numScvs_;
