@@ -240,22 +240,19 @@ public:
         const auto eIdx = globalFvGeometry().problem_().elementMapper().index(element);
         for (auto&& scvf : scvfs_)
         {
+            // skip the rest if scvf has been handled already
             if (contains(scvf.vertexIndex(), finishedVertices))
                 continue;
 
-            const bool boundary = globalFvGeometry().scvfTouchesBoundary(scvf);
-            const auto& ivSeed = boundary ? globalFvGeometry().boundaryInteractionVolumeSeed(scvf) : globalFvGeometry().interactionVolumeSeed(scvf);
-
-            auto scvfIndices = ivSeed.globalScvfIndices();
-            // make the scv for each element in the interaction region
-            // and the corresponding scv faces in that scv
-            for (auto eIdxGlobal : ivSeed.globalScvIndices())
+            if (globalFvGeometry().scvfTouchesBoundary(scvf))
             {
-                if (eIdxGlobal != eIdx)
-                {
-                    auto element = globalFvGeometry().element(eIdxGlobal);
-                    makeNeighborGeometries(element, eIdxGlobal, scvfIndices);
-                }
+                const auto& ivSeed = globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
+                handleInteractionRegion(ivSeed);
+            }
+            else
+            {
+                const auto& ivSeed = globalFvGeometry().interactionVolumeSeed(scvf);
+                handleInteractionRegion(ivSeed);
             }
 
             finishedVertices.push_back(scvf.vertexIndex());
@@ -288,10 +285,12 @@ private:
         // the problem
         const auto& problem = globalFvGeometry().problem_();
 
+        // make the scv
         auto eIdx = problem.elementMapper().index(element);
         scvs_.emplace_back(element.geometry(), eIdx);
         scvIndices_.emplace_back(eIdx);
 
+        // get data on the scv faces
         const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdx);
 
@@ -347,8 +346,28 @@ private:
         scvfIndices_.shrink_to_fit();
     }
 
+    template<typename Seed>
+    void handleInteractionRegion(const Seed& ivSeed)
+    {
+        // the element index of the element which we are binding to
+        auto eIdx = globalFvGeometry().problem_().elementMapper().index(*elementPtr_);
+
+        // the scvf indices in the interaction region
+        auto scvfIndices = ivSeed.globalScvfIndices();
+
+        // make the scvs/scvfs for each element in the interaction region
+        for (auto eIdxGlobal : ivSeed.globalScvIndices())
+        {
+            if (eIdxGlobal != eIdx)
+            {
+                auto element = globalFvGeometry().element(eIdxGlobal);
+                makeNeighborGeometries(element, eIdxGlobal, scvfIndices);
+            }
+        }
+    }
+
     //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
-    template<class IndexVector>
+    template<typename IndexVector>
     void makeNeighborGeometries(const Element& element, IndexType eIdxGlobal, const IndexVector& ivScvfs)
     {
         // create the neighbor scv if it doesn't exist yet

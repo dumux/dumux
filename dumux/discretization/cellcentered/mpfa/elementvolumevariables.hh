@@ -181,13 +181,13 @@ public:
             volumeVariables_.reserve(numDofs+neighborScvfEstimate);
             volVarIndices_.reserve(numDofs+neighborScvfEstimate);
 
+            // skip the rest if the scvf does not touch a boundary
             const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
-            const auto& ivSeed = boundary ? globalFvGeometry.boundaryInteractionVolumeSeed(scvf) : globalFvGeometry.interactionVolumeSeed(scvf);
-
-            if (!ivSeed.onBoundary())
+            if (!boundary)
                 continue;
 
             // loop over all the scvfs in the interaction region
+            const auto& ivSeed = globalFvGeometry.boundaryInteractionVolumeSeed(scvf);
             for (auto scvfIdx : ivSeed.globalScvfIndices())
             {
                 auto&& ivScvf = fvGeometry.scvf(scvfIdx);

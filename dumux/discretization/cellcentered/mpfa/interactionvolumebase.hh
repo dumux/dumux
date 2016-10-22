@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
-#include <dumux/discretization/cellcentered/mpfa/interactionvolumeseed.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 namespace Dumux

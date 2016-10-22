@@ -47,6 +47,7 @@ class MpfaHelperBase<TypeTag, MpfaMethods::oMethod, 2>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -57,6 +58,10 @@ class MpfaHelperBase<TypeTag, MpfaMethods::oMethod, 2>
     using InteractionVolumeSeed = typename InteractionVolume::Seed;
     using ScvSeed = typename InteractionVolumeSeed::LocalScvSeed;
     using ScvfSeed = typename InteractionVolumeSeed::LocalScvfSeed;
+
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using BoundaryScvSeed = typename BoundaryInteractionVolumeSeed::LocalScvSeed;
+    using BoundaryScvfSeed = typename BoundaryInteractionVolumeSeed::LocalScvfSeed;
 
     using GlobalIndexSet = std::vector<GlobalIndexType>;
     using LocalIndexSet = std::vector<LocalIndexType>;
@@ -84,13 +89,13 @@ public:
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), false);
     }
 
-    static InteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
-                                                                   const Element& element,
-                                                                   const FVElementGeometry& fvGeometry,
-                                                                   const SubControlVolumeFace& scvf)
+    static BoundaryInteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
+                                                                           const Element& element,
+                                                                           const FVElementGeometry& fvGeometry,
+                                                                           const SubControlVolumeFace& scvf)
     {
-        std::vector<ScvSeed> scvSeeds;
-        std::vector<ScvfSeed> scvfSeeds;
+        std::vector<BoundaryScvSeed> scvSeeds;
+        std::vector<BoundaryScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
         scvSeeds.reserve(20);
@@ -102,10 +107,11 @@ public:
         scvSeeds.shrink_to_fit();
         scvfSeeds.shrink_to_fit();
 
-        return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
+        return BoundaryInteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
     }
 
 private:
+    template<typename ScvSeed, typename ScvfSeed>
     static void fillEntitySeeds_(std::vector<ScvSeed>& scvSeeds,
                                  std::vector<ScvfSeed>& scvfSeeds,
                                  const Problem& problem,
@@ -146,7 +152,7 @@ private:
     }
 
     // clockwise rotation and construction of local scv & scv face entities
-    template<class ScvfPointerVector>
+    template<typename ScvSeed, typename ScvfSeed, typename ScvfPointerVector>
     static void performRotation_(const Problem& problem,
                                  const ScvfPointerVector& scvfVector,
                                  std::vector<ScvSeed>& scvSeeds,
@@ -257,6 +263,7 @@ class MpfaHelperBase<TypeTag, MpfaMethods::oMethod, 3>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -267,6 +274,10 @@ class MpfaHelperBase<TypeTag, MpfaMethods::oMethod, 3>
     using InteractionVolumeSeed = typename InteractionVolume::Seed;
     using ScvSeed = typename InteractionVolumeSeed::LocalScvSeed;
     using ScvfSeed = typename InteractionVolumeSeed::LocalScvfSeed;
+
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using BoundaryScvSeed = typename BoundaryInteractionVolumeSeed::LocalScvSeed;
+    using BoundaryScvfSeed = typename BoundaryInteractionVolumeSeed::LocalScvfSeed;
 
     using GlobalIndexSet = std::vector<GlobalIndexType>;
     using LocalIndexSet = std::vector<LocalIndexType>;
@@ -299,13 +310,13 @@ public:
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), false);
     }
 
-    static InteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
-                                                                   const Element& element,
-                                                                   const FVElementGeometry& fvGeometry,
-                                                                   const SubControlVolumeFace& scvf)
+    static BoundaryInteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
+                                                                           const Element& element,
+                                                                           const FVElementGeometry& fvGeometry,
+                                                                           const SubControlVolumeFace& scvf)
     {
-        std::vector<ScvSeed> scvSeeds;
-        std::vector<ScvfSeed> scvfSeeds;
+        std::vector<BoundaryScvSeed> scvSeeds;
+        std::vector<BoundaryScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
         scvSeeds.reserve(50);
@@ -321,10 +332,11 @@ public:
         scvSeeds.shrink_to_fit();
         scvfSeeds.shrink_to_fit();
 
-        return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
+        return BoundaryInteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
     }
 
 private:
+    template<typename ScvSeed, typename ScvfSeed>
     static void fillEntitySeeds_(std::vector<ScvSeed>& scvSeeds,
                                  std::vector<ScvfSeed>& scvfSeeds,
                                  const Problem& problem,

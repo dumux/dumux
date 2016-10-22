@@ -136,11 +136,19 @@ public:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
-            const auto& ivSeed = boundary ? globalFvGeometry.boundaryInteractionVolumeSeed(scvf) : globalFvGeometry.interactionVolumeSeed(scvf);
 
-            // loop over all the scvfs in the interaction region
-            for (auto scvfIdx : ivSeed.globalScvfIndices())
-                globalScvfIndices_.push_back(scvfIdx);
+            if (boundary)
+            {
+                const auto& ivSeed = globalFvGeometry.boundaryInteractionVolumeSeed(scvf);
+                for (auto scvfIdx : ivSeed.globalScvfIndices())
+                    globalScvfIndices_.push_back(scvfIdx);
+            }
+            else
+            {
+                const auto& ivSeed = globalFvGeometry.interactionVolumeSeed(scvf);
+                for (auto scvfIdx : ivSeed.globalScvfIndices())
+                    globalScvfIndices_.push_back(scvfIdx);
+            }
         }
         // make global indices unique
         std::sort(globalScvfIndices_.begin(), globalScvfIndices_.end());

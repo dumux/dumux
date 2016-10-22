@@ -72,8 +72,9 @@ public:
                                  FluxVarsCacheVector& fluxVarsCache,
                                  const bool updateNeumannOnly = false)
     {
-        // if we only want to update the neumann fluxes, skip the rest if we don't touch the boundary
         const bool boundary = problem.model().globalFvGeometry().scvfTouchesBoundary(scvf);
+
+        // if we only want to update the neumann fluxes, skip the rest if we don't touch the boundary
         if (updateNeumannOnly && !boundary)
             return;
 
@@ -84,10 +85,10 @@ public:
                                    const SubControlVolume& scv)
                             { return prob->spatialParams().intrinsicPermeability(scv, volVars); };
 
-        // get the interaction volume seed and update flux var caches
-        const auto& seed = boundary ? problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf) : problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
+        // update flux var caches
         if (boundary)
         {
+            const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
             BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
             iv.solveLocalSystem(permFunction);
 
@@ -131,6 +132,7 @@ public:
         }
         else
         {
+            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
             InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
             iv.solveLocalSystem(permFunction);
 

@@ -20,11 +20,11 @@
  * \file
  * \brief Base class for interaction volume seeds of mpfa methods.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMESEED_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMESEED_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUMESEED_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUMESEED_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include "facetypes.hh"
+#include "localsubcontrolentityseeds.hh"
 
 namespace Dumux
 {
@@ -33,19 +33,18 @@ namespace Dumux
  * \ingroup Mpfa
  * \brief Base class for the interaction volume seed of mpfa methods
  */
-template<class ScvSeedType, class ScvfSeedType>
-class CCMpfaInteractionVolumeSeed
+template<typename G, typename L>
+class CCMpfaOInteractionVolumeSeed
 {
-    using GlobalScvIdxType = typename ScvSeedType::GlobalIndexType;
-    using GlobalScvfIdxType = typename ScvfSeedType::GlobalIndexType;
+    using GlobalIndexType = G;
 
 public:
-    using LocalScvSeed = ScvSeedType;
-    using LocalScvfSeed = ScvfSeedType;
+    using LocalScvSeed = CCMpfaOLocalScvSeed<G, L>;
+    using LocalScvfSeed = CCMpfaOLocalScvfSeed<G, L>;
 
-    CCMpfaInteractionVolumeSeed(std::vector<LocalScvSeed>&& scvSeeds,
-                                std::vector<LocalScvfSeed>&& scvfSeeds,
-                                bool onBoundary)
+    CCMpfaOInteractionVolumeSeed(std::vector<LocalScvSeed>&& scvSeeds,
+                                 std::vector<LocalScvfSeed>&& scvfSeeds,
+                                 bool onBoundary)
     : onBoundary_(onBoundary),
       scvSeeds_(std::move(scvSeeds)),
       scvfSeeds_(std::move(scvfSeeds))
@@ -60,9 +59,9 @@ public:
     const std::vector<LocalScvfSeed>& scvfSeeds() const
     { return scvfSeeds_; }
 
-    std::vector<GlobalScvIdxType> globalScvIndices() const
+    std::vector<GlobalIndexType> globalScvIndices() const
     {
-        std::vector<GlobalScvIdxType> globalIndices;
+        std::vector<GlobalIndexType> globalIndices;
         globalIndices.reserve(scvSeeds().size());
 
         for (auto&& localScvSeed : scvSeeds())
@@ -71,9 +70,9 @@ public:
         return globalIndices;
     }
 
-    std::vector<GlobalScvfIdxType> globalScvfIndices() const
+    std::vector<GlobalIndexType> globalScvfIndices() const
     {
-        std::vector<GlobalScvfIdxType> globalIndices;
+        std::vector<GlobalIndexType> globalIndices;
         globalIndices.reserve(scvfSeeds().size() * 2);
 
         for (auto&& localScvfSeed : scvfSeeds())

@@ -29,7 +29,6 @@
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
-#include <dumux/discretization/cellcentered/mpfa/interactionvolumeseed.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 

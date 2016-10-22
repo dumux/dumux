@@ -26,16 +26,15 @@
 #include <dumux/common/math.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
-#include <dumux/discretization/cellcentered/mpfa/interactionvolumeseed.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
-#include "localsubcontrolentityseeds.hh"
+#include "interactionvolumeseed.hh"
 #include "localsubcontrolentities.hh"
 
 namespace Dumux
 {
-//! Specialization of the interaction volume traits clas
+//! Specialization of the interaction volume traits class for the mpfa-o method
 template<class TypeTag>
 class CCMpfaOInteractionVolumeTraits
 {
@@ -65,9 +64,7 @@ public:
     using LocalScvType = CCMpfaOLocalScv<TypeTag>;
     using LocalScvfType = CCMpfaOLocalScvf<TypeTag>;
 
-    using LocalScvSeedType = CCMpfaOLocalScvSeed<GlobalIndexType, LocalIndexType>;
-    using LocalScvfSeedType = CCMpfaOLocalScvfSeed<GlobalIndexType, LocalIndexType>;
-    using Seed = CCMpfaInteractionVolumeSeed<LocalScvSeedType, LocalScvfSeedType>;
+    using Seed = CCMpfaOInteractionVolumeSeed<GlobalIndexType, LocalIndexType>;
 };
 
 //! Forward declaration of the mpfa-o interaction volume
