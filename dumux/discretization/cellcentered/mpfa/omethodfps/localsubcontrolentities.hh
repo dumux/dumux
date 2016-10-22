@@ -62,18 +62,16 @@ public:
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const LocalScvSeed& scvSeed)
-    : seed_(scvSeed)
+    : seedPtr_(&scvSeed)
     {
-        auto eg = element.geometry();
-
         // the geometry helper that will give us the scv corners
-        GeometryHelper geomHelper(eg);
+        GeometryHelper geomHelper(element.geometry());
 
         // extract the vertex index from the first scvf
         auto vIdxGlobal = fvGeometry.scvf(scvSeed.globalScvfIndices()[0]).vertexIndex();
 
         // find local index of the vertex in the element
-        unsigned int vIdxLocal = -1;
+        int vIdxLocal = -1;
         for (unsigned int localIdx = 0; localIdx < element.subEntities(dim); ++localIdx)
         {
             if (problem.vertexMapper().subIndex(element, localIdx, dim) == vIdxGlobal)
@@ -117,7 +115,6 @@ public:
         return *this;
     }
 
-
     GlobalIndexType globalIndex() const
     { return scvSeed_().globalIndex(); }
 
@@ -143,10 +140,9 @@ public:
 
 private:
     const LocalScvSeed& scvSeed_() const
-    { return seed_; }
+    { return *seedPtr_; }
 
-    const LocalScvSeed& seed_;
-    // Work around the fact that geometry is not default constructible
+    const LocalScvSeed* seedPtr_;
     Optional<Geometry> geometry_;
 };
 } // end namespace
