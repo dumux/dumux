@@ -130,7 +130,7 @@ struct CCMpfaOLocalScvf
 public:
     CCMpfaOLocalScvf(const LocalScvfSeed& scvfSeed,
                      const SubControlVolumeFace& scvf)
-    : seed_(scvfSeed),
+    : seedPtr_(&scvfSeed),
       center_(scvf.center()),
       ip_(scvf.ipGlobal()),
       normal_(scvf.unitOuterNormal()),
@@ -175,9 +175,9 @@ public:
 
 private:
     const LocalScvfSeed& scvfSeed_() const
-    { return seed_; }
+    { return *seedPtr_; }
 
-    const LocalScvfSeed& seed_;
+    const LocalScvfSeed* seedPtr_;
     GlobalPosition center_;
     GlobalPosition ip_;
     GlobalPosition normal_;

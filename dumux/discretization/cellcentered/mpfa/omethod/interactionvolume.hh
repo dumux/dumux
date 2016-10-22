@@ -136,9 +136,9 @@ public:
                              const Problem& problem,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars)
-    : problemRef_(problem),
-      fvGeometryRef_(fvGeometry),
-      elemVolVarsRef_(elemVolVars),
+    : problemPtr_(&problem),
+      fvGeometryPtr_(&fvGeometry),
+      elemVolVarsPtr_(&elemVolVars),
       onBoundary_(seed.onBoundary()),
       globalScvfIndices_(seed.globalScvfIndices())
     {
@@ -508,17 +508,17 @@ private:
     }
 
     const Problem& problem_() const
-    { return problemRef_; }
+    { return *problemPtr_; }
 
     const FVElementGeometry& fvGeometry_() const
-    { return fvGeometryRef_; }
+    { return *fvGeometryPtr_; }
 
     const ElementVolumeVariables& elemVolVars_() const
-    { return elemVolVarsRef_; }
+    { return *elemVolVarsPtr_; }
 
-    const Problem& problemRef_;
-    const FVElementGeometry& fvGeometryRef_;
-    const ElementVolumeVariables& elemVolVarsRef_;
+    const Problem* problemPtr_;
+    const FVElementGeometry* fvGeometryPtr_;
+    const ElementVolumeVariables* elemVolVarsPtr_;
 
     bool onBoundary_;
     LocalIndexType eqIdx_;
