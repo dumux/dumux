@@ -69,14 +69,12 @@ public:
     // function to be called before assembling an element, preparing the vol vars within the stencil
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol)
-    {}
+              const SolutionVector& sol) {}
 
     // function to prepare the vol vars within the element
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
-    {}
+                     const SolutionVector& sol) {}
 
     //! The global volume variables object we are a restriction of
     const GlobalVolumeVariables& globalVolVars() const
