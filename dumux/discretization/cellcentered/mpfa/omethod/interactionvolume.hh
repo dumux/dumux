@@ -116,6 +116,7 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    using DimVector = typename Traits::DimVector;
     using GlobalPosition = typename Traits::GlobalPosition;
     using DynamicVector = typename Traits::Vector;
     using DynamicMatrix = typename Traits::Matrix;
@@ -390,7 +391,7 @@ private:
                     B[idxInFluxFaces][posLocalScvIdx] += posWijk[localDir];
             }
 
-            // If not on a boundary or interior dirichlet face, add entries for the "negative" scv
+            // If face is not on a boundary or an interior dirichlet face, add entries for the "negative" scv
             if (faceType == MpfaFaceTypes::interior)
             {
                 const auto negLocalScvIdx = localScvf.outsideLocalScvIndex();
@@ -472,7 +473,7 @@ private:
         }
     }
 
-    GlobalPosition calculateOmegas_(const LocalScvType& localScv,
+    DimVector calculateOmegas_(const LocalScvType& localScv,
                                const LocalScvfType& localScvf,
                                const Tensor& T) const
     {
@@ -490,7 +491,7 @@ private:
         return wijk;
     }
 
-    GlobalPosition calculateOmegas_(const LocalScvType& localScv,
+    DimVector calculateOmegas_(const LocalScvType& localScv,
                                const LocalScvfType& localScvf,
                                const Scalar t) const
     {
