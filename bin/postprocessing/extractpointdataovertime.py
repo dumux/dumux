@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('-f', '--files', nargs='+', required=True, help="pvd files to be processed")
 parser.add_argument('-o', '--outputDirectory', default='', help="Directory to which the .csv files are written")
+parser.add_argument('-of', '--outFile', default='', help="Basename of the written csv file")
 parser.add_argument('-p', '--point', type=float, nargs=3, required=True, help='Coordinates of the probed point (in 3D)')
 parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of the output. 1 = print progress. 2 = print data columns')
 args = vars(parser.parse_args())
@@ -61,6 +62,8 @@ for curFile in args['files']:
     plotSelectionOverTime.Input = probeLocation
 
     # write output to csv writer
+    if not args['outFile'] == '':
+        basename = args['outFile']
     csvFile = outDirectory + basename + '.csv'
     writer = CreateWriter(csvFile, plotSelectionOverTime)
     writer.UpdatePipeline()
