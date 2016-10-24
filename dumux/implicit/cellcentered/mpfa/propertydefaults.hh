@@ -105,7 +105,7 @@ private:
     using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
     using IndexType = typename GridView::IndexSet::IndexType;
 public:
-    typedef Dumux::CCMpfaSubControlVolumeFace<ScvfGeometry, IndexType> type;
+    typedef Dumux::CCMpfaSubControlVolumeFace<GET_PROP_VALUE(TypeTag, MpfaMethod), ScvfGeometry, IndexType> type;
 };
 
 // By default, we use tpfa on the boundaries

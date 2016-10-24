@@ -275,6 +275,7 @@ public:
                                         geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
                                         intersection.centerUnitOuterNormal(),
                                         vIdxGlobal,
+                                        vIdxLocal,
                                         scvfIdx,
                                         std::array<IndexType, 2>({{eIdx, nIdx}}),
                                         q,
