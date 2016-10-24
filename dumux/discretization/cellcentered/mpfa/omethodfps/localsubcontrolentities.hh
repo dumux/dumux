@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_FPS_LOCALSUBCONTROLENTITIES_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
-
 #include "mpfafpsgeometryhelper.hh"
 
 namespace Dumux
@@ -54,66 +53,19 @@ class CCMpfaOFpsLocalScv
 public:
     using Geometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld>;
 
-    // the default constructor
-    CCMpfaOFpsLocalScv() = default;
-
-    // the constructor
+    //! The constructor
+    //! Initialization in the initializer list is desired to not have to use the optional (see scv).
+    //! Here, we use the first scvf in the seed to extract an scvf and the local vertex index it is connected to.
+    //! We know that in the fps scheme all the scvfs are connected to the same vertex. The MpfaFpsGeometry Helper
+    //! is then used to extract the corners of the given scv (in the geometry constructor).
     CCMpfaOFpsLocalScv(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const LocalScvSeed& scvSeed)
-    : seedPtr_(&scvSeed)
-    {
-        // the geometry helper that will give us the scv corners
-        GeometryHelper geomHelper(element.geometry());
-
-        // extract the vertex index from the first scvf
-        auto vIdxGlobal = fvGeometry.scvf(scvSeed.globalScvfIndices()[0]).vertexIndex();
-
-        // find local index of the vertex in the element
-        int vIdxLocal = -1;
-        for (unsigned int localIdx = 0; localIdx < element.subEntities(dim); ++localIdx)
-        {
-            if (problem.vertexMapper().subIndex(element, localIdx, dim) == vIdxGlobal)
-            {
-                vIdxLocal = localIdx;
-                break;
-            }
-        }
-
-        assert(vIdxLocal != -1 && "could not find the local index of the scv in the element!");
-
-        // construct the geometry of the scv
-        geometry_ = Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), geomHelper.getScvCorners(vIdxLocal));
-    }
-
-    //! The copy constrcutor
-    CCMpfaOFpsLocalScv(const CCMpfaOFpsLocalScv& other) = default;
-
-    //! The move constrcutor
-    CCMpfaOFpsLocalScv(CCMpfaOFpsLocalScv&& other) = default;
-
-    //! The copy assignment operator
-    CCMpfaOFpsLocalScv& operator=(const CCMpfaOFpsLocalScv& other)
-    {
-        // We want to use the default copy/move assignment.
-        // But since geometry is not copy assignable :( we
-        // have to construct it again
-        geometry_.release();
-        geometry_.emplace(other.geometry_.value());
-        return *this;
-    }
-
-    //! The move assignment operator
-    CCMpfaOFpsLocalScv& operator=(CCMpfaOFpsLocalScv&& other)
-    {
-        // We want to use the default copy/move assignment.
-        // But since geometry is not copy assignable :( we
-        // have to construct it again
-        geometry_.release();
-        geometry_.emplace(other.geometry_.value());
-        return *this;
-    }
+    : seedPtr_(&scvSeed),
+      geometry_(Dune::GeometryType(Dune::GeometryType::cube, dim),
+                GeometryHelper(element.geometry()).getScvCorners(fvGeometry.scvf(scvSeed.globalScvfIndices()[0]).vertexIndexInElement()))
+    {}
 
     GlobalIndexType globalIndex() const
     { return scvSeed_().globalIndex(); }
@@ -136,14 +88,14 @@ public:
     { return geometry().corner(0); }
 
     const Geometry& geometry() const
-    { return geometry_.value(); }
+    { return geometry_; }
 
 private:
     const LocalScvSeed& scvSeed_() const
     { return *seedPtr_; }
 
     const LocalScvSeed* seedPtr_;
-    Optional<Geometry> geometry_;
+    Geometry geometry_;
 };
 } // end namespace
 
