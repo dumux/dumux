@@ -34,9 +34,10 @@
 #include <dune/alugrid/dgf.hh>
 #endif // HAVE_DUNE_ALUGRID
 
-#include "propertysystem.hh"
-#include "parameters.hh"
-#include "valgrind.hh"
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/valgrind.hh>
+#include <dumux/common/dumuxmessage.hh>
 
 namespace Dumux
 {
@@ -136,145 +137,6 @@ std::string usageTextBlock()
 
 /*!
  * \ingroup Start
- * \brief Dumux start and end message.
- *
- * Selects random messages to write out at the start and end of a simulation run.
- * \param start Indicates if the simulation is starting (=true) or ending (=false).
- */
-void dumuxMessage_(bool start)
-{
-    static int dice_;
-    if(start)
-    {
-        std::srand(std::time(0));
-        // roll the dice to decide which start message will be displayed:
-        dice_ = std::rand() % 12; // has to be n+1
-    }
-
-
-    std::cout << "" << std::endl;
-    switch (dice_)
-    {
-        case 0:
-            if(start)
-                std::cout << "Welcome aboard DuMuX airlines. Please fasten your seatbelts! "
-                          << "Emergency exits are near the time integration." << std::endl;
-            else
-                std::cout << "We hope that you enjoyed simulating with us " << std::endl
-                          << "and that you will choose us next time, too." << std::endl;
-        break;
-        case 1:
-            if(start)
-                std::cout << "Let's get the cow off the ice." << std::endl;
-            else
-                std::cout << "DuMuX got the cow off the ice." << std::endl;
-        break;
-        case 2:
-            if(start)
-                std::cout << "Science, my lad, is made up of mistakes, but they are "
-                          << "mistakes which it is useful to make, because they lead little "
-                          << "by little to the truth." << std::endl
-                          << " - Jules Verne, A journey to the center of the earth" << std::endl;
-            else
-                std::cout << "[We see that] science is eminently perfectible, and that each theory has "
-                          << "constantly to give way to a fresh one." << std::endl
-                          << " - Jules Verne, Journey to the Center of the Earth" << std::endl;
-
-        break;
-        case 3:
-            if(start)
-                std::cout << "Wherever he saw a hole he always wanted to know the depth of it. "
-                          << "To him this was important." << std::endl
-                          << " - Jules Verne, A journey to the center of the earth" << std::endl;
-            else
-                std::cout << "We may brave human laws, but we cannot resist natural ones." << std::endl
-                          << " - Jules Verne, 20,000 Leagues Under the Sea" << std::endl;
-        break;
-        case 4:
-            if(start)
-                std::cout << "Silence - to delight Bernd." << std::endl;
-            else
-                std::cout << "\n " << std::endl;
-        break;
-        case 5:
-                std::cout << "Don't panic... !" << std::endl;
-        break;
-        case 6:
-            if(start)
-                std::cout << "You idiot! You signed the order to destroy Earth!" << std::endl
-                          << " - Douglas Adams, HGttG" << std::endl;
-            else
-                std::cout << "Marvin: I've been talking to the main computer.\n Arthur: And?" << std::endl
-                          << "Marvin: It hates me." << std::endl
-                          << " - Douglas Adams, HGttG" << std::endl;
-        break;
-        case 7:
-            if(start)
-                std::cout << "In the beginning the Universe was created. This has made a lot of "
-                          << "people very angry and has been widely regarded as a bad move.!" << std::endl
-                          << " - Douglas Adams, HGttG " << std::endl;
-            else
-                std::cout << "Forty-two. I checked it very thoroughly, and that quite definitely is the answer. I think "
-                          << "the problem, to be quite honest with you, is that you\'ve never actually known what the question is." << std::endl
-                          << " - Douglas Adams, HGttG " << std::endl;
-        break;
-        case 8:
-            std::cout << "                ##                  @@@@          @   @         @ @" << std::endl;
-            std::cout << "             ###   #                @   @         @@ @@          @ " << std::endl;
-            std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @" << std::endl;
-            std::cout << "         ##          #              @   @  @   @  @   @  @   @     " << std::endl;
-            std::cout << "        #             #             @@@@    @@@   @   @   @@@      " << std::endl;
-            std::cout << "       #               #                                           " << std::endl;
-            std::cout << "      #                 #                                          " << std::endl;
-            std::cout << "     #                   ##        %%%                     " << std::setw(8) << std::right << DUMUX_VERSION << std::endl;
-            std::cout << "    #                      ###    %   %  %%     %%                 " << std::endl;
-            std::cout << "####                          #%%%     %%  %%%%%  %%%%%%%%%%%%%%%%%" << std::endl;
-        break;
-        case 9:
-            std::cout << "###         #   #        # #                            " << std::endl;
-            std::cout << "#  #  #  #  ## ##  #  #   #                             " << std::endl;
-            std::cout << "#  #  #  #  # # #  #  #  # #                            " << std::endl;
-            std::cout << "###    ##   #   #   ##                                  " << std::endl;
-            std::cout << "                                                        " << std::endl;
-            std::cout << "Dune for Multi-{ Phase,                                 " << std::endl;
-            std::cout << "                 Component,                             " << std::endl;
-            std::cout << "                 Scale,                                 " << std::endl;
-            std::cout << "                 Physics,                               " << std::endl;
-            std::cout << "                 ...} flow and transport in porous media" << std::endl;
-        break;
-        case 10:
-          if(start)
-            {
-                std::cout << "Elliot Carver: Mr. Jones, are we ready to release our new software?" << std::endl;
-                std::cout << "Jones: Yes, sir. As requested, it's full of bugs, which means people will be forced to upgrade for years." << std::endl;
-                std::cout << " - James Bond, Tomorrow Never Dies" << std::endl;
-            }
-            else
-            {
-                std::cout << "Elliot Carver: Outstanding." << std::endl;
-                std::cout << " - James Bond, Tomorrow Never Dies" << std::endl;
-            }
-        break;
-        case 11:
-          if(start)
-            {
-                std::cout << "Chuck Norris has successfully compiled DuMuX." << std::endl;
-            }
-            else
-            {
-                std::cout << "Chuck Norris has compiled DuMuX even two times in a row!" << std::endl;
-            }
-        break;
-        // Note: If you add a case, you have to increase the modulus at the beginning of this function!
-
-        default:    // silence to delight Bernd
-            return ;
-    }
-    std::cout << std::endl;
-}
-
-/*!
- * \ingroup Start
  *
  * \brief Provides a main function which reads in parameters from the
  *        command line and a parameter file.
@@ -301,7 +163,7 @@ int start_(int argc,
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
-        dumuxMessage_(true);
+        DumuxMessage::print(/*firstCall=*/true);
 
     ////////////////////////////////////////////////////////////
     // parse the command line arguments
@@ -455,22 +317,14 @@ int start_(int argc,
     Problem problem(timeManager, GridCreator::grid().leafGridView());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
-    // print dumux end message
+
+    // print dumux end message and maybe the parameters
     if (mpiHelper.rank() == 0)
-        dumuxMessage_(false);
-
-    if (printParams && mpiHelper.rank() == 0) {
-        Parameters::print<TypeTag>();
-    }
-
-    // check if a deprecated TypeTag has been used
-    Properties::TypeTagAncestors<TypeTag>::addAncestors();
-    if (Properties::TypeTagAncestors<TypeTag>::contains("Decoupled"))
     {
-        std::cout << "\nAt least one of the used TypeTags contains the "
-                  << "deprecated name \"Decoupled\":" << std::endl;
-        Properties::TypeTagAncestors<TypeTag>::print(std::cout);
-        std::cout << "Please use \"Sequential\" instead." << std::endl;
+        DumuxMessage::print(/*firstCall=*/false);
+
+        if (printParams)
+            Parameters::print<TypeTag>();
     }
 
     return 0;
