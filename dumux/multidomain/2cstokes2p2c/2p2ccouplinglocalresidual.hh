@@ -48,26 +48,13 @@ class TwoPTwoCCouplingLocalResidual : public TwoPTwoCLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { useMoles = GET_PROP_VALUE(TypeTag, UseMoles) };
-    enum {
-        pressureIdx = Indices::pressureIdx
-    };
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
+    enum { nPhaseIdx = Indices::nPhaseIdx };
+    enum { wCompIdx = Indices::wCompIdx };
     enum {
         massBalanceIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx),
         contiWEqIdx = Indices::contiWEqIdx
     };
-    enum {
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx
-    };
-    enum { phaseIdx = nPhaseIdx }; // index of the phase for the phase flux calculation
-    enum { compIdx = wCompIdx}; // index of the component for the phase flux calculation
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
