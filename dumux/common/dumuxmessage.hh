@@ -23,6 +23,7 @@
 #ifndef DUMUX_MESSAGE_HH
 #define DUMUX_MESSAGE_HH
 
+#include <iomanip>
 #include <iostream>
 #include <ctime>
 

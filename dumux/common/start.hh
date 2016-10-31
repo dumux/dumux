@@ -27,6 +27,7 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>

@@ -23,6 +23,7 @@
 #ifndef DUMUX_PARAMETER_PARSER_HH
 #define DUMUX_PARAMETER_PARSER_HH
 
+#include <fstream>
 #include <iostream>
 
 #include <dune/common/parametertreeparser.hh>
