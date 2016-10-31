@@ -123,8 +123,6 @@ public:
                     const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
                     // set pressure as part of the momentum coupling
-                    static_assert(GET_PROP_VALUE(TypeTag, Formulation) == TwoPTwoCFormulation::pnsw,
-                                  "This coupling condition is only implemented for a pnsw formulation.");
                     if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
                         this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
