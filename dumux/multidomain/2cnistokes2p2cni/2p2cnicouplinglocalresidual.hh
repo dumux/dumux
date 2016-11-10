@@ -51,24 +51,13 @@ class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { useMoles = GET_PROP_VALUE(TypeTag, UseMoles) };
-    enum {
-        pressureIdx = Indices::pressureIdx,
-        temperatureIdx = Indices::temperatureIdx
-    };
-    enum {
-        nPhaseIdx = Indices::nPhaseIdx
-    };
+    enum { nPhaseIdx = Indices::nPhaseIdx };
+    enum { wCompIdx = Indices::wCompIdx, };
     enum {
         massBalanceIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx),
         contiWEqIdx = Indices::contiWEqIdx,
         energyEqIdx = Indices::energyEqIdx
     };
-    enum {
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx
-    };
-    enum { phaseIdx = nPhaseIdx }; // index of the phase for the phase flux calculation
-    enum { compIdx = wCompIdx}; // index of the component for the phase flux calculation
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -123,8 +112,6 @@ public:
                     const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
 
                     // set pressure as part of the momentum coupling
-                    static_assert(GET_PROP_VALUE(TypeTag, Formulation) == TwoPTwoCFormulation::pnsw,
-                                  "This coupling condition is only implemented for a pnsw formulation.");
                     if (this->bcTypes_(scvIdx).isCouplingDirichlet(massBalanceIdx))
                         this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
