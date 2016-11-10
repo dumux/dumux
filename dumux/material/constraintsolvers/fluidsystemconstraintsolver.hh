@@ -34,7 +34,7 @@
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux {
-/*!
+/**
  * \ingroup ConstraintSolver
  * \brief Computes the composition of all phases from a function in the fluidsystem.
  *
@@ -55,7 +55,7 @@ namespace Dumux {
  * - composition in mole and mass fractions and molarities of *all* phases
  * - mean molar masses of *all* phases
  * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
- * - if the setInternalEnergy parameter is true, also specific enthalpies and internal energies of *all* phases
+ * - if the setEnthalpy parameter is true, also specific enthalpies of *all* phases
  */
 template <class Scalar, class FluidSystem>
 class FluidSystemConstraintSolver
@@ -63,69 +63,19 @@ class FluidSystemConstraintSolver
     static constexpr int numPhases = FluidSystem::numPhases;
 
 public:
-    /*!
-     * \brief Computes the composition of all phases of from a function in the fluidsystem.
-     *
-     *        This constraint solver assumes that there is a function
-     *        calculateEquilibriumMoleFraction
-     *        in the fluidsystem. I.e. Either this function only has lookup tables or
-     *        short-circuits the solution of a linear system of equations
-     *
-     * The constraint solver assumes the following quantities to be set:
-     *
-     * - temperatures of *all* phases
-     * - saturations of *all* phases
-     * - pressures of *all* phases
-     *
-     * It also assumes that the mole/mass fractions of all phases sum up
-     * to 1. After calling the solve() method the following quantities
-     * are calculated in addition:
-     *
-     * - density, molar density, molar volume of *all* phases
-     * - composition in mole and mass fractions and molarities of *all* phases
-     * - mean molar masses of *all* phases
-     * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
-     * - if the setInternalEnergy parameter is true, also specific enthalpies and internal energies of *all* phases
-     */
-
-    /*!
-     * \brief Computes the composition of all phases of from a function in the fluidsystem.
-     *
-     *        This constraint solver assumes that there is a function
-     *        calculateEquilibriumMoleFraction
-     *        in the fluidsystem. I.e. Either this function only has lookup tables or
-     *        short-circuits the solution of a linear system of equations
-     *        Therefore, this approach cannot be used if the solubility is a function
-     *        of composition. For this nonlinear case the "fugacity coefficient"
-     *        approach has to be used.
-     *
-     * The constraint solver assumes the following quantities to be set:
-     *
-     * - temperatures of *all* phases
-     * - saturations of *all* phases
-     * - pressures of *all* phases
-     *
-     * - the Fluidsystem has to be able to calculate euilibrium compostion from that information.
-     *
-     * After calling the solve() method the following quantities
-     * are calculated in addition:
-     *
-     * - density, molar density, molar volume of *all* phases
-     * - composition in mole and mass fractions and molarities of *all* phases
-     * - mean molar masses of *all* phases
-     * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
-     * - if the setEnthalpy parameter is true, also specific enthalpies and internal energies of *all* phases
+    /**
+     * \brief @copybrief Dumux::FluidSystemConstraintSolver
      *
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
      * \param setViscosity Should the viscosity be set in the fluidstate?
-     * \param setInternalEnergy Should the enthalpy be set in the fluidstate?
+     * \param setEnthalpy Should the enthalpy be set in the fluidstate?
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState & fluidState,
                       ParameterCache & paramCache,
                       const bool setViscosity,
-                      const bool setInternalEnergy)
+                      const bool setEnthalpy)
     {
 
         // In this function the actual work is done.
@@ -143,7 +93,7 @@ public:
                 fluidState.setViscosity(phaseIdx, value);
             }
 
-            if (setInternalEnergy) {
+            if (setEnthalpy) {
                 value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
                 fluidState.setEnthalpy(phaseIdx, value);
             }

@@ -217,7 +217,7 @@ public:
                 MiscibleMultiPhaseComposition::solve(fluidState_,
                                                      paramCache,
                                                      /*setViscosity=*/true,
-                                                     /*setInternalEnergy=*/false);
+                                                     /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             // please note that we experienced some problems with un-regularized
@@ -295,7 +295,7 @@ public:
                                                  paramCache,
                                                  wPhaseIdx,
                                                  /*setViscosity=*/true,
-                                                 /*setInternalEnergy=*/false);
+                                                 /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             else {
@@ -364,7 +364,7 @@ public:
                                              paramCache,
                                              gPhaseIdx,
                                              /*setViscosity=*/true,
-                                             /*setInternalEnergy=*/false);
+                                             /*setEnthalpy=*/false);
         }
         else if (phasePresence == wnPhaseOnly) {
             // only water and NAPL phases are present
@@ -388,7 +388,7 @@ public:
                                              paramCache,
                                              wPhaseIdx,
                                              /*setViscosity=*/true,
-                                             /*setInternalEnergy=*/false);
+                                             /*setEnthalpy=*/false);
         }
         else if (phasePresence == gPhaseOnly) {
             // only the gas phase is present, gas phase composition is
@@ -412,7 +412,7 @@ public:
                                                  paramCache,
                                                  gPhaseIdx,
                                                  /*setViscosity=*/true,
-                                                 /*setInternalEnergy=*/false);
+                                                 /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             else {
@@ -474,7 +474,7 @@ public:
                                                  paramCache,
                                                  gPhaseIdx,
                                                  /*setViscosity=*/true,
-                                                 /*setInternalEnergy=*/false);
+                                                 /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             else {
