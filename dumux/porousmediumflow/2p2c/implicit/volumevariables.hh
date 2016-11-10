@@ -258,14 +258,14 @@ public:
         // now comes the tricky part: calculate phase compositions
         if (phasePresence == bothPhases) {
             // both phases are present, phase compositions are a
-            // result of the the nonwetting <-> wetting equilibrium. This is
+            // result of the nonwetting <-> wetting equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
             // constraint solver
             if(useConstraintSolver) {
                 MiscibleMultiPhaseComposition::solve(fluidState,
                                                      paramCache,
                                                      /*setViscosity=*/true,
-                                                     /*setInternalEnergy=*/false);
+                                                     /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             else {
@@ -330,7 +330,7 @@ public:
                                                  paramCache,
                                                  nPhaseIdx,
                                                  /*setViscosity=*/true,
-                                                 /*setInternalEnergy=*/false);
+                                                 /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             else {
@@ -395,7 +395,7 @@ public:
                                                  paramCache,
                                                  wPhaseIdx,
                                                  /*setViscosity=*/true,
-                                                 /*setInternalEnergy=*/false);
+                                                 /*setEnthalpy=*/false);
             }
             // ... or calculated explicitly this way ...
             else {

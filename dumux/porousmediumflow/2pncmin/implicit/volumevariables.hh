@@ -290,7 +290,7 @@ public:
                                             paramCache,
                                             wPhaseIdx,  //known phaseIdx
                                             /*setViscosity=*/true,
-                                            /*setInternalEnergy=*/false);
+                                            /*  =*/false);
         }
         else if (phasePresence == nPhaseOnly)
         {
@@ -336,7 +336,7 @@ public:
                                                     nPhaseIdx,
                                                     nPhaseOnly,
                                                     /*setViscosity=*/true,
-                                                    /*setInternalEnergy=*/false);
+                                                    /*setEnthalpy=*/false);
 
             }
         else if (phasePresence == wPhaseOnly)
@@ -374,7 +374,7 @@ public:
                                                     wPhaseIdx,
                                                     wPhaseOnly,
                                                     /*setViscosity=*/true,
-                                                    /*setInternalEnergy=*/false);
+                                                    /*setEnthalpy=*/false);
         }
         paramCache.updateAll(fluidState);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

@@ -55,7 +55,7 @@ namespace Dumux {
  * - mean molar masses of *all* phases
  * - fugacity coefficients of *all* components in *all* phases
  * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
- * - if the setInternalEnergy parameter is true, also specific enthalpies and internal energies of *all* phases
+ * - if the setEnthalpy parameter is true, also specific enthalpies of *all* phases
  */
 template <class Scalar, class FluidSystem>
 class MiscibleMultiPhaseComposition
@@ -96,7 +96,7 @@ public:
     static void solve(FluidState &fluidState,
                       ParameterCache &paramCache,
                       bool setViscosity,
-                      bool setInternalEnergy)
+                      bool setEnthalpy)
     {
 #ifndef NDEBUG
         // currently this solver can only handle fluid systems which
@@ -194,7 +194,7 @@ public:
                 fluidState.setViscosity(phaseIdx, value);
             }
 
-            if (setInternalEnergy) {
+            if (setEnthalpy) {
                 value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
                 fluidState.setEnthalpy(phaseIdx, value);
             }
