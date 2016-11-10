@@ -67,27 +67,7 @@ class Miscible2pNCComposition
 
 public:
     /*!
-     * \brief Computes the composition of all phases of a M-phase,
-     *        N-component fluid system assuming that all M phases are
-     *        present
-     *
-     * It constraint solver assumes the following quantities to be set:
-     *
-     * - temperatures of *all* phases
-     * - saturations of *all* phases
-     * - pressures of *all* phases
-     *
-     * It also assumes that the mole/mass fractions of all phases sum up
-     * to 1. After calling the solve() method the following quantities
-     * are calculated in addition:
-     *
-     * - temperature of *all* phases
-     * - density, molar density, molar volume of *all* phases
-     * - composition in mole and mass fractions and molarities of *all* phases
-     * - mean molar masses of *all* phases
-     * - fugacity coefficients of *all* components in *all* phases
-     * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
-     * - if the setInternalEnergy parameter is true, also specific enthalpies and internal energies of *all* phases
+     * \brief @copybrief Dumux::Miscible2pNCComposition
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,

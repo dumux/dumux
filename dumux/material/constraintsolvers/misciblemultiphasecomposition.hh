@@ -70,27 +70,12 @@ class MiscibleMultiPhaseComposition
 
 public:
     /*!
-     * \brief Computes the composition of all phases of a N-phase,
-     *        N-component fluid system assuming that all N phases are
-     *        present
+     * \brief @copybrief Dumux::MiscibleMultiPhaseComposition
      *
-     * The constraint solver assumes the following quantities to be set:
-     *
-     * - temperatures of *all* phases
-     * - saturations of *all* phases
-     * - pressures of *all* phases
-     *
-     * It also assumes that the mole/mass fractions of all phases sum up
-     * to 1. After calling the solve() method the following quantities
-     * are calculated in addition:
-     *
-     * - temperature of *all* phases
-     * - density, molar density, molar volume of *all* phases
-     * - composition in mole and mass fractions and molarities of *all* phases
-     * - mean molar masses of *all* phases
-     * - fugacity coefficients of *all* components in *all* phases
-     * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
-     * - if the setInternalEnergy parameter is true, also specific enthalpies and internal energies of *all* phases
+     * \param fluidState A container with the current (physical) state of the fluid
+     * \param paramCache A container for iterative calculation of fluid composition
+     * \param setViscosity Should the viscosity be set in the fluidstate?
+     * \param setEnthalpy Should the enthalpy be set in the fluidstate?
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,
