@@ -133,7 +133,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal();
+            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << ", doIdx (self): " << scvf.dofIndexSelf() << ", doIdx (opposite): " << scvf.dofIndexOpposite();
             if (scvf.boundary()) std::cout << " (on boundary).";
             std::cout << std::endl;
         }

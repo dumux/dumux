@@ -72,12 +72,12 @@ public:
     StaggeredSubControlVolumeFace() = default;
 
     //! Constructor with intersection
-    template <class Intersection>
+    template <class Intersection, class GeometryHelper>
     StaggeredSubControlVolumeFace(const Intersection& is,
                                const typename Intersection::Geometry& isGeometry,
                                IndexType scvfIndex,
                                const std::vector<IndexType>& scvIndices,
-                               const int selfIdx
+                               const GeometryHelper& geometryHelper
                            )
     : ParentType(),
       geomType_(isGeometry.type()),
@@ -86,19 +86,14 @@ public:
       unitOuterNormal_(is.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
-      boundary_(is.boundary()),
-      selfIdx_(selfIdx)
+      boundary_(is.boundary())
       {
           corners_.resize(isGeometry.corners());
           for (int i = 0; i < isGeometry.corners(); ++i)
               corners_[i] = isGeometry.corner(i);
 
-//           subfaces_.resize(2);
-
-//           const auto& element = is.inside();
-//           const int inIdx = is.indexInInside();
-//           gridView.indexSet().subIndex(element, inIdx, dimWorld-1);
-
+          selfIdx_ = geometryHelper.dofIdxSelf();
+          oppositeIdx_ = geometryHelper.dofIdxOpposite();
       }
 
     /*//! The copy constrcutor

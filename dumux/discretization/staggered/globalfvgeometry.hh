@@ -28,6 +28,7 @@
 #include <dumux/common/elementmap.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
+#include <dumux/discretization/staggered/staggeredgeometryhelper.hh>
 
 namespace Dumux
 {
@@ -62,6 +63,8 @@ class StaggeredGlobalFVGeometry<TypeTag, true>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
+
+    using GeometryHelper = StaggeredGeometryHelper<GridView, dim>;
 
 public:
     //! Constructor
@@ -110,7 +113,6 @@ public:
         elementMap_.clear();
 
         // determine size of containers
-        const int numElements = gridView_.size(0);
         IndexType numScvs = gridView_.size(0);
         IndexType numScvf = 0;
         for (const auto& element : elements(gridView_))
@@ -128,6 +130,12 @@ public:
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
+
+            // get the element geometry
+//             auto elementGeometry = element.geometry();
+//             GeometryHelper geometryHelper(elementGeometry);
+
+
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
 
             // fill the element map with seeds
@@ -138,22 +146,8 @@ public:
             scvfsIndexSet.reserve(element.subEntities(1));
             for (const auto& intersection : intersections(gridView_, element))
             {
-                //TODO: use proper intersection mapper!
-                const auto inIdx = intersection.indexInInside();
-                const auto globalIsIdx = gridView_.indexSet().subIndex(element, inIdx, dim-1) + numElements;
+                GeometryHelper geometryHelper(intersection, gridView_);
 
-                int oppoSiteIdx;
-
-                if(inIdx % 2) // face index is odd
-                {
-                    oppoSiteIdx = inIdx -1;
-                }
-                else
-                {
-                    oppoSiteIdx = inIdx +1;
-                }
-
-//                 std::cout << "faceSelf: " << inIdx << ", oppo: " << oppoSiteIdx << std::endl;
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
@@ -162,7 +156,7 @@ public:
                                         intersection.geometry(),
                                         scvfIdx,
                                         std::vector<IndexType>({eIdx, nIdx}),
-                                        globalIsIdx
+                                        geometryHelper
                                         );
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -173,7 +167,7 @@ public:
                                         intersection.geometry(),
                                         scvfIdx,
                                         std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
-                                        globalIsIdx
+                                        geometryHelper
                                         );
                     scvfsIndexSet.push_back(scvfIdx++);
                 }

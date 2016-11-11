@@ -32,7 +32,66 @@
 namespace Dumux
 {
 
+//! Create sub control volumes and sub control volume face geometries
+template<class GridView, int dim>
+class StaggeredGeometryHelper;
 
+
+//! A class to create sub control volume and sub control volume face geometries per element
+template <class GridView>
+class StaggeredGeometryHelper<GridView, 2>
+{
+    using Scalar = typename GridView::ctype;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
+    using ScvGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim, dimWorld>;
+    using ScvfGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim-1, dimWorld>;
+
+    using GlobalPosition = typename ScvGeometry::GlobalCoordinate;
+    using PointVector = std::vector<GlobalPosition>;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
+
+    //! the maximum number of helper points used to construct the geometries
+    //! Using a statically sized point array is much faster than dynamic allocation
+    static constexpr int maxPoints = 9;
+
+public:
+
+    StaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
+    : intersection_(intersection), elementGeometry_(intersection.inside().geometry()), gridView_(gridView)//, corners_(geometry.corners())
+    {
+    }
+
+    int dofIdxSelf() const
+    {
+        //TODO: use proper intersection mapper!
+        const auto inIdx = intersection_.indexInInside();
+        const int numElements = gridView_.size(0);
+        return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, dim-1) + numElements;
+    }
+
+    int dofIdxOpposite() const
+    {
+        //TODO: use proper intersection mapper!
+        const auto inIdx = intersection_.indexInInside();
+        const int numElements = gridView_.size(0);
+        const int localOppositeIdx = (inIdx % 2) ? (inIdx - 1) : (inIdx + 1);
+        return gridView_.indexSet().subIndex(intersection_.inside(), localOppositeIdx, dim-1) + numElements;
+    }
+
+private:
+    const Intersection& intersection_;
+    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    const GridView gridView_;
+//     GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
+//     std::size_t corners_; // number of element corners
+
+};
 
 } // end namespace Dumux
 
