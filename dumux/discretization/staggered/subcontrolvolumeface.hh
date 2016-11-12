@@ -26,7 +26,10 @@
 #include <utility>
 #include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/discretization/staggered/staggeredgeometryhelper.hh>
 #include <dumux/common/optional.hh>
+
+#include <typeinfo>
 
 namespace Dumux
 {
@@ -67,6 +70,9 @@ class StaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<StaggeredS
 
     using StaggeredSubFace = Dumux::StaggeredSubFace<G,I>;
 
+    static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
+
+
 public:
     // the default constructor
     StaggeredSubControlVolumeFace() = default;
@@ -94,6 +100,8 @@ public:
 
           selfIdx_ = geometryHelper.dofIdxSelf();
           oppositeIdx_ = geometryHelper.dofIdxOpposite();
+
+          pairData_ = geometryHelper.pairData();
       }
 
     /*//! The copy constrcutor
@@ -193,6 +201,12 @@ public:
         return oppositeIdx_;
     }
 
+
+    auto pairData(const int idx) const
+    {
+        return pairData_[idx];
+    }
+
 private:
     Dune::GeometryType geomType_;
     std::vector<GlobalPosition> corners_;
@@ -206,6 +220,8 @@ private:
     int selfIdx_;
     int oppositeIdx_;
     std::vector<StaggeredSubFace> subfaces_;
+    std::array<PairData<Scalar>, numPairs> pairData_;
+
 };
 
 

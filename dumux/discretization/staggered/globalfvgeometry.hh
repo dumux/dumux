@@ -64,7 +64,7 @@ class StaggeredGlobalFVGeometry<TypeTag, true>
         dimWorld = GridView::dimensionworld
     };
 
-    using GeometryHelper = StaggeredGeometryHelper<GridView, dim>;
+    using GeometryHelper = StaggeredGeometryHelper<GridView>;
 
 public:
     //! Constructor

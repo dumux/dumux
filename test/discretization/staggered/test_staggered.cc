@@ -131,9 +131,11 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
+//TODO: beautify output
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << ", doIdx (self): " << scvf.dofIndexSelf() << ", doIdx (opposite): " << scvf.dofIndexOpposite();
+            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << ", self: " << scvf.dofIndexSelf() << ", opposite: " << scvf.dofIndexOpposite() << ", side1 in: " << scvf.pairData(0).normalPair.first << ", side2  in: " << scvf.pairData(1).normalPair.first << " , side1 out: " <<  scvf.pairData(0).normalPair.second
+            << ", side2out: " << scvf.pairData(1).normalPair.second;
             if (scvf.boundary()) std::cout << " (on boundary).";
             std::cout << std::endl;
         }
