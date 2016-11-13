@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <utility>
+#include <iomanip>
 
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
@@ -108,6 +109,12 @@ int main (int argc, char *argv[]) try
     GlobalFVGeometry global(leafGridView);
     global.update(problem);
 
+    std::cout << "Abbreviatons:\n"
+              << "ip - global postition of face center\n"
+              << "face - global face index\n"
+              << "self/oppo - global dofIdx on intersection (self/opposite)\n"
+              << "norm in/out - global dofIdx on side normal to intersection (within own element / in adjacent element)" << std::endl;
+
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
@@ -131,12 +138,18 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
-//TODO: beautify output
+
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << ", self: " << scvf.dofIndexSelf() << ", opposite: " << scvf.dofIndexOpposite() << ", side1 in: " << scvf.pairData(0).normalPair.first << ", side2  in: " << scvf.pairData(1).normalPair.first << " , side1 out: " <<  scvf.pairData(0).normalPair.second
-            << ", side2out: " << scvf.pairData(1).normalPair.second;
-            if (scvf.boundary()) std::cout << " (on boundary).";
+            std::cout <<  std::fixed << std::left << std::setprecision(2)
+            << "ip "<< scvf.ipGlobal()
+            << "; face "  << std::setw(3)  << scvf.index()
+            << "; self/oppo " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) <<scvf.dofIndexOpposite()
+            << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
+            << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
+            << ", par1 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(0).outerParallel
+            << ", par2 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(1).outerParallel;
+            if (scvf.boundary()) std::cout << " (on boundary)";
             std::cout << std::endl;
         }
     }

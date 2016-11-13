@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief Helper class constructing the dual grid finite volume geometries
- *        for the staggered discretizazion method
+ *        for the staggered discretization method
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
@@ -36,9 +36,9 @@ namespace Dumux
 template<class Scalar>
 struct PairData
 {
-    std::pair<int,int> parallelPair;
+    int outerParallel;
     std::pair<int,int> normalPair;
-    int localCommonEntIdx;
+    int globalCommonEntIdx;
     Scalar parallelDistance;
     Scalar normalDistance;
 };
@@ -68,13 +68,14 @@ class StaggeredGeometryHelper
 
 
     //TODO include assert that checks for quad geometry
+    static constexpr int codimCommonEntity = 2; //TODO: 3d?
 
 
 public:
 
 
     StaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : intersection_(intersection), elementGeometry_(intersection.inside().geometry()), gridView_(gridView), offset_(gridView.size(0))
+    : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView), offset_(gridView.size(0))
     {
         fillPairData();
     }
@@ -102,84 +103,97 @@ public:
 
     void fillPairData()
     {
-        const auto element = intersection_.inside();
-        const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-
+        const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
         const int indexInInside = intersection_.indexInInside();
 
+        // initialize outerParallel (in boundary case, where there is no outer parallel dof)
+        pairData_[0].outerParallel = 0;
+        pairData_[1].outerParallel = 0;
 
-        // store the element's own face info first
-        pairData_[0].parallelPair.first = dofIdxSelf();
-        pairData_[1].parallelPair.first = dofIdxSelf();
-
+        // set the inner parts of the normal pairs
         setInnerNormalPairs_(indexInInside);
 
-
-
-        // go into the direct neigbor element
+        // go into the direct neighbor element
         if(intersection_.neighbor())
         {
-            const int neighborIsIdx = intersection_.indexInOutside();
-
+            // the direct neighbor element and the respective intersection index
             const auto& directNeighbor = intersection_.outside();
 
-
-            for(const auto& is : intersections(gridView_, directNeighbor))
+            for(const auto& neighborIntersection : intersections(gridView_, directNeighbor))
             {
-                constexpr int codimCommonEntity = 2;// TODO: 3d?
-
-                auto isNormalSide = [&](const int idx)
-                {
-                    return !(idx == neighborIsIdx || localOppositeIdx_(idx) == neighborIsIdx);
-                };
-
-                auto localToGlobalEntityIdx = [&](const int localIdx)
-                {
-                    return gridView_.indexSet().subIndex(directNeighbor, localIdx, codimCommonEntity);
-                };
-                // skip the directly neighboring face itself
-                if(isNormalSide(is.indexInInside()))
+                // skip the directly neighboring face itself and its opposing one
+                if(neighborIntersectionNormalSide_(neighborIntersection.indexInInside(), intersection_.indexInOutside()))
                 {
                     // get facet
-//                     const auto& facet = directNeighbor.template subEntity < 1 > (is.indexInInside());
-//                     std::cout <<
+//                    const auto& facet = directNeighbor.template subEntity < 1 > (neighborIntersection.indexInInside());
 
                     // iterate over facets sub-entities // TODO: get number correctly
                     for(int i = 0; i < 2; ++i)
                     {
-                        int localCommonEntIdx = referenceElement.subEntity(is.indexInInside(), 1, i, dim);
-                        const auto& commonEnt = directNeighbor.template subEntity < codimCommonEntity > (localCommonEntIdx);
+                        int localCommonEntIdx = referenceElement.subEntity(neighborIntersection.indexInInside(), 1, i, dim);
+                        // const auto& commonEnt = directNeighbor.template subEntity < codimCommonEntity > (localCommonEntIdx);
 
 //                         int globalCommonEntIdx = gridView_.indexSet().subIndex(directNeighbor, localCommonEntIdx, codimCommonEntity);
-                        int globalCommonEntIdx = localToGlobalEntityIdx(localCommonEntIdx);
+                        // int globalCommonEntIdx = localToGlobalEntityIdx(localCommonEntIdx);
+                        int globalCommonEntIdx = localToGlobalEntityIdx_(localCommonEntIdx, directNeighbor);
 
 //                         int dofIdx = gridView_.indexSet().index(commonEnt);
 
 //                         if(globalCommonEntIdx != dofIdx)
 //                             std::cout << "error!";
 
-                        std::cout << "pos: " << commonEnt.geometry().center() << std::endl;
+                        // std::cout << "pos: " << commonEnt.geometry().center() << std::endl;
 
-                        if(globalCommonEntIdx == localToGlobalEntityIdx(pairData_[0].localCommonEntIdx))
+                        if(globalCommonEntIdx == pairData_[0].globalCommonEntIdx)
                         {
-                            pairData_[0].normalPair.second = gridView_.indexSet().subIndex(directNeighbor, is.indexInInside(), dim-1) + offset_;
+                            pairData_[0].normalPair.second = gridView_.indexSet().subIndex(directNeighbor, neighborIntersection.indexInInside(), dim-1) + offset_;
                         }
-                        if(globalCommonEntIdx == localToGlobalEntityIdx(pairData_[1].localCommonEntIdx))
+                        if(globalCommonEntIdx == pairData_[1].globalCommonEntIdx)
                         {
-                            pairData_[1].normalPair.second = gridView_.indexSet().subIndex(directNeighbor, is.indexInInside(), dim-1) + offset_;
+                            pairData_[1].normalPair.second = gridView_.indexSet().subIndex(directNeighbor, neighborIntersection.indexInInside(), dim-1) + offset_;
                         }
                     }
 
-                    std::cout << "inters: " << intersection_.geometry().center() <<
-                    " || side : " << is.geometry().center() << std::endl;
+                    // std::cout << "inters: " << intersection_.geometry().center() <<
+                    // " || side : " << neighborIntersection.geometry().center() << std::endl;
+
+                    // std::cout << "in element " << gridView_.indexSet().index(intersection_.inside()) << ", direct neighbor: " <<  gridView_.indexSet().index(directNeighbor)
+                    //           << std::endl;
 
 
+                    // go into the adjacent neighbor element
+                    if(neighborIntersection.neighbor())
+                    {
+                        const auto& diagonalNeighbor = neighborIntersection.outside();
+                        for(const auto& dIs : intersections(gridView_, diagonalNeighbor))
+                        {
+                            if(neighborIntersectionNormalSide_(dIs.indexInInside(), neighborIntersection.indexInOutside()))
+                            {
+                                for(int i = 0; i < 2; ++i)
+                                {
+                                    int localCommonEntIdx = referenceElement.subEntity(dIs.indexInInside(), 1, i, dim);
+                                    int globalCommonEntIdx = localToGlobalEntityIdx_(localCommonEntIdx, diagonalNeighbor);
+
+                                    // const auto& commonEnt = diagonalNeighbor.template subEntity < codimCommonEntity > (localCommonEntIdx);
+                                    // std::cout << "globalCommEnt:" << commonEnt.geometry().center() << std::endl;
+                                    //
+                                    // int dofIdx = gridView_.indexSet().index(commonEnt);
+                                    // if(globalCommonEntIdx != dofIdx)
+                                    //                             std::cout << "error!";
+
+
+                                    if(globalCommonEntIdx == pairData_[0].globalCommonEntIdx)
+                                        pairData_[0].outerParallel = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
+
+                                    if(globalCommonEntIdx == pairData_[1].globalCommonEntIdx)
+                                        pairData_[1].outerParallel = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
+                                }
+                            }
+                        }
+                    }
                 }
-
             }
         }
-
-//TODO: fill parallel faces
     }
 
 private:
@@ -189,48 +203,64 @@ private:
         return (idx % 2) ? (idx - 1) : (idx + 1);
     }
 
+    bool neighborIntersectionNormalSide_(const int isIdx, const int neighborIsIdx) const
+    {
+        return !(isIdx == neighborIsIdx || localOppositeIdx_(isIdx) == neighborIsIdx);
+    };
+
+    int localToGlobalEntityIdx_(const int localIdx, const Element& element)
+    {
+        return gridView_.indexSet().subIndex(element, localIdx, codimCommonEntity);
+    };
+
 
     template<class G = GridView>
     typename std::enable_if<G::dimension == 2, void>::type
-    setInnerNormalPairs_(const int isIdx)
+    setInnerNormalPairs_(const int directNeighborIsIdx)
     {
-        auto& data1 = pairData_[0];
-        auto& data2 = pairData_[1];
+        int normalLocalDofIdx1;
+        int normalLocalDofIdx2;
+        int localCommonEntIdx1;
+        int localCommonEntIdx2;
 
-        switch(isIdx)
+        switch(directNeighborIsIdx)
         {
             case 0:
-                data1.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 3, dim-1) + offset_;
-                data2.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 2, dim-1) + offset_;
-                data1.localCommonEntIdx = 2;
-                data2.localCommonEntIdx = 0;
+                normalLocalDofIdx1 = 3;
+                normalLocalDofIdx2 = 2;
+                localCommonEntIdx1 = 2;
+                localCommonEntIdx2 = 0;
                 break;
             case 1:
-                data1.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 2, dim-1) + offset_;
-                data2.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 3, dim-1) + offset_;
-                data1.localCommonEntIdx = 1;
-                data2.localCommonEntIdx = 3;
+                normalLocalDofIdx1 = 2;
+                normalLocalDofIdx2 = 3;
+                localCommonEntIdx1 = 1;
+                localCommonEntIdx2 = 3;
                 break;
             case 2:
-                data1.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 0, dim-1) + offset_;
-                data2.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 1, dim-1) + offset_;
-                data1.localCommonEntIdx = 0;
-                data2.localCommonEntIdx = 1;
+                normalLocalDofIdx1 = 0;
+                normalLocalDofIdx2 = 1;
+                localCommonEntIdx1 = 0;
+                localCommonEntIdx2 = 1;
                 break;
             case 3:
-                data1.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 1, dim-1) + offset_;
-                data2.normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), 0, dim-1) + offset_;
-                data1.localCommonEntIdx = 3;
-                data2.localCommonEntIdx = 2;
+                normalLocalDofIdx1 = 1;
+                normalLocalDofIdx2 = 0;
+                localCommonEntIdx1 = 3;
+                localCommonEntIdx2 = 2;
                 break;
             default:
-                DUNE_THROW(Dune::InvalidStateException, "foo");
+                DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
         }
+        pairData_[0].normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), normalLocalDofIdx1, dim-1) + offset_;
+        pairData_[1].normalPair.first = gridView_.indexSet().subIndex(intersection_.inside(), normalLocalDofIdx2, dim-1) + offset_;
+        pairData_[0].globalCommonEntIdx = gridView_.indexSet().subIndex(intersection_.inside(), localCommonEntIdx1, codimCommonEntity);
+        pairData_[1].globalCommonEntIdx = gridView_.indexSet().subIndex(intersection_.inside(), localCommonEntIdx2, codimCommonEntity);
     }
 
     template<class G = GridView>
     typename std::enable_if<G::dimension == 3, void>::type
-    setInnerNormalPairs_(const int isIdx)
+    setInnerNormalPairs_(const int directNeighborIsIdx)
     {
         // TODO: 3D
         DUNE_THROW(Dune::NotImplemented, "3d helper not ready yet");
@@ -238,6 +268,7 @@ private:
 
 
     const Intersection& intersection_;
+    const Element& element_;
     const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
     const GridView gridView_;
     const int offset_;
