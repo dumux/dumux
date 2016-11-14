@@ -100,7 +100,7 @@ int main (int argc, char *argv[]) try
     // make a grid
     GlobalPosition lower(0.0);
     GlobalPosition upper(1.0);
-    std::array<unsigned int, dim> els{{2, 2}};
+    std::array<unsigned int, dim> els{{2, 4}};
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
@@ -148,7 +148,11 @@ int main (int argc, char *argv[]) try
             << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
             << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
             << ", par1 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(0).outerParallel
-            << ", par2 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(1).outerParallel;
+            << ", par2 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(1).outerParallel
+            << ", normDist1 " << std::setw(3) << scvf.pairData(0).normalDistance
+            << ", normDist2 " << std::setw(3) << scvf.pairData(1).normalDistance
+            << ", parDist1 " << std::setw(3) << scvf.pairData(0).parallelDistance
+            << ", parDist2 " << std::setw(3) << scvf.pairData(1).parallelDistance;
             if (scvf.boundary()) std::cout << " (on boundary)";
             std::cout << std::endl;
         }
