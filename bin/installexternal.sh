@@ -65,7 +65,7 @@ installErt()
     if [ ! -e ert ]; then
         git clone -b release/2016.04 https://github.com/Ensembles/ert.git
     fi
-        
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -80,13 +80,13 @@ installErt()
     cd $TOPDIR/ert
     mkdir build
     cd build
-    cmake ../devel 
+    cmake ../devel
     make
 
     # show additional information
     echo "Ert has been built in directory ert/build."
     echo "Do not change this directory otherwise opm will not find ert!"
-    
+
     cd $TOPDIR
 }
 
@@ -111,6 +111,39 @@ installFoamGrid()
         rm -rf dune-foamgrid
         return
     fi
+}
+
+installGLPK()
+{
+    cd $EXTDIR
+    rm -rf glpk* standalone
+
+    if [ ! -e glpk-4.60.tar.gz ]; then
+        wget http://ftp.gnu.org/gnu/glpk/glpk-4.60.tar.gz
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf glpk
+        return
+    fi
+
+    mkdir glpk
+    tar zxvf glpk-4.60.tar.gz --strip-components=1 -C glpk
+    cd glpk
+
+    ./configure
+    make
+
+    # show additional information
+    echo "In addition, it might be necessary to set manually"
+    echo "the glpk path in the CMAKE_FLAGS section of the .opts-file:"
+    echo "  -DGLPK_ROOT=/path/to/glpk \\"
+
+    cd $TOPDIR
 }
 
 installGStat()
@@ -218,6 +251,39 @@ installMultidomainGrid()
     cd $TOPDIR
 }
 
+installNLOPT()
+{
+    cd $EXTDIR
+    rm -rf nlopt* standalone
+
+    if [ ! -e nlopt-2.4.2.tar.gz ]; then
+        wget http://ab-initio.mit.edu/nlopt/nlopt-2.4.2.tar.gz
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf nlopt
+        return
+    fi
+
+    mkdir nlopt
+    tar zxvf nlopt-2.4.2.tar.gz --strip-components=1 -C nlopt
+    cd nlopt
+
+    ./configure
+    make
+
+    # show additional information
+    echo "In addition, it might be necessary to set manually"
+    echo "the nlopt path in the CMAKE_FLAGS section of the .opts-file:"
+    echo "  -DNLOPT_ROOT=/path/to/nlopt \\"
+
+    cd $TOPDIR
+}
+
 installOPM()
 {
     cd $TOPDIR
@@ -246,7 +312,7 @@ installOPM()
     if [ ! -e opm-grid ]; then
         git clone -b release/2016.04 https://github.com/OPM/opm-grid
     fi
-        
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -264,7 +330,7 @@ installOPM()
     echo "Applying patch for opm-parser"
     cd $TOPDIR/opm-parser
     patch -p1 < $TOPDIR/dumux/patches/opm-parser-2016.04.patch
-    
+
     echo "Applying patch for opm-common"
     cd $TOPDIR/opm-common
     patch -p1 < $TOPDIR/dumux/patches/opm-common-2016.04.patch
@@ -400,10 +466,12 @@ usage()
     echo "  alugrid          Download dune-alugrid."
     echo "  ert              Download and build ert."
     echo "  foamgrid         Download dune-foamgrid."
+    echo "  glpk             Download and install glpk."
     echo "  gstat            Download and install gstat."
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
+    echo "  nlopt            Download and install nlopt."
     echo "  opm              Download opm modules required for dune-cornerpoint."
     echo "  pdelab           Download dune-pdelab."
     echo "  typetree         Download dune-typetree."
@@ -443,8 +511,8 @@ for TMP in "$@"; do
             MPILIBS=$($MPICONFIG --libs)
             MPILIBDIR=$(echo $MPILIBS | sed "s/.*-L\([^[:blank:]]*\).*/\1/")
 
-            # consistency check 
-            if test "$ENABLE_MPI" == "y" -a -z "$MPICXX"; then 
+            # consistency check
+            if test "$ENABLE_MPI" == "y" -a -z "$MPICXX"; then
                 echo ""
                 echo "Compiler mpicxx not found although ENABLE_MPI is set in this script!"
                 echo "Please make sure that your MPI environment is set up or that you turn it off."
@@ -454,7 +522,7 @@ for TMP in "$@"; do
                 echo ""
 
                 exit -1
-            fi 
+            fi
 
             ;;
         "--clean")
@@ -466,10 +534,12 @@ for TMP in "$@"; do
             installAluGrid
             installErt
             installFoamGrid
+            installGLPK
             installGStat
             installMETIS
             installMultidomain
             installMultidomainGrid
+            installNLOPT
             installOPM
             installPDELab
             installTypeTree
@@ -486,6 +556,11 @@ for TMP in "$@"; do
         foamgrid|dune-foamgrid)
             SOMETHING_DONE="y"
             installFoamGrid
+            ;;
+        glpk)
+            SOMETHING_DONE="y"
+            createExternalDirectory
+            installGLPK
             ;;
         gstat)
             SOMETHING_DONE="y"
@@ -504,6 +579,11 @@ for TMP in "$@"; do
         multidomaingrid|dune-multidomaingrid)
             SOMETHING_DONE="y"
             installMultidomainGrid
+            ;;
+        nlopt)
+            SOMETHING_DONE="y"
+            createExternalDirectory
+            installNLOPT
             ;;
         opm)
             SOMETHING_DONE="y"
