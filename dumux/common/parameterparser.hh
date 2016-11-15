@@ -42,7 +42,6 @@ namespace Dumux
  * \ingroup Start
  * \brief Parses parameters in the command line and input files
  */
-template<class TypeTag>
 class ParameterParser
 {
 
@@ -83,32 +82,25 @@ public:
     }
 
     /*!
-     * \brief Parse the input file. If the user didn't specify anything in the parameter tree (that contains
-     *        command line options if parseCommandLineArguments was called before) we default to the
-     *        program name + input. When calling this function we consider it an error if no input file is found.
+     * \brief Parse the input file.
+              Throws an error if no input file is found.
      *
-     * \param   argc      The 'argc' argument of the main function: count of arguments (1 if there are no arguments)
-     * \param   argv      The 'argv' argument of the main function: array of pointers to the argument strings
-     * \param   params    A parameter tree. It can be filled from an input file or the command line.
-     * \param   usage     Callback function for printing the usage message
+     * \param   argc              The 'argc' argument of the main function: count of arguments (1 if there are no arguments)
+     * \param   argv              The 'argv' argument of the main function: array of pointers to the argument strings
+     * \param   params            A parameter tree. It can be filled from an input file or the command line.
+     * \param   usage             Optional callback function for printing the usage message
+     * \param   parameterFileName Optional name of the input file. If empty we default to program name + ".input"
      */
     static void parseInputFile(int argc,
                                char **argv,
                                Dune::ParameterTree &params,
+                               std::string parameterFileName = "",
                                void (*usage)(const char *, const std::string &) = [](const char *, const std::string &){})
     {
         const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
-        std::string parameterFileName = "";
-
-        // check the parameter tree for a user specified input file
-        if (params.hasKey("ParameterFile"))
-            // this is the only reason why this class needs a TypeTag -- sigh
-            // if the parameter tree is used directly this appears in the unused properties list
-            parameterFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile);
-
-        // otherwise use the default
-        else
+        // if no parameter file was specified use the default
+        if (parameterFileName == "")
         {
             if (mpiHelper.size() > 1)
                 std::cout << "Rank " << mpiHelper.rank() << ": ";
