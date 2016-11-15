@@ -14,7 +14,9 @@
 # look for header files, only at positions given by the user
 find_path(GLPK_INCLUDE_DIR
   NAMES glpk.h
-  PATHS ${GLPK_PREFIX} ${GLPK_ROOT}
+  PATHS ${GLPK_PREFIX}
+        ${GLPK_ROOT}
+        "${CMAKE_SOURCE_DIR}/../external/glpk"
   PATH_SUFFIXES "glpk" "include/glpk" "include" "SRC" "src"
   NO_DEFAULT_PATH
 )
@@ -28,8 +30,10 @@ find_path(GLPK_INCLUDE_DIR
 # look for library, only at positions given by the user
 find_library(GLPK_LIBRARY
   NAMES "glpk"
-  PATHS ${GLPK_PREFIX} ${GLPK_ROOT} ${GLPK_ROOT}/src/ ${GLPK_ROOT}/src/.libs/
-  PATH_SUFFIXES "lib" "lib32" "lib64" "libglpk"
+  PATHS ${GLPK_PREFIX}
+        ${GLPK_ROOT}
+        "${CMAKE_SOURCE_DIR}/../external/glpk"
+  PATH_SUFFIXES "lib" "lib32" "lib64" "libglpk" "src" "src/.libs"
   NO_DEFAULT_PATH
 )
 
