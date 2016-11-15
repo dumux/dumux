@@ -19,12 +19,10 @@ GXX_OPTS=" \
 # configure flags
 CMAKE_FLAGS="\
   -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
+  -DUG_DIR=ug_installation_path \
   "
 
 # optional configure flags
 # for the CO2 and CO2ni tests enable the experimental grid extension
 # and make sure the module dune-alugrid is present
 # -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
-
-# for using gstat
-# -DGSTAT_ROOT=gstat_installation_path \

@@ -403,22 +403,18 @@ installUG()
 {
     cd $EXTDIR
 
-    if [ ! -e ug-3.12.1.tar.gz ]; then
-        wget http://conan.iwr.uni-heidelberg.de/download/ug-3.12.1.tar.gz
+    UG_VERSION="3.12.1"
+    if [ ! -e ug-$UG_VERSION ]; then
+        git clone -b v$UG_VERSION https://gitlab.dune-project.org/staging/dune-uggrid.git ug-$UG_VERSION
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
 
-    UG_VERSION="3.12.1"
     if  test "$CLEANUP" == "y"; then
         rm -rf ug-$UG_VERSION
         return
-    fi
-
-    if ! test -e "ug-$UG_VERSION"; then
-        tar zxvf ug-$UG_VERSION.tar.gz
     fi
 
     # Apply patch for the parallel use of UG
@@ -454,6 +450,7 @@ installUG()
     make
     make install
 
+    sed -i "s#-DUG_DIR=.*#-DUG_DIR=$EXTDIR/ug-$UG_VERSION \\\\#g" $TOPDIR/dumux/*.opts
     cd $TOPDIR
 }
 
