@@ -102,6 +102,17 @@ public:
     }
 
      /*!
+     * \brief Returns the distance between dofSelf and dofOpposite
+     */
+    Scalar selfToOppositeDistance() const
+    {
+        const auto inIdx = intersection_.indexInInside();
+        const auto& self = element_.template subEntity <1> (inIdx);
+        const auto& opposite = element_.template subEntity <1> (localOppositeIdx_(inIdx));
+        return (self.geometry().center() - opposite.geometry().center()).two_norm();
+    }
+
+     /*!
      * \brief Returns a copy of the pair data
      */
     auto pairData() const

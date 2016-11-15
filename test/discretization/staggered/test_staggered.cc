@@ -145,6 +145,7 @@ int main (int argc, char *argv[]) try
             << "ip "<< scvf.ipGlobal()
             << "; face "  << std::setw(3)  << scvf.index()
             << "; self/oppo " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) <<scvf.dofIndexOpposite()
+            << "; dist self/oppo " << std::setw(3) << scvf.selfToOppositeDistance()
             << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
             << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
             << ", par1 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(0).outerParallel

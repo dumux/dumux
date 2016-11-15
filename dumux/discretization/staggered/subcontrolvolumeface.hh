@@ -100,6 +100,7 @@ public:
 
           selfIdx_ = geometryHelper.dofIdxSelf();
           oppositeIdx_ = geometryHelper.dofIdxOpposite();
+          selfToOppositeDistance_ = geometryHelper.selfToOppositeDistance();
 
           pairData_ = geometryHelper.pairData();
       }
@@ -201,6 +202,12 @@ public:
         return oppositeIdx_;
     }
 
+    //! The global index of this sub control volume face
+    Scalar selfToOppositeDistance() const
+    {
+        return selfToOppositeDistance_;
+    }
+
 
     auto pairData(const int idx) const
     {
@@ -219,6 +226,7 @@ private:
 
     int selfIdx_;
     int oppositeIdx_;
+    Scalar selfToOppositeDistance_;
     std::vector<StaggeredSubFace> subfaces_;
     std::array<PairData<Scalar>, numPairs> pairData_;
 
