@@ -441,16 +441,14 @@ Please reverse the changes made in this part of the exercise, as we will continu
 to use immiscible phases from here on and hence do not need a complex fluid system.
 
 \item \textbf{Changing Constitutive Relations} \\
-  Use an unregularized linear law with an entry pressure of $p_e = \unit[0.0]{Pa}$
-  and maximal capillary pressure of e.g. $p_{c_{max}} = \unit[2000.0]{Pa}$ instead of using a
+Use an unregularized linear law with an entry pressure of $p_e = \unit[0.0]{Pa}$
+and maximal capillary pressure of e.g. $p_{c_{max}} = \unit[2000.0]{Pa}$ instead of using a
  regularized Brooks-Corey law for the
   relative permeability and for the capillary pressure saturation relationship.
   To do that you have
-  to change the material law property (line \ref{tutorial-implicit:eff2abs}) in
-  \texttt{tutorialspatialparams\_implicit.hh}. Leave the type definition of \texttt{Scalar} and remove
- the type definition of \texttt{BrooksAndCorey} in the private section of
- the property definition. Exchange the \texttt{EffToAbsLaw} with the \texttt{LinearMaterial} law type in the
-public section.
+  to change the material law property (line \ref{tutorial-implicit:rawlaw}) in
+  \texttt{tutorialspatialparams\_implicit.hh}. Exchange the \texttt{RegularizedBrooksCorey} material law with the \texttt{LinearMaterial} law type in the private section of
+ the property definition.
  You can find the material laws in the folder
   \verb+dumux/material/fluidmatrixinteractions+. The necessary parameters
 of the linear law and the respective \texttt{set}-functions can be found

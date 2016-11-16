@@ -1,28 +1,18 @@
-Index: tutorialspatialparams_implicit.hh
-===================================================================
---- tutorialspatialparams_implicit.hh	(revision 15068)
-+++ tutorialspatialparams_implicit.hh	(working copy)
-@@ -54,10 +54,10 @@
+diff --git a/tutorial/tutorialspatialparams_implicit.hh b/tutorial/tutorialspatialparams_implicit.hh
+index 18086e9..541c799 100644
+--- a/tutorial/tutorialspatialparams_implicit.hh
++++ b/tutorial/tutorialspatialparams_implicit.hh
+@@ -54,7 +54,7 @@ private:
      // material law typedefs
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
      // select material law to be used
 -    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-implicit:rawlaw}@*/
-+//     typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-implicit:rawlaw}@*/
++    typedef LinearMaterial<Scalar> RawMaterialLaw;     /*@\label{tutorial-implicit:rawlaw}@*/
  public:
      // adapter for absolute law
--    typedef EffToAbsLaw<RawMaterialLaw> type;   /*@\label{tutorial-implicit:eff2abs}@*/
-+    typedef LinearMaterial<Scalar> type;   /*@\label{tutorial-implicit:eff2abs}@*/
- };
- }
- 
-@@ -150,12 +150,12 @@
-             K_[i][i] = 1e-7;
- 
-         //set residual saturations
--        materialParams_.setSwr(0.0);                /*@\label{tutorial-implicit:setLawParams}@*/
--        materialParams_.setSnr(0.0);
-+//         materialParams_.setSwr(0.0);                /*@\label{tutorial-implicit:setLawParams}@*/
-+//         materialParams_.setSnr(0.0);
+     typedef EffToAbsLaw<RawMaterialLaw> type;   /*@\label{tutorial-implicit:eff2abs}@*/
+@@ -154,8 +154,8 @@ public:
+         materialParams_.setSnr(0.0);
  
          //parameters of Brooks & Corey Law
 -        materialParams_.setPe(500.0);
