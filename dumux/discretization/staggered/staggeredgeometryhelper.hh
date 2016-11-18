@@ -36,7 +36,8 @@ namespace Dumux
 template<class Scalar>
 struct PairData
 {
-    int outerParallel;
+    int outerParallelFaceDofIdx;
+    int outerParallelElementDofIdx;
     std::pair<int,int> normalPair;
     int globalCommonEntIdx;
     Scalar parallelDistance;
@@ -131,7 +132,8 @@ public:
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
         {
-            data.outerParallel = 0;
+            data.outerParallelFaceDofIdx = 0;
+            data.outerParallelElementDofIdx = 0;
             data.normalDistance = 0;
             data.parallelDistance = 0;
         }
@@ -204,7 +206,8 @@ public:
                                     {
                                         if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
                                         {
-                                            pairData_[pairIdx].outerParallel = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
+                                            pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
+                                            pairData_[pairIdx].outerParallelElementDofIdx = dIs.indexInOutside();
                                             const auto& selfFacet = element_.template subEntity <1> (indexInInside);
                                             const auto& parallelFacet = diagonalNeighbor.template subEntity <1> (dIs.indexInInside());
                                             pairData_[pairIdx].parallelDistance = (selfFacet.geometry().center() - parallelFacet.geometry().center()).two_norm();
