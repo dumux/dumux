@@ -1,4 +1,5 @@
 add_subdirectory("navierstokes")
+add_subdirectory("staggered")
 add_subdirectory("stokes")
 add_subdirectory("stokes2c")
 add_subdirectory("stokes2cni")

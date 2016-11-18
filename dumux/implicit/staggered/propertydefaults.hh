@@ -28,13 +28,24 @@
 #define DUMUX_STAGGERED_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
+// #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/staggered/globalfvgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/cellcentered/stencils.hh>
+#include <dumux/discretization/staggered/stencils.hh>
+
+
+#include <dumux/freeflow/staggered/fluxvariables.hh>
+#include <dumux/freeflow/staggered/fluxvariablescache.hh>
+
+
+
+
+#include "assembler.hh"
+#include "localresidual.hh"
+#include "localjacobian.hh"
 
 namespace Dumux {
 
@@ -88,13 +99,13 @@ SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariab
 SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::CCGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! The local jacobian operator
-SET_TYPE_PROP(StaggeredModel, LocalJacobian, Dumux::CCLocalJacobian<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, LocalJacobian, Dumux::StaggeredLocalJacobian<TypeTag>);
 
 //! Assembler for the global jacobian matrix
-SET_TYPE_PROP(StaggeredModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, JacobianAssembler, Dumux::StaggeredAssembler<TypeTag>);
 
 //! The stencil container
-SET_TYPE_PROP(StaggeredModel, StencilsVector, Dumux::CCStencilsVector<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, StencilsVector, Dumux::StaggeredStencilsVector<TypeTag>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::CCElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
@@ -102,11 +113,18 @@ SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::CCElementFluxVar
 //! The global previous volume variables vector class
 SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
-//! Set the BaseLocalResidual to CCLocalResidual
-SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
+//! Set the BaseLocalResidual to StaggeredLocalResidual
+SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, Dumux::StaggeredLocalResidual<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(StaggeredModel, ImplicitIsBox, false);
+
+//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+//! by default, we set the flux variables to ones for porous media
+SET_TYPE_PROP(StaggeredModel, FluxVariables, FreeFlowFluxVariables<TypeTag>);
+
+//! The flux variables cache class, by default the one for porous media
+SET_TYPE_PROP(StaggeredModel, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 } // namespace Properties
 

@@ -214,6 +214,11 @@ public:
         return pairData_[idx];
     }
 
+    auto& pairData() const
+    {
+        return pairData_;
+    }
+
 private:
     Dune::GeometryType geomType_;
     std::vector<GlobalPosition> corners_;

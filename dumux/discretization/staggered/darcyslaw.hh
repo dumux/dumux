@@ -80,67 +80,81 @@ public:
                        int phaseIdx,
                        const FluxVarsCache& fluxVarsCache)
     {
-        const auto& tij = fluxVarsCache.tij();
-
-        // Get the inside and outside volume variables
-        const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
-
-        auto hInside = insideVolVars.pressure(phaseIdx);
-        auto hOutside = outsideVolVars.pressure(phaseIdx);
-
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
-        {
-            // do averaging for the density
-            const auto rhoInside = insideVolVars.density(phaseIdx);
-            const auto rhoOutide = outsideVolVars.density(phaseIdx);
-            const auto rho = (rhoInside + rhoOutide)*0.5;
-
-            // ask for the gravitational acceleration in the inside neighbor
-            const auto xInside = insideScv.center();
-            const auto gInside = problem.gravityAtPos(xInside);
-
-            hInside -= rho*(gInside*xInside);
-
-            // and the outside neighbor
-            if (scvFace.boundary())
-            {
-                const auto xOutside = scvFace.center();
-                const auto gOutside = problem.gravityAtPos(xOutside);
-                hOutside -= rho*(gOutside*xOutside);
-            }
-            else
-            {
-                const auto outsideScvIdx = scvFace.outsideScvIdx();
-                // as we assemble fluxes from the neighbor to our element the outside index
-                // refers to the scv of our element, so we use the scv method
-                const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-                const auto xOutside = outsideScv.center();
-                const auto gOutside = problem.gravityAtPos(xOutside);
-                hOutside -= rho*(gOutside*xOutside);
-            }
-        }
-
-        return tij*(hInside - hOutside);
+//         const auto& tij = fluxVarsCache.tij();
+//
+//         // Get the inside and outside volume variables
+//         const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
+//         const auto& insideVolVars = elemVolVars[insideScv];
+//         const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
+//
+//         auto hInside = insideVolVars.pressure(phaseIdx);
+//         auto hOutside = outsideVolVars.pressure(phaseIdx);
+//
+//         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+//         {
+//             // do averaging for the density
+//             const auto rhoInside = insideVolVars.density(phaseIdx);
+//             const auto rhoOutide = outsideVolVars.density(phaseIdx);
+//             const auto rho = (rhoInside + rhoOutide)*0.5;
+//
+//             // ask for the gravitational acceleration in the inside neighbor
+//             const auto xInside = insideScv.center();
+//             const auto gInside = problem.gravityAtPos(xInside);
+//
+//             hInside -= rho*(gInside*xInside);
+//
+//             // and the outside neighbor
+//             if (scvFace.boundary())
+//             {
+//                 const auto xOutside = scvFace.center();
+//                 const auto gOutside = problem.gravityAtPos(xOutside);
+//                 hOutside -= rho*(gOutside*xOutside);
+//             }
+//             else
+//             {
+//                 const auto outsideScvIdx = scvFace.outsideScvIdx();
+//                 // as we assemble fluxes from the neighbor to our element the outside index
+//                 // refers to the scv of our element, so we use the scv method
+//                 const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+//                 const auto xOutside = outsideScv.center();
+//                 const auto gOutside = problem.gravityAtPos(xOutside);
+//                 hOutside -= rho*(gOutside*xOutside);
+//             }
+//         }
+//
+//         const GlobalPosition vector = {1,0};
+//         const Scalar angle = std::acos(scvFace.unitOuterNormal() * vector / scvFace.unitOuterNormal().two_norm() / vector.two_norm())*180.0/M_PI;
+//         const Scalar threshold = 1e-6;
+//
+//         if(std::abs(angle) < threshold)
+            return 1.0;
+// //         else if(std::abs(angle-180) < threshold)
+// //             return -1.0;
+//         else
+//             return 0;
+//
+// //         if(std::abs(angle) < threshold || std::abs(angle-180) < threshold)
+// //         return tij*(hInside - hOutside);
+// //         std::cout << "normal " << scvFace.unitOuterNormal() << std::endl;
+//
     }
 
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        Stencil stencil;
-        if (!scvFace.boundary())
-        {
-            stencil.push_back(scvFace.insideScvIdx());
-            stencil.push_back(scvFace.outsideScvIdx());
-        }
-        else
-            stencil.push_back(scvFace.insideScvIdx());
-
-        return stencil;
-    }
+//     static Stencil pressureStencil(const Problem& problem,
+//                            const Element& element,
+//                            const FVElementGeometry& fvGeometry,
+//                            const SubControlVolumeFace& scvFace)
+//     {
+//         Stencil pressureStencil;
+//         if (!scvFace.boundary())
+//         {
+//             pressureStencil.push_back(scvFace.insideScvIdx());
+//             pressureStencil.push_back(scvFace.outsideScvIdx());
+//         }
+//         else
+//             pressureStencil.push_back(scvFace.insideScvIdx());
+//
+//         return pressureStencil;
+//     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibilities will be computed and stored using the method below.
