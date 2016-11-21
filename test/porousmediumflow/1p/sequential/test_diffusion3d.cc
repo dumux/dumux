@@ -32,10 +32,208 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/grid/common/gridinfo.hh>
 
-#include <dumux/common/start.hh>
+#include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/defaultusagemessage.hh>
+#include <dumux/common/parameterparser.hh>
 
 #include "test_diffusionproblem3d.hh"
 #include "resultevaluation3d.hh"
+
+namespace Dumux
+{
+// forward declaration of property tags
+namespace Properties
+{
+NEW_PROP_TAG(GridCreator);
+NEW_PROP_TAG(Problem);
+}
+
+/*!
+ * \ingroup Start
+ *
+ * \brief Provides a main function which reads in parameters from the
+ *        command line and a parameter file.
+ *
+ * \param   argc    The 'argc' argument of the main function: count of arguments (1 if there are no arguments)
+ * \param   argv    The 'argv' argument of the main function: array of pointers to the argument strings
+ * \param   usage   Callback function for printing the usage message
+ */
+int start(int argc,
+          char **argv,
+          void (*usage)(const char *, const std::string &))
+{
+    // initialize MPI, finalize is done automatically on exit
+    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+    // print dumux start message
+    if (mpiHelper.rank() == 0)
+        DumuxMessage::print(/*firstCall=*/true);
+
+    ////////////////////////////////////////////////////////////
+    // parse the command line arguments and input file
+    ////////////////////////////////////////////////////////////
+
+    using TypeTag = TTAG(DiffusionTestProblem);
+    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
+
+    // if the user just wanted to see the help / usage message show usage and stop program
+    if(!ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree(), usage))
+    {
+        usage(argv[0], defaultUsageMessage(argv[0]));
+        return 0;
+    }
+    // parse the input file into the parameter tree
+    // check first if the user provided an input file through the command line, if not use the default
+    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
+    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName, usage);
+
+    ////////////////////////////////////////////////////////////
+    // get some optional parameters
+    ////////////////////////////////////////////////////////////
+    const int numRefine = ParameterTree::tree().hasKey("Grid.Refinement") ?
+                          GET_RUNTIME_PARAM(TypeTag, int, Grid.Refinement) : 0;
+
+    std::string outputName("");
+    if (ParameterTree::tree().hasKey("Problem.OutputName"))
+    {
+        outputName += "_";
+        outputName += GET_RUNTIME_PARAM(TypeTag, std::string, OutputName);
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    // try to create a grid (from the given grid file or the input file)
+    /////////////////////////////////////////////////////////////////////
+
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    try { GridCreator::makeGrid(); }
+    catch (...) {
+        std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n";
+        usageMessage += defaultUsageMessage(argv[0]);
+        usage(argv[0], usageMessage);
+        throw;
+    }
+    GridCreator::loadBalance();
+
+    // print grid info
+    auto& grid = GridCreator::grid();
+    Dune::gridinfo(grid);
+
+    //////////////////////////////////////////////////////////////////////
+    // run the simulation
+    /////////////////////////////////////////////////////////////////////
+
+    Dune::Timer timer;
+    bool consecutiveNumbering = true;
+
+    //////////////////////////////////////////////////////////////////////
+    // finite volume TPFA test problem
+    /////////////////////////////////////////////////////////////////////
+
+    using FVTypeTag = TTAG(FVTestProblem);
+    using FVProblem = GET_PROP_TYPE(FVTypeTag, Problem);
+    using FVParameterTree = GET_PROP(FVTypeTag, ParameterTree);
+    ParameterParser::parseInputFile(argc, argv, FVParameterTree::tree(), parameterFileName, usage);
+
+    std::shared_ptr<FVProblem> fvProblem = std::make_shared<FVProblem>(grid.leafGridView());
+    // set output name
+    std::string fvOutput = "test_diffusion3d_fv" + outputName;
+    if (numRefine > 0)
+        fvOutput += "_numRefine" + std::to_string(numRefine);
+    fvProblem->setName(fvOutput.c_str());
+
+    timer.reset();
+
+    fvProblem->init();
+    fvProblem->calculateFVVelocity();
+
+    auto fvTime = timer.elapsed();
+
+    fvProblem->writeOutput();
+
+    Dumux::ResultEvaluation fvResult;
+    fvResult.evaluate(grid.leafGridView(), *fvProblem, consecutiveNumbering);
+
+    //////////////////////////////////////////////////////////////////////
+    // finite volume MPFA-L test problem
+    /////////////////////////////////////////////////////////////////////
+
+    using MPFALTypeTag = TTAG(FVMPFAL3DTestProblem);
+    using MPFALProblem = GET_PROP_TYPE(MPFALTypeTag, Problem);
+    using MPFALParameterTree = GET_PROP(MPFALTypeTag, ParameterTree);
+    ParameterParser::parseInputFile(argc, argv, MPFALParameterTree::tree(), parameterFileName, usage);
+
+    std::shared_ptr<MPFALProblem> mpfaProblem = std::make_shared<MPFALProblem>(grid.leafGridView());
+    // set output name
+    std::string fvmpfaOutput = "test_diffusion3d_fvmpfal" + outputName;
+    if (numRefine > 0)
+        fvmpfaOutput += "_numRefine" + std::to_string(numRefine);
+    mpfaProblem->setName(fvmpfaOutput.c_str());
+
+    timer.reset();
+
+    mpfaProblem->init();
+    mpfaProblem->calculateFVVelocity();
+
+    auto mpfaTime = timer.elapsed();
+
+    mpfaProblem->writeOutput();
+
+    Dumux::ResultEvaluation mpfaResult;
+    mpfaResult.evaluate(grid.leafGridView(), *mpfaProblem, consecutiveNumbering);
+
+    //////////////////////////////////////////////////////////////////////
+    // mimetic finite difference test problem
+    /////////////////////////////////////////////////////////////////////
+
+    using MimeticTypeTag = TTAG(MimeticTestProblem);
+    using MimeticProblem = GET_PROP_TYPE(MimeticTypeTag, Problem);
+    using MimeticParameterTree = GET_PROP(MimeticTypeTag, ParameterTree);
+    ParameterParser::parseInputFile(argc, argv, MimeticParameterTree::tree(), parameterFileName, usage);
+
+    std::shared_ptr<MimeticProblem> mimeticProblem = std::make_shared<MimeticProblem>(grid.leafGridView());
+    // set output name
+    std::string mimeticOutput = "test_diffusion3d_mimetic" + outputName;
+    if (numRefine > 0)
+        mimeticOutput += "_numRefine" + std::to_string(numRefine);
+    mimeticProblem->setName(mimeticOutput.c_str());
+
+    timer.reset();
+
+    mimeticProblem->init();
+    mimeticProblem->calculateFVVelocity();
+
+    auto mimeticTime = timer.elapsed();
+
+    mimeticProblem->writeOutput();
+
+    Dumux::ResultEvaluation mimeticResult;
+    mimeticResult.evaluate(grid.leafGridView(), *mimeticProblem, consecutiveNumbering);
+
+    //////////////////////////////////////////////////////////////////////
+    // print results to command line
+    /////////////////////////////////////////////////////////////////////
+
+    std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    std::cout.precision(2);
+    std::cout << "\t\t pErrorL2 \t pInnerErrorL2 \t vErrorL2 \t vInnerErrorL2 \t hMax \t\t pMin\t\t pMax\t\t pMinExact\t pMaxExact\t time"
+              << std::endl;
+    std::cout << "2pfa\t\t " << fvResult.relativeL2Error << "\t " << fvResult.relativeL2ErrorIn << "\t "
+              << fvResult.ervell2 << "\t " << fvResult.ervell2In << "\t " << fvResult.hMax << "\t " << fvResult.uMin
+              << "\t " << fvResult.uMax << "\t " << fvResult.uMinExact << "\t " << fvResult.uMaxExact << "\t "
+              << fvTime << std::endl;
+    std::cout << "mpfa-l\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.relativeL2ErrorIn << "\t "
+              << mpfaResult.ervell2 << "\t " << mpfaResult.ervell2In << "\t " << mpfaResult.hMax << "\t "
+              << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaResult.uMinExact << "\t "
+              << mpfaResult.uMaxExact << "\t " << mpfaTime << std::endl;
+    std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.relativeL2ErrorIn << "\t "
+              << mimeticResult.ervell2 << "\t " << mimeticResult.ervell2In << "\t " << mimeticResult.hMax << "\t "
+              << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticResult.uMinExact << "\t "
+              << mimeticResult.uMaxExact << "\t " << mimeticTime << std::endl;
+
+    return 0;
+}
+
+} // end namespace Dumux
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -63,166 +261,28 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(DiffusionTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef GET_PROP(TypeTag, ParameterTree) ParameterTree;
-
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        // fill the parameter tree with the options from the command line
-        std::string s = Dumux::readOptions_(argc, argv, ParameterTree::tree());
-        if (!s.empty()) {
-            usage(argv[0], s);
-            return 1;
-        }
-
-        // obtain the name of the parameter file
-        std::string parameterFileName;
-        if (ParameterTree::tree().hasKey("ParameterFile"))
-        {
-            // set the name to the one provided by the user
-            parameterFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile);
-        }
-        else // otherwise we read from the command line
-        {
-            // set the name to the default ./<programname>.input
-            parameterFileName = argv[0];
-            parameterFileName += ".input";
-        }
-
-        Dune::ParameterTreeParser::readINITree(parameterFileName,
-                                               ParameterTree::tree(),
-                                               /*overwrite=*/false);
-
-        int numRefine = 0;
-        if (ParameterTree::tree().hasKey("Grid.RefinementRatio"))
-        numRefine = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, RefinementRatio);
-
-        std::string outputName("");
-        if (ParameterTree::tree().hasKey("Problem.OutputName"))
-        {
-            outputName += "_";
-            outputName += GET_RUNTIME_PARAM(TypeTag, std::string, OutputName);
-        }
-
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        std::string gridFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
-        Dune::GridPtr < Grid > grid(gridFileName);
-        grid->globalRefine(numRefine);
-
-        Dune::gridinfo (*grid);
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        Dune::Timer timer;
-        bool consecutiveNumbering = true;
-
-        typedef TTAG (FVTestProblem)
-        FVTypeTag;
-        typedef GET_PROP_TYPE(FVTypeTag, Problem) FVProblem;
-        typedef GET_PROP(FVTypeTag, ParameterTree) FVParameterTree;
-        Dune::ParameterTreeParser::readINITree(parameterFileName, FVParameterTree::tree());
-        FVProblem *fvProblem = new FVProblem(grid->leafGridView());
-
-        std::string fvOutput("test_diffusion3d_fv");
-        fvOutput += outputName;
-        if (numRefine > 0)
-        {
-            char refine[128];
-            sprintf(refine, "_numRefine%d", numRefine);
-            fvOutput += refine;
-        }
-        fvProblem->setName(fvOutput.c_str());
-        timer.reset();
-        fvProblem->init();
-        fvProblem->calculateFVVelocity();
-        double fvTime = timer.elapsed();
-        fvProblem->writeOutput();
-        Dumux::ResultEvaluation fvResult;
-        fvResult.evaluate(grid->leafGridView(), *fvProblem, consecutiveNumbering);
-        delete fvProblem;
-
-        typedef TTAG (FVMPFAL3DTestProblem)
-        MPFALTypeTag;
-        typedef GET_PROP_TYPE(MPFALTypeTag, Problem) MPFALProblem;
-        typedef GET_PROP(MPFALTypeTag, ParameterTree) MPFALParameterTree;
-        Dune::ParameterTreeParser::readINITree(parameterFileName, MPFALParameterTree::tree());
-        MPFALProblem *mpfaProblem = new MPFALProblem(grid->leafGridView());
-
-        std::string fvmpfaOutput("test_diffusion3d_fvmpfal");
-        fvmpfaOutput += outputName;
-        if (numRefine > 0)
-        {
-            char refine[128];
-            sprintf(refine, "_numRefine%d", numRefine);
-            fvmpfaOutput += refine;
-        }
-        mpfaProblem->setName(fvmpfaOutput.c_str());
-        timer.reset();
-        mpfaProblem->init();
-        double mpfaTime = timer.elapsed();
-        mpfaProblem->writeOutput();
-        Dumux::ResultEvaluation mpfaResult;
-        mpfaResult.evaluate(grid->leafGridView(), *mpfaProblem, consecutiveNumbering);
-        delete mpfaProblem;
-
-        typedef TTAG (MimeticTestProblem)
-        MimeticTypeTag;
-        typedef GET_PROP_TYPE(MimeticTypeTag, Problem) MimeticProblem;
-        typedef GET_PROP(MimeticTypeTag, ParameterTree) MimeticParameterTree;
-        Dune::ParameterTreeParser::readINITree(parameterFileName, MimeticParameterTree::tree());
-        MimeticProblem *mimeticProblem = new MimeticProblem(grid->leafGridView());
-
-        std::string mimeticOutput("test_diffusion3d_mimetic");
-        mimeticOutput += outputName;
-        if (numRefine > 0)
-        {
-            char refine[128];
-            sprintf(refine, "_numRefine%d", numRefine);
-            mimeticOutput += refine;
-        }
-        mimeticProblem->setName(mimeticOutput.c_str());
-        timer.reset();
-        mimeticProblem->init();
-        double mimeticTime = timer.elapsed();
-        mimeticProblem->writeOutput();
-        Dumux::ResultEvaluation mimeticResult;
-        mimeticResult.evaluate(grid->leafGridView(), *mimeticProblem, consecutiveNumbering);
-        delete mimeticProblem;
-
-        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-        std::cout.precision(2);
-        std::cout
-                << "\t pErrorL2 \t pInnerErrorL2 \t vErrorL2 \t vInnerErrorL2 \t hMax \t\t pMin\t\t pMax\t\t pMinExact\t pMaxExact\t time"
-                << std::endl;
-        std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.relativeL2ErrorIn << "\t "
-                << fvResult.ervell2 << "\t " << fvResult.ervell2In << "\t " << fvResult.hMax << "\t " << fvResult.uMin
-                << "\t " << fvResult.uMax << "\t " << fvResult.uMinExact << "\t " << fvResult.uMaxExact << "\t "
-                << fvTime << std::endl;
-        std::cout << "mpfa-l\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.relativeL2ErrorIn << "\t "
-                << mpfaResult.ervell2 << "\t " << mpfaResult.ervell2In << "\t " << mpfaResult.hMax << "\t "
-                << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaResult.uMinExact << "\t "
-                << mpfaResult.uMaxExact << "\t " << mpfaTime << std::endl;
-        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.relativeL2ErrorIn << "\t "
-                << mimeticResult.ervell2 << "\t " << mimeticResult.ervell2In << "\t " << mimeticResult.hMax << "\t "
-                << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticResult.uMinExact << "\t "
-                << mimeticResult.uMaxExact << "\t " << mimeticTime << std::endl;
-
-        return 0;
-    } catch (Dune::Exception &e)
-    {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    } catch (...)
-    {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
+        return Dumux::start(argc, argv, usage);
     }
-
-    return 3;
+    catch (Dumux::ParameterException &e) {
+        std::cerr << std::endl << e << ". Abort!" << std::endl;
+        return 1;
+    }
+    catch (Dune::DGFException & e) {
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
+                 "or the DGF file is corrupted, "
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << std::endl;
+    return 2;
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+        return 3;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+        return 4;
+    }
 }
 #else
 int main()

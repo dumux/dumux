@@ -23,8 +23,11 @@
  */
 #include <config.h>
 
-#include "generallensproblem.hh"
 #include <dumux/common/start.hh>
+#include <dumux/common/defaultusagemessage.hh>
+#include <dumux/common/parameterparser.hh>
+
+#include "generallensproblem.hh"
 
 ////////////////////////
 // the main function
@@ -50,36 +53,59 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    Dune::ParameterTree paramTree;
-    std::string s(Dumux::readOptions_(argc, argv, paramTree));
-    if (s.empty()) // everything was read correctly
-    {
+    using namespace Dumux;
+
+    try {
+
+        Dune::ParameterTree paramTree;
+        // if the user just wanted to see the help / usage message show usage and stop program
+        if(!ParameterParser::parseCommandLineArguments(argc, argv, paramTree, usage))
+        {
+            usage(argv[0], defaultUsageMessage(argv[0]));
+            return 0;
+        }
+
         // default model type is box
         const std::string modelType(paramTree.get<std::string>("ModelType", "box"));
         if (modelType == "box")
         {
-            typedef TTAG(BoxGeneralLensProblem) ProblemTypeTag;
+            using ProblemTypeTag = TTAG(BoxGeneralLensProblem);
+            // avoid unused parameter message
             GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = "box";
-            return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+            return start<ProblemTypeTag>(argc, argv, usage);
         }
         else if (modelType == "cc")
         {
-            typedef TTAG(CCGeneralLensProblem) ProblemTypeTag;
-            return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+            using ProblemTypeTag = TTAG(CCGeneralLensProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = "cc";
+            return start<ProblemTypeTag>(argc, argv, usage);
         }
         else if (modelType == "sequential")
         {
-            typedef TTAG(SequentialGeneralLensProblem) ProblemTypeTag;
-            return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+            using ProblemTypeTag = TTAG(SequentialGeneralLensProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = "sequential";
+            return start<ProblemTypeTag>(argc, argv, usage);
         }
         else
         {
-            Dumux::ParameterException e("Unknown ModelType: " + modelType);
-            std::cerr << e << ". Abort!" << std::endl
+            std::cerr << ParameterException("Unknown ModelType: " + modelType) << ". Abort!" << std::endl
                       << "ModelType can be: box (2p box model), cc (2p cc model), sequential (2p impes model)" << std::endl;
-            exit(1);
+            return 1;
         }
     }
-    else
-        DUNE_THROW(Dumux::ParameterException, "Unknown command line option " << s);
-}
+    catch (ParameterException &e) {
+        std::cerr << std::endl << e << ". Abort!" << std::endl;
+        return 1;
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+        return 3;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+        return 4;
+    }
+
+} // end main

@@ -83,14 +83,15 @@ int start_(int argc,
     ////////////////////////////////////////////////////////////
 
     // if the user just wanted to see the help / usage message show usage and stop program
-    if(!ParameterParser<TypeTag>::parseCommandLineArguments(argc, argv, ParameterTree::tree(), usage))
+    if(!ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree(), usage))
     {
         usage(argv[0], defaultUsageMessage(argv[0]));
         return 0;
     }
     // parse the input file into the parameter tree
-    ParameterParser<TypeTag>::parseInputFile(argc, argv, ParameterTree::tree(), usage);
-
+    // check first if the user provided an input file through the command line, if not use the default
+    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
+    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName, usage);
 
     ////////////////////////////////////////////////////////////
     // check for some user debugging parameters

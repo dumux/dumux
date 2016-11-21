@@ -25,8 +25,11 @@
 
 #if HAVE_DUNE_ALUGRID
 
-#include "test_3d2pproblem.hh"
 #include <dumux/common/start.hh>
+#include <dumux/common/defaultusagemessage.hh>
+#include <dumux/common/parameterparser.hh>
+
+#include "test_3d2pproblem.hh"
 
 ////////////////////////
 // the main function
@@ -62,110 +65,105 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    Dune::ParameterTree paramTree;
-    std::string s(Dumux::readOptions_(argc, argv, paramTree));
-    if (s.empty())
-    {
-        if (paramTree.hasKey("ModelType"))
-        {
-            std::string modelType(paramTree.get<std::string>("ModelType"));
+    using namespace Dumux;
 
-            if (modelType == "FV")
-            {
-                typedef TTAG(FVTwoPTestProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used standard finite volume model\n";
-                return startReturn;
-            }
-            else if (modelType == "FVAdaptive")
-            {
-                typedef TTAG(FVAdaptiveTwoPTestProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used adaptive finite volume model\n";
-                return startReturn;
-            }
-            else if (modelType == "MPFAL")
-            {
-                typedef TTAG(MPFALTwoPTestProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used finite volume MPFA l-method model\n";
-                return startReturn;
-            }
-            else if (modelType == "MPFALAdaptive")
-            {
-                typedef TTAG(MPFALAdaptiveTwoPTestProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used adaptive finite volume MPFA l-method model\n";
-                return startReturn;
-            }
-#if PROBLEM != 1
-            else if (modelType == "Mimetic")
-            {
-                typedef TTAG(MimeticTwoPTestProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used mimetic finite difference model\n";
-                return startReturn;
-            }
-            else if (modelType == "MimeticAdaptive")
-            {
-                typedef TTAG(MimeticAdaptiveTwoPTestProblem) ProblemTypeTag;
-                typedef GET_PROP(ProblemTypeTag, ParameterTree) ParamTree;
-                Dune::ParameterTree &rt = ParamTree::runTimeParams();
-                rt["ModelType"]=modelType;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Used adaptive mimetic finite difference model\n";
-                return startReturn;
-            }
-#endif
-            else
-            {
-                typedef TTAG(MPFALTwoPTestProblem) ProblemTypeTag;
-                int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-                std::cout<<"######################################################\n";
-                std::cout<<"Unknwon model type "<<modelType<<" specified\n";
-                std::cout<<"Default to finite volume MPFA l-method model\n";
-                return startReturn;
-            }
+    try {
+
+        Dune::ParameterTree paramTree;
+        // if the user just wanted to see the help / usage message show usage and stop program
+        if(!ParameterParser::parseCommandLineArguments(argc, argv, paramTree, usage))
+        {
+            usage(argv[0], defaultUsageMessage(argv[0]));
+            return 0;
         }
+
+        const std::string modelType(paramTree.get<std::string>("ModelType", "MPFAL"));
+
+        if (modelType == "FV")
+        {
+            using ProblemTypeTag = TTAG(FVTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Standard finite volume TPFA model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
+        }
+        else if (modelType == "FVAdaptive")
+        {
+            using ProblemTypeTag = TTAG(FVAdaptiveTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Adapative finite volume TPFA model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
+        }
+        else if (modelType == "MPFAL")
+        {
+            using ProblemTypeTag = TTAG(MPFALTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Standard finite volume MPFA-L model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
+        }
+        else if (modelType == "MPFALAdaptive")
+        {
+            using ProblemTypeTag = TTAG(MPFALAdaptiveTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Adapative finite volume MPFA-L model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
+        }
+#if PROBLEM != 1
+        else if (modelType == "Mimetic")
+        {
+            using ProblemTypeTag = TTAG(MimeticTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Standard mimetic finite difference model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
+        }
+        else if (modelType == "MimeticAdaptive")
+        {
+            using ProblemTypeTag = TTAG(MimeticAdaptiveTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Adaptive mimetic finite difference model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
+        }
+#endif
         else
         {
-            typedef TTAG(MPFALTwoPTestProblem) ProblemTypeTag;
-            int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-            std::cout<<"######################################################\n";
-            std::cout<<"No model type specified\n";
-            std::cout<<"Default to finite volume MPFA l-method model\n";
-            return startReturn;
+            using ProblemTypeTag = TTAG(MPFALTwoPTestProblem);
+            // avoid unused parameter message
+            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
+            std::cout<<"##########################################" << std::endl;
+            std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
+            std::cout<<"Standard finite volume MPFA-L model" << std::endl;
+            std::cout<<"##########################################" << std::endl;
+            return start<ProblemTypeTag>(argc, argv, usage);
         }
     }
-    else
-    {
-        typedef TTAG(MPFALTwoPTestProblem) ProblemTypeTag;
-        int startReturn =  Dumux::start<ProblemTypeTag>(argc, argv, usage);
-        std::cout<<"######################################################\n";
-        std::cout<<s<<" is not a valid model type specification!\n";
-        std::cout<<"Default to finite volume MPFA l-method model\n";
-        return startReturn;
+    catch (ParameterException &e) {
+        std::cerr << std::endl << e << ". Abort!" << std::endl;
+        return 1;
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+        return 3;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+        return 4;
     }
 
     return 0;
