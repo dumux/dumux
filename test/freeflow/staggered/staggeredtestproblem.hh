@@ -69,6 +69,9 @@ SET_TYPE_PROP(StaggeredTestProblem, Problem, Dumux::StaggeredTestProblem<TypeTag
 
 SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFVGeometryCache, true);
 
+SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalVolumeVariablesCache, true);
+
 
 // Enable gravity
 SET_BOOL_PROP(StaggeredTestProblem, ProblemEnableGravity, true);

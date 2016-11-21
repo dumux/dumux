@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_STENCILS_HH
 
 #include <set>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/implicit/staggered/properties.hh>
 
 namespace Dumux
 {

@@ -36,6 +36,12 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/staggered/stencils.hh>
 
+#include <dumux/discretization/staggered/globalfluxvariablescache.hh>
+#include <dumux/discretization/staggered/elementfluxvariablescache.hh>
+
+#include <dumux/discretization/staggered/elementvolumevariables.hh>
+#include <dumux/discretization/staggered/globalvolumevariables.hh>
+
 
 #include <dumux/freeflow/staggered/fluxvariables.hh>
 #include <dumux/freeflow/staggered/fluxvariablescache.hh>
@@ -93,10 +99,10 @@ SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, Dumux::CCElementBoundaryType
 SET_TYPE_PROP(StaggeredModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
 
 //! The global current volume variables vector class
-SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::StaggeredGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::CCGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::StaggeredGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! The local jacobian operator
 SET_TYPE_PROP(StaggeredModel, LocalJacobian, Dumux::StaggeredLocalJacobian<TypeTag>);
@@ -108,10 +114,10 @@ SET_TYPE_PROP(StaggeredModel, JacobianAssembler, Dumux::StaggeredAssembler<TypeT
 SET_TYPE_PROP(StaggeredModel, StencilsVector, Dumux::StaggeredStencilsVector<TypeTag>);
 
 //! The local flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::CCElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! The global previous volume variables vector class
-SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, Dumux::StaggeredElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, Dumux::StaggeredLocalResidual<TypeTag>);

@@ -121,40 +121,11 @@ public:
 //                 hOutside -= rho*(gOutside*xOutside);
 //             }
 //         }
-//
-//         const GlobalPosition vector = {1,0};
-//         const Scalar angle = std::acos(scvFace.unitOuterNormal() * vector / scvFace.unitOuterNormal().two_norm() / vector.two_norm())*180.0/M_PI;
-//         const Scalar threshold = 1e-6;
-//
-//         if(std::abs(angle) < threshold)
+
             return 1.0;
-// //         else if(std::abs(angle-180) < threshold)
-// //             return -1.0;
-//         else
-//             return 0;
-//
-// //         if(std::abs(angle) < threshold || std::abs(angle-180) < threshold)
-// //         return tij*(hInside - hOutside);
-// //         std::cout << "normal " << scvFace.unitOuterNormal() << std::endl;
+
 //
     }
-
-//     static Stencil pressureStencil(const Problem& problem,
-//                            const Element& element,
-//                            const FVElementGeometry& fvGeometry,
-//                            const SubControlVolumeFace& scvFace)
-//     {
-//         Stencil pressureStencil;
-//         if (!scvFace.boundary())
-//         {
-//             pressureStencil.push_back(scvFace.insideScvIdx());
-//             pressureStencil.push_back(scvFace.outsideScvIdx());
-//         }
-//         else
-//             pressureStencil.push_back(scvFace.insideScvIdx());
-//
-//         return pressureStencil;
-//     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibilities will be computed and stored using the method below.
@@ -164,75 +135,10 @@ public:
                                               const ElementVolumeVariables& elemVolVars,
                                               const SubControlVolumeFace& scvFace)
     {
-        Scalar tij;
-
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = fvGeometry.scv(insideScvIdx);
-        const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
-        Scalar ti = calculateOmega_(problem, scvFace, insideK, element, insideScv);
-
-        if (!scvFace.boundary())
-        {
-            const auto outsideScvIdx = scvFace.outsideScvIdx();
-            // as we assemble fluxes from the neighbor to our element the outside index
-            // refers to the scv of our element, so we use the scv method
-            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
-            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv, outsideVolVars);
-            Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideElement, outsideScv);
-
-            // check for division by zero!
-            if (ti*tj <= 0.0)
-                tij = 0;
-            else
-                tij = scvFace.area()*(ti * tj)/(ti + tj);
-        }
-        else
-        {
-            tij = scvFace.area()*ti;
-        }
-
-        return tij;
+        return 0;
     }
 
-private:
 
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const SubControlVolumeFace& scvFace,
-                                  const DimWorldMatrix &K,
-                                  const Element& element,
-                                  const SubControlVolume &scv)
-    {
-        GlobalPosition Knormal;
-        K.mv(scvFace.unitOuterNormal(), Knormal);
-
-        auto distanceVector = scvFace.center();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = Knormal * distanceVector;
-        omega *= problem.boxExtrusionFactor(element, scv);
-
-        return omega;
-    }
-
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const SubControlVolumeFace& scvFace,
-                                  const Scalar K,
-                                  const Element& element,
-                                  const SubControlVolume &scv)
-    {
-        auto distanceVector = scvFace.center();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = K * (distanceVector * scvFace.unitOuterNormal());
-        omega *= problem.boxExtrusionFactor(element, scv);
-
-        return omega;
-    }
 };
 
 } // end namespace

@@ -110,45 +110,6 @@ public:
     void init(Problem &problem)
     {
         ParentType::init(problem);
-
-//         assemblyMap_.resize(problem.gridView().size(0));
-//         for (const auto& element : elements(problem.gridView()))
-//         {
-//             // get a local finite volume geometry object that is bindable
-//             auto fvGeometryJ = localView(problem.model().globalFvGeometry());
-//
-//             auto globalI = problem.elementMapper().index(element);
-//             const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
-//
-// //             assemblyMap_[globalI].reserve(neighborStencil.size());
-//             for (auto globalJ : neighborStencil)
-//             {
-//                 const auto& elementJ = fvGeometryJ.globalFvGeometry().element(globalJ);
-//
-//                 // find the flux vars needed for the calculation of the flux into element
-//                 std::vector<IndexType> fluxVarIndices;
-//
-//                 // only non-ghost neighbors (J) have to be considered, derivatives from non-ghost to ghost dofs
-//                 // are assembled when assembling the ghost element (I)
-//                 if (elementJ.partitionType() != Dune::GhostEntity)
-//                 {
-//                     fvGeometryJ.bindElement(elementJ);
-//                     for (auto&& scvFaceJ : scvfs(fvGeometryJ))
-//                     {
-//                         auto fluxVarsIdx = scvFaceJ.index();
-//
-//                         // if globalI is in flux var stencil, add to list
-//                         FluxVariables fluxVars;
-//                         const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, fvGeometryJ, scvFaceJ);
-//
-//                         for (auto globalIdx : fluxStencil)
-//                             if (globalIdx == globalI)
-//                                 fluxVarIndices.push_back(fluxVarsIdx);
-//                     }
-//                 }
-// //                 assemblyMap_[globalI].emplace_back(std::move(fluxVarIndices));
-//             }
-//         }
     }
 
     /*!

@@ -20,11 +20,11 @@
  * \file
  * \brief The global object of flux var caches
  */
-#ifndef DUMUX_DISCRETIZATION_CC_GLOBAL_FLUXVARSCACHE_HH
-#define DUMUX_DISCRETIZATION_CC_GLOBAL_FLUXVARSCACHE_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/discretization/cellcentered/elementfluxvariablescache.hh>
+#include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 
 namespace Dumux
 {
@@ -34,17 +34,17 @@ namespace Dumux
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag, bool EnableGlobalFluxVariablesCache>
-class CCGlobalFluxVariablesCache;
+class StaggeredGlobalFluxVariablesCache;
 
 /*!
  * \ingroup ImplicitModel
  * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class CCGlobalFluxVariablesCache<TypeTag, true>
+class StaggeredGlobalFluxVariablesCache<TypeTag, true>
 {
     // the local class needs access to the problem
-    friend CCElementFluxVariablesCache<TypeTag, true>;
+    friend StaggeredElementFluxVariablesCache<TypeTag, true>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -80,7 +80,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const StaggeredGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:
@@ -105,10 +105,10 @@ private:
  * \brief Spezialization when not using global caching
  */
 template<class TypeTag>
-class CCGlobalFluxVariablesCache<TypeTag, false>
+class StaggeredGlobalFluxVariablesCache<TypeTag, false>
 {
     // the local class needs access to the problem
-    friend CCElementFluxVariablesCache<TypeTag, false>;
+    friend StaggeredElementFluxVariablesCache<TypeTag, false>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
@@ -122,7 +122,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const StaggeredGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:
