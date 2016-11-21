@@ -25,36 +25,32 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
-// #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/freeflow/staggered/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 #include <dumux/linear/amgbackend.hh>
 
-#include "1ptestspatialparams.hh"
 
 namespace Dumux
 {
 template <class TypeTag>
-class OnePTestProblem;
+class StaggeredTestProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<OnePTestProblem<TypeTag>>
+    struct isStationary<StaggeredTestProblem<TypeTag>>
     { static const bool value = true; };
 }
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP));
-// NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
-NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(StaggeredModel, OnePTestProblem));
+NEW_TYPE_TAG(StaggeredTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
 
-SET_PROP(OnePTestProblem, Fluid)
+SET_PROP(StaggeredTestProblem, Fluid)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -63,19 +59,19 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(StaggeredTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePTestProblem, Problem, Dumux::OnePTestProblem<TypeTag> );
+SET_TYPE_PROP(StaggeredTestProblem, Problem, Dumux::StaggeredTestProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeTag> );
+// SET_TYPE_PROP(StaggeredTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeTag> );
 
-SET_BOOL_PROP(OnePTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFVGeometryCache, true);
 
 
 // Enable gravity
-SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(StaggeredTestProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -101,9 +97,9 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
  * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag>
-class OnePTestProblem : public ImplicitPorousMediaProblem<TypeTag>
+class StaggeredTestProblem : public NavierStokesProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    typedef NavierStokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -134,7 +130,7 @@ class OnePTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    OnePTestProblem(TimeManager &timeManager, const GridView &gridView)
+    StaggeredTestProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,

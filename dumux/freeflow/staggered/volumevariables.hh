@@ -33,13 +33,13 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePModel
+ * \ingroup NavierStokesModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class NavierStokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
     using ParentType = ImplicitVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -68,8 +68,6 @@ public:
         ParentType::update(priVars, problem, element, scv);
 
         completeFluidState(priVars, problem, element, scv, fluidState_);
-        // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
     };
 
     /*!
@@ -156,12 +154,6 @@ public:
     { return 1.0/fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
-     */
-    Scalar porosity() const
-    { return porosity_; }
-
-    /*!
      * \brief Return the fluid state of the control volume.
      */
     const FluidState &fluidState() const
@@ -169,7 +161,6 @@ public:
 
 protected:
     FluidState fluidState_;
-    Scalar porosity_;
 
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

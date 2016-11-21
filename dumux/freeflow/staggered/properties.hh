@@ -19,23 +19,23 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup OnePModel
+ * \ingroup NavierStokesModel
  * \file
  *
  * \brief Defines the properties required for the one-phase fully implicit model.
  */
-#ifndef DUMUX_1P_PROPERTIES_HH
-#define DUMUX_1P_PROPERTIES_HH
+#ifndef DUMUX_NAVIERSTOKES_PROPERTIES_HH
+#define DUMUX_NAVIERSTOKES_PROPERTIES_HH
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+// #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
 {
 // \{
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal single phase model
+// properties for the isothermal Navier-Stokes model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -44,14 +44,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit single-phase problems
-NEW_TYPE_TAG(OneP);
-NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel, OneP));
-NEW_TYPE_TAG(CCOneP, INHERITS_FROM(CCModel, OneP));
+NEW_TYPE_TAG(NavierStokes);
 
 //! The type tags for the corresponding non-isothermal problems
-NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
-NEW_TYPE_TAG(BoxOnePNI, INHERITS_FROM(BoxModel, OnePNI));
-NEW_TYPE_TAG(CCOnePNI, INHERITS_FROM(CCModel, OnePNI));
+// NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -59,14 +55,12 @@ NEW_TYPE_TAG(CCOnePNI, INHERITS_FROM(CCModel, OnePNI));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
 NEW_PROP_TAG(FluidSystem); //!< The type of the fluid system to use
 NEW_PROP_TAG(Fluid); //!< The fluid used for the default fluid system
 NEW_PROP_TAG(FluidState); //!< The type of the fluid state to use
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 // \}
 }

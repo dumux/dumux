@@ -27,13 +27,13 @@
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+// #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "properties.hh"
 
 namespace Dumux
 {
 /*!
- * \ingroup OnePModel
+ * \ingroup NavierStokesModel
  * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
  * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
@@ -54,10 +54,10 @@ namespace Dumux
  * The model supports compressible as well as incompressible fluids.
  */
 template<class TypeTag >
-class OnePModel : public GET_PROP_TYPE(TypeTag, BaseModel)
+class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+//     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -73,7 +73,7 @@ public:
     /*!
      * \brief \copybrief Dumux::ImplicitModel::addOutputVtkFields
      *
-     * Specialization for the OnePModel, adding the pressure and
+     * Specialization for the NavierStokesModel, adding the pressure and
      * the process rank to the VTK writer.
      */
     template<class MultiWriter>
@@ -85,7 +85,6 @@ public:
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
         auto *p = writer.allocateManagedBuffer(numDofs);
-        auto *K = writer.allocateManagedBuffer(numDofs);
         // VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
@@ -116,11 +115,9 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                const auto& spatialParams = this->problem_().spatialParams();
                 auto dofIdxGlobal = scv.dofIndex();
 
                 (*p)[dofIdxGlobal] = volVars.pressure();
-                (*K)[dofIdxGlobal] = spatialParams.intrinsicPermeability(scv, volVars);
             }
 
             // velocity output
@@ -128,7 +125,6 @@ public:
         }
 
         writer.attachDofData(*p, "p", isBox);
-        writer.attachDofData(*K, "K", isBox);
         // if (velocityOutput.enableOutput())
         // {
         //     writer.attachDofData(*velocity,  "velocity", isBox, dim);
