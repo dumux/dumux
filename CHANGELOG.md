@@ -17,6 +17,9 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
 * IMPROVEMENTS and ENHANCEMENTS:
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+    - In the ZeroEq models, the properties BBoxMinIsWall and BBoxMaxIsWall have
+      been replaced by the functions bBoxMaxIsWall() and bBoxMaxIsWall() in the
+      problem file.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.11: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name

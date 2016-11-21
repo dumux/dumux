@@ -50,8 +50,6 @@ NEW_TYPE_TAG(BoxZeroEq, INHERITS_FROM(BoxStokes));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(KarmanConstant); //!< The Karman constant
-NEW_PROP_TAG(BBoxMinIsWall); //!< Sets BBoxMin as a wall
-NEW_PROP_TAG(BBoxMaxIsWall); //!< Sets BBoxMax as a wall
 NEW_PROP_TAG(ZeroEqFlowNormal); //!< Indicates the main flow direction
 NEW_PROP_TAG(ZeroEqWallNormal); //!< Indicates the wall normal direction
 NEW_PROP_TAG(ZeroEqBBoxMinSandGrainRoughness); //!< Sets a sand grain roughness at BBoxMin

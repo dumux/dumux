@@ -75,6 +75,22 @@ public:
     {
         this->model().updateWallProperties();
     }
+
+    /*!
+     * \brief The left/lower boundary in ZeroEqWallNormal direction is a wall
+     */
+    bool bBoxMinIsWall()
+    {
+        return true;
+    }
+
+    /*!
+     * \brief The right/upper boundary in ZeroEqWallNormal direction is a wall
+     */
+    bool bBoxMaxIsWall()
+    {
+        return true;
+    }
 };
 
 }

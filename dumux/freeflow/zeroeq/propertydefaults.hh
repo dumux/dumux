@@ -58,12 +58,6 @@ SET_BOOL_PROP(BoxZeroEq, EnableNavierStokes, true);
 //! Set the Karman constant \f$[-]\f$
 SET_SCALAR_PROP(BoxZeroEq, KarmanConstant, 0.41);
 
-//! Set BBoxMin of wall normal direction as a wall
-SET_BOOL_PROP(BoxZeroEq, BBoxMinIsWall, true);
-
-//! Set BBoxMax of wall normal direction as a wall
-SET_BOOL_PROP(BoxZeroEq, BBoxMaxIsWall, true);
-
 //! Set main flow direction
 SET_INT_PROP(BoxZeroEq, ZeroEqFlowNormal, 0);
 

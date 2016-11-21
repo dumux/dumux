@@ -53,9 +53,6 @@ SET_TYPE_PROP(ZeroEqChannelTestProblem, Fluid,
 // Disable gravity
 SET_BOOL_PROP(ZeroEqChannelTestProblem, ProblemEnableGravity, false);
 
-// Set only bottom as wall
-SET_BOOL_PROP(ZeroEqChannelTestProblem, BBoxMaxIsWall, false);
-
 #if HAVE_UMFPACK
 // Use UMFPack as linear solver
 SET_TYPE_PROP(ZeroEqChannelTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
@@ -145,6 +142,14 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         return 273.15 + 10; // -> 10 °C
+    }
+
+    /*!
+     * \brief The right/upper boundary in ZeroEqWallNormal direction is a wall
+     */
+    bool bBoxMaxIsWall()
+    {
+        return false;
     }
 
     // \}

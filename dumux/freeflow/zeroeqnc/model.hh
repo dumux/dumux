@@ -85,9 +85,7 @@ class ZeroEqncModel : public ZeroEqModel<TypeTag>
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals),
-        walls = (GET_PROP_VALUE(TypeTag, BBoxMinIsWall) ? 1 : 0)
-                + (GET_PROP_VALUE(TypeTag, BBoxMaxIsWall) ? 1 : 0)
+        intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals)
     };
     enum { transportCompIdx = Indices::transportCompIdx,
            numComponents = Indices::numComponents };
@@ -311,7 +309,7 @@ public:
     {
         ParentType::resetWallProperties();
 
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < this->wall.size(); ++wallIdx)
             for (int posIdx = 0; posIdx < intervals; ++posIdx)
             {
                 this->wall[wallIdx].maxMassFraction[posIdx] = 0.0;
@@ -328,11 +326,11 @@ public:
         int wallIdx = this->getWallIdx(globalPos, posIdx);
         // mass fraction
         if (this->wall[wallIdx].maxMassFraction[posIdx] < fluxVars.massFraction(transportCompIdx))
-            for (int wIdx = 0; wIdx < walls; ++wIdx)
+            for (int wIdx = 0; wIdx < this->wall.size(); ++wIdx)
                 this->wall[wIdx].maxMassFraction[posIdx] = fluxVars.massFraction(transportCompIdx);
         // mole fraction
         if (this->wall[wallIdx].maxMoleFraction[posIdx] < fluxVars.moleFraction(transportCompIdx))
-            for (int wIdx = 0; wIdx < walls; ++wIdx)
+            for (int wIdx = 0; wIdx < this->wall.size(); ++wIdx)
                 this->wall[wIdx].maxMoleFraction[posIdx] = fluxVars.moleFraction(transportCompIdx);
     }
 

@@ -96,9 +96,7 @@ class ZeroEqncniModel : public ZeroEqncModel<TypeTag>
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals),
-        walls = (GET_PROP_VALUE(TypeTag, BBoxMinIsWall) ? 1 : 0)
-                + (GET_PROP_VALUE(TypeTag, BBoxMaxIsWall) ? 1 : 0)
+        intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals)
     };
     enum { transportCompIdx = Indices::transportCompIdx,
            numComponents = Indices::numComponents };
@@ -331,7 +329,7 @@ public:
     {
         ParentType::resetWallProperties();
 
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < this->wall.size(); ++wallIdx)
             for (int posIdx = 0; posIdx < intervals; ++posIdx)
             {
                 this->wall[wallIdx].maxTemperature[posIdx] = 0.0;
@@ -346,7 +344,7 @@ public:
         int posIdx = this->getPosIdx(globalPos);
         int wallIdx = this->getWallIdx(globalPos, posIdx);
         if (this->wall[wallIdx].maxTemperature[posIdx] < fluxVars.temperature())
-            for (int wIdx = 0; wIdx < walls; ++wIdx)
+            for (int wIdx = 0; wIdx < this->wall.size(); ++wIdx)
                 this->wall[wIdx].maxTemperature[posIdx] = fluxVars.temperature();
     }
 
