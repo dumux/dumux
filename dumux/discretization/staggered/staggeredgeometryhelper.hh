@@ -79,7 +79,7 @@ public:
     BaseStaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
     : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView), offset_(gridView.size(0))
     {
-        fillPairData();
+        fillPairData_();
     }
 
      /*!
@@ -121,10 +121,11 @@ public:
         return pairData_;
     }
 
+private:
      /*!
      * \brief Fills all entries of the pair data
      */
-    void fillPairData()
+    void fillPairData_()
     {
         const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
         const int indexInInside = intersection_.indexInInside();
@@ -132,10 +133,10 @@ public:
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
         {
-            data.outerParallelFaceDofIdx = 0;
-            data.outerParallelElementDofIdx = 0;
-            data.normalDistance = 0;
-            data.parallelDistance = 0;
+            data.outerParallelFaceDofIdx = -1;
+            data.outerParallelElementDofIdx = -1;
+            data.normalDistance = -1;
+            data.parallelDistance = -1;
         }
 
         // set the inner parts of the normal pairs
@@ -167,13 +168,13 @@ public:
             {
                 const int neighborIsIdx = neighborIntersection.indexInInside();
                 // skip the directly neighboring face itself and its opposing one
-                if(neighborIntersectionNormalSide_(neighborIsIdx, intersection_.indexInOutside()))
+                if(facetIsNormal_(neighborIsIdx, intersection_.indexInOutside()))
                 {
                     // iterate over facets sub-entities
                     for(int i = 0; i < numFacetSubEntities; ++i)
                     {
                         int localCommonEntIdx = referenceElement.subEntity(neighborIsIdx, 1, i, dim);
-                        int globalCommonEntIdx = localToGlobalEntityIdx_(localCommonEntIdx, directNeighbor);
+                        int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, directNeighbor);
 
                         // fill the normal pair entries
                         for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
@@ -194,12 +195,12 @@ public:
                         const auto& diagonalNeighbor = neighborIntersection.outside();
                         for(const auto& dIs : intersections(gridView_, diagonalNeighbor))
                         {
-                            if(neighborIntersectionNormalSide_(dIs.indexInInside(), neighborIntersection.indexInOutside()))
+                            if(facetIsNormal_(dIs.indexInInside(), neighborIntersection.indexInOutside()))
                             {
                                 for(int i = 0; i < numFacetSubEntities; ++i)
                                 {
                                     int localCommonEntIdx = referenceElement.subEntity(dIs.indexInInside(), 1, i, dim);
-                                    int globalCommonEntIdx = localToGlobalEntityIdx_(localCommonEntIdx, diagonalNeighbor);
+                                    int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, diagonalNeighbor);
 
 
                                     for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
@@ -207,7 +208,7 @@ public:
                                         if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
                                         {
                                             pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
-                                            pairData_[pairIdx].outerParallelElementDofIdx = dIs.indexInOutside();
+                                            pairData_[pairIdx].outerParallelElementDofIdx =  gridView_.indexSet().index(dIs.outside());
                                             const auto& selfFacet = element_.template subEntity <1> (indexInInside);
                                             const auto& parallelFacet = diagonalNeighbor.template subEntity <1> (dIs.indexInInside());
                                             pairData_[pairIdx].parallelDistance = (selfFacet.geometry().center() - parallelFacet.geometry().center()).two_norm();
@@ -220,9 +221,42 @@ public:
                 }
             }
         }
+        else // intersection is on boundary
+        {
+            // find an intersection normal to the face
+            for(const auto& normalIntersection : intersections(gridView_, element_))
+            {
+                if(facetIsNormal_(normalIntersection.indexInInside(), intersection_.indexInInside()) && normalIntersection.neighbor())
+                {
+                    const auto& neighbor = normalIntersection.outside();
+
+                    for(const auto& neighborIs : intersections(gridView_, neighbor))
+                    {
+                    // iterate over facets sub-entities
+                        if(neighborIs.indexInInside() != normalIntersection.indexInOutside())
+                        {
+                            for(int i = 0; i < numFacetSubEntities; ++i)
+                            {
+                                int localCommonEntIdx = referenceElement.subEntity(neighborIs.indexInInside(), 1, i, dim);
+                                int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, neighbor);
+
+                                // fill the parallel pair entries
+                                for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
+                                {
+                                    if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
+                                    {
+                                        pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(neighbor, neighborIs.indexInInside(), dim-1) + offset_;
+                                        pairData_[pairIdx].outerParallelElementDofIdx = gridView_.indexSet().index(neighbor);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-private:
      /*!
      * \brief Returns the local opposing intersection index
      *
@@ -239,7 +273,7 @@ private:
      * \param selfIdx The local index of the intersection itself
      * \param otherIdx The local index of the other intersection
      */
-    bool neighborIntersectionNormalSide_(const int selfIdx, const int otherIdx) const
+    bool facetIsNormal_(const int selfIdx, const int otherIdx) const
     {
         return !(selfIdx == otherIdx || localOppositeIdx_(selfIdx) == otherIdx);
     };
@@ -250,7 +284,7 @@ private:
      * \param localIdx The local index of the common entity
      * \param element The element
      */
-    int localToGlobalEntityIdx_(const int localIdx, const Element& element) const
+    int localToGlobalCommonEntityIdx_(const int localIdx, const Element& element) const
     {
         return this->gridView_.indexSet().subIndex(element, localIdx, codimCommonEntity);
     };

@@ -112,17 +112,14 @@ public:
                            const SubControlVolumeFace& scvFace)
     {
         Stencil cellCenterStencil;
-        if (!scvFace.boundary())
-        {
-            // the cell center dof indices
-            cellCenterStencil.push_back(scvFace.insideScvIdx());
-            cellCenterStencil.push_back(scvFace.outsideScvIdx());
 
-            // the face dof indices
-            cellCenterStencil.push_back(scvFace.dofIndexSelf());
-        }
-        else
-            cellCenterStencil.push_back(scvFace.insideScvIdx());
+        // the cell center dof indices
+        cellCenterStencil.push_back(scvFace.insideScvIdx());
+
+        // the face dof indices
+        cellCenterStencil.push_back(scvFace.dofIndexSelf());
+        if (!scvFace.boundary())
+            cellCenterStencil.push_back(scvFace.outsideScvIdx());
 
         return cellCenterStencil;
     }
@@ -131,27 +128,29 @@ public:
                                const SubControlVolumeFace& scvFace)
     {
         Stencil faceStencil;
+
+        // normal element dof indices
+        faceStencil.push_back(scvFace.insideScvIdx());
         if (!scvFace.boundary())
-        {
-            // the cell center dof indices normal to the face
-            faceStencil.push_back(scvFace.insideScvIdx());
             faceStencil.push_back(scvFace.outsideScvIdx());
 
-            // the cell center dof indices parallel to the face
-            for(const auto& data : scvFace.pairData())
-            {
-                faceStencil.push_back(data.outerParallelElementDofIdx);
-                faceStencil.push_back(data.outerParallelFaceDofIdx);
-                faceStencil.push_back(data.normalPair.first);
-                faceStencil.push_back(data.normalPair.second);
-            }
+        // the normal face dof indices
+        faceStencil.push_back(scvFace.dofIndexSelf());
+        faceStencil.push_back(scvFace.dofIndexOpposite());
 
-            // the face dof indices
-            faceStencil.push_back(scvFace.dofIndexSelf());
-            faceStencil.push_back(scvFace.dofIndexOpposite());
+        for(const auto& data : scvFace.pairData())
+        {
+            const auto& outerParallelElementDofIdx = data.outerParallelElementDofIdx;
+            const auto& outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
+            if(outerParallelElementDofIdx >= 0)
+                faceStencil.push_back(outerParallelElementDofIdx);
+            if(outerParallelFaceDofIdx >= 0)
+                faceStencil.push_back(outerParallelFaceDofIdx);
+
+            faceStencil.push_back(data.normalPair.first);
+            if(!scvFace.boundary())
+                faceStencil.push_back(data.normalPair.second);
         }
-        else
-            faceStencil.push_back(scvFace.dofIndexSelf());
 
         return faceStencil;
     }
