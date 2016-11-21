@@ -75,9 +75,6 @@ class ZeroEqModel : public GET_PROP_TYPE(TypeTag, BaseStokesModel)
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
         intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals),
-        bboxMinIsWall = GET_PROP_VALUE(TypeTag, BBoxMinIsWall),
-        bboxMaxIsWall = GET_PROP_VALUE(TypeTag, BBoxMaxIsWall),
-        walls = (bboxMinIsWall ? 1 : 0) + (bboxMaxIsWall ? 1 : 0)
     };
 
     typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
@@ -110,6 +107,9 @@ public:
                         << GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel)
                         << "." << std::endl;
         }
+
+        wall.resize((this->problem_().bBoxMinIsWall() ? 1 : 0)
+                    + (this->problem_().bBoxMaxIsWall() ? 1 : 0));
     }
 
     /*!
@@ -364,7 +364,7 @@ public:
         bool headerWritten[intervals];         //!< Header of scv-data file was already written.
         WallProperties() {}                    //!< Constructor for wall properties.
     };
-    WallProperties wall[walls];
+    std::vector<WallProperties> wall;
 
     /*!
      * \brief Initializes the wall structure with values.
@@ -375,20 +375,20 @@ public:
      */
     void resetWallProperties()
     {
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < wall.size(); ++wallIdx)
         {
             for (int posIdx = 0; posIdx < intervals; ++posIdx)
             {
-                if (walls == 1)
+                if (wall.size() == 1)
                 {
-                    if (bboxMinIsWall)
+                    if (this->problem_().bBoxMinIsWall())
                     {
                         wall[wallIdx].wallPos[posIdx] = this->problem_().bBoxMin()[wallNormal_];
                         wall[wallIdx].boundaryLayerThickness[posIdx] = this->problem_().bBoxMax()[wallNormal_] - this->problem_().bBoxMin()[wallNormal_] + eps_;
                         wall[wallIdx].isBBoxMinWall = true;
                         wall[wallIdx].sandGrainRoughness[posIdx] = GET_PARAM_FROM_GROUP(TypeTag, Scalar, ZeroEq, BBoxMinSandGrainRoughness);
                     }
-                    if (bboxMaxIsWall)
+                    if (this->problem_().bBoxMaxIsWall())
                     {
                         wall[wallIdx].wallPos[posIdx] = this->problem_().bBoxMax()[wallNormal_];
                         wall[wallIdx].boundaryLayerThickness[posIdx] = this->problem_().bBoxMin()[wallNormal_] - this->problem_().bBoxMax()[wallNormal_] - eps_;
@@ -396,7 +396,7 @@ public:
                         wall[wallIdx].sandGrainRoughness[posIdx] = GET_PARAM_FROM_GROUP(TypeTag, Scalar, ZeroEq, BBoxMaxSandGrainRoughness);
                     }
                 }
-                if (walls == 2 && wallIdx == 0)
+                if (wall.size() == 2 && wallIdx == 0)
                 {
                     wall[0].wallPos[posIdx] = this->problem_().bBoxMin()[wallNormal_];
                     wall[1].wallPos[posIdx] = this->problem_().bBoxMax()[wallNormal_];
@@ -431,7 +431,7 @@ public:
      */
     void resetWallFluidProperties()
     {
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < wall.size(); ++wallIdx)
             for (int posIdx = 0; posIdx < intervals; ++posIdx)
             {
                 wall[wallIdx].wallDensity[posIdx] = 0.0;
@@ -453,7 +453,7 @@ public:
         asImp_().updateCrossLength();
         asImp_().resetWallFluidProperties();
         asImp_().updateWallFluidProperties();
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < wall.size(); ++wallIdx)
         {
             for (int posIdx = 0; posIdx < intervals; ++posIdx)
                 if (wall[wallIdx].viscousSublayerThicknessCalculated[posIdx] > wall[wallIdx].boundaryLayerThicknessCalculated[posIdx])
@@ -484,10 +484,10 @@ public:
      */
     int getWallIdx(const GlobalPosition &globalPos, const int posIdx) const
     {
-        if (walls == 0)
+        if (wall.size() == 0)
             DUNE_THROW(Dune::NotImplemented, "Eddy viscosity models are not implemented for use without walls.");
 
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < wall.size(); ++wallIdx)
             if ((wall[wallIdx].isBBoxMinWall && globalPos[wallNormal_] < wall[wallIdx].wallPos[posIdx] + wall[wallIdx].boundaryLayerThickness[posIdx])
                  || (!wall[wallIdx].isBBoxMinWall && globalPos[wallNormal_] > wall[wallIdx].wallPos[posIdx] + wall[wallIdx].boundaryLayerThickness[posIdx]))
             {
@@ -576,7 +576,7 @@ public:
      */
     bool useViscosityInner(const GlobalPosition &globalPos, const int posIdx) const
     {
-        for (int wallIdx = 0; wallIdx < walls; ++wallIdx)
+        for (int wallIdx = 0; wallIdx < wall.size(); ++wallIdx)
             if ((wall[wallIdx].isBBoxMinWall && globalPos[wallNormal_] < wall[wallIdx].wallPos[posIdx] + wall[wallIdx].crossLength[posIdx])
                 || (!wall[wallIdx].isBBoxMinWall && globalPos[wallNormal_] > wall[wallIdx].wallPos[posIdx] + wall[wallIdx].crossLength[posIdx]))
                 return true;
@@ -635,12 +635,12 @@ public:
             {
                 wall[wallIdx].maxVelocity[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
 //                 // if the values in the middle should be set on both wall
-//                 for (int wIdx = 0; wIdx < walls; ++wIdx)
+//                 for (int wIdx = 0; wIdx < wall.size(); ++wIdx)
 //                     if (std::abs(distanceToWallReal(globalPos, wallIdx, posIdx)) < std::abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-5))
 //                         wall[wIdx].maxVelocity[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
                 // set it as maxVelocityAbs
                 if (std::abs(wall[wallIdx].maxVelocityAbs[posIdx][dimIdx]) < std::abs(fluxVars.velocity()[dimIdx]))
-                    for (int wIdx = 0; wIdx < walls; ++wIdx)
+                    for (int wIdx = 0; wIdx < wall.size(); ++wIdx)
                         wall[wIdx].maxVelocityAbs[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
                 wall[wallIdx].fluxValuesCount[posIdx]++;
             }
@@ -654,7 +654,7 @@ public:
             wall[wallIdx].fMax[posIdx] = fluxVars.fz();
             wall[wallIdx].yMax[posIdx] = distanceToWallRough(globalPos, wallIdx, posIdx);
 //            // if the values in the middle should be set on both wall
-//            for (int wIdx = 0; wIdx < walls; ++wIdx)
+//            for (int wIdx = 0; wIdx < wall.size(); ++wIdx)
 //                if (std::abs(distanceToWall(globalPos, wIdx, posIdx)) < std::abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-4))
 //                    {
 //                        wall[wIdx].fMax[posIdx] = fluxVars.fz();
@@ -987,7 +987,6 @@ public:
                 DUNE_THROW(Dune::NotImplemented, "This eddy viscosity model is not implemented.");
         }
     }
-
 
 protected:
     //! Current implementation.
