@@ -194,23 +194,24 @@ public:
         return faceStencils_[scvFace.dofIndexSelf() - numElements];
     }
 
+    /*!
+    * \brief Returns the size of a complete face dof stencil
+    */
     size_t completeFaceDofStencilSize(const int idx) const
     {
 //         const IndexType numElements = problemPtr_->gridView().size(0);
+        assert(fullFaceDofStencils_ && "fullFaceDofStencils_ has already been called and deleted!");
         return fullFaceDofStencils_.get()[0][idx/*-numElements*/].size();
         // TODO: why does this not work?
     }
 
-    void getFullFaceDofStencils(std::unique_ptr<std::vector<Stencil>>& ptr)
+    /*!
+    * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
+    */
+    auto getFullFaceDofStencilsPtr()
     {
-        std::cout << "before move: ";
-        if(fullFaceDofStencils_)
-            std::cout << "object still there" << std::endl;
-        ptr =  std::move(fullFaceDofStencils_);
-
-        std::cout << "after move: ";
-        if(fullFaceDofStencils_)
-            std::cout << "object still there" << std::endl;
+        assert(fullFaceDofStencils_ && "fullFaceDofStencils_ has already been used and deleted!");
+        return std::move(fullFaceDofStencils_);
     }
 
 

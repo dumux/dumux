@@ -77,16 +77,12 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
                 this->matrix().addindex(globalI, globalJ);
         }
 
-        // TODO: this is a mess. find a better way for the pointer handling!
-        using Stencil = std::vector<IndexType>;
-        std::unique_ptr<std::vector<Stencil>> ptr;
-
-        this->model_().getFullFaceDofStencils(ptr);
+        auto ptr = this->model_().getFullFaceDofStencilsPtr();
 
         if(ptr)
             std::cout << "success!!!" << std::endl;
 
-        auto& fullFaceDofStencils = ptr.get()[0];
+        const auto& fullFaceDofStencils = ptr.get()[0];
 
         int globalI = this->gridView_().size(0);
         for(const auto& stencil : fullFaceDofStencils)

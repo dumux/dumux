@@ -144,16 +144,20 @@ public:
         return this->gridView_().size(0) + this->gridView_().size(1);;
     }
 
-    size_t completeFaceDofStencilSize(const int idx)
+    /*!
+    * \brief Returns the size of a complete face dof stencil
+    */
+    size_t completeFaceDofStencilSize(const int idx) const
     {
         return this->stencilsVector_.completeFaceDofStencilSize(idx);
     }
 
-    template<class Stencil>
-    void getFullFaceDofStencils(std::unique_ptr<std::vector<Stencil>>& ptr)
+    /*!
+    * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
+    */
+    auto getFullFaceDofStencilsPtr()
     {
-        this->stencilsVector_.getFullFaceDofStencils(ptr);
-        // TODO: find better way to do this
+        return this->stencilsVector_.getFullFaceDofStencilsPtr();
     }
 
 };
