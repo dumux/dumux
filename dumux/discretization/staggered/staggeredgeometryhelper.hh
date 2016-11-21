@@ -135,6 +135,7 @@ private:
         {
             data.outerParallelFaceDofIdx = -1;
             data.outerParallelElementDofIdx = -1;
+            data.normalPair.second = -1;
             data.normalDistance = -1;
             data.parallelDistance = -1;
         }
