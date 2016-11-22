@@ -432,6 +432,11 @@ public:
         const Scalar normalMassFlux1 = boundaryVars1.normalVelocity()
                                        * cParams.elemVolVarsCur1[vertInElem1].density();
 
+        if (std::abs(bfNormal1[1]) < 1e-10)
+        {
+            DUNE_THROW(Dune::NotImplemented, "The coupling conditions are not implemented for vertical interfaces.");
+        }
+
         // MASS Balance
         // Neumann-like conditions
         if (cParams.boundaryTypes1.isCouplingNeumann(massBalanceIdx1))

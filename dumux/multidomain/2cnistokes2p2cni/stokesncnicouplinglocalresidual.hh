@@ -158,16 +158,13 @@ public:
                     for (int compIdx = 0; compIdx < numComponents; compIdx++)
                     {
                         int eqIdx =  conti0EqIdx + compIdx;
-                        if (eqIdx != massBalanceIdx)
+                        if ((eqIdx != massBalanceIdx) && bcTypes.isCouplingDirichlet(eqIdx))
                         {
-                            if (bcTypes.isCouplingDirichlet(eqIdx))
-                            {
-                                if(useMoles)
-                                    this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
-                                else
-                                    this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
-                                Valgrind::CheckDefined(this->residual_[scvIdx][compIdx]);
-                            }
+                            if(useMoles)
+                                this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
+                            else
+                                this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
+                            Valgrind::CheckDefined(this->residual_[scvIdx][compIdx]);
                         }
                     }
 
