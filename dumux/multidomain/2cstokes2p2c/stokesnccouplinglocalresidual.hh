@@ -157,10 +157,8 @@ public:
                     // if p.n comes from the pm
                     if (bcTypes.isCouplingNeumann(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
                     {
-                        DimVector pressureCorrection(intersection.centerUnitOuterNormal());
-                        pressureCorrection *= volVars.pressure();
-                        this->residual_[scvIdx][momentumYIdx] += pressureCorrection[momentumYIdx]
-                                                                 * boundaryVars.face().area;
+                        this->residual_[scvIdx][momentumYIdx] += volVars.pressure()
+                                                                 * boundaryVars.face().normal[momentumYIdx];
                         Valgrind::CheckDefined(this->residual_[scvIdx][momentumYIdx]);
                     }
 
