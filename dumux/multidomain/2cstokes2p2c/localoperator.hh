@@ -522,8 +522,8 @@ public:
             // p*A as condition for free flow
             // pressure correction is done in stokeslocalresidual.hh
             couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
-                                    cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2) *
-                                    boundaryVars2.face().area);
+                                    cParams.elemVolVarsCur2[vertInElem2].pressure(nPhaseIdx2)
+                                    * bfNormal1[momentumYIdx1]);
         }
 
         // Dirichlet-like conditions

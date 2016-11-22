@@ -157,7 +157,7 @@ public:
                     // if p.n comes from the pm
                     if (bcTypes.isCouplingNeumann(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
                     {
-                        this->residual_[scvIdx][momentumYIdx] += volVars.pressure()
+                        this->residual_[scvIdx][momentumYIdx] -= volVars.pressure()
                                                                  * boundaryVars.face().normal[momentumYIdx];
                         Valgrind::CheckDefined(this->residual_[scvIdx][momentumYIdx]);
                     }
