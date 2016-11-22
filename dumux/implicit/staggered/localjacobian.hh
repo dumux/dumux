@@ -190,157 +190,157 @@ private:
                                  const bool isGhost)
     {
         // get stencil informations
-        const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
-        const auto numNeighbors = neighborStencil.size();
+//         const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
+//         const auto numNeighbors = neighborStencil.size();
 
         // the localresidual class used for the flux calculations
-        LocalResidual localRes;
-        localRes.init(this->problem_());
-
-        // container to store the neighboring elements
-        std::vector<Element> neighborElements;
-        neighborElements.reserve(numNeighbors);
-
-        // get the elements and calculate the flux into the element in the undeflected state
-        Dune::BlockVector<PrimaryVariables> origFlux(numNeighbors);
-        origFlux = 0.0;
-
-        unsigned int j = 0;
-        for (auto globalJ : neighborStencil)
-        {
-            auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
-            neighborElements.push_back(elementJ);
-
-            for (auto fluxVarIdx : assemblyMap_[globalI_][j])
-            {
-                auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
-            }
-
-            ++j;
-        }
-
-        auto&& scv = fvGeometry.scv(globalI_);
-        auto& curVolVars = getCurVolVars(curElemVolVars, scv);
-        // save a copy of the original vol vars
-        VolumeVariables origVolVars(curVolVars);
-
-        // derivatives in the neighbors with repect to the current elements
-        Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
-        for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-        {
-            // derivatives of element dof with respect to itself
-            PrimaryVariables partialDeriv(0.0);
-
-            if (isGhost)
-                partialDeriv[pvIdx] = 1.0;
-
-            neighborDeriv = 0.0;
-            PrimaryVariables priVars(this->model_().curSol()[globalI_]);
-
-            Scalar eps = this->numericEpsilon(scv, curVolVars, pvIdx);
-            Scalar delta = 0;
-
-            if (numericDifferenceMethod_ >= 0)
-            {
-                // we are not using backward differences, i.e. we need to
-                // calculate f(x + \epsilon)
-
-                // deflect primary variables
-                priVars[pvIdx] += eps;
-                delta += eps;
-
-                // update the volume variables and bind the flux var cache again
-                curVolVars.update(priVars, this->problem_(), element, scv);
-                elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-
-                if (!isGhost)
-                {
-                    // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
-
-                    // store the residual and the storage term
-                    partialDeriv = this->localResidual().residual(0);
-                }
-
-                // calculate the fluxes into element with the deflected primary variables
-                for (std::size_t k = 0; k < numNeighbors; ++k)
-                {
-                    for (auto fluxVarIdx : assemblyMap_[globalI_][k])
-                    {
-                        auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
-                    }
-                }
-            }
-            else
-            {
-                // we are using backward differences, i.e. we don't need
-                // to calculate f(x + \epsilon) and we can recycle the
-                // (already calculated) residual f(x)
-                if (!isGhost)
-                    partialDeriv = this->residual(0);
-                neighborDeriv = origFlux;
-            }
-
-            if (numericDifferenceMethod_ <= 0)
-            {
-                // we are not using forward differences, i.e. we
-                // need to calculate f(x - \epsilon)
-
-                // deflect the primary variables
-                priVars[pvIdx] -= delta + eps;
-                delta += eps;
-
-                // update the volume variables and bind the flux var cache again
-                curVolVars.update(priVars, this->problem_(), element, scv);
-                elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-
-                if (!isGhost)
-                {
-                    // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
-
-                    // subtract the residual from the derivative storage
-                    partialDeriv -= this->localResidual().residual(0);
-                }
-
-                // calculate the fluxes into element with the deflected primary variables
-                for (std::size_t k = 0; k < numNeighbors; ++k)
-                {
-                    for (auto fluxVarIdx : assemblyMap_[globalI_][k])
-                    {
-                        auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
-                    }
-                }
-            }
-            else
-            {
-                // we are using forward differences, i.e. we don't need to
-                // calculate f(x - \epsilon) and we can recycle the
-                // (already calculated) residual f(x)
-                if (!isGhost)
-                    partialDeriv -= this->residual(0);
-                neighborDeriv -= origFlux;
-            }
-
-            // divide difference in residuals by the magnitude of the
-            // deflections between the two function evaluation
-            if (!isGhost)
-                partialDeriv /= delta;
-            neighborDeriv /= delta;
-
-            // restore the original state of the scv's volume variables
-            curVolVars = origVolVars;
-
-            // update the global jacobian matrix with the current partial derivatives
-            this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
-
-            j = 0;
-            for (auto globalJ : neighborStencil)
-                this->updateGlobalJacobian_(matrix, globalJ, globalI_, pvIdx, neighborDeriv[j++]);
-        }
+//         LocalResidual localRes;
+//         localRes.init(this->problem_());
+//
+//         // container to store the neighboring elements
+//         std::vector<Element> neighborElements;
+// //         neighborElements.reserve(numNeighbors);
+//
+//         // get the elements and calculate the flux into the element in the undeflected state
+//         Dune::BlockVector<PrimaryVariables> origFlux(numNeighbors);
+//         origFlux = 0.0;
+//
+//         unsigned int j = 0;
+//         for (auto globalJ : neighborStencil)
+//         {
+//             auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+//             neighborElements.push_back(elementJ);
+//
+//             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
+//             {
+//                 auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+//                 origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
+//             }
+//
+//             ++j;
+//         }
+//
+//         auto&& scv = fvGeometry.scv(globalI_);
+//         auto& curVolVars = getCurVolVars(curElemVolVars, scv);
+//         // save a copy of the original vol vars
+//         VolumeVariables origVolVars(curVolVars);
+//
+//         // derivatives in the neighbors with repect to the current elements
+//         Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
+//         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+//         {
+//             // derivatives of element dof with respect to itself
+//             PrimaryVariables partialDeriv(0.0);
+//
+//             if (isGhost)
+//                 partialDeriv[pvIdx] = 1.0;
+//
+//             neighborDeriv = 0.0;
+//             PrimaryVariables priVars(this->model_().curSol()[globalI_]);
+//
+//             Scalar eps = this->numericEpsilon(scv, curVolVars, pvIdx);
+//             Scalar delta = 0;
+//
+//             if (numericDifferenceMethod_ >= 0)
+//             {
+//                 // we are not using backward differences, i.e. we need to
+//                 // calculate f(x + \epsilon)
+//
+//                 // deflect primary variables
+//                 priVars[pvIdx] += eps;
+//                 delta += eps;
+//
+//                 // update the volume variables and bind the flux var cache again
+//                 curVolVars.update(priVars, this->problem_(), element, scv);
+//                 elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+//
+//                 if (!isGhost)
+//                 {
+//                     // calculate the residual with the deflected primary variables
+//                     this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+//
+//                     // store the residual and the storage term
+//                     partialDeriv = this->localResidual().residual(0);
+//                 }
+//
+//                 // calculate the fluxes into element with the deflected primary variables
+//                 for (std::size_t k = 0; k < numNeighbors; ++k)
+//                 {
+//                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
+//                     {
+//                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+//                         neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
+//                     }
+//                 }
+//             }
+//             else
+//             {
+//                 // we are using backward differences, i.e. we don't need
+//                 // to calculate f(x + \epsilon) and we can recycle the
+//                 // (already calculated) residual f(x)
+//                 if (!isGhost)
+//                     partialDeriv = this->residual(0);
+//                 neighborDeriv = origFlux;
+//             }
+//
+//             if (numericDifferenceMethod_ <= 0)
+//             {
+//                 // we are not using forward differences, i.e. we
+//                 // need to calculate f(x - \epsilon)
+//
+//                 // deflect the primary variables
+//                 priVars[pvIdx] -= delta + eps;
+//                 delta += eps;
+//
+//                 // update the volume variables and bind the flux var cache again
+//                 curVolVars.update(priVars, this->problem_(), element, scv);
+//                 elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+//
+//                 if (!isGhost)
+//                 {
+//                     // calculate the residual with the deflected primary variables
+//                     this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+//
+//                     // subtract the residual from the derivative storage
+//                     partialDeriv -= this->localResidual().residual(0);
+//                 }
+//
+//                 // calculate the fluxes into element with the deflected primary variables
+//                 for (std::size_t k = 0; k < numNeighbors; ++k)
+//                 {
+//                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
+//                     {
+//                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+//                         neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
+//                     }
+//                 }
+//             }
+//             else
+//             {
+//                 // we are using forward differences, i.e. we don't need to
+//                 // calculate f(x - \epsilon) and we can recycle the
+//                 // (already calculated) residual f(x)
+//                 if (!isGhost)
+//                     partialDeriv -= this->residual(0);
+//                 neighborDeriv -= origFlux;
+//             }
+//
+//             // divide difference in residuals by the magnitude of the
+//             // deflections between the two function evaluation
+//             if (!isGhost)
+//                 partialDeriv /= delta;
+//             neighborDeriv /= delta;
+//
+//             // restore the original state of the scv's volume variables
+//             curVolVars = origVolVars;
+//
+//             // update the global jacobian matrix with the current partial derivatives
+//             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
+//
+//             j = 0;
+//             for (auto globalJ : neighborStencil)
+//                 this->updateGlobalJacobian_(matrix, globalJ, globalI_, pvIdx, neighborDeriv[j++]);
+//         }
     }
 
     //! If the global vol vars caching is enabled we have to modify the global volvar object

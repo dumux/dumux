@@ -50,43 +50,50 @@ public:
                 const Element& element,
                 const FVElementGeometry& fvGeometry)
     {
-        elementStencil_.clear();
+
+        const auto globalI = problem.elementMapper().index(element);
+
+        cellCenterToCellCenterStencil_.clear();
+        cellCenterToFaceStencil_.clear();
+
+        // the cell center dof indices
+        cellCenterToCellCenterStencil_.push_back(globalI);
 
         // loop over sub control faces
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            FluxVariables fluxVars;
-            const auto& centerStencil = fluxVars.computeCellCenterStencil(problem, element, fvGeometry, scvf);
-            elementStencil_.insert(elementStencil_.end(), centerStencil.begin(), centerStencil.end());
+            if (!scvf.boundary())
+                cellCenterToCellCenterStencil_.push_back(scvf.outsideScvIdx());
+
+            cellCenterToFaceStencil_.push_back(scvf.dofIndexSelf());
         }
-        // make values in elementstencil unique
-        std::sort(elementStencil_.begin(), elementStencil_.end());
-        elementStencil_.erase(std::unique(elementStencil_.begin(), elementStencil_.end()), elementStencil_.end());
 
-        auto globalI = problem.elementMapper().index(element);
-        neighborStencil_ = elementStencil_;
+        // make values unique
+        std::sort(cellCenterToCellCenterStencil_.begin(), cellCenterToCellCenterStencil_.end());
+        cellCenterToCellCenterStencil_.erase(std::unique(cellCenterToCellCenterStencil_.begin(), cellCenterToCellCenterStencil_.end()), cellCenterToCellCenterStencil_.end());
 
-        // remove the element itself and possible ghost neighbors from the neighbor stencil
-        neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(),
-                                             [globalI](int i){ return (i == globalI); }),
-                               neighborStencil_.end());
+        std::sort(cellCenterToFaceStencil_.begin(), cellCenterToFaceStencil_.end());
+        cellCenterToFaceStencil_.erase(std::unique(cellCenterToFaceStencil_.begin(), cellCenterToFaceStencil_.end()), cellCenterToFaceStencil_.end());
+    }
+
+
+    //! The full element stencil (all element this element is interacting with)
+    const Stencil& cellCenterToCellCenterStencil() const
+    {
+        return cellCenterToCellCenterStencil_;
     }
 
     //! The full element stencil (all element this element is interacting with)
-    const Stencil& elementStencil() const
+    const Stencil& cellCenterToFaceStencil() const
     {
-        return elementStencil_;
+        return cellCenterToFaceStencil_;
     }
 
-    //! The full element stencil without this element
-    const Stencil& neighborStencil() const
-    {
-        return neighborStencil_;
-    }
+
 
 private:
-    Stencil elementStencil_;
-    Stencil neighborStencil_;
+    Stencil cellCenterToCellCenterStencil_;
+    Stencil cellCenterToFaceStencil_;
 };
 
 template<class TypeTag>
@@ -106,23 +113,45 @@ public:
     void update(const Problem& problem,
                 const SubControlVolumeFace& scvf)
     {
-        faceStencil_.clear();
-        FluxVariables fluxVars;
+        faceToCellCenterStencil_.clear();
+        faceToFaceStencil_.clear();
 
-        const auto& faceStencil = fluxVars.computeFaceStencil(problem, scvf);
-        faceStencil_.insert(faceStencil_.end(), faceStencil.begin(), faceStencil.end());
-        std::sort(faceStencil_.begin(), faceStencil_.end());
-        faceStencil_.erase(std::unique(faceStencil_.begin(), faceStencil_.end()), faceStencil_.end());
+        faceToCellCenterStencil_.push_back(scvf.insideScvIdx());
+
+        faceToFaceStencil_.push_back(scvf.dofIndexSelf());
+        faceToFaceStencil_.push_back(scvf.dofIndexOpposite());
+
+        for(const auto& data : scvf.pairData())
+        {
+            const auto& outerParallelElementDofIdx = data.outerParallelElementDofIdx;
+            const auto& outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
+            if(outerParallelElementDofIdx >= 0)
+                faceToCellCenterStencil_.push_back(outerParallelElementDofIdx);
+            if(outerParallelFaceDofIdx >= 0)
+                faceToFaceStencil_.push_back(outerParallelFaceDofIdx);
+
+            faceToFaceStencil_.push_back(data.normalPair.first);
+            if(!scvf.boundary())
+                faceToFaceStencil_.push_back(data.normalPair.second);
+        }
+
     }
 
      //! The full face stencil (all dofs this face is interacting with)
-    const Stencil& faceStencil() const
+    const Stencil& faceToCellCenterStencil() const
     {
-        return faceStencil_;
+        return faceToCellCenterStencil_;
+    }
+
+     //! The full face stencil (all dofs this face is interacting with)
+    const Stencil& faceToFaceStencil() const
+    {
+        return faceToFaceStencil_;
     }
 
 private:
-    Stencil faceStencil_;
+    Stencil faceToCellCenterStencil_;
+    Stencil faceToFaceStencil_;
 };
 
 
@@ -150,11 +179,13 @@ public:
         const IndexType numElements = problem.gridView().size(0);
         const IndexType numFacets = problem.gridView().size(1);
         const IndexType numBoundaryFacets = problem.gridView().grid().numBoundarySegments();
-        elementStencils_.resize(numElements);
+        cellCenterStencils_.resize(numElements);
         faceStencils_.resize(2*numFacets - numBoundaryFacets);
 
-        std::vector<Stencil> fullFaceStencils;
-        fullFaceStencils.resize(numFacets);
+        std::vector<Stencil> fullFaceToCellCenterStencils;
+        fullFaceToCellCenterStencils.resize(numFacets);
+        std::vector<Stencil> fullfaceToFaceStencils;
+        fullfaceToFaceStencils.resize(numFacets);
 
         for (const auto& element : elements(problem.gridView()))
         {
@@ -162,7 +193,7 @@ public:
             // restrict the FvGeometry locally and bind to the element
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element); // for TPFA bind element is enough
-            elementStencils_[eIdx].update(problem, element, fvGeometry);
+            cellCenterStencils_[eIdx].update(problem, element, fvGeometry);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -170,21 +201,28 @@ public:
                 faceStencils_[scvf.index()].update(problem, scvf);
 
                 const IndexType idx = scvf.dofIndexSelf() - numElements;
-                const auto& faceStencil = faceStencils_[scvf.index()].faceStencil();
-                fullFaceStencils[idx].insert(fullFaceStencils[idx].end(), faceStencil.begin(), faceStencil.end());
-                std::sort(fullFaceStencils[idx].begin(), fullFaceStencils[idx].end());
-                fullFaceStencils[idx].erase(std::unique(fullFaceStencils[idx].begin(), fullFaceStencils[idx].end()), fullFaceStencils[idx].end());
+
+                const auto& faceToCellCenterStencil = faceStencils_[scvf.index()].faceToCellCenterStencil();
+                fullFaceToCellCenterStencils[idx].insert(fullFaceToCellCenterStencils[idx].end(), faceToCellCenterStencil.begin(), faceToCellCenterStencil.end());
+                std::sort(fullFaceToCellCenterStencils[idx].begin(), fullFaceToCellCenterStencils[idx].end());
+                fullFaceToCellCenterStencils[idx].erase(std::unique(fullFaceToCellCenterStencils[idx].begin(), fullFaceToCellCenterStencils[idx].end()), fullFaceToCellCenterStencils[idx].end());
+
+                const auto& faceToFaceStencil = faceStencils_[scvf.index()].faceToFaceStencil();
+                fullfaceToFaceStencils[idx].insert(fullfaceToFaceStencils[idx].end(), faceToFaceStencil.begin(), faceToFaceStencil.end());
+                std::sort(fullfaceToFaceStencils[idx].begin(), fullfaceToFaceStencils[idx].end());
+                fullfaceToFaceStencils[idx].erase(std::unique(fullfaceToFaceStencils[idx].begin(), fullfaceToFaceStencils[idx].end()), fullfaceToFaceStencils[idx].end());
             }
         }
         // TODO: is this a good idea?
-        fullFaceDofStencils_ = std::make_unique<decltype(fullFaceStencils)>(fullFaceStencils);
+        fullFaceToCellCenterStencils_ = std::make_unique<decltype(fullFaceToCellCenterStencils)>(fullFaceToCellCenterStencils);
+        fullfaceToFaceStencils_ = std::make_unique<decltype(fullfaceToFaceStencils)>(fullfaceToFaceStencils);
     }
 
 
     //! overload for elements
     auto& get(const Element& entity) const
     {
-        return elementStencils_[problemPtr_->elementMapper().index(entity)];
+        return cellCenterStencils_[problemPtr_->elementMapper().index(entity)];
     }
 
     //! overload for faces
@@ -197,28 +235,49 @@ public:
     /*!
     * \brief Returns the size of a complete face dof stencil
     */
-    size_t completeFaceDofStencilSize(const int idx) const
+    size_t fullFaceToCellCenterStencilSize(const int idx) const
     {
 //         const IndexType numElements = problemPtr_->gridView().size(0);
-        assert(fullFaceDofStencils_ && "fullFaceDofStencils_ has already been called and deleted!");
-        return fullFaceDofStencils_.get()[0][idx/*-numElements*/].size();
+        assert(fullFaceToCellCenterStencils_ && "fullFaceToCellCenterStencils_ has already been called and deleted!");
+        return fullFaceToCellCenterStencils_.get()[0][idx/*-numElements*/].size();
+        // TODO: why does this not work?
+    }
+
+    /*!
+    * \brief Returns the size of a complete face dof stencil
+    */
+    size_t fullfaceToFaceStencilSize(const int idx) const
+    {
+//         const IndexType numElements = problemPtr_->gridView().size(0);
+        assert(fullfaceToFaceStencils_ && "fullfaceToFaceStencils_ has already been called and deleted!");
+        return fullfaceToFaceStencils_.get()[0][idx/*-numElements*/].size();
         // TODO: why does this not work?
     }
 
     /*!
     * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
     */
-    auto getFullFaceDofStencilsPtr()
+    auto getFullFaceToCellCenterStencilsPtr()
     {
-        assert(fullFaceDofStencils_ && "fullFaceDofStencils_ has already been used and deleted!");
-        return std::move(fullFaceDofStencils_);
+        assert(fullFaceToCellCenterStencils_ && "fullFaceToCellCenterStencils_ has already been used and deleted!");
+        return std::move(fullFaceToCellCenterStencils_);
+    }
+
+    /*!
+    * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
+    */
+    auto getFullfaceToFaceStencilsPtr()
+    {
+        assert(fullfaceToFaceStencils_ && "fullfaceToFaceStencils_ has already been used and deleted!");
+        return std::move(fullfaceToFaceStencils_);
     }
 
 
 private:
-    std::vector<StaggeredCellCenterStencils<TypeTag>> elementStencils_;
+    std::vector<StaggeredCellCenterStencils<TypeTag>> cellCenterStencils_;
     std::vector<StaggeredFaceStencils<TypeTag>> faceStencils_;
-    std::unique_ptr<std::vector<Stencil>> fullFaceDofStencils_;
+    std::unique_ptr<std::vector<Stencil>> fullFaceToCellCenterStencils_;
+    std::unique_ptr<std::vector<Stencil>> fullfaceToFaceStencils_;
 
 
     const Problem* problemPtr_;

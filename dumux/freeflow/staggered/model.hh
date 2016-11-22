@@ -143,17 +143,33 @@ public:
     /*!
     * \brief Returns the size of a complete face dof stencil
     */
-    size_t completeFaceDofStencilSize(const int idx) const
+    size_t fullFaceToCellCenterStencilSize(const int idx) const
     {
-        return this->stencilsVector_.completeFaceDofStencilSize(idx);
+        return this->stencilsVector_.fullFaceToCellCenterStencilSize(idx);
+    }
+
+    /*!
+    * \brief Returns the size of a complete face dof stencil
+    */
+    size_t fullfaceToFaceStencilSize(const int idx) const
+    {
+        return this->stencilsVector_.fullfaceToFaceStencilSize(idx);
     }
 
     /*!
     * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
     */
-    auto getFullFaceDofStencilsPtr()
+    auto getFullFaceToCellCenterStencilsPtr()
     {
-        return this->stencilsVector_.getFullFaceDofStencilsPtr();
+        return this->stencilsVector_.getFullFaceToCellCenterStencilsPtr();
+    }
+
+    /*!
+    * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
+    */
+    auto getFullfaceToFaceStencilsPtr()
+    {
+        return this->stencilsVector_.getFullfaceToFaceStencilsPtr();
     }
 
 };

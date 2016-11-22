@@ -50,15 +50,18 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
         {
             // the global index of the element at hand
             const auto globalI = this->elementMapper_().index(element);
-            const auto& stencil = this->model_().stencils(element).elementStencil();
+            const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
+            const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
+            const auto size = cellCenterToCellCenterStencil.size() + cellCenterToFaceStencil.size();
 
-            this->matrix().setrowsize(globalI, stencil.size());
+            this->matrix().setrowsize(globalI, size);
         }
 
         for(int facetIdx = 0; facetIdx < this->gridView_().size(1); ++facetIdx)
         {
             const int faceDofxIdx = facetIdx + this->gridView_().size(0);
-            const int size = this->model_().completeFaceDofStencilSize(facetIdx);
+            auto size = this->model_().fullFaceToCellCenterStencilSize(facetIdx);
+            size += this->model_().fullfaceToFaceStencilSize(facetIdx);
             this->matrix().setrowsize(faceDofxIdx, size);
         }
         this->matrix().endrowsizes();
@@ -70,22 +73,34 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
         {
             // the global index of the element at hand
             const auto globalI = this->elementMapper_().index(element);
-            const auto& stencil = this->model_().stencils(element).elementStencil();
+            const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
+            const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
 
 
-            for (auto&& globalJ : stencil)
+            for (auto&& globalJ : cellCenterToCellCenterStencil)
+                this->matrix().addindex(globalI, globalJ);
+            for (auto&& globalJ : cellCenterToFaceStencil)
                 this->matrix().addindex(globalI, globalJ);
         }
 
-        auto ptr = this->model_().getFullFaceDofStencilsPtr();
+        auto ptr1 = this->model_().getFullFaceToCellCenterStencilsPtr();
+        auto ptr2 = this->model_().getFullfaceToFaceStencilsPtr();
 
-        if(ptr)
+        if(ptr1 && ptr2)
             std::cout << "success!!!" << std::endl;
 
-        const auto& fullFaceDofStencils = ptr.get()[0];
+        const auto& fullFaceToCellCenterStencils = ptr1.get()[0];
+        const auto& fullfaceToFaceStencils = ptr2.get()[0];
 
         int globalI = this->gridView_().size(0);
-        for(const auto& stencil : fullFaceDofStencils)
+        for(const auto& stencil : fullFaceToCellCenterStencils)
+        {
+            for(auto&& globalJ : stencil)
+            this->matrix().addindex(globalI, globalJ);
+            ++globalI;
+        }
+        globalI = this->gridView_().size(0);
+        for(const auto& stencil : fullfaceToFaceStencils)
         {
             for(auto&& globalJ : stencil)
             this->matrix().addindex(globalI, globalJ);
