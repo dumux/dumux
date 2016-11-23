@@ -155,10 +155,6 @@ public:
         porosity_ = problem.spatialParams().porosity(scv);
         Valgrind::CheckDefined(porosity_);
 
-        // permeability
-        permeability_ = problem.spatialParams().intrinsicPermeability(scv);
-        Valgrind::CheckDefined(permeability_);
-
         // energy related quantities not contained in the fluid state
         typename FluidSystem::ParameterCache paramCache;
         asImp_().updateEnergy_(priVars, problem, element, scv);
@@ -235,12 +231,6 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
-    /*!
-     * \brief Returns the permeability within the control volume.
-     */
-    Scalar permeability() const
-    { return permeability_; }
-
 protected:
 
     static Scalar temperature_(const PrimaryVariables &priVars,
@@ -271,7 +261,6 @@ protected:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar permeability_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     FluidState fluidState_;
