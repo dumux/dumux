@@ -23,17 +23,16 @@
 #ifndef DUMUX_DISCRETIZATION_CC_STENCILS_HH
 #define DUMUX_DISCRETIZATION_CC_STENCILS_HH
 
-#include <set>
 #include <dumux/implicit/cellcentered/properties.hh>
 
 namespace Dumux
 {
 
 /*!
- * \brief Element-related stencils
+ * \brief Element-related stencils for symmetric cc methods.
  */
 template<class TypeTag>
-class CCElementStencils
+class CCSymmetricElementStencils
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -44,7 +43,7 @@ class CCElementStencils
     // TODO a separate stencil class all stencils can derive from?
     using Stencil = std::vector<IndexType>;
 public:
-    //! Update the stencil. We expect a bound fvGeometry
+    //! Update the stencil.
     void update(const Problem& problem,
                 const Element& element)
     {
@@ -93,14 +92,14 @@ private:
 
 /*!
  * \ingroup CCModel
- * \brief The global stencil container class
+ * \brief The global stencil container class for symmetric cc methods
  */
 template<class TypeTag>
-class CCStencilsVector
+class CCSymmetricStencilsVector
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using StencilType = CCElementStencils<TypeTag>;
+    using StencilType = CCSymmetricElementStencils<TypeTag>;
 
 public:
     void update(Problem& problem)
@@ -123,7 +122,135 @@ public:
     }
 
 private:
-    std::vector<CCElementStencils<TypeTag>> elementStencils_;
+    std::vector<StencilType> elementStencils_;
+    const Problem* problemPtr_;
+};
+
+//! Forward declaration of the global stencil class for nonsymmetric cc methods
+template<class TypeTag> class CCNonSymmetricStencilsVector;
+
+/*!
+ * \brief Element-related stencils for non-symmetric cc methods
+ */
+template<class TypeTag>
+class CCNonSymmetricElementStencils
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    // TODO a separate stencil class all stencils can derive from?
+    using Stencil = std::vector<IndexType>;
+public:
+    //! Update the stencil. We expect a bound fvGeometry
+    void update(const Problem& problem,
+                const Element& element,
+                CCNonSymmetricStencilsVector<TypeTag>& stencilsVector)
+    {
+        // the element index of our own here
+        auto eIdx = problem.elementMapper().index(element);
+        elementStencil_.clear();
+
+        // restrict the FvGeometry locally and bind to the element
+        auto fvGeometry = localView(problem.model().globalFvGeometry());
+        fvGeometry.bindElement(element);
+
+        // loop over sub control faces
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            FluxVariables fluxVars;
+            const auto& stencil = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
+
+            // insert stencil into the element stencil
+            elementStencil_.insert(elementStencil_.end(), stencil.begin(), stencil.end());
+
+            // insert our index in the neighbor stencils of the elements in the flux stencil
+            for (auto globalI : stencil)
+            {
+                if (globalI != eIdx)
+                    stencilsVector[globalI].addNeighbor(eIdx);
+            }
+        }
+
+        // make values in element stencil unique
+        std::sort(elementStencil_.begin(), elementStencil_.end());
+        elementStencil_.erase(std::unique(elementStencil_.begin(), elementStencil_.end()), elementStencil_.end());
+    }
+
+    //! The full element stencil (all element this element is interacting with)
+    const Stencil& elementStencil() const
+    {
+        return elementStencil_;
+    }
+
+    //! The full element stencil without this element
+    const Stencil& neighborStencil() const
+    {
+        return neighborStencil_;
+    }
+
+    void addNeighbor(const IndexType nIdx)
+    {
+        neighborStencil_.push_back(nIdx);
+    }
+
+    void makeNeighborStencilUnique()
+    {
+        // make values in neighbor stencil unique
+        std::sort(neighborStencil_.begin(), neighborStencil_.end());
+        neighborStencil_.erase(std::unique(neighborStencil_.begin(), neighborStencil_.end()), neighborStencil_.end());
+    }
+
+private:
+    Stencil elementStencil_;
+    Stencil neighborStencil_;
+};
+
+/*!
+ * \ingroup CCModel
+ * \brief The global stencil container class for non-symmetric cc methods
+ */
+template<class TypeTag>
+class CCNonSymmetricStencilsVector
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using StencilType = CCNonSymmetricElementStencils<TypeTag>;
+
+    // The stencil type of an element has to access bracket operator
+    friend StencilType;
+
+public:
+    void update(Problem& problem)
+    {
+        problemPtr_ = &problem;
+        elementStencils_.resize(problem.gridView().size(0));
+        for (const auto& element : elements(problem.gridView()))
+        {
+            auto eIdx = problem.elementMapper().index(element);
+            elementStencils_[eIdx].update(problem, element, *this);
+        }
+
+        for (auto&& stencil : elementStencils_)
+            stencil.makeNeighborStencilUnique();
+    }
+
+    //! overload for elements
+    template <class Entity>
+    typename std::enable_if<Entity::codimension == 0, const StencilType&>::type
+    get(const Entity& entity) const
+    {
+        return elementStencils_[problemPtr_->elementMapper().index(entity)];
+    }
+
+private:
+    StencilType& operator[] (const IndexType globalIdx)
+    { return elementStencils_[globalIdx]; }
+
+    std::vector<StencilType> elementStencils_;
     const Problem* problemPtr_;
 };
 

@@ -30,7 +30,6 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
-#include <dumux/discretization/cellcentered/stencils.hh>
 
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
@@ -44,7 +43,6 @@ namespace Dumux
 // forward declaration
 template<class TypeTag> class CCElementBoundaryTypes;
 template<class TypeTag> class CCLocalResidual;
-template<class TypeTag> class CCStencilsVector;
 
 namespace Properties
 {
@@ -55,13 +53,10 @@ SET_TYPE_PROP(CCModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
 
 //! The local jacobian operator
-SET_TYPE_PROP(CCModel, LocalJacobian, Dumux::CCLocalJacobian<TypeTag>);
+SET_TYPE_PROP(CCModel, LocalJacobian, CCLocalJacobian<TypeTag>);
 
 //! Assembler for the global jacobian matrix
-SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
-
-//! The stencil container
-SET_TYPE_PROP(CCModel, StencilsVector, CCStencilsVector<TypeTag>);
+SET_TYPE_PROP(CCModel, JacobianAssembler, CCAssembler<TypeTag>);
 
 //! The sub control volume
 SET_PROP(CCModel, SubControlVolume)
@@ -71,11 +66,11 @@ private:
     using ScvGeometry = typename Grid::template Codim<0>::Geometry;
     using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
 public:
-    typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
+    using type = CCSubControlVolume<ScvGeometry, IndexType>;
 };
 
 //! The global current volume variables vector class
-SET_TYPE_PROP(CCModel, GlobalVolumeVariables, Dumux::CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(CCModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
