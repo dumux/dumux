@@ -140,52 +140,36 @@ public:
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
             int eIdx = this->elementMapper().index(element);
-
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), element);
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               element,
-                               fvGeometry,
-                               false /* oldSol? */);
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            for (auto&& scv : scvs(fvGeometry))
             {
-                int eIdx = this->elementMapper().index(element);
-                (*rank)[eIdx] = this->gridView_().comm().rank();
+                auto dofIdxGlobal = scv.dofIndex();
+                const auto& volVars = elemVolVars[scv];
 
-                // make sure FVElementGeometry & vol vars are bound to the element
-                auto fvGeometry = localView(this->globalFvGeometry());
-                fvGeometry.bindElement(element);
-
-                auto elemVolVars = localView(this->curGlobalVolVars());
-                elemVolVars.bindElement(element, fvGeometry, this->curSol());
-
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    auto dofIdxGlobal = scv.dofIndex();
-                    const auto& volVars = elemVolVars[scv];
-
-                    (*pw)[dofIdxGlobal] = volVars.pressure(wPhaseIdx);
-                    (*pn)[dofIdxGlobal] = volVars.pressure(nPhaseIdx);
-                    (*pc)[dofIdxGlobal] = volVars.capillaryPressure();
-                    (*sw)[dofIdxGlobal] = volVars.saturation(wPhaseIdx);
-                    (*sn)[dofIdxGlobal] = volVars.saturation(nPhaseIdx);
-                    (*rhoW)[dofIdxGlobal] = volVars.density(wPhaseIdx);
-                    (*rhoN)[dofIdxGlobal] = volVars.density(nPhaseIdx);
-                    (*mobW)[dofIdxGlobal] = volVars.mobility(wPhaseIdx);
-                    (*mobN)[dofIdxGlobal] = volVars.mobility(nPhaseIdx);
-                    (*poro)[dofIdxGlobal] = volVars.porosity();
-                    (*Te)[dofIdxGlobal] = volVars.temperature();
-                }
-
-                // // velocity output
-                // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-                // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                (*pw)[dofIdxGlobal] = volVars.pressure(wPhaseIdx);
+                (*pn)[dofIdxGlobal] = volVars.pressure(nPhaseIdx);
+                (*pc)[dofIdxGlobal] = volVars.capillaryPressure();
+                (*sw)[dofIdxGlobal] = volVars.saturation(wPhaseIdx);
+                (*sn)[dofIdxGlobal] = volVars.saturation(nPhaseIdx);
+                (*rhoW)[dofIdxGlobal] = volVars.density(wPhaseIdx);
+                (*rhoN)[dofIdxGlobal] = volVars.density(nPhaseIdx);
+                (*mobW)[dofIdxGlobal] = volVars.mobility(wPhaseIdx);
+                (*mobN)[dofIdxGlobal] = volVars.mobility(nPhaseIdx);
+                (*poro)[dofIdxGlobal] = volVars.porosity();
+                (*Te)[dofIdxGlobal] = volVars.temperature();
             }
+
+            // // velocity output
+            // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
         }
 
         writer.attachDofData(*sn, "Sn", isBox);
