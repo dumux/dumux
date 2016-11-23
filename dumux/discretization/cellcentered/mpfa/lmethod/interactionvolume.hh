@@ -85,7 +85,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod> : pub
     static const int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using InteractionRegion = InteractionRegion<TypeTag>;
+    using InteractionRegion = Dumux::InteractionRegion<TypeTag>;
 
     using Vector = typename Traits::Vector;
     using Tensor = typename Traits::Tensor;
