@@ -96,7 +96,7 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        //typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
@@ -114,7 +114,6 @@ public:
 
         ScalarField *temperature = writer.allocateManagedBuffer (numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
-        ScalarField *perm = writer.allocateManagedBuffer(numDofs);
         // VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         // VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         // VectorField *velocityG = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
@@ -136,54 +135,36 @@ public:
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            const auto& fvGeometry = this->fvGeometries(element);
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            this->curVolVars_().bindElement(element);
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
-            const auto& fvGeometry = this->fvGeometries(element);
-            for (const auto& scv : fvGeometry.scvs())
+            for (auto&& scv : scvs(fvGeometry))
             {
-                // make sure FVElementGeometry & vol vars are bound to the element
-                auto fvGeometry = localView(this->globalFvGeometry());
-                fvGeometry.bindElement(element);
+                auto eIdx = scv.elementIndex();
+                auto dofIdxGlobal = scv.dofIndex();
+                (*rank)[eIdx] = this->gridView_().comm().rank();
 
-                auto elemVolVars = localView(this->curGlobalVolVars());
-                elemVolVars.bindElement(element, fvGeometry, this->curSol());
+                const auto& volVars = elemVolVars[scv];
 
-                for (auto&& scv : scvs(fvGeometry))
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
                 {
-                    auto eIdx = scv.elementIndex();
-                    auto dofIdxGlobal = scv.dofIndex();
-                    (*rank)[eIdx] = this->gridView_().comm().rank();
-
-                    const auto& volVars = elemVolVars[scv];
-
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
-                    {
-                        (*saturation[phaseIdx])[dofIdxGlobal] = volVars.saturation(phaseIdx);
-                        (*pressure[phaseIdx])[dofIdxGlobal] = volVars.pressure(phaseIdx);
-                        (*density[phaseIdx])[dofIdxGlobal] = volVars.density(phaseIdx);
-                    }
-
-                    (*poro)[dofIdxGlobal] = volVars.porosity();
-                    (*perm)[dofIdxGlobal] = volVars.permeability();
-                    (*temperature)[dofIdxGlobal] = volVars.temperature();
-
-                    // velocity output
-                    // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-                    // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
-                    // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
+                    (*saturation[phaseIdx])[dofIdxGlobal] = volVars.saturation(phaseIdx);
+                    (*pressure[phaseIdx])[dofIdxGlobal] = volVars.pressure(phaseIdx);
+                    (*density[phaseIdx])[dofIdxGlobal] = volVars.density(phaseIdx);
                 }
+
+                (*poro)[dofIdxGlobal] = volVars.porosity();
+                (*temperature)[dofIdxGlobal] = volVars.temperature();
+
+                // velocity output
+                // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
             }
-
-            (*poro)[dofIdxGlobal] = volVars.porosity();
-            (*perm)[dofIdxGlobal] = volVars.permeability();
-            (*temperature)[dofIdxGlobal] = volVars.temperature();
-
-            // velocity output
-            // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
-            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
         }
 
         writer.attachDofData(*saturation[wPhaseIdx], "sw", isBox);
@@ -197,7 +178,6 @@ public:
         writer.attachDofData(*density[gPhaseIdx], "rhog", isBox);
 
         writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*perm, "permeability", isBox);
         writer.attachDofData(*temperature, "temperature", isBox);
 
         // if (velocityOutput.enableOutput()) // check if velocity output is demanded
