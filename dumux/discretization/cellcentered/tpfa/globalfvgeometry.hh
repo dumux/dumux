@@ -278,19 +278,28 @@ public:
             std::vector<IndexType> neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
+
+            unsigned int localFaceIdx = 0;
             for (const auto& intersection : intersections(gridView_, element))
             {
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back(problem.elementMapper().index(intersection.outside()));
+                    auto nIdx = problem.elementMapper().index(intersection.outside());
+                    neighborVolVarIndexSet.push_back(nIdx);
+
+                    // increment counter
+                    localFaceIdx++;
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
                     neighborVolVarIndexSet.push_back(numScvs_ + numBoundaryScvf_++);
+
+                    // increment counter
+                    localFaceIdx++;
                 }
             }
 
