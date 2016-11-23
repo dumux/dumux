@@ -61,6 +61,7 @@
 #include "localjacobian.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
+#include "model.hh"
 
 namespace Dumux {
 
@@ -73,6 +74,10 @@ SET_PROP(StaggeredModel, DiscretizationMethod)
 {
     static const DiscretizationMethods value = DiscretizationMethods::Staggered;
 };
+
+
+SET_TYPE_PROP(StaggeredModel, BaseModel, StaggeredBaseModel<TypeTag>);
+
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(StaggeredModel, GlobalFVGeometry, StaggeredGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
@@ -146,8 +151,39 @@ SET_TYPE_PROP(StaggeredModel, NewtonController, StaggeredNewtonController<TypeTa
 SET_INT_PROP(StaggeredModel, NumEqCellCenter, 1);
 SET_INT_PROP(StaggeredModel, NumEqFace, 1);
 
+//! A vector of primary variables
+SET_TYPE_PROP(StaggeredModel,
+              CellCenterPrimaryVariables,
+              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                GET_PROP_VALUE(TypeTag, NumEqCellCenter)>);
+//! A vector of primary variables
+SET_TYPE_PROP(StaggeredModel,
+              FacePrimaryVariables,
+              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                GET_PROP_VALUE(TypeTag, NumEqFace)>);
+
+//! The type of a solution for the whole grid at a fixed time
+SET_TYPE_PROP(StaggeredModel,
+              CellCenterSolutionVector,
+              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
+
+//! The type of a solution for the whole grid at a fixed time
+SET_TYPE_PROP(StaggeredModel,
+              FaceSolutionVector,
+              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables)>);
+
+//! default property value for the solution vector only used for monolithic solver
+SET_PROP(StaggeredModel, SolutionVector)
+{
+private:
+    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+public:
+    typedef typename Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector> type;
+};
+
 //! Set the type of a global jacobian matrix from the solution types
-SET_PROP(StaggeredModel, JacobianMatrix/*New*/)
+SET_PROP(StaggeredModel, JacobianMatrix)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

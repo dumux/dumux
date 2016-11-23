@@ -57,6 +57,10 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -75,7 +79,7 @@ public:
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(sol[scv.dofIndex()], problem, element, scv);
+                volumeVariables_[scv.index()].update(sol[cellCenterIdx][scv.dofIndex()], problem, element, scv);
 
             // handle the boundary volume variables
             for (auto&& scvf : scvfs(fvGeometry))

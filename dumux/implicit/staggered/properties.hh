@@ -45,6 +45,9 @@ NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(ImplicitBase));
 
 NEW_PROP_TAG(CellCenterPrimaryVariables); //!< A vector of primary variables for cell center dofs
 NEW_PROP_TAG(FacePrimaryVariables); //!< A vector of primary variables for face dofs
+NEW_PROP_TAG(CellCenterSolutionVector); //!< Vector containing all cell centered primary variables
+NEW_PROP_TAG(FaceSolutionVector); //!< Vector containing all face primary variables
+
 
 NEW_PROP_TAG(NumEqCellCenter); //!< Number of equations per cell center dof
 NEW_PROP_TAG(NumEqFace); //!< Number of equations per face dof

@@ -55,6 +55,37 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
+public:
+
+     /*!
+     * \brief Initialize the jacobian assembler.
+     *
+     * At this point we can assume that all objects in the problem and
+     * the model have been allocated. We can not assume that they are
+     * fully initialized, though.
+     *
+     * \param problem The problem object
+     */
+    void init(Problem& problem)
+    {
+        std::cout << "init(Problem& problem)" << std::endl;
+        this->problemPtr_ = &problem;
+
+        // initialize the BCRS matrix
+        createMatrix_();
+
+        // initialize the jacobian matrix with zeros
+        *this->matrix_ = 0;
+
+        // allocate the residual vector
+        this->residual_[cellCenterIdx].resize(problem.model().numCellCenterDofs());
+        this->residual_[faceIdx].resize(problem.model().numFaceDofs());
+//         printmatrix(std::cout, matrix(), "", "");
+    }
+
+
+private:
+
     // Construct the multitype matrix for the global jacobian
     void createMatrix_()
     {

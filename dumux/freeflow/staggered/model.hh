@@ -57,8 +57,11 @@ template<class TypeTag >
 class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry) GlobalFVGeometry;
 //     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum { dim = GridView::dimension };
@@ -69,7 +72,14 @@ class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
 public:
+
+
+
     /*!
      * \brief \copybrief Dumux::ImplicitModel::addOutputVtkFields
      *
@@ -132,61 +142,6 @@ public:
         writer.attachCellData(*rank, "process rank");
     }
 
-     /*!
-     * \brief Returns the number of global degrees of freedoms (DOFs)
-     */
-    size_t numDofs() const
-    {
-        return this->gridView_().size(0) + this->gridView_().size(1);
-    }
-
-     /*!
-     * \brief Returns the number of cell center degrees of freedoms (DOFs)
-     */
-    size_t numCellCenterDofs() const
-    {
-        return this->gridView_().size(0);
-    }
-
-     /*!
-     * \brief Returns the number of cell center degrees of freedoms (DOFs)
-     */
-    size_t numFaceDofs() const
-    {
-        return this->gridView_().size(1);
-    }
-
-    /*!
-    * \brief Returns the size of a complete face dof stencil
-    */
-    size_t fullFaceToCellCenterStencilSize(const int idx) const
-    {
-        return this->stencilsVector_.fullFaceToCellCenterStencilSize(idx);
-    }
-
-    /*!
-    * \brief Returns the size of a complete face dof stencil
-    */
-    size_t fullfaceToFaceStencilSize(const int idx) const
-    {
-        return this->stencilsVector_.fullfaceToFaceStencilSize(idx);
-    }
-
-    /*!
-    * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
-    */
-    auto getFullFaceToCellCenterStencilsPtr()
-    {
-        return this->stencilsVector_.getFullFaceToCellCenterStencilsPtr();
-    }
-
-    /*!
-    * \brief Returns a unique pointer to the complete face dof stencils which is used once for setting up the global matrix and deleted afterwards
-    */
-    auto getFullfaceToFaceStencilsPtr()
-    {
-        return this->stencilsVector_.getFullfaceToFaceStencilsPtr();
-    }
 
 };
 }

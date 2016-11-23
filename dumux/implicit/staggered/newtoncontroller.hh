@@ -49,6 +49,10 @@ class StaggeredNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
 public:
     StaggeredNewtonController(const Problem &problem)
         : ParentType(problem)
@@ -117,6 +121,88 @@ public:
             p.message(e.what());
             throw p;
         }
+    }
+
+        /*!
+     * \brief Update the current solution with a delta vector.
+     *
+     * The error estimates required for the newtonConverged() and
+     * newtonProceed() methods should be updated inside this method.
+     *
+     * Different update strategies, such as line search and chopped
+     * updates can be implemented. The default behavior is just to
+     * subtract deltaU from uLastIter, i.e.
+     * \f[ u^{k+1} = u^k - \Delta u^k \f]
+     *
+     * \param uCurrentIter The solution vector after the current iteration
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The delta as calculated from solving the linear
+     *               system of equations. This parameter also stores
+     *               the updated solution.
+     */
+    void newtonUpdate(SolutionVector &uCurrentIter,
+                      const SolutionVector &uLastIter,
+                      const SolutionVector &deltaU)
+    {
+        if (this->enableShiftCriterion_)
+            this->newtonUpdateShift(uLastIter, deltaU);
+
+        this->writeConvergence_(uLastIter, deltaU);
+
+        if (this->useLineSearch_)
+        {
+            this->lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
+        }
+        else {
+            for (unsigned int i = 0; i < uLastIter[cellCenterIdx].size(); ++i) {
+                uCurrentIter[cellCenterIdx][i] = uLastIter[cellCenterIdx][i];
+                uCurrentIter[cellCenterIdx][i] -= deltaU[cellCenterIdx][i];
+            }
+            for (unsigned int i = 0; i < uLastIter[faceIdx].size(); ++i) {
+                uCurrentIter[faceIdx][i] = uLastIter[faceIdx][i];
+                uCurrentIter[faceIdx][i] -= deltaU[faceIdx][i];
+            }
+
+            if (this->enableResidualCriterion_)
+            {
+                SolutionVector tmp(uLastIter);
+                this->reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                this->reduction_ /= this->initialResidual_;
+            }
+        }
+    }
+
+     /*!
+     * \brief Update the maximum relative shift of the solution compared to
+     *        the previous iteration.
+     *
+     * \param uLastIter The current iterative solution
+     * \param deltaU The difference between the current and the next solution
+     */
+    void newtonUpdateShift(const SolutionVector &uLastIter,
+                           const SolutionVector &deltaU)
+    {
+        this->shift_ = 0;
+
+        for (int i = 0; i < int(uLastIter[cellCenterIdx].size()); ++i) {
+            auto uNewI = uLastIter[cellCenterIdx][i];
+            uNewI -= deltaU[cellCenterIdx][i];
+
+            Scalar shiftAtDof = this->model_().relativeShiftAtDof(uLastIter[cellCenterIdx][i],
+                                                            uNewI);
+            this->shift_ = std::max(this->shift_, shiftAtDof);
+        }
+        for (int i = 0; i < int(uLastIter[faceIdx].size()); ++i) {
+            auto uNewI = uLastIter[faceIdx][i];
+            uNewI -= deltaU[faceIdx][i];
+
+            Scalar shiftAtDof = this->model_().relativeShiftAtDof(uLastIter[faceIdx][i],
+                                                            uNewI);
+            this->shift_ = std::max(this->shift_, shiftAtDof);
+        }
+
+        if (this->gridView_().comm().size() > 1)
+            this->shift_ = this->gridView_().comm().max(this->shift_);
     }
 
 };

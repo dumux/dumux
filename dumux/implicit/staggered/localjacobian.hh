@@ -90,6 +90,10 @@ class StaggeredLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
     using AssemblyMap = std::vector<std::vector<std::vector<IndexType>>>;
 
 public:
@@ -145,14 +149,14 @@ public:
         if (isGhost)
         {
             this->residual_ = 0.0;
-            residual[globalI_] = 0.0;
+            residual[cellCenterIdx][globalI_] = 0.0;
         }
         else
         {
             this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
-            residual[globalI_] = this->localResidual().residual(0);
+            residual[cellCenterIdx][globalI_] = this->localResidual().residual(0);
         }
 
         this->model_().updatePVWeights(fvGeometry);
