@@ -42,6 +42,9 @@ class CCTpfaElementFluxVariablesCache;
 template<class TypeTag>
 class CCTpfaElementFluxVariablesCache<TypeTag, true>
 {
+    // the local jacobian needs to be able to update the cache during assembly
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -67,11 +70,6 @@ public:
               const ElementVolumeVariables& elemVolVars) {}
 
     // Specialization for the global caching being enabled - do nothing here
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars) {}
-
-    // Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
@@ -87,6 +85,11 @@ public:
 
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+
+    // Specialization for the global caching being enabled - do nothing here
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
 };
 
 /*!
@@ -96,6 +99,9 @@ private:
 template<class TypeTag>
 class CCTpfaElementFluxVariablesCache<TypeTag, false>
 {
+    // the local jacobian needs to be able to update the cache during assembly
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -131,15 +137,6 @@ public:
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
-    }
-
-    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
-    {
-        if (solDependentParams)
-            bind(element, fvGeometry, elemVolVars);
     }
 
     // This function is called by the CCLocalResidual before flux calculations during assembly.
@@ -212,6 +209,15 @@ public:
 
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+
+    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        if (solDependentParams)
+            bind(element, fvGeometry, elemVolVars);
+    }
 
     // get index of scvf in the local container
     int getLocalScvfIdx_(const int scvfIdx) const
