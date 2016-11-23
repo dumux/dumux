@@ -123,6 +123,7 @@ class InfiltrationThreePProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -268,6 +269,8 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     PrimaryVariables neumann(const Element &element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);

@@ -82,6 +82,7 @@ class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -148,7 +149,8 @@ public:
      * \param scvIdx The index of the sub-control volume
      * \return Intrinsic permeability
      */
-    const Scalar intrinsicPermeability(const SubControlVolume& scv) const
+    const Scalar intrinsicPermeability(const SubControlVolume& scv,
+                                       const VolumeVariables& volVars) const
     {
         const GlobalPosition &globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
