@@ -424,33 +424,26 @@ private:
     {
         PrimaryVariables totalMass(0);
 
-        for (const auto& element : elements(this->gridView(),Dune::Partitions::interior))
+        for (const auto& element : elements(this->gridView(), Dune::Partitions::interior))
         {
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView(), element);
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            auto elemVolVars = localView(this->model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
             {
-                // get index
-                int dofIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+                const auto& volVars = elemVolVars[scv];
 
-                VolumeVariables volVars;
-                volVars.update(this->model().curSol()[dofIdx],
-                              this->asImp_(),
-                              element,
-                              fvGeometry,
-                              scvIdx,
-                              false);
-
-                Scalar volume = fvGeometry.subContVol[scvIdx].volume;
-
-                totalMass[nPhaseIdx] += volume*volVars.density(nPhaseIdx)
-                                    * volVars.porosity() * volVars.saturation(nPhaseIdx);
-                totalMass[wPhaseIdx] += volume*volVars.density(wPhaseIdx)
-                                    * volVars.porosity() * volVars.saturation(wPhaseIdx);
+                totalMass[nPhaseIdx] += scv.volume()*volVars.density(nPhaseIdx)
+                                        *volVars.porosity()*volVars.saturation(nPhaseIdx);
+                totalMass[wPhaseIdx] += scv.volume()*volVars.density(wPhaseIdx)
+                                        *volVars.porosity()*volVars.saturation(wPhaseIdx);
             }
         }
 
+        // communicate global sum if we are running mpi parallel
         if (this->gridView().comm().size() > 1)
             totalMass = this->gridView().comm().sum(totalMass);
 

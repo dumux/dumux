@@ -87,6 +87,7 @@ class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
     //get the material law from the property system
@@ -130,7 +131,8 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar intrinsicPermeability (const SubControlVolume &scv) const
+    Scalar intrinsicPermeability (const SubControlVolume &scv,
+                                  const VolumeVariables& volVars) const
     {
         if (isInLens_(scv.dofPosition()))
             return lensK_;
