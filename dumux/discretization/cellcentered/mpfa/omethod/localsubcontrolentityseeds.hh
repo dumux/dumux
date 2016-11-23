@@ -32,10 +32,10 @@ template<typename G, typename L>
 class CCMpfaOLocalScvSeed
 {
 public:
-    using GlobalIndexType = G;
-    using LocalIndexType = L;
-    using GlobalIndexSet = std::vector<GlobalIndexType>;
-    using LocalIndexSet = std::vector<LocalIndexType>;
+    using GlobalIndexSet = G;
+    using LocalIndexSet = L;
+    using GlobalIndexType = typename GlobalIndexSet::value_type;
+    using LocalIndexType = typename LocalIndexSet::value_type;
 
     //! constructor fully defining the scv seed
     CCMpfaOLocalScvSeed(GlobalIndexSet&& globalScvfIndices,
@@ -43,8 +43,7 @@ public:
                         GlobalIndexType globalScvIndex)
     : globalScvIndex_(globalScvIndex),
       localScvfIndices_(std::move(localScvfIndices)),
-      globalScvfIndices_(std::move(globalScvfIndices))
-    {}
+      globalScvfIndices_(std::move(globalScvfIndices)) {}
 
     //! Constructor when the local scvf indices are not known at this point
     CCMpfaOLocalScvSeed(GlobalIndexSet&& globalScvfIndices,
@@ -75,60 +74,78 @@ private:
     GlobalIndexSet globalScvfIndices_;
 };
 
-
+/*!
+ * \ingroup Mpfa
+ * \brief Class for a sub-control volume face seed of the mpfa-o method.
+ *
+ * \param G the global index set type
+ * \param L the local index set type
+ */
 template<typename G, typename L>
 class CCMpfaOLocalScvfSeed
 {
 public:
-    using GlobalIndexType = G;
-    using LocalIndexType = L;
-    using GlobalIndexSet = std::vector<GlobalIndexType>;
-    using LocalIndexSet = std::vector<LocalIndexType>;
+    using GlobalIndexSet = G;
+    using LocalIndexSet = L;
+    using GlobalIndexType = typename GlobalIndexSet::value_type;
+    using LocalIndexType = typename LocalIndexSet::value_type;
 
+    //! constructor fully defining the scv face seed
     template<class SubControlVolumeFace>
     CCMpfaOLocalScvfSeed(const SubControlVolumeFace& scvf,
-                         LocalIndexSet&& scvIndicesLocal,
-                         GlobalIndexSet&& scvfIndicesGlobal,
+                         LocalIndexType insideLocalScvIndex,
+                         LocalIndexSet&& outsideLocalScvIndices,
+                         GlobalIndexSet&& outsideGlobalScvfIndices,
                          const MpfaFaceTypes faceType)
     : boundary_(scvf.boundary()),
-      scvIndicesGlobal_({scvf.insideScvIdx(), scvf.outsideScvIdx()}),
-      scvfIndicesGlobal_(std::move(scvfIndicesGlobal)),
-      scvIndicesLocal_(std::move(scvIndicesLocal)),
+      insideScvLocalIdx_(insideLocalScvIndex),
+      outsideLocalScvIndices_(std::move(outsideLocalScvIndices)),
+      insideScvGlobalIdx_(scvf.insideScvIdx()),
+      outsideGlobalScvIndices_(scvf.outsideScvIndices()),
+      insideScvfGlobalIdx_(scvf.index()),
+      outsideGlobalScvfIndices_(std::move(outsideGlobalScvfIndices)),
+      faceType_(faceType) {}
+
+    //! Constructor when the outside indices are not known at this point
+    template<class SubControlVolumeFace>
+    CCMpfaOLocalScvfSeed(const SubControlVolumeFace& scvf,
+                         LocalIndexType insideLocalScvIndex,
+                         const MpfaFaceTypes faceType)
+    : boundary_(scvf.boundary()),
+      insideScvLocalIdx_(insideLocalScvIndex),
+      insideScvGlobalIdx_(scvf.insideScvIdx()),
+      outsideGlobalScvIndices_(scvf.outsideScvIndices()),
+      insideScvfGlobalIdx_(scvf.index()),
       faceType_(faceType)
-    {}
+      {
+        auto size = outsideGlobalScvIndices_.size();
+        outsideLocalScvIndices_.reserve(size);
+        outsideGlobalScvfIndices_.reserve(size);
+      }
 
-    const GlobalIndexSet& globalScvfIndices() const
-    { return scvfIndicesGlobal_; }
+    const GlobalIndexType insideGlobalScvfIndex() const
+    { return insideScvfGlobalIdx_; }
 
-    const LocalIndexSet& localScvIndices() const
-    { return scvIndicesLocal_; }
+    const GlobalIndexSet& outsideGlobalScvfIndices() const
+    { return outsideGlobalScvfIndices_; }
 
-    const GlobalIndexSet& globalScvIndices() const
-    { return scvIndicesGlobal_; }
-
-    LocalIndexType insideLocalScvIndex() const
-    { return scvIndicesLocal_[0]; }
-
-    LocalIndexType outsideLocalScvIndex() const
+    const GlobalIndexType outsideGlobalScvfIndex() const
     {
-        assert(!boundary() && "There is no outside local scv for boundary scvfs");
-        return scvIndicesLocal_[1];
+        assert(outsideGlobalScvfIndices_.size() == 1 && "outside global scvf index not uniquely defined");
+        return outsideGlobalScvfIndices_[0];
     }
 
-    GlobalIndexType insideGlobalScvIndex() const
-    { return scvIndicesGlobal_[0]; }
+    const LocalIndexType insideLocalScvIndex() const
+    { return insideScvLocalIdx_; }
 
-    GlobalIndexType outsideGlobalScvIndex() const
-    { return scvIndicesGlobal_[1]; }
+    const LocalIndexSet& outsideLocalScvIndices() const
+    { return outsideLocalScvIndices_; }
 
-    GlobalIndexType insideGlobalScvfIndex() const
-    { return scvfIndicesGlobal_[0]; }
+    const GlobalIndexType insideGlobalScvIndex() const
+    { return insideScvGlobalIdx_; }
 
-    GlobalIndexType outsideGlobalScvfIndex() const
-    {
-        assert(!boundary() && "There is no outside global scvf for boundary scvfs");
-        return scvfIndicesGlobal_[1];
-    }
+    const GlobalIndexSet& outsideGlobalScvIndices() const
+    { return outsideGlobalScvIndices_; }
 
     MpfaFaceTypes faceType() const
     { return faceType_; }
@@ -136,11 +153,37 @@ public:
     bool boundary() const
     { return boundary_; }
 
+    void addOutsideScvfIndex(const GlobalIndexType index)
+    {
+        outsideGlobalScvfIndices_.push_back(index);
+    }
+
+    void addOutsideLocalScvIndex(const LocalIndexType index)
+    {
+        outsideLocalScvIndices_.push_back(index);
+    }
+
+    void makeOutsideDataUnique()
+    {
+        std::sort(outsideGlobalScvfIndices_.begin(), outsideGlobalScvfIndices_.end());
+        outsideGlobalScvfIndices_.erase(std::unique(outsideGlobalScvfIndices_.begin(), outsideGlobalScvfIndices_.end()), outsideGlobalScvfIndices_.end());
+
+        std::sort(outsideLocalScvIndices_.begin(), outsideLocalScvIndices_.end());
+        outsideLocalScvIndices_.erase(std::unique(outsideLocalScvIndices_.begin(), outsideLocalScvIndices_.end()), outsideLocalScvIndices_.end());
+    }
+
 private:
     bool boundary_;
-    GlobalIndexSet scvIndicesGlobal_;
-    GlobalIndexSet scvfIndicesGlobal_;
-    LocalIndexSet scvIndicesLocal_;
+
+    LocalIndexType insideScvLocalIdx_;
+    LocalIndexSet outsideLocalScvIndices_;
+
+    GlobalIndexType insideScvGlobalIdx_;
+    GlobalIndexSet outsideGlobalScvIndices_;
+
+    GlobalIndexType insideScvfGlobalIdx_;
+    GlobalIndexSet outsideGlobalScvfIndices_;
+
     MpfaFaceTypes faceType_;
 };
 } // end namespace

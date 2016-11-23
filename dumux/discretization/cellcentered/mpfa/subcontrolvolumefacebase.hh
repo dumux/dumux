@@ -60,25 +60,28 @@ public:
      * \param vIdxGlobal The global vertex index the scvf is connected to
      * \param localIndex Some element local index (the local vertex index in mpfao-fps)
      * \param scvfIndex The global index of this scv face
-     * \param scvIndices The inside and outside scv indices connected to this face
+     * \param insideScvIdx The inside scv index connected to this face
+     * \param outsideScvIndices The outside scv indices connected to this face
      * \param q The parameterization of the quadrature point on the scvf for flux calculation
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
-    template<class MpfaGeometryHelper>
-    CCMpfaSubControlVolumeFaceBase(const MpfaGeometryHelper& geomHelper,
+    template<class MpfaHelper>
+    CCMpfaSubControlVolumeFaceBase(const MpfaHelper& helper,
                                    std::vector<GlobalPosition>&& corners,
                                    GlobalPosition&& unitOuterNormal,
                                    IndexType vertexIndex,
                                    unsigned int localIndex,
                                    IndexType scvfIndex,
-                                   std::array<IndexType, 2>&& scvIndices,
+                                   IndexType insideScvIdx,
+                                   const std::vector<IndexType>& outsideScvIndices,
                                    Scalar q,
                                    bool boundary)
     : ParentType(),
       boundary_(boundary),
       vertexIndex_(vertexIndex),
       scvfIndex_(scvfIndex),
-      scvIndices_(std::move(scvIndices)),
+      insideScvIdx_(insideScvIdx),
+      outsideScvIndices_(outsideScvIndices),
       corners_(std::move(corners)),
       center_(0.0),
       unitOuterNormal_(std::move(unitOuterNormal))
@@ -86,8 +89,8 @@ public:
             for (const auto& corner : corners_)
                 center_ += corner;
             center_ /= corners_.size();
-            ipGlobal_ = geomHelper.getScvfIntegrationPoint(corners_, q);
-            area_ = geomHelper.getScvfArea(corners_);
+            ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
+            area_ = helper.getScvfArea(corners_);
       }
 
     //! The center of the sub control volume face
@@ -111,11 +114,20 @@ public:
 
     //! index of the inside sub control volume for spatial param evaluation
     IndexType insideScvIdx() const
-    { return scvIndices_[0]; }
+    { return insideScvIdx_; }
 
     //! index of the outside sub control volume for spatial param evaluation
+    //! returns in undefined behaviour is boundary is true
+    //! is not uniquely defined for grids where dim < dimWorld and shouldn't be used in that case.
     IndexType outsideScvIdx() const
-    { return scvIndices_[1]; }
+    {
+        assert(outsideScvIndices_.size() == 1 && "outside scv index not uniquely defined");
+        return outsideScvIndices_[0];
+    }
+
+    //! returns the outside scv indices (can be more than one index for dim < dimWorld)
+    std::vector<IndexType> outsideScvIndices() const
+    { return outsideScvIndices_; }
 
     //! The global index of this sub control volume face
     IndexType index() const
@@ -152,7 +164,8 @@ private:
     bool boundary_;
     IndexType vertexIndex_;
     IndexType scvfIndex_;
-    std::array<IndexType, 2> scvIndices_;
+    IndexType insideScvIdx_;
+    std::vector<IndexType> outsideScvIndices_;
 
     std::vector<GlobalPosition> corners_;
     GlobalPosition center_;

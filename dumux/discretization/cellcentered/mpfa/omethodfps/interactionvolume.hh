@@ -67,6 +67,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
     using LocalScvfType = typename Traits::LocalScvfType;
 
     static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
     using CoordScalar = typename GridView::ctype;
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -74,8 +75,8 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename LocalScvType::Geometry::JacobianInverseTransposed;
 
-    using GlobalPosition = typename Traits::GlobalPosition;
     using LocalPosition = typename LocalScvType::Geometry::LocalCoordinate;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DynamicVector = typename Traits::Vector;
     using DynamicMatrix = typename Traits::Matrix;
     using Tensor = typename Traits::Tensor;
@@ -101,7 +102,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
 
 public:
     using typename ParentType::LocalIndexType;
-    using typename ParentType::LocalIndexPair;
+    using typename ParentType::LocalFaceData;
     using typename ParentType::Seed;
 
     CCMpfaInteractionVolumeImplementation(const Seed& seed,
@@ -234,34 +235,36 @@ private:
                              LocalMatrixContainer& mc)
     {
         // get diffusion tensor in "negative" sub volume
-        const auto localScvIdx = localScvf.outsideLocalScvIndex();
-        const auto& localScv = this->localScv_(localScvIdx);
-        const auto& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
-        const auto& element = this->localElement_(localScvIdx);;
-        auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
+        for (auto localScvIdx : localScvf.outsideLocalScvIndices())
+        {
+            const auto& localScv = this->localScv_(localScvIdx);
+            const auto& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
+            const auto& element = this->localElement_(localScvIdx);;
+            auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
 
-        // the local finite element bases of the scvs
-        const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
+            // the local finite element bases of the scvs
+            const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
 
-        // the normal and local integration point
-        // On the ref element, normal vector points in the direction of local coordinate
-        auto normalDir = localScv.getScvfIdxInScv(localScvfIdx);
-        auto ipLocal = localScv.geometry().local(localScvf.ip());
+            // the normal and local integration point
+            // On the ref element, normal vector points in the direction of local coordinate
+            auto normalDir = localScv.getScvfIdxInScv(localScvfIdx);
+            auto ipLocal = localScv.geometry().local(localScvf.ip());
 
-        // find normals and integration points in the two scvs for condition of zero divergence
-        LocalIndexType divEqNormalDir = normalDir == 1 ? 0 : 1;
-        LocalPosition divEqIpLocal(0.0);
-        divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
-        divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
+            // find normals and integration points in the two scvs for condition of zero divergence
+            LocalIndexType divEqNormalDir = normalDir == 1 ? 0 : 1;
+            LocalPosition divEqIpLocal(0.0);
+            divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
+            divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
 
-        // does the face has an unknown associated with it?
-        bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
+            // does the face has an unknown associated with it?
+            bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
 
-        // assemble coefficients for the face fluxes
-        addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace, true);
+            // assemble coefficients for the face fluxes
+            addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace, true);
 
-        // assemble matrix entries for the condition of zero divergence
-        addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir, mc);
+            // assemble matrix entries for the condition of zero divergence
+            addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir, mc);
+        }
     }
 
     void addFaceFluxCoefficients_(const LocalScvType& localScv,

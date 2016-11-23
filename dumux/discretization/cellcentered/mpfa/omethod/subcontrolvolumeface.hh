@@ -47,7 +47,7 @@ class CCMpfaSubControlVolumeFace<MpfaMethods::oMethod, G, I> : public CCMpfaSubC
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    //! We do not use the vertexIndexInElement variable.
+    //! We do not use the localIndex variable.
     //! It is here to satisfy the general mpfa scvf interface.
     template<class MpfaGeometryHelper>
     CCMpfaSubControlVolumeFace(const MpfaGeometryHelper& geomHelper,
@@ -56,19 +56,20 @@ public:
                                IndexType vertexIndex,
                                unsigned int localIndex,
                                IndexType scvfIndex,
-                               std::array<IndexType, 2>&& scvIndices,
+                               IndexType insideScvIdx,
+                               const std::vector<IndexType>& outsideScvIndices,
                                Scalar q,
                                bool boundary)
     : ParentType(geomHelper,
-                 std::move(corners),
-                 std::move(unitOuterNormal),
+                 std::forward<std::vector<GlobalPosition>>(corners),
+                 std::forward<GlobalPosition>(unitOuterNormal),
                  vertexIndex,
                  localIndex,
                  scvfIndex,
-                 std::move(scvIndices),
+                 insideScvIdx,
+                 outsideScvIndices,
                  q,
-                 boundary)
-      {}
+                 boundary) {}
 };
 
 } // end namespace

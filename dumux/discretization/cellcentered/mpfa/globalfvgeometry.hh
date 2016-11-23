@@ -25,14 +25,23 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_GLOBALFVGEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_GLOBALFVGEOMETRY_HH
 
+#include <dumux/discretization/cellcentered/mpfa/globalfvgeometrybase.hh>
 #include "methods.hh"
 
 namespace Dumux
 {
-//! forward declaration of the method-specific specialization
+//! Forward declaration of the method-specific specialization
+//! By default, the methods simply inherit from the base class
+//! Methods that use a different implementation have to provide this below
 template<class TypeTag, MpfaMethods method, bool EnableFVElementGeometryCache>
-class CCMpfaGlobalFVGeometryImplementation
-{};
+class CCMpfaGlobalFVGeometryImplementation : public CCMpfaGlobalFVGeometryBase<TypeTag, EnableFVElementGeometryCache>
+{
+    using ParentType = CCMpfaGlobalFVGeometryBase<TypeTag, EnableFVElementGeometryCache>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+public:
+    CCMpfaGlobalFVGeometryImplementation(const GridView& gridView) : ParentType(gridView) {}
+};
 
 /*!
  * \ingroup ImplicitModel
@@ -45,8 +54,6 @@ using CCMpfaGlobalFVGeometry = CCMpfaGlobalFVGeometryImplementation<TypeTag, GET
 
 } // end namespace
 
-// the specializations of this class for the available methods have to be included here
-#include <dumux/discretization/cellcentered/mpfa/omethod/globalfvgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/globalfvgeometry.hh>
+// further specializations of this class for the available methods have to be included here
 
 #endif

@@ -29,9 +29,7 @@ namespace Dumux
     {
         interior,
         neumann,
-        dirichlet,
-        interiorNeumann,
-        interiorDirichlet
+        dirichlet
     };
 } // end namespace
 

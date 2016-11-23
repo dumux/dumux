@@ -33,6 +33,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 
 namespace Dumux
@@ -53,6 +54,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -63,6 +65,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
+
+    static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
 public:
 
@@ -79,19 +83,10 @@ public:
         const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions(phaseIdx);
         const auto& tij = fluxVarsCache.advectionTij(phaseIdx);
 
-        // interface density as arithmetic mean of the two neighbors (when gravity is on)
+        // interface density as arithmetic mean of the neighbors (when gravity is on)
         Scalar rho;
         if (gravity)
-        {
-            if (!scvf.boundary())
-            {
-                rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
-                rho += elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
-                rho /= 2.0;
-            }
-            else
-                rho = elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
-        }
+            rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
 
         // calculate Tij*pj
         Scalar flux(0.0);
@@ -110,7 +105,6 @@ public:
 
                 h -= rho*(g*x);
             }
-
             flux += tij[localIdx++]*h;
         }
 
@@ -129,6 +123,27 @@ public:
             return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
         else
             return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
+    }
+
+private:
+    static Scalar interpolateDensity(const ElementVolumeVariables& elemVolVars,
+                                     const SubControlVolumeFace& scvf,
+                                     const unsigned int phaseIdx)
+    {
+        // use arithmetic mean of the densities around the scvf
+        if (!scvf.boundary())
+        {
+            const auto& outsideScvIndices = scvf.outsideScvIndices();
+
+            Scalar rho = elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
+            for (auto outsideIdx : outsideScvIndices)
+                rho += elemVolVars[outsideIdx].density(phaseIdx);
+            rho /= outsideScvIndices.size();
+
+            return rho;
+        }
+        else
+            return elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
     }
 };
 

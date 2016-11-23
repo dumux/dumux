@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_FPS_SUBCONTROLVOLUMEFACE_HH
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/subcontrolvolumeface.hh>
+#include <dumux/discretization/cellcentered/mpfa/subcontrolvolumefacebase.hh>
 
 namespace Dumux
 {
@@ -34,9 +34,9 @@ namespace Dumux
  * \brief Class for a sub control volume face in the mpfao-fps method.
  */
 template<class G, typename I>
-class CCMpfaSubControlVolumeFace<MpfaMethods::oMethodFps, G, I> : public CCMpfaSubControlVolumeFace<MpfaMethods::oMethod, G, I>
+class CCMpfaSubControlVolumeFace<MpfaMethods::oMethodFps, G, I> : public CCMpfaSubControlVolumeFaceBase<G, I>
 {
-    using ParentType = CCMpfaSubControlVolumeFace<MpfaMethods::oMethod, G, I>;
+    using ParentType = CCMpfaSubControlVolumeFaceBase<G, I>;
     using Geometry = G;
     using IndexType = I;
 
@@ -47,23 +47,25 @@ class CCMpfaSubControlVolumeFace<MpfaMethods::oMethodFps, G, I> : public CCMpfaS
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    template<class MpfaGeometryHelper>
-    CCMpfaSubControlVolumeFace(const MpfaGeometryHelper& geomHelper,
+    template<class MpfaHelper>
+    CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
                                std::vector<GlobalPosition>&& corners,
                                GlobalPosition&& unitOuterNormal,
                                IndexType vIdxGlobal,
                                unsigned int vIdxLocal,
                                IndexType scvfIndex,
-                               std::array<IndexType, 2>&& scvIndices,
+                               IndexType insideScvIdx,
+                               const std::vector<IndexType>& outsideScvIndices,
                                Scalar q,
                                bool boundary)
-    : ParentType(geomHelper,
+    : ParentType(helper,
                  std::move(corners),
                  std::move(unitOuterNormal),
                  vIdxGlobal,
                  vIdxLocal,
                  scvfIndex,
-                 std::move(scvIndices),
+                 insideScvIdx,
+                 outsideScvIndices,
                  q,
                  boundary),
       vIdxInElement_(vIdxLocal)

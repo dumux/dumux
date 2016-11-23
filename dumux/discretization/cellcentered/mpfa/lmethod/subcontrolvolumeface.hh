@@ -18,30 +18,25 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class for an MPFA-O sub control volume face
+ * \brief Class for an mpfa-o sub control volume face
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_L_SUBCONTROLVOLUMEFACE_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_L_SUBCONTROLVOLUMEFACE_HH
 
-#include "methods.hh"
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/subcontrolvolumefacebase.hh>
 
 namespace Dumux
 {
-//! Forward declaration of the method specific implementations
-//! Available implementations have to be included at the end of this file.
-template<MpfaMethods M, class G, typename I>
-class CCMpfaSubControlVolumeFaceImplementation;
 
 /*!
  * \ingroup Discretization
- * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
- *        of a control volume we compute fluxes on. This class inherits from the actual implementations
- *        and defines the constructor interface.
+ * \brief Class for a sub control volume face in the mpfa-l method. We simply inherit from the base class here.
  */
-template<MpfaMethods M, class G, typename I>
-class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementation<M, G, I>
+template<class G, typename I>
+class CCMpfaSubControlVolumeFace<MpfaMethods::lMethod, G, I> : public CCMpfaSubControlVolumeFaceBase<G, I>
 {
-    using ParentType = CCMpfaSubControlVolumeFaceImplementation<M, G, I>;
+    using ParentType = CCMpfaSubControlVolumeFaceBase<G, I>;
     using Geometry = G;
     using IndexType = I;
 
@@ -52,28 +47,13 @@ class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementati
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
-    /*!
-     * \brief Constructor
-     *
-     * We do not use the localIndex here. Its meaning can vary depending on the
-     * implementation (i.e. mpfa method) and is handled by the implementation itself.
-     *
-     * \param geomHelper The mpfa geometry helper
-     * \param corners The corners of the scv face
-     * \param unitOuterNormal The unit outer normal vector of the scvf
-     * \param vIdxGlobal The global vertex index the scvf is connected to
-     * \param localIndex Some element local index (the local vertex index in mpfao-fps)
-     * \param scvfIndex The global index of this scv face
-     * \param insideScvIdx The inside scv index connected to this face
-     * \param outsideScvIndices The outside scv indices connected to this face
-     * \param q The parameterization of the quadrature point on the scvf for flux calculation
-     * \param boundary Boolean to specify whether or not the scvf is on a boundary
-     */
+    //! We do not use the localIndex variable.
+    //! It is here to satisfy the general mpfa scvf interface.
     template<class MpfaHelper>
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
                                std::vector<GlobalPosition>&& corners,
                                GlobalPosition&& unitOuterNormal,
-                               IndexType vIdxGlobal,
+                               IndexType vertexIndex,
                                unsigned int localIndex,
                                IndexType scvfIndex,
                                IndexType insideScvIdx,
@@ -81,22 +61,17 @@ public:
                                Scalar q,
                                bool boundary)
     : ParentType(helper,
-                 std::forward<std::vector<GlobalPosition>>(corners),
-                 std::forward<GlobalPosition>(unitOuterNormal),
-                 vIdxGlobal,
+                 std::move(corners),
+                 std::move(unitOuterNormal),
+                 vertexIndex,
                  localIndex,
                  scvfIndex,
                  insideScvIdx,
                  outsideScvIndices,
-                 q,
-                 boundary)
-    {}
+                 0.0, // q should be always zero for the mpfa-l method,
+                 boundary) {}
 };
-} // end namespace
 
-//! The available implementations should be included here
-#include <dumux/discretization/cellcentered/mpfa/lmethod/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/subcontrolvolumeface.hh>
+} // end namespace
 
 #endif

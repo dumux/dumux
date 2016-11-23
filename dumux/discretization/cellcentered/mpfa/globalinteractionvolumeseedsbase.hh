@@ -35,6 +35,10 @@ namespace Dumux
 template<class TypeTag>
 class CCMpfaGlobalInteractionVolumeSeedsBase
 {
+    using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalInteractionVolumeSeeds);
+    // the actual implementation needs to be friend
+    friend Implementation;
+
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -58,12 +62,12 @@ public:
         seeds_.clear();
         boundarySeeds_.clear();
 
-        // -1 indicates that the scvf has not been handled yet
         auto numScvf = problem_().model().globalFvGeometry().numScvf();
-        scvfIndexMap_.resize(numScvf, -1);
+        scvfIndexMap_.resize(numScvf);
+        std::vector<bool> isFaceHandled(numScvf, false);
 
-        // detect and handle the boundary first
-        initializeSeeds_(boundaryVertices);
+        // initialize the seeds according to the mpfa method
+        asImp_().initializeSeeds_(boundaryVertices, isFaceHandled);
     }
 
     const InteractionVolumeSeed& seed(const SubControlVolumeFace& scvf) const
@@ -74,7 +78,8 @@ public:
 
 private:
 
-    void initializeSeeds_(std::vector<bool>& boundaryVertices)
+    void initializeSeeds_(std::vector<bool>& boundaryVertices,
+                          std::vector<bool>& isFaceHandled)
     {
         const auto numScvf = problem_().model().globalFvGeometry().numScvf();
         const auto numBoundaryScvf = problem_().model().globalFvGeometry().numBoundaryScvf();
@@ -92,7 +97,7 @@ private:
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 // skip the rest if we already handled this face
-                if (scvfIndexMap_[scvf.index()] != -1)
+                if (isFaceHandled[scvf.index()])
                     continue;
 
                 if (boundaryVertices[scvf.vertexIndex()])
@@ -102,7 +107,10 @@ private:
 
                     // update the index map entries for the global scv faces in the interaction volume
                     for (auto scvfIdxGlobal : boundarySeeds_.back().globalScvfIndices())
+                    {
                         scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
+                        isFaceHandled[scvfIdxGlobal] = true;
+                    }
 
                     // increment counter
                     boundarySeedIndex++;
@@ -114,7 +122,10 @@ private:
 
                     // update the index map entries for the global scv faces in the interaction volume
                     for (auto scvfIdxGlobal : seeds_.back().globalScvfIndices())
+                    {
                         scvfIndexMap_[scvfIdxGlobal] = seedIndex;
+                        isFaceHandled[scvfIdxGlobal] = true;
+                    }
 
                     // increment counter
                     seedIndex++;
@@ -129,6 +140,12 @@ private:
 
     const Problem& problem_() const
     { return *problemPtr_; }
+
+    const Implementation& asImp_() const
+    { return *static_cast<Implementation*>(this); }
+
+    Implementation& asImp_()
+    { return *static_cast<Implementation*>(this); }
 
     const Problem* problemPtr_;
     GridView gridView_;

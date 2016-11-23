@@ -91,6 +91,7 @@ class CCMpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
@@ -114,7 +115,7 @@ public:
               const SolutionVector& sol)
     {
         const auto& problem = globalVolVars().problem_();
-        auto eIdx = problem.elementMapper().index(element);
+        const auto& globalFvGeometry = problem.model().globalFvGeometry();
 
         // stencil information
         const auto& neighborStencil = problem.model().stencils(element).neighborStencil();
@@ -126,6 +127,7 @@ public:
         int localIdx = 0;
 
         // update the volume variables of the element at hand
+        auto eIdx = problem.elementMapper().index(element);
         auto&& scvI = fvGeometry.scv(eIdx);
         volumeVariables_[localIdx].update(sol[eIdx], problem, element, scvI);
         volVarIndices_[localIdx] = scvI.index();
@@ -134,86 +136,92 @@ public:
         // Update the volume variables of the neighboring elements
         for (auto globalJ : neighborStencil)
         {
-            const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            const auto& elementJ = globalFvGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
             volumeVariables_[localIdx].update(sol[globalJ], problem, elementJ, scvJ);
             volVarIndices_[localIdx] = scvJ.index();
             ++localIdx;
         }
 
-        std::size_t neighborScvfEstimate = neighborStencil.size()*dim*(2*dim-2);
-        std::vector<IndexType> finishedBoundaries;
-        finishedBoundaries.reserve(neighborScvfEstimate);
+        // if the element is connected to a boundary, additionally prepare BCs
+        bool boundary = element.hasBoundaryIntersections();
+        if (!boundary)
+            for (auto&& scvf : scvfs(fvGeometry))
+                if (globalFvGeometry.scvfTouchesBoundary(scvf))
+                {
+                    boundary = true;
+                    break;
+                }
 
-        // if the element is connected to a boundary, additionally treat the BC
-        if (element.hasBoundaryIntersections())
+        if (boundary)
         {
-            // reserve enough space for the boundary volume variables
-            volumeVariables_.reserve(numDofs+neighborScvfEstimate);
-            volVarIndices_.reserve(numDofs+neighborScvfEstimate);
+            // reserve memory (12 is the case of 3d hexahedron with one face on boundary)
+            std::size_t estimate = 12;
+            std::vector<IndexType> finishedBoundaries;
+            finishedBoundaries.reserve(estimate);
+            volumeVariables_.reserve(numDofs+estimate);
+            volVarIndices_.reserve(numDofs+estimate);
 
+            // treat the BCs inside the element
+            if (element.hasBoundaryIntersections())
+            {
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    // if we are not on a boundary, skip to the next scvf
+                    if (!scvf.boundary())
+                        continue;
+
+                    // boundary volume variables
+                    VolumeVariables dirichletVolVars;
+                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
+                    dirichletVolVars.update(dirichletPriVars, problem, element, scvI);
+                    volumeVariables_.emplace_back(std::move(dirichletVolVars));
+
+                    // boundary vol var index
+                    auto bVolVarIdx = scvf.outsideScvIdx();
+                    volVarIndices_.push_back(bVolVarIdx);
+                    finishedBoundaries.push_back(bVolVarIdx);
+                }
+            }
+
+            // Update boundary volume variables in the neighbors
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                // if we are not on a boundary, skip to the next scvf
-                if (!scvf.boundary())
+                // skip the rest if the scvf does not touch a boundary
+                if (!globalFvGeometry.scvfTouchesBoundary(scvf))
                     continue;
 
-                // boundary volume variables
-                VolumeVariables dirichletVolVars;
-                const auto dirichletPriVars = problem.dirichlet(element, scvf);
-                dirichletVolVars.update(dirichletPriVars, problem, element, scvI);
-                volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                // loop over all the scvfs in the interaction region
+                const auto& ivSeed = globalFvGeometry.boundaryInteractionVolumeSeed(scvf);
+                for (auto scvfIdx : ivSeed.globalScvfIndices())
+                {
+                    auto&& ivScvf = fvGeometry.scvf(scvfIdx);
 
-                // boundary vol var index
-                auto bVolVarIdx = scvf.outsideScvIdx();
-                volVarIndices_.push_back(bVolVarIdx);
-                finishedBoundaries.push_back(bVolVarIdx);
+                    if (!ivScvf.boundary() || MpfaHelper::contains(finishedBoundaries, ivScvf.outsideScvIdx()))
+                        continue;
+
+                    // that means we are on a not yet handled boundary scvf
+                    auto insideScvIdx = ivScvf.insideScvIdx();
+                    auto&& ivScv = fvGeometry.scv(insideScvIdx);
+                    auto ivElement = globalFvGeometry.element(insideScvIdx);
+
+                    // boundary volume variables
+                    VolumeVariables dirichletVolVars;
+                    const auto dirichletPriVars = problem.dirichlet(ivElement, ivScvf);
+                    dirichletVolVars.update(dirichletPriVars, problem, ivElement, ivScv);
+                    volumeVariables_.emplace_back(std::move(dirichletVolVars));
+
+                    // boundary vol var index
+                    auto bVolVarIdx = ivScvf.outsideScvIdx();
+                    volVarIndices_.push_back(bVolVarIdx);
+                    finishedBoundaries.push_back(bVolVarIdx);
+                }
             }
+
+            // free unused memory
+            volumeVariables_.shrink_to_fit();
+            volVarIndices_.shrink_to_fit();
         }
-
-        // Update boundary volume variables in the neighbors
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            // reserve enough space for the boundary volume variables
-            volumeVariables_.reserve(numDofs+neighborScvfEstimate);
-            volVarIndices_.reserve(numDofs+neighborScvfEstimate);
-
-            // skip the rest if the scvf does not touch a boundary
-            const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
-            if (!boundary)
-                continue;
-
-            // loop over all the scvfs in the interaction region
-            const auto& ivSeed = globalFvGeometry.boundaryInteractionVolumeSeed(scvf);
-            for (auto scvfIdx : ivSeed.globalScvfIndices())
-            {
-                auto&& ivScvf = fvGeometry.scvf(scvfIdx);
-
-                if (!ivScvf.boundary() || contains(ivScvf.outsideScvIdx(), finishedBoundaries))
-                    continue;
-
-                // that means we are on a not yet handled boundary scvf
-                auto insideScvIdx = ivScvf.insideScvIdx();
-                auto&& ivScv = fvGeometry.scv(insideScvIdx);
-                auto ivElement = globalFvGeometry.element(insideScvIdx);
-
-                // boundary volume variables
-                VolumeVariables dirichletVolVars;
-                const auto dirichletPriVars = problem.dirichlet(ivElement, ivScvf);
-                dirichletVolVars.update(dirichletPriVars, problem, ivElement, ivScv);
-                volumeVariables_.emplace_back(std::move(dirichletVolVars));
-
-                // boundary vol var index
-                auto bVolVarIdx = ivScvf.outsideScvIdx();
-                volVarIndices_.push_back(bVolVarIdx);
-                finishedBoundaries.push_back(bVolVarIdx);
-            }
-        }
-
-        // free unused memory
-        volumeVariables_.shrink_to_fit();
-        volVarIndices_.shrink_to_fit();
     }
 
     // Binding of an element, prepares only the volume variables of the element
@@ -257,10 +265,6 @@ private:
         assert(it != volVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
         return std::distance(volVarIndices_.begin(), it);
     }
-
-    const bool contains(const IndexType idx,
-                        const std::vector<IndexType>& indices) const
-    { return std::find(indices.begin(), indices.end(), idx) != indices.end(); }
 
     std::vector<IndexType> volVarIndices_;
     std::vector<VolumeVariables> volumeVariables_;

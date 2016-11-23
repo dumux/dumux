@@ -36,17 +36,18 @@ class CCMpfaOLocalScv
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using LocalScvSeed = typename InteractionVolume::Seed::LocalScvSeed;
 
-    using GlobalIndexType = typename GridView::IndexSet::IndexType;
+    // we use the seed types of the boundary interaction volume to be compatible with other mpfa
+    // methods that use o-type interaction volumes on the boundary but differing ones inside the domain.
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using LocalScvSeed = typename InteractionVolume::Seed::LocalScvSeed;
+    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using LocalBasis = std::array<GlobalPosition, dim>;
 
@@ -113,15 +114,19 @@ struct CCMpfaOLocalScvf
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using LocalScvfSeed = typename InteractionVolume::Seed::LocalScvfSeed;
 
-    using GlobalIndexType = typename GridView::IndexSet::IndexType;
+    // we use the seed types of the boundary interaction volume to be compatible with other mpfa
+    // methods that use o-type interaction volumes on the boundary but differing ones inside the domain.
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using LocalScvfSeed = typename InteractionVolume::Seed::LocalScvfSeed;
+    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
+    using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalIndexSet = typename InteractionVolume::LocalIndexSet;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -131,35 +136,49 @@ public:
     CCMpfaOLocalScvf(const LocalScvfSeed& scvfSeed,
                      const SubControlVolumeFace& scvf)
     : seedPtr_(&scvfSeed),
-      center_(scvf.center()),
       ip_(scvf.ipGlobal()),
       normal_(scvf.unitOuterNormal()),
       area_(scvf.area())
     {}
 
-    GlobalIndexType insideGlobalScvfIndex() const
+    const GlobalIndexType insideGlobalScvfIndex() const
     { return scvfSeed_().insideGlobalScvfIndex(); }
 
-    GlobalIndexType outsideGlobalScvfIndex() const
-    { return scvfSeed_().outsideGlobalScvfIndex(); }
+    const GlobalIndexSet& outsideGlobalScvfIndices() const
+    { return scvfSeed_().outsideGlobalScvfIndices(); }
 
-    LocalIndexType insideLocalScvIndex() const
+    const GlobalIndexType outsideGlobalScvfIndex() const
+    {
+        assert(scvfSeed_().outsideGlobalScvfIndices().size() == 1 && "outside scvf index not uniquely defined");
+        return scvfSeed_().outsideGlobalScvfIndices()[0];
+    }
+
+    const LocalIndexType insideLocalScvIndex() const
     { return scvfSeed_().insideLocalScvIndex(); }
 
-    LocalIndexType outsideLocalScvIndex() const
-    { return scvfSeed_().outsideLocalScvIndex(); }
+    const LocalIndexSet& outsideLocalScvIndices() const
+    { return scvfSeed_().outsideLocalScvIndices(); }
 
-    GlobalIndexType insideGlobalScvIndex() const
+    const LocalIndexType outsideLocalScvIndex() const
+    {
+        assert(scvfSeed_().outsideLocalScvIndices().size() == 1 && "outside local scv index not uniquely defined");
+        return scvfSeed_().outsideLocalScvIndices()[0];
+    }
+
+    const GlobalIndexType insideGlobalScvIndex() const
     { return scvfSeed_().insideGlobalScvIndex(); }
 
-    GlobalIndexType outsideGlobalScvIndex() const
-    { return scvfSeed_().outsideGlobalScvIndex();}
+    const GlobalIndexSet& outsideGlobalScvIndices() const
+    { return scvfSeed_().outsideGlobalScvIndices(); }
+
+    const GlobalIndexType outsideGlobalScvIndex() const
+    {
+        assert(scvfSeed_().outsideGlobalScvIndices().size() == 1 && "outside scv index not uniquely defined");
+        return scvfSeed_().outsideGlobalScvIndices()[0];
+    }
 
     MpfaFaceTypes faceType() const
     { return scvfSeed_().faceType(); }
-
-    GlobalPosition center() const
-    { return center_; }
 
     GlobalPosition ip() const
     { return ip_; }
@@ -178,7 +197,6 @@ private:
     { return *seedPtr_; }
 
     const LocalScvfSeed* seedPtr_;
-    GlobalPosition center_;
     GlobalPosition ip_;
     GlobalPosition normal_;
     Scalar area_;

@@ -18,31 +18,27 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the global interaction volume seeds of mpfa methods.
+ * \brief Stores the face indices corresponding to the neighbors of an element
+ *        that contribute to the derivative calculation
  */
-#ifndef DUMUX_DISCRETIZATION_MPFA_O_GLOBALINTERACTIONVOLUMESEEDS_HH
-#define DUMUX_DISCRETIZATION_MPFA_O_GLOBALINTERACTIONVOLUMESEEDS_HH
+#ifndef DUMUX_CC_MPFA_ASSEMBLY_MAP_HH
+#define DUMUX_CC_MPFA_ASSEMBLY_MAP_HH
 
-#include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseedsbase.hh>
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/implicit/cellcentered/assemblymap.hh>
 
 namespace Dumux
 {
-/*!
- * \ingroup Mpfa
- * \brief Specialization of the class for the mpfa-o method.
- */
+//! Forward declaration of method specific implementation of the assembly map
+template<class TypeTag, MpfaMethods method>
+class CCMpfaAssemblyMapImplementation;
+
+// //! The Assembly map for models using mpfa methods
 template<class TypeTag>
-class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>
-{
-    using ParentType = CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using CCMpfaAssemblyMap = CCMpfaAssemblyMapImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
 
-public:
-    CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView gridView) : ParentType(gridView)  {}
-};
-
-} // end namespace
-
+//! The default is simply the CCAssemblyMap
+template<class TypeTag, MpfaMethods method>
+class CCMpfaAssemblyMapImplementation : public CCAssemblyMap<TypeTag> {};
+}
 
 #endif

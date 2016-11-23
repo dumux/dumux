@@ -27,6 +27,26 @@
 
 namespace Dumux
 {
+//! Base class for the interaction volume traits
+template<class TypeTag>
+class CCMpfaInteractionVolumeTraitsBase
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+public:
+    using LocalIndexType = std::uint8_t;
+    using LocalIndexSet = std::vector<LocalIndexType>;
+    using GlobalIndexType = typename GridView::IndexSet::IndexType;
+    using GlobalIndexSet = std::vector<GlobalIndexType>;
+
+    using Tensor = Dune::FieldMatrix<Scalar, dim, dim>;
+};
+
 /*!
  * \ingroup Mpfa
  * \brief Base class for the interaction volumes of mpfa methods.
@@ -43,12 +63,25 @@ public:
     using BoundaryInteractionVolume = typename Traits::BoundaryInteractionVolume;
     using LocalIndexType = typename Traits::LocalIndexType;
     using LocalIndexSet = typename Traits::LocalIndexSet;
-    using LocalIndexPair = typename Traits::LocalIndexPair;
     using GlobalIndexType = typename Traits::GlobalIndexType;
     using GlobalIndexSet = typename Traits::GlobalIndexSet;
     using Vector = typename Traits::Vector;
     using PositionVector = typename Traits::PositionVector;
     using Seed = typename Traits::Seed;
+
+    struct LocalFaceData
+    {
+        LocalIndexType localScvfIndex;
+        LocalIndexType localScvIndex;
+        bool isOutside;
+
+        LocalFaceData(const LocalIndexType faceIndex,
+                      const LocalIndexType scvIndex,
+                      bool isOut)
+        : localScvfIndex(faceIndex),
+          localScvIndex(scvIndex),
+          isOutside(isOut) {}
+    };
 
     //! solves the local equation system for the computation of the transmissibilities
     template<typename GetTensorFunction>
@@ -68,15 +101,15 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a globalScvfs() method."); }
 
     //! returns the local index of an scvf in the IV and a boolean whether or not it is on the negative side of the local scvf (flux has to be inverted)
-    LocalIndexPair getLocalIndexPair(const SubControlVolumeFace& scvf) const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getLocalIndexPair() method."); }
+    LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getLocalFaceData() method."); }
 
     //! returns the transmissibilities corresponding to a local scvf
-    Vector getTransmissibilities(const LocalIndexPair& localIndexPair) const
+    Vector getTransmissibilities(const LocalFaceData& localFaceData) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getTransmissibilities() method."); }
 
     //! returns the neumann flux corresponding to a local scvf
-    Scalar getNeumannFlux(LocalIndexPair& localIndexPair) const
+    Scalar getNeumannFlux(const LocalFaceData& localFaceData) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getNeumannFlux() method."); }
 
     //! returns the local index in a vector for a given global index

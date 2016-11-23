@@ -18,28 +18,23 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the finite volume geometry vector for box models
- *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ * \brief Implements the notion of stencils for cell-centered models
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_GLOBALFVGEOMETRY_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_O_GLOBALFVGEOMETRY_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_STENCILS_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_STENCILS_HH
 
-#include <dumux/discretization/cellcentered/mpfa/globalfvgeometrybase.hh>
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/stencils.hh>
 
 namespace Dumux
 {
-//! Specialization for the mpfa-o scheme.
-template<class TypeTag, bool EnableCache>
-class CCMpfaGlobalFVGeometryImplementation<TypeTag, MpfaMethods::oMethod, EnableCache> : public CCMpfaGlobalFVGeometryBase<TypeTag, EnableCache>
-{
-    using ParentType = CCMpfaGlobalFVGeometryBase<TypeTag, EnableCache>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+//! Method-specific implementation of the stencils vector
+//! By default, we inherit from the symmetric stencils vector class
+//! For non-symmetric mpfa methods a corresponding specialization has to be provided below
+template<class TypeTag, MpfaMethods method>
+class CCMpfaStencilsVectorImplementation : public CCSymmetricStencilsVector<TypeTag> {};
 
-public:
-    CCMpfaGlobalFVGeometryImplementation(const GridView gridView) : ParentType(gridView) {}
-};
+template<class TypeTag>
+using CCMpfaStencilsVector = CCMpfaStencilsVectorImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
 
 } // end namespace
 

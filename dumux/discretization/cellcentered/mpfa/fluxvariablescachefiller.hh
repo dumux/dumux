@@ -108,7 +108,7 @@ public:
                 {
                     if (!updateNeumannOnly)
                         cache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
-                    cache.setUpdated();
+                    cache.setUpdateStatus(true);
                 }
 
                 // update flux variable caches of the other scvfs of the interaction volume
@@ -124,7 +124,7 @@ public:
                         {
                             if (!updateNeumannOnly)
                                 cacheJ.updateAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
-                            cacheJ.setUpdated();
+                            cacheJ.setUpdateStatus(true);
                         }
                     }
                 }
@@ -140,7 +140,7 @@ public:
             const auto scvfIdx = scvf.index();
             auto& cache = fluxVarsCache[scvfIdx];
             cache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf, iv);
-            cache.setUpdated();
+            cache.setUpdateStatus(true);
 
             // update flux variable caches of the other scvfs of the interaction volume
             for (const auto scvfIdxJ : iv.globalScvfs())
@@ -151,7 +151,7 @@ public:
                     const auto elementJ = problem.model().globalFvGeometry().element(scvfJ.insideScvIdx());
                     auto& cacheJ = fluxVarsCache[scvfIdxJ];
                     cacheJ.updateAdvection(problem, elementJ, fvGeometry, elemVolVars, scvfJ, iv);
-                    cacheJ.setUpdated();
+                    cacheJ.setUpdateStatus(true);
                 }
             }
         }
@@ -168,7 +168,7 @@ public:
     {
         if (!solDependentParams)
         {
-            fluxVarsCache[scvf.index()].setUpdated();
+            fluxVarsCache[scvf.index()].setUpdateStatus(true);
 
             // if we do not use tpfa on the boundary, we have to update the neumann fluxes
             if (!useTpfaBoundary)

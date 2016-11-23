@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the finite volume geometry vector for box models
+ * \brief Base class for the finite volume geometry vector for mpfa models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
@@ -31,82 +31,8 @@
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/common/elementmap.hh>
 
-#include "mpfageometryhelper.hh"
-
 namespace Dumux
 {
-//! Helper class for the global fv geometries
-template<class TypeTag>
-class CCMpfaGlobalFVGeometryHelper
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
-
-    static const int dim = GridView::dimension;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-
-public:
-    static std::vector<bool> findGhostVertices(const Problem& problem, const GridView& gridView)
-    {
-        std::vector<bool> ghostVertices(gridView.size(dim), false);
-
-        // if not run in parallel, skip the rest
-        if (Dune::MPIHelper::getCollectiveCommunication().size() == 1)
-            return ghostVertices;
-
-        // mpfa methods can not yet handle ghost cells
-        if (gridView.ghostSize(0) > 0)
-            DUNE_THROW(Dune::InvalidStateException, "Mpfa methods in parallel do not work with ghost cells. Use overlap cells instead.");
-
-        // mpfa methods have to have overlapping cells
-        if (gridView.overlapSize(0) == 0)
-            DUNE_THROW(Dune::InvalidStateException, "Grid no overlaping cells. This is required by mpfa methods in parallel.");
-
-        for (const auto& element : elements(gridView))
-        {
-            for (const auto& is : intersections(gridView, element))
-            {
-                if (!is.neighbor() && !is.boundary())
-                {
-                    const auto& refElement = ReferenceElements::general(element.geometry().type());
-                    for (unsigned int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
-                    {
-                        const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);
-                        const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
-
-                        ghostVertices[vIdxGlobal] = true;
-                    }
-                }
-            }
-        }
-
-        return ghostVertices;
-    }
-
-    template<int d = dim>
-    static typename std::enable_if<d == 2, std::size_t>::type getGlobalNumScvf(const GridView& gridView)
-    {
-        Dune::GeometryType triangle, quadrilateral;
-        triangle.makeTriangle();
-        quadrilateral.makeQuadrilateral();
-
-        return gridView.size(triangle)*6 + gridView.size(quadrilateral)*8;
-    }
-
-    template<int d = dim>
-    static typename std::enable_if<d == 3, std::size_t>::type getGlobalNumScvf(const GridView& gridView)
-    {
-        Dune::GeometryType simplex, pyramid, prism, cube;
-        simplex.makeTetrahedron();
-        pyramid.makePyramid();
-        prism.makePrism();
-        cube.makeHexahedron();
-
-        return gridView.size(simplex)*12 + gridView.size(pyramid)*16 + gridView.size(prism)*18 + gridView.size(cube)*24;
-    }
-};
-
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the finite volume geometry vector for mpfa models
@@ -121,13 +47,16 @@ class CCMpfaGlobalFVGeometryBase
 template<class TypeTag>
 class CCMpfaGlobalFVGeometryBase<TypeTag, true>
 {
-    //! The local class needs access to the scv, scvfs and the fv element geometry
-    //! as they are globally cached
+    using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+
+    //! The actual implementation might overwrite the update() routine
+    friend Implementation;
+    //! The local class needs access to the problem
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
-    using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -146,9 +75,8 @@ class CCMpfaGlobalFVGeometryBase<TypeTag, true>
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using MpfaGeometryHelper = Dumux::MpfaGeometryHelper<GridView, dim>;
 
 public:
     //! Constructor
@@ -201,7 +129,7 @@ public:
 
         // reserve memory
         std::size_t numScvs = gridView_.size(0);
-        std::size_t numScvfs = CCMpfaGlobalFVGeometryHelper<TypeTag>::getGlobalNumScvf(gridView_);
+        std::size_t numScvfs = MpfaHelper::getGlobalNumScvf(gridView_);
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvfs);
         scvfIndicesOfScv_.resize(numScvs);
@@ -209,10 +137,13 @@ public:
         elementMap_.resize(numScvs);
 
         // find vertices on processor boundaries
-        auto ghostVertices = CCMpfaGlobalFVGeometryHelper<TypeTag>::findGhostVertices(problem, gridView_);
+        auto isGhostVertex = MpfaHelper::findGhostVertices(problem, gridView_);
 
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+
+        // Instantiate a helper class to pass it to the scvf constructors
+        MpfaHelper helper;
 
         // Build the SCVs and SCV faces
         IndexType scvfIdx = 0;
@@ -221,48 +152,89 @@ public:
         {
             auto eIdx = problem.elementMapper().index(element);
 
+            // the element geometry
+            auto elementGeometry = element.geometry();
+
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
 
-            // the element geometry and reference element
-            auto elemGeometry = element.geometry();
-            const auto& referenceElement = ReferenceElements::general(elemGeometry.type());
-
-            // The geometry helper class
-            MpfaGeometryHelper geomHelper(elemGeometry);
-
-            // create sub control volume for this element
-            scvs_[eIdx] = SubControlVolume(std::move(elemGeometry), eIdx);
-
             // The local scvf index set
             std::vector<IndexType> scvfIndexSet;
-            scvfIndexSet.reserve(geomHelper.getNumLocalScvfs());
+            scvfIndexSet.reserve(MpfaHelper::getNumLocalScvfs(elementGeometry.type()));
+
+            // for dim < dimWorld we'll have multiple intersections at one point
+            // we store here the centers of those we have handled already
+            std::vector<GlobalPosition> finishedCenters;
 
             // construct the sub control volume faces
-            for (const auto& intersection : intersections(gridView_, element))
+            for (const auto& is : intersections(gridView_, element))
             {
-                // get the intersection geometry and some of its bools
-                auto isGeometry = intersection.geometry();
-                bool boundary = intersection.boundary();
+                // if we are dealing with a lower dimensional network
+                // only make a new scvf if we haven't handled it yet
+                if (dim < dimWorld)
+                    if(MpfaHelper::contains(finishedCenters, is.geometry().center()))
+                        continue;
 
-                // determine the outside volvar idx
-                // we initialize nIdx so that the compiler does not complain in overlap elements in parallel
-                // nIdx will not be used in this case anyway (see continue call below)
-                IndexType nIdx = eIdx;
-                if (intersection.neighbor())
-                    nIdx = problem.elementMapper().index(intersection.outside());
-                else if (boundary)
-                    nIdx = numScvs + numBoundaryScvf_++;
+                // get some of the intersection's bools
+                bool boundary = is.boundary();
+                bool neighbor = is.neighbor();
 
-                // make the scv faces of the intersection
-                for (unsigned int faceScvfIdx = 0; faceScvfIdx < isGeometry.corners(); ++faceScvfIdx)
+                // determine the outside volvar indices
+                std::vector<IndexType> nIndices;
+                if (neighbor)
                 {
-                    // get the global vertex index the scv face is connected to (mpfa-o method does not work for hanging nodes!)
-                    const auto vIdxLocal = referenceElement.subEntity(intersection.indexInInside(), 1, faceScvfIdx, dim);
-                    const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
+                    nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
+
+                    // check for further neighbors in case of lower dimensional networks
+                    if (dim < dimWorld)
+                    {
+                        auto insideIndex = is.indexInInside();
+                        auto isCenter = is.geometry().center();
+
+                        // find further possible intersections at the same point (bifurcations etc)
+                        for (const auto& nextIs : intersections(gridView_, element))
+                        {
+                            if (nextIs.indexInInside() == insideIndex && nextIs.geometry().center() == isCenter)
+                            {
+                                auto nIdx = problem.elementMapper().index(nextIs.outside());
+                                if (nIdx != nIndices[0])
+                                    nIndices.push_back(nIdx);
+                            }
+                        }
+
+                        // store this center as a handled one
+                        finishedCenters.push_back(isCenter);
+                    }
+                }
+                else if (boundary)
+                {
+                    nIndices.resize(1);
+                    nIndices[0] = numScvs + numBoundaryScvf_++;
+                }
+
+                // get the intersection corners according to generic numbering
+                auto numCorners = is.geometry().corners();
+                std::vector<GlobalPosition> isCorners(numCorners);
+
+                // if outside level > inside level, use the outside element in the following
+                bool useNeighbor = neighbor && is.outside().level() > element.level();
+                const auto& e = useNeighbor ? is.outside() : element;
+                const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
+                const auto eg = e.geometry();
+                const auto& refElement = ReferenceElements::general(eg.type());
+
+                for (unsigned int c = 0; c < numCorners; ++c)
+                    isCorners[c] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+
+                // make the scv faces belonging to each corner of the intersection
+                for (unsigned int c = 0; c < numCorners; ++c)
+                {
+                    // get the global vertex index the scv face is connected to
+                    auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
+                    auto vIdxGlobal = problem.vertexMapper().subIndex(e, vIdxLocal, dim);
 
                     // do not build scvfs connected to a processor boundary
-                    if (ghostVertices[vIdxGlobal])
+                    if (isGhostVertex[vIdxGlobal])
                         continue;
 
                     // store info on which vertices are on the domain boundary
@@ -271,13 +243,14 @@ public:
 
                     // make the scv face
                     scvfIndexSet.push_back(scvfIdx);
-                    scvfs_.emplace_back(geomHelper,
-                                        geomHelper.getScvfCorners(isGeometry, faceScvfIdx),
-                                        intersection.centerUnitOuterNormal(),
+                    scvfs_.emplace_back(helper,
+                                        helper.getScvfCorners(isCorners, c),
+                                        is.centerUnitOuterNormal(),
                                         vIdxGlobal,
                                         vIdxLocal,
                                         scvfIdx,
-                                        std::array<IndexType, 2>({{eIdx, nIdx}}),
+                                        eIdx,
+                                        nIndices,
                                         q,
                                         boundary
                                         );
@@ -286,6 +259,9 @@ public:
                     scvfIdx++;
                 }
             }
+
+            // create sub control volume for this element
+            scvs_[eIdx] = SubControlVolume(std::move(elementGeometry), eIdx);
 
             // Save the scvf indices belonging to this scv to build up fv element geometries fast
             scvfIndicesOfScv_[eIdx] = scvfIndexSet;
@@ -321,6 +297,10 @@ public:
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
 
+    //! Return a const reference to the grid view
+    const GridView& gridView() const
+    { return gridView_; }
+
 private:
 
     const Problem& problem_() const
@@ -353,6 +333,7 @@ class CCMpfaGlobalFVGeometryBase<TypeTag, false>
     using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -371,9 +352,8 @@ class CCMpfaGlobalFVGeometryBase<TypeTag, false>
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using MpfaGeometryHelper = Dumux::MpfaGeometryHelper<GridView, dim>;
 
 public:
     //! Constructor
@@ -441,7 +421,7 @@ public:
         boundaryVertices_.resize(gridView_.size(dim), false);
 
         // find vertices on processor boundaries
-        ghostVertices_ = CCMpfaGlobalFVGeometryHelper<TypeTag>::findGhostVertices(problem, gridView_);
+        ghostVertices_ = MpfaHelper::findGhostVertices(problem, gridView_);
 
         // Store necessary info on SCVs and SCV faces
         for (const auto& element : elements(gridView_))
@@ -452,38 +432,72 @@ public:
             elementMap_[eIdx] = element.seed();
 
             // the element geometry and reference element
-            auto elemGeometry = element.geometry();
-            const auto& referenceElement = ReferenceElements::general(elemGeometry.type());
-
-            // The geometry helper class
-            MpfaGeometryHelper geomHelper(elemGeometry);
+            auto eg = element.geometry();
+            const auto& referenceElement = ReferenceElements::general(eg.type());
 
             // the element-wise index sets for finite volume geometry
-            auto numLocalFaces = geomHelper.getNumLocalScvfs();
-            std::vector<IndexType> scvfsIndexSet(numLocalFaces);
-            std::vector<IndexType> neighborVolVarIndexSet(numLocalFaces);
-            IndexType localFaceIdx = 0;
-            // construct the sub control volume faces
-            for (const auto& intersection : intersections(gridView_, element))
-            {
-                // get some of the intersection bools
-                bool boundary = intersection.boundary();
-                bool neighbor = intersection.neighbor();
+            auto numLocalFaces = MpfaHelper::getNumLocalScvfs(eg.type());
+            std::vector<IndexType> scvfsIndexSet;
+            std::vector< std::vector<IndexType> > neighborVolVarIndexSet;
+            scvfsIndexSet.reserve(numLocalFaces);
+            neighborVolVarIndexSet.reserve(numLocalFaces);
 
-                // determine the outside volvar idx
-                // we initialize nIdx so that the compiler does not complain in overlap elements in parallel
-                // nIdx will not be used in this case anyway (see continue call below)
-                IndexType nIdx = eIdx;
+            // for dim < dimWorld we'll have multiple intersections at one point
+            // we store here the centers of those we have handled already
+            std::vector<GlobalPosition> finishedCenters;
+
+            unsigned int localFaceIdx = 0;
+            // construct the sub control volume faces
+            for (const auto& is : intersections(gridView_, element))
+            {
+                // if we are dealing with a lower dimensional network
+                // only make a new scvf if we haven't handled it yet
+                if (dim < dimWorld)
+                    if(MpfaHelper::contains(finishedCenters, is.geometry().center()))
+                        continue;
+
+                // get some of the intersection bools
+                bool boundary = is.boundary();
+                bool neighbor = is.neighbor();
+
+                // determine the outside volvar indices
+                std::vector<IndexType> nIndices;
                 if (neighbor)
-                    nIdx = problem.elementMapper().index(intersection.outside());
+                {
+                    nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
+
+                    // check for further neighbors in case of lower dimensional networks
+                    if (dim < dimWorld)
+                    {
+                        auto insideIndex = is.indexInInside();
+                        auto isCenter = is.geometry().center();
+
+                        // find further possible intersections at the same point (bifurcations etc)
+                        for (const auto& nextIs : intersections(gridView_, element))
+                        {
+                            if (nextIs.indexInInside() == insideIndex && nextIs.geometry().center() == isCenter)
+                            {
+                                auto nIdx = problem.elementMapper().index(nextIs.outside());
+                                if (nIdx != nIndices[0])
+                                    nIndices.push_back(nIdx);
+                            }
+                        }
+
+                        // store this center as a handled one
+                        finishedCenters.push_back(isCenter);
+                    }
+                }
                 else if (boundary)
-                    nIdx = numScvs_ + numBoundaryScvf_++;
+                {
+                    nIndices.resize(1);
+                    nIndices[0] = numScvs_ + numBoundaryScvf_++;
+                }
 
                 // make the scv faces of the intersection
-                for (unsigned int faceScvfIdx = 0; faceScvfIdx < intersection.geometry().corners(); ++faceScvfIdx)
+                for (unsigned int faceScvfIdx = 0; faceScvfIdx < is.geometry().corners(); ++faceScvfIdx)
                 {
                     // get the global vertex index the scv face is connected to (mpfa-o method does not work for hanging nodes!)
-                    const auto vIdxLocal = referenceElement.subEntity(intersection.indexInInside(), 1, faceScvfIdx, dim);
+                    const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, faceScvfIdx, dim);
                     const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
 
                     // do not build scvfs connected to a processor boundary
@@ -495,8 +509,11 @@ public:
                         boundaryVertices_[vIdxGlobal] = true;
 
                     // store information on the scv face
-                    scvfsIndexSet[localFaceIdx] = numScvf_++;
-                    neighborVolVarIndexSet[localFaceIdx++] = nIdx;
+                    scvfsIndexSet.push_back(numScvf_++);
+                    neighborVolVarIndexSet.push_back(nIndices);
+
+                    // increment counter
+                    localFaceIdx++;
                 }
             }
 
@@ -515,7 +532,7 @@ public:
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
 
-    const std::vector<IndexType>& neighborVolVarIndices(IndexType scvIdx) const
+    const std::vector< std::vector<IndexType> >& neighborVolVarIndices(IndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
     /*!
@@ -543,7 +560,7 @@ private:
     // vectors that store the global data
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    std::vector<std::vector<IndexType>> neighborVolVarIndices_;
+    std::vector< std::vector< std::vector<IndexType> > > neighborVolVarIndices_;
     std::vector<bool> boundaryVertices_;
     std::vector<bool> ghostVertices_;
 

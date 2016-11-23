@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for interaction volume seeds of mpfa methods.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUMESEED_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUMESEED_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_L_INTERACTIONVOLUMESEED_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_L_INTERACTIONVOLUMESEED_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include "localsubcontrolentityseeds.hh"
@@ -31,65 +31,67 @@ namespace Dumux
 
 /*!
  * \ingroup Mpfa
- * \brief Class for the interaction volume seed of the mpfa-o method
+ * \brief Base class for the interaction volume seed of mpfa methods
  */
-template<typename G, typename L, int dim, int dimWorld>
-class CCMpfaOInteractionVolumeSeed
+template<typename G, typename L>
+class CCMpfaLInteractionVolumeSeed
 {
     using GlobalIndexSet = G;
-    using GlobalIndexType = typename GlobalIndexSet::value_type;
+    using GlobalIndexType = typename G::value_type;
+    using LocalIndexSet = L;
+    using LocalIndexType = typename L::value_type;
 
 public:
-    using LocalScvSeed = CCMpfaOLocalScvSeed<G, L>;
-    using LocalScvfSeed = CCMpfaOLocalScvfSeed<G, L>;
+    using LocalScvSeed = CCMpfaLCentralLocalScvSeed<G, L>;
+    using LocalOuterScvSeed = CCMpfaLOuterLocalScvSeed<G>;
 
-    CCMpfaOInteractionVolumeSeed(std::vector<LocalScvSeed>&& scvSeeds,
-                                 std::vector<LocalScvfSeed>&& scvfSeeds,
-                                 bool onBoundary)
-    : onBoundary_(onBoundary),
-      scvSeeds_(std::move(scvSeeds)),
-      scvfSeeds_(std::move(scvfSeeds)) {}
-
-    bool onBoundary() const
-    { return onBoundary_; }
+    CCMpfaLInteractionVolumeSeed(std::vector<LocalScvSeed>&& scvSeeds,
+                                 std::vector<LocalOuterScvSeed>&& outerScvSeeds,
+                                 std::vector<GlobalIndexType>&& globalScvfIndices)
+    : scvSeeds_(std::move(scvSeeds)),
+      outerScvSeeds_(std::move(outerScvSeeds)),
+      globalScvfIndices_(std::move(globalScvfIndices)) {}
 
     const std::vector<LocalScvSeed>& scvSeeds() const
     { return scvSeeds_; }
 
-    const std::vector<LocalScvfSeed>& scvfSeeds() const
-    { return scvfSeeds_; }
+    const LocalScvSeed& scvSeed(const LocalIndexType idx) const
+    { return scvSeeds_[idx]; }
+
+    const std::vector<LocalOuterScvSeed>& outerScvSeeds() const
+    { return outerScvSeeds_; }
+
+    const LocalOuterScvSeed& outerScvSeed(const LocalIndexType idx) const
+    { return outerScvSeeds_[idx]; }
 
     std::vector<GlobalIndexType> globalScvIndices() const
     {
         std::vector<GlobalIndexType> globalIndices;
-        globalIndices.reserve(scvSeeds().size());
+        globalIndices.reserve(scvSeeds().size() + outerScvSeeds().size());
 
         for (auto&& localScvSeed : scvSeeds())
             globalIndices.push_back(localScvSeed.globalIndex());
 
+        for (auto&& localScvSeed : outerScvSeeds())
+            globalIndices.push_back(localScvSeed.globalIndex());
+
+        // make the entries unique
+        std::sort(globalIndices.begin(), globalIndices.end());
+        globalIndices.erase(std::unique(globalIndices.begin(), globalIndices.end()), globalIndices.end());
+
         return globalIndices;
     }
 
-    std::vector<GlobalIndexType> globalScvfIndices() const
-    {
-        std::vector<GlobalIndexType> globalIndices;
-        globalIndices.reserve(scvfSeeds().size() * 2);
+    const std::vector<GlobalIndexType>& globalScvfIndices() const
+    { return globalScvfIndices_; }
 
-        for (auto&& localScvfSeed : scvfSeeds())
-        {
-            globalIndices.push_back(localScvfSeed.insideGlobalScvfIndex());
-            for (auto scvfIdxGlobal : localScvfSeed.outsideGlobalScvfIndices())
-                globalIndices.push_back(scvfIdxGlobal);
-        }
-
-        globalIndices.shrink_to_fit();
-        return globalIndices;
-    }
+    bool isUnique() const
+    { return scvSeeds_.size() == 1; }
 
 private:
-    bool onBoundary_;
     std::vector<LocalScvSeed> scvSeeds_;
-    std::vector<LocalScvfSeed> scvfSeeds_;
+    std::vector<LocalOuterScvSeed> outerScvSeeds_;
+    std::vector<GlobalIndexType> globalScvfIndices_;
 };
 } // end namespace
 

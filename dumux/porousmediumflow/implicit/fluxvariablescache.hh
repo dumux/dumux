@@ -152,13 +152,13 @@ private:
 
 // forward declaration of the base class of the mpfa flux variables cache
 template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
-class PorousMediumMpfaFluxVariablesCache
+class MpfaPorousMediumFluxVariablesCache
 {};
 
 // specialization for cell centered mpfa methods
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
-       : public PorousMediumMpfaFluxVariablesCache<TypeTag,
+       : public MpfaPorousMediumFluxVariablesCache<TypeTag,
                                                    GET_PROP_VALUE(TypeTag, EnableAdvection),
                                                    GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                    GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
@@ -166,7 +166,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 
 // specialization for the case of pure advection
 template<class TypeTag>
-class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
+class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -192,11 +192,11 @@ class PorousMediumMpfaFluxVariablesCache<TypeTag, true, false, false>
 
 public:
     // the constructor
-    PorousMediumMpfaFluxVariablesCache() : isUpdated_(false)
+    MpfaPorousMediumFluxVariablesCache() : isUpdated_(false)
     {
-        // We have to initialize to zero (for inner interaction volumes)
-        for (auto& nFlux : phaseNeumannFluxes_)
-            nFlux = 0.0;
+        // We have to initialize the neumann fluxes to zero (for inner interaction volumes)
+        for (auto& flux : phaseNeumannFluxes_)
+            flux = 0.0;
     }
 
     // update cached objects
@@ -208,19 +208,10 @@ public:
                          const SubControlVolumeFace &scvf,
                          const InteractionVolume& interactionVolume)
     {
-        const auto& localIndexPair = interactionVolume.getLocalIndexPair(scvf);
-        const auto& volVarsStencil = interactionVolume.volVarsStencil();
-        const auto& volVarsPositions = interactionVolume.volVarsPositions();
-
-        // the types coming from the inner interaction volumes might differ (thus, = assignment is not possible)
-        const auto numVolVars = volVarsStencil.size();
-        volVarsStencil_.clear();
-        volVarsStencil_.reserve(numVolVars);
-        volVarsPositions_.clear();
-        volVarsPositions_.reserve(numVolVars);
-        volVarsStencil_.insert(volVarsStencil_.begin(), volVarsStencil.begin(), volVarsStencil.end());
-        volVarsPositions_.insert(volVarsPositions_.begin(), volVarsPositions.begin(), volVarsPositions.end());
-        tij_ = interactionVolume.getTransmissibilities(localIndexPair);
+        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
+        volVarsStencil_ = interactionVolume.volVarsStencil();
+        volVarsPositions_ = interactionVolume.volVarsPositions();
+        tij_ = interactionVolume.getTransmissibilities(localFaceData);
     }
 
     template<typename InteractionVolume>
@@ -232,8 +223,8 @@ public:
                                 const InteractionVolume& interactionVolume,
                                 const unsigned int phaseIdx)
     {
-        const auto& localIndexPair = interactionVolume.getLocalIndexPair(scvf);
-        phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localIndexPair);
+        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
+        phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localFaceData);
     }
 
     const Stencil& advectionVolVarsStencil(const unsigned int phaseIdx) const
@@ -251,14 +242,9 @@ public:
     bool isUpdated() const
     { return isUpdated_; }
 
-    void setUpdated()
+    void setUpdateStatus(const bool status)
     {
-        isUpdated_ = true;
-    }
-
-    void setOutdated()
-    {
-        isUpdated_ = false;
+        isUpdated_ = status;
     }
 
 private:

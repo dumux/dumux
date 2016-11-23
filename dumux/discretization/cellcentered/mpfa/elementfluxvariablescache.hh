@@ -44,6 +44,9 @@ class CCMpfaElementFluxVariablesCache;
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, true>
 {
+    // the local jacobian needs to be able to update the cache during assembly
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -69,11 +72,6 @@ public:
               const ElementVolumeVariables& elemVolVars) {}
 
     // Specialization for the global caching being enabled - do nothing here
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars) {}
-
-    // Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
@@ -89,6 +87,11 @@ public:
 
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+
+    // Specialization for the global caching being enabled - do nothing here
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
 };
 
 /*!
@@ -98,6 +101,9 @@ private:
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, false>
 {
+    // the local jacobian needs to be able to update the cache during assembly
+    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -119,6 +125,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
+        // TODO
         DUNE_THROW(Dune::InvalidStateException, "Does local flux var cache binding make sense in general?");
     }
 
@@ -129,52 +136,53 @@ public:
               const ElementVolumeVariables& elemVolVars)
     {
         clear();
+
         const auto& problem = globalFluxVarsCache().problem_();
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
+        const auto& neighborStencil = problem.model().stencils(element).neighborStencil();
+        const auto& assemblyMap = problem.model().localJacobian().assemblyMap();
+        const auto globalI = problem.elementMapper().index(element);
 
-        // // first prepare all the global indices
+        // reserve initial guess of memory (won't be enough though - several scvfs per neighbor will be required)
+        globalScvfIndices_.reserve(fvGeometry.numScvf() + assemblyMap[globalI].size());
+
+        // first add all the indices inside the element
         for (auto&& scvf : scvfs(fvGeometry))
-        {
-            const bool boundary = globalFvGeometry.scvfTouchesBoundary(scvf);
+            globalScvfIndices_.push_back(scvf.index());
 
-            if (boundary)
-            {
-                const auto& ivSeed = globalFvGeometry.boundaryInteractionVolumeSeed(scvf);
-                for (auto scvfIdx : ivSeed.globalScvfIndices())
-                    globalScvfIndices_.push_back(scvfIdx);
-            }
-            else
-            {
-                const auto& ivSeed = globalFvGeometry.interactionVolumeSeed(scvf);
-                for (auto scvfIdx : ivSeed.globalScvfIndices())
-                    globalScvfIndices_.push_back(scvfIdx);
-            }
-        }
+        // for the indices in the neighbors, use assembly map of the local jacobian
+        for (unsigned int j = 0; j < neighborStencil.size(); ++j)
+            for (auto fluxVarIdx : assemblyMap[globalI][j])
+                globalScvfIndices_.push_back(fluxVarIdx);
+
         // make global indices unique
         std::sort(globalScvfIndices_.begin(), globalScvfIndices_.end());
         globalScvfIndices_.erase(std::unique(globalScvfIndices_.begin(), globalScvfIndices_.end()), globalScvfIndices_.end());
 
-        // prepare all the caches of the scvfs inside the corresponding interaction volume using helper class
+        // prepare all the caches of the scvfs inside the corresponding interaction volumes using helper class
         fluxVarsCache_.resize(globalScvfIndices_.size());
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if (!(*this)[scvf].isUpdated())
                 FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, *this);
         }
-    }
 
-    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
-    {
-        for (auto&& scvf : scvfs(fvGeometry))
-            (*this)[scvf].setOutdated();
-
-        for (auto&& scvf : scvfs(fvGeometry))
+        // prepare the caches in the remaining neighbors
+        unsigned int j = 0;
+        for (auto globalJ : neighborStencil)
         {
-            if (!(*this)[scvf].isUpdated())
-                FluxVariablesCacheFiller::updateFluxVarCache(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf, *this);
+            for (auto fluxVarIdx : assemblyMap[globalI][j])
+            {
+                const auto& scvf = fvGeometry.scvf(fluxVarIdx);
+                if (!(*this)[scvf].isUpdated())
+                {
+                    auto elementJ = globalFvGeometry.element(globalJ);
+                    FluxVariablesCacheFiller::fillFluxVarCache(problem, elementJ, fvGeometry, elemVolVars, scvf, *this);
+                }
+            }
+
+            // increment counter
+            j++;
         }
     }
 
@@ -183,6 +191,7 @@ public:
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf)
     {
+        // TODO
         DUNE_THROW(Dune::InvalidStateException, "Does binding of one scvf make sense in general?");
     }
 
@@ -212,11 +221,25 @@ private:
         globalScvfIndices_.clear();
     }
 
+    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        for (auto&& scvf : scvfs(fvGeometry))
+            (*this)[scvf].setUpdateStatus(false);
+
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (!(*this)[scvf].isUpdated())
+                FluxVariablesCacheFiller::updateFluxVarCache(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf, *this);
+        }
+    }
+
     // get index of scvf in the local container
     int getLocalScvfIdx_(const int scvfIdx) const
     {
         auto it = std::lower_bound(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
-        assert(it != globalScvfIndices_.end() && "Could not find the flux vars cache for scvfIdx");
         assert(globalScvfIndices_[std::distance(globalScvfIndices_.begin(), it)] == scvfIdx && "Could not find the flux vars cache for scvfIdx");
         return std::distance(globalScvfIndices_.begin(), it);
     }
