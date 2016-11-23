@@ -65,7 +65,6 @@ class CCAssembler : public ImplicitAssembler<TypeTag>
             const auto globalI = this->elementMapper_().index(element);
             const auto& stencil = this->model_().stencils(element).elementStencil();
 
-
             for (auto&& globalJ : stencil)
                 this->matrix().addindex(globalI, globalJ);
         }
