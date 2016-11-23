@@ -46,12 +46,21 @@
 #include <dumux/freeflow/staggered/fluxvariables.hh>
 #include <dumux/freeflow/staggered/fluxvariablescache.hh>
 
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/common/indices.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/multitypeblockvector.hh>
+#include <dune/istl/multitypeblockmatrix.hh>
+
 
 
 
 #include "assembler.hh"
 #include "localresidual.hh"
 #include "localjacobian.hh"
+#include "properties.hh"
+#include "newtoncontroller.hh"
 
 namespace Dumux {
 
@@ -131,6 +140,53 @@ SET_TYPE_PROP(StaggeredModel, FluxVariables, FreeFlowFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for porous media
 SET_TYPE_PROP(StaggeredModel, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+
+SET_TYPE_PROP(StaggeredModel, NewtonController, StaggeredNewtonController<TypeTag>);
+
+SET_INT_PROP(StaggeredModel, NumEqCellCenter, 1);
+SET_INT_PROP(StaggeredModel, NumEqFace, 1);
+
+//! Set the type of a global jacobian matrix from the solution types
+SET_PROP(StaggeredModel, JacobianMatrix/*New*/)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    enum {
+        numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter),
+        numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace)
+    };
+
+public:
+    // the sub-blocks
+    using MatrixLittleBlockCCToCC = typename Dune::FieldMatrix<Scalar, numEqCellCenter, numEqCellCenter>; // 2x2
+    using MatrixLittleBlockCCToFace = typename Dune::FieldMatrix<Scalar, numEqFace, numEqCellCenter>; // 1x2
+
+    using MatrixLittleBlockFaceToFace = typename Dune::FieldMatrix<Scalar, numEqFace, numEqFace>; // 1x1
+    using MatrixLittleBlockFaceToCC = typename Dune::FieldMatrix<Scalar, numEqCellCenter, numEqFace>; // 2x1
+
+    // the BCRS matrices of the subproblems as big blocks
+    using MatrixBlockCCToCC = typename Dune::BCRSMatrix<MatrixLittleBlockCCToCC>;
+    using MatrixBlockCCToFace = typename Dune::BCRSMatrix<MatrixLittleBlockCCToFace>;
+
+
+    using MatrixBlockFaceToFace = typename Dune::BCRSMatrix<MatrixLittleBlockFaceToFace>;
+    using MatrixBlockFaceToCC = typename Dune::BCRSMatrix<MatrixLittleBlockFaceToCC>;
+
+    // the row types
+    using RowCellCenter = typename Dune::MultiTypeBlockVector<MatrixLittleBlockCCToCC, MatrixLittleBlockCCToFace>;
+    using RowFace = typename Dune::MultiTypeBlockVector<MatrixLittleBlockFaceToCC, MatrixLittleBlockFaceToFace>;
+
+    // the jacobian matrix
+    using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
+};
+
+//! Definition of the indices for cell center and face dofs in the global solution vector
+SET_PROP(StaggeredModel, DofTypeIndices)
+{
+    using CellCenterIdx = Dune::index_constant<0>;
+    using FaceIdx = Dune::index_constant<1>;
+};
+
 
 } // namespace Properties
 

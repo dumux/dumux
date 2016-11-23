@@ -137,7 +137,23 @@ public:
      */
     size_t numDofs() const
     {
-        return this->gridView_().size(0) + this->gridView_().size(1);;
+        return this->gridView_().size(0) + this->gridView_().size(1);
+    }
+
+     /*!
+     * \brief Returns the number of cell center degrees of freedoms (DOFs)
+     */
+    size_t numCellCenterDofs() const
+    {
+        return this->gridView_().size(0);
+    }
+
+     /*!
+     * \brief Returns the number of cell center degrees of freedoms (DOFs)
+     */
+    size_t numFaceDofs() const
+    {
+        return this->gridView_().size(1);
     }
 
     /*!

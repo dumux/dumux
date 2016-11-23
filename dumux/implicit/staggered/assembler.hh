@@ -40,11 +40,55 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IndexSet::IndexType IndexType;
 
-    void setRowSizes_()
+    typedef typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToCC CCToCCMatrixBlock;
+    typedef typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToFace CCToFaceMatrixBlock;
+
+    typedef typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToFace FaceToFaceMatrixBlock;
+    typedef typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToCC FaceToCCMatrixBlock;
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
+    // Construct the multitype matrix for the global jacobian
+    void createMatrix_()
+    {
+        // create the multitype matrix
+        this->matrix_ = std::make_shared<JacobianMatrix>();
+
+        // get sub matrix sizes
+        const auto cellCenterSize = this->problem_().model().numCellCenterDofs();
+        const auto faceSize = this->problem_().model().numFaceDofs();
+
+        // allocate the sub matrices (BCRS matrices)
+        auto A11 = CCToCCMatrixBlock(cellCenterSize, cellCenterSize, CCToCCMatrixBlock::random);
+        auto A12 = CCToFaceMatrixBlock(cellCenterSize, faceSize, CCToFaceMatrixBlock::random);
+
+        auto A21 = FaceToCCMatrixBlock(faceSize, cellCenterSize, FaceToCCMatrixBlock::random);
+        auto A22 = FaceToFaceMatrixBlock(faceSize, faceSize, FaceToFaceMatrixBlock::random);
+
+
+        setRowSizes_(A11, A12, A21, A22);
+        addIndices_(A11, A12, A21, A22);
+
+        (*this->matrix_)[cellCenterIdx][cellCenterIdx] = A11;
+        (*this->matrix_)[cellCenterIdx][faceIdx] = A12;
+        (*this->matrix_)[faceIdx][cellCenterIdx] = A21;
+        (*this->matrix_)[faceIdx][faceIdx] = A22;
+
+        printmatrix(std::cout, A11, "A11", "");
+        printmatrix(std::cout, A12, "A12", "");
+        printmatrix(std::cout, A21, "A21", "");
+        printmatrix(std::cout, A22, "A22", "");
+    }
+
+    void setRowSizes_(CCToCCMatrixBlock &A11, CCToFaceMatrixBlock &A12,
+                      FaceToCCMatrixBlock &A21, FaceToFaceMatrixBlock &A22)
     {
         for (const auto& element : elements(this->gridView_()))
         {
@@ -52,22 +96,27 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
             const auto globalI = this->elementMapper_().index(element);
             const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
             const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
-            const auto size = cellCenterToCellCenterStencil.size() + cellCenterToFaceStencil.size();
 
-            this->matrix().setrowsize(globalI, size);
+            A11.setrowsize(globalI, cellCenterToCellCenterStencil.size());
+            A12.setrowsize(globalI, cellCenterToFaceStencil.size());
         }
+        A11.endrowsizes();
+        A12.endrowsizes();
 
-        for(int facetIdx = 0; facetIdx < this->gridView_().size(1); ++facetIdx)
+        for(int faceDofxIdx = 0; faceDofxIdx < this->gridView_().size(1); ++faceDofxIdx)
         {
-            const int faceDofxIdx = facetIdx + this->gridView_().size(0);
-            auto size = this->model_().fullFaceToCellCenterStencilSize(facetIdx);
-            size += this->model_().fullfaceToFaceStencilSize(facetIdx);
-            this->matrix().setrowsize(faceDofxIdx, size);
+            const auto faceToCellSize = this->model_().fullFaceToCellCenterStencilSize(faceDofxIdx);
+            const auto faceToFaceSize = this->model_().fullfaceToFaceStencilSize(faceDofxIdx);
+
+            A21.setrowsize(faceDofxIdx, faceToCellSize);
+            A22.setrowsize(faceDofxIdx, faceToFaceSize);
         }
-        this->matrix().endrowsizes();
+        A21.endrowsizes();
+        A22.endrowsizes();
     }
 
-    void addIndices_()
+    void addIndices_(CCToCCMatrixBlock &A11, CCToFaceMatrixBlock &A12,
+                     FaceToCCMatrixBlock &A21, FaceToFaceMatrixBlock &A22)
     {
         for (const auto& element : elements(this->gridView_()))
         {
@@ -78,36 +127,39 @@ class StaggeredAssembler : public ImplicitAssembler<TypeTag>
 
 
             for (auto&& globalJ : cellCenterToCellCenterStencil)
-                this->matrix().addindex(globalI, globalJ);
+                A11.addindex(globalI, globalJ);
             for (auto&& globalJ : cellCenterToFaceStencil)
-                this->matrix().addindex(globalI, globalJ);
+                A12.addindex(globalI, globalJ - this->gridView_().size(0));
         }
+        A11.endindices();
+        A12.endindices();
 
         auto ptr1 = this->model_().getFullFaceToCellCenterStencilsPtr();
         auto ptr2 = this->model_().getFullfaceToFaceStencilsPtr();
 
-        if(ptr1 && ptr2)
-            std::cout << "success!!!" << std::endl;
+        assert((ptr1 && ptr2) && "pointers to full face stencils are empty!");
 
         const auto& fullFaceToCellCenterStencils = ptr1.get()[0];
         const auto& fullfaceToFaceStencils = ptr2.get()[0];
 
-        int globalI = this->gridView_().size(0);
+        int globalI = 0;
         for(const auto& stencil : fullFaceToCellCenterStencils)
         {
             for(auto&& globalJ : stencil)
-            this->matrix().addindex(globalI, globalJ);
-            ++globalI;
-        }
-        globalI = this->gridView_().size(0);
-        for(const auto& stencil : fullfaceToFaceStencils)
-        {
-            for(auto&& globalJ : stencil)
-            this->matrix().addindex(globalI, globalJ);
+            A21.addindex(globalI, globalJ);
             ++globalI;
         }
 
-        this->matrix().endindices();
+        globalI = 0;
+        for(const auto& stencil : fullfaceToFaceStencils)
+        {
+            for(auto&& globalJ : stencil)
+            A22.addindex(globalI, globalJ - this->gridView_().size(0));
+            ++globalI;
+        }
+
+        A21.endindices();
+        A22.endindices();
     }
 
 };
