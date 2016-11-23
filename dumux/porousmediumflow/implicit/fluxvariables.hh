@@ -114,10 +114,10 @@ public:
                         auto initPriVars = this->problem().initial(insideScv);
                         VolumeVariables volVars;
                         volVars.update(initPriVars, this->problem(), this->element(), insideScv);
-                        return flux*volVars.density(phaseIdx)/volVars.viscosity(phaseIdx);
+                        return flux*volVars.density(phaseIdx)*volVars.mobility(phaseIdx);
                     }
                     else
-                        return flux*insideVolVars.density(phaseIdx)/insideVolVars.viscosity(phaseIdx);
+                        return flux*insideVolVars.density(phaseIdx)*insideVolVars.mobility(phaseIdx);
                 }
             }
         }
