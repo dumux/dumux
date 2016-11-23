@@ -103,9 +103,7 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                const auto& spatialParams = this->problem_().spatialParams();
-                auto dofIdxGlobal = scv.dofIndex();
-
+                const auto dofIdxGlobal = scv.dofIndex();
                 (*p)[dofIdxGlobal] = volVars.pressure();
             }
 
