@@ -147,10 +147,8 @@ public:
                     // if p.n comes from the pm
                     if (bcTypes.isCouplingNeumann(momentumYIdx) || bcTypes.isCouplingMortar(momentumYIdx))
                     {
-                        DimVector pressureCorrection(intersection.centerUnitOuterNormal());
-                        pressureCorrection *= volVars.pressure();
-                        this->residual_[scvIdx][momentumYIdx] += pressureCorrection[momentumYIdx]
-                                                                  * boundaryVars.face().area;
+                        this->residual_[scvIdx][momentumYIdx] -= volVars.pressure()
+                                                                 * boundaryVars.face().normal[momentumYIdx];
                         Valgrind::CheckDefined(this->residual_[scvIdx][momentumYIdx]);
                     }
 
@@ -158,16 +156,13 @@ public:
                     for (int compIdx = 0; compIdx < numComponents; compIdx++)
                     {
                         int eqIdx =  conti0EqIdx + compIdx;
-                        if (eqIdx != massBalanceIdx)
+                        if ((eqIdx != massBalanceIdx) && bcTypes.isCouplingDirichlet(eqIdx))
                         {
-                            if (bcTypes.isCouplingDirichlet(eqIdx))
-                            {
-                                if(useMoles)
-                                    this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
-                                else
-                                    this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
-                                Valgrind::CheckDefined(this->residual_[scvIdx][compIdx]);
-                            }
+                            if(useMoles)
+                                this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
+                            else
+                                this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
+                            Valgrind::CheckDefined(this->residual_[scvIdx][compIdx]);
                         }
                     }
 
