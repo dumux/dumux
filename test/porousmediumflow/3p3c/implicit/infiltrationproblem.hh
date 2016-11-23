@@ -347,10 +347,14 @@ public:
             auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
+            // make sure the FVElementGeometry is bound to the element
+            auto elemVolVars = localView(this->model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
-                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(scv);
+                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(scv, elemVolVars[scv]);
             }
         }
 

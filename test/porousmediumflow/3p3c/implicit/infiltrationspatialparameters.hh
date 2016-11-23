@@ -94,7 +94,7 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -143,7 +143,8 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
-    Scalar intrinsicPermeability(const SubControlVolume &scv) const
+    Scalar intrinsicPermeability(const SubControlVolume &scv,
+                                 const VolumeVariables& volVars) const
     {
         if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
