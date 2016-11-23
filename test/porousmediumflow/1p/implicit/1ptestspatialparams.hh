@@ -74,8 +74,8 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    OnePTestSpatialParams(const GridView& gridView)
-        : ParentType(gridView),
+    OnePTestSpatialParams(const Problem& problem, const GridView& gridView)
+        : ParentType(problem, gridView),
           randomPermeability_(gridView.size(dim), 0.0),
           indexSet_(gridView.indexSet())
     {
@@ -104,7 +104,7 @@ public:
         if (isInLens_(scv.dofPosition()))
         {
             if(randomField_)
-                return randomPermeability_[indexSet_.index(element.template subEntity<dim> (0))];
+                return randomPermeability_[scv.dofIndex()];
             else
                 return permeabilityLens_;
         }
@@ -170,7 +170,7 @@ private:
     ScalarVector randomPermeability_;
 
     const IndexSet& indexSet_;
-    static const Scalar eps_ = 1.5e-7;
+    static constexpr Scalar eps_ = 1.5e-7;
 };
 
 } // end namespace
