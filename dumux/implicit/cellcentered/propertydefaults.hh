@@ -36,6 +36,7 @@
 #include "properties.hh"
 #include "localjacobian.hh"
 #include "assembler.hh"
+#include "assemblymap.hh"
 
 namespace Dumux
 {
@@ -74,6 +75,9 @@ SET_TYPE_PROP(CCModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, G
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
+
+//! Set the AssemblyMap to the CCAssemblyMap
+SET_TYPE_PROP(CCModel, AssemblyMap, Dumux::CCAssemblyMap<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
