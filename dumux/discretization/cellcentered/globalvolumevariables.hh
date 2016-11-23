@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_CC_GLOBAL_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux
 {
