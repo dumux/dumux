@@ -216,7 +216,14 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     {
-        // unifiy advective and diffusive stencil
+        // In the case of cctpfa or box the stencils for all laws are the same...
+        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCTpfa
+            || GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)
+        {
+            return AdvectionType::stencil(problem, element, fvGeometry, scvFace);
+        }
+
+        // ...in general: unifiy advective and diffusive stencil
         Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
         Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, fvGeometry, scvFace);
 
@@ -311,7 +318,14 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     {
-        // unifiy advective and diffusive stencil
+        // In the case of cctpfa or box the stencils for all laws are the same...
+        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCTpfa
+            || GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)
+        {
+            return AdvectionType::stencil(problem, element, fvGeometry, scvFace);
+        }
+
+        // ...in general: unifiy advective and heat conduction stencil
         Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
         Stencil energyStencil = HeatConductionType::stencil(problem, element, fvGeometry, scvFace);
 
@@ -420,7 +434,14 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     {
-        // unifiy advective and diffusive stencil
+        // In the case of cctpfa or box the stencils for all laws are the same...
+        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCTpfa
+            || GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)
+        {
+            return AdvectionType::stencil(problem, element, fvGeometry, scvFace);
+        }
+
+        // ...in general: unifiy advective, diffusive and heat conduction stencil
         Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
         Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, fvGeometry, scvFace);
         Stencil energyStencil = HeatConductionType::stencil(problem, element, fvGeometry, scvFace);

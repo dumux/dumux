@@ -117,16 +117,10 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     {
-        std::vector<IndexType> stencil;
         if (!scvFace.boundary())
-        {
-            stencil.push_back(scvFace.insideScvIdx());
-            stencil.push_back(scvFace.outsideScvIdx());
-        }
+            return Stencil({scvFace.insideScvIdx(), scvFace.outsideScvIdx()});
         else
-            stencil.push_back(scvFace.insideScvIdx());
-
-        return stencil;
+            return Stencil({scvFace.insideScvIdx()});
     }
 
 private:

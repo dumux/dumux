@@ -130,16 +130,10 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     {
-        Stencil stencil;
         if (!scvFace.boundary())
-        {
-            stencil.push_back(scvFace.insideScvIdx());
-            stencil.push_back(scvFace.outsideScvIdx());
-        }
+            return Stencil({scvFace.insideScvIdx(), scvFace.outsideScvIdx()});
         else
-            stencil.push_back(scvFace.insideScvIdx());
-
-        return stencil;
+            return Stencil({scvFace.insideScvIdx()});
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
