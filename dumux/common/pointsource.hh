@@ -336,7 +336,7 @@ public:
                             pointSourceMap.insert({key, {source}});
                         // split equally on the number of matched scvs
                         auto& s = pointSourceMap.at(key).back();
-                        s.setEmbeddings(scvs.size()*s.embeddings());
+                        s.setEmbeddings(scvIndices.size()*s.embeddings());
                     }
                 }
                 else
