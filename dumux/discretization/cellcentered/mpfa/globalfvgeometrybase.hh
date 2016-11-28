@@ -164,15 +164,16 @@ public:
 
             // for dim < dimWorld we'll have multiple intersections at one point
             // we store here the centers of those we have handled already
-            std::vector<GlobalPosition> finishedCenters;
+            std::vector<IndexType> finishedIndices;
 
             // construct the sub control volume faces
             for (const auto& is : intersections(gridView_, element))
             {
                 // if we are dealing with a lower dimensional network
                 // only make a new scvf if we haven't handled it yet
+                // Note that for hanging nodes on the lower dimension network, it doesn't work
                 if (dim < dimWorld)
-                    if(MpfaHelper::contains(finishedCenters, is.geometry().center()))
+                    if(MpfaHelper::contains(finishedIndices, is.indexInInside()))
                         continue;
 
                 // get some of the intersection's bools
@@ -189,12 +190,11 @@ public:
                     if (dim < dimWorld)
                     {
                         auto insideIndex = is.indexInInside();
-                        auto isCenter = is.geometry().center();
 
                         // find further possible intersections at the same point (bifurcations etc)
                         for (const auto& nextIs : intersections(gridView_, element))
                         {
-                            if (nextIs.indexInInside() == insideIndex && nextIs.geometry().center() == isCenter)
+                            if (nextIs.indexInInside() == insideIndex)
                             {
                                 auto nIdx = problem.elementMapper().index(nextIs.outside());
                                 if (nIdx != nIndices[0])
@@ -203,7 +203,7 @@ public:
                         }
 
                         // store this center as a handled one
-                        finishedCenters.push_back(isCenter);
+                        finishedIndices.push_back(insideIndex);
                     }
                 }
                 else if (boundary)
@@ -444,7 +444,7 @@ public:
 
             // for dim < dimWorld we'll have multiple intersections at one point
             // we store here the centers of those we have handled already
-            std::vector<GlobalPosition> finishedCenters;
+            std::vector<IndexType> finishedIndices;
 
             unsigned int localFaceIdx = 0;
             // construct the sub control volume faces
@@ -452,8 +452,9 @@ public:
             {
                 // if we are dealing with a lower dimensional network
                 // only make a new scvf if we haven't handled it yet
+                // Note that for hanging nodes on the lower dimension network, it doesn't work
                 if (dim < dimWorld)
-                    if(MpfaHelper::contains(finishedCenters, is.geometry().center()))
+                    if(MpfaHelper::contains(finishedIndices, is.indexInInside()))
                         continue;
 
                 // get some of the intersection bools
@@ -470,12 +471,11 @@ public:
                     if (dim < dimWorld)
                     {
                         auto insideIndex = is.indexInInside();
-                        auto isCenter = is.geometry().center();
 
                         // find further possible intersections at the same point (bifurcations etc)
                         for (const auto& nextIs : intersections(gridView_, element))
                         {
-                            if (nextIs.indexInInside() == insideIndex && nextIs.geometry().center() == isCenter)
+                            if (nextIs.indexInInside() == insideIndex)
                             {
                                 auto nIdx = problem.elementMapper().index(nextIs.outside());
                                 if (nIdx != nIndices[0])
@@ -484,7 +484,7 @@ public:
                         }
 
                         // store this center as a handled one
-                        finishedCenters.push_back(isCenter);
+                        finishedIndices.push_back(insideIndex);
                     }
                 }
                 else if (boundary)
