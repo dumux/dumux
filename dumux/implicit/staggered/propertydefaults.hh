@@ -209,8 +209,8 @@ public:
     using MatrixBlockFaceToCC = typename Dune::BCRSMatrix<MatrixLittleBlockFaceToCC>;
 
     // the row types
-    using RowCellCenter = typename Dune::MultiTypeBlockVector<MatrixLittleBlockCCToCC, MatrixLittleBlockCCToFace>;
-    using RowFace = typename Dune::MultiTypeBlockVector<MatrixLittleBlockFaceToCC, MatrixLittleBlockFaceToFace>;
+    using RowCellCenter = typename Dune::MultiTypeBlockVector<MatrixBlockCCToCC, MatrixBlockCCToFace>;
+    using RowFace = typename Dune::MultiTypeBlockVector<MatrixBlockFaceToCC, MatrixBlockFaceToFace>;
 
     // the jacobian matrix
     using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
@@ -222,6 +222,12 @@ SET_PROP(StaggeredModel, DofTypeIndices)
     using CellCenterIdx = Dune::index_constant<0>;
     using FaceIdx = Dune::index_constant<1>;
 };
+
+//! set default solver
+SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::GSBiCGSTABBackend<TypeTag>);
+
+//! set the block level to 2, suitable for e.g. the Dune::MultiTypeBlockMatrix
+SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
 
 
 } // namespace Properties

@@ -82,7 +82,7 @@ public:
                 this->initialResidual_ = std::sqrt(norm2);
             }
 
-            int converged = 1;//this->linearSolver_.solve(A, x, b); //TODO: fix
+            int converged = this->linearSolver_.solve(A, x, b);
 
             // make sure all processes converged
             int convergedRemote = converged;
