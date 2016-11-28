@@ -450,7 +450,7 @@ private:
             auto tensor = getTensor(element, elemVolVars_()[posGlobalScv], posGlobalScv);
 
             // the omega factors of the "positive" sub volume
-            auto posWijk = calculateOmegas_(posLocalScv, localScvf, tensor);
+            auto posWijk = calculateOmegas_(posLocalScv, localScvf.unitOuterNormal(), localScvf.area(), tensor);
             posWijk *= problem_().boxExtrusionFactor(element, posGlobalScv);
 
             // Check the local directions of the positive sub volume
@@ -493,15 +493,30 @@ private:
             if (faceType == MpfaFaceTypes::interior)
             {
                 // loop over all the outside neighbors of this face and add entries
+                unsigned int indexInOutsideData = 0;
                 for (auto negLocalScvIdx : localScvf.outsideLocalScvIndices())
                 {
                     const auto& negLocalScv = localScv_(negLocalScvIdx);
                     const auto& negGlobalScv = fvGeometry_().scv(negLocalScv.globalIndex());
-                    auto negElement = localElement_(negLocalScvIdx);;
+                    auto negElement = localElement_(negLocalScvIdx);
                     auto negTensor = getTensor(negElement, elemVolVars_()[negGlobalScv], negGlobalScv);
 
                     // the omega factors of the "negative" sub volume
-                    auto negWijk = calculateOmegas_(negLocalScv, localScvf, negTensor);
+                    DimVector negWijk;
+
+                    // if dim < dimWorld, use outside normal vector
+                    if (dim < dimWorld)
+                    {
+                        // outside scvf
+                        auto&& outsideScvf = fvGeometry_().scvf(localScvf.outsideGlobalScvfIndices()[indexInOutsideData]);
+                        auto negNormal = outsideScvf.unitOuterNormal();
+                        negNormal *= -1.0;
+                        negWijk = calculateOmegas_(negLocalScv, negNormal, localScvf.area(), negTensor);
+                    }
+                    else
+                        negWijk = calculateOmegas_(negLocalScv, localScvf.unitOuterNormal(), localScvf.area(), negTensor);
+
+                    // scale by extrusion factpr
                     negWijk *= problem_().boxExtrusionFactor(negElement, negGlobalScv);
 
                     // Check local directions of negative sub volume
@@ -527,8 +542,12 @@ private:
                         B[idxInFluxFaces][negLocalScvIdx] -= negWijk[localDir];
                     }
 
-                    // store the omegas
+                    // store the omegas (negative, because of normal vector sign switch)
+                    negWijk *= -1.0;
                     wijk_[rowIdx].emplace_back(std::move(negWijk));
+
+                    // increment counter in outside data
+                    indexInOutsideData++;
                 }
             }
             // go to the next face
@@ -563,7 +582,7 @@ private:
             auto tensor = getTensor(element, elemVolVars_()[posGlobalScv], posGlobalScv);
 
             // the omega factors of the "positive" sub volume
-            auto posWijk = calculateOmegas_(posLocalScv, localScvf, tensor);
+            auto posWijk = calculateOmegas_(posLocalScv, localScvf.unitOuterNormal(), localScvf.area(), tensor);
             posWijk *= problem_().boxExtrusionFactor(element, posGlobalScv);
 
             for (int localDir = 0; localDir < dim; localDir++)
@@ -584,7 +603,8 @@ private:
     }
 
     DimVector calculateOmegas_(const LocalScvType& localScv,
-                               const LocalScvfType& localScvf,
+                               const GlobalPosition normal,
+                               const Scalar area,
                                const Tensor& T) const
     {
         DimVector wijk;
@@ -592,9 +612,9 @@ private:
         for (int dir = 0; dir < dim; ++dir)
         {
             T.mv(localScv.innerNormal(dir), tmp);
-            wijk[dir] = tmp*localScvf.unitOuterNormal();
+            wijk[dir] = tmp*normal;
         }
-        wijk *= localScvf.area();
+        wijk *= area;
         wijk /= localScv.detX();
         wijk *= -1.0;
 
@@ -602,16 +622,17 @@ private:
     }
 
     DimVector calculateOmegas_(const LocalScvType& localScv,
-                               const LocalScvfType& localScvf,
+                               const GlobalPosition normal,
+                               const Scalar area,
                                const Scalar t) const
     {
         DimVector wijk;
-        GlobalPosition tmp(localScvf.unitOuterNormal());
+        GlobalPosition tmp(normal);
         tmp *= t;
 
         for (int dir = 0; dir < dim; ++dir)
             wijk[dir] = tmp*localScv.innerNormal(dir);
-        wijk *= localScvf.area();
+        wijk *= area;
         wijk /= localScv.detX();
         wijk *= -1.0;
 
