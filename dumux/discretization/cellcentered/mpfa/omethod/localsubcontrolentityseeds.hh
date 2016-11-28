@@ -153,14 +153,11 @@ public:
     bool boundary() const
     { return boundary_; }
 
-    void addOutsideScvfIndex(const GlobalIndexType index)
+    void addOutsideData(const GlobalIndexType outsideGlobalScvfIndex,
+                        const LocalIndexType outsideLocalScvIndex)
     {
-        outsideGlobalScvfIndices_.push_back(index);
-    }
-
-    void addOutsideLocalScvIndex(const LocalIndexType index)
-    {
-        outsideLocalScvIndices_.push_back(index);
+        outsideLocalScvIndices_.push_back(outsideLocalScvIndex);
+        outsideGlobalScvfIndices_.push_back(outsideGlobalScvfIndex);
     }
 
     void makeOutsideDataUnique()
