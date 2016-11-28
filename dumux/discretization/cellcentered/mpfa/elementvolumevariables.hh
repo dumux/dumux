@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
+#include "facetypes.hh"
 
 namespace Dumux
 {
@@ -171,16 +172,20 @@ public:
                     if (!scvf.boundary())
                         continue;
 
-                    // boundary volume variables
-                    VolumeVariables dirichletVolVars;
-                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
-                    dirichletVolVars.update(dirichletPriVars, problem, element, scvI);
-                    volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                    // only proceed if we are on a dirichlet boundary
+                    if (MpfaHelper::getMpfaFaceType(problem, element, scvf) == MpfaFaceTypes::dirichlet)
+                    {
+                        // boundary volume variables
+                        VolumeVariables dirichletVolVars;
+                        const auto dirichletPriVars = problem.dirichlet(element, scvf);
+                        dirichletVolVars.update(dirichletPriVars, problem, element, scvI);
+                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
 
-                    // boundary vol var index
-                    auto bVolVarIdx = scvf.outsideScvIdx();
-                    volVarIndices_.push_back(bVolVarIdx);
-                    finishedBoundaries.push_back(bVolVarIdx);
+                        // boundary vol var index
+                        auto bVolVarIdx = scvf.outsideScvIdx();
+                        volVarIndices_.push_back(bVolVarIdx);
+                        finishedBoundaries.push_back(bVolVarIdx);
+                    }
                 }
             }
 
@@ -202,19 +207,23 @@ public:
 
                     // that means we are on a not yet handled boundary scvf
                     auto insideScvIdx = ivScvf.insideScvIdx();
-                    auto&& ivScv = fvGeometry.scv(insideScvIdx);
                     auto ivElement = globalFvGeometry.element(insideScvIdx);
 
-                    // boundary volume variables
-                    VolumeVariables dirichletVolVars;
-                    const auto dirichletPriVars = problem.dirichlet(ivElement, ivScvf);
-                    dirichletVolVars.update(dirichletPriVars, problem, ivElement, ivScv);
-                    volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                    // only proceed if we are on a dirichlet boundary
+                    if (MpfaHelper::getMpfaFaceType(problem, ivElement, ivScvf) == MpfaFaceTypes::dirichlet)
+                    {
+                        // boundary volume variables
+                        VolumeVariables dirichletVolVars;
+                        auto&& ivScv = fvGeometry.scv(insideScvIdx);
+                        const auto dirichletPriVars = problem.dirichlet(ivElement, ivScvf);
+                        dirichletVolVars.update(dirichletPriVars, problem, ivElement, ivScv);
+                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
 
-                    // boundary vol var index
-                    auto bVolVarIdx = ivScvf.outsideScvIdx();
-                    volVarIndices_.push_back(bVolVarIdx);
-                    finishedBoundaries.push_back(bVolVarIdx);
+                        // boundary vol var index
+                        auto bVolVarIdx = ivScvf.outsideScvIdx();
+                        volVarIndices_.push_back(bVolVarIdx);
+                        finishedBoundaries.push_back(bVolVarIdx);
+                    }
                 }
             }
 

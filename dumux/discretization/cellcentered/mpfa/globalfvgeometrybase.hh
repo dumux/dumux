@@ -111,9 +111,13 @@ public:
     const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
     { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
-    //! Returns whether or not a scvf touches the boundary (has to be called before getting an interaction volume)
+    //! Returns whether or not an scvf touches the boundary (has to be called before getting an interaction volume)
     bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
     { return boundaryVertices_[scvf.vertexIndex()]; }
+
+    //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
+    bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
+    { return branchingVertices_[scvf.vertexIndex()]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
@@ -135,6 +139,10 @@ public:
         scvfIndicesOfScv_.resize(numScvs);
         boundaryVertices_.resize(gridView_.size(dim), false);
         elementMap_.resize(numScvs);
+
+        // keep track of branching points
+        if (dim < dimWorld)
+            branchingVertices_.resize(gridView_.size(dim), false);
 
         // find vertices on processor boundaries
         auto isGhostVertex = MpfaHelper::findGhostVertices(problem, gridView_);
@@ -164,15 +172,16 @@ public:
 
             // for dim < dimWorld we'll have multiple intersections at one point
             // we store here the centers of those we have handled already
-            std::vector<GlobalPosition> finishedCenters;
+            std::vector<IndexType> finishedIndices;
 
             // construct the sub control volume faces
             for (const auto& is : intersections(gridView_, element))
             {
                 // if we are dealing with a lower dimensional network
                 // only make a new scvf if we haven't handled it yet
+                // Note that for hanging nodes on the lower dimension network, it doesn't work
                 if (dim < dimWorld)
-                    if(MpfaHelper::contains(finishedCenters, is.geometry().center()))
+                    if(MpfaHelper::contains(finishedIndices, is.indexInInside()))
                         continue;
 
                 // get some of the intersection's bools
@@ -189,12 +198,11 @@ public:
                     if (dim < dimWorld)
                     {
                         auto insideIndex = is.indexInInside();
-                        auto isCenter = is.geometry().center();
 
                         // find further possible intersections at the same point (bifurcations etc)
                         for (const auto& nextIs : intersections(gridView_, element))
                         {
-                            if (nextIs.indexInInside() == insideIndex && nextIs.geometry().center() == isCenter)
+                            if (nextIs.indexInInside() == insideIndex)
                             {
                                 auto nIdx = problem.elementMapper().index(nextIs.outside());
                                 if (nIdx != nIndices[0])
@@ -203,7 +211,7 @@ public:
                         }
 
                         // store this center as a handled one
-                        finishedCenters.push_back(isCenter);
+                        finishedIndices.push_back(insideIndex);
                     }
                 }
                 else if (boundary)
@@ -240,6 +248,10 @@ public:
                     // store info on which vertices are on the domain boundary
                     if (boundary)
                         boundaryVertices_[vIdxGlobal] = true;
+
+                    // is vertex on a branching point?
+                    if (dim < dimWorld && nIndices.size() > 1)
+                        branchingVertices_[vIdxGlobal] = true;
 
                     // make the scv face
                     scvfIndexSet.push_back(scvfIdx);
@@ -317,6 +329,7 @@ private:
     // vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<bool> boundaryVertices_;
+    std::vector<bool> branchingVertices_;
     IndexType numBoundaryScvf_;
 
     // the global interaction volume seeds
@@ -392,13 +405,17 @@ public:
     const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
     { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
-    //! Returns whether or not a scvf touches the boundary (has to be called before getting an interaction volume)
+    //! Returns whether or not an scvf touches the boundary (has to be called before getting an interaction volume)
     bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
     { return boundaryVertices_[scvf.vertexIndex()]; }
 
     //! Returns whether or not a vertex is on a processor boundary
     bool isGhostVertex(const IndexType vIdxGlobal) const
     { return ghostVertices_[vIdxGlobal]; }
+
+    //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
+    bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
+    { return branchingVertices_[scvf.vertexIndex()]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
@@ -419,6 +436,10 @@ public:
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
         boundaryVertices_.resize(gridView_.size(dim), false);
+
+        // keep track of branching points
+        if (dim < dimWorld)
+            branchingVertices_.resize(gridView_.size(dim), false);
 
         // find vertices on processor boundaries
         ghostVertices_ = MpfaHelper::findGhostVertices(problem, gridView_);
@@ -444,7 +465,7 @@ public:
 
             // for dim < dimWorld we'll have multiple intersections at one point
             // we store here the centers of those we have handled already
-            std::vector<GlobalPosition> finishedCenters;
+            std::vector<IndexType> finishedIndices;
 
             unsigned int localFaceIdx = 0;
             // construct the sub control volume faces
@@ -452,8 +473,9 @@ public:
             {
                 // if we are dealing with a lower dimensional network
                 // only make a new scvf if we haven't handled it yet
+                // Note that for hanging nodes on the lower dimension network, it doesn't work
                 if (dim < dimWorld)
-                    if(MpfaHelper::contains(finishedCenters, is.geometry().center()))
+                    if(MpfaHelper::contains(finishedIndices, is.indexInInside()))
                         continue;
 
                 // get some of the intersection bools
@@ -470,12 +492,11 @@ public:
                     if (dim < dimWorld)
                     {
                         auto insideIndex = is.indexInInside();
-                        auto isCenter = is.geometry().center();
 
                         // find further possible intersections at the same point (bifurcations etc)
                         for (const auto& nextIs : intersections(gridView_, element))
                         {
-                            if (nextIs.indexInInside() == insideIndex && nextIs.geometry().center() == isCenter)
+                            if (nextIs.indexInInside() == insideIndex)
                             {
                                 auto nIdx = problem.elementMapper().index(nextIs.outside());
                                 if (nIdx != nIndices[0])
@@ -484,7 +505,7 @@ public:
                         }
 
                         // store this center as a handled one
-                        finishedCenters.push_back(isCenter);
+                        finishedIndices.push_back(insideIndex);
                     }
                 }
                 else if (boundary)
@@ -507,6 +528,10 @@ public:
                     // store info on which vertices are on the domain boundary
                     if (boundary)
                         boundaryVertices_[vIdxGlobal] = true;
+
+                    // is vertex on a branching point?
+                    if (dim < dimWorld && nIndices.size() > 1)
+                        branchingVertices_[vIdxGlobal] = true;
 
                     // store information on the scv face
                     scvfsIndexSet.push_back(numScvf_++);
@@ -563,6 +588,7 @@ private:
     std::vector< std::vector< std::vector<IndexType> > > neighborVolVarIndices_;
     std::vector<bool> boundaryVertices_;
     std::vector<bool> ghostVertices_;
+    std::vector<bool> branchingVertices_;
 
     // the global interaction volume seeds
     GlobalInteractionVolumeSeeds globalInteractionVolumeSeeds_;

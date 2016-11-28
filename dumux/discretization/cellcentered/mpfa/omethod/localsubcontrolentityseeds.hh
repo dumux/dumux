@@ -153,23 +153,32 @@ public:
     bool boundary() const
     { return boundary_; }
 
-    void addOutsideScvfIndex(const GlobalIndexType index)
+    void addOutsideData(const GlobalIndexType outsideGlobalScvfIndex,
+                        const LocalIndexType outsideLocalScvIndex)
     {
-        outsideGlobalScvfIndices_.push_back(index);
+        outsideLocalScvIndices_.push_back(outsideLocalScvIndex);
+        outsideGlobalScvfIndices_.push_back(outsideGlobalScvfIndex);
     }
 
-    void addOutsideLocalScvIndex(const LocalIndexType index)
-    {
-        outsideLocalScvIndices_.push_back(index);
-    }
-
+    // for grids with dim < dimWorld, some outside indices might be doubled
+    // we want to make the outside indices unique, but, the i-th outside global scvf face
+    // should correspond to the j-th outside local scv.Therefore we apply the same operations on both containers
     void makeOutsideDataUnique()
     {
-        std::sort(outsideGlobalScvfIndices_.begin(), outsideGlobalScvfIndices_.end());
-        outsideGlobalScvfIndices_.erase(std::unique(outsideGlobalScvfIndices_.begin(), outsideGlobalScvfIndices_.end()), outsideGlobalScvfIndices_.end());
-
-        std::sort(outsideLocalScvIndices_.begin(), outsideLocalScvIndices_.end());
-        outsideLocalScvIndices_.erase(std::unique(outsideLocalScvIndices_.begin(), outsideLocalScvIndices_.end()), outsideLocalScvIndices_.end());
+        for (auto scvIt = outsideLocalScvIndices_.begin(); scvIt != outsideLocalScvIndices_.end(); ++scvIt)
+        {
+            auto scvfIt = outsideGlobalScvfIndices_.begin();
+            for (auto scvIt2 = scvIt+1; scvIt2 != outsideLocalScvIndices_.end(); ++scvIt2)
+            {
+                if (*scvIt2 == *scvIt)
+                {
+                    outsideLocalScvIndices_.erase(scvIt2);
+                    outsideGlobalScvfIndices_.erase(scvfIt);
+                    break;
+                }
+                ++scvfIt;
+            }
+        }
     }
 
 private:

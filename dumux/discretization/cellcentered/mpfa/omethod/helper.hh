@@ -290,6 +290,10 @@ public:
                                                                 const FVElementGeometry& fvGeometry,
                                                                 const SubControlVolumeFace& scvf)
     {
+        // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
+        if (!problem.model().globalFvGeometry().scvfTouchesBranchingPoint(scvf))
+            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeInnerInteractionVolumeSeed(problem, element, fvGeometry, scvf);
+
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
@@ -321,6 +325,10 @@ public:
                                                                    const FVElementGeometry& fvGeometry,
                                                                    const SubControlVolumeFace& scvf)
     {
+        // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
+        if (!problem.model().globalFvGeometry().scvfTouchesBranchingPoint(scvf))
+            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeBoundaryInteractionVolumeSeed(problem, element, fvGeometry, scvf);
+
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
@@ -429,6 +437,7 @@ private:
                                 outsideLocalScvfIdx++;
 
                         if (scvfSeed.insideGlobalScvIndex() == actualScvf.insideScvIdx() &&
+                            scvfSeed.outsideGlobalScvIndices().size() == actualScvf.outsideScvIndices().size() &&
                             std::equal(scvfSeed.outsideGlobalScvIndices().begin(), scvfSeed.outsideGlobalScvIndices().end(), actualScvf.outsideScvIndices().begin()))
                             insideScvfExists = true;
                         else
@@ -454,20 +463,17 @@ private:
                                                    Implementation::getMpfaFaceType(problem, element, actualScvf));
 
                             // pass the actual outside indices to the new scvf seed
-                            scvfSeeds.back().addOutsideScvfIndex(outsideScvfIdx);
-                            scvfSeeds.back().addOutsideLocalScvIndex(static_cast<LocalIndexType>(scvSeeds.size()));
+                            scvfSeeds.back().addOutsideData(outsideScvfIdx, static_cast<LocalIndexType>(scvSeeds.size()));
                         }
                         else if (insideScvfExists && !outsideScvfExists)
                         {
                             // pass info on outside to the inside scvf seed
-                            scvfSeeds[insideLocalScvfIdx].addOutsideScvfIndex(outsideScvfIdx);
-                            scvfSeeds[insideLocalScvfIdx].addOutsideLocalScvIndex(static_cast<LocalIndexType>(scvSeeds.size()));
+                            scvfSeeds[insideLocalScvfIdx].addOutsideData(outsideScvfIdx, static_cast<LocalIndexType>(scvSeeds.size()));
                         }
                         else if (!insideScvfExists && outsideScvfExists)
                         {
                             // pass info on outside to the inside scvf seed
-                            scvfSeeds[outsideLocalScvfIdx].addOutsideScvfIndex(actualScvf.index());
-                            scvfSeeds[outsideLocalScvfIdx].addOutsideLocalScvIndex(static_cast<LocalIndexType>(scvSeeds.size()));
+                            scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), static_cast<LocalIndexType>(scvSeeds.size()));
                         }
 
                         // make outside scv by recursion
@@ -485,8 +491,7 @@ private:
                                                Implementation::getMpfaFaceType(problem, element, actualScvf));
 
                         // pass the actual outside indices to the new scvf seed
-                        scvfSeeds.back().addOutsideScvfIndex(outsideScvfIdx);
-                        scvfSeeds.back().addOutsideLocalScvIndex(outsideLocalScvIdx);
+                        scvfSeeds.back().addOutsideData(outsideScvfIdx, outsideLocalScvIdx);
                     }
                     else if (outsideScvExists && !insideScvfExists && outsideScvfExists)
                     {
@@ -494,8 +499,7 @@ private:
                         actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
 
                         // pass info on outside to the inside found local scvf seed
-                        scvfSeeds[outsideLocalScvfIdx].addOutsideScvfIndex(outsideScvfIdx);
-                        scvfSeeds[outsideLocalScvfIdx].addOutsideLocalScvIndex(actualLocalScvIdx);
+                        scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), actualLocalScvIdx);
                     }
                 }
             }

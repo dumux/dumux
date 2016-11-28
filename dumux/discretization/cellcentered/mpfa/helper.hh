@@ -248,6 +248,11 @@ public:
 
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     { return MpfaDimensionHelper<TypeTag, dim, dim>::getNumLocalScvfs(gt); }
+
+    static ScvfVector getCommonAndNextScvFace(const SubControlVolumeFace& outsideScvf,
+                                              const FVElementGeometry& fvGeometry,
+                                              const bool clockWise)
+    { return MpfaDimensionHelper<TypeTag, dim, dim>::getCommonAndNextScvFace(outsideScvf, fvGeometry, clockWise); }
 };
 
 // Specialization for dim == 3 (dimWorld has to be 3)
