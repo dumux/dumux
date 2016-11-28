@@ -87,7 +87,7 @@ SET_PROP(NavierStokes, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
 /*!
