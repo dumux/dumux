@@ -111,9 +111,13 @@ public:
     const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
     { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
-    //! Returns whether or not a scvf touches the boundary (has to be called before getting an interaction volume)
+    //! Returns whether or not an scvf touches the boundary (has to be called before getting an interaction volume)
     bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
     { return boundaryVertices_[scvf.vertexIndex()]; }
+
+    //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
+    bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
+    { return branchingVertices_[scvf.vertexIndex()]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
@@ -135,6 +139,10 @@ public:
         scvfIndicesOfScv_.resize(numScvs);
         boundaryVertices_.resize(gridView_.size(dim), false);
         elementMap_.resize(numScvs);
+
+        // keep track of branching points
+        if (dim < dimWorld)
+            branchingVertices_.resize(gridView_.size(dim), false);
 
         // find vertices on processor boundaries
         auto isGhostVertex = MpfaHelper::findGhostVertices(problem, gridView_);
@@ -241,6 +249,10 @@ public:
                     if (boundary)
                         boundaryVertices_[vIdxGlobal] = true;
 
+                    // is vertex on a branching point?
+                    if (dim < dimWorld && nIndices.size() > 1)
+                        branchingVertices_[vIdxGlobal] = true;
+
                     // make the scv face
                     scvfIndexSet.push_back(scvfIdx);
                     scvfs_.emplace_back(helper,
@@ -317,6 +329,7 @@ private:
     // vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<bool> boundaryVertices_;
+    std::vector<bool> branchingVertices_;
     IndexType numBoundaryScvf_;
 
     // the global interaction volume seeds
@@ -392,13 +405,17 @@ public:
     const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
     { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
-    //! Returns whether or not a scvf touches the boundary (has to be called before getting an interaction volume)
+    //! Returns whether or not an scvf touches the boundary (has to be called before getting an interaction volume)
     bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
     { return boundaryVertices_[scvf.vertexIndex()]; }
 
     //! Returns whether or not a vertex is on a processor boundary
     bool isGhostVertex(const IndexType vIdxGlobal) const
     { return ghostVertices_[vIdxGlobal]; }
+
+    //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
+    bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
+    { return branchingVertices_[scvf.vertexIndex()]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
@@ -419,6 +436,10 @@ public:
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
         boundaryVertices_.resize(gridView_.size(dim), false);
+
+        // keep track of branching points
+        if (dim < dimWorld)
+            branchingVertices_.resize(gridView_.size(dim), false);
 
         // find vertices on processor boundaries
         ghostVertices_ = MpfaHelper::findGhostVertices(problem, gridView_);
@@ -508,6 +529,10 @@ public:
                     if (boundary)
                         boundaryVertices_[vIdxGlobal] = true;
 
+                    // is vertex on a branching point?
+                    if (dim < dimWorld && nIndices.size() > 1)
+                        branchingVertices_[vIdxGlobal] = true;
+
                     // store information on the scv face
                     scvfsIndexSet.push_back(numScvf_++);
                     neighborVolVarIndexSet.push_back(nIndices);
@@ -563,6 +588,7 @@ private:
     std::vector< std::vector< std::vector<IndexType> > > neighborVolVarIndices_;
     std::vector<bool> boundaryVertices_;
     std::vector<bool> ghostVertices_;
+    std::vector<bool> branchingVertices_;
 
     // the global interaction volume seeds
     GlobalInteractionVolumeSeeds globalInteractionVolumeSeeds_;

@@ -290,6 +290,10 @@ public:
                                                                 const FVElementGeometry& fvGeometry,
                                                                 const SubControlVolumeFace& scvf)
     {
+        // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
+        if (!problem.model().globalFvGeometry().scvfTouchesBranchingPoint(scvf))
+            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeInnerInteractionVolumeSeed(problem, element, fvGeometry, scvf);
+
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
@@ -321,6 +325,10 @@ public:
                                                                    const FVElementGeometry& fvGeometry,
                                                                    const SubControlVolumeFace& scvf)
     {
+        // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
+        if (!problem.model().globalFvGeometry().scvfTouchesBranchingPoint(scvf))
+            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeBoundaryInteractionVolumeSeed(problem, element, fvGeometry, scvf);
+
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
