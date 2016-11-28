@@ -32,7 +32,7 @@ namespace Dumux
     //!       or the classification is non-applicable
     enum class DiscretizationMethods : unsigned int
     {
-        None, Box, CCTpfa, CCMpfa
+        None, Box, CCTpfa, CCMpfa, Staggered
     };
 
 } // end namespace Dumux

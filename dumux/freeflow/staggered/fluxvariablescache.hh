@@ -53,7 +53,6 @@ class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::S
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
@@ -67,18 +66,15 @@ public:
     {
         FluxVariables fluxVars;
         stencil_ = fluxVars.computeCellCenterStencil(problem, element, fvGeometry, scvf);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
     }
 
     const Stencil& stencil() const
     { return stencil_; }
 
-    const Scalar& tij() const
-    { return tij_; }
+
 
 private:
     Stencil stencil_;
-    Scalar tij_;
 };
 
 } // end namespace

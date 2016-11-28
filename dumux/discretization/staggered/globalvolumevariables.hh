@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/discretization/cellcentered/elementvolumevariables.hh>
+#include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux
 {

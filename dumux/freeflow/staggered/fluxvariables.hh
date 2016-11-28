@@ -88,13 +88,13 @@ public:
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
     {
-        Scalar flux = AdvectionType::flux(this->problem(),
+        Scalar flux = 1.0;/*AdvectionType::flux(this->problem(),
                                           this->element(),
                                           this->fvGeometry(),
                                           this->elemVolVars(),
                                           this->scvFace(),
                                           phaseIdx,
-                                          this->fluxVarsCache());
+                                          this->fluxVarsCache());*/
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
