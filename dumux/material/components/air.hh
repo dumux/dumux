@@ -179,7 +179,7 @@ public:
         const Scalar tempCelsius = temperature - 273.15;
         const Scalar pressureCorrectionFactor = 9.7115e-9*tempCelsius*tempCelsius - 5.5e-6*tempCelsius + 0.0010809;
 
-        using namespace std;
+        using std::sqrt;
         const Scalar mu = 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0)
                           * (1.0 + (pressure/1.0e5 - 1.0)*pressureCorrectionFactor);
         return mu;
@@ -233,10 +233,10 @@ public:
         const Scalar tau = criticalTemperature()/temperature;
         const Scalar rhoc = 10.4477; // [mol/m^3]
         const Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;
-        const Scalar etaR = 10.72 * pow(tau, 0.2) * pow(delta, 1)
+        const Scalar etaR = 10.72 * pow(tau, 0.2) * delta
                             + 1.122 * pow(tau, 0.05) * pow(delta, 4)
                             + 0.002019 * pow(tau, 2.4) * pow(delta, 9)
-                            - 8.876 * pow(tau, 0.6) * pow(delta, 1) * exp(-delta)
+                            - 8.876 * pow(tau, 0.6) * delta * exp(-delta)
                             - 0.02916 * pow(tau, 3.6) * pow(delta, 8) * exp(-delta);
 
         return (eta0 + etaR)*1e-6;
@@ -270,11 +270,9 @@ public:
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
     {
-        return
-            gasEnthalpy(temperature, pressure)
-            -
-            IdealGas::R * temperature // = pressure * molar volume for an ideal gas
-            / molarMass(); // conversion from [J/(mol K)] to [J/(kg K)]
+        return gasEnthalpy(temperature, pressure)
+               - IdealGas::R * temperature // = pressure * molar volume for an ideal gas
+                 / molarMass(); // conversion from [J/(mol K)] to [J/(kg K)]
     }
 
     /*!
@@ -311,6 +309,7 @@ public:
                 -0.233758E+00 * pow(phi,-5)
                 +0.125718E-01 * pow(phi,-6);
         c_p *= IdealGas::R / (molarMass() * 1000); // in J/mol/K * mol / kg / 1000 = kJ/kg/K
+
         return  c_p;
     }
 
