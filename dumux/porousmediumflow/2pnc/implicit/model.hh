@@ -140,8 +140,8 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
             bothPhases = Indices::bothPhases
     };
     enum {
-            plSg = TwoPNCFormulation::plSg,
-            pgSl = TwoPNCFormulation::pgSl,
+            pwsn = TwoPNCFormulation::pwsn,
+            pnsw = TwoPNCFormulation::pnsw,
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
