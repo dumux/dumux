@@ -93,6 +93,7 @@ class FuelCellSpatialParams : public ImplicitSpatialParams<TypeTag>
     using DimMatrix = Dune::FieldMatrix<CoordScalar,dim,dim>;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -138,7 +139,8 @@ public:
      * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
-    const DimMatrix intrinsicPermeability(const SubControlVolume& scv) const
+    const DimMatrix intrinsicPermeability(const SubControlVolume& scv,
+                                          const VolumeVariables& volVars) const
     { return K_; }
 
     /*!
