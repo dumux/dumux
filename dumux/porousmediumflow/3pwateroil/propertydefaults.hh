@@ -56,7 +56,7 @@ namespace Properties {
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(ThreePWaterOil, NumComponents)
+SET_PROP(ThreePWaterOilNI, NumComponents)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -74,7 +74,7 @@ SET_PROP(ThreePWaterOil, NumComponents)
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(ThreePWaterOil, NumPhases)
+SET_PROP(ThreePWaterOilNI, NumPhases)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -85,55 +85,38 @@ SET_PROP(ThreePWaterOil, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 };
 
-SET_INT_PROP(ThreePWaterOil, NumEq, 2); //!< set the number of equations to 2
-
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_TYPE_PROP(ThreePWaterOil, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
-//! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreePWaterOil, LocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
+SET_TYPE_PROP(ThreePWaterOilNI, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 //! Use the 3p2cni specific newton controller for the 3p2cni model
-SET_TYPE_PROP(ThreePWaterOil, NewtonController, ThreePWaterOilNewtonController<TypeTag>);
-
-//! the Model property
-SET_TYPE_PROP(ThreePWaterOil, Model, ThreePWaterOilModel<TypeTag>);
-
-//! the VolumeVariables property
-SET_TYPE_PROP(ThreePWaterOil, VolumeVariables, ThreePWaterOilVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(ThreePWaterOil, FluxVariables, ThreePWaterOilFluxVariables<TypeTag>);
+SET_TYPE_PROP(ThreePWaterOilNI, NewtonController, ThreePWaterOilNewtonController<TypeTag>);
 
 //! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(ThreePWaterOil, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(ThreePWaterOilNI, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
-SET_SCALAR_PROP(ThreePWaterOil, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(ThreePWaterOilNI, ImplicitMassUpwindWeight, 1.0);
 
 //! set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(ThreePWaterOil, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(ThreePWaterOilNI, ImplicitMobilityUpwindWeight, 1.0);
 
 //! Determines whether a constraint solver should be used explicitly
-SET_BOOL_PROP(ThreePWaterOil, UseSimpleModel, true);
-
-//! The indices required by the isothermal 3p2cni model
-SET_TYPE_PROP(ThreePWaterOil, Indices, ThreePWaterOilIndices<TypeTag, /*PVOffset=*/0>);
+SET_BOOL_PROP(ThreePWaterOilNI, UseSimpleModel, true);
 
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(ThreePWaterOil, SpatialParams, ImplicitSpatialParams<TypeTag>);
+SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 // disable velocity output by default
-SET_BOOL_PROP(ThreePWaterOil, VtkAddVelocity, false);
+SET_BOOL_PROP(ThreePWaterOilNI, VtkAddVelocity, false);
 
 // enable gravity by default
-SET_BOOL_PROP(ThreePWaterOil, ProblemEnableGravity, true);
+SET_BOOL_PROP(ThreePWaterOilNI, ProblemEnableGravity, true);
 
-SET_BOOL_PROP(ThreePWaterOil, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
+SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
 
 
 
@@ -142,7 +125,7 @@ SET_BOOL_PROP(ThreePWaterOil, UseMoles, true); //!< Define that mole fractions a
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(ThreePWaterOil, SpatialParamsForchCoeff, 0.55);
+SET_SCALAR_PROP(ThreePWaterOilNI, SpatialParamsForchCoeff, 0.55);
 
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
