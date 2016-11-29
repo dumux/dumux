@@ -79,8 +79,6 @@ SET_BOOL_PROP(ObstacleProblem, ImplicitEnablePartialReassemble, true);
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(ObstacleProblem, Scalar, double);
 
-// set the linear solver
-SET_TYPE_PROP(ObstacleProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 }
 
 

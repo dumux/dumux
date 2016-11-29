@@ -135,7 +135,7 @@ public:
     typedef typename Dune::BCRSMatrix<MatrixBlock> type;
 };
 
-//! use the stabilized BiCG solver preconditioned by the ILU-0 by default
+//! use the AMGBackend solver by default
 SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
 // if the deflection of the newton method is large, we do not
