@@ -153,7 +153,10 @@ int invertQuadraticPolynomial(SolContainer &sol,
 
     // sort the result
     if (sol[0] > sol[1])
-        std::swap(sol[0], sol[1]);
+    {
+        using std::swap;
+        swap(sol[0], sol[1]);
+    }
     return 2; // two real roots
 }
 

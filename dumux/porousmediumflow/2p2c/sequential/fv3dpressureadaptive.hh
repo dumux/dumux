@@ -455,7 +455,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 // check if relation not already added
                                 IntPair intPair(eIdxGlobalI,additionalIdx2);
                                 if(eIdxGlobalI > additionalIdx2)
-                                    std::swap(intPair.first, intPair.second);
+                                {
+                                    using std::swap;
+                                    swap(intPair.first, intPair.second);
+                                }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
                                                             and rangeIt!=range.second; ++rangeIt)
@@ -478,7 +481,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 // check if relation not already added
                                 IntPair intPair(eIdxGlobalI,additionalIdx3);
                                 if(eIdxGlobalI > additionalIdx3)
-                                    std::swap(intPair.first, intPair.second);
+                                {
+                                    using std::swap;
+                                    swap(intPair.first, intPair.second);
+                                }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
                                                             and rangeIt!=range.second; ++rangeIt)
@@ -516,7 +522,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 // check if relation not already added
                                 IntPair intPair(eIdxGlobalJ,additionalIdx2);
                                 if(eIdxGlobalJ > additionalIdx2)
-                                    std::swap(intPair.first, intPair.second);
+                                {
+                                    using std::swap;
+                                    swap(intPair.first, intPair.second);
+                                }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
                                                             and rangeIt!=range.second; ++rangeIt)
@@ -539,7 +548,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 // check if relation not already added
                                 IntPair intPair(eIdxGlobalJ,additionalIdx3);
                                 if(eIdxGlobalJ > additionalIdx3)
-                                    std::swap(intPair.first, intPair.second);
+                                {
+                                    using std::swap;
+                                    swap(intPair.first, intPair.second);
+                                }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
                                                             and rangeIt!=range.second; ++rangeIt)
@@ -2486,7 +2498,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         // a) reverse direction
         additionalT *= -1;
         // b) swap cell I and J
-        std::swap(additionalT[0], additionalT[1]);
+        using std::swap;
+        swap(additionalT[0], additionalT[1]);
     }
 
     return caseL;

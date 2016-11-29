@@ -240,9 +240,10 @@ public:
 
         // make sure that x0 is smaller than x1
         if (x0 > x1)
-            std::swap(x0, x1);
-
-        assert(x0 < x1);
+        {
+            using std::swap;
+            swap(x0, x1);
+        }
 
         // corner case where the whole spline is a constant
         if (moment_(0) == 0 &&

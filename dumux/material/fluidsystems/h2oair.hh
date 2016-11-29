@@ -572,7 +572,10 @@ public:
                                              int compJIdx)
     {
         if (compIIdx > compJIdx)
-            std::swap(compIIdx, compJIdx);
+        {
+            using std::swap;
+            swap(compIIdx, compJIdx);
+        }
 
 #ifndef NDEBUG
         if (compIIdx == compJIdx ||

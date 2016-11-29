@@ -149,8 +149,8 @@ public:
 
             if (vDarcyFracture_[phaseIdx] < 0)
             {
-                std::swap(upstreamFractureIdx[phaseIdx],
-                          downstreamFractureIdx[phaseIdx]);
+                using std::swap;
+                swap(upstreamFractureIdx[phaseIdx], downstreamFractureIdx[phaseIdx]);
             }
         }
     }
