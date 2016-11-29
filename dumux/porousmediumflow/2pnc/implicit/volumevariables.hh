@@ -73,8 +73,8 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
         // formulations
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        plSg = TwoPNCFormulation::plSg,
-        pgSl = TwoPNCFormulation::pgSl,
+        pwsn = TwoPNCFormulation::pwsn,
+        pnsw = TwoPNCFormulation::pnsw,
 
         // phase indices
         wPhaseIdx = FluidSystem::wPhaseIdx,
@@ -207,9 +207,9 @@ public:
             Sg = 0.0;
         }
         else if (phasePresence == bothPhases) {
-            if (formulation == plSg)
+            if (formulation == pwsn)
                 Sg = priVars[switchIdx];
-            else if (formulation == pgSl)
+            else if (formulation == pnsw)
                 Sg = 1.0 - priVars[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
@@ -227,13 +227,13 @@ public:
         Scalar pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures
-        if (formulation == plSg) {
+        if (formulation == pwsn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
             if (priVars[pressureIdx] + pc < 0.0)
                  DUNE_THROW(NumericalProblem,"Capillary pressure is too low");
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
-        else if (formulation == pgSl) {
+        else if (formulation == pnsw) {
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
             // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
             if (priVars[pressureIdx] - pc < 0.0)

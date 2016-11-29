@@ -20,6 +20,12 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
     - In the ZeroEq models, the properties BBoxMinIsWall and BBoxMaxIsWall have
       been replaced by the functions bBoxMaxIsWall() and bBoxMaxIsWall() in the
       problem file.
+    - In the TwoPNC (and, consequently the TwoPNCMin) models, the old formulations
+      pgSl, plSg as well as pnSw and pwSg have been replaced by the pnsw and pwsn,
+      to satify the naming convention and be consistent with TwoPTwoC.
+    - In the TwoPTwoC model, the indices are no longer dependent on the
+      formulation. Further, the values of "nPhaseOnly" and "bothPhases"
+      have been harmonized with those in TwoPNC
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.11: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name

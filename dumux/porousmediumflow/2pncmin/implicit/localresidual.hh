@@ -80,8 +80,8 @@ protected:
         nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases,
 
-        plSg = TwoPNCFormulation::plSg,
-        pgSl = TwoPNCFormulation::pgSl,
+        pwsn = TwoPNCFormulation::pwsn,
+        pnsw = TwoPNCFormulation::pnsw,
         formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
