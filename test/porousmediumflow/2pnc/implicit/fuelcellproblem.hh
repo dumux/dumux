@@ -121,7 +121,7 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     // Select the electrochemistry method
-    using ElectroChemistry = typename ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
+    using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
     using Constant = Constants<Scalar>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
