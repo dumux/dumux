@@ -239,9 +239,8 @@ int invertCubicPolynomial(SolContainer *sol,
         // t^3 + q = 0,
         //
         // i. e. single real root at t=curt(q)
-        Scalar t;
-        if (-q > 0) t = std::pow(-q, 1./3);
-        else t = - std::pow(q, 1./3);
+        using std::cbrt;
+        Scalar t = cbrt(q);
         sol[0] = t - b/3;
 
         return 1;
@@ -256,9 +255,10 @@ int invertCubicPolynomial(SolContainer *sol,
         }
 
         // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
-        sol[0] = -std::sqrt(-p) - b/3;
+        using std::sqrt;
+        sol[0] = -sqrt(-p) - b/3;
         sol[1] = 0.0 - b/3;
-        sol[2] = std::sqrt(-p) - b/3;
+        sol[2] = sqrt(-p) - b/3;
 
         return 3;
     }
@@ -296,9 +296,9 @@ int invertCubicPolynomial(SolContainer *sol,
     Scalar wDisc = q*q/4 + p*p*p/27;
     if (wDisc >= 0) { // the positive discriminant case:
         // calculate the cube root of - q/2 + sqrt(q^2/4 + p^3/27)
-        Scalar u = - q/2 + std::sqrt(wDisc);
-        if (u < 0) u = - std::pow(-u, 1.0/3);
-        else u = std::pow(u, 1.0/3);
+        using std::cbrt;
+        using std::sqrt;
+        Scalar u = cbrt(-q/2 + sqrt(wDisc));
 
         // at this point, u != 0 since p^3 = 0 is necessary in order
         // for u = 0 to hold, so
@@ -314,7 +314,8 @@ int invertCubicPolynomial(SolContainer *sol,
         using std::sqrt;
         Scalar uCubedIm = sqrt(-wDisc);
         // calculate the cube root of - q/2 + sqrt(q^2/4 + p^3/27)
-        Scalar uAbs  = std::pow(std::sqrt(uCubedRe*uCubedRe + uCubedIm*uCubedIm), 1.0/3);
+        using std::cbrt;
+        Scalar uAbs  = cbrt(sqrt(uCubedRe*uCubedRe + uCubedIm*uCubedIm));
         using std::atan2;
         Scalar phi = atan2(uCubedIm, uCubedRe)/3;
 

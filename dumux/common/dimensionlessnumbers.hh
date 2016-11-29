@@ -264,7 +264,9 @@ static Scalar sherwoodNumber(const Scalar reynoldsNumber,
         /* example: flow through porous medium *single phase*
          * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 156
          */
-        return 2. + 1.1 * pow(schmidtNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
+        using std::cbrt;
+        using std::pow;
+        return 2. + 1.1 * cbrt(schmidtNumber) * pow(reynoldsNumber, 0.6);
     }
 
     else {
