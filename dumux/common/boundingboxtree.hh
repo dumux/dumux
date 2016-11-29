@@ -1169,8 +1169,10 @@ private:
             corner = geometry.corner(vLocalIdx);
             for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
             {
-                xMin[dimIdx] = std::min(xMin[dimIdx], corner[dimIdx]);
-                xMax[dimIdx] = std::max(xMax[dimIdx], corner[dimIdx]);
+                using std::max;
+                using std::min;
+                xMin[dimIdx] = min(xMin[dimIdx], corner[dimIdx]);
+                xMax[dimIdx] = max(xMax[dimIdx], corner[dimIdx]);
             }
         }
     }

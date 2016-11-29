@@ -23,6 +23,7 @@
 #ifndef DUMUX_SPLINE_COMMON__HH
 #define DUMUX_SPLINE_COMMON__HH
 
+#include <algorithm>
 #include <iostream>
 #include <cassert>
 
@@ -88,8 +89,10 @@ public:
     */
     void printCSV(Scalar xi0, Scalar xi1, int k) const
     {
-        Scalar x0 = std::min(xi0, xi1);
-        Scalar x1 = std::max(xi0, xi1);
+        using std::max;
+        using std::min;
+        Scalar x0 = min(xi0, xi1);
+        Scalar x1 = max(xi0, xi1);
         const int n = numSamples_() - 1;
         for (int i = 0; i <= k; ++i) {
             double x = i*(x1 - x0)/k + x0;
@@ -116,7 +119,7 @@ public:
             else {
                 y = eval(x);
                 dy_dx = evalDerivative(x);
-                mono = monotonic(std::max<Scalar>(x_(0), x), std::min<Scalar>(x_(n), x_p1));
+                mono = monotonic(max<Scalar>(x_(0), x), min<Scalar>(x_(n), x_p1));
             }
 
             std::cout << x << " " << y << " " << dy_dx << " " << mono << "\n";
@@ -552,7 +555,8 @@ protected:
             // not exhibit any extrema.
             return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
         }
-        disc = std::sqrt(disc);
+        using std::sqrt;
+        disc = sqrt(disc);
         Scalar xE1 = (-2*b + disc)/(6*a);
         Scalar xE2 = (-2*b - disc)/(6*a);
 
@@ -591,8 +595,9 @@ protected:
                                              b_(segIdx) - b,
                                              c_(segIdx) - c,
                                              d_(segIdx) - d);
-        x0 = std::max(x_(segIdx), x0);
-        x1 = std::max(x_(segIdx+1), x1);
+        using std::max;
+        x0 = max(x_(segIdx), x0);
+        x1 = max(x_(segIdx+1), x1);
 
         // filter the intersections outside of the specified intervall
         int k = 0;

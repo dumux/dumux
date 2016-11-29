@@ -163,8 +163,10 @@ public:
         Scalar alpha = xToI(x);
         Scalar beta = yToJ(y);
 
-        int i = std::max(0, std::min(m_, static_cast<int>(alpha)));
-        int j = std::max(0, std::min(n_, static_cast<int>(beta)));
+        using std::max;
+        using std::min;
+        int i = max(0, min(m_, static_cast<int>(alpha)));
+        int j = max(0, min(n_, static_cast<int>(beta)));
 
         alpha -= i;
         beta -= j;

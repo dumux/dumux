@@ -23,11 +23,11 @@
 #ifndef DUMUX_MATH_HH
 #define DUMUX_MATH_HH
 
+#include <algorithm>
+#include <cmath>
+
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-
-#include <cmath>
-#include <algorithm>
 
 namespace Dumux
 {
@@ -58,7 +58,8 @@ Scalar geometricMean(Scalar x, Scalar y)
 {
     if (x*y <= 0)
         return 0;
-    return std::sqrt(x*y)*((x < 0)?-1:1);
+    using std::sqrt;
+    return sqrt(x*y)*sign(x);
 }
 
 /*!
@@ -147,7 +148,8 @@ int invertQuadraticPolynomial(SolContainer &sol,
     if (Delta < 0)
         return 0; // no real roots
 
-    Delta = std::sqrt(Delta);
+    using std::sqrt;
+    Delta = sqrt(Delta);
     sol[0] = (- b + Delta)/(2*a);
     sol[1] = (- b - Delta)/(2*a);
 
@@ -181,7 +183,8 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
         x -= fOld/fPrime;
 
         Scalar fNew = d + x*(c + x*(b + x*a));
-        if (std::abs(fNew) < std::abs(fOld))
+        using std::abs;
+        if (abs(fNew) < abs(fOld))
             sol[i] = x;
     }
 }
@@ -308,10 +311,12 @@ int invertCubicPolynomial(SolContainer *sol,
     }
     else { // the negative discriminant case:
         Scalar uCubedRe = - q/2;
-        Scalar uCubedIm = std::sqrt(-wDisc);
+        using std::sqrt;
+        Scalar uCubedIm = sqrt(-wDisc);
         // calculate the cube root of - q/2 + sqrt(q^2/4 + p^3/27)
         Scalar uAbs  = std::pow(std::sqrt(uCubedRe*uCubedRe + uCubedIm*uCubedIm), 1.0/3);
-        Scalar phi = std::atan2(uCubedIm, uCubedRe)/3;
+        using std::atan2;
+        Scalar phi = atan2(uCubedIm, uCubedRe)/3;
 
         // calculate the length and the angle of the primitive root
 
@@ -353,7 +358,8 @@ int invertCubicPolynomial(SolContainer *sol,
         // values for phi which differ by 2/3*pi. This allows to
         // calculate the three real roots of the polynomial:
         for (int i = 0; i < 3; ++i) {
-            sol[i] = std::cos(phi)*(uAbs - p/(3*uAbs)) - b/3;
+            using std::cos;
+            sol[i] = cos(phi)*(uAbs - p/(3*uAbs)) - b/3;
             phi += 2*M_PI/3;
         }
 
@@ -362,7 +368,8 @@ int invertCubicPolynomial(SolContainer *sol,
         invertCubicPolynomialPostProcess_(sol, 3, a, b, c, d);
 
         // sort the result
-        std::sort(sol, sol + 3);
+        using std::sort;
+        sort(sol, sol + 3);
 
         return 3;
     }
@@ -472,7 +479,8 @@ Scalar antoine(Scalar temperature,
                Scalar C)
 {
     const Scalar ln10 = 2.3025850929940459;
-    return std::exp(ln10*(A - B/(C + temperature)));
+    using std::exp;
+    return exp(ln10*(A - B/(C + temperature)));
 }
 
 /*!
