@@ -131,29 +131,12 @@ class TwoPNCMinModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        numSecComponents = GET_PROP_VALUE(TypeTag, NumSecComponents),
-        numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents),
-
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        wPhaseOnly = Indices::wPhaseOnly,
-        nPhaseOnly = Indices::nPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        plSg = TwoPNCFormulation::plSg,
-        pgSl = TwoPNCFormulation::pgSl,
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        nPhaseIdx = Indices::nPhaseIdx
     };
 
     using Vertex = typename GridView::template Codim<dim>::Entity;

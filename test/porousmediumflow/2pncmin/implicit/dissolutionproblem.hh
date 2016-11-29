@@ -64,7 +64,7 @@ SET_BOOL_PROP(DissolutionProblem, ProblemEnableGravity, true);
 
 //Set properties here to override the default property settings in the model.
 SET_INT_PROP(DissolutionProblem, ReplaceCompEqIdx, 1); //! Replace gas balance by total mass balance
-SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pgSl);
+SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pnsw);
 }
 
 /*!
