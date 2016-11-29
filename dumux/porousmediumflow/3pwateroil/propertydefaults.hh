@@ -30,6 +30,9 @@
 
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
+
 
 #include "indices.hh"
 #include "model.hh"
@@ -82,7 +85,7 @@ SET_PROP(ThreePWaterOil, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 };
 
-SET_INT_PROP(ThreePWaterOil, NumEq, 3); //!< set the number of equations to 2
+SET_INT_PROP(ThreePWaterOil, NumEq, 2); //!< set the number of equations to 2
 
 /*!
  * \brief Set the property for the material parameters by extracting
@@ -140,6 +143,47 @@ SET_BOOL_PROP(ThreePWaterOil, UseMoles, true); //!< Define that mole fractions a
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(ThreePWaterOil, SpatialParamsForchCoeff, 0.55);
+
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(ThreePWaterOilNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(ThreePWaterOilNI, IsothermalModel, ThreePWaterOilModel<TypeTag>);
+
+// set isothermal FluxVariables
+SET_TYPE_PROP(ThreePWaterOilNI, IsothermalFluxVariables, ThreePWaterOilFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(ThreePWaterOilNI, IsothermalVolumeVariables, ThreePWaterOilVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(ThreePWaterOilNI, IsothermalLocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_PROP(ThreePWaterOilNI, IsothermalIndices)
+{
+
+public:
+    typedef ThreePWaterOilIndices<TypeTag, /*PVOffset=*/0> type;
+};
+
+//set isothermal NumEq
+SET_INT_PROP(ThreePWaterOilNI, IsothermalNumEq, 2);
 
 }
 

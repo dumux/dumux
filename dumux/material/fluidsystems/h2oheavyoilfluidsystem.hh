@@ -421,7 +421,25 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2ONAPL::thermalConductivity()");
+        const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            return H2O::liquidThermalConductivity(temperature, pressure);
+        }
+        else if (phaseIdx == nPhaseIdx)
+        {
+            return HeavyOil::liquidThermalConductivity(temperature, pressure);
+        }
+        else if (phaseIdx == gPhaseIdx)
+        {
+            const Scalar lambdaH2O = H2O::liquidThermalConductivity(temperature, pressure);
+            const Scalar lambdaHeavyOil = HeavyOil::liquidThermalConductivity(temperature, pressure);
+            const Scalar result = lambdaH2O * fluidState.massFraction(gPhaseIdx, H2OIdx)
+                                + lambdaHeavyOil * fluidState.massFraction(gPhaseIdx, NAPLIdx);
+            return result; //TODO: check if this is correct
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
 private:

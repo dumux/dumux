@@ -123,7 +123,7 @@ public:
         coarsePorosity_ = 0.1;
 
         // heat conductivity of granite
-        //lambdaSolid_ = 2.8;
+        lambdaSolid_ = 2.8;
 
         // specific heat capacities
         fineHeatCap_ = 850.;
@@ -208,28 +208,57 @@ public:
             return coarseMaterialParams_;
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume
+     */
+    Scalar solidHeatCapacity(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
+    {
+        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(pos))
+            return fineHeatCap_ ;
+        else
+            return coarseHeatCap_;
+    }
+
+     /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume
+     */
+    Scalar solidDensity(const Element &element,
+                        const FVElementGeometry &fvGeometry,
+                        const int scvIdx) const
+    {
+        return 2650; // density of sand [kg/m^3]
+    }
+
+     /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
-    Scalar heatCapacity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
+    Scalar solidThermalConductivity(const Element &element,
+                                    const FVElementGeometry &fvGeometry,
+                                    const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
-            return fineHeatCap_ * 2650 // density of sand [kg/m^3]
-                * (1 - porosity(element, fvGeometry, scvIdx));
-        else
-            return coarseHeatCap_ * 2650 // density of sand [kg/m^3]
-                * (1 - porosity(element, fvGeometry, scvIdx));
+        return lambdaSolid_;
     }
+
 
 private:
     bool isFineMaterial_(const GlobalPosition &pos) const

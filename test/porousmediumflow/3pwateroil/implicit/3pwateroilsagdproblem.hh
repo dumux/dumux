@@ -40,7 +40,7 @@ class SagdProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(SagdProblem, INHERITS_FROM(ThreePWaterOil, SagdSpatialParams));
+NEW_TYPE_TAG(SagdProblem, INHERITS_FROM(ThreePWaterOilNI, SagdSpatialParams));
 NEW_TYPE_TAG(ThreePWaterOilSagdBoxProblem, INHERITS_FROM(BoxModel, SagdProblem));
 
 // Set the grid type

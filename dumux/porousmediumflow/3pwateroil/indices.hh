@@ -52,6 +52,7 @@ public:
     // and room temperature 20°C:
     static const int wCompIdx = FluidSystem::wCompIdx;
     static const int nCompIdx = FluidSystem::nCompIdx;
+    static const int gCompIdx = -1; //!< dummy index for compatibility with 3p3c
 
     // present phases (-> 'pseudo' primary variable)
     static const int threePhases = 1; //!< All three phases are present
@@ -69,7 +70,7 @@ public:
     // equation indices
     static const int conti0EqIdx = PVOffset    + wCompIdx; //!< Index of the mass conservation equation for the water component
     static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the contaminant component
-    static const int energyEqIdx = PVOffset + 2; //! The index for energy in equation vectors.
+    static const int conti2EqIdx = -1; //!< dummy index for compatibility with 3p3c
 
     static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< index of the mass conservation equation for the water component
     static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< index of the mass conservation equation for the contaminant component

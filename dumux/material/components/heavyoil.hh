@@ -438,6 +438,19 @@ public:
         return 618.; // J/(kg K)
     }
 
+     /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of mesitylene
+     *
+     * see: http://pubs.acs.org/doi/pdf/10.1021/ci000139t
+     *
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidThermalConductivity( Scalar temperature,  Scalar pressure)
+    {
+        return 0.1351; //TODO: find correct value!
+    }
+
 protected:
     /*!
      * \brief The molar density of pure heavyoil at a given pressure and temperature
