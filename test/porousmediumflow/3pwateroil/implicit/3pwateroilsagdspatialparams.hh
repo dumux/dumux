@@ -231,51 +231,6 @@ public:
                 * (1 - porosity(element, fvGeometry, scvIdx));
     }
 
-    /*!
-     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-     *        rock matrix based on the temperature gradient \f$[K / m]\f$
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
-     * \param elemVolVars The volume variables
-     * \param tempGrad The temperature gradient
-     * \param element The current finite element
-     * \param fvGeometry The finite volume geometry of the current element
-     * \param faceIdx The local index of the sub-control volume face where
-     *                    the matrix heat flux should be calculated
-     */
-    void matrixHeatFlux(DimVector &heatFlux,
-                        const FluxVariables &fluxDat,
-                        const ElementVolumeVariables &elemVolVars,
-                        const DimVector &tempGrad,
-                        const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        int faceIdx) const
-    {
-        static const Scalar ldry = 0.35;
-        static const Scalar lSw1 = 1.8;
-        static const Scalar lSn1 = 0.65;
-
-        // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvGeometry.subContVolFace[faceIdx].i;
-        const int j = fvGeometry.subContVolFace[faceIdx].j;
-        const Scalar Sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
-                                         elemVolVars[j].saturation(wPhaseIdx)) / 2);
-        const Scalar Sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +
-                                         elemVolVars[j].saturation(nPhaseIdx)) / 2);
-
-        // the heat conductivity of the matrix. in general this is a
-        // tensorial value, but we assume isotropic heat conductivity.
-        const Scalar heatCond = ldry + std::sqrt(Sw) * (lSw1-ldry) + std::sqrt(Sn) * (lSn1-ldry);
-
-        // the matrix heat flux is the negative temperature gradient
-        // times the heat conductivity.
-        heatFlux = tempGrad;
-        heatFlux *= -heatCond;
-    }
-
 private:
     bool isFineMaterial_(const GlobalPosition &pos) const
     {
