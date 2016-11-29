@@ -147,12 +147,7 @@ SET_SCALAR_PROP(TwoPTwoC, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(TwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! Set the indices required by the isothermal 2p2c
-SET_PROP(TwoPTwoC, Indices)
-{ private:
-    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
- public:
-    typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
-};
+SET_TYPE_PROP(TwoPTwoC, Indices, TwoPTwoCIndices <TypeTag, /*PVOffset=*/0>);
 
 //! Use the ImplicitSpatialParams by default
 SET_TYPE_PROP(TwoPTwoC, SpatialParams, ImplicitSpatialParams<TypeTag>);
@@ -222,13 +217,7 @@ SET_TYPE_PROP(TwoPTwoCNI, IsothermalVolumeVariables, TwoPTwoCVolumeVariables<Typ
 SET_TYPE_PROP(TwoPTwoCNI, IsothermalLocalResidual, TwoPTwoCLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_PROP(TwoPTwoCNI, IsothermalIndices)
-{
-private:
-    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
-public:
-    typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
-};
+SET_TYPE_PROP(TwoPTwoCNI, IsothermalIndices, TwoPTwoCIndices<TypeTag, /*PVOffset=*/0>);
 
 //set isothermal NumEq
 SET_INT_PROP(TwoPTwoCNI, IsothermalNumEq, 2);

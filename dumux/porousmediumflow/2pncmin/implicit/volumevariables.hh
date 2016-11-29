@@ -76,8 +76,8 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
 
         // formulations
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        plSg = TwoPNCFormulation::plSg,
-        pgSl = TwoPNCFormulation::pgSl,
+        pwsn = TwoPNCFormulation::pwsn,
+        pnsw = TwoPNCFormulation::pnsw,
 
         // phase indices
         wPhaseIdx = FluidSystem::wPhaseIdx,
@@ -234,9 +234,9 @@ public:
         }
         else if (phasePresence == bothPhases)
         {
-            if (formulation == plSg)
+            if (formulation == pwsn)
                 Sg = priVars[switchIdx];
-            else if (formulation == pgSl)
+            else if (formulation == pnsw)
                 Sg = 1.0 - priVars[switchIdx];
             else
                 DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
@@ -255,11 +255,11 @@ public:
         Scalar pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures
-        if (formulation == plSg) {
+        if (formulation == pwsn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
-        else if (formulation == pgSl) {
+        else if (formulation == pnsw) {
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
         }

@@ -126,8 +126,8 @@ SET_PROP(TwoPNC, FluidState){
         typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
-//! Set the default formulation to pl-Sg: This can be over written in the problem.
-SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::plSg);
+//! Set the default formulation to pw-Sn: This can be over written in the problem.
+SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::pwsn);
 
 //! Set the property for the material parameters by extracting it from the material law.
 SET_PROP(TwoPNC, MaterialLawParams)

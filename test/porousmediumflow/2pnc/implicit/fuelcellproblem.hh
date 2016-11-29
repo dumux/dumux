@@ -49,7 +49,7 @@ SET_TYPE_PROP(FuelCellProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(FuelCellProblem, Problem, FuelCellProblem<TypeTag>);
 // Set the primary variable combination for the 2pnc model
-SET_INT_PROP(FuelCellProblem, Formulation, TwoPNCFormulation::pgSl);
+SET_INT_PROP(FuelCellProblem, Formulation, TwoPNCFormulation::pnsw);
 
 // Set fluid configuration
 SET_PROP(FuelCellProblem, FluidSystem)

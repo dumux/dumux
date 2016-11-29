@@ -141,8 +141,8 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
             bothPhases = Indices::bothPhases
     };
     enum {
-            plSg = TwoPNCFormulation::plSg,
-            pgSl = TwoPNCFormulation::pgSl,
+            pwsn = TwoPNCFormulation::pwsn,
+            pnsw = TwoPNCFormulation::pnsw,
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
@@ -638,10 +638,10 @@ protected:
                             << sumxl << std::endl;
                     newPhasePresence = bothPhases;
 
-                    //saturation of the liquid phase set to 0.0001 (if formulation pgSl and vice versa)
-                    if (formulation == pgSl)
+                    //saturation of the liquid phase set to 0.0001 (if formulation pnsw and vice versa)
+                    if (formulation == pnsw)
                         globalSol[dofIdxGlobal][switchIdx] = 0.0001;
-                    else if (formulation == plSg)
+                    else if (formulation == pwsn)
                         globalSol[dofIdxGlobal][switchIdx] = 0.9999;
 
                     //switch all secondary components back to liquid mole fraction
@@ -669,10 +669,10 @@ protected:
                             << ", coordinated: " << globalPos << ", sumxg: "
                             << sumxg << std::endl;
                     newPhasePresence = bothPhases;
-                    //saturation of the liquid phase set to 0.9999 (if formulation pgSl and vice versa)
-                    if (formulation == pgSl)
+                    //saturation of the liquid phase set to 0.9999 (if formulation pnsw and vice versa)
+                    if (formulation == pnsw)
                         globalSol[dofIdxGlobal][switchIdx] = 0.9999;
-                    else if (formulation == plSg)
+                    else if (formulation == pwsn)
                         globalSol[dofIdxGlobal][switchIdx] = 0.0001;
 
                 }
