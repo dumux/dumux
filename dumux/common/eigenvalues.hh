@@ -55,8 +55,9 @@ double calcOffDiagonalNorm(Matrix& matrix)
     return sqrt(norm);
 }
 
-//! Function to calculate eigenvalues of n x n matrices
-/*
+/*!
+ * \briefFunction to calculate eigenvalues of n x n matrices
+ *
  * \param eigVel Vector for storing the eigenvalues
  * \param matrix n x n matrices for which eigenvalues have to be calculated
  * \param relativeTolerance tolerance for the relative convergence criterion (default: 0.01)

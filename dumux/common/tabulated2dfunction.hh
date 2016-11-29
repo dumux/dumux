@@ -79,7 +79,7 @@ public:
 
         yMin_ = yMin;
         yMax_ = yMax;
-    };
+    }
 
     /*!
      * \brief Return the position on the x-axis of the i-th interval.
@@ -89,7 +89,7 @@ public:
         assert(0 <= i && i < m_);
 
         return xMin_ + i*(xMax_ - xMin_)/(m_ - 1);
-    };
+    }
 
     /*!
      * \brief Return the position on the y-axis of the j-th interval.
@@ -99,7 +99,7 @@ public:
         assert(0 <= j && j < n_);
 
         return yMin_ + j*(yMax_ - yMin_)/(n_ - 1);
-    };
+    }
 
     /*!
      * \brief Return the interval index of a given position on the x-axis.
@@ -112,7 +112,7 @@ public:
     Scalar xToI(Scalar x) const
     {
         return (x - xMin_)/(xMax_ - xMin_)*m_;
-    };
+    }
 
 
     /*!
@@ -126,7 +126,7 @@ public:
     Scalar yToJ(Scalar y) const
     {
         return (y - yMin_)/(yMax_ - yMin_)*n_;
-    };
+    }
 
 
     /*!
@@ -140,7 +140,7 @@ public:
         assert(0 <= j && j < n_);
 
         return samples_[j*m_ + i];
-    };
+    }
 
     /*!
      * \brief Set the value of the sample point which is at the
@@ -153,7 +153,7 @@ public:
         assert(0 <= j && j < n_);
 
         samples_[j*m_ + i] = value;
-    };
+    }
 
     /*!
      * \brief Return an interpolated value.

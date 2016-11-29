@@ -30,8 +30,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 
-#include "valgrind.hh"
 #include "math.hh"
+#include "valgrind.hh"
 
 namespace Dumux
 {
@@ -56,19 +56,19 @@ public:
     bool applies(Scalar x) const
     {
         return x_(0) <= x && x <= x_(numSamples_() - 1);
-    };
+    }
 
     /*!
      * \brief Return the x value of the leftmost sampling point.
      */
     Scalar xMin() const
-    { return x_(0); };
+    { return x_(0); }
 
     /*!
      * \brief Return the x value of the rightmost sampling point.
      */
     Scalar xMax() const
-    { return x_(numSamples_() - 1); };
+    { return x_(numSamples_() - 1); }
 
     /*!
      * \brief Prints k tuples of the format (x, y, dx/dy, isMonotonic)
@@ -193,7 +193,7 @@ public:
     Scalar intersect(Scalar a, Scalar b, Scalar c, Scalar d) const
     {
         return intersectIntervall(xMin(), xMax(), a, b, c, d);
-    };
+    }
 
     /*!
      * \brief Find the intersections of the spline with a cubic
@@ -225,7 +225,7 @@ public:
                        "Spline has no intersection"); //<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<<d<<"!");
 
         return tmpSol[0];
-    };
+    }
 
     /*!
      * \brief Returns 1 if the spline is monotonically increasing, -1
@@ -291,7 +291,7 @@ public:
 protected:
     // this is an internal class, so everything is protected!
     SplineCommon_()
-    { Valgrind::SetUndefined(asImp_()); };
+    { Valgrind::SetUndefined(asImp_()); }
 
     /*!
      * \brief Set the sampling point vectors.
