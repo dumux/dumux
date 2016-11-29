@@ -117,9 +117,6 @@ public:
         // porosities
         porosity_ = 0.2;
 
-        //thermalconductivity
-        lambdaSolid_ = 14.7; //[W/(m*K)] Acosta et al. [2006]
-
         // residual saturations
         materialParams_.setSwr(0.12); //here water, see philtophoblaw
         materialParams_.setSnr(0.0);
@@ -175,85 +172,11 @@ public:
         return materialParams_;
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    Scalar heatCapacity(const Element &element,
-                        const SubControlVolume& scv) const
-    {
-        return
-            790 // specific heat capacity of granite [J / (kg K)]
-            * 2700 // density of granite [kg/m^3]
-            * (1 - porosity(scv));
-    }
-
-    // /*!
-    //  * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-    //  *        rock matrix based on the temperature gradient \f$[K / m]\f$
-    //  *
-    //  * This is only required for non-isothermal models.
-    //  *
-    //  * \param heatFlux The resulting heat flux vector
-    //  * \param fluxVars The flux variables
-    //  * \param elemVolVars The volume variables
-    //  * \param tempGrad The temperature gradient
-    //  * \param element The current finite element
-    //  * \param fvGeometry The finite volume geometry of the current element
-    //  * \param faceIdx The local index of the sub-control volume face where
-    //  *                    the matrix heat flux should be calculated
-    //  */
-    // void matrixHeatFlux(DimVector &heatFlux,
-    //                     const FluxVariables &fluxVars,
-    //                     const ElementVolumeVariables &elemVolVars,
-    //                     const DimVector &tempGrad,
-    //                     const Element &element,
-    //                     const FVElementGeometry &fvGeometry,
-    //                     const int faceIdx) const
-    // {
-
-    //     static const Scalar lWater = 0.6;
-    //     static const Scalar lGranite = 2.8;
-
-    //     // arithmetic mean of the liquid saturation and the porosity
-    //     const int i = fvGeometry.subContVolFace[faceIdx].i;
-    //     const int j = fvGeometry.subContVolFace[faceIdx].j;
-    //     Scalar sW = std::max<Scalar>(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
-    //                                        elemVolVars[j].saturation(wPhaseIdx)) / 2);
-    //     Scalar poro = (porosity(element, fvGeometry, i) +
-    //                    porosity(element, fvGeometry, j)) / 2;
-
-    //     Scalar lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-    //     Scalar ldry = pow(lGranite, (1-poro));
-
-    //     // the heat conductivity of the matrix. in general this is a
-    //     // tensorial value, but we assume isotropic heat conductivity.
-    //     Scalar heatCond = ldry + sqrt(sW) * (ldry - lsat);
-
-    //     // the matrix heat flux is the negative temperature gradient
-    //     // times the heat conductivity.
-    //     heatFlux = tempGrad;
-    //     heatFlux *= -heatCond;
-    // }
-
-    Scalar thermalConductivitySolid(const Element &element,
-                                    const SubControlVolume& scv) const
-    {
-        return lambdaSolid_;
-    }
-
 private:
     DimMatrix K_;
     Scalar porosity_;
     Scalar eps_;
     MaterialLawParams materialParams_;
-    Scalar lambdaSolid_;
 };
 
 }//end namespace
