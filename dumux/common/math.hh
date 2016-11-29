@@ -476,6 +476,19 @@ Scalar antoine(Scalar temperature,
 }
 
 /*!
+ * \brief Sign or signum function.
+ *
+ * Returns 1 for a positive argument.
+ * Returns -1 for a negative argument.
+ * Returns 0 if the argument is zero.
+ */
+template<class ValueType>
+int sign(const ValueType& value)
+{
+    return (ValueType(0) < value) - (value < ValueType(0));
+}
+
+/*!
  * \brief Cross product of two vectors in three-dimensional Euclidean space
  *
  * \param vec1 The first vector

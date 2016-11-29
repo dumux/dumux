@@ -563,7 +563,7 @@ protected:
                 // to determine whether we're monotonically increasing
                 // or decreasing
                 x0 = x1;
-            return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
+            return sign(x0*(x0*3*a + 2*b) + c);
         }
         if ((x0 < xE1 && xE1 < x1) ||
             (x0 < xE2 && xE2 < x1))
@@ -574,7 +574,7 @@ protected:
         // no extremum in range (x0, x1)
         x0 = (x0 + x1)/2; // pick point in the middle of the interval
                           // to avoid extrema on the boundaries
-        return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
+        return sign(x0*(x0*3*a + 2*b) + c);
     }
 
     /*!

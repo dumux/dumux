@@ -26,14 +26,10 @@
 
 #include <cmath>
 
+#include "math.hh"
+
 namespace Dumux
 {
-
-template<class ValueType>
-int sign(const ValueType& value)
-{
-    return (value < 0 ? -1 : 1);
-}
 
 template<int dim, class Matrix>
 void identityMatrix(Matrix& matrix)
