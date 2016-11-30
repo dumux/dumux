@@ -200,7 +200,7 @@ public:
             {
                 faceStencils_[scvf.index()].update(problem, scvf);
 
-                const IndexType idx = scvf.dofIndexSelf() - numElements;
+                const IndexType idx = scvf.dofIndexSelf();
 
                 const auto& faceToCellCenterStencil = faceStencils_[scvf.index()].faceToCellCenterStencil();
                 fullFaceToCellCenterStencils[idx].insert(fullFaceToCellCenterStencils[idx].end(), faceToCellCenterStencil.begin(), faceToCellCenterStencil.end());
@@ -229,7 +229,7 @@ public:
     auto& get(const SubControlVolumeFace& scvFace) const
     {
         const IndexType numElements = problemPtr_->gridView().size(0);
-        return faceStencils_[scvFace.dofIndexSelf() - numElements];
+        return faceStencils_[scvFace.dofIndexSelf()];
     }
 
     /*!
@@ -237,10 +237,8 @@ public:
     */
     size_t fullFaceToCellCenterStencilSize(const int idx) const
     {
-//         const IndexType numElements = problemPtr_->gridView().size(0);
         assert(fullFaceToCellCenterStencils_ && "fullFaceToCellCenterStencils_ has already been called and deleted!");
-        return fullFaceToCellCenterStencils_.get()[0][idx/*-numElements*/].size();
-        // TODO: why does this not work?
+        return fullFaceToCellCenterStencils_.get()[0][idx].size();
     }
 
     /*!
@@ -248,10 +246,8 @@ public:
     */
     size_t fullfaceToFaceStencilSize(const int idx) const
     {
-//         const IndexType numElements = problemPtr_->gridView().size(0);
         assert(fullfaceToFaceStencils_ && "fullfaceToFaceStencils_ has already been called and deleted!");
-        return fullfaceToFaceStencils_.get()[0][idx/*-numElements*/].size();
-        // TODO: why does this not work?
+        return fullfaceToFaceStencils_.get()[0][idx].size();
     }
 
     /*!

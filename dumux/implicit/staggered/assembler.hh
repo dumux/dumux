@@ -160,7 +160,7 @@ private:
             for (auto&& globalJ : cellCenterToCellCenterStencil)
                 A11.addindex(globalI, globalJ);
             for (auto&& globalJ : cellCenterToFaceStencil)
-                A12.addindex(globalI, globalJ - this->gridView_().size(0));
+                A12.addindex(globalI, globalJ);
         }
         A11.endindices();
         A12.endindices();
@@ -185,7 +185,7 @@ private:
         for(const auto& stencil : fullfaceToFaceStencils)
         {
             for(auto&& globalJ : stencil)
-            A22.addindex(globalI, globalJ - this->gridView_().size(0));
+            A22.addindex(globalI, globalJ);
             ++globalI;
         }
 
