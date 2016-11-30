@@ -77,7 +77,7 @@ class BaseStaggeredGeometryHelper
 
 public:
     BaseStaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView), offset_(gridView.size(0))
+    : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView), offset_(0/*gridView.size(0)*/)
     {
         fillPairData_();
     }
