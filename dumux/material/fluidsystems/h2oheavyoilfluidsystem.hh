@@ -433,11 +433,7 @@ public:
         }
         else if (phaseIdx == gPhaseIdx)
         {
-            const Scalar lambdaH2O = H2O::liquidThermalConductivity(temperature, pressure);
-            const Scalar lambdaHeavyOil = HeavyOil::liquidThermalConductivity(temperature, pressure);
-            const Scalar result = lambdaH2O * fluidState.massFraction(gPhaseIdx, H2OIdx)
-                                + lambdaHeavyOil * fluidState.massFraction(gPhaseIdx, NAPLIdx);
-            return result; //TODO: check if this is correct
+            return H2O::gasThermalConductivity(temperature, pressure);
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
