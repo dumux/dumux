@@ -29,6 +29,7 @@
 
 // #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include <dumux/implicit/model.hh>
+#include <dumux/discretization/staggered/globalfacevariables.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -76,6 +77,9 @@ class StaggeredBaseModel : public ImplicitModel<TypeTag>
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
+    using GlobalFaceVariables = Dumux::StaggeredGlobalFaceVariables<TypeTag>;
+    using ParentType = ImplicitModel<TypeTag>;
+
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
@@ -109,6 +113,8 @@ public:
         // resize and update the volVars with the initial solution
         this->curGlobalVolVars_.update(problem, this->curSol());
 
+        curGlobalFaceVariables_.update(problem, this->curSol()[faceIdx]);
+
         // update stencils
         this->stencilsVector_.update(problem);
 
@@ -124,6 +130,7 @@ public:
         // initial solution.
         this->uPrev_ = this->uCur_;
         this->prevGlobalVolVars_ = this->curGlobalVolVars_;
+        prevGlobalFaceVariables_ = curGlobalFaceVariables_;
     }
 
      /*!
@@ -165,6 +172,38 @@ public:
 #endif // HAVE_VALGRIND
 
         return converged;
+    }
+
+    void newtonEndStep()
+    {
+        ParentType::newtonEndStep();
+        curGlobalFaceVariables_.update(this->problem_(), this->curSol()[faceIdx]);
+
+    }
+
+    /*!
+     * \brief Called by the update() method if it was
+     *        unsuccessful. This is primarily a hook which the actual
+     *        model can overload.
+     */
+    void updateFailed()
+    {
+        ParentType::updateFailed();
+        curGlobalFaceVariables_ = prevGlobalFaceVariables_;
+    }
+
+    /*!
+     * \brief Called by the problem if a time integration was
+     *        successful, post processing of the solution is done and
+     *        the result has been written to disk.
+     *
+     * This should prepare the model for the next time integration.
+     */
+    void advanceTimeLevel()
+    {
+        ParentType::advanceTimeLevel();
+        // make the current solution the previous one.
+        prevGlobalFaceVariables_ = curGlobalFaceVariables_;
     }
 
      /*!
@@ -413,8 +452,8 @@ public:
             this->localResidual().eval(element);
 
 
-            int globalI = this->elementMapper().index(element);
-            residual[cellCenterIdx][globalI] = this->localResidual().residual(0);
+//             int globalI = this->elementMapper().index(element);
+//             residual[cellCenterIdx][globalI] = this->localResidual().residual(0);
         }
 
         // calculate the square norm of the residual
@@ -480,6 +519,22 @@ public:
     {
         return this->stencilsVector_.getFullfaceToFaceStencilsPtr();
     }
+
+    const GlobalFaceVariables& curGlobalFaceVars() const
+    { return curGlobalFaceVariables_; }
+
+    const GlobalFaceVariables& prevGlobalFaceVars() const
+    { return prevGlobalFaceVariables_; }
+
+protected:
+
+    GlobalFaceVariables& nonConstCurFaceVars()
+    { return curGlobalFaceVariables_; }
+
+    GlobalFaceVariables curGlobalFaceVariables_;
+    GlobalFaceVariables prevGlobalFaceVariables_;
+
+
 private:
 
     Implementation &asImp_()
