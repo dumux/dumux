@@ -110,7 +110,7 @@ public:
      * \param gridView The grid view
      */
     SagdSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+        : ParentType(gridView), eps_(1e-6)
     {
         layerBottom_ = 35.0;
 
@@ -263,7 +263,7 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &pos) const
     {
-        return pos[dim-1] > layerBottom_;
+        return pos[dim-1] > layerBottom_ - eps_;
     };
 
     Scalar layerBottom_;
@@ -280,6 +280,8 @@ private:
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
+
+    Scalar eps_;
 };
 
 }

@@ -31,8 +31,6 @@
 #include <dumux/material/fluidsystems/h2oheavyoilfluidsystem.hh>
 #include "3pwateroilsagdspatialparams.hh"
 
-#define ISOTHERMAL 0
-
 namespace Dumux
 {
 template <class TypeTag>
@@ -161,20 +159,10 @@ public:
         return 0;
     }
 
-    bool shouldWriteOutput() const
-    {
-        return
-          this->timeManager().timeStepIndex() == 0 ||
-          this->timeManager().timeStepIndex() % 10000 == 0 ||
-          this->timeManager().episodeWillBeOver() ||
-          this->timeManager().willBeFinished();
-    }
 
     /*!
      * \brief Called directly after the time integration.
      */
-
-
     void postTimeStep()
     {
         double time = this->timeManager().time();
@@ -336,13 +324,13 @@ public:
            globalPos = is.geometry().center();
 
         // negative values for injection at injection well
-        if (globalPos[1] > 8.5 + eps_ && globalPos[1] < 9.5 - eps_)
+        if (globalPos[1] > 8.5 - eps_ && globalPos[1] < 9.5 + eps_)
         {
             values[Indices::contiNEqIdx] = -0.0;
             values[Indices::contiWEqIdx] = -0.193;//*0.5;   // (55.5 mol*12.5)/3600 mol/s m = 0.193
             values[Indices::energyEqIdx] = -9132;//*0.5;   // J/sec m 9132
         }
-        else if (globalPos[1] > 2.5 + eps_ && globalPos[1] < 3.5 - eps_) // production well
+        else if (globalPos[1] > 2.5 - eps_ && globalPos[1] < 3.5 + eps_) // production well
         {
 
             const Scalar elemPressW = elemVolVars[scvIdx].pressure(wPhaseIdx);            //Pressures
