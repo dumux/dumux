@@ -1,11 +1,10 @@
 [TimeManager]
 DtInitial = 1800 # [s]
-TEnd = 18000 # [s] a year
-MaxTimeStepSize = 1800 # [s]
+TEnd = 60000 # [s]
 
 [Grid]
 UpperRight = 60 40
-Cells = 120 80
+Cells = 60 40
 
 [Problem]
 Name = sagd # name passed to the output routines
