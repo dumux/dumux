@@ -103,6 +103,7 @@ public:
           selfToOppositeDistance_ = geometryHelper.selfToOppositeDistance();
 
           pairData_ = geometryHelper.pairData();
+          localFaceIdx_ = is.indexInInside();
       }
 
     /*//! The copy constrcutor
@@ -202,6 +203,12 @@ public:
         return oppositeIdx_;
     }
 
+    //! The local index of this sub control volume face
+    IndexType localFaceIdx() const
+    {
+        return localFaceIdx_;
+    }
+
     //! The global index of this sub control volume face
     Scalar selfToOppositeDistance() const
     {
@@ -234,6 +241,7 @@ private:
     Scalar selfToOppositeDistance_;
     std::vector<StaggeredSubFace> subfaces_;
     std::array<PairData<Scalar>, numPairs> pairData_;
+    int localFaceIdx_;
 
 };
 
