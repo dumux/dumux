@@ -50,6 +50,21 @@ private:
 };
 
 
+
+
+template<class TypeTag>
+class StaggeredModel;
+
+template<class TypeTag>
+class StaggeredGlobalFaceVariables;
+
+
+namespace Properties
+{
+SET_TYPE_PROP(StaggeredModel, FaceVars, Dumux::StaggeredFaceVariables<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag>);
+}
+
 template<class TypeTag>
 class StaggeredGlobalFaceVariables
 {
@@ -57,7 +72,7 @@ class StaggeredGlobalFaceVariables
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
-    using FaceVariables = Dumux::StaggeredFaceVariables<TypeTag>;
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVars);
     using IndexType = typename GridView::IndexSet::IndexType;
 
 public:
@@ -74,10 +89,10 @@ public:
         }
     }
 
-    const Scalar faceVars(const IndexType facetIdx) const
+    const FaceVariables& faceVars(const IndexType facetIdx) const
     { return faceVariables_[facetIdx]; }
 
-    Scalar& faceVars(const IndexType facetIdx)
+    FaceVariables& faceVars(const IndexType facetIdx)
     { return faceVariables_[facetIdx]; }
 private:
     const Problem& problem_() const

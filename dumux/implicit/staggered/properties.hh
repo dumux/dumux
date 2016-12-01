@@ -53,6 +53,8 @@ NEW_PROP_TAG(NumEqCellCenter); //!< Number of equations per cell center dof
 NEW_PROP_TAG(NumEqFace); //!< Number of equations per face dof
 NEW_PROP_TAG(DofTypeIndices); //!< Indices to choose between cell center and face dofs
 
+NEW_PROP_TAG(FaceVars); //!< Variables associated to facets (equivalent to volVars)
+NEW_PROP_TAG(GlobalFaceVars); //!< Global vector of facet variables
 
 }
 }
