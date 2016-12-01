@@ -24,6 +24,7 @@
 #ifndef DUMUX_BOUNDINGBOXTREE_HH
 #define DUMUX_BOUNDINGBOXTREE_HH
 
+#include <algorithm>
 #include <memory>
 #include <type_traits>
 #include <dune/geometry/referenceelements.hh>
@@ -300,10 +301,7 @@ public:
         // we know the points are aligned
         // if the dot product is positive and the length in range
         // the point is in the interval
-        if (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_))
-            return true;
-
-        return false;
+        return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_));
     }
 
     /*!
@@ -546,10 +544,7 @@ public:
         // we know the points are aligned
         // if the dot product is positive and the length in range
         // the point is in the interval
-        if (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_))
-            return true;
-
-        return false;
+        return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_));
     }
 
     /*!
@@ -695,10 +690,9 @@ public:
         // the point is inside if the length is
         // small than the interval length and the
         // sign of v1 & v2 are the same
-        if (std::signbit(v1) == std::signbit(v2)
-            && std::abs(v1) < std::abs(v2)*(1 + eps_))
-            return true;
-        return false;
+        using std::abs;
+        return (std::signbit(v1) == std::signbit(v2)
+                && abs(v1) < abs(v2)*(1 + eps_));
     }
 
     /*!
@@ -1175,8 +1169,10 @@ private:
             corner = geometry.corner(vLocalIdx);
             for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
             {
-                xMin[dimIdx] = std::min(xMin[dimIdx], corner[dimIdx]);
-                xMax[dimIdx] = std::max(xMax[dimIdx], corner[dimIdx]);
+                using std::max;
+                using std::min;
+                xMin[dimIdx] = min(xMin[dimIdx], corner[dimIdx]);
+                xMax[dimIdx] = max(xMax[dimIdx], corner[dimIdx]);
             }
         }
     }

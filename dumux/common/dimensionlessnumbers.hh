@@ -27,6 +27,8 @@
 #ifndef DIMENSIONLESS_NUMBERS_HH
 #define DIMENSIONLESS_NUMBERS_HH
 
+#include <cmath>
+
 #include <dune/common/exceptions.hh>
 
 namespace Dumux
@@ -148,13 +150,15 @@ static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
         * Dittus, F.W and Boelter, L.M.K, Heat Transfer in Automobile Radiators of the Tubular Type,
         * Publications in Engineering, Vol. 2, pages 443-461, 1930
         */
-           return 0.023 * pow(reynoldsNumber, 0.8) * pow(prandtlNumber,0.33);
+       using std::pow;
+       return 0.023 * pow(reynoldsNumber, 0.8) * pow(prandtlNumber,0.33);
     }
 
     else if (formulation == NusseltFormulation::WakaoKaguei){
         /* example: flow through porous medium *single phase*, fit to many different data
          * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 293
          */
+        using std::pow;
         return 2. + 1.1 * pow(prandtlNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
     }
 
@@ -163,6 +167,8 @@ static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
         * valid for 0.1<Re<10000, 0.6<Pr/Sc<10000, packed beds of perfect spheres.
         *
         */
+        using std::sqrt;
+        using std::pow;
         Scalar numerator    = 0.037 * pow(reynoldsNumber,0.8) * prandtlNumber ;
         Scalar reToMin01    = pow(reynoldsNumber,-0.1);
         Scalar prTo23       = pow(prandtlNumber, (2./3. ) ) ; // MIND THE pts! :-( otherwise the integer exponent version is chosen
@@ -258,7 +264,9 @@ static Scalar sherwoodNumber(const Scalar reynoldsNumber,
         /* example: flow through porous medium *single phase*
          * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 156
          */
-        return 2. + 1.1 * pow(schmidtNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
+        using std::cbrt;
+        using std::pow;
+        return 2. + 1.1 * cbrt(schmidtNumber) * pow(reynoldsNumber, 0.6);
     }
 
     else {

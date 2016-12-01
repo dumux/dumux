@@ -23,6 +23,8 @@
 #ifndef DUMUX_TIME_MANAGER_HH
 #define DUMUX_TIME_MANAGER_HH
 
+#include <algorithm>
+
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -201,7 +203,10 @@ public:
      * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
     void setTimeStepSize(Scalar dt)
-    { timeStepSize_ = std::min(dt, maxTimeStepSize()); }
+    {
+        using std::min;
+        timeStepSize_ = min(dt, maxTimeStepSize());
+    }
 
     /*!
      * \brief Returns the suggested time step length \f$\mathrm{[s]}\f$ so that we
@@ -259,10 +264,11 @@ public:
         if (finished())
             return 0.0;
 
-        return
-            std::min(std::min(episodeMaxTimeStepSize(),
-                    problem_->maxTimeStepSize()),
-                     std::max<Scalar>(0.0, endTime() - time()));
+        using std::max;
+        using std::min;
+        return min(min(episodeMaxTimeStepSize(),
+                       problem_->maxTimeStepSize()),
+                   max<Scalar>(0.0, endTime() - time()));
     }
 
     /*
@@ -357,9 +363,8 @@ public:
 
         // make sure that we don't exceed the end of the
         // current episode.
-        return
-            std::max<Scalar>(0.0,
-                             episodeLength() - (time() - episodeStartTime()));
+        using std::max;
+        return max<Scalar>(0.0, episodeLength() - (time() - episodeStartTime()));
     }
 
     /*
@@ -422,7 +427,8 @@ public:
                 if (Dune::FloatCmp::eq<Scalar>(dt, timeStepSize()))
                 {
                     // set the initial time step size of a an episode to the last real time step size before the episode
-                    Scalar nextDt = std::max(previousTimeStepSize_, timeStepSize());
+                    using std::max;
+                    Scalar nextDt = max(previousTimeStepSize_, timeStepSize());
                     previousTimeStepSize_ = nextDt;
                     setTimeStepSize(nextDt);
                 }

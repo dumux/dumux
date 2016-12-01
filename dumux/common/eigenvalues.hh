@@ -24,16 +24,13 @@
 #ifndef DUMUX_EIGENVALUES_HH
 #define DUMUX_EIGENVALUES_HH
 
+#include <algorithm>
 #include <cmath>
+
+#include "math.hh"
 
 namespace Dumux
 {
-
-template<class ValueType>
-int sign(const ValueType& value)
-{
-    return (value < 0 ? -1 : 1);
-}
 
 template<int dim, class Matrix>
 void identityMatrix(Matrix& matrix)
@@ -54,11 +51,13 @@ double calcOffDiagonalNorm(Matrix& matrix)
                 norm += matrix[i][j] * matrix[i][j];
             }
 
-    return std::sqrt(norm);
+    using std::sqrt;
+    return sqrt(norm);
 }
 
-//! Function to calculate eigenvalues of n x n matrices
-/*
+/*!
+ * \briefFunction to calculate eigenvalues of n x n matrices
+ *
  * \param eigVel Vector for storing the eigenvalues
  * \param matrix n x n matrices for which eigenvalues have to be calculated
  * \param relativeTolerance tolerance for the relative convergence criterion (default: 0.01)
@@ -76,10 +75,12 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix, double relat
         eigVel[0] = (-b + sqrt(b * b - 4.0 * c)) / 2.0;
         eigVel[1] = (-b - sqrt(b * b - 4.0 * c)) / 2.0;
 
-        if (std::isnan(eigVel[0]) || std::isinf(eigVel[0]))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(eigVel[0]) || isinf(eigVel[0]))
             return false;
 
-        if (std::isnan(eigVel[1]) || std::isinf(eigVel[1]))
+        if (isnan(eigVel[1]) || isinf(eigVel[1]))
             return false;
 
         return true;
@@ -103,9 +104,10 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix, double relat
 
                     double theta = (evMatrix[i][i] - evMatrix[j][j])
                             / (2 * evMatrix[i][j]);
-                    double t = sign(theta)
-                            / (std::abs(theta) + std::sqrt(1 + theta * theta));
-                    double c = 1 / std::sqrt(1 + t * t);
+                    using std::abs;
+                    using std::sqrt;
+                    double t = sign(theta) / (abs(theta) + sqrt(1 + theta * theta));
+                    double c = 1 / sqrt(1 + t * t);
                     double s = c * t;
 
                     rotationMatrix[i][i] = c;
@@ -129,7 +131,9 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix, double relat
         for (int i = 0; i < dim; i++)
         {
             eigVel[i] = evMatrix[i][i];
-            if (std::isnan(eigVel[i]) || std::isinf(eigVel[i]))
+            using std::isinf;
+            using std::isnan;
+            if (isnan(eigVel[i]) || isinf(eigVel[i]))
                 return false;
         }
 
@@ -168,9 +172,10 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& 
 
                     double theta = (evMatrix[i][i] - evMatrix[j][j])
                             / (2 * evMatrix[i][j]);
-                    double t = sign(theta)
-                            / (std::abs(theta) + std::sqrt(1 + theta * theta));
-                    double c = 1 / std::sqrt(1 + t * t);
+                    using std::abs;
+                    using std::sqrt;
+                    double t = sign(theta) / (abs(theta) + sqrt(1 + theta * theta));
+                    double c = 1 / sqrt(1 + t * t);
                     double s = c * t;
 
                     rotationMatrix[i][i] = c;
@@ -195,7 +200,9 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& 
         for (int i = 0; i < dim; i++)
         {
             eigVel[i] = evMatrix[i][i];
-            if (std::isnan(eigVel[i]) || std::isinf(eigVel[i]))
+            using std::isinf;
+            using std::isnan;
+            if (isnan(eigVel[i]) || isinf(eigVel[i]))
                 return false;
             for (int j = 0; j < dim; j++)
             {
