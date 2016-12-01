@@ -722,6 +722,26 @@ public:
     Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
+     /*!
+     * \brief Returns the mass fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mole fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.moleFraction(phaseIdx, compIdx); }
+
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
@@ -800,7 +820,7 @@ public:
     Scalar bulkDensTimesAdsorpCoeff() const
     { return bulkDensTimesAdsorpCoeff_; }
 
-/*!
+     /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
      *
@@ -818,15 +838,6 @@ public:
     Scalar enthalpy(int phaseIdx) const
     { return fluidState_.enthalpy(phaseIdx); };
 
-    /*!
-     * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
-     *        the sub-control volume.
-     */
-    Scalar heatCapacity() const
-    { return heatCapacity_; };
-
-
-
 protected:
 
     /*!
@@ -838,18 +849,12 @@ protected:
                        const FVElementGeometry &fvGeometry,
                        const int scvIdx,
                        bool isOldSol)
-    {
-        // compute and set the heat capacity of the solid phase
-        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(heatCapacity_);
-    }
+    { }
 
     Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
 
     Scalar moleFrac_[numPhases][numComponents];
     Scalar massFrac_[numPhases][numComponents];
-
-    Scalar heatCapacity_;
 
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar permeability_;        //!< Effective porosity within the control volume

@@ -403,6 +403,8 @@ public:
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure heavyoil.
      *
+     * Lashanizadegan et al. (2008) \cite lashanizadegan2008 <BR>
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
@@ -423,7 +425,7 @@ public:
     /*!
      * \brief Specific heat cap of liquid heavyoil \f$\mathrm{[J/kg]}\f$.
      *
-     * source : Reid et al. (fourth edition): Missenard group contrib. method (chap 5-7, Table 5-11, s. example 5-8)
+     * Lashanizadegan et al. (2008) \cite lashanizadegan2008 <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -432,10 +434,20 @@ public:
     static Scalar liquidHeatCapacity(const Scalar temperature,
                                      const Scalar pressure)
     {
-        /* according to Lashanizadegan et al (2008) in Chemical Engineering Communications:  */
-        /* Simultaneous Heat and Fluid Flow in Porous Media: Case Study: Steam Injection for Tertiary Oil Recovery */
-
         return 618.; // J/(kg K)
+    }
+
+     /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of heavy oil
+     *
+     * Lashanizadegan et al. (2008) \cite lashanizadegan2008 <BR>
+     *
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidThermalConductivity( Scalar temperature,  Scalar pressure)
+    {
+        return 0.127;
     }
 
 protected:
