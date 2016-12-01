@@ -416,8 +416,8 @@ protected:
 
         if (KmvpNormal_ < 0)
         {
-            std::swap(upstreamIdx_,
-                      downstreamIdx_);
+            using std::swap;
+            swap(upstreamIdx_, downstreamIdx_);
         }
 
         volumeFlux_ = KmvpNormal_;

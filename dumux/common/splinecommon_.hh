@@ -23,14 +23,15 @@
 #ifndef DUMUX_SPLINE_COMMON__HH
 #define DUMUX_SPLINE_COMMON__HH
 
+#include <algorithm>
 #include <iostream>
 #include <cassert>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 
-#include "valgrind.hh"
 #include "math.hh"
+#include "valgrind.hh"
 
 namespace Dumux
 {
@@ -55,19 +56,19 @@ public:
     bool applies(Scalar x) const
     {
         return x_(0) <= x && x <= x_(numSamples_() - 1);
-    };
+    }
 
     /*!
      * \brief Return the x value of the leftmost sampling point.
      */
     Scalar xMin() const
-    { return x_(0); };
+    { return x_(0); }
 
     /*!
      * \brief Return the x value of the rightmost sampling point.
      */
     Scalar xMax() const
-    { return x_(numSamples_() - 1); };
+    { return x_(numSamples_() - 1); }
 
     /*!
      * \brief Prints k tuples of the format (x, y, dx/dy, isMonotonic)
@@ -88,8 +89,10 @@ public:
     */
     void printCSV(Scalar xi0, Scalar xi1, int k) const
     {
-        Scalar x0 = std::min(xi0, xi1);
-        Scalar x1 = std::max(xi0, xi1);
+        using std::max;
+        using std::min;
+        Scalar x0 = min(xi0, xi1);
+        Scalar x1 = max(xi0, xi1);
         const int n = numSamples_() - 1;
         for (int i = 0; i <= k; ++i) {
             double x = i*(x1 - x0)/k + x0;
@@ -116,7 +119,7 @@ public:
             else {
                 y = eval(x);
                 dy_dx = evalDerivative(x);
-                mono = monotonic(std::max<Scalar>(x_(0), x), std::min<Scalar>(x_(n), x_p1));
+                mono = monotonic(max<Scalar>(x_(0), x), min<Scalar>(x_(n), x_p1));
             }
 
             std::cout << x << " " << y << " " << dy_dx << " " << mono << "\n";
@@ -190,7 +193,7 @@ public:
     Scalar intersect(Scalar a, Scalar b, Scalar c, Scalar d) const
     {
         return intersectIntervall(xMin(), xMax(), a, b, c, d);
-    };
+    }
 
     /*!
      * \brief Find the intersections of the spline with a cubic
@@ -222,7 +225,7 @@ public:
                        "Spline has no intersection"); //<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<<d<<"!");
 
         return tmpSol[0];
-    };
+    }
 
     /*!
      * \brief Returns 1 if the spline is monotonically increasing, -1
@@ -240,9 +243,10 @@ public:
 
         // make sure that x0 is smaller than x1
         if (x0 > x1)
-            std::swap(x0, x1);
-
-        assert(x0 < x1);
+        {
+            using std::swap;
+            swap(x0, x1);
+        }
 
         // corner case where the whole spline is a constant
         if (moment_(0) == 0 &&
@@ -287,7 +291,7 @@ public:
 protected:
     // this is an internal class, so everything is protected!
     SplineCommon_()
-    { Valgrind::SetUndefined(asImp_()); };
+    { Valgrind::SetUndefined(asImp_()); }
 
     /*!
      * \brief Set the sampling point vectors.
@@ -551,7 +555,8 @@ protected:
             // not exhibit any extrema.
             return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
         }
-        disc = std::sqrt(disc);
+        using std::sqrt;
+        disc = sqrt(disc);
         Scalar xE1 = (-2*b + disc)/(6*a);
         Scalar xE2 = (-2*b - disc)/(6*a);
 
@@ -562,7 +567,7 @@ protected:
                 // to determine whether we're monotonically increasing
                 // or decreasing
                 x0 = x1;
-            return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
+            return sign(x0*(x0*3*a + 2*b) + c);
         }
         if ((x0 < xE1 && xE1 < x1) ||
             (x0 < xE2 && xE2 < x1))
@@ -573,7 +578,7 @@ protected:
         // no extremum in range (x0, x1)
         x0 = (x0 + x1)/2; // pick point in the middle of the interval
                           // to avoid extrema on the boundaries
-        return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
+        return sign(x0*(x0*3*a + 2*b) + c);
     }
 
     /*!
@@ -590,8 +595,9 @@ protected:
                                              b_(segIdx) - b,
                                              c_(segIdx) - c,
                                              d_(segIdx) - d);
-        x0 = std::max(x_(segIdx), x0);
-        x1 = std::max(x_(segIdx+1), x1);
+        using std::max;
+        x0 = max(x_(segIdx), x0);
+        x1 = max(x_(segIdx+1), x1);
 
         // filter the intersections outside of the specified intervall
         int k = 0;

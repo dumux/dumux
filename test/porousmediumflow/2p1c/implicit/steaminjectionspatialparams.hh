@@ -112,7 +112,7 @@ public:
                                        const FVElementGeometry &fvElemGeom,
                                        int scvIdx) const
     {
-        FieldMatrix permMatrix = 0.0;
+        FieldMatrix permMatrix(0.0);
 
         // intrinsic permeability
         permMatrix[0][0] = 1e-9;

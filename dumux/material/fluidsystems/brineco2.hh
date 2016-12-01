@@ -477,7 +477,10 @@ public:
         assert(0 <= compJIdx && compJIdx < numComponents);
 
         if (compIIdx > compJIdx)
-            std::swap(compIIdx, compJIdx);
+        {
+            using std::swap;
+            swap(compIIdx, compJIdx);
+        }
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);

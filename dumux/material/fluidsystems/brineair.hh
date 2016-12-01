@@ -519,7 +519,10 @@ public:
             assert(phaseIdx == gPhaseIdx);
 
             if (compIIdx != AirIdx)
-            std::swap(compIIdx, compJIdx);
+            {
+                using std::swap;
+                swap(compIIdx, compJIdx);
+            }
 
             Scalar result = 0.0;
             if(compJIdx == H2OIdx)
