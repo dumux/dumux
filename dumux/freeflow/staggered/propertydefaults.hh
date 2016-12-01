@@ -33,8 +33,9 @@
 #include "volumevariables.hh"
 #include "indices.hh"
 #include "problem.hh"
+#include "localresidual.hh"
 
-#include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
@@ -52,7 +53,7 @@ SET_INT_PROP(NavierStokes, NumEq, 1); //!< set the number of equations to 1
 SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
 
 //! The local residual function
-SET_TYPE_PROP(NavierStokes, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(NavierStokes, LocalResidual, StaggeredNavierStokesResidual<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(NavierStokes, Model, NavierStokesModel<TypeTag>);

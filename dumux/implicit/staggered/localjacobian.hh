@@ -145,18 +145,25 @@ public:
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
 
+        auto& curGlobalFaceVars = this->model_().curGlobalFaceVars();
+        auto& prevGlobalFaceVars = this->model_().prevGlobalFaceVars();
+
         // calculate the local residual
         if (isGhost)
         {
-            this->residual_ = 0.0;
-            residual[cellCenterIdx][globalI_] = 0.0;
+//             this->residual_ = 0.0;
+//             residual[cellCenterIdx][globalI_] = 0.0;
         }
         else
         {
-            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
-            this->residual_ = this->localResidual().residual();
+            this->localResidual().eval(element, fvGeometry,
+                                       prevElemVolVars, curElemVolVars,
+                                       prevGlobalFaceVars, curGlobalFaceVars,
+                                       elemBcTypes, elemFluxVarsCache);
+//             this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+//             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
-            residual[cellCenterIdx][globalI_] = this->localResidual().residual(0);
+//             residual[cellCenterIdx][globalI_] = this->localResidual().residual(0);
         }
 
         this->model_().updatePVWeights(fvGeometry);

@@ -43,7 +43,7 @@ namespace Capabilities
 {
     template<class TypeTag>
     struct isStationary<StaggeredTestProblem<TypeTag>>
-    { static const bool value = true; };
+    { static const bool value = false; };
 }
 
 namespace Properties
