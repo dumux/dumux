@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/implicit/model.hh>
 
 namespace Dumux
 {

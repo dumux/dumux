@@ -35,6 +35,12 @@ template<class TypeTag, DiscretizationMethods Method>
 class PorousMediumFluxVariablesCacheImplementation
 {};
 
+namespace Properties
+{
+// forward declaration
+NEW_PROP_TAG(NumPhases);
+}
+
 /*!
  * \ingroup ImplicitModel
  * \brief The flux variables cache classes for porous media.
