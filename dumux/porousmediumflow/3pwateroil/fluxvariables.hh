@@ -102,18 +102,6 @@ public:
     {
         BaseFluxVariables::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
         calculatePorousDiffCoeff_(problem, element, elemVolVars);
-
-        // The spatial parameters calculates the actual heat flux vector
-        DimVector temperatureGrad(0);
-        DimVector tmp(0.0);
-        problem.spatialParams().matrixHeatFlux(tmp, *this,
-                                               elemVolVars,
-                                               temperatureGrad,
-                                               element,
-                                               fvGeometry,
-                                               fIdx);
-        // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp*this->face().normal;
     }
 
 private:
@@ -285,15 +273,6 @@ public:
     const DimVector &moleFractionCompNGrad(int phaseIdx) const
     { return moleFractionCompNGrad_[phaseIdx]; };
 
-    /*!
-    * \brief The total heat flux \f$\mathrm{[J/s]}\f$ due to heat conduction
-    *        of the rock matrix over the sub-control volume's face in
-    *        direction of the face normal.
-    */
-    Scalar normalMatrixHeatFlux() const
-    { return normalMatrixHeatFlux_; }
-
-
 protected:
     // gradients
     DimVector massFractionCompWGrad_[numPhases];
@@ -307,7 +286,6 @@ protected:
     // the diffusivity matrix for the porous medium
     Dune::FieldVector<Scalar, numPhases> porousDiffCoeff_;
 
-    Scalar normalMatrixHeatFlux_;
 };
 
 } // end namespace
