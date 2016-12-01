@@ -50,6 +50,7 @@ class CpGridCreator
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
     typedef std::shared_ptr<Grid> GridPointer;
+    typedef Opm::Deck Deck;
 
 public:
     /*!
@@ -59,12 +60,11 @@ public:
     {
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
 
-        parser_() = *(new Opm::ParserPtr(new Opm::Parser()));
-        Opm::ParseContext parseContext;
-        deck() = *(new Opm::DeckConstPtr(parser_()->parseFile(fileName, parseContext)));
+        deck() = Opm::Parser().parseFile(fileName);
+        Opm::EclipseGrid ecl_grid(deck());
 
         gridPtr() = std::make_shared<Grid>(*(new Grid()));
-        gridPtr()->processEclipseFormat(deck(), 0.0, false, false);
+        gridPtr()->processEclipseFormat(ecl_grid, false, false);
     }
 
     /*!
@@ -89,9 +89,9 @@ public:
      *
      * The input deck can be used to read parameters like porosity/permeability.
      */
-    static Opm::DeckConstPtr &deck()
+    static Deck &deck()
     {
-        static Opm::DeckConstPtr deck_;
+        static Deck deck_;
         return deck_;
     }
 
@@ -101,13 +101,6 @@ public:
     static void loadBalance()
     {
         gridPtr()->loadBalance();
-    }
-
-private:
-    static Opm::ParserPtr &parser_()
-    {
-        static Opm::ParserPtr parser;
-        return parser;
     }
 };
 }
