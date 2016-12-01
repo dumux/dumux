@@ -63,7 +63,7 @@ installErt()
     fi
 
     if [ ! -e ert ]; then
-        git clone -b release/2016.04 https://github.com/Ensembles/ert.git
+        git clone -b release/2016.10 https://github.com/Ensembles/ert.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -80,7 +80,7 @@ installErt()
     cd $TOPDIR/ert
     mkdir build
     cd build
-    cmake ../devel
+    cmake ..
     make
 
     # show additional information
@@ -294,25 +294,29 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2016.04 https://github.com/OPM/opm-common
+        git clone -b release/2016.10 https://github.com/OPM/opm-common
     fi
 
     if [ ! -e opm-core ]; then
-        git clone -b release/2016.04 https://github.com/OPM/opm-core
+        git clone -b release/2016.10 https://github.com/OPM/opm-core
     fi
 
     if [ ! -e opm-material ]; then
-        git clone -b release/2016.04 https://github.com/OPM/opm-material
+        git clone -b release/2016.10 https://github.com/OPM/opm-material
     fi
 
     if [ ! -e opm-parser ]; then
-        git clone -b release/2016.04 https://github.com/OPM/opm-parser
+        git clone -b release/2016.10 https://github.com/OPM/opm-parser
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone -b release/2016.04 https://github.com/OPM/opm-grid
+        git clone -b release/2016.10 https://github.com/OPM/opm-grid
     fi
 
+    if [ ! -e opm-output ]; then
+        git clone -b release/2016.10 https://github.com/OPM/opm-output
+    fi
+    
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -323,6 +327,7 @@ installOPM()
         rm -rf opm-material
         rm -rf opm-parser
         rm -rf opm-grid
+        rm -rf opm-output
         return
     fi
 
@@ -344,6 +349,8 @@ installOPM()
     echo "  -Dopm-core_PREFIX=/path/to/opm-core \\"
     echo "  -Dopm-material_PREFIX=/path/to/opm-material \\"
     echo "  -Dopm-parser_PREFIX=/path/to/opm-parser \\"
+    echo "  -Dopm-output_PREFIX=/path/to/opm-output \\"
+    echo "  -DUSE_MPI=ON \\"
     echo "  -DHAVE_OPM_GRID=1 \\"
 
     cd $TOPDIR

@@ -92,9 +92,9 @@ public:
 
         const std::vector<int>& globalCell = GridCreator::grid().globalCell();
 
-        if (GridCreator::deck()->hasKeyword("PORO")) {
+        if (GridCreator::deck().hasKeyword("PORO")) {
             std::cout << "Found PORO..." << std::endl;
-            std::vector<double> eclVector = GridCreator::deck()->getKeyword("PORO").getRawDoubleData();
+            std::vector<double> eclVector = GridCreator::deck().getKeyword("PORO").getRawDoubleData();
             porosity_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -105,9 +105,9 @@ public:
             }
         }
 
-        if (GridCreator::deck()->hasKeyword("PERMX")) {
+        if (GridCreator::deck().hasKeyword("PERMX")) {
             std::cout << "Found PERMX..." << std::endl;
-            std::vector<double> eclVector = GridCreator::deck()->getKeyword("PERMX").getRawDoubleData();
+            std::vector<double> eclVector = GridCreator::deck().getKeyword("PERMX").getRawDoubleData();
             permX_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -119,9 +119,9 @@ public:
             }
         }
 
-        if (GridCreator::deck()->hasKeyword("PERMZ")) {
+        if (GridCreator::deck().hasKeyword("PERMZ")) {
             std::cout << "Found PERMZ..." << std::endl;
-            std::vector<double> eclVector = GridCreator::deck()->getKeyword("PERMZ").getRawDoubleData();
+            std::vector<double> eclVector = GridCreator::deck().getKeyword("PERMZ").getRawDoubleData();
             permZ_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
