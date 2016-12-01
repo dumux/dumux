@@ -26,6 +26,7 @@
 #define DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 
 #include "properties.hh"
+#include <dumux/porousmediumflow/3p3c/implicit/localresidual.hh>
 
 namespace Dumux
 {
@@ -38,7 +39,7 @@ namespace Dumux
  * This class is used to fill the gaps in BoxLocalResidual for the 3P2C flow.
  */
 template<class TypeTag>
-class ThreePWaterOilLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class ThreePWaterOilLocalResidual: public ThreePThreeCLocalResidual<TypeTag>
 {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
@@ -57,7 +58,6 @@ protected:
 
         conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
         conti1EqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
-        energyEqIdx = Indices::energyEqIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -106,154 +106,6 @@ public:
     }
 
     /*!
-     * \brief Evaluate the amount all conservation quantities
-     *        (e.g. phase mass) within a sub-control volume.
-     *
-     * The result should be averaged over the volume (e.g. phase mass
-     * inside a sub control volume divided by the volume)
-     *
-     *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
-     */
-    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
-    {
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars =
-            usePrevSol
-            ? this->prevVolVars_()
-            : this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
-
-        // compute storage term of all components within all phases
-        storage = 0;
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-        {
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {
-                storage[conti0EqIdx + compIdx] +=
-                    volVars.porosity()
-                    * volVars.saturation(phaseIdx)
-                    * volVars.molarDensity(phaseIdx)
-                    * volVars.fluidState().moleFraction(phaseIdx, compIdx);
-            }
-        }
-
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-
-        // compute the energy storage
-        storage[energyEqIdx] = volVars.porosity()
-            *(
-                volVars.density(wPhaseIdx)
-                *volVars.internalEnergy(wPhaseIdx)
-                *volVars.saturation(wPhaseIdx)
-                +
-                volVars.density(nPhaseIdx)
-                *volVars.internalEnergy(nPhaseIdx)
-                *volVars.saturation(nPhaseIdx)
-                +
-                volVars.density(gPhaseIdx)
-                *volVars.internalEnergy(gPhaseIdx)
-                *volVars.saturation(gPhaseIdx)
-            )
-            + volVars.temperature()*volVars.heatCapacity();
-    }
-
-    /*!
-     * \brief Evaluates the total flux of all conservation quantities
-     *        over a face of a sub-control volume.
-     *
-     * \param flux The flux over the SCV (sub-control-volume) face for each component
-     * \param fIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
-     */
-    void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
-    {
-        FluxVariables fluxVars;
-        fluxVars.update(this->problem_(),
-                        this->element_(),
-                        this->fvGeometry_(),
-                        fIdx,
-                        this->curVolVars_(),
-                        onBoundary);
-
-        flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, fluxVars);
-        asImp_()->computeDiffusiveFlux(flux, fluxVars);
-    }
-
-    /*!
-     * \brief Evaluates the advective mass flux of all components over
-     *        a face of a subcontrol volume.
-     *
-     * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
-     */
-
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-
-        ////////
-        // advective fluxes of all components in all phases
-        ////////
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            // data attached to upstream and the downstream vertices
-            // of the current phase
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
-
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                // add advective flux of current component in current
-                // phase
-                // if alpha > 0 und alpha < 1 then both upstream and downstream
-                // nodes need their contribution
-                // if alpha == 1 (which is mostly the case) then, the downstream
-                // node is not evaluated
-                int eqIdx = conti0EqIdx + compIdx;
-                flux[eqIdx] += fluxVars.volumeFlux(phaseIdx)
-                    * (massUpwindWeight
-                       * up.fluidState().molarDensity(phaseIdx)
-                       * up.fluidState().moleFraction(phaseIdx, compIdx)
-                       +
-                       (1.0 - massUpwindWeight)
-                       * dn.fluidState().molarDensity(phaseIdx)
-                       * dn.fluidState().moleFraction(phaseIdx, compIdx));
-            }
-        }
-
-        // advective heat flux in all phases
-        flux[energyEqIdx] = 0;
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // vertex data of the upstream and the downstream vertices
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
-
-            flux[energyEqIdx] +=
-                fluxVars.volumeFlux(phaseIdx) * (
-                                              massUpwindWeight * // upstream vertex
-                                              (  up.density(phaseIdx) *
-                                                 up.enthalpy(phaseIdx))
-                                              +
-                                              (1-massUpwindWeight) * // downstream vertex
-                                              (  dn.density(phaseIdx) *
-                                                 dn.enthalpy(phaseIdx)) );
-        }
-
-    }
-
-    /*!
      * \brief Adds the diffusive mass flux of all components over
      *        a face of a subcontrol volume.
      *
@@ -286,21 +138,6 @@ public:
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
-    }
-
-    /*!
-     * \brief Calculate the source term of the equation
-     *
-     * \param source The source/sink in the SCV for each component
-     * \param scvIdx The index of the SCV
-     */
-    void computeSource(PrimaryVariables &source, const int scvIdx)
-    {
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
     }
 
 protected:

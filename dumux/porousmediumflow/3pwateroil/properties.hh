@@ -22,13 +22,16 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the 3p2cni fully implicit model.
+ * \brief Defines the properties required for the three-phase two-component
+ *        fully implicit model. This model requires the use of the non-isothermal
+ *        extension found in dumux/implicit/nonisothermal
  */
 #ifndef DUMUX_3P2CNI_PROPERTIES_HH
 #define DUMUX_3P2CNI_PROPERTIES_HH
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
 {
@@ -38,11 +41,9 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-
-//! The type tags for the implicit three-phase three-component problems
-NEW_TYPE_TAG(ThreePWaterOil);
-NEW_TYPE_TAG(BoxThreePWaterOil, INHERITS_FROM(BoxModel, ThreePWaterOil));
-NEW_TYPE_TAG(CCThreePWaterOil, INHERITS_FROM(CCModel, ThreePWaterOil));
+NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(NonIsothermal));
+NEW_TYPE_TAG(BoxThreePWaterOilNI, INHERITS_FROM(BoxModel, ThreePWaterOilNI));
+NEW_TYPE_TAG(CCThreePWaterOilNI, INHERITS_FROM(CCModel, ThreePWaterOilNI));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
