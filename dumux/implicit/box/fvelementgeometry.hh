@@ -899,7 +899,10 @@ public:
             int i = referenceElement.subEntity(scvfIdx, dim-1, 0, dim);
             int j = referenceElement.subEntity(scvfIdx, dim-1, 1, dim);
             if (numScvf == 4 && (i == 2 || j == 2))
-                std::swap(i, j);
+            {
+                using std::swap;
+                swap(i, j);
+            }
             scvFace.i = i;
             scvFace.j = j;
 

@@ -4,7 +4,6 @@ set(modules
   DumuxDoxygen.cmake
   DumuxMacros.cmake
   DumuxTestMacros.cmake
-  FindGstat.cmake
-  FindValgrind.cmake)
+  FindGstat.cmake)
 include(GNUInstallDirs)
 install(FILES ${modules} DESTINATION ${DUNE_INSTALL_MODULEDIR})

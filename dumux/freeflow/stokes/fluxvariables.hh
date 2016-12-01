@@ -171,7 +171,10 @@ protected:
         downstreamIdx_ = face().j;
 
         if (normalVelocity() < 0)
-            std::swap(upstreamIdx_, downstreamIdx_);
+        {
+            using std::swap;
+            swap(upstreamIdx_, downstreamIdx_);
+        }
     }
 
 public:
