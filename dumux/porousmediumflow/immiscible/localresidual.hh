@@ -60,18 +60,6 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 public:
 
     /*!
-     * \brief Constructor. Gets the upwind weight.
-     */
-    ImmiscibleLocalResidual()
-    : ParentType()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    }
-
-    /*!
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
      *        volume of a finite volume element for the immiscible models.
@@ -122,22 +110,18 @@ public:
                                       scvf,
                                       fluxVarsCache);
 
-        // copy weight to local scope for use in lambda expression
-        auto w = upwindWeight_;
-
         PrimaryVariables flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // the upwinding scheme
-            auto upwindRule = [w, phaseIdx](const VolumeVariables& up, const VolumeVariables& dn)
-                              { return (up.density(phaseIdx)*up.mobility(phaseIdx))*(w)
-                                     + (dn.density(phaseIdx)*dn.mobility(phaseIdx))*(1-w); };
+            // the physical quantities for which we perform upwinding
+            auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+                              { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
             auto eqIdx = conti0EqIdx + phaseIdx;
-            flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindRule);
+            flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
@@ -152,8 +136,6 @@ private:
 
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
-
-    Scalar upwindWeight_;
 };
 
 }

@@ -37,6 +37,7 @@ NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(EnableAdvection);
 NEW_PROP_TAG(EnableMolecularDiffusion);
 NEW_PROP_TAG(EnableEnergyBalance);
+NEW_PROP_TAG(ImplicitMassUpwindWeight);
 }
 
 // forward declaration
@@ -84,10 +85,14 @@ public:
                               const FluxVariablesCache& fluxVarsCache)
     {
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm)
     {
         Scalar flux = AdvectionType::flux(this->problem(),
                                           this->element(),
@@ -122,10 +127,13 @@ public:
             }
         }
 
+        // upwind scheme
         if (std::signbit(flux))
-            return flux*upwindFunction(outsideVolVars, insideVolVars);
+            return flux*(upwindWeight_*upwindTerm(outsideVolVars)
+                         + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
         else
-            return flux*upwindFunction(insideVolVars, outsideVolVars);
+            return flux*(upwindWeight_*upwindTerm(insideVolVars)
+                         + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
     }
 
     Stencil computeStencil(const Problem& problem,
@@ -133,6 +141,9 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     { return AdvectionType::stencil(problem, element, fvGeometry, scvFace); }
+
+private:
+    Scalar upwindWeight_;
 };
 
 
@@ -169,10 +180,14 @@ public:
     {
         advFluxCached_.reset();
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm)
     {
         if (!advFluxCached_[phaseIdx])
         {
@@ -194,9 +209,11 @@ public:
         const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
 
         if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
+            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(outsideVolVars)
+                                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
         else
-            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
+            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(insideVolVars)
+                                          + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
@@ -237,6 +254,7 @@ private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
     std::array<Scalar, numPhases> advPreFlux_;
+    Scalar upwindWeight_;
 };
 
 // specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
@@ -272,10 +290,14 @@ public:
     {
         advFluxCached_.reset();
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm)
     {
         if (!advFluxCached_[phaseIdx])
         {
@@ -297,9 +319,11 @@ public:
         const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
 
         if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
+            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(outsideVolVars)
+                                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
         else
-            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
+            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(insideVolVars)
+                                          + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
     }
 
     Scalar heatConductionFlux()
@@ -340,6 +364,7 @@ private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
     std::array<Scalar, numPhases> advPreFlux_;
+    Scalar upwindWeight_;
 };
 
 // specialization for non-isothermal advection and difussion equations (e.g. non-isothermal three-phase three-component flow)
@@ -376,10 +401,14 @@ public:
     {
         advFluxCached_.reset();
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm)
     {
         if (!advFluxCached_[phaseIdx])
         {
@@ -401,9 +430,11 @@ public:
         const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
 
         if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
+            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(outsideVolVars)
+                                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
         else
-            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
+            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(insideVolVars)
+                                          + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
@@ -458,6 +489,7 @@ private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
     std::array<Scalar, numPhases> advPreFlux_;
+    Scalar upwindWeight_;
 };
 
 } // end namespace
