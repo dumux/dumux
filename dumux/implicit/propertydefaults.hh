@@ -34,6 +34,7 @@
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
+#include <dumux/linear/amgbackend.hh>
 
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
@@ -54,7 +55,7 @@ namespace Dumux {
 
 // forward declarations
 template <class TypeTag> class NewtonController;
-template <class TypeTag> class ILU0BiCGSTABBackend;
+template <class TypeTag> class AMGBackend;
 
 namespace Properties {
 //////////////////////////////////////////////////////////////////
@@ -171,8 +172,8 @@ public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
 
-//! use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(ImplicitBase, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+//! use the AMGBackend solver by default
+SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
 // if the deflection of the newton method is large, we do not
 // need to solve the linear approximation accurately. Assuming

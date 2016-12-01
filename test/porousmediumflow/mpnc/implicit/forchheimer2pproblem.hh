@@ -78,6 +78,9 @@ SET_TYPE_PROP(Forchheimer2pProblem, Scalar, double);
 SET_TYPE_PROP(Forchheimer2pProblem, BaseFluxVariables, ImplicitForchheimerFluxVariables<TypeTag>);
 
 SET_BOOL_PROP(Forchheimer2pProblem, VtkAddVelocities, true);
+
+// set the linear solver
+SET_TYPE_PROP(Forchheimer2pProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 }
 
 
