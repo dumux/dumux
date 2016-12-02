@@ -78,7 +78,7 @@ public:
         spatialParams_ = std::make_shared<SpatialParams>(gridView);
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
-            gravity_[dim-1]  = -9.81;
+            gravity_[dimWorld-1]  = -9.81;
     }
 
     /*!
