@@ -58,7 +58,6 @@ class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
