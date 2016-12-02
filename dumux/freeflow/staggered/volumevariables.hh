@@ -47,7 +47,7 @@ class NavierStokesVolumeVariables : public StaggeredVolumeVariables<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -60,7 +60,7 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const CellCenterPrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -73,7 +73,7 @@ public:
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const CellCenterPrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,

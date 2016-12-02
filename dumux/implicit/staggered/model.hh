@@ -65,8 +65,12 @@ class StaggeredBaseModel : public ImplicitModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
+
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
+
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -182,6 +186,28 @@ public:
     }
 
     /*!
+     * \brief Returns the maximum relative shift between two vectors of
+     *        primary variables.
+     *
+     * \param priVars1 The first vector of primary variables
+     * \param priVars2 The second vector of primary variables
+     */
+    template<class CellCenterOrFacePriVars>
+    Scalar relativeShiftAtDof(const CellCenterOrFacePriVars &priVars1,
+                              const CellCenterOrFacePriVars &priVars2)
+    {
+        const auto numEq = priVars1.size();
+        Scalar result = 0.0;
+        for (int j = 0; j < numEq; ++j) {
+            Scalar eqErr = std::abs(priVars1[j] - priVars2[j]);
+            eqErr /= std::max<Scalar>(1.0, std::abs(priVars1[j] + priVars2[j])/2);
+
+            result = std::max(result, eqErr);
+        }
+        return result;
+    }
+
+    /*!
      * \brief Called by the update() method if it was
      *        unsuccessful. This is primarily a hook which the actual
      *        model can overload.
@@ -234,6 +260,13 @@ public:
 
                 auto dofIdxGlobal = scv.dofIndex();
                 this->uCur_[cellCenterIdx][dofIdxGlobal] += initPriVars;
+            }
+
+            // loop over faces
+            for(auto&& scvf : scvfs(fvGeometry))
+            {
+                auto initPriVars = this->problem_().initialFaceValues(scvf);
+                this->uCur_[faceIdx][scvf.dofIndexSelf()] = initPriVars;
             }
         }
     }

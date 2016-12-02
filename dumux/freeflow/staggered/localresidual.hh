@@ -100,17 +100,25 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
 
+        CellCenterPrimaryVariables flux(0.0);
+
         const Scalar eps = 1e-6;
 
         for(int direction = 0; direction < dim; ++direction)
         {
-            if(scvf.unitOuterNormal()[direction] > eps && velocity > 0) // positive x-direction
-                return insideVolVars.density(0) * velocity;
+            if(scvf.unitOuterNormal()[direction] > eps && velocity > 0)
+            {
+                flux[0] = insideVolVars.density(0) * velocity;
+                return flux;
+            }
 
             if(scvf.unitOuterNormal()[direction] < eps && velocity < 0)
-                return outsideVolVars.density(0) * velocity;
+            {
+                flux[0] = outsideVolVars.density(0) * velocity;
+                return flux;
+            }
         }
-        return CellCenterPrimaryVariables(0.0);
+        return flux;
     }
 
     static CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,

@@ -132,6 +132,9 @@ class StaggeredTestProblem : public NavierStokesProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+
 public:
     StaggeredTestProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
@@ -171,9 +174,9 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    CellCenterPrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0);
+        return CellCenterPrimaryVariables(0);
     }
     // \}
     /*!
@@ -210,9 +213,9 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    CellCenterPrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0);
+        CellCenterPrimaryVariables values(0);
         values[pressureIdx] = 1.0e+5*(2.0 - globalPos[dimWorld-1]);
         return values;
     }
@@ -225,9 +228,9 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    CellCenterPrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     {
-        return PrimaryVariables(0);
+        return CellCenterPrimaryVariables(0);
     }
 
     // \}
@@ -243,11 +246,31 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const SubControlVolume& scv) const
+    CellCenterPrimaryVariables initial(const SubControlVolume& scv) const
     {
-        PrimaryVariables priVars(0);
+        CellCenterPrimaryVariables priVars(0);
         priVars[pressureIdx] = 1.0e+5;
         return priVars;
+    }
+
+
+        /*!
+     * \brief Evaluate the initial value for a facet.
+     *
+     * \param values The initial values for the primary variables
+     * \param globalPos The position of the center of the finite volume
+     *            for which the initial values ought to be
+     *            set (in global coordinates)
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    FacePrimaryVariables initialFaceValueAtPos(const GlobalPosition &globalPos) const
+    {
+        FacePrimaryVariables value(0.0);
+        if(globalPos[0] < 1e-6)
+            value[0] = 1.0;
+        return value;
+
     }
 
     // \}

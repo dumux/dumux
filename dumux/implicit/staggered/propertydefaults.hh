@@ -63,6 +63,7 @@
 #include "properties.hh"
 #include "newtoncontroller.hh"
 #include "model.hh"
+#include "problem.hh"
 
 namespace Dumux {
 

@@ -23,7 +23,7 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
-#include <dumux/implicit/problem.hh>
+#include <dumux/implicit/staggered/problem.hh>
 
 #include "properties.hh"
 
@@ -37,9 +37,9 @@ namespace Dumux
  * This implements gravity (if desired) and a function returning the temperature.
  */
 template<class TypeTag>
-class NavierStokesProblem : public ImplicitProblem<TypeTag>
+class NavierStokesProblem : public StaggeredProblem<TypeTag>
 {
-    typedef ImplicitProblem<TypeTag> ParentType;
+    typedef StaggeredProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
