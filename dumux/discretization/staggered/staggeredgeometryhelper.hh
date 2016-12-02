@@ -33,7 +33,7 @@
 namespace Dumux
 {
 
-template<class Scalar>
+template<class Scalar, class GlobalPosition>
 struct PairData
 {
     int outerParallelFaceDofIdx;
@@ -42,6 +42,7 @@ struct PairData
     int globalCommonEntIdx;
     Scalar parallelDistance;
     Scalar normalDistance;
+    GlobalPosition virtualOuterParallelFaceDofPos;
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -248,6 +249,8 @@ private:
                                     {
                                         pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(neighbor, neighborIs.indexInInside(), dim-1) + offset_;
                                         pairData_[pairIdx].outerParallelElementDofIdx = gridView_.indexSet().index(neighbor);
+                                        const auto& parallelFacet = neighbor.template subEntity <1> (neighborIs.indexInInside());
+                                        pairData_[pairIdx].parallelDistance = (intersection_.geometry().center() - parallelFacet.geometry().center()).two_norm();
                                     }
                                 }
                             }
@@ -256,8 +259,11 @@ private:
                 }
             }
         }
+
+        asImp_().treatVirtualOuterParallelFaceDofs_();
     }
 
+protected:
      /*!
      * \brief Returns the local opposing intersection index
      *
@@ -290,13 +296,12 @@ private:
         return this->gridView_.indexSet().subIndex(element, localIdx, codimCommonEntity);
     };
 
-protected:
     const Intersection& intersection_; //! The intersection of interest
     const Element& element_; //! The respective element
     const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
     const GridView gridView_;
     const int offset_; //! Offset for intersection dof indexing
-    std::array<PairData<Scalar>, numPairs> pairData_; //! collection of pair information
+    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //! collection of pair information
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -391,6 +396,56 @@ private:
         this->pairData_[1].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx2, dim-1) + this->offset_;
         this->pairData_[0].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx1, codimCommonEntity);
         this->pairData_[1].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx2, codimCommonEntity);
+    }
+
+     /*!
+     * \brief Sets the position of "virtual" dofs on facets which are perpendicular to facets on the domain boundary.
+     *        This is required to account e.g. for wall friction.
+     */
+    void treatVirtualOuterParallelFaceDofs_()
+    {
+        // get the local index of the facet we are dealing with in this class
+        const int localIntersectionIdx = this->intersection_.indexInInside();
+
+        // iterate over all intersections of the element, this facet is part of
+        for(const auto& is : intersections(this->gridView_, this->element_))
+        {
+            // check if any of these intersection, which are normal to our facet, lie on the domain boundary
+            if(( !is.neighbor() ) &&  this->facetIsNormal_(localIntersectionIdx, is.indexInInside()) )
+            {
+                const auto& elementCenter = this->element_.geometry().center();
+                const auto& boundaryFacetCenter = is.geometry().center();
+
+                const auto distance = boundaryFacetCenter - elementCenter;
+                const auto virtualOuterParallelFaceDofPos = this->intersection_.geometry().center() + distance;
+
+                int index;
+                switch(localIntersectionIdx)
+                {
+                    case 0:
+                        index = (is.indexInInside() == 3) ? 0 : 1;
+                        break;
+                    case 1:
+                        index = (is.indexInInside() == 2) ? 0 : 1;
+                        break;
+                    case 2:
+                        index = (is.indexInInside() == 0) ? 0 : 1;
+                        break;
+                    case 3:
+                        index = (is.indexInInside() == 1) ? 0 : 1;
+                        break;
+                    default:
+                        DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
+                }
+
+//                 if(this->pairData_[index].outerParallelFaceDofIdx != -1)
+//                     DUNE_THROW(Dune::InvalidStateException, "not -1");
+                assert(this->pairData_[index].outerParallelFaceDofIdx == -1);
+
+                this->pairData_[index].virtualOuterParallelFaceDofPos = std::move(virtualOuterParallelFaceDofPos);
+                this->pairData_[index].parallelDistance = std::move(distance.two_norm());
+            }
+        }
     }
 
 };

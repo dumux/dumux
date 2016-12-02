@@ -240,7 +240,7 @@ private:
     int oppositeIdx_;
     Scalar selfToOppositeDistance_;
     std::vector<StaggeredSubFace> subfaces_;
-    std::array<PairData<Scalar>, numPairs> pairData_;
+    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
 
 };
