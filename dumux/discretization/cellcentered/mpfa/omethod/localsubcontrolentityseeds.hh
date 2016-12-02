@@ -165,19 +165,31 @@ public:
     // should correspond to the j-th outside local scv.Therefore we apply the same operations on both containers
     void makeOutsideDataUnique()
     {
-        for (auto scvIt = outsideLocalScvIndices_.begin(); scvIt != outsideLocalScvIndices_.end(); ++scvIt)
+        auto scvIt = outsideLocalScvIndices_.begin();
+
+        while(scvIt != outsideLocalScvIndices_.end())
         {
-            auto scvfIt = outsideGlobalScvfIndices_.begin();
+            auto distance = std::distance(outsideLocalScvIndices_.begin(), scvIt);
+            auto scvfIt = outsideGlobalScvfIndices_.begin()+distance;
+
+            bool proceed = true;
             for (auto scvIt2 = scvIt+1; scvIt2 != outsideLocalScvIndices_.end(); ++scvIt2)
             {
+                // increment face iterator to be at the same position as the scvIt2 iterator
+                ++scvfIt;
+
+                // if an identical index is found, delete it
                 if (*scvIt2 == *scvIt)
                 {
                     outsideLocalScvIndices_.erase(scvIt2);
                     outsideGlobalScvfIndices_.erase(scvfIt);
+                    proceed = false;
                     break;
                 }
-                ++scvfIt;
             }
+
+            if (proceed)
+                ++scvIt;
         }
     }
 
