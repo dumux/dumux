@@ -76,10 +76,6 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
 
 public:
 
-    ThreePThreeCLocalResidual() : ParentType()
-    {
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    }
     /*!
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -142,7 +138,6 @@ public:
                                       fluxVarsCache);
 
         // get upwind weights into local scope
-        auto w = upwindWeight_;
         PrimaryVariables flux(0.0);
 
         // advective fluxes
@@ -150,23 +145,16 @@ public:
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
-                {
-                    return ( w )*up.molarDensity(phaseIdx)
-                                *up.moleFraction(phaseIdx, compIdx)
-                                *up.mobility(phaseIdx)
-                          +(1-w)*dn.molarDensity(phaseIdx)
-                                *dn.moleFraction(phaseIdx, compIdx)
-                                *dn.mobility(phaseIdx);
-                };
+                auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
+                { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
                 // get equation index
                 auto eqIdx = conti0EqIdx + compIdx;
-                flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRule);
+                flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
             }
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
@@ -203,9 +191,6 @@ protected:
 
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
-
-private:
-    Scalar upwindWeight_;
 };
 
 } // end namespace

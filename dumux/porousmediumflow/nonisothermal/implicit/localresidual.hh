@@ -74,8 +74,7 @@ public:
     //! The advective phase energy fluxes
     static void heatConvectionFlux(PrimaryVariables& flux,
                                    FluxVariables& fluxVars,
-                                   int phaseIdx,
-                                   Scalar upwindWeight)
+                                   int phaseIdx)
     {}
 
     //! The diffusive energy fluxes
@@ -124,16 +123,12 @@ public:
     //! The advective phase energy fluxes
     static void heatConvectionFlux(PrimaryVariables& flux,
                                    FluxVariables& fluxVars,
-                                   int phaseIdx,
-                                   Scalar upwindWeight)
+                                   int phaseIdx)
     {
-        auto upwindRule = [upwindWeight, phaseIdx](const VolumeVariables& up, const VolumeVariables& dn)
-        {
-            return (up.density(phaseIdx)*up.mobility(phaseIdx)*up.enthalpy(phaseIdx))*(upwindWeight)
-                 + (dn.density(phaseIdx)*dn.mobility(phaseIdx)*dn.enthalpy(phaseIdx))*(1-upwindWeight);
-        };
+        auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
 
-        flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindRule);
+        flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }
 
     //! The diffusive energy fluxes

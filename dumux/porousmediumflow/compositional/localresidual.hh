@@ -70,14 +70,6 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
 
 public:
 
-    CompositionalLocalResidual()
-    : ParentType()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    }
     /*!
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -181,7 +173,6 @@ public:
                                       fluxVarsCache);
 
         // get upwind weights into local scope
-        auto w = upwindWeight_;
         PrimaryVariables flux(0.0);
 
         // formulation with mole balances
@@ -194,17 +185,12 @@ public:
                 {
                     // get equation index
                     auto eqIdx = conti0EqIdx + compIdx;
-                    auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
-                    {
-                        return ( w )*up.molarDensity(phaseIdx)
-                                    *up.moleFraction(phaseIdx, compIdx)
-                                    *up.mobility(phaseIdx)
-                              +(1-w)*dn.molarDensity(phaseIdx)
-                                    *dn.moleFraction(phaseIdx, compIdx)
-                                    *dn.mobility(phaseIdx);
-                    };
 
-                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindRule);
+                    // the physical quantities for which we perform upwinding
+                    auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
+                    { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
+
+                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
                     if (eqIdx != replaceCompEqIdx)
                         flux[eqIdx] += advFlux;
@@ -225,7 +211,7 @@ public:
                 }
 
                 //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-                EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx, w);
+                EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
             }
 
             //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
@@ -241,17 +227,12 @@ public:
                 {
                     // get equation index
                     auto eqIdx = conti0EqIdx + compIdx;
-                    auto upwindRule = [w, phaseIdx, compIdx](const VolumeVariables& up, const VolumeVariables& dn)
-                    {
-                        return ( w )*up.density(phaseIdx)
-                                    *up.massFraction(phaseIdx, compIdx)
-                                    *up.mobility(phaseIdx)
-                              +(1-w)*dn.density(phaseIdx)
-                                    *dn.massFraction(phaseIdx, compIdx)
-                                    *dn.mobility(phaseIdx);
-                    };
 
-                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindRule);
+                    // the physical quantities for which we perform upwinding
+                    auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
+                    { return volVars.density(phaseIdx)*volVars.massFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
+
+                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
                     if (eqIdx != replaceCompEqIdx)
                         flux[eqIdx] += advFlux;
@@ -288,9 +269,6 @@ protected:
 
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
-
-private:
-    Scalar upwindWeight_;
 };
 
 } // end namespace Dumux
