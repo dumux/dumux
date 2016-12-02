@@ -41,6 +41,7 @@
 
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/globalvolumevariables.hh>
+#include <dumux/discretization/staggered/volumevariables.hh>
 
 
 #include <dumux/freeflow/staggered/fluxvariables.hh>
@@ -115,6 +116,8 @@ SET_TYPE_PROP(StaggeredModel, DofMapper, typename GET_PROP_TYPE(TypeTag, Element
 //! The global current volume variables vector class
 SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::StaggeredGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
+//! The volume variables vector class
+// SET_TYPE_PROP(StaggeredModel, VolumeVariables, Dumux::StaggeredVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 //! The global flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::StaggeredGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 

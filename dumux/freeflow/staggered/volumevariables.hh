@@ -25,7 +25,7 @@
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
 #include "properties.hh"
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/discretization/staggered/volumevariables.hh>
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
@@ -39,9 +39,9 @@ namespace Dumux
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class NavierStokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class NavierStokesVolumeVariables : public StaggeredVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = StaggeredVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
