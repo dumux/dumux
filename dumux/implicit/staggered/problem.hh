@@ -299,7 +299,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    FacePrimaryVariables initialFaceValueAtPos(const GlobalPosition &globalPos) const
+    FacePrimaryVariables initialFaceValueAtPos(const GlobalPosition &globalPos, const int direction) const
     {
         // Throw an exception (there is no reasonable default value
         // for initial values)

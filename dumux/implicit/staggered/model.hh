@@ -265,7 +265,7 @@ public:
             // loop over faces
             for(auto&& scvf : scvfs(fvGeometry))
             {
-                auto initPriVars = this->problem_().initialFaceValueAtPos(scvf.center());
+                auto initPriVars = this->problem_().initialFaceValueAtPos(scvf.center(), scvf.directionIndex());
                 this->uCur_[faceIdx][scvf.dofIndexSelf()] = initPriVars;
             }
         }

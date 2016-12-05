@@ -254,25 +254,32 @@ public:
     }
 
 
-        /*!
+    /*!
      * \brief Evaluate the initial value for a facet.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position of the center of the finite volume
      *            for which the initial values ought to be
      *            set (in global coordinates)
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param direction The direction index of the facets unit outer normal
      */
-    FacePrimaryVariables initialFaceValueAtPos(const GlobalPosition &globalPos) const
+    GlobalPosition initialVelocityAtPos(const GlobalPosition &globalPos) const
     {
-        FacePrimaryVariables value(0.0);
-        if(globalPos[0] < 1e-6)
-            value[0] = 1.0;
-        return value;
+        GlobalPosition velocity;
+        velocity[0] = 1.0;
+        velocity[1] = 0.0;
+        return velocity;
 
     }
 
+     /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        facet.
+     *
+     * \param globalPos The position of the center of the finite volume
+     *            for which the dirichlet condition ought to be
+     *            set in global coordinates
+     * \param direction The direction index of the facets unit outer normal
+     */
     GlobalPosition dirichletVelocityAtPos(const GlobalPosition &pos) const
     {
         GlobalPosition velocity;
