@@ -38,6 +38,7 @@ NEW_PROP_TAG(EnableAdvection);
 NEW_PROP_TAG(EnableMolecularDiffusion);
 NEW_PROP_TAG(EnableEnergyBalance);
 NEW_PROP_TAG(ImplicitMassUpwindWeight);
+NEW_PROP_TAG(EnableGlobalElementFluxVariablesCache);
 }
 
 // forward declaration
@@ -73,7 +74,10 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, false>
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
 public:
 
@@ -82,9 +86,9 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -162,7 +166,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, false>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -176,10 +180,10 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -198,11 +202,9 @@ public:
                                                         this->elemVolVars(),
                                                         this->scvFace(),
                                                         phaseIdx,
-                                                        this->fluxVarsCache());
+                                                        this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
-
-
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
@@ -224,7 +226,7 @@ public:
                                                    this->elemVolVars(),
                                                    this->scvFace(),
                                                    phaseIdx, compIdx,
-                                                   this->fluxVarsCache());
+                                                   this->elemFluxVarsCache());
         return flux;
     }
 
@@ -272,7 +274,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
@@ -286,10 +288,10 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -308,7 +310,7 @@ public:
                                                         this->elemVolVars(),
                                                         this->scvFace(),
                                                         phaseIdx,
-                                                        this->fluxVarsCache());
+                                                        this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
 
@@ -333,7 +335,7 @@ public:
                                                this->fvGeometry(),
                                                this->elemVolVars(),
                                                this->scvFace(),
-                                               this->fluxVarsCache());
+                                               this->elemFluxVarsCache());
         return flux;
     }
 
@@ -382,7 +384,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -397,10 +399,10 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -419,7 +421,7 @@ public:
                                                         this->elemVolVars(),
                                                         this->scvFace(),
                                                         phaseIdx,
-                                                        this->fluxVarsCache());
+                                                        this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
 
@@ -445,7 +447,7 @@ public:
                                                    this->elemVolVars(),
                                                    this->scvFace(),
                                                    phaseIdx, compIdx,
-                                                   this->fluxVarsCache());
+                                                   this->elemFluxVarsCache());
         return flux;
     }
 
@@ -456,7 +458,7 @@ public:
                                                this->fvGeometry(),
                                                this->elemVolVars(),
                                                this->scvFace(),
-                                               this->fluxVarsCache());
+                                               this->elemFluxVarsCache());
         return flux;
     }
 

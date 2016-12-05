@@ -215,7 +215,7 @@ private:
             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
             {
                 auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
+                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache);
             }
 
             ++j;
@@ -270,7 +270,7 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
+                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache);
                     }
                 }
             }
@@ -312,7 +312,7 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
+                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache);
                     }
                 }
             }

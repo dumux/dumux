@@ -77,7 +77,7 @@ protected:
         // calculate the mass flux over the scv faces
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            this->residual_[0] += this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache[scvf]);
+            this->residual_[0] += this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
         }
     }
 
@@ -86,10 +86,10 @@ protected:
                                   const ElementVolumeVariables& elemVolVars,
                                   const SubControlVolumeFace &scvf,
                                   const ElementBoundaryTypes& bcTypes,
-                                  const FluxVariablesCache& fluxVarsCache)
+                                  const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if (!scvf.boundary())
-            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
+            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else
             return PrimaryVariables(0.0);
 
@@ -106,7 +106,7 @@ protected:
             if (scvf.boundary())
             {
                 auto bcTypes = this->problem().boundaryTypes(element, scvf);
-                this->residual_[0] += evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache[scvf]);
+                this->residual_[0] += evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
             }
         }
 
@@ -130,7 +130,7 @@ protected:
                                          const ElementVolumeVariables& elemVolVars,
                                          const SubControlVolumeFace &scvf,
                                          const BoundaryTypes& bcTypes,
-                                         const FluxVariablesCache& fluxVarsCache)
+                                         const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // evaluate the Neumann conditions at the boundary face
         PrimaryVariables flux(0);
@@ -143,7 +143,7 @@ protected:
 
         // evaluate the pure Dirichlet conditions at the boundary face
         if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-            flux += this->asImp_().evalDirichletSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes, fluxVarsCache);
+            flux += this->asImp_().evalDirichletSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
 
         return flux;
     }
@@ -199,12 +199,12 @@ protected:
                                            const ElementVolumeVariables& elemVolVars,
                                            const SubControlVolumeFace &scvf,
                                            const BoundaryTypes &bcTypes,
-                                           const FluxVariablesCache& fluxVarsCache)
+                                           const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // temporary vector to store the Dirichlet boundary fluxes
         PrimaryVariables flux(0);
 
-        auto dirichletFlux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
+        auto dirichletFlux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // add fluxes to the residual
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

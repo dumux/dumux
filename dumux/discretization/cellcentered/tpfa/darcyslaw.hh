@@ -58,14 +58,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -78,9 +78,9 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
                        int phaseIdx,
-                       const FluxVarsCache& fluxVarsCache)
+                       const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        const auto& tij = fluxVarsCache.tij();
+        const auto& fluxVarsCache = elemFluxVarsCache[scvFace];
 
         // Get the inside and outside volume variables
         const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
@@ -122,7 +122,7 @@ public:
             }
         }
 
-        return tij*(hInside - hOutside);
+        return fluxVarsCache.tij()*(hInside - hOutside);
     }
 
     static Stencil stencil(const Problem& problem,
