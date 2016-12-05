@@ -104,6 +104,7 @@ public:
 
           pairData_ = geometryHelper.pairData();
           localFaceIdx_ = is.indexInInside();
+          dirIdx_ = geometryHelper.directionIndex();
       }
 
     /*//! The copy constrcutor
@@ -209,6 +210,12 @@ public:
         return localFaceIdx_;
     }
 
+    //! Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
+    int directionIndex() const
+    {
+        return dirIdx_;
+    }
+
     //! The global index of this sub control volume face
     Scalar selfToOppositeDistance() const
     {
@@ -242,6 +249,7 @@ private:
     std::vector<StaggeredSubFace> subfaces_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
+    int dirIdx_;
 
 };
 

@@ -29,6 +29,7 @@
 
 #include <dumux/common/math.hh>
 #include <type_traits>
+#include <algorithm>
 
 namespace Dumux
 {
@@ -120,6 +121,17 @@ public:
     auto pairData() const
     {
         return pairData_;
+    }
+
+     /*!
+     * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
+     */
+    int directionIndex() const
+    {
+        const Scalar eps = 1e-8;
+        const auto& direction = intersection_.centerUnitOuterNormal();
+        const int idx = std::find_if(direction.begin(), direction.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - direction.begin();
+        return idx;
     }
 
 private:

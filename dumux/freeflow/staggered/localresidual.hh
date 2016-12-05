@@ -102,21 +102,19 @@ public:
 
         CellCenterPrimaryVariables flux(0.0);
 
-        const Scalar eps = 1e-6;
-
-        for(int direction = 0; direction < dim; ++direction)
+        if(scvf.unitOuterNormal()[scvf.directionIndex()] > 0.0) // positive coordinate direction
         {
-            if(scvf.unitOuterNormal()[direction] > eps && velocity > 0)
-            {
+            if(velocity > 0.0)
                 flux[0] = insideVolVars.density(0) * velocity;
-                return flux;
-            }
-
-            if(scvf.unitOuterNormal()[direction] < eps && velocity < 0)
-            {
+            else
                 flux[0] = outsideVolVars.density(0) * velocity;
-                return flux;
-            }
+        }
+        else // negative coordinate direction
+        {
+            if(velocity > 0.0)
+                flux[0] = outsideVolVars.density(0) * velocity;
+            else
+                flux[0] = insideVolVars.density(0) * velocity;
         }
         return flux;
     }
