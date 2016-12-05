@@ -84,9 +84,7 @@ public:
         const auto& tij = fluxVarsCache.advectionTij(phaseIdx);
 
         // interface density as arithmetic mean of the neighbors (when gravity is on)
-        Scalar rho;
-        if (gravity)
-            rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
+        Scalar rho = gravity ? interpolateDensity(elemVolVars, scvf, phaseIdx) : 0.0;
 
         // calculate Tij*pj
         Scalar flux(0.0);

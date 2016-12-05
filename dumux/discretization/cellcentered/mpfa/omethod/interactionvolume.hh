@@ -308,15 +308,6 @@ public:
     typename std::enable_if< (d < dw), DynamicVector >::type
     getTransmissibilities(const LocalFaceData& localFaceData) const
     {
-        // if we are not on a branching point, do the usual
-        if (localScvf_(localFaceData.localScvfIndex).outsideLocalScvIndices().size() == 1)
-        {
-            auto tij = T_[localFaceData.localScvfIndex];
-            if (localFaceData.isOutside)
-                tij *= -1.0;
-            return tij;
-        }
-
         // This means we are on a branching point. If we come from the inside, simply return tij
         if (!localFaceData.isOutside)
             return T_[localFaceData.localScvfIndex];

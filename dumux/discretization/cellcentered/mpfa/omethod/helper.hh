@@ -472,34 +472,40 @@ private:
                         }
                         else if (!insideScvfExists && outsideScvfExists)
                         {
-                            // pass info on outside to the inside scvf seed
-                            scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), static_cast<LocalIndexType>(scvSeeds.size()));
+                            // set the local scvfIndex of the outside face
+                            actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
+
+                            // pass info on inside to the outside scvf seed
+                            scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), actualLocalScvIdx);
                         }
 
                         // make outside scv by recursion
                         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, outsideElement, outsideFvGeometry, outsideScvfVector, vIdxGlobal);
                     }
-                    // outside scv exists, but no corresponding local scv face yet. Make it from inside.
-                    else if (outsideScvExists && !outsideScvfExists && !insideScvfExists)
+                    else
                     {
-                        // set the local scvfIndex of the face that is about to created
-                        actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
+                        // outside scv exists, but no corresponding local scv face yet. Make it from inside.
+                        if (!outsideScvfExists && !insideScvfExists)
+                        {
+                            // set the local scvfIndex of the face that is about to created
+                            actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
-                        // create scvf seed
-                        scvfSeeds.emplace_back(actualScvf,
-                                               actualLocalScvIdx,
-                                               Implementation::getMpfaFaceType(problem, element, actualScvf));
+                            // create scvf seed
+                            scvfSeeds.emplace_back(actualScvf,
+                                                   actualLocalScvIdx,
+                                                   Implementation::getMpfaFaceType(problem, element, actualScvf));
 
-                        // pass the actual outside indices to the new scvf seed
-                        scvfSeeds.back().addOutsideData(outsideScvfIdx, outsideLocalScvIdx);
-                    }
-                    else if (outsideScvExists && !insideScvfExists && outsideScvfExists)
-                    {
-                        // set the local scvfIndex of the found outside local scv face seed
-                        actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
+                            // pass the actual outside indices to the new scvf seed
+                            scvfSeeds.back().addOutsideData(outsideScvfIdx, outsideLocalScvIdx);
+                        }
+                        else if (!insideScvfExists && outsideScvfExists)
+                        {
+                            // set the local scvfIndex of the found outside local scv face seed
+                            actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
 
-                        // pass info on outside to the inside found local scvf seed
-                        scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), actualLocalScvIdx);
+                            // pass info on inside to the outside found local scvf seed
+                            scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), actualLocalScvIdx);
+                        }
                     }
                 }
             }

@@ -117,7 +117,12 @@ public:
 
     //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
     bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
-    { return branchingVertices_[scvf.vertexIndex()]; }
+    {
+        if (dim == dimWorld)
+            return false;
+        else
+            return branchingVertices_[scvf.vertexIndex()];
+    }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
