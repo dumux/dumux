@@ -88,7 +88,10 @@ class StaggeredLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum {
+        numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter),
+        numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace),
+    };
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -231,14 +234,12 @@ private:
             auto& curVolVars = getCurVolVars(curElemVolVars, scv);
             VolumeVariables origVolVars(curVolVars);
 
-            CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
-
-
-            for(int pvIdx = 0; pvIdx < priVars.size(); ++pvIdx)
+            for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
             {
                 const Scalar eps = 1e-4; // TODO: do properly
-                priVars += eps;
+                CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
 
+                priVars[pvIdx] += eps;
                 curVolVars.update(priVars, this->problem_(), elementJ, scv);
 
                 this->localResidual().eval(element, fvGeometry,
@@ -286,12 +287,12 @@ private:
             auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
             auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
 
-            FacePrimaryVariables priVars(this->model_().curSol()[faceIdx][globalJ]);
 
-            for(int pvIdx = 0; pvIdx < priVars.size(); ++pvIdx)
+            for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
             {
                 const Scalar eps = 1e-4; // TODO: do properly
-                priVars += eps;
+                FacePrimaryVariables priVars(this->model_().curSol()[faceIdx][globalJ]);
+                priVars[pvIdx] += eps;
 
                 curFaceVars.update(priVars);
 
@@ -324,7 +325,7 @@ private:
                           const int pvIdx,
                           const CCOrFacePrimaryVariables &partialDeriv)
     {
-        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+        for (int eqIdx = 0; eqIdx < partialDeriv.size(); eqIdx++)
         {
             // A[i][col][eqIdx][pvIdx] is the rate of change of
             // the residual of equation 'eqIdx' at dof 'i'
