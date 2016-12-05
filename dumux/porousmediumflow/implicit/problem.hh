@@ -58,7 +58,6 @@ class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
@@ -79,7 +78,7 @@ public:
         spatialParams_ = std::make_shared<SpatialParams>(asImp_(), gridView);
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
-            gravity_[dim-1]  = -9.81;
+            gravity_[dimWorld-1]  = -9.81;
     }
 
     /*!
