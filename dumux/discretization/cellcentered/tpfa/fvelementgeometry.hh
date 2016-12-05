@@ -60,6 +60,9 @@ class CCTpfaFVElementGeometry<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
 
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
     using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
     using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
@@ -80,6 +83,13 @@ public:
     const SubControlVolumeFace& scvf(IndexType scvfIdx) const
     {
         return globalFvGeometry().scvf(scvfIdx);
+    }
+
+    //! Get an element sub control volume face with a global scvf index
+    //! We separate element and neighbor scvfs to speed up mapping
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    {
+        return globalFvGeometry().flipScvf(scvfIdx, outsideScvIdx);
     }
 
     //! iterator range for sub control volumes. Iterates over

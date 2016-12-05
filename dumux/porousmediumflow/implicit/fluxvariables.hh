@@ -104,40 +104,110 @@ public:
                                           this->elemVolVars(),
                                           this->scvFace(),
                                           phaseIdx,
-                                          this->fluxVarsCache());
+                                          this->elemFluxVarsCache());
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
 
-        // When using an mpfa methods, we have to take special care of neumann boundaries
-        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCMpfa)
+        // // When using an mpfa methods, we have to take special care of neumann boundaries
+        // if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCMpfa)
+        // {
+        //     if (this->scvFace().boundary())
+        //     {
+        //         auto bcTypes = this->problem().boundaryTypes(this->element(), this->scvFace());
+        //         if (bcTypes.isNeumann(phaseIdx))
+        //         {
+        //             if (GET_PROP_VALUE(TypeTag, EnableGlobalElementFluxVariablesCache))
+        //             {
+        //                 auto initPriVars = this->problem().initial(insideScv);
+        //                 VolumeVariables volVars;
+        //                 volVars.update(initPriVars, this->problem(), this->element(), insideScv);
+        //                 return flux*volVars.density(phaseIdx)*volVars.mobility(phaseIdx);
+        //             }
+        //             else
+        //                 return flux*insideVolVars.density(phaseIdx)*insideVolVars.mobility(phaseIdx);
+        //         }
+        //     }
+        // }
+
+        // equidimensional grids (standard case)
+        if (dim == dimWorld)
         {
-            if (this->scvFace().boundary())
-            {
-                auto bcTypes = this->problem().boundaryTypes(this->element(), this->scvFace());
-                if (bcTypes.isNeumann(phaseIdx))
-                {
-                    if (GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache))
-                    {
-                        auto initPriVars = this->problem().initial(insideScv);
-                        VolumeVariables volVars;
-                        volVars.update(initPriVars, this->problem(), this->element(), insideScv);
-                        return flux*volVars.density(phaseIdx)*volVars.mobility(phaseIdx);
-                    }
-                    else
-                        return flux*insideVolVars.density(phaseIdx)*insideVolVars.mobility(phaseIdx);
-                }
-            }
+            // upwind scheme
+            const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+            if (std::signbit(flux))
+                return flux*(upwindWeight_*upwindTerm(outsideVolVars)
+                             + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+            else
+                return flux*(upwindWeight_*upwindTerm(insideVolVars)
+                             + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
         }
-
-        // upwind scheme
-        if (std::signbit(flux))
-            return flux*(upwindWeight_*upwindTerm(outsideVolVars)
-                         + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+        // embedded surface or network grids
         else
-            return flux*(upwindWeight_*upwindTerm(insideVolVars)
-                         + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+        {
+            // check if this is a branching point
+            if (this->scvFace().numOutsideScvs() > 1)
+            {
+                // more complicated upwind scheme
+                // we compute a flux-weighted average of all inflowing branches
+                Scalar branchingPointUpwindTerm = 0.0;
+                Scalar sumUpwindFluxes = 0.0;
+
+                // the inside flux
+                if (!std::signbit(flux))
+                    branchingPointUpwindTerm += upwindTerm(insideVolVars)*flux;
+                else
+                    sumUpwindFluxes += flux;
+
+                for (unsigned int i = 0; i < this->scvFace().numOutsideScvs(); ++i)
+                {
+                     // compute the outside flux
+                    const auto outsideScvIdx = this->scvFace().outsideScvIdx(i);
+                    const auto outsideElement = this->fvGeometry().globalFvGeometry().element(outsideScvIdx);
+                    const auto& flippedScvf = this->fvGeometry().flipScvf(this->scvFace().index(), i);
+
+                    const auto outsideFlux = AdvectionType::flux(this->problem(),
+                                                                 outsideElement,
+                                                                 this->fvGeometry(),
+                                                                 this->elemVolVars(),
+                                                                 flippedScvf,
+                                                                 phaseIdx,
+                                                                 this->elemFluxVarsCache());
+
+                    if (!std::signbit(outsideFlux))
+                        branchingPointUpwindTerm += upwindTerm(this->elemVolVars()[outsideScvIdx])*outsideFlux;
+                    else
+                        sumUpwindFluxes += outsideFlux;
+                }
+
+                // the flux might be zero
+                if (sumUpwindFluxes != 0.0)
+                    branchingPointUpwindTerm /= -sumUpwindFluxes;
+                else
+                    branchingPointUpwindTerm = 0.0;
+
+                // upwind scheme
+                if (std::signbit(flux))
+                    return flux*(upwindWeight_*branchingPointUpwindTerm
+                                 + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+                else
+                    return flux*(upwindWeight_*upwindTerm(insideVolVars)
+                                 + (1.0 - upwindWeight_)*branchingPointUpwindTerm);
+            }
+            // non-branching points and boundaries
+            else
+            {
+                // upwind scheme
+                const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+                if (std::signbit(flux))
+                    return flux*(upwindWeight_*upwindTerm(outsideVolVars)
+                                 + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+                else
+                    return flux*(upwindWeight_*upwindTerm(insideVolVars)
+                                 + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+            }
+
+        }
     }
 
     Stencil computeStencil(const Problem& problem,
@@ -205,6 +275,8 @@ public:
                                                         this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
+
+
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
@@ -424,8 +496,6 @@ public:
                                                         this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
-
-
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
