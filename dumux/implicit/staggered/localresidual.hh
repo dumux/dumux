@@ -267,7 +267,11 @@ protected:
         {
             if (scvf.boundary())
             {
+//                 auto test = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
+//              std::cout << " face: " << scvf.center() << ",  normal: "  <<  scvf.unitOuterNormal()    << ",   value: " << test << std::endl;
+
 //                 auto bcTypes = this->problem().boundaryTypes(element, scvf);
+
 //                 this->residual_[0] += evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache[scvf]);
             }
         }

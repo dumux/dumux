@@ -103,7 +103,7 @@ public:
      *
      * The method returns the boundary types information.
      */
-    CellCenterPrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    CellCenterPrimaryVariables ccDirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         // forward it to the method which only takes the global coordinate
         if (isBox)
@@ -114,7 +114,7 @@ public:
             return asImp_().dirichletAtPos(scvf.center());
     }
 
-    CellCenterPrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
+    CellCenterPrimaryVariables ccDirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
         if (!isBox)
@@ -135,7 +135,27 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    CellCenterPrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    CellCenterPrimaryVariables ccDirichletAtPos(const GlobalPosition &globalPos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Dirichlet conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem specifies that some boundary "
+                   "segments are dirichlet, but does not provide "
+                   "a dirichlet() method.");
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param globalPos The position of the center of the finite volume
+     *            for which the dirichlet condition ought to be
+     *            set in global coordinates
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    FacePrimaryVariables faceDirichletAtPos(const GlobalPosition &globalPos, const int direction) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -249,25 +269,6 @@ public:
     }
 
 
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
-    CellCenterPrimaryVariables initial(const SubControlVolume &scv) const
-    {
-        // forward to generic interface
-        return asImp_().initialAtPos(scv.dofPosition());
-    }
-
-
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
@@ -278,7 +279,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    CellCenterPrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    CellCenterPrimaryVariables initialCCValuesAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for initial values)
@@ -287,22 +288,6 @@ public:
                    "a initialAtPos() method.");
     }
 
-    /*!
-     * \brief Evaluate the initial value for a facet.
-     *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
-    FacePrimaryVariables initialFaceValues(const SubControlVolumeFace &scvf) const
-    {
-        // forward to generic interface
-        return asImp_().initialFaceValueAtPos(scvf.center());
-    }
 
     /*!
      * \brief Evaluate the initial value for a facet.

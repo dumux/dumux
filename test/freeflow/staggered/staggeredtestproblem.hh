@@ -246,7 +246,7 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    CellCenterPrimaryVariables initial(const SubControlVolume& scv) const
+    CellCenterPrimaryVariables initialCCValuesAtPos(const GlobalPosition &globalPos) const
     {
         CellCenterPrimaryVariables priVars(0);
         priVars[pressureIdx] = 1.0e+5;
@@ -271,6 +271,14 @@ public:
             value[0] = 1.0;
         return value;
 
+    }
+
+    GlobalPosition dirichletVelocityAtPos(const GlobalPosition &pos) const
+    {
+        GlobalPosition velocity;
+        velocity[0] = 1.0;
+        velocity[1] = 0.0;
+        return velocity;
     }
 
     // \}

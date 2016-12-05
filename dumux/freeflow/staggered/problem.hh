@@ -52,6 +52,8 @@ class NavierStokesProblem : public StaggeredProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+
     enum {
         dim = Grid::dimension,
         dimWorld = Grid::dimensionworld
@@ -115,6 +117,22 @@ public:
                         const int scvIdx,
                         const int boundaryFaceIdx) const
     { DUNE_THROW(Dune::NotImplemented, "permeability()"); }
+
+
+     /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param globalPos The position of the center of the finite volume
+     *            for which the dirichlet condition ought to be
+     *            set in global coordinates
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    FacePrimaryVariables faceDirichletAtPos(const GlobalPosition &globalPos, const int direction) const
+    {
+        return asImp_().dirichletVelocityAtPos(globalPos)[direction];
+    }
 
     // \}
 

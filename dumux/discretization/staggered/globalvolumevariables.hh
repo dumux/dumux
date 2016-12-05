@@ -94,7 +94,7 @@ public:
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
+                    const auto dirichletPriVars = problem.ccDirichlet(element, scvf);
 
                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
                 }
