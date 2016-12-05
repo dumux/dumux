@@ -97,8 +97,10 @@ public:
     {
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
+
+        // if we are on an inflow/outflow boundary, use the volVars of the element itself
+        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         CellCenterPrimaryVariables flux(0.0);
 
