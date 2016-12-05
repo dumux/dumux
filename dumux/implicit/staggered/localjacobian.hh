@@ -94,7 +94,10 @@ class StaggeredLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
-    using AssemblyMap = std::vector<std::vector<std::vector<IndexType>>>;
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+
 
 public:
 
@@ -145,14 +148,13 @@ public:
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
 
-        auto& curGlobalFaceVars = this->model_().curGlobalFaceVars();
+        auto curGlobalFaceVars = this->model_().curGlobalFaceVars();
         auto& prevGlobalFaceVars = this->model_().prevGlobalFaceVars();
 
         // calculate the local residual
         if (isGhost)
         {
-//             this->residual_ = 0.0;
-//             residual[cellCenterIdx][globalI_] = 0.0;
+            DUNE_THROW(Dune::NotImplemented, "Support for ghost cells not implemented");
         }
         else
         {
@@ -160,199 +162,122 @@ public:
                                        prevElemVolVars, curElemVolVars,
                                        prevGlobalFaceVars, curGlobalFaceVars,
                                        elemBcTypes, elemFluxVarsCache);
-//             this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
-//             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
-//             residual[cellCenterIdx][globalI_] = this->localResidual().residual(0);
+            residual[cellCenterIdx][globalI_] = this->localResidual().ccResidual();
+
+            for(auto&& scvf : scvfs(fvGeometry))
+            {
+                residual[faceIdx][scvf.dofIndexSelf()] += this->localResidual().faceResidual(scvf.localFaceIdx());
+            }
         }
 
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
-
-        // TODO: calculate derivatives in the case of an extended source stencil
-        // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
-        // for (auto&& globalJ : extendedSourceStencil)
-        // {
-        //     for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-        //         {
-        //             evalPartialDerivativeSource_(partialDeriv, globalJ, pvIdx, neighborToFluxVars[globalJ]);
-
-        //             // update the local stiffness matrix with the partial derivatives
-        //             updateLocalJacobian_(j, pvIdx, partialDeriv);
-        //         }
-               // ++j;
-        // }
+        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
     }
-
-    const AssemblyMap& assemblyMap() const
-    { return assemblyMap_; }
 
 private:
     void evalPartialDerivatives_(const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
                                  ElementVolumeVariables& curElemVolVars,
+                                 const GlobalFaceVars& prevGlobalFaceVars,
+                                 GlobalFaceVars& curGlobalFaceVars,
                                  ElementFluxVariablesCache& elemFluxVarsCache,
                                  const ElementBoundaryTypes& elemBcTypes,
                                  JacobianMatrix& matrix,
                                  SolutionVector& residual,
                                  const bool isGhost)
     {
-        // get stencil informations
-//         const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
-//         const auto numNeighbors = neighborStencil.size();
+        // compute the derivatives of the cell center dofs with respect to cell center dofs
+        dCCdCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
 
-        // the localresidual class used for the flux calculations
-//         LocalResidual localRes;
-//         localRes.init(this->problem_());
-//
-//         // container to store the neighboring elements
-//         std::vector<Element> neighborElements;
-// //         neighborElements.reserve(numNeighbors);
-//
-//         // get the elements and calculate the flux into the element in the undeflected state
-//         Dune::BlockVector<PrimaryVariables> origFlux(numNeighbors);
-//         origFlux = 0.0;
-//
-//         unsigned int j = 0;
-//         for (auto globalJ : neighborStencil)
-//         {
-//             auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
-//             neighborElements.push_back(elementJ);
-//
-//             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
-//             {
-//                 auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-//                 origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
-//             }
-//
-//             ++j;
-//         }
-//
-//         auto&& scv = fvGeometry.scv(globalI_);
-//         auto& curVolVars = getCurVolVars(curElemVolVars, scv);
-//         // save a copy of the original vol vars
-//         VolumeVariables origVolVars(curVolVars);
-//
-//         // derivatives in the neighbors with repect to the current elements
-//         Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
-//         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-//         {
-//             // derivatives of element dof with respect to itself
-//             PrimaryVariables partialDeriv(0.0);
-//
-//             if (isGhost)
-//                 partialDeriv[pvIdx] = 1.0;
-//
-//             neighborDeriv = 0.0;
-//             PrimaryVariables priVars(this->model_().curSol()[globalI_]);
-//
-//             Scalar eps = this->numericEpsilon(scv, curVolVars, pvIdx);
-//             Scalar delta = 0;
-//
-//             if (numericDifferenceMethod_ >= 0)
-//             {
-//                 // we are not using backward differences, i.e. we need to
-//                 // calculate f(x + \epsilon)
-//
-//                 // deflect primary variables
-//                 priVars[pvIdx] += eps;
-//                 delta += eps;
-//
-//                 // update the volume variables and bind the flux var cache again
-//                 curVolVars.update(priVars, this->problem_(), element, scv);
-//                 elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-//
-//                 if (!isGhost)
-//                 {
-//                     // calculate the residual with the deflected primary variables
-//                     this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
-//
-//                     // store the residual and the storage term
-//                     partialDeriv = this->localResidual().residual(0);
-//                 }
-//
-//                 // calculate the fluxes into element with the deflected primary variables
-//                 for (std::size_t k = 0; k < numNeighbors; ++k)
-//                 {
-//                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
-//                     {
-//                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-//                         neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
-//                     }
-//                 }
-//             }
-//             else
-//             {
-//                 // we are using backward differences, i.e. we don't need
-//                 // to calculate f(x + \epsilon) and we can recycle the
-//                 // (already calculated) residual f(x)
-//                 if (!isGhost)
-//                     partialDeriv = this->residual(0);
-//                 neighborDeriv = origFlux;
-//             }
-//
-//             if (numericDifferenceMethod_ <= 0)
-//             {
-//                 // we are not using forward differences, i.e. we
-//                 // need to calculate f(x - \epsilon)
-//
-//                 // deflect the primary variables
-//                 priVars[pvIdx] -= delta + eps;
-//                 delta += eps;
-//
-//                 // update the volume variables and bind the flux var cache again
-//                 curVolVars.update(priVars, this->problem_(), element, scv);
-//                 elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-//
-//                 if (!isGhost)
-//                 {
-//                     // calculate the residual with the deflected primary variables
-//                     this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
-//
-//                     // subtract the residual from the derivative storage
-//                     partialDeriv -= this->localResidual().residual(0);
-//                 }
-//
-//                 // calculate the fluxes into element with the deflected primary variables
-//                 for (std::size_t k = 0; k < numNeighbors; ++k)
-//                 {
-//                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
-//                     {
-//                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-//                         neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache[scvf]);
-//                     }
-//                 }
-//             }
-//             else
-//             {
-//                 // we are using forward differences, i.e. we don't need to
-//                 // calculate f(x - \epsilon) and we can recycle the
-//                 // (already calculated) residual f(x)
-//                 if (!isGhost)
-//                     partialDeriv -= this->residual(0);
-//                 neighborDeriv -= origFlux;
-//             }
-//
-//             // divide difference in residuals by the magnitude of the
-//             // deflections between the two function evaluation
-//             if (!isGhost)
-//                 partialDeriv /= delta;
-//             neighborDeriv /= delta;
-//
-//             // restore the original state of the scv's volume variables
-//             curVolVars = origVolVars;
-//
-//             // update the global jacobian matrix with the current partial derivatives
-//             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
-//
-//             j = 0;
-//             for (auto globalJ : neighborStencil)
-//                 this->updateGlobalJacobian_(matrix, globalJ, globalI_, pvIdx, neighborDeriv[j++]);
-//         }
+
+        printmatrix(std::cout, matrix[cellCenterIdx][cellCenterIdx], "A11 neu", "");
     }
+
+     /*!
+     * \brief Computes the derivatives of the cell center dofs with respect to cell center dofs
+     */
+    void dCCdCC_(const Element& element,
+                 const FVElementGeometry& fvGeometry,
+                 const ElementVolumeVariables& prevElemVolVars,
+                 ElementVolumeVariables& curElemVolVars,
+                 const GlobalFaceVars& prevGlobalFaceVars,
+                 const GlobalFaceVars& curGlobalFaceVars,
+                 ElementFluxVariablesCache& elemFluxVarsCache,
+                 const ElementBoundaryTypes& elemBcTypes,
+                 JacobianMatrix& matrix,
+                 SolutionVector& residual,
+                 const bool isGhost)
+    {
+        // set the actual dof index
+        auto globalI = this->problem_().elementMapper().index(element);
+
+
+        // build derivatives with for cell center dofs w.r.t. cell center dofs
+        const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
+
+        for(const auto& globalJ : cellCenterToCellCenterStencil)
+        {
+            // get the volVars of the element with respect to which we are going to build the derivative
+            auto&& scv = fvGeometry.scv(globalJ);
+            const auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            curElemVolVars.bind(elementJ, fvGeometry, this->model_().curSol());
+            auto& curVolVars = getCurVolVars(curElemVolVars, scv);
+            VolumeVariables origVolVars(curVolVars);
+
+            CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
+
+
+            for(int pvIdx = 0; pvIdx < priVars.size(); ++pvIdx)
+            {
+                const Scalar eps = 1e-4; // TODO: do properly
+                priVars += eps;
+
+                curVolVars.update(priVars, this->problem_(), elementJ, scv);
+
+                this->localResidual().eval(element, fvGeometry,
+                                        prevElemVolVars, curElemVolVars,
+                                        prevGlobalFaceVars, curGlobalFaceVars,
+                                        elemBcTypes, elemFluxVarsCache);
+
+                auto partialDeriv = (this->localResidual().ccResidual() - residual[cellCenterIdx][globalI]);
+                partialDeriv /= eps;
+
+                // update the global jacobian matrix with the current partial derivatives
+                this->updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], globalI, globalJ, pvIdx, partialDeriv);
+
+                // restore the original volVars
+                curVolVars = origVolVars;
+            }
+        }
+    }
+
+    /*!
+     * \brief Updates the current global Jacobian matrix with the
+     *        partial derivatives of all equations in regard to the
+     *        primary variable 'pvIdx' at dof 'col'. Specialization for cc methods.
+     */
+    template<class SubMatrix, class CCOrFacePrimaryVariables>
+    void updateGlobalJacobian_(SubMatrix& matrix,
+                          const int globalI,
+                          const int globalJ,
+                          const int pvIdx,
+                          const CCOrFacePrimaryVariables &partialDeriv)
+    {
+        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+        {
+            // A[i][col][eqIdx][pvIdx] is the rate of change of
+            // the residual of equation 'eqIdx' at dof 'i'
+            // depending on the primary variable 'pvIdx' at dof
+            // 'col'.
+            matrix[globalI][globalJ][eqIdx][pvIdx] = partialDeriv[eqIdx];
+            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
+        }
+    }
+
 
     //! If the global vol vars caching is enabled we have to modify the global volvar object
     template<class T = TypeTag>
@@ -368,7 +293,6 @@ private:
 
     IndexType globalI_;
     int numericDifferenceMethod_;
-    AssemblyMap assemblyMap_;
 };
 
 }

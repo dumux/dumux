@@ -216,7 +216,7 @@ public:
     CellCenterPrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         CellCenterPrimaryVariables values(0);
-        values[pressureIdx] = 1.0e+5*(2.0 - globalPos[dimWorld-1]);
+        values[0] = 1.0e+5;
         return values;
     }
 
@@ -249,7 +249,8 @@ public:
     CellCenterPrimaryVariables initialCCValuesAtPos(const GlobalPosition &globalPos) const
     {
         CellCenterPrimaryVariables priVars(0);
-        priVars[pressureIdx] = 1.0e+5;
+        priVars[0] = 1.0e+5; //TODO: fix indices
+        std::cout << "init from problem; " << priVars << std::endl;
         return priVars;
     }
 

@@ -168,15 +168,20 @@ public:
         // resize the vectors for all terms
         const auto numScv = fvGeometry.numScv();
         const auto numScvf = fvGeometry.numScvf();
-        ccResidual_.resize(numScv, 0.0);
-        ccStorageTerm_.resize(numScv, 0.0);
+        ccResidual_.resize(numScv);
+        ccStorageTerm_.resize(numScv);
+
+        ccResidual_ = 0.0;
+        ccStorageTerm_ = 0.0;
 
         faceResiduals_.resize(numScvf);
         faceStorageTerms_.resize(numScvf);
         for(int i = 0; i < numScvf; ++i)
         {
-            faceResiduals_[i].resize(1, 0.0);
-            faceStorageTerms_[i].resize(1, 0.0);
+            faceResiduals_[i].resize(1);
+            faceStorageTerms_[i].resize(1);
+            faceResiduals_[i] = 0.0;
+            faceStorageTerms_[i] = 0.0;
         }
 
         asImp_().evalVolumeTerms_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
@@ -195,6 +200,15 @@ public:
      */
     Problem& problem()
     { return *problemPtr_; }
+
+    const auto& ccResidual() const
+    { return ccResidual_[0]; }
+
+    const auto& faceResiduals() const
+    { return faceResiduals_; }
+
+    const auto& faceResidual(const int faceIdx) const
+    { return faceResiduals_[faceIdx][0]; }
 
 
 protected:
