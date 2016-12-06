@@ -228,10 +228,9 @@ private:
         for(const auto& globalJ : cellCenterToCellCenterStencil)
         {
             // get the volVars of the element with respect to which we are going to build the derivative
-            auto&& scv = fvGeometry.scv(globalJ);
+            auto&& scvJ = fvGeometry.scv(globalJ);
             const auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
-            curElemVolVars.bind(elementJ, fvGeometry, this->model_().curSol());
-            auto& curVolVars = getCurVolVars(curElemVolVars, scv);
+            auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
             VolumeVariables origVolVars(curVolVars);
 
             for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
@@ -240,7 +239,7 @@ private:
                 CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
 
                 priVars[pvIdx] += eps;
-                curVolVars.update(priVars, this->problem_(), elementJ, scv);
+                curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
                 this->localResidual().eval(element, fvGeometry,
                                         prevElemVolVars, curElemVolVars,
@@ -286,7 +285,6 @@ private:
 
             auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
             auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
-
 
             for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
             {

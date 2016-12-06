@@ -70,9 +70,9 @@ public:
         problemPtr_ = &problem;
 
         auto numScv = problem.model().globalFvGeometry().numScv();
-        auto numBoundaryScvf = problem.model().globalFvGeometry().numBoundaryScvf();
+//         auto numBoundaryScvf = problem.model().globalFvGeometry().numBoundaryScvf();
 
-        volumeVariables_.resize(numScv + numBoundaryScvf);
+        volumeVariables_.resize(numScv /*+ numBoundaryScvf*/);
         for (const auto& element : elements(problem.gridView()))
         {
             auto fvGeometry = localView(problem.model().globalFvGeometry());
@@ -81,24 +81,24 @@ public:
             for (auto&& scv : scvs(fvGeometry))
                 volumeVariables_[scv.index()].update(sol[cellCenterIdx][scv.dofIndex()], problem, element, scv);
 
-            // handle the boundary volume variables
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                // if we are not on a boundary, skip the rest
-                if (!scvf.boundary())
-                    continue;
-
-                // check if boundary is a pure dirichlet boundary
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
-                if (bcTypes.hasOnlyDirichlet())
-                {
-                    const auto insideScvIdx = scvf.insideScvIdx();
-                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = problem.ccDirichlet(element, scvf);
-
-                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
-                }
-            }
+//             // handle the boundary volume variables
+//             for (auto&& scvf : scvfs(fvGeometry))
+//             {
+//                 // if we are not on a boundary, skip the rest
+//                 if (!scvf.boundary())
+//                     continue;
+//
+//                 // check if boundary is a pure dirichlet boundary
+//                 const auto bcTypes = problem.boundaryTypes(element, scvf);
+//                 if (bcTypes.hasOnlyDirichlet())
+//                 {
+//                     const auto insideScvIdx = scvf.insideScvIdx();
+//                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
+//                     const auto dirichletPriVars = problem.ccDirichlet(element, scvf);
+//
+//                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
+//                 }
+//             }
         }
     }
 
