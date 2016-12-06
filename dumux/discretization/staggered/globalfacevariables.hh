@@ -81,7 +81,7 @@ public:
         problemPtr_ = &problem;
 
         faceVariables_.resize(problem.model().numFaceDofs());
-        assert(faceVariables_.size == sol.size());
+        assert(faceVariables_.size() == sol.size());
 
         for(int i = 0; i < problem.model().numFaceDofs(); ++i)
         {

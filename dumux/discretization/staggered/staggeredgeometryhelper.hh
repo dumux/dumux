@@ -110,8 +110,8 @@ public:
     Scalar selfToOppositeDistance() const
     {
         const auto inIdx = intersection_.indexInInside();
-        const auto& self = element_.template subEntity <1> (inIdx);
-        const auto& opposite = element_.template subEntity <1> (localOppositeIdx_(inIdx));
+        const auto self = element_.template subEntity <1> (inIdx);
+        const auto opposite = element_.template subEntity <1> (localOppositeIdx_(inIdx));
         return (self.geometry().center() - opposite.geometry().center()).two_norm();
     }
 
@@ -308,9 +308,10 @@ protected:
         return this->gridView_.indexSet().subIndex(element, localIdx, codimCommonEntity);
     };
 
-    const Intersection& intersection_; //! The intersection of interest
-    const Element& element_; //! The respective element
-    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    // TODO: check whether to use references here or not
+    const Intersection intersection_; //! The intersection of interest
+    const Element element_; //! The respective element
+    const typename Element::Geometry elementGeometry_; //! Reference to the element geometry
     const GridView gridView_;
     const int offset_; //! Offset for intersection dof indexing
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //! collection of pair information

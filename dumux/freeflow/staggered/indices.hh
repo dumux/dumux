@@ -50,7 +50,7 @@ struct NavierStokesCommonIndices
     static const int dimYIdx = 1; //!< Index of the y-component of a vector of size dim
     static const int dimZIdx = 2; //!< Index of the z-component of a vector of size dim
 
-    static const int massBalanceIdx = dim; //!< Index of the mass balance equation
+    static const int massBalanceIdx = PVOffset + 0; //!< Index of the mass balance equation
     static const int conti0EqIdx = massBalanceIdx; //!< Index of first (for C-guys: 0th) mass conservation equation
 
     static const int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
