@@ -89,57 +89,66 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        // TODO: implement vtk output
-//         // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
-//
-//         // create the required scalar fields
-//         unsigned numDofs = this->numDofs();
-//         auto *p = writer.allocateManagedBuffer(numDofs);
-//         // VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-//         // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-//
-//         // if (velocityOutput.enableOutput())
-//         // {
-//         //     // initialize velocity field
-//         //     for (unsigned int i = 0; i < numDofs; ++i)
-//         //     {
-//         //         (*velocity)[i] = double(0);
-//         //     }
-//         // }
-//
-//         unsigned numElements = this->gridView_().size(0);
-//         auto *rank = writer.allocateManagedBuffer(numElements);
-//
-//         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-//         {
-//             auto eIdx = this->elementMapper().index(element);
-//             (*rank)[eIdx] = this->gridView_().comm().rank();
-//
-//             // get the local fv geometry
-//             auto fvGeometry = localView(this->globalFvGeometry());
-//             fvGeometry.bindElement(element);
-//
-//             auto elemVolVars = localView(this->curGlobalVolVars());
-//             elemVolVars.bindElement(element, fvGeometry, this->curSol());
-//
-//             for (auto&& scv : scvs(fvGeometry))
-//             {
-//                 const auto& volVars = elemVolVars[scv];
-//                 auto dofIdxGlobal = scv.dofIndex();
-//
-//                 (*p)[dofIdxGlobal] = volVars.pressure();
-//             }
-//
-//             // velocity output
-//             //velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
-//         }
-//
-//         writer.attachDofData(*p, "p", isBox);
-//         // if (velocityOutput.enableOutput())
-//         // {
-//         //     writer.attachDofData(*velocity,  "velocity", isBox, dim);
-//         // }
-//         writer.attachCellData(*rank, "process rank");
+        // TODO: implement vtk output properly, account for 3d
+
+        // create the required scalar fields
+        const auto numElements = this->gridView_().size(0);
+        auto *p = writer.allocateManagedBuffer(numElements);
+
+        auto *v_x_pos = writer.allocateManagedBuffer(numElements);
+        auto *v_x_neg = writer.allocateManagedBuffer(numElements);
+        auto *v_y_pos = writer.allocateManagedBuffer(numElements);
+        auto *v_y_neg = writer.allocateManagedBuffer(numElements);
+
+       auto *rank = writer.allocateManagedBuffer(numElements);
+
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
+        {
+            auto eIdx = this->elementMapper().index(element);
+            (*rank)[eIdx] = this->gridView_().comm().rank();
+
+           // get the local fv geometry
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                auto dofIdxGlobal = scv.dofIndex();
+
+                (*p)[dofIdxGlobal] = volVars.pressure();
+
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
+                    auto dirIdx = scvf.directionIndex();
+
+                    if(scvf.unitOuterNormal()[dirIdx] > 0.0)
+                    {
+                        if(dirIdx == 0)
+                            (*v_x_pos) = origFaceVars.velocity();
+                        if(dirIdx == 1)
+                            (*v_y_pos) = origFaceVars.velocity();
+                    }
+                    else
+                    {
+                        if(dirIdx == 0)
+                            (*v_x_neg) = origFaceVars.velocity();
+                        if(dirIdx == 1)
+                            (*v_y_neg) = origFaceVars.velocity();
+                    }
+                }
+            }
+        }
+        writer.attachDofData(*p, "p", isBox);
+        writer.attachDofData(*v_x_pos, "v_x_pos", isBox);
+        writer.attachDofData(*v_x_neg, "v_x_neg", isBox);
+        writer.attachDofData(*v_y_pos, "v_y_pos", isBox);
+        writer.attachDofData(*v_y_neg, "v_y_neg", isBox);
+        writer.attachCellData(*rank, "process rank");
     }
 
 
