@@ -39,26 +39,33 @@ namespace Properties
 {
 // forward declaration of properties
 NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(FluidState);
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(EffectiveDiffusivityModel);
 }
 
 /*!
- * \ingroup CCTpfaFicksLaw
+ * \ingroup BoxFicksLaw
  * \brief Specialization of Fick's Law for the box method.
  */
 template <class TypeTag>
 class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffDiffModel;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::IndexSet::IndexType IndexType;
-    typedef typename std::vector<IndexType> Stencil;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = typename std::vector<IndexType>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -66,114 +73,90 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     enum { dimWorld = GridView::dimensionworld} ;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-
     static Scalar flux(const Problem& problem,
                        const Element& element,
-                       const SubControlVolumeFace& scvFace,
-                       const int phaseIdx,
-                       const int compIdx)
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf,
+                       int phaseIdx, int compIdx,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       bool useMoles = true)
     {
-        // diffusion tensors are always solution dependent
-        Scalar tij = calculateTransmissibility_(problem, scvFace, phaseIdx, compIdx);
+        // get inside and outside diffusion tensors and calculate the harmonic mean
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        // Get the inside volume variables
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto& insideVolVars = problem.model().curVolVars(insideScv);
+        // effective diffusion tensors
+        auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
+                                                          insideVolVars.saturation(phaseIdx),
+                                                          insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+        auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
+                                                           outsideVolVars.saturation(phaseIdx),
+                                                           outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
 
-        // and the outside volume variables
-        const auto& outsideVolVars = problem.model().curVolVars(scvFace.outsideScvIdx());
+        // scale by extrusion factor
+        insideD *= insideVolVars.extrusionFactor();
+        outsideD *= outsideVolVars.extrusionFactor();
 
-        // compute the diffusive flux
-        const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
-        const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
-        const auto rho = 0.5*(insideVolVars.molarDensity(phaseIdx) + outsideVolVars.molarDensity(phaseIdx));
+        // the resulting averaged diffusion tensor
+        const auto D = harmonicMean(insideD, outsideD);
 
-        return rho*tij*(xInside - xOutside);
-    }
+        // evaluate gradX at integration point and interpolate density
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto& jacInvT = fluxVarsCache.jacInvT();
+        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
+        const auto& shapeValues = fluxVarsCache.shapeValues();
 
-    static Stencil stencil(const Problem& problem, const SubControlVolumeFace& scvFace)
-    {
-        std::vector<IndexType> stencil;
-        stencil.clear();
-        if (!scvFace.boundary())
+        GlobalPosition gradX(0.0);
+        Scalar rho(0.0);
+        for (auto&& scv : scvs(fvGeometry))
         {
-            stencil.push_back(scvFace.insideScvIdx());
-            stencil.push_back(scvFace.outsideScvIdx());
-        }
-        else
-            stencil.push_back(scvFace.insideScvIdx());
+            const auto& volVars = elemVolVars[scv];
 
-        return stencil;
+            // density interpolation
+            rho += useMoles ? volVars.molarDensity(phaseIdx)*shapeValues[scv.index()][0]
+                            : volVars.density(phaseIdx)*shapeValues[scv.index()][0];
+
+            // the mole/mass fraction gradient
+            GlobalPosition gradI;
+            jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
+            gradI *= useMoles ? volVars.moleFraction(phaseIdx, compIdx)
+                              : volVars.massFraction(phaseIdx, compIdx);
+            gradX += gradI;
+        }
+
+        // apply the diffusion tensor and return the flux
+        auto DGradX = applyDiffusionTensor_(D, gradX);
+        return -1.0*(DGradX*scvf.unitOuterNormal())*scvf.area();
     }
+
+    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
+    static Stencil stencil(const Problem& problem,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf)
+    { return Stencil(0); }
 
 private:
-
-
-    static Scalar calculateTransmissibility_(const Problem& problem, const SubControlVolumeFace& scvFace, const int phaseIdx, const int compIdx)
+    static GlobalPosition applyDiffusionTensor_(const DimWorldMatrix& D, const GlobalPosition& gradI)
     {
-        Scalar tij;
-
-        const auto insideScvIdx = scvFace.insideScvIdx();
-        const auto& insideScv = problem.model().fvGeometries().subControlVolume(insideScvIdx);
-        const auto& insideVolVars = problem.model().curVolVars(insideScvIdx);
-
-        auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
-        insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
-        Scalar ti = calculateOmega_(problem, scvFace, insideD, insideScv);
-
-        if (!scvFace.boundary())
-        {
-            const auto outsideScvIdx = scvFace.outsideScvIdx();
-            const auto& outsideScv = problem.model().fvGeometries().subControlVolume(outsideScvIdx);
-            const auto& outsideVolVars = problem.model().curVolVars(outsideScvIdx);
-
-            auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
-            outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
-            Scalar tj = -1.0*calculateOmega_(problem, scvFace, outsideD, outsideScv);
-
-            tij = scvFace.area()*(ti * tj)/(ti + tj);
-        }
-        else
-        {
-            tij = scvFace.area()*ti;
-        }
-
-        return tij;
+        GlobalPosition result(0.0);
+        D.mv(gradI, result);
+        return result;
     }
 
-    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, const DimWorldMatrix &D, const SubControlVolume &scv)
+    static GlobalPosition applyDiffusionTensor_(const Scalar d, const GlobalPosition& gradI)
     {
-        GlobalPosition Dnormal;
-        D.mv(scvFace.unitOuterNormal(), Dnormal);
-
-        auto distanceVector = scvFace.center();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = Dnormal * distanceVector;
-        omega *= problem.model().curVolVars(scv).extrusionFactor();
-
-        return omega;
-    }
-
-    static Scalar calculateOmega_(const Problem& problem, const SubControlVolumeFace& scvFace, Scalar D, const SubControlVolume &scv)
-    {
-        auto distanceVector = scvFace.center();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = D * (distanceVector * scvFace.unitOuterNormal());
-        omega *= problem.model().curVolVars(scv).extrusionFactor();
-
-        return omega;
+        GlobalPosition result(gradI);
+        result *= d;
+        return result;
     }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -87,7 +87,7 @@ public:
         const auto ipLocal = geometry.local(scvf.center());
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
-        //localBasis.evaluateFunction(ipLocal, shapeValue_); // do we need the shapeValues for the flux?
+        localBasis.evaluateFunction(ipLocal, shapeValues_); // do we need the shapeValues for the flux?
 
         // The stencil info is obsolete for the box method.
         // It is here for compatibility with cc methods
@@ -97,8 +97,8 @@ public:
     const std::vector<ShapeJacobian>& shapeJacobian() const
     { return shapeJacobian_; }
 
-   /* const std::vector<ShapeValue>& shapeValue() const
-    { return shapeValue_; }*/
+    const std::vector<ShapeValue>& shapeValues() const
+    { return shapeValues_; }
 
     const JacobianInverseTransposed& jacInvT() const
     { return jacInvT_; }
@@ -110,7 +110,7 @@ public:
 
 private:
     std::vector<ShapeJacobian> shapeJacobian_;
-    //std::vector<ShapeValue> shapeValue_;
+    std::vector<ShapeValue> shapeValues_;
     JacobianInverseTransposed jacInvT_;
 
     Stencil stencil_;
