@@ -199,10 +199,10 @@ private:
 public:
     // the sub-blocks
     using MatrixLittleBlockCCToCC = typename Dune::FieldMatrix<Scalar, numEqCellCenter, numEqCellCenter>; // 2x2
-    using MatrixLittleBlockCCToFace = typename Dune::FieldMatrix<Scalar, numEqFace, numEqCellCenter>; // 1x2
+    using MatrixLittleBlockCCToFace = typename Dune::FieldMatrix<Scalar, numEqCellCenter, numEqFace>; // 2x1
 
     using MatrixLittleBlockFaceToFace = typename Dune::FieldMatrix<Scalar, numEqFace, numEqFace>; // 1x1
-    using MatrixLittleBlockFaceToCC = typename Dune::FieldMatrix<Scalar, numEqCellCenter, numEqFace>; // 2x1
+    using MatrixLittleBlockFaceToCC = typename Dune::FieldMatrix<Scalar, numEqFace, numEqCellCenter>; // 1x2
 
     // the BCRS matrices of the subproblems as big blocks
     using MatrixBlockCCToCC = typename Dune::BCRSMatrix<MatrixLittleBlockCCToCC>;
