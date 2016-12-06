@@ -38,7 +38,7 @@ namespace Properties
 NEW_TYPE_TAG(GridCreatorCakeTest, INHERITS_FROM(NumericModel));
 //     Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::conforming>);
+SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
 SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::UGGrid<3>);
 #else

@@ -1,8 +1,9 @@
 [Grid]
-PolarCoorMin = 0.1 0.0 1000.0
-PolarCoorMax = 1000.0 360.0 1010.0
-Cells = 10 4 10
+PolarCoorMin = 0.0 0.0 0.0
+PolarCoorMax = 2.0 360.0 2.0
+Cells = 1 4 1
 UsePowerLawSpacerRadius = true
+WellRadius = 0.005
 
 [PowerLawSpacer]
 Power = 2
