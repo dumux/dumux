@@ -60,7 +60,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -76,9 +76,11 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
                        const unsigned int phaseIdx,
-                       const FluxVarsCache& fluxVarsCache)
+                       const ElementFluxVarsCache& elemFluxVarsCache)
     {
         const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& volVarsStencil = fluxVarsCache.advectionVolVarsStencil(phaseIdx);
         const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions(phaseIdx);
         const auto& tij = fluxVarsCache.advectionTij(phaseIdx);

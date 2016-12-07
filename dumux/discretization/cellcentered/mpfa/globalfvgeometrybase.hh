@@ -285,6 +285,39 @@ public:
         // in parallel problems we might have reserved more scvfs than we actually use
         scvfs_.shrink_to_fit();
 
+        // Make the flip index set for network and surface grids
+        if (dim < dimWorld)
+        {
+            flipScvfIndices_.resize(scvfs_.size());
+            for (auto&& scvf : scvfs_)
+            {
+                if (scvf.boundary())
+                    continue;
+
+                const auto numOutsideScvs = scvf.numOutsideScvs();
+                const auto vIdxGlobal = scvf.vertexIndex();
+                const auto insideScvIdx = scvf.insideScvIdx();
+
+                flipScvfIndices_[scvf.index()].resize(numOutsideScvs);
+                for (unsigned int i = 0; i < numOutsideScvs; ++i)
+                {
+                    const auto outsideScvIdx = scvf.outsideScvIdx(i);
+                    for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
+                    {
+                        const auto& outsideScvf = this->scvf(outsideScvfIndex);
+                        if (outsideScvf.vertexIndex() == vIdxGlobal &&
+                            MpfaHelper::contains(outsideScvf.outsideScvIndices(), insideScvIdx))
+                        {
+                            flipScvfIndices_[scvf.index()][i] = outsideScvfIndex;
+                            // there is always only one flip face in an outside element
+                            break;
+                        }
+                    }
+
+                }
+            }
+        }
+
         // Initialize the interaction volume seeds
         globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
     }
@@ -304,6 +337,11 @@ public:
     //! Get a sub control volume face with a global scvf index
     const SubControlVolumeFace& scvf(IndexType scvfIdx) const
     { return scvfs_[scvfIdx]; }
+
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    {
+        return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
+    }
 
     //! Get the sub control volume face indices of an scv by global index
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
@@ -331,6 +369,8 @@ private:
     std::vector<bool> boundaryVertices_;
     std::vector<bool> branchingVertices_;
     IndexType numBoundaryScvf_;
+    // needed for embedded surface and network grids (dim < dimWorld)
+    std::vector<std::vector<IndexType>> flipScvfIndices_;
 
     // the global interaction volume seeds
     GlobalInteractionVolumeSeeds globalInteractionVolumeSeeds_;
