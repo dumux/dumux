@@ -230,16 +230,6 @@ public:
                 for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     flipScvfIndices_[scvf.index()][i] = findFlippedScvfIndex_(insideScvIdx, scvf.outsideScvIdx(i));
             }
-
-            // TEST
-            for (auto&& scvf : scvfs_)
-            {
-                if (scvf.boundary())
-                    continue;
-
-                for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-                    assert(scvf.outsideScvIdx(i) == this->flipScvf(scvf.index(), i).insideScvIdx());
-            }
         }
     }
 
