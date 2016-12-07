@@ -302,9 +302,9 @@ private:
         scvfIndices_.reserve(numLocalScvf);
         scvfs_.reserve(numLocalScvf);
 
-        // for dim < dimWorld we'll have multiple intersections at one point
-        // we store here the centers of those we have handled already
-        std::vector<GlobalPosition> finishedCenters;
+        // for network grids we only want to do one scvf per half facet
+        // this approach assumes conforming grids at branching facets
+        std::vector<IndexType> finishedFacets;
 
         int scvfCounter = 0;
         for (const auto& is : intersections(globalFvGeometry().gridView(), element))
@@ -313,11 +313,11 @@ private:
             // only make a new scvf if we haven't handled it yet
             if (dim < dimWorld)
             {
-                auto isCenter = is.geometry().center();
-                if(MpfaHelper::contains(finishedCenters, isCenter))
+                auto indexInInside = is.indexInInside();
+                if(MpfaHelper::contains(finishedFacets, indexInInside))
                     continue;
                 else
-                    finishedCenters.push_back(isCenter);
+                    finishedFacets.push_back(indexInInside);
             }
 
             // get the intersection corners according to generic numbering
@@ -381,9 +381,9 @@ private:
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
-        // for dim < dimWorld we'll have multiple intersections at one point
-        // we store here the centers of those we have handled already
-        std::vector<GlobalPosition> finishedCenters;
+        // for network grids we only want to do one scvf per half facet
+        // this approach assumes conforming grids at branching facets
+        std::vector<IndexType> finishedFacets;
 
         int scvfCounter = 0;
         for (const auto& is : intersections(globalFvGeometry().gridView(), element))
@@ -392,11 +392,11 @@ private:
             // only make a new scvf if we haven't handled it yet
             if (dim < dimWorld)
             {
-                auto isCenter = is.geometry().center();
-                if(MpfaHelper::contains(finishedCenters, isCenter))
+                auto indexInInside = is.indexInInside();
+                if(MpfaHelper::contains(finishedFacets, indexInInside))
                     continue;
                 else
-                    finishedCenters.push_back(isCenter);
+                    finishedFacets.push_back(indexInInside);
             }
 
             // get the intersection corners according to generic numbering
