@@ -131,14 +131,10 @@ private:
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            const auto& outsideScvIndices = scvf.outsideScvIndices();
-
             Scalar rho = elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
-            for (auto outsideIdx : outsideScvIndices)
+            for (auto outsideIdx : scvf.outsideScvIndices())
                 rho += elemVolVars[outsideIdx].density(phaseIdx);
-            rho /= outsideScvIndices.size();
-
-            return rho;
+            return rho/(scvf.outsideScvIndices().size()+1);
         }
         else
             return elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
