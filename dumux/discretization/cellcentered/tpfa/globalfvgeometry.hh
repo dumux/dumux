@@ -223,6 +223,12 @@ public:
                             flipScvfIndices_[scvf.index()][i] = outsideScvfIndex;
 
                 }
+
+                flipScvfIndices_[scvf.index()].resize(scvf.numOutsideScvs());
+                const auto insideScvIdx = scvf.insideScvIdx();
+                // check which outside scvf has the insideScvIdx index in its outsideScvIndices
+                for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+                    flipScvfIndices_[scvf.index()][i] = findFlippedScvfIndex_(insideScvIdx, scvf.outsideScvIdx(i));
             }
 
             // TEST
@@ -271,6 +277,21 @@ public:
     }
 
 private:
+    // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
+    IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType outsideScvIdx)
+    {
+        // go over all potential scvfs of the outside scv
+        for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
+        {
+            const auto& outsideScvf = this->scvf(outsideScvfIndex);
+            for (int j = 0; j < outsideScvf.numOutsideScvs(); ++j)
+                if (outsideScvf.outsideScvIdx(j) == insideScvIdx)
+                    return outsideScvf.index();
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
+    }
+
     const Problem& problem_() const
     { return *problemPtr_; }
 
