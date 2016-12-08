@@ -105,6 +105,7 @@ public:
           pairData_ = geometryHelper.pairData();
           localFaceIdx_ = is.indexInInside();
           dirIdx_ = geometryHelper.directionIndex();
+          normalInPosCoordDir_ = unitOuterNormal()[directionIndex()] > 0.0;
       }
 
     /*//! The copy constrcutor
@@ -222,6 +223,12 @@ public:
         return selfToOppositeDistance_;
     }
 
+    //! The returns whether the unitNormal of the face point in positive coordinate direction
+    bool normalInPosCoordDir() const
+    {
+        return normalInPosCoordDir_;
+    }
+
 
     auto pairData(const int idx) const
     {
@@ -250,6 +257,7 @@ private:
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
     int dirIdx_;
+    bool normalInPosCoordDir_;
 
 };
 
