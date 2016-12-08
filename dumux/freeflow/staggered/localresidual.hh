@@ -177,12 +177,46 @@ public:
     }
 
     static FacePrimaryVariables computeFluxForFace(const SubControlVolumeFace& scvf,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const GlobalFaceVars& globalFaceVars)
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars,
+                                          const GlobalFaceVars& globalFaceVars)
     {
-        return FacePrimaryVariables(0.0);
+        FacePrimaryVariables flux(0.0);
+
+        flux += computeNormalMomentumFlux(scvf, fvGeometry, elemVolVars, globalFaceVars);
+
+        return flux;
     }
 
+    static auto computeNormalMomentumFlux(const SubControlVolumeFace& scvf,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars,
+                                          const GlobalFaceVars& globalFaceVars)
+    {
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
+        const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.dofIndexOpposite()).velocity();
+        FacePrimaryVariables normalFlux(0.0);
+
+        const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
+
+        // advective part
+        normalFlux += vAvg * insideVolVars.density();
+
+        // diffusive part
+        const Scalar deltaV = scvf.normalInPosCoordDir() ?
+                              (velocitySelf - velocityOpposite) :
+                              (velocityOpposite - velocitySelf);
+
+        const Scalar deltaX = scvf.selfToOppositeDistance();
+        normalFlux -= insideVolVars.viscosity() * 2.0 * deltaV/deltaX;
+
+        // account for the orientation of the face
+        const Scalar sign = scvf.normalInPosCoordDir() ? -1.0 : 1.0;
+//         std::cout << "normal flux (element: " << fvGeometry.globalFvGeometry().element(scvf.insideScvIdx()).geometry().center() <<") at face:  " << scvf.center() << "  , " << normalFlux*sign*scvf.area() << std::endl;
+        return normalFlux * sign * scvf.area();
+    }
 
 
 };

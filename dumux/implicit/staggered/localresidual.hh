@@ -257,7 +257,7 @@ protected:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if(!scvf.boundary())
-                faceResiduals_[scvf.localFaceIdx()][0] += asImp_().computeFluxForFace(scvf, elemVolVars, globalFaceVars);
+                faceResiduals_[scvf.localFaceIdx()][0] += asImp_().computeFluxForFace(scvf, fvGeometry, elemVolVars, globalFaceVars);
         }
     }
 
@@ -279,6 +279,7 @@ protected:
                 ccResidual_[0] += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
 //                 auto test = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
 //                 std::cout << " face: " << scvf.center() << ",  normal: "  <<  scvf.unitOuterNormal()    << ",   value: " << test << std::endl;
+                faceResiduals_[scvf.localFaceIdx()][0] += asImp_().computeFluxForFace(scvf, fvGeometry, elemVolVars, faceVars);
             }
         }
     }
