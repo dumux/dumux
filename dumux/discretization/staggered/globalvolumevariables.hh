@@ -63,6 +63,9 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+
+    enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
 
 public:
     void update(Problem& problem, const SolutionVector& sol)
@@ -70,9 +73,9 @@ public:
         problemPtr_ = &problem;
 
         auto numScv = problem.model().globalFvGeometry().numScv();
-//         auto numBoundaryScvf = problem.model().globalFvGeometry().numBoundaryScvf();
+        auto numBoundaryScvf = problem.model().globalFvGeometry().numBoundaryScvf();
 
-        volumeVariables_.resize(numScv /*+ numBoundaryScvf*/);
+        volumeVariables_.resize(numScv + numBoundaryScvf);
         for (const auto& element : elements(problem.gridView()))
         {
             auto fvGeometry = localView(problem.model().globalFvGeometry());
@@ -81,24 +84,32 @@ public:
             for (auto&& scv : scvs(fvGeometry))
                 volumeVariables_[scv.index()].update(sol[cellCenterIdx][scv.dofIndex()], problem, element, scv);
 
-//             // handle the boundary volume variables
-//             for (auto&& scvf : scvfs(fvGeometry))
-//             {
-//                 // if we are not on a boundary, skip the rest
-//                 if (!scvf.boundary())
-//                     continue;
-//
-//                 // check if boundary is a pure dirichlet boundary
-//                 const auto bcTypes = problem.boundaryTypes(element, scvf);
-//                 if (bcTypes.hasOnlyDirichlet())
-//                 {
-//                     const auto insideScvIdx = scvf.insideScvIdx();
-//                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-//                     const auto dirichletPriVars = problem.ccDirichlet(element, scvf);
-//
-//                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
-//                 }
-//             }
+            // handle the boundary volume variables
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // if we are not on a boundary, skip the rest
+                if (!scvf.boundary())
+                    continue;
+
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                const auto insideScvIdx = scvf.insideScvIdx();
+                const auto& insideScv = fvGeometry.scv(insideScvIdx);
+
+                auto boundaryPriVars = CellCenterPrimaryVariables(0.0);
+
+                for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                {
+                    if(bcTypes.isDirichlet(eqIdx))
+                        boundaryPriVars[eqIdx] = problem.ccDirichlet(element, scvf)[eqIdx];
+                    else if(bcTypes.isNeumann(eqIdx))
+                        boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                    //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
+                    // could be made more general by allowing a non-zero-gradient, provided in problem file
+                    else
+                        DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
+                }
+                volumeVariables_[scvf.outsideScvIdx()].update(boundaryPriVars, problem, element, insideScv);
+            }
         }
     }
 
