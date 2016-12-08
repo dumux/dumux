@@ -215,16 +215,6 @@ public:
                     continue;
 
                 flipScvfIndices_[scvf.index()].resize(scvf.numOutsideScvs());
-                for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-                {
-                    const auto outsideScvIdx = scvf.outsideScvIdx(i);
-                    for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
-                        if (this->scvf(outsideScvfIndex).insideScvIdx() == outsideScvIdx)
-                            flipScvfIndices_[scvf.index()][i] = outsideScvfIndex;
-
-                }
-
-                flipScvfIndices_[scvf.index()].resize(scvf.numOutsideScvs());
                 const auto insideScvIdx = scvf.insideScvIdx();
                 // check which outside scvf has the insideScvIdx index in its outsideScvIndices
                 for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
@@ -255,6 +245,8 @@ public:
         return scvfs_[scvfIdx];
     }
 
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
     const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
     {
         return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
@@ -308,6 +300,10 @@ class CCTpfaGlobalFVGeometry<TypeTag, false>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
     //! The local fvGeometry needs access to the problem
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
@@ -371,31 +367,60 @@ public:
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = element.subEntities(1);
             std::vector<IndexType> scvfsIndexSet;
-            std::vector<IndexType> neighborVolVarIndexSet;
+            std::vector<std::vector<IndexType>> neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
-            unsigned int localFaceIdx = 0;
+            // for network grids there might be multiple intersection with the same geometryInInside
+            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            std::vector<std::vector<IndexType>> outsideIndices;
+            if (dim < dimWorld)
+            {
+                outsideIndices.resize(numLocalFaces);
+                for (const auto& intersection : intersections(gridView_, element))
+                {
+                    if (intersection.neighbor())
+                    {
+                        const auto& outside = intersection.outside();
+                        auto nIdx = problem.elementMapper().index(outside);
+                        outsideIndices[intersection.indexInInside()].push_back(nIdx);
+                    }
+
+                }
+            }
+
             for (const auto& intersection : intersections(gridView_, element))
             {
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
-                    scvfsIndexSet.push_back(numScvf_++);
-                    auto nIdx = problem.elementMapper().index(intersection.outside());
-                    neighborVolVarIndexSet.push_back(nIdx);
-
-                    // increment counter
-                    localFaceIdx++;
+                    if (dim == dimWorld)
+                    {
+                        scvfsIndexSet.push_back(numScvf_++);
+                        auto nIdx = problem.elementMapper().index(intersection.outside());
+                        neighborVolVarIndexSet.push_back({nIdx});
+                    }
+                    // this is for network grids
+                    // (will be optimized away of dim == dimWorld)
+                    else
+                    {
+                        auto indexInInside = intersection.indexInInside();
+                        // check if we already handled this facet
+                        if (outsideIndices[indexInInside].empty())
+                            continue;
+                        else
+                        {
+                            scvfsIndexSet.push_back(numScvf_++);
+                            neighborVolVarIndexSet.push_back(outsideIndices[indexInInside]);
+                            outsideIndices[indexInInside].clear();
+                        }
+                    }
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back(numScvs_ + numBoundaryScvf_++);
-
-                    // increment counter
-                    localFaceIdx++;
+                    neighborVolVarIndexSet.push_back({numScvs_ + numBoundaryScvf_++});
                 }
             }
 
@@ -408,7 +433,8 @@ public:
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
 
-    const std::vector<IndexType>& neighborVolVarIndices(IndexType scvIdx) const
+    //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
+    const std::vector<std::vector<IndexType>>& neighborVolVarIndices(IndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
     /*!
@@ -420,6 +446,7 @@ public:
     { return FVElementGeometry(global); }
 
 private:
+
     const Problem& problem_() const
     { return *problemPtr_; }
 
@@ -435,7 +462,7 @@ private:
     // vectors that store the global data
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    std::vector<std::vector<IndexType>> neighborVolVarIndices_;
+    std::vector<std::vector<std::vector<IndexType>>> neighborVolVarIndices_;
 };
 
 } // end namespace
