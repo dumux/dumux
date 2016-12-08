@@ -78,10 +78,10 @@ protected:
                                   const ElementVolumeVariables& elemVolVars,
                                   const SubControlVolumeFace &scvf,
                                   const ElementBoundaryTypes& bcTypes,
-                                  const FluxVariablesCache& fluxVarsCache)
+                                  const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if (!scvf.boundary() || !useTpfaBoundary)
-            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
+            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else
             return PrimaryVariables(0.0);
 
@@ -91,7 +91,7 @@ protected:
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const SubControlVolumeFace& scvf,
-                               const FluxVariablesCache& fluxVarsCache)
+                               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         ElementBoundaryTypes bcTypes;
         bcTypes.update(this->problem(), element, fvGeometry);
@@ -100,11 +100,11 @@ protected:
         this->residual_ = 0;
 
         if (!scvf.boundary() || !useTpfaBoundary)
-          return this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, fluxVarsCache);
+          return this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
         else
         {
           auto bcTypes = this->problem().boundaryTypes(element, scvf);
-          return this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, fluxVarsCache);
+          return this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
         }
     }
 
@@ -122,7 +122,7 @@ protected:
             if (scvf.boundary())
             {
                 auto bcTypes = this->problem().boundaryTypes(element, scvf);
-                this->residual_[0] += this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache[scvf]);
+                this->residual_[0] += this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
             }
         }
     }
@@ -136,11 +136,11 @@ protected:
                                          const ElementVolumeVariables& elemVolVars,
                                          const SubControlVolumeFace &scvf,
                                          const BoundaryTypes& bcTypes,
-                                         const FluxVariablesCache& fluxVarsCache)
+                                         const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // return the boundary fluxes
         if (bcTypes.hasOnlyDirichlet())
-            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, fluxVarsCache);
+            return this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else if (bcTypes.hasOnlyNeumann())
             return this->asImp_().evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
         else if (bcTypes.hasOutflow())

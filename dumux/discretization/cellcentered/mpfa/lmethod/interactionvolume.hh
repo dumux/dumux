@@ -143,7 +143,7 @@ public:
     LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
     {
         assert(systemSolved_ && "Scvf Indices not set yet. You have to call solveLocalSystem() beforehand.");
-        assert(scvf.index() == globalScvfIndices_[0] || scvf.index() == globalScvfIndices_[1] && "The provided scvf is not the flux face of the interaction volume.");
+        assert((scvf.index() == globalScvfIndices_[0] || scvf.index() == globalScvfIndices_[1]) && "The provided scvf is not the flux face of the interaction volume.");
 
         if (globalScvfIndices_[0] == scvf.index())
             return LocalFaceData(contiFaceLocalIdx_, /*dummy*/0, false);

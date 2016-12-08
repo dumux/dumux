@@ -175,49 +175,39 @@ public:
             std::vector<IndexType> scvfIndexSet;
             scvfIndexSet.reserve(MpfaHelper::getNumLocalScvfs(elementGeometry.type()));
 
-            // for dim < dimWorld we'll have multiple intersections at one point
-            // we store here the centers of those we have handled already
-            std::vector<IndexType> finishedIndices;
+            // for network grids there might be multiple intersection with the same geometryInInside
+            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            std::vector<std::vector<IndexType>> outsideIndices;
+            if (dim < dimWorld)
+            {
+                outsideIndices.resize(element.subEntities(1));
+                for (const auto& intersection : intersections(gridView_, element))
+                {
+                    if (intersection.neighbor())
+                    {
+                        const auto& outside = intersection.outside();
+                        auto nIdx = problem.elementMapper().index(outside);
+                        outsideIndices[intersection.indexInInside()].push_back(nIdx);
+                    }
+                }
+            }
 
             // construct the sub control volume faces
             for (const auto& is : intersections(gridView_, element))
             {
-                // if we are dealing with a lower dimensional network
-                // only make a new scvf if we haven't handled it yet
-                // Note that for hanging nodes on the lower dimension network, it doesn't work
-                if (dim < dimWorld)
-                    if(MpfaHelper::contains(finishedIndices, is.indexInInside()))
-                        continue;
-
-                // get some of the intersection's bools
+                auto indexInInside = is.indexInInside();
                 bool boundary = is.boundary();
                 bool neighbor = is.neighbor();
 
+                // for network grids, skip the rest if handled already
+                if (dim < dimWorld && neighbor && outsideIndices[indexInInside].empty())
+                    continue;
+
                 // determine the outside volvar indices
                 std::vector<IndexType> nIndices;
-                if (neighbor)
+                if (neighbor && dim == dimWorld)
                 {
                     nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
-
-                    // check for further neighbors in case of lower dimensional networks
-                    if (dim < dimWorld)
-                    {
-                        auto insideIndex = is.indexInInside();
-
-                        // find further possible intersections at the same point (bifurcations etc)
-                        for (const auto& nextIs : intersections(gridView_, element))
-                        {
-                            if (nextIs.indexInInside() == insideIndex)
-                            {
-                                auto nIdx = problem.elementMapper().index(nextIs.outside());
-                                if (nIdx != nIndices[0])
-                                    nIndices.push_back(nIdx);
-                            }
-                        }
-
-                        // store this center as a handled one
-                        finishedIndices.push_back(insideIndex);
-                    }
                 }
                 else if (boundary)
                 {
@@ -232,7 +222,7 @@ public:
                 // if outside level > inside level, use the outside element in the following
                 bool useNeighbor = neighbor && is.outside().level() > element.level();
                 const auto& e = useNeighbor ? is.outside() : element;
-                const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
+                const auto indexInElement = useNeighbor ? is.indexInOutside() : indexInInside;
                 const auto eg = e.geometry();
                 const auto& refElement = ReferenceElements::general(eg.type());
 
@@ -255,10 +245,11 @@ public:
                         boundaryVertices_[vIdxGlobal] = true;
 
                     // is vertex on a branching point?
-                    if (dim < dimWorld && nIndices.size() > 1)
+                    if (dim < dimWorld && outsideIndices[indexInInside].size() > 1)
                         branchingVertices_[vIdxGlobal] = true;
 
-                    // make the scv face
+                    // make the scv face (for inside scvfs on network grids, use precalculated outside indices)
+                    const auto& outsideScvIndices = (boundary || dim == dimWorld) ? nIndices : outsideIndices[indexInInside];
                     scvfIndexSet.push_back(scvfIdx);
                     scvfs_.emplace_back(helper,
                                         helper.getScvfCorners(isCorners, c),
@@ -267,7 +258,7 @@ public:
                                         vIdxLocal,
                                         scvfIdx,
                                         eIdx,
-                                        nIndices,
+                                        outsideScvIndices,
                                         q,
                                         boundary
                                         );
@@ -275,6 +266,10 @@ public:
                     // increment scvf counter
                     scvfIdx++;
                 }
+
+                // for network grids, clear outside indices to not make a second scvf on that facet
+                if (dim < dimWorld)
+                    outsideIndices[indexInInside].clear();
             }
 
             // create sub control volume for this element
@@ -289,6 +284,39 @@ public:
 
         // in parallel problems we might have reserved more scvfs than we actually use
         scvfs_.shrink_to_fit();
+
+        // Make the flip index set for network and surface grids
+        if (dim < dimWorld)
+        {
+            flipScvfIndices_.resize(scvfs_.size());
+            for (auto&& scvf : scvfs_)
+            {
+                if (scvf.boundary())
+                    continue;
+
+                const auto numOutsideScvs = scvf.numOutsideScvs();
+                const auto vIdxGlobal = scvf.vertexIndex();
+                const auto insideScvIdx = scvf.insideScvIdx();
+
+                flipScvfIndices_[scvf.index()].resize(numOutsideScvs);
+                for (unsigned int i = 0; i < numOutsideScvs; ++i)
+                {
+                    const auto outsideScvIdx = scvf.outsideScvIdx(i);
+                    for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
+                    {
+                        const auto& outsideScvf = this->scvf(outsideScvfIndex);
+                        if (outsideScvf.vertexIndex() == vIdxGlobal &&
+                            MpfaHelper::contains(outsideScvf.outsideScvIndices(), insideScvIdx))
+                        {
+                            flipScvfIndices_[scvf.index()][i] = outsideScvfIndex;
+                            // there is always only one flip face in an outside element
+                            break;
+                        }
+                    }
+
+                }
+            }
+        }
 
         // Initialize the interaction volume seeds
         globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
@@ -309,6 +337,11 @@ public:
     //! Get a sub control volume face with a global scvf index
     const SubControlVolumeFace& scvf(IndexType scvfIdx) const
     { return scvfs_[scvfIdx]; }
+
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    {
+        return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
+    }
 
     //! Get the sub control volume face indices of an scv by global index
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
@@ -336,6 +369,8 @@ private:
     std::vector<bool> boundaryVertices_;
     std::vector<bool> branchingVertices_;
     IndexType numBoundaryScvf_;
+    // needed for embedded surface and network grids (dim < dimWorld)
+    std::vector<std::vector<IndexType>> flipScvfIndices_;
 
     // the global interaction volume seeds
     GlobalInteractionVolumeSeeds globalInteractionVolumeSeeds_;
@@ -459,7 +494,6 @@ public:
 
             // the element geometry and reference element
             auto eg = element.geometry();
-            const auto& referenceElement = ReferenceElements::general(eg.type());
 
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = MpfaHelper::getNumLocalScvfs(eg.type());
@@ -468,50 +502,39 @@ public:
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
-            // for dim < dimWorld we'll have multiple intersections at one point
-            // we store here the centers of those we have handled already
-            std::vector<IndexType> finishedIndices;
+            // for network grids there might be multiple intersection with the same geometryInInside
+            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            std::vector<std::vector<IndexType>> outsideIndices;
+            if (dim < dimWorld)
+            {
+                outsideIndices.resize(element.subEntities(1));
+                for (const auto& intersection : intersections(gridView_, element))
+                {
+                    if (intersection.neighbor())
+                    {
+                        const auto& outside = intersection.outside();
+                        auto nIdx = problem.elementMapper().index(outside);
+                        outsideIndices[intersection.indexInInside()].push_back(nIdx);
+                    }
+                }
+            }
 
             unsigned int localFaceIdx = 0;
             // construct the sub control volume faces
             for (const auto& is : intersections(gridView_, element))
             {
-                // if we are dealing with a lower dimensional network
-                // only make a new scvf if we haven't handled it yet
-                // Note that for hanging nodes on the lower dimension network, it doesn't work
-                if (dim < dimWorld)
-                    if(MpfaHelper::contains(finishedIndices, is.indexInInside()))
-                        continue;
-
-                // get some of the intersection bools
+                auto indexInInside = is.indexInInside();
                 bool boundary = is.boundary();
                 bool neighbor = is.neighbor();
+                // for network grids, skip the rest if handled already
+                if (dim < dimWorld && neighbor && outsideIndices[indexInInside].empty())
+                    continue;
 
                 // determine the outside volvar indices
                 std::vector<IndexType> nIndices;
-                if (neighbor)
+                if (neighbor && dim == dimWorld)
                 {
                     nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
-
-                    // check for further neighbors in case of lower dimensional networks
-                    if (dim < dimWorld)
-                    {
-                        auto insideIndex = is.indexInInside();
-
-                        // find further possible intersections at the same point (bifurcations etc)
-                        for (const auto& nextIs : intersections(gridView_, element))
-                        {
-                            if (nextIs.indexInInside() == insideIndex)
-                            {
-                                auto nIdx = problem.elementMapper().index(nextIs.outside());
-                                if (nIdx != nIndices[0])
-                                    nIndices.push_back(nIdx);
-                            }
-                        }
-
-                        // store this center as a handled one
-                        finishedIndices.push_back(insideIndex);
-                    }
                 }
                 else if (boundary)
                 {
@@ -519,12 +542,19 @@ public:
                     nIndices[0] = numScvs_ + numBoundaryScvf_++;
                 }
 
+                // if outside level > inside level, use the outside element in the following
+                bool useNeighbor = neighbor && is.outside().level() > element.level();
+                const auto& e = useNeighbor ? is.outside() : element;
+                const auto indexInElement = useNeighbor ? is.indexInOutside() : indexInInside;
+                const auto eg = e.geometry();
+                const auto& refElement = ReferenceElements::general(eg.type());
+
                 // make the scv faces of the intersection
-                for (unsigned int faceScvfIdx = 0; faceScvfIdx < is.geometry().corners(); ++faceScvfIdx)
+                for (unsigned int c = 0; c < is.geometry().corners(); ++c)
                 {
                     // get the global vertex index the scv face is connected to (mpfa-o method does not work for hanging nodes!)
-                    const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, faceScvfIdx, dim);
-                    const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
+                    const auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
+                    const auto vIdxGlobal = problem.vertexMapper().subIndex(e, vIdxLocal, dim);
 
                     // do not build scvfs connected to a processor boundary
                     if (ghostVertices_[vIdxGlobal])
@@ -535,16 +565,21 @@ public:
                         boundaryVertices_[vIdxGlobal] = true;
 
                     // is vertex on a branching point?
-                    if (dim < dimWorld && nIndices.size() > 1)
+                    if (dim < dimWorld && outsideIndices[indexInInside].size() > 1)
                         branchingVertices_[vIdxGlobal] = true;
 
-                    // store information on the scv face
+                    // store information on the scv face (for inner scvfs on network grids use precalculated outside indices)
+                    const auto& outsideScvIndices = (boundary || dim == dimWorld) ? nIndices : outsideIndices[indexInInside];
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back(nIndices);
+                    neighborVolVarIndexSet.push_back(outsideScvIndices);
 
                     // increment counter
                     localFaceIdx++;
                 }
+
+                // for network grids, clear outside indices to not make a second scvf on that facet
+                if (dim < dimWorld)
+                    outsideIndices[indexInInside].clear();
             }
 
             // store the sets of indices in the data container
