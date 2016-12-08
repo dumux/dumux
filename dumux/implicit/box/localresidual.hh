@@ -87,7 +87,7 @@ protected:
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache[scvf]);
+                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
                 this->residual_[insideScv.index()] += flux;
                 this->residual_[outsideScv.index()] -= flux;
@@ -108,7 +108,7 @@ protected:
                 if (scvf.boundary())
                 {
                     auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.index()], elemFluxVarsCache[scvf]);
+                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.index()], elemFluxVarsCache);
                 }
             }
         }
@@ -163,7 +163,7 @@ protected:
                              const SubControlVolumeFace &scvf,
                              const SubControlVolume& insideScv,
                              const BoundaryTypes& bcTypes,
-                             const FluxVariablesCache& fluxVarsCache)
+                             const ElementFluxVariablesCache& elemFluxVarsCache)
     {
 
         // evaluate the Neumann conditions at the boundary face
