@@ -181,7 +181,7 @@ public:
         }
     }
 
-    // For cell-centered surface and network grids (dim < dimWorld) we have to do a special upwind scheme
+    // For grids with dim == dimWorld or the box-method we use a simple upwinding scheme
     template<typename FunctionType, class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox) || GET_PROP_TYPE(T, Grid)::dimension == GET_PROP_TYPE(T, Grid)::dimensionworld, Scalar>::type
     upwindScheme(Scalar flux, int phaseIdx, const FunctionType& upwindTerm)
