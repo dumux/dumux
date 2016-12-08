@@ -93,6 +93,13 @@ add_dumux_test(test_fracture_cc2p test_fracture_cc2p test_fracture_cc2p.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/fracturecc-00029.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_fracture_cc2p")
 
+add_dumux_test(test_fracture_ccmpfa2p test_fracture_ccmpfa2p test_fracture_ccmpfa2p.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/fractureccmpfa2p-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/fractureccmpfa-00031.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_fracture_ccmpfa2p")
+
 #install sources
 install(FILES
 cc2pcornerpointproblem.hh
