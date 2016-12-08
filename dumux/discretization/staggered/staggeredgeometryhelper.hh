@@ -40,9 +40,12 @@ struct PairData
     int outerParallelFaceDofIdx;
     int outerParallelElementDofIdx;
     std::pair<int,int> normalPair;
+    int localNormalFaceIdx;
     int globalCommonEntIdx;
     Scalar parallelDistance;
     Scalar normalDistance;
+//     Scalar normalFaceArea;
+//     GlobalPosition normalFaceDirection;
     GlobalPosition virtualOuterParallelFaceDofPos;
 };
 
@@ -273,6 +276,7 @@ private:
         }
 
         asImp_().treatVirtualOuterParallelFaceDofs_();
+//         asImp_().setNormalFaceInformation_();
     }
 
 protected:
@@ -409,6 +413,9 @@ private:
         this->pairData_[1].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx2, dim-1) + this->offset_;
         this->pairData_[0].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx1, codimCommonEntity);
         this->pairData_[1].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx2, codimCommonEntity);
+
+        this->pairData_[0].localNormalFaceIdx = indices.normalLocalDofIdx1;
+        this->pairData_[1].localNormalFaceIdx = indices.normalLocalDofIdx2;
     }
 
      /*!
@@ -460,6 +467,40 @@ private:
             }
         }
     }
+
+//     void setNormalFaceInformation_()
+//     {
+//         // get the local index of the facet we are dealing with in this class
+//         const int localIntersectionIdx = this->intersection_.indexInInside();
+//
+//         // iterate over all intersections of the element, this facet is part of
+//         for(const auto& is : intersections(this->gridView_, this->element_))
+//         {
+//             if(this->facetIsNormal_(localIntersectionIdx, is.indexInInside()))
+//             {
+//                 int index;
+//                 switch(localIntersectionIdx)
+//                 {
+//                     case 0:
+//                         index = (is.indexInInside() == 3) ? 0 : 1;
+//                         break;
+//                     case 1:
+//                         index = (is.indexInInside() == 2) ? 0 : 1;
+//                         break;
+//                     case 2:
+//                         index = (is.indexInInside() == 0) ? 0 : 1;
+//                         break;
+//                     case 3:
+//                         index = (is.indexInInside() == 1) ? 0 : 1;
+//                         break;
+//                     default:
+//                         DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
+//                 }
+//                 this->pairData_[index].normalFaceDirection = std::move(is.centerUnitOuterNormal());
+//                 this->pairData_[index].normalFaceArea = std::move(0.5 * is.geometry().volume());
+//             }
+//         }
+//     }
 
 };
 

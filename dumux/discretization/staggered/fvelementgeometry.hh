@@ -83,6 +83,11 @@ public:
         return globalFvGeometry().scvf(scvfIdx);
     }
 
+    const SubControlVolumeFace& scvf(IndexType eIdx ,IndexType localScvfIdx) const
+    {
+        return globalFvGeometry().scvf(eIdx, localScvfIdx);
+    }
+
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL

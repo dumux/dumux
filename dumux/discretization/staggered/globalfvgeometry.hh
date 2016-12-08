@@ -123,6 +123,7 @@ public:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
+        localToGlobalScvfIndices_.resize(numScvs);
 
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
@@ -131,10 +132,10 @@ public:
         {
             auto eIdx = problem.elementMapper().index(element);
 
-            // get the element geometry
-//             auto elementGeometry = element.geometry();
-//             GeometryHelper geometryHelper(elementGeometry);
 
+            // reserve memory for the localToGlobalScvfIdx map
+            auto numLocalFaces = element.subEntities(1);
+            localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
 
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
 
@@ -158,6 +159,7 @@ public:
                                         std::vector<IndexType>({eIdx, nIdx}),
                                         geometryHelper
                                         );
+                    localToGlobalScvfIndices_[eIdx][intersection.indexInInside()] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
                 // boundary sub control volume faces
@@ -169,6 +171,7 @@ public:
                                         std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
                                         geometryHelper
                                         );
+                    localToGlobalScvfIndices_[eIdx][intersection.indexInInside()] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
             }
@@ -206,6 +209,17 @@ public:
         return scvfIndicesOfScv_[scvIdx];
     }
 
+    const auto localToGlobalScvfIndex(IndexType eIdx, IndexType localScvfIdx) const
+    {
+        return localToGlobalScvfIndices_[eIdx][localScvfIdx];
+    }
+
+    const SubControlVolumeFace& scvf(IndexType eIdx ,IndexType localScvfIdx) const
+    {
+        return scvf(localToGlobalScvfIndex(eIdx, localScvfIdx));
+    }
+
+
 private:
     const Problem& problem_() const
     { return *problemPtr_; }
@@ -217,6 +231,7 @@ private:
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
+    std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
     IndexType numBoundaryScvf_;
 };
 
