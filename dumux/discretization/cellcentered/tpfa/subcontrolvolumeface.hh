@@ -123,6 +123,7 @@ public:
         return boundary_;
     }
 
+    //! The unit outer normal of the sub control volume face
     GlobalPosition unitOuterNormal() const
     {
         return unitOuterNormal_;
@@ -136,9 +137,15 @@ public:
 
     //! index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
-    IndexType outsideScvIdx() const
+    IndexType outsideScvIdx(int i = 0) const
     {
-        return scvIndices_[1];
+        return scvIndices_[i+1];
+    }
+
+    //! The number of outside scvs connection via this scv face
+    std::size_t numOutsideScvs() const
+    {
+        return scvIndices_.size()-1;
     }
 
     //! The global index of this sub control volume face

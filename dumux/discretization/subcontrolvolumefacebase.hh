@@ -85,10 +85,11 @@ public:
     }
 
     //! index of the outside sub control volume for spatial param evaluation
-    // This results in undefined behaviour if boundary is true
-    IndexType outsideScvIdx() const
+    //! This results in undefined behaviour if boundary is true
+    //! In case of multiple outside scv indices (network grids) an index can be supplied
+    IndexType outsideScvIdx(int i = 0) const
     {
-        return asImp_().outsideScvIdx();
+        return asImp_().outsideScvIdx(i);
     }
 
     //! The global index of this sub control volume face
@@ -105,7 +106,7 @@ private:
     { return *static_cast<Implementation*>(this); }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 
 #endif

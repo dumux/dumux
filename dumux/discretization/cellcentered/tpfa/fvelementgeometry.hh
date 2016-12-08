@@ -82,6 +82,13 @@ public:
         return globalFvGeometry().scvf(scvfIdx);
     }
 
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    {
+        return globalFvGeometry().flipScvf(scvfIdx, outsideScvIdx);
+    }
+
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL
@@ -157,6 +164,9 @@ class CCTpfaFVElementGeometry<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
 
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
     using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
     using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
@@ -184,6 +194,27 @@ public:
             return scvfs_[std::distance(scvfIndices_.begin(), it)];
         else
             return neighborScvfs_[findLocalIndex(scvfIdx, neighborScvfIndices_)];
+    }
+
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    {
+        auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
+        if (it != scvfIndices_.end())
+        {
+            const auto localScvfIdx = std::distance(scvfIndices_.begin(), it);
+            return neighborScvfs_[flippedScvfIndices_[localScvfIdx][outsideScvIdx]];
+        }
+        else
+        {
+            const auto localScvfIdx = findLocalIndex(scvfIdx, neighborScvfIndices_);
+            const auto localFlippedIndex = flippedNeighborScvfIndices_[localScvfIdx][outsideScvIdx];
+            if (localFlippedIndex < scvfs_.size())
+                return scvfs_[localFlippedIndex];
+            else
+                return neighborScvfs_[localFlippedIndex - scvfs_.size()];
+        }
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -230,6 +261,42 @@ public:
             if (intersection.neighbor())
                 makeNeighborGeometries(intersection.outside());
         }
+
+        if (dim < dimWorld)
+        {
+            flippedScvfIndices_.resize(scvfs_.size());
+            for (unsigned int localScvfIdx = 0; localScvfIdx < scvfs_.size(); ++localScvfIdx)
+            {
+                const auto& scvf = scvfs_[localScvfIdx];
+                if (scvf.boundary())
+                    continue;
+
+                flippedScvfIndices_[localScvfIdx].resize(scvf.numOutsideScvs());
+                for (unsigned int localOutsideScvIdx = 0; localOutsideScvIdx < scvf.numOutsideScvs(); ++localOutsideScvIdx)
+                {
+                    const auto globalOutsideScvIdx = scvf.outsideScvIdx(localOutsideScvIdx);
+                    for (unsigned int localNeighborScvfIdx = 0; localNeighborScvfIdx < neighborScvfs_.size(); ++localNeighborScvfIdx)
+                    {
+                        if (neighborScvfs_[localNeighborScvfIdx].insideScvIdx() == globalOutsideScvIdx)
+                        {
+                            flippedScvfIndices_[localScvfIdx][localOutsideScvIdx] = localNeighborScvfIdx;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            flippedNeighborScvfIndices_.resize(neighborScvfs_.size());
+            for (unsigned int localScvfIdx = 0; localScvfIdx < neighborScvfs_.size(); ++localScvfIdx)
+            {
+                const auto& neighborScvf = neighborScvfs_[localScvfIdx];
+                flippedNeighborScvfIndices_[localScvfIdx].resize(neighborScvf.numOutsideScvs());
+                for (unsigned int localOutsideScvIdx = 0; localOutsideScvIdx < neighborScvf.numOutsideScvs(); ++localOutsideScvIdx)
+                {
+                    flippedNeighborScvfIndices_[localScvfIdx][localOutsideScvIdx] = findFlippedScvfIndex_(neighborScvf.insideScvIdx(), neighborScvf.outsideScvIdx(localOutsideScvIdx));
+                }
+            }
+        }
     }
 
     //! Binding of an element preparing the geometries only inside the element
@@ -246,6 +313,32 @@ public:
 
 private:
 
+    IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType globalOutsideScvIdx)
+    {
+        for (unsigned int localNeighborScvfIdx = 0; localNeighborScvfIdx < neighborScvfs_.size(); ++localNeighborScvfIdx)
+        {
+            if (neighborScvfs_[localNeighborScvfIdx].insideScvIdx() == globalOutsideScvIdx)
+            {
+                return scvfs_.size() + localNeighborScvfIdx;
+            }
+        }
+
+        // go over all potential scvfs of the outside scv
+        for (unsigned int localOutsideScvfIdx = 0; localOutsideScvfIdx < scvfs_.size(); ++localOutsideScvfIdx)
+        {
+            const auto& outsideScvf = scvfs_[localOutsideScvfIdx];
+            for (unsigned int j = 0; j < outsideScvf.numOutsideScvs(); ++j)
+            {
+                if (outsideScvf.outsideScvIdx(j) == insideScvIdx)
+                {
+                    return localOutsideScvfIdx;
+                }
+            }
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
+    }
+
     //! create scvs and scvfs of the bound element
     void makeElementGeometries(const Element& element)
     {
@@ -256,19 +349,34 @@ private:
         const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdx);
 
+        // for network grids there might be multiple intersection with the same geometryInInside
+        // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+        // here we keep track of them
+        std::vector<bool> handledScvf;
+        if (dim < dimWorld)
+            handledScvf.resize(element.subEntities(1), false);
+
         int scvfCounter = 0;
         for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
         {
+            if (dim < dimWorld)
+                if (handledScvf[intersection.indexInInside()])
+                    continue;
+
             if (intersection.neighbor() || intersection.boundary())
             {
+                std::vector<IndexType> scvIndices({eIdx});
+                scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());
                 scvfs_.emplace_back(intersection,
                                     intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
-                                    std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
-                                    );
-
+                                    scvIndices);
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
+
+                // for surface and network grids mark that we handled this face
+                if (dim < dimWorld)
+                    handledScvf[intersection.indexInInside()] = true;
             }
         }
     }
@@ -284,27 +392,71 @@ private:
         const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdx);
 
+        // for network grids there might be multiple intersection with the same geometryInInside
+        // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+        // here we keep track of them
+        std::vector<bool> handledScvf;
+        if (dim < dimWorld)
+            handledScvf.resize(element.subEntities(1), false);
+
         int scvfCounter = 0;
         for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
         {
+            if (dim < dimWorld)
+                if (handledScvf[intersection.indexInInside()])
+                    continue;
+
             if (intersection.neighbor())
             {
                 // only create subcontrol faces where the outside element is the bound element
-                if (intersection.outside() == *elementPtr_)
+                if (dim == dimWorld)
                 {
-                    neighborScvfs_.emplace_back(intersection,
-                                                intersection.geometry(),
-                                                scvFaceIndices[scvfCounter],
-                                                std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
-                                                );
+                    if (intersection.outside() == *elementPtr_)
+                    {
+                        std::vector<IndexType> scvIndices({eIdx});
+                        scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());
+                        neighborScvfs_.emplace_back(intersection,
+                                                    intersection.geometry(),
+                                                    scvFaceIndices[scvfCounter],
+                                                    scvIndices);
 
-                    neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
+                        neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
+                    }
                 }
-                // always increase local counter
+                // for network grids we can't use the intersection.outside() index as we can't assure that the
+                // first intersection with this indexInInside is the one that has our bound element as outside
+                // instead we check if the bound element's index is in the outsideScvIndices of the candidate scvf
+                // (will be optimized away for dim == dimWorld)
+                else
+                {
+                    for (unsigned outsideScvIdx = 0; outsideScvIdx < neighborVolVarIndices[scvfCounter].size(); ++outsideScvIdx)
+                    {
+                        if (neighborVolVarIndices[scvfCounter][outsideScvIdx] == globalFvGeometry().problem_().elementMapper().index(*elementPtr_))
+                        {
+                            std::vector<IndexType> scvIndices({eIdx});
+                            scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());
+                            neighborScvfs_.emplace_back(intersection,
+                                                        intersection.geometry(),
+                                                        scvFaceIndices[scvfCounter],
+                                                        scvIndices);
+
+                            neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
+                            break;
+                        }
+                    }
+
+                }
+
+                // for surface and network grids mark that we handled this face
+                if (dim < dimWorld)
+                    handledScvf[intersection.indexInInside()] = true;
                 scvfCounter++;
             }
             else if (intersection.boundary())
             {
+                // for surface and network grids mark that we handled this face
+                if (dim < dimWorld)
+                    handledScvf[intersection.indexInInside()] = true;
                 scvfCounter++;
             }
         }
@@ -342,11 +494,13 @@ private:
     std::vector<IndexType> scvfIndices_;
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+    std::vector<std::vector<IndexType>> flippedScvfIndices_;
 
     std::vector<IndexType> neighborScvIndices_;
     std::vector<IndexType> neighborScvfIndices_;
     std::vector<SubControlVolume> neighborScvs_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
+    std::vector<std::vector<IndexType>> flippedNeighborScvfIndices_;
 };
 
 } // end namespace

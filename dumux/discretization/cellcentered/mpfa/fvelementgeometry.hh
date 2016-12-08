@@ -75,6 +75,13 @@ public:
         return globalFvGeometry().scvf(scvfIdx);
     }
 
+    //! Get an element sub control volume face with a global scvf index
+    //! We separate element and neighbor scvfs to speed up mapping
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    {
+        return globalFvGeometry().flipScvf(scvfIdx, outsideScvIdx);
+    }
+
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL
@@ -187,6 +194,29 @@ public:
             return neighborScvfs_[findLocalIndex(scvfIdx, neighborScvfIndices_)];
     }
 
+    //! Get an element sub control volume face with a global scvf index
+    //! We separate element and neighbor scvfs to speed up mapping
+    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    {
+        auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
+        if (it != scvfIndices_.end())
+        {
+            assert(flipScvfIndices_[std::distance(scvfIndices_.begin(), it)][outsideScvIdx] != -1);
+            return neighborScvfs_[ flipScvfIndices_[std::distance(scvfIndices_.begin(), it)][outsideScvIdx] ];
+        }
+        else
+        {
+            const auto neighborScvfIdxLocal = findLocalIndex(scvfIdx, neighborScvfIndices_);
+            auto&& scvf = neighborScvfs_[neighborScvfIdxLocal];
+
+            assert(neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx] != -1);
+            if (scvf.outsideScvIdx(outsideScvIdx) == scvIndices_[0])
+                return scvfs_[ neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx] ];
+            else
+                return neighborScvfs_[ neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx] ];
+        }
+    }
+
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL
@@ -260,6 +290,10 @@ public:
         neighborScvIndices_.shrink_to_fit();
         neighborScvfIndices_.shrink_to_fit();
         neighborScvfs_.shrink_to_fit();
+
+        // set up the scvf flip indices for network grids
+        if (dim < dimWorld)
+            makeFlipIndexSet();
     }
 
     //! Binding of an element preparing the geometries only inside the element
@@ -302,9 +336,9 @@ private:
         scvfIndices_.reserve(numLocalScvf);
         scvfs_.reserve(numLocalScvf);
 
-        // for dim < dimWorld we'll have multiple intersections at one point
-        // we store here the centers of those we have handled already
-        std::vector<GlobalPosition> finishedCenters;
+        // for network grids we only want to do one scvf per half facet
+        // this approach assumes conforming grids at branching facets
+        std::vector<IndexType> finishedFacets;
 
         int scvfCounter = 0;
         for (const auto& is : intersections(globalFvGeometry().gridView(), element))
@@ -313,11 +347,11 @@ private:
             // only make a new scvf if we haven't handled it yet
             if (dim < dimWorld)
             {
-                auto isCenter = is.geometry().center();
-                if(MpfaHelper::contains(finishedCenters, isCenter))
+                auto indexInInside = is.indexInInside();
+                if(MpfaHelper::contains(finishedFacets, indexInInside))
                     continue;
                 else
-                    finishedCenters.push_back(isCenter);
+                    finishedFacets.push_back(indexInInside);
             }
 
             // get the intersection corners according to generic numbering
@@ -381,9 +415,9 @@ private:
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
-        // for dim < dimWorld we'll have multiple intersections at one point
-        // we store here the centers of those we have handled already
-        std::vector<GlobalPosition> finishedCenters;
+        // for network grids we only want to do one scvf per half facet
+        // this approach assumes conforming grids at branching facets
+        std::vector<IndexType> finishedFacets;
 
         int scvfCounter = 0;
         for (const auto& is : intersections(globalFvGeometry().gridView(), element))
@@ -392,11 +426,11 @@ private:
             // only make a new scvf if we haven't handled it yet
             if (dim < dimWorld)
             {
-                auto isCenter = is.geometry().center();
-                if(MpfaHelper::contains(finishedCenters, isCenter))
+                auto indexInInside = is.indexInInside();
+                if(MpfaHelper::contains(finishedFacets, indexInInside))
                     continue;
                 else
-                    finishedCenters.push_back(isCenter);
+                    finishedFacets.push_back(indexInInside);
             }
 
             // get the intersection corners according to generic numbering
@@ -448,6 +482,97 @@ private:
         }
     }
 
+    void makeFlipIndexSet()
+    {
+        const auto numInsideScvfs = scvfIndices_.size();
+        const auto numNeighborScvfs = neighborScvfIndices_.size();
+
+        // first, handle the interior scvfs (flip scvf will be in outside scvfs)
+        flipScvfIndices_.resize(numInsideScvfs);
+        for (unsigned int insideFace = 0; insideFace < numInsideScvfs; ++insideFace)
+        {
+            auto&& scvf = scvfs_[insideFace];
+            if (scvf.boundary())
+                continue;
+
+            const auto numOutsideScvs = scvf.numOutsideScvs();
+            const auto vIdxGlobal = scvf.vertexIndex();
+            const auto insideScvIdx = scvf.insideScvIdx();
+
+            flipScvfIndices_[insideFace].resize(numOutsideScvs, -1);
+            for (unsigned int nIdx = 0; nIdx < numOutsideScvs; ++nIdx)
+            {
+                const auto outsideScvIdx = scvf.outsideScvIdx(nIdx);
+                for (unsigned int outsideFace = 0; outsideFace < numNeighborScvfs; ++outsideFace)
+                {
+                    auto&& outsideScvf = neighborScvfs_[outsideFace];
+                    // check if outside face is the flip face
+                    if (outsideScvf.insideScvIdx() == outsideScvIdx &&
+                        outsideScvf.vertexIndex() == vIdxGlobal &&
+                        MpfaHelper::contains(outsideScvf.outsideScvIndices(), insideScvIdx))
+                    {
+                        flipScvfIndices_[insideFace][nIdx] = outsideFace;
+                        // there is always only one flip face in an outside element
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Now we look for the flip indices of the outside faces
+        neighborFlipScvfIndices_.resize(numNeighborScvfs);
+        for (unsigned int outsideFace = 0; outsideFace < numNeighborScvfs; ++outsideFace)
+        {
+            auto&& scvf = neighborScvfs_[outsideFace];
+            if (scvf.boundary())
+                continue;
+
+            const auto numOutsideScvs = scvf.numOutsideScvs();
+            const auto vIdxGlobal = scvf.vertexIndex();
+            const auto insideScvIdx = scvf.insideScvIdx();
+
+            neighborFlipScvfIndices_[outsideFace].resize(numOutsideScvs, -1);
+            for (unsigned int nIdx = 0; nIdx < numOutsideScvs; ++nIdx)
+            {
+                const auto neighborScvIdx = scvf.outsideScvIdx(nIdx);
+
+                // if the neighbor scv idx is the index of the bound element,
+                // then the flip scvf will be within the inside scvfs
+                if (neighborScvIdx == scvIndices_[0])
+                {
+                    for (unsigned int insideFace = 0; insideFace < numInsideScvfs; ++insideFace)
+                    {
+                        auto&& insideScvf = scvfs_[insideFace];
+                        // check if the face is the flip face
+                        if (insideScvf.vertexIndex() == vIdxGlobal &&
+                            MpfaHelper::contains(insideScvf.outsideScvIndices(), insideScvIdx))
+                        {
+                            neighborFlipScvfIndices_[outsideFace][nIdx] = insideFace;
+                            // there is always only one flip face in an outside element
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    for (unsigned int outsideFace2 = 0; outsideFace2 < numNeighborScvfs; ++outsideFace2)
+                    {
+                        const auto& outsideScvf = neighborScvfs_[outsideFace2];
+                        // check if outside face is the flip face
+                        if (outsideScvf.insideScvIdx() == neighborScvIdx &&
+                            outsideScvf.vertexIndex() == vIdxGlobal &&
+                            MpfaHelper::contains(outsideScvf.outsideScvIndices(), insideScvIdx))
+                        {
+                            neighborFlipScvfIndices_[outsideFace][nIdx] = outsideFace2;
+                            // there is always only one flip face in an outside element
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     const IndexType findLocalIndex(const IndexType idx,
                                    const std::vector<IndexType>& indices) const
     {
@@ -484,6 +609,10 @@ private:
     std::vector<IndexType> neighborScvfIndices_;
     std::vector<SubControlVolume> neighborScvs_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
+
+    // flip index sets
+    std::vector< std::vector<IndexType> > flipScvfIndices_;
+    std::vector< std::vector<IndexType> > neighborFlipScvfIndices_;
 };
 
 } // end namespace

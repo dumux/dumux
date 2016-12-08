@@ -30,6 +30,7 @@
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 
 #include "fracturespatialparams.hh"
@@ -44,11 +45,18 @@ namespace Properties
 {
 NEW_TYPE_TAG(FractureProblem, INHERITS_FROM(TwoP, FractureSpatialParams));
 NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
+NEW_TYPE_TAG(FractureCCProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
+NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem));
+
+SET_BOOL_PROP(FractureCCProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(FractureCCProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(FractureCCProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(FractureCCProblem, SolutionDependentParameters, false);
 
 #if HAVE_DUNE_FOAMGRID
-SET_TYPE_PROP(FractureBoxProblem, Grid, Dune::FoamGrid<2, 3>);
+SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
 #else
-SET_TYPE_PROP(FractureBoxProblem, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(FractureProblem, Grid, Dune::YaspGrid<3>);
 #endif
 
 // Set the problem property
@@ -73,9 +81,9 @@ public:
 };
 
 // Linear solver settings
-SET_TYPE_PROP(FractureBoxProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(FractureProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
 
-SET_BOOL_PROP(FractureBoxProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(FractureProblem, ProblemEnableGravity, false);
 }
 
 /*!
@@ -218,10 +226,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0.0;
+        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -238,32 +245,33 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values,
-                       const Vertex &vertex) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        const auto globalPos = vertex.geometry().center();
-        values.setAllDirichlet();
+        BoundaryTypes values;
 
+        values.setAllDirichlet();
         if (onInlet_(globalPos))
             values.setAllNeumann();
-        if (globalPos[2] > 1.0-eps_ || globalPos[2] < eps_)
+        if (globalPos[2] > 1.0 - eps_ || globalPos[2] < eps_)
             values.setAllNeumann();
+
+        return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet
+     *        boundary segment
      *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex representing the "half volume on the boundary"
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param values Stores the Dirichlet values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} ] \f$
+     * \param globalPos The global position
      */
-    void dirichlet(PrimaryVariables &values,
-                   const Vertex &vertex) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
         values[pwIdx] = 1e5;
         values[snIdx] = 0.0;
+        return values;
     }
 
     /*!
@@ -277,13 +285,13 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumannAtPos(PrimaryVariables& values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0.0;
+        PrimaryVariables values(0.0);
         if (onInlet_(globalPos)) {
             values[contiNEqIdx] = -0.04; // kg / (m * s)
         }
+        return values;
     }
 
     // \}
@@ -301,11 +309,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        values[pwIdx] = 1e5;
-        values[snIdx] = 0.0;
+        return dirichletAtPos(globalPos);
     }
     // \}
 
@@ -319,6 +325,6 @@ private:
     std::string name_;
 };
 
-} //end namespace
+} //end namespace Dumux
 
 #endif

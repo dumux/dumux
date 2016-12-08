@@ -117,12 +117,16 @@ public:
     { return insideScvIdx_; }
 
     //! index of the outside sub control volume for spatial param evaluation
-    //! returns in undefined behaviour is boundary is true
-    //! is not uniquely defined for grids where dim < dimWorld and shouldn't be used in that case.
-    IndexType outsideScvIdx() const
+    //! returns in undefined behaviour if boundary is true or index exceeds numOutsideScvs
+    IndexType outsideScvIdx(int i = 0) const
     {
-        assert(outsideScvIndices_.size() == 1 && "outside scv index not uniquely defined");
-        return outsideScvIndices_[0];
+        return outsideScvIndices_[i];
+    }
+
+    //! The number of outside scvs connection via this scv face
+    std::size_t numOutsideScvs() const
+    {
+        return outsideScvIndices_.size();
     }
 
     //! returns the outside scv indices (can be more than one index for dim < dimWorld)

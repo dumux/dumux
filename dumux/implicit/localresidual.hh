@@ -293,7 +293,7 @@ protected:
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const SubControlVolumeFace& scvf,
-                               const FluxVariablesCache& fluxVarsCache)
+                               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem(), element, fvGeometry);
@@ -301,7 +301,7 @@ protected:
         residual_.resize(fvGeometry.numScv());
         residual_ = 0;
 
-        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, fluxVarsCache);
+        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
     }
 
     /*!

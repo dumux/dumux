@@ -70,10 +70,10 @@ template<class TypeTag>
 class FractureSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename Grid::ctype;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using CoordScalar = typename GridView::Traits::Grid::ctype;
 
     enum {
         dim=GridView::dimension,
@@ -83,6 +83,8 @@ class FractureSpatialParams : public ImplicitSpatialParams<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
 public:
     //get the material law from the property system
@@ -94,8 +96,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FractureSpatialParams(const GridView& gridView)
-    : ParentType(gridView)
+    FractureSpatialParams(const Problem& problem, const GridView& gridView)
+    : ParentType(problem, gridView)
     {
         // residual saturations
         materialParams_.setSwr(0.05);
@@ -114,9 +116,8 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 int scvIdx) const
+    Scalar intrinsicPermeability (const SubControlVolume &scv,
+                                  const VolumeVariables& volVars) const
     {
         return 1e-10;
     }
@@ -128,21 +129,15 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosity(const SubControlVolume &scv) const
     { return 0.4; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The position at which we evaluate
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         return materialParams_;
     }

@@ -45,7 +45,7 @@ class FluxVariablesBase
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
 public:
 
@@ -54,19 +54,15 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace &scvFace,
-              const FluxVariablesCache& fluxVarsCache)
+              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         problemPtr_ = &problem;
         elementPtr_ = &element;
         scvFacePtr_ = &scvFace;
         fvGeometryPtr_ = &fvGeometry;
         elemVolVarsPtr_ = &elemVolVars;
-        fluxVarsCachePtr_ = &fluxVarsCache;
+        elemFluxVarsCachePtr_ = &elemFluxVarsCache;
     }
-
-    // get the stencil from the cache class
-    const Stencil & stencil() const
-    { return problem().model().fluxVarsCache(scvFace()).stencil(); }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -83,8 +79,8 @@ public:
     const ElementVolumeVariables& elemVolVars() const
     { return *elemVolVarsPtr_; }
 
-    const FluxVariablesCache& fluxVarsCache() const
-    { return *fluxVarsCachePtr_; }
+    const ElementFluxVariablesCache& elemFluxVarsCache() const
+    { return *elemFluxVarsCachePtr_; }
 
     Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
     { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
@@ -102,7 +98,7 @@ private:
     const FVElementGeometry* fvGeometryPtr_;
     const SubControlVolumeFace* scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
     const ElementVolumeVariables* elemVolVarsPtr_;
-    const FluxVariablesCache* fluxVarsCachePtr_;
+    const ElementFluxVariablesCache* elemFluxVarsCachePtr_;
 };
 
 } // end namespace

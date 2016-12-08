@@ -38,6 +38,7 @@ NEW_PROP_TAG(EnableAdvection);
 NEW_PROP_TAG(EnableMolecularDiffusion);
 NEW_PROP_TAG(EnableEnergyBalance);
 NEW_PROP_TAG(ImplicitMassUpwindWeight);
+NEW_PROP_TAG(EnableGlobalElementFluxVariablesCache);
 }
 
 // forward declaration
@@ -73,7 +74,10 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, false>
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
 public:
 
@@ -82,9 +86,9 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -100,34 +104,93 @@ public:
                                           this->elemVolVars(),
                                           this->scvFace(),
                                           phaseIdx,
-                                          this->fluxVarsCache());
+                                          this->elemFluxVarsCache());
 
+        Scalar massFlux = upwindScheme(flux, phaseIdx, upwindTerm);
+        return massFlux;
+    }
+
+    // For cell-centered surface and network grids (dim < dimWorld) we have to do a special upwind scheme
+    template<typename FunctionType, class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox) && GET_PROP_TYPE(T, Grid)::dimension < GET_PROP_TYPE(T, Grid)::dimensionworld, Scalar>::type
+    upwindScheme(Scalar flux, int phaseIdx, const FunctionType& upwindTerm)
+    {
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
 
-        // When using an mpfa methods, we have to take special care of neumann boundaries
-        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCMpfa)
+        // check if this is a branching point
+        if (this->scvFace().numOutsideScvs() > 1)
         {
-            if (this->scvFace().boundary())
+            // more complicated upwind scheme
+            // we compute a flux-weighted average of all inflowing branches
+            Scalar branchingPointUpwindTerm = 0.0;
+            Scalar sumUpwindFluxes = 0.0;
+
+            // the inside flux
+            if (!std::signbit(flux))
+                branchingPointUpwindTerm += upwindTerm(insideVolVars)*flux;
+            else
+                sumUpwindFluxes += flux;
+
+            for (unsigned int i = 0; i < this->scvFace().numOutsideScvs(); ++i)
             {
-                auto bcTypes = this->problem().boundaryTypes(this->element(), this->scvFace());
-                if (bcTypes.isNeumann(phaseIdx))
-                {
-                    if (GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache))
-                    {
-                        auto initPriVars = this->problem().initial(insideScv);
-                        VolumeVariables volVars;
-                        volVars.update(initPriVars, this->problem(), this->element(), insideScv);
-                        return flux*volVars.density(phaseIdx)*volVars.mobility(phaseIdx);
-                    }
-                    else
-                        return flux*insideVolVars.density(phaseIdx)*insideVolVars.mobility(phaseIdx);
-                }
+                 // compute the outside flux
+                const auto outsideScvIdx = this->scvFace().outsideScvIdx(i);
+                const auto outsideElement = this->fvGeometry().globalFvGeometry().element(outsideScvIdx);
+                const auto& flippedScvf = this->fvGeometry().flipScvf(this->scvFace().index(), i);
+
+                const auto outsideFlux = AdvectionType::flux(this->problem(),
+                                                             outsideElement,
+                                                             this->fvGeometry(),
+                                                             this->elemVolVars(),
+                                                             flippedScvf,
+                                                             phaseIdx,
+                                                             this->elemFluxVarsCache());
+
+                if (!std::signbit(outsideFlux))
+                    branchingPointUpwindTerm += upwindTerm(this->elemVolVars()[outsideScvIdx])*outsideFlux;
+                else
+                    sumUpwindFluxes += outsideFlux;
             }
+
+            // the flux might be zero
+            if (sumUpwindFluxes != 0.0)
+                branchingPointUpwindTerm /= -sumUpwindFluxes;
+            else
+                branchingPointUpwindTerm = 0.0;
+
+            // upwind scheme
+            if (std::signbit(flux))
+                return flux*(upwindWeight_*branchingPointUpwindTerm
+                             + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+            else
+                return flux*(upwindWeight_*upwindTerm(insideVolVars)
+                             + (1.0 - upwindWeight_)*branchingPointUpwindTerm);
         }
+        // non-branching points and boundaries
+        else
+        {
+            // upwind scheme
+            const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+            if (std::signbit(flux))
+                return flux*(upwindWeight_*upwindTerm(outsideVolVars)
+                             + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+            else
+                return flux*(upwindWeight_*upwindTerm(insideVolVars)
+                             + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+        }
+    }
+
+    // For grids with dim == dimWorld or the box-method we use a simple upwinding scheme
+    template<typename FunctionType, class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox) || GET_PROP_TYPE(T, Grid)::dimension == GET_PROP_TYPE(T, Grid)::dimensionworld, Scalar>::type
+    upwindScheme(Scalar flux, int phaseIdx, const FunctionType& upwindTerm)
+    {
+        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
+        const auto& insideVolVars = this->elemVolVars()[insideScv];
 
         // upwind scheme
+        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
         if (std::signbit(flux))
             return flux*(upwindWeight_*upwindTerm(outsideVolVars)
                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
@@ -162,7 +225,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, false>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -176,10 +239,10 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -198,7 +261,7 @@ public:
                                                         this->elemVolVars(),
                                                         this->scvFace(),
                                                         phaseIdx,
-                                                        this->fluxVarsCache());
+                                                        this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
 
@@ -224,7 +287,7 @@ public:
                                                    this->elemVolVars(),
                                                    this->scvFace(),
                                                    phaseIdx, compIdx,
-                                                   this->fluxVarsCache());
+                                                   this->elemFluxVarsCache());
         return flux;
     }
 
@@ -272,7 +335,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
@@ -286,10 +349,10 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -308,7 +371,7 @@ public:
                                                         this->elemVolVars(),
                                                         this->scvFace(),
                                                         phaseIdx,
-                                                        this->fluxVarsCache());
+                                                        this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
 
@@ -333,7 +396,7 @@ public:
                                                this->fvGeometry(),
                                                this->elemVolVars(),
                                                this->scvFace(),
-                                               this->fluxVarsCache());
+                                               this->elemFluxVarsCache());
         return flux;
     }
 
@@ -382,7 +445,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -397,10 +460,10 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
+        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
@@ -419,11 +482,9 @@ public:
                                                         this->elemVolVars(),
                                                         this->scvFace(),
                                                         phaseIdx,
-                                                        this->fluxVarsCache());
+                                                        this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
-
-
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];
@@ -445,7 +506,7 @@ public:
                                                    this->elemVolVars(),
                                                    this->scvFace(),
                                                    phaseIdx, compIdx,
-                                                   this->fluxVarsCache());
+                                                   this->elemFluxVarsCache());
         return flux;
     }
 
@@ -456,7 +517,7 @@ public:
                                                this->fvGeometry(),
                                                this->elemVolVars(),
                                                this->scvFace(),
-                                               this->fluxVarsCache());
+                                               this->elemFluxVarsCache());
         return flux;
     }
 

@@ -49,7 +49,9 @@ class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
 
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
-    // We know that dim = 2 and dimworld = 2
+    // We know that dim = 2 and dimworld = 2, but
+    // the dim = 2, dimWorld = 3 specialization forwards to some methods of this class
+    // Thus, we need to get the GlobalPosition vector etc right
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
@@ -72,7 +74,7 @@ public:
         auto vIdxGlobal = outsideScvf.vertexIndex();
 
         unsigned int count = 0;
-        ScvfVector scvfVector;
+        ScvfVector scvfVector({nullptr});
         for (const auto& scvf : scvfs(fvGeometry))
         {
             if (scvf.vertexIndex() == vIdxGlobal)
@@ -464,7 +466,7 @@ public:
                                           const Element& element,
                                           const FVElementGeometry& fvGeometry)
     {
-        ScvfVector scvfVector;
+        ScvfVector scvfVector({nullptr});
         LocalBasis basisVectors;
 
         // The element center

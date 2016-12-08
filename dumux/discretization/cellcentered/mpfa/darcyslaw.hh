@@ -60,7 +60,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -76,9 +76,11 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
                        const unsigned int phaseIdx,
-                       const FluxVarsCache& fluxVarsCache)
+                       const ElementFluxVarsCache& elemFluxVarsCache)
     {
         const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& volVarsStencil = fluxVarsCache.advectionVolVarsStencil(phaseIdx);
         const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions(phaseIdx);
         const auto& tij = fluxVarsCache.advectionTij(phaseIdx);
@@ -131,14 +133,10 @@ private:
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            const auto& outsideScvIndices = scvf.outsideScvIndices();
-
             Scalar rho = elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
-            for (auto outsideIdx : outsideScvIndices)
+            for (auto outsideIdx : scvf.outsideScvIndices())
                 rho += elemVolVars[outsideIdx].density(phaseIdx);
-            rho /= outsideScvIndices.size();
-
-            return rho;
+            return rho/(scvf.outsideScvIndices().size()+1);
         }
         else
             return elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
