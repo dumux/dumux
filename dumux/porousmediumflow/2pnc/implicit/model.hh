@@ -309,9 +309,9 @@ public:
         for (int j = 0; j < numComponents ; ++j)
             molarity[j] = writer.allocateManagedBuffer(numDofs);
 
-        ScalarField *Perm[dim];
+        ScalarField *perm[dim];
         for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
-            Perm[j] = writer.allocateManagedBuffer(numDofs);
+            perm[j] = writer.allocateManagedBuffer(numDofs);
 
         auto numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
@@ -356,7 +356,7 @@ public:
                 Tensor K = perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
 
                 for (int j = 0; j<dim; ++j)
-                    (*Perm[j])[dofIdxGlobal] = K[j][j];
+                    (*perm[j])[dofIdxGlobal] = K[j][j];
             };
 
             // velocity output
@@ -378,11 +378,11 @@ public:
         writer.attachDofData(*mobG, "mobG", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*temperature, "temperature", isBox);
-        writer.attachDofData(*Perm[0], "Kxx", isBox);
+        writer.attachDofData(*perm[0], "Kxx", isBox);
         if (dim >= 2)
-            writer.attachDofData(*Perm[1], "Kyy", isBox);
+            writer.attachDofData(*perm[1], "Kyy", isBox);
         if (dim == 3)
-            writer.attachDofData(*Perm[2], "Kzz", isBox);
+            writer.attachDofData(*perm[2], "Kzz", isBox);
 
         for (int i = 0; i < numPhases; ++i)
         {
