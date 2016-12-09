@@ -106,6 +106,7 @@ public:
           localFaceIdx_ = is.indexInInside();
           dirIdx_ = geometryHelper.directionIndex();
           normalInPosCoordDir_ = unitOuterNormal()[directionIndex()] > 0.0;
+          outerNormalScalar_ = unitOuterNormal()[directionIndex()];
       }
 
     /*//! The copy constrcutor
@@ -229,6 +230,11 @@ public:
         return normalInPosCoordDir_;
     }
 
+    Scalar outerNormalScalar() const
+    {
+        return outerNormalScalar_;
+    }
+
 
     auto pairData(const int idx) const
     {
@@ -258,6 +264,7 @@ private:
     int localFaceIdx_;
     int dirIdx_;
     bool normalInPosCoordDir_;
+    Scalar outerNormalScalar_;
 
 };
 
