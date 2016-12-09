@@ -171,12 +171,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        if (!Region2::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Enthalpy of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region2::checkValidityRange(temperature, pressure, "Enthalpy");
 
         // regularization
         if (pressure < triplePressure() - 100) {
@@ -221,12 +216,7 @@ public:
     static const Scalar liquidEnthalpy(Scalar temperature,
                                        Scalar pressure)
     {
-        if (!Region1::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Enthalpy of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region1::checkValidityRange(temperature, pressure, "Enthalpy");
 
         // regularization
         Scalar pv = vaporPressure(temperature);
@@ -262,12 +252,7 @@ public:
     static const Scalar gasHeatCapacity(Scalar temperature,
                                         Scalar pressure)
     {
-        if (!Region2::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Heat capacity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region2::checkValidityRange(temperature, pressure, "Heat capacity");
 
         // regularization
         if (pressure < triplePressure() - 100) {
@@ -297,12 +282,7 @@ public:
     static const Scalar liquidHeatCapacity(Scalar temperature,
                                            Scalar pressure)
     {
-        if (!Region1::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "heat Capacity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region1::checkValidityRange(temperature, pressure, "Heat capacity");
 
         // regularization
         Scalar pv = vaporPressure(temperature);
@@ -329,13 +309,7 @@ public:
     static const Scalar liquidInternalEnergy(Scalar temperature,
                                              Scalar pressure)
     {
-        if (!Region1::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Internal Energy of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
-
+        Region1::checkValidityRange(temperature, pressure, "Internal energy");
 
         // regularization
         Scalar pv = vaporPressure(temperature);
@@ -385,12 +359,7 @@ public:
     */
     static Scalar gasInternalEnergy(Scalar temperature, Scalar pressure)
     {
-        if (!Region2::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Internal Energy of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region2::checkValidityRange(temperature, pressure, "Internal energy");
 
         // regularization
         if (pressure < triplePressure() - 100) {
@@ -459,13 +428,7 @@ public:
     static const Scalar liquidHeatCapacityConstVolume(Scalar temperature,
                                                       Scalar pressure)
     {
-        if (!Region1::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Heat capacity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
-
+        Region1::checkValidityRange(temperature, pressure, "Heat capacity for a constant volume");
 
         // regularization
         Scalar pv = vaporPressure(temperature);
@@ -492,12 +455,7 @@ public:
     */
     static Scalar gasHeatCapacityConstVolume(Scalar temperature, Scalar pressure)
     {
-        if (!Region2::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Heat capacity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region2::checkValidityRange(temperature, pressure, "Heat capacity for a constant volume");
 
         // regularization
         if (pressure < triplePressure() - 100) {
@@ -538,12 +496,7 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        if (!Region2::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Density of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region2::checkValidityRange(temperature, pressure, "Density");
 
         // regularization
         if (pressure < triplePressure() - 100) {
@@ -659,12 +612,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        if (!Region1::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Density of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region1::checkValidityRange(temperature, pressure, "Density");
 
         // regularization
         Scalar pv = vaporPressure(temperature);
@@ -758,12 +706,7 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-        if (!Region2::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Viscosity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region2::checkValidityRange(temperature, pressure, "Viscosity");
 
         Scalar rho = gasDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
@@ -782,12 +725,7 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        if (!Region1::isValid(temperature, pressure))
-        {
-            DUNE_THROW(NumericalProblem,
-                       "Viscosity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+        Region1::checkValidityRange(temperature, pressure, "Viscosity");
 
         Scalar rho = liquidDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
