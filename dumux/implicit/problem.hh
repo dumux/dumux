@@ -560,6 +560,7 @@ public:
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide a initialPhasePresenceAtPos() method.");
+        return 0;
     }
 
     /*!
