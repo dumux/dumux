@@ -98,7 +98,7 @@ public:
         if (temperature <= 623.15 && pressure <= 100e6)
             return;
 
-        DUNE_THROW(Dune::NotImplemented,
+        DUNE_THROW(NumericalProblem,
                    propertyName << " of steam is only implemented for temperatures below 623.15K and "
                    "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
     }
