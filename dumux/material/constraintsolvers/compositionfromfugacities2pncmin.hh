@@ -25,6 +25,7 @@
 #ifndef DUMUX_COMPOSITION_FROM_FUGACITIES_2PNCMIN_HH
 #define DUMUX_COMPOSITION_FROM_FUGACITIES_2PNCMIN_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
@@ -32,14 +33,13 @@
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux {
-
 /*!
  * \ingroup ConstraintSolver
  * \brief Calculates the chemical equilibrium from the component
  *        fugacities in a phase.
  */
 template <class Scalar, class FluidSystem>
-class compositionFromFugacities2pncmin
+class CompositionFromFugacities2pncmin
 {
     enum {
             numComponents = FluidSystem::numComponents,
@@ -142,6 +142,12 @@ protected:
         return;
     }
 };
+
+template <class Scalar, class FluidSystem>
+DUNE_DEPRECATED_MSG("compositionFromFugacities2pncmin is deprecated. Use CompositionFromFugacities2pncmin (capital C) instead.")
+class compositionFromFugacities2pncmin
+  : public CompositionFromFugacities2pncmin<Scalar, FluidSystem>
+{ };
 } // end namespace Dumux
 
 #endif
