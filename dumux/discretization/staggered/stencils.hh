@@ -231,8 +231,7 @@ public:
     //! overload for faces
     auto& get(const SubControlVolumeFace& scvFace) const
     {
-        const IndexType numElements = problemPtr_->gridView().size(0);
-        return faceStencils_[scvFace.dofIndexSelf()];
+        return faceStencils_[scvFace.index()];
     }
 
     /*!

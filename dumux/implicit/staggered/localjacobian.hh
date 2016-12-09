@@ -199,6 +199,9 @@ private:
         // compute the derivatives of the cell center dofs with respect to face dofs
         dCCdFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
 
+        // compute the derivatives of the face dofs with respect to cell center dofs
+        dFacedCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
+
 
         printmatrix(std::cout, matrix[cellCenterIdx][cellCenterIdx], "A11 neu", "");
         printmatrix(std::cout, matrix[cellCenterIdx][faceIdx], "A12 neu", "");
@@ -311,6 +314,68 @@ private:
         }
     }
 
+
+     /*!
+     * \brief Computes the derivatives of the face dofs with respect to cell center dofs
+     */
+    void dFacedCC_(const Element& element,
+                 const FVElementGeometry& fvGeometry,
+                 const ElementVolumeVariables& prevElemVolVars,
+                 ElementVolumeVariables& curElemVolVars,
+                 const GlobalFaceVars& prevGlobalFaceVars,
+                 const GlobalFaceVars& curGlobalFaceVars,
+                 ElementFluxVariablesCache& elemFluxVarsCache,
+                 const ElementBoundaryTypes& elemBcTypes,
+                 JacobianMatrix& matrix,
+                 SolutionVector& residual,
+                 const bool isGhost)
+    {
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            const auto globalI = scvf.dofIndexSelf();
+            // build derivatives with for face dofs w.r.t. cell center dofs
+            const auto& faceToCellCenterStencil = this->model_().stencils(scvf).faceToCellCenterStencil();
+
+            for(const auto& globalJ : faceToCellCenterStencil)
+            {
+                // get the volVars of the element with respect to which we are going to build the derivative
+                auto&& scvJ = fvGeometry.scv(globalJ);
+                const auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+                auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
+                VolumeVariables origVolVars(curVolVars);
+
+                // TODO: this requires recalculating and storing the residual. is there a better way?
+                this->localResidual().eval(element, fvGeometry,
+                        prevElemVolVars, curElemVolVars,
+                        prevGlobalFaceVars, curGlobalFaceVars,
+                        elemBcTypes, elemFluxVarsCache);
+
+                auto originalLocalResidual = this->localResidual().faceResidual(scvf.localFaceIdx());
+
+                for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
+                {
+                    const Scalar eps = 1e-4; // TODO: do properly
+                    CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
+
+                    priVars[pvIdx] += eps;
+                    curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
+
+                    this->localResidual().eval(element, fvGeometry,
+                                            prevElemVolVars, curElemVolVars,
+                                            prevGlobalFaceVars, curGlobalFaceVars,
+                                            elemBcTypes, elemFluxVarsCache);
+
+                    auto partialDeriv = (this->localResidual().faceResidual(scvf.localFaceIdx()) - originalLocalResidual);
+                    partialDeriv /= eps;
+                    // update the global jacobian matrix with the current partial derivatives
+                    this->updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], globalI, globalJ, pvIdx, partialDeriv);
+
+                    // restore the original volVars
+                    curVolVars = origVolVars;
+                }
+            }
+        }
+    }
     /*!
      * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
@@ -329,7 +394,7 @@ private:
             // the residual of equation 'eqIdx' at dof 'i'
             // depending on the primary variable 'pvIdx' at dof
             // 'col'.
-            matrix[globalI][globalJ][eqIdx][pvIdx] = partialDeriv[eqIdx];
+            matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
             Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
         }
     }
