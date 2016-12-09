@@ -35,6 +35,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
@@ -65,6 +66,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    DUNE_DEPRECATED_MSG("isValid is deprecated. Use checkValidityRange instead.")
     static constexpr bool isValid(Scalar temperature, Scalar pressure)
     {
         return temperature <= 623.15 && pressure <= 100e6;
@@ -76,6 +78,29 @@ public:
            (623.15 < temperature && temperature <= 863.15 && pressure <= auxPressure(temperature)) ||
            (863.15 < temperature && temperature <= 1073.15 && pressure < 100e6);
         */
+    }
+
+    /*!
+     * \brief Returns true if IAPWS region 2 applies for a
+     *        (temperature, pressure) pair.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param propertyName the name for which property the check is performed
+     */
+    static void checkValidityRange(Scalar temperature, Scalar pressure,
+                                   std::string propertyName = "This property")
+    {
+        // actually this is:
+        /* (273.15 <= temperature && temperature <= 623.15 && pressure <= vaporPressure(temperature)) ||
+           (623.15 < temperature && temperature <= 863.15 && pressure <= auxPressure(temperature)) ||
+           (863.15 < temperature && temperature <= 1073.15 && pressure < 100e6); */
+        if (temperature <= 623.15 && pressure <= 100e6)
+            return;
+
+        DUNE_THROW(Dune::NotImplemented,
+                   propertyName << " of steam is only implemented for temperatures below 623.15K and "
+                   "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
     }
 
     /*!
