@@ -38,16 +38,26 @@ template<class Scalar, class GlobalPosition>
 struct PairData
 {
     int outerParallelFaceDofIdx;
-    int outerParallelElementDofIdx;
     std::pair<int,int> normalPair;
     int localNormalFaceIdx;
     int globalCommonEntIdx;
     Scalar parallelDistance;
     Scalar normalDistance;
-//     Scalar normalFaceArea;
-//     GlobalPosition normalFaceDirection;
+    GlobalPosition virtualOuterNormalFaceDofPos;
     GlobalPosition virtualOuterParallelFaceDofPos;
 };
+
+
+ /*!
+ * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
+ */
+template<class Vector>
+inline static int directionIndex(Vector&& vector)
+{
+    const auto eps = 1e-8;
+    const int idx = std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
+    return idx;
+}
 
 //! A class to create sub control volume and sub control volume face geometries per element
 template <class GridView, int dim = GridView::dimension >
@@ -131,10 +141,7 @@ public:
      */
     int directionIndex() const
     {
-        const Scalar eps = 1e-8;
-        const auto& direction = intersection_.centerUnitOuterNormal();
-        const int idx = std::find_if(direction.begin(), direction.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - direction.begin();
-        return idx;
+        return Dumux::directionIndex(std::move(intersection_.centerUnitOuterNormal()));
     }
 
 private:
@@ -150,7 +157,6 @@ private:
         for(auto& data : pairData_)
         {
             data.outerParallelFaceDofIdx = -1;
-            data.outerParallelElementDofIdx = -1;
             data.normalPair.second = -1;
             data.normalDistance = -1;
             data.parallelDistance = -1;
@@ -225,7 +231,6 @@ private:
                                         if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
                                         {
                                             pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
-                                            pairData_[pairIdx].outerParallelElementDofIdx =  gridView_.indexSet().index(dIs.outside());
                                             const auto& selfFacet = element_.template subEntity <1> (indexInInside);
                                             const auto& parallelFacet = diagonalNeighbor.template subEntity <1> (dIs.indexInInside());
                                             pairData_[pairIdx].parallelDistance = (selfFacet.geometry().center() - parallelFacet.geometry().center()).two_norm();
@@ -263,7 +268,6 @@ private:
                                     if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
                                     {
                                         pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(neighbor, neighborIs.indexInInside(), dim-1) + offset_;
-                                        pairData_[pairIdx].outerParallelElementDofIdx = gridView_.indexSet().index(neighbor);
                                         const auto& parallelFacet = neighbor.template subEntity <1> (neighborIs.indexInInside());
                                         pairData_[pairIdx].parallelDistance = (intersection_.geometry().center() - parallelFacet.geometry().center()).two_norm();
                                     }
@@ -273,10 +277,21 @@ private:
                     }
                 }
             }
+
+            // fill the normal pair entries
+            for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
+            {
+                assert(pairData_[pairIdx].normalPair.second == -1);
+                const auto& elementCenter = this->element_.geometry().center();
+                const auto& boundaryFacetCenter = intersection_.geometry().center();
+                const auto distance = boundaryFacetCenter - elementCenter;
+
+                pairData_[pairIdx].virtualOuterNormalFaceDofPos = innerNormalFacePos[pairIdx] + distance;
+                pairData_[pairIdx].normalDistance = std::move(distance.two_norm());
+            }
         }
 
         asImp_().treatVirtualOuterParallelFaceDofs_();
-//         asImp_().setNormalFaceInformation_();
     }
 
 protected:
@@ -458,8 +473,6 @@ private:
                         DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
                 }
 
-//                 if(this->pairData_[index].outerParallelFaceDofIdx != -1)
-//                     DUNE_THROW(Dune::InvalidStateException, "not -1");
                 assert(this->pairData_[index].outerParallelFaceDofIdx == -1);
 
                 this->pairData_[index].virtualOuterParallelFaceDofPos = std::move(virtualOuterParallelFaceDofPos);
@@ -467,41 +480,6 @@ private:
             }
         }
     }
-
-//     void setNormalFaceInformation_()
-//     {
-//         // get the local index of the facet we are dealing with in this class
-//         const int localIntersectionIdx = this->intersection_.indexInInside();
-//
-//         // iterate over all intersections of the element, this facet is part of
-//         for(const auto& is : intersections(this->gridView_, this->element_))
-//         {
-//             if(this->facetIsNormal_(localIntersectionIdx, is.indexInInside()))
-//             {
-//                 int index;
-//                 switch(localIntersectionIdx)
-//                 {
-//                     case 0:
-//                         index = (is.indexInInside() == 3) ? 0 : 1;
-//                         break;
-//                     case 1:
-//                         index = (is.indexInInside() == 2) ? 0 : 1;
-//                         break;
-//                     case 2:
-//                         index = (is.indexInInside() == 0) ? 0 : 1;
-//                         break;
-//                     case 3:
-//                         index = (is.indexInInside() == 1) ? 0 : 1;
-//                         break;
-//                     default:
-//                         DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
-//                 }
-//                 this->pairData_[index].normalFaceDirection = std::move(is.centerUnitOuterNormal());
-//                 this->pairData_[index].normalFaceArea = std::move(0.5 * is.geometry().volume());
-//             }
-//         }
-//     }
-
 };
 
 template<class GridView>
