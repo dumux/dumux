@@ -111,22 +111,26 @@ class StaggeredFaceStencils
 
 public:
     void update(const Problem& problem,
-                const SubControlVolumeFace& scvf)
+                const SubControlVolumeFace& scvf,
+                const FVElementGeometry& fvGeometry)
     {
         faceToCellCenterStencil_.clear();
         faceToFaceStencil_.clear();
+        const int eIdx = scvf.insideScvIdx();
 
-        faceToCellCenterStencil_.push_back(scvf.insideScvIdx());
+        faceToCellCenterStencil_.push_back(eIdx);
 
         faceToFaceStencil_.push_back(scvf.dofIndexSelf());
         faceToFaceStencil_.push_back(scvf.dofIndexOpposite());
 
         for(const auto& data : scvf.pairData())
         {
-            const auto& outerParallelElementDofIdx = data.outerParallelElementDofIdx;
-            const auto& outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelElementDofIdx >= 0)
+            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
+            const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
+            if(!normalFace.boundary())
                 faceToCellCenterStencil_.push_back(outerParallelElementDofIdx);
+
+            const auto& outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
             if(outerParallelFaceDofIdx >= 0)
                 faceToFaceStencil_.push_back(outerParallelFaceDofIdx);
 
@@ -134,7 +138,6 @@ public:
             if(!scvf.boundary())
                 faceToFaceStencil_.push_back(data.normalPair.second);
         }
-
     }
 
      //! The full face stencil (all dofs this face is interacting with)
@@ -198,7 +201,7 @@ public:
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                faceStencils_[scvf.index()].update(problem, scvf);
+                faceStencils_[scvf.index()].update(problem, scvf, fvGeometry);
 
                 const IndexType idx = scvf.dofIndexSelf();
 
