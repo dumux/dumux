@@ -556,10 +556,11 @@ public:
      *
      * \param globalPos The global position
      */
-    void initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide a initialPhasePresenceAtPos() method.");
+        return 0;
     }
 
     /*!
