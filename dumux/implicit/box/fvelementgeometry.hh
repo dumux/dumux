@@ -943,6 +943,10 @@ public:
                 this->crossProduct(elemNormal, elemVec1, elemVec2);
                 this->crossProduct(scvFace.normal, faceVec, elemNormal);
 
+                // scale normal vector by the area
+                scvFace.normal /= scvFace.normal.two_norm();
+                scvFace.normal *= faceVec.two_norm();
+
                 const auto diffVec = subContVol[j].global - subContVol[i].global;
                 // make sure the normal points to the right direction
                 if (scvFace.normal * diffVec < 0)
