@@ -186,6 +186,7 @@ class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static const int dim = GridView::dimension;
 
@@ -201,17 +202,12 @@ public:
     MpfaPorousMediumFluxVariablesCache() : isUpdated_(false)
     {
         // We have to initialize the neumann fluxes to zero (for inner interaction volumes)
-        for (auto& flux : phaseNeumannFluxes_)
-            flux = 0.0;
+        phaseNeumannFluxes_.fill(0.0);
     }
 
     // update cached objects
     template<typename InteractionVolume>
-    void updateAdvection(const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace &scvf,
+    void updateAdvection(const SubControlVolumeFace &scvf,
                          const InteractionVolume& interactionVolume)
     {
         const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
@@ -220,17 +216,17 @@ public:
         tij_ = interactionVolume.getTransmissibilities(localFaceData);
     }
 
+    // update cached neumann boundary flux
     template<typename InteractionVolume>
-    void updatePhaseNeumannFlux(const Problem& problem,
-                                const Element& element,
-                                const FVElementGeometry& fvGeometry,
-                                const ElementVolumeVariables& elemVolVars,
-                                const SubControlVolumeFace &scvf,
+    void updatePhaseNeumannFlux(const SubControlVolumeFace &scvf,
                                 const InteractionVolume& interactionVolume,
                                 const unsigned int phaseIdx)
     {
-        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
-        phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localFaceData);
+        if (!useTpfaBoundary)
+        {
+            const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
+            phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localFaceData);
+        }
     }
 
     const Stencil& advectionVolVarsStencil(const unsigned int phaseIdx) const

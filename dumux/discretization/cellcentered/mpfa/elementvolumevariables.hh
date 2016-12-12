@@ -100,6 +100,7 @@ class CCMpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -147,19 +148,22 @@ public:
         // if the element is connected to a boundary, additionally prepare BCs
         bool boundary = element.hasBoundaryIntersections();
         if (!boundary)
+        {
             for (auto&& scvf : scvfs(fvGeometry))
+            {
                 if (globalFvGeometry.scvfTouchesBoundary(scvf))
                 {
                     boundary = true;
                     break;
                 }
+            }
+        }
 
         if (boundary)
         {
             // reserve memory (12 is the case of 3d hexahedron with one face on boundary)
             std::size_t estimate = 12;
             std::vector<IndexType> finishedBoundaries;
-            finishedBoundaries.reserve(estimate);
             volumeVariables_.reserve(numDofs+estimate);
             volVarIndices_.reserve(numDofs+estimate);
 
@@ -172,19 +176,22 @@ public:
                     if (!scvf.boundary())
                         continue;
 
-                    // only proceed if we are on a dirichlet boundary
+                    // on dirichlet boundaries use dirichlet values
                     if (MpfaHelper::getMpfaFaceType(problem, element, scvf) == MpfaFaceTypes::dirichlet)
                     {
                         // boundary volume variables
                         VolumeVariables dirichletVolVars;
                         const auto dirichletPriVars = problem.dirichlet(element, scvf);
                         dirichletVolVars.update(dirichletPriVars, problem, element, scvI);
-                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
 
-                        // boundary vol var index
-                        auto bVolVarIdx = scvf.outsideScvIdx();
-                        volVarIndices_.push_back(bVolVarIdx);
-                        finishedBoundaries.push_back(bVolVarIdx);
+                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                        volVarIndices_.push_back(scvf.outsideScvIdx());
+                    }
+                    // use the inside volume variables for neumann boundaries
+                    else if (!useTpfaBoundary)
+                    {
+                        volumeVariables_.emplace_back(VolumeVariables(volumeVariables_[0]));
+                        volVarIndices_.push_back(scvf.outsideScvIdx());
                     }
                 }
             }
@@ -202,27 +209,31 @@ public:
                 {
                     auto&& ivScvf = fvGeometry.scvf(scvfIdx);
 
-                    if (!ivScvf.boundary() || MpfaHelper::contains(finishedBoundaries, ivScvf.outsideScvIdx()))
+                    // only proceed for scvfs on the boundary and not in the inside element
+                    if (!ivScvf.boundary() || ivScvf.insideScvIdx() == eIdx)
                         continue;
 
                     // that means we are on a not yet handled boundary scvf
                     auto insideScvIdx = ivScvf.insideScvIdx();
-                    auto ivElement = globalFvGeometry.element(insideScvIdx);
+                    auto insideElement = globalFvGeometry.element(insideScvIdx);
 
-                    // only proceed if we are on a dirichlet boundary
-                    if (MpfaHelper::getMpfaFaceType(problem, ivElement, ivScvf) == MpfaFaceTypes::dirichlet)
+                    // on dirichlet boundaries use dirichlet values
+                    if (MpfaHelper::getMpfaFaceType(problem, insideElement, ivScvf) == MpfaFaceTypes::dirichlet)
                     {
                         // boundary volume variables
                         VolumeVariables dirichletVolVars;
                         auto&& ivScv = fvGeometry.scv(insideScvIdx);
-                        const auto dirichletPriVars = problem.dirichlet(ivElement, ivScvf);
-                        dirichletVolVars.update(dirichletPriVars, problem, ivElement, ivScv);
-                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                        const auto dirichletPriVars = problem.dirichlet(insideElement, ivScvf);
+                        dirichletVolVars.update(dirichletPriVars, problem, insideElement, ivScv);
 
-                        // boundary vol var index
-                        auto bVolVarIdx = ivScvf.outsideScvIdx();
-                        volVarIndices_.push_back(bVolVarIdx);
-                        finishedBoundaries.push_back(bVolVarIdx);
+                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                        volVarIndices_.push_back(ivScvf.outsideScvIdx());
+                    }
+                    // use the inside volume variables for neumann boundaries
+                    else if (!useTpfaBoundary)
+                    {
+                        volumeVariables_.emplace_back(VolumeVariables((*this)[insideScvIdx]));
+                        volVarIndices_.push_back(ivScvf.outsideScvIdx());
                     }
                 }
             }
