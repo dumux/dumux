@@ -112,7 +112,7 @@ class CCTpfaElementFluxVariablesCache<TypeTag, false>
     using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
-    static const bool solDependentParams = GET_PROP_VALUE(TypeTag, SolutionDependentParameters);
+    static const bool solDependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
 
 public:
     CCTpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
@@ -215,7 +215,7 @@ private:
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
-        if (solDependentParams)
+        if (solDependentAdvection)
             bind(element, fvGeometry, elemVolVars);
     }
 
