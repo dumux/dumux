@@ -97,7 +97,10 @@ public:
     {
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
+
+        const Scalar velocity = scvf.boundary() ?
+                               this->problem().dirichletVelocityAtPos(scvf.center())[scvf.directionIndex()] :
+                               globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity(); //TODO: put this in faceVars class?
 
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
@@ -203,10 +206,12 @@ private:
     {
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
         const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.dofIndexOpposite()).velocity();
         FacePrimaryVariables normalFlux(0.0);
 
+
+        const Scalar velocitySelf = scvf.boundary() ? this->problem().dirichletVelocityAtPos(scvf.center())[scvf.directionIndex()] :
+                                                      globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
         const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
 
         // advective part
@@ -222,8 +227,17 @@ private:
 
         // account for the orientation of the face
         const Scalar sgn = -1.0 * sign(scvf.outerNormalScalar());
-//         std::cout << "normal flux (element: " << fvGeometry.globalFvGeometry().element(scvf.insideScvIdx()).geometry().center() <<") at face:  " << scvf.center() << "  , " << normalFlux*sign*scvf.area() << std::endl;
-        return normalFlux * sgn * scvf.area();
+
+        Scalar result = normalFlux * sgn * scvf.area();
+
+        if(scvf.boundary())
+        {
+            const auto& upVolVars = (sign(scvf.outerNormalScalar()) == sign(velocitySelf)) ?
+                                    elemVolVars[insideScvIdx] : elemVolVars[scvf.outsideScvIdx()] ;
+            result += velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
+        }
+//         std::cout << "normal flux (element: " << fvGeometry.globalFvGeometry().element(scvf.insideScvIdx()).geometry().center() <<") at face:  " << scvf.center() << "  , " << result << std::endl;
+        return result;
     }
 
      /*!
