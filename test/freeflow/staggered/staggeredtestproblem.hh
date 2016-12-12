@@ -160,6 +160,11 @@ public:
         return name_;
     }
 
+    bool shouldWriteRestartFile()
+    {
+        return false;
+    }
+
     /*!
      * \brief Return the temperature within the domain in [K].
      *
@@ -196,7 +201,7 @@ public:
         BoundaryTypes values;
 
         Scalar eps = 1.0e-6;
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps)
+        if (globalPos[0] > this->bBoxMax()[0] - eps)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
