@@ -203,8 +203,7 @@ public:
         T_ += D;
     }
 
-    template<typename UpwindFactorFunction>
-    void assembleNeumannFluxes(const UpwindFactorFunction& upwindFactor, const unsigned int eqIdx)
+    void assembleNeumannFluxes(const unsigned int eqIdx)
     {
         if (!onBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return;
@@ -221,11 +220,7 @@ public:
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];
                 neumannFlux *= globalScvf.area();
 
-                // recover -k*gradh
-                const auto& insideScv = fvGeometry_().scv(globalScvf.insideScvIdx());
-                const auto& volVars = elemVolVars_()[insideScv];
-                neumannFlux /= upwindFactor(volVars);
-
+                // The flux is assumed to be prescribed in the form of -D*gradU
                 neumannFluxes_[fluxFaceIdx] = neumannFlux;
             }
 
