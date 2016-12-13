@@ -176,7 +176,7 @@ public:
      *
      * \param compIdx The index of the component
      */
-    Scalar moleFraction(int phase, int compIdx) const
+    Scalar moleFraction(int pIdx, int compIdx) const
     { return fluidState_.moleFraction(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
 
     /*!
@@ -184,7 +184,7 @@ public:
      *
      * \param compIdx The index of the component
      */
-    Scalar massFraction(int phase, int compIdx) const
+    Scalar massFraction(int pIdx, int compIdx) const
     { return fluidState_.massFraction(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
 
     /*!
@@ -192,7 +192,7 @@ public:
      *
      * \param compIdx The index of the component
      */
-    Scalar molarity(int phase, int compIdx) const
+    Scalar molarity(int pIdx, int compIdx) const
     { return fluidState_.molarity(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
 
     /*!
@@ -205,7 +205,7 @@ public:
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
-    Scalar diffusionCoefficient(int phase, int compIdx) const
+    Scalar diffusionCoefficient(int pIdx, int compIdx) const
     { return diffCoeff_; }
 
     /*!
