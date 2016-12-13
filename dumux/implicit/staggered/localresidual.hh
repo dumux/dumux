@@ -277,9 +277,20 @@ protected:
             {
                 // Do the same as if the face was not on a boundary.This might need to be changed sometime...
                 ccResidual_[0] += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
-//                 auto test = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
-//                 std::cout << " face: " << scvf.center() << ",  normal: "  <<  scvf.unitOuterNormal()    << ",   value: " << test << std::endl;
-                faceResiduals_[scvf.localFaceIdx()][0] += asImp_().computeFluxForFace(scvf, fvGeometry, elemVolVars, faceVars);
+
+                // set a Dirichlet BC for the velocity. TODO: make more generic!
+                faceResiduals_[scvf.localFaceIdx()][0] = faceVars.faceVars(scvf.dofIndexSelf()).velocity() - this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
+            }
+        }
+
+        // set a Dirichlet BC for the pressure. TODO: make far more generic. this uses a fixed value
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if(scvf.center()[0] < 1e-6)
+            {
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                const auto& insideVolVars = elemVolVars[insideScv];
+                ccResidual_[0] = insideVolVars.pressure() - 1.1e5;
             }
         }
     }

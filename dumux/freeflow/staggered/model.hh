@@ -98,6 +98,7 @@ public:
         // create the required scalar fields
         const auto numElements = this->gridView_().size(0);
         auto *p = writer.allocateManagedBuffer(numElements);
+        auto *delP = writer.allocateManagedBuffer(numElements);
 
         auto *v_x_pos = writer.allocateManagedBuffer(numElements);
         auto *v_x_neg = writer.allocateManagedBuffer(numElements);
@@ -132,6 +133,7 @@ public:
                 auto dofIdxGlobal = scv.dofIndex();
 
                 (*p)[dofIdxGlobal] = volVars.pressure();
+                (*delP)[dofIdxGlobal] = volVars.pressure() - 1.1e5;
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -160,6 +162,7 @@ public:
             }
         }
         writer.attachDofData(*p, "p", isBox);
+        writer.attachDofData(*delP, "delP", isBox);
         writer.attachDofData(*v_x_pos, "v_x_pos", isBox);
         writer.attachDofData(*v_x_neg, "v_x_neg", isBox);
         writer.attachDofData(*v_y_pos, "v_y_pos", isBox);
