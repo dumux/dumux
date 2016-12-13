@@ -98,9 +98,7 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        const Scalar velocity = scvf.boundary() ?
-                               this->problem().dirichletVelocityAtPos(scvf.center())[scvf.directionIndex()] :
-                               globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity(); //TODO: put this in faceVars class?
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
 
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
@@ -156,7 +154,7 @@ public:
                                                const VolumeVariables& volVars,
                                                const GlobalFaceVars& globalFaceVars)
     {
-        FacePrimaryVariables storage;
+        FacePrimaryVariables storage(0.0);
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
         storage[0] = volVars.density(0) * velocity;
         return storage;
@@ -210,12 +208,12 @@ private:
         FacePrimaryVariables normalFlux(0.0);
 
 
-        const Scalar velocitySelf = scvf.boundary() ? this->problem().dirichletVelocityAtPos(scvf.center())[scvf.directionIndex()] :
-                                                      globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
+        const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
         const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
 
         // advective part
-        normalFlux += vAvg * insideVolVars.density();
+        const Scalar vUp = (sign(scvf.outerNormalScalar()) == sign(vAvg)) ? velocityOpposite : velocitySelf;
+        normalFlux += vAvg * vUp * insideVolVars.density();
 
         // diffusive part
         const Scalar deltaV = scvf.normalInPosCoordDir() ?
@@ -236,7 +234,6 @@ private:
                                     elemVolVars[insideScvIdx] : elemVolVars[scvf.outsideScvIdx()] ;
             result += velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
         }
-//         std::cout << "normal flux (element: " << fvGeometry.globalFvGeometry().element(scvf.insideScvIdx()).geometry().center() <<") at face:  " << scvf.center() << "  , " << result << std::endl;
         return result;
     }
 
