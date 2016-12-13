@@ -206,14 +206,7 @@ public:
                 // determine the outside volvar indices
                 std::vector<IndexType> nIndices;
                 if (neighbor && dim == dimWorld)
-                {
                     nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
-                }
-                else if (boundary)
-                {
-                    nIndices.resize(1);
-                    nIndices[0] = numScvs + numBoundaryScvf_++;
-                }
 
                 // get the intersection corners according to generic numbering
                 auto numCorners = is.geometry().corners();
@@ -249,19 +242,39 @@ public:
                         branchingVertices_[vIdxGlobal] = true;
 
                     // make the scv face (for inside scvfs on network grids, use precalculated outside indices)
-                    const auto& outsideScvIndices = (boundary || dim == dimWorld) ? nIndices : outsideIndices[indexInInside];
-                    scvfIndexSet.push_back(scvfIdx);
-                    scvfs_.emplace_back(helper,
-                                        helper.getScvfCorners(isCorners, c),
-                                        is.centerUnitOuterNormal(),
-                                        vIdxGlobal,
-                                        vIdxLocal,
-                                        scvfIdx,
-                                        eIdx,
-                                        outsideScvIndices,
-                                        q,
-                                        boundary
-                                        );
+                    if (!boundary)
+                    {
+                        const auto& outsideScvIndices = dim == dimWorld ? nIndices : outsideIndices[indexInInside];
+                        scvfIndexSet.push_back(scvfIdx);
+                        scvfs_.emplace_back(helper,
+                                            helper.getScvfCorners(isCorners, c),
+                                            is.centerUnitOuterNormal(),
+                                            vIdxGlobal,
+                                            vIdxLocal,
+                                            scvfIdx,
+                                            eIdx,
+                                            outsideScvIndices,
+                                            q,
+                                            boundary
+                                            );
+                    }
+                    else
+                    {
+                        nIndices.resize(1);
+                        nIndices[0] = numScvs + numBoundaryScvf_++;
+                        scvfIndexSet.push_back(scvfIdx);
+                        scvfs_.emplace_back(helper,
+                                            helper.getScvfCorners(isCorners, c),
+                                            is.centerUnitOuterNormal(),
+                                            vIdxGlobal,
+                                            vIdxLocal,
+                                            scvfIdx,
+                                            eIdx,
+                                            nIndices,
+                                            q,
+                                            boundary
+                                            );
+                    }
 
                     // increment scvf counter
                     scvfIdx++;
@@ -533,14 +546,7 @@ public:
                 // determine the outside volvar indices
                 std::vector<IndexType> nIndices;
                 if (neighbor && dim == dimWorld)
-                {
                     nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
-                }
-                else if (boundary)
-                {
-                    nIndices.resize(1);
-                    nIndices[0] = numScvs_ + numBoundaryScvf_++;
-                }
 
                 // if outside level > inside level, use the outside element in the following
                 bool useNeighbor = neighbor && is.outside().level() > element.level();
@@ -569,9 +575,19 @@ public:
                         branchingVertices_[vIdxGlobal] = true;
 
                     // store information on the scv face (for inner scvfs on network grids use precalculated outside indices)
-                    const auto& outsideScvIndices = (boundary || dim == dimWorld) ? nIndices : outsideIndices[indexInInside];
-                    scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back(outsideScvIndices);
+                    if (!boundary)
+                    {
+                        const auto& outsideScvIndices = dim == dimWorld ? nIndices : outsideIndices[indexInInside];
+                        scvfsIndexSet.push_back(numScvf_++);
+                        neighborVolVarIndexSet.push_back(outsideScvIndices);
+                    }
+                    else
+                    {
+                        nIndices.resize(1);
+                        nIndices[0] = numScvs_ + numBoundaryScvf_++;
+                        scvfsIndexSet.push_back(numScvf_++);
+                        neighborVolVarIndexSet.push_back(nIndices);
+                    }
 
                     // increment counter
                     localFaceIdx++;

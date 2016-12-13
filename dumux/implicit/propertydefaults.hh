@@ -154,7 +154,9 @@ SET_BOOL_PROP(ImplicitBase, EnableGlobalVolumeVariablesCache, false);
 SET_BOOL_PROP(ImplicitBase, EnableGlobalFluxVariablesCache, false);
 
 //! by default, parameters are solution-dependent
-SET_BOOL_PROP(ImplicitBase, SolutionDependentParameters, true);
+SET_BOOL_PROP(ImplicitBase, SolutionDependentAdvection, true);
+SET_BOOL_PROP(ImplicitBase, SolutionDependentMolecularDiffusion, true);
+SET_BOOL_PROP(ImplicitBase, SolutionDependentHeatConduction, true);
 
 //! by default, boundary conditions are not constant over time
 SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);

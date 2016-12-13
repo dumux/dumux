@@ -66,6 +66,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
 
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
 public:
@@ -108,7 +109,10 @@ public:
             flux += tij[localIdx++]*h;
         }
 
-        return flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
+        if (useTpfaBoundary)
+            return flux;
+        else
+            return flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
     }
 
     static Stencil stencil(const Problem& problem,

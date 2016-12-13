@@ -84,7 +84,6 @@ NEW_PROP_TAG(ElementFluxVariablesCache); //!< A local vector of flux variable ca
 NEW_PROP_TAG(EnableGlobalFluxVariablesCache); //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces in cc models(outflow)
 NEW_PROP_TAG(ConstantBoundaryConditions); //!< specifies whether or not the boundary conditions are constant over time
-NEW_PROP_TAG(SolutionDependentParameters); //!< specifies if spatial parameters depend on the solution
 NEW_PROP_TAG(DiscretizationMethod); //!< Property for the used discretization method
 NEW_PROP_TAG(PrimaryVariableSwitch); //!< The primary variable switch needed for compositional models
 
@@ -92,11 +91,13 @@ NEW_PROP_TAG(PrimaryVariableSwitch); //!< The primary variable switch needed for
 // also, specify their corresponding flux variables
 NEW_PROP_TAG(EnableAdvection); //! specifies if advection is considered in the model
 NEW_PROP_TAG(AdvectionType); //! The type for the calculation the advective fluxes
+NEW_PROP_TAG(SolutionDependentAdvection); //!< specifies if the parameters for the advective fluxes depend on the solution
 NEW_PROP_TAG(EnableMolecularDiffusion); //! specifies if molecular diffusive fluxes are considered in the model
 NEW_PROP_TAG(MolecularDiffusionType); //! The type for the calculation of the molecular diffusion fluxes
+NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the parameters for the diffusive fluxes depend on the solution
 NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy equation
-
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
+NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
 // stencils
 NEW_PROP_TAG(StencilsVector); //! The type of the global vector of stencils per element
