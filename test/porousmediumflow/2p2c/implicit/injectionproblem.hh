@@ -159,9 +159,6 @@ public:
          * - Overwriting on command line not possible
          */
 
-
-        eps_ = 1.5e-7;
-
         // initialize the tables of the fluid system
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -375,7 +372,7 @@ private:
 
     Scalar temperature_;
     Scalar depthBOR_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
 
     int nTemperature_;
     int nPressure_;

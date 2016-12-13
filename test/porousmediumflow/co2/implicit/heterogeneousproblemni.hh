@@ -196,8 +196,6 @@ public:
         // set the spatial parameters by reading the DGF grid file
         this->spatialParams().setParams();
 
-        eps_ = 1e-6;
-
         // initialize the tables of the fluid system
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -508,7 +506,6 @@ private:
     Scalar injectionRate_;
     Scalar injectionPressure_;
     Scalar injectionTemperature_;
-    Scalar eps_;
 
     int nTemperature_;
     int nPressure_;

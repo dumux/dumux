@@ -155,7 +155,6 @@ public:
         : ParentType(timeManager, gridView)
     {
         maxDepth_ = 1000.0; // [m]
-        eps_ = 1e-6;
 
         FluidSystem::init();
 
@@ -276,7 +275,7 @@ public:
         const auto& globalPos = scvf.ipGlobal();
 
         // negative values for injection
-        if (globalPos[0] > 15 && globalPos[0] < 25 && globalPos[1] < eps_)
+        if (globalPos[0] > 15 - eps_ && globalPos[0] < 25 + eps_ && globalPos[1] < eps_)
         {
             values[contiNEqIdx] = -1e-3/FluidSystem::molarMass(nCompIdx); //(kg/(m^2*s) or mole/(m^2*s) )
         }
@@ -304,8 +303,8 @@ public:
         auto priVars = initial_(globalPos);
 
 #if !ISOTHERMAL
-        if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] < 30)
-            priVars[temperatureIdx] = 380;
+        if (globalPos[0] > 20 - eps_ && globalPos[0] < 30 + eps_ && globalPos[1] < 30 + eps_)
+            values[temperatureIdx] = 380;
 #endif
         return priVars;
     }
@@ -338,7 +337,7 @@ private:
     }
 
     Scalar maxDepth_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
 

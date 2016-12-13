@@ -174,7 +174,7 @@ Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
  */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
-    if (globalPos[0] > this->bBoxMax()[0]-1E-6 || globalPos[0] < 1e-6)
+    if (globalPos[0] > this->bBoxMax()[0] - eps_|| globalPos[0] < eps_)
         bcTypes.setAllDirichlet();
     else
         // all other boundaries
@@ -198,7 +198,7 @@ void dirichletAtPos(PrimaryVariables &bcValues, const GlobalPosition& globalPos)
     Scalar temp = temperatureAtPos(globalPos);
 
     // Dirichlet for pressure equation
-    bcValues[Indices::pressureEqIdx] = (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
+    bcValues[Indices::pressureEqIdx] = (globalPos[0] < eps_) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
             : (2e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1]);
 
     // Dirichlet values for transport equations
@@ -228,7 +228,7 @@ void source(PrimaryVariables &values, const Element &element)
         father = father.father();
     }
     GlobalPosition globalPos = father.geometry().center();
-    if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
+    if (fabs(globalPos[0] - 4.8) < 0.5 + eps_ && fabs(globalPos[1] - 4.8) < 0.5 + eps_)
         values[Indices::contiNEqIdx] = 0.0001;
 }
 
@@ -251,6 +251,7 @@ Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 private:
 //Grid grid_;
 VtkMultiWriter<GridView> debugWriter_;
+static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 

@@ -198,7 +198,6 @@ public:
         // load parameters from input file and initialize parameter values
         void setInputInitialize()
         {
-                eps_                    = 1e-6;
                 heightPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.InterfacePosY);
                 heightDomain_           = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
                 // BEWARE! First the input values have to be set, than the material parameters can be set
@@ -547,7 +546,7 @@ public:
      * -> be careful with neumannAtPos
      */
     bool inPM_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dimWorld-1] > 0. - 1e-6) and (globalPos[dimWorld-1] < (heightPM_ + 1e-6 ) ) );   }
+    {       return ( (globalPos[dimWorld-1] > 0. - eps_) and (globalPos[dimWorld-1] < (heightPM_ + eps_) ) );   }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
@@ -561,7 +560,7 @@ public:
      * -> be careful with neumannAtPos
      */
     bool inFF_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dimWorld-1] < heightDomain_ + 1e-6) and (globalPos[dimWorld-1] > (heightPM_ + 1e-6) ) );   }
+    {       return ( (globalPos[dimWorld-1] < heightDomain_ + eps_) and (globalPos[dimWorld-1] > (heightPM_ + eps_) ) );   }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
@@ -575,14 +574,14 @@ public:
      * -> be careful with neumannAtPos
      */
     bool inInjection_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dimWorld-1] < heightDomain_ - 0.25*heightDomain_  + 1e-6) and (globalPos[dimWorld-1] > (heightPM_ + 1e-6) ) );   }
+    {       return ( (globalPos[dimWorld-1] < heightDomain_ - 0.25*heightDomain_  + eps_) and (globalPos[dimWorld-1] > (heightPM_ + eps_) ) );   }
 
     /*! \brief access function for the depth / height of the porous medium */
     const Scalar heightPM() const
     { return heightPM_; }
 
 private:
-    Scalar eps_ ;
+    static constexpr Scalar eps_  = 1e-6;;
     Scalar heightDomain_ ;
 
     AwnSurfaceParams    aWettingNonWettingSurfaceParams_;

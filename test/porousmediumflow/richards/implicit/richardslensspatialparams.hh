@@ -152,10 +152,10 @@ public:
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
-        for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
+        for (int i = 0; i < dimWorld; ++i)
+            if (globalPos[i] < lensLowerLeft_[i] - eps_ || globalPos[i] > lensUpperRight_[i] + eps_)
                 return false;
-        }
+
         return true;
     }
 

@@ -313,7 +313,7 @@ public:
         const Scalar xVelocity = xVelocity_(globalPos);
 
         if (onLeftBoundary_(globalPos)
-                && globalPos[1] > bBoxMin_[1] && globalPos[1] < bBoxMax_[1])
+                && globalPos[1] > bBoxMin_[1] - eps_ && globalPos[1] < bBoxMax_[1] + eps_)
         {
             // rho*v*X at inflow
             values[transportEqIdx] = -xVelocity * density * refMassfrac();

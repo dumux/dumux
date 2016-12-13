@@ -157,7 +157,6 @@ public:
             pMin_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.pMin);
             outputName_     = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.outputName);
 
-        eps_ = 1e-6;
         temperature_ = 273.15 + 25; // -> 25°C
 
         // initialize the tables of the fluid system
@@ -441,7 +440,7 @@ private:
     {        return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;    }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;;
     std::string outputName_;
     Scalar pMax_, pMin_ ;
 

@@ -129,7 +129,7 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
 public:
     OnePNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+        : ParentType(timeManager, gridView)
     {
         //initialize fluid system
         FluidSystem::init();

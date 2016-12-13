@@ -149,8 +149,6 @@ public:
 
         pO2Inlet_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, ElectroChemistry, pO2Inlet);
 
-        eps_ = 1e-6;
-
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
                           /*nT=*/nTemperature_,
@@ -342,7 +340,7 @@ private:
     { return globalPos[1] < 0.1*(this->bBoxMax()[1] - this->bBoxMin()[1]) + eps_; }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     int nTemperature_;
     int nPressure_;
     std::string name_ ;

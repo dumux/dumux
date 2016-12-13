@@ -136,7 +136,7 @@ public:
      * \param gridView The grid view
      */
     ColumnProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView), eps_(1e-6)
+        : ParentType(timeManager, gridView)
     {
         FluidSystem::init();
 
@@ -318,51 +318,51 @@ private:
 
         if (y > 1.2 - eps_)
             values[switch2Idx] = 0.112;
-        else if (y > 1.2 - 0.0148)
+        else if (y > 1.2 - 0.0148 - eps_)
             values[switch2Idx] = 0 + ((1.2 - y)/0.0148)*0.112;
-        else if (y > 1.2 - 0.0296)
+        else if (y > 1.2 - 0.0296 - eps_)
             values[switch2Idx] = 0.112 + (((1.2 - y) - 0.0148)/0.0148)*(0.120 - 0.112);
-        else if (y > 1.2 - 0.0444)
+        else if (y > 1.2 - 0.0444 - eps_)
             values[switch2Idx] = 0.120 + (((1.2 - y) - 0.0296)/0.0148)*(0.125 - 0.120);
-        else if (y > 1.2 - 0.0592)
+        else if (y > 1.2 - 0.0592 - eps_)
             values[switch2Idx] = 0.125 + (((1.2 - y) - 0.0444)/0.0148)*(0.137 - 0.125);
-        else if (y > 1.2 - 0.0740)
+        else if (y > 1.2 - 0.0740 - eps_)
             values[switch2Idx] = 0.137 + (((1.2 - y) - 0.0592)/0.0148)*(0.150 - 0.137);
-        else if (y > 1.2 - 0.0888)
+        else if (y > 1.2 - 0.0888 - eps_)
             values[switch2Idx] = 0.150 + (((1.2 - y) - 0.0740)/0.0148)*(0.165 - 0.150);
-        else if (y > 1.2 - 0.1036)
+        else if (y > 1.2 - 0.1036 - eps_)
             values[switch2Idx] = 0.165 + (((1.2 - y) - 0.0888)/0.0148)*(0.182 - 0.165);
-        else if (y > 1.2 - 0.1184)
+        else if (y > 1.2 - 0.1184 - eps_)
             values[switch2Idx] = 0.182 + (((1.2 - y) - 0.1036)/0.0148)*(0.202 - 0.182);
-        else if (y > 1.2 - 0.1332)
+        else if (y > 1.2 - 0.1332 - eps_)
             values[switch2Idx] = 0.202 + (((1.2 - y) - 0.1184)/0.0148)*(0.226 - 0.202);
-        else if (y > 1.2 - 0.1480)
+        else if (y > 1.2 - 0.1480 - eps_)
             values[switch2Idx] = 0.226 + (((1.2 - y) - 0.1332)/0.0148)*(0.257 - 0.226);
-        else if (y > 1.2 - 0.1628)
+        else if (y > 1.2 - 0.1628 - eps_)
             values[switch2Idx] = 0.257 + (((1.2 - y) - 0.1480)/0.0148)*(0.297 - 0.257);
-        else if (y > 1.2 - 0.1776)
+        else if (y > 1.2 - 0.1776 - eps_)
             values[switch2Idx] = 0.297 + (((1.2 - y) - 0.1628)/0.0148)*(0.352 - 0.297);
-        else if (y > 1.2 - 0.1924)
+        else if (y > 1.2 - 0.1924 - eps_)
             values[switch2Idx] = 0.352 + (((1.2 - y) - 0.1776)/0.0148)*(0.426 - 0.352);
-        else if (y > 1.2 - 0.2072)
+        else if (y > 1.2 - 0.2072 - eps_)
             values[switch2Idx] = 0.426 + (((1.2 - y) - 0.1924)/0.0148)*(0.522 - 0.426);
-        else if (y > 1.2 - 0.2220)
+        else if (y > 1.2 - 0.2220 - eps_)
             values[switch2Idx] = 0.522 + (((1.2 - y) - 0.2072)/0.0148)*(0.640 - 0.522);
-        else if (y > 1.2 - 0.2368)
+        else if (y > 1.2 - 0.2368 - eps_)
             values[switch2Idx] = 0.640 + (((1.2 - y) - 0.2220)/0.0148)*(0.767 - 0.640);
-        else if (y > 1.2 - 0.2516)
+        else if (y > 1.2 - 0.2516 - eps_)
             values[switch2Idx] = 0.767 + (((1.2 - y) - 0.2368)/0.0148)*(0.878 - 0.767);
-        else if (y > 1.2 - 0.2664)
+        else if (y > 1.2 - 0.2664 - eps_)
             values[switch2Idx] = 0.878 + (((1.2 - y) - 0.2516)/0.0148)*(0.953 - 0.878);
-        else if (y > 1.2 - 0.2812)
+        else if (y > 1.2 - 0.2812 - eps_)
             values[switch2Idx] = 0.953 + (((1.2 - y) - 0.2664)/0.0148)*(0.988 - 0.953);
-        else if (y > 1.2 - 0.3000)
+        else if (y > 1.2 - 0.3000 - eps_)
             values[switch2Idx] = 0.988;
         else
             values[switch2Idx] = 1.e-4;
     }
 
-    const Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
 } //end namespace

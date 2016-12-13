@@ -116,8 +116,6 @@ public:
     ZeroEqTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        eps_ = 1e-6;
-
         injectionVelocity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionVelocity);
     }
 
@@ -240,7 +238,7 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->bBoxMax()[1] - eps_; }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     Scalar injectionVelocity_;
 };
 
