@@ -24,6 +24,8 @@
 #ifndef DUMUX_1P2C_OUTFLOW_PROBLEM_HH
 #define DUMUX_1P2C_OUTFLOW_PROBLEM_HH
 
+#include <dumux/implicit/box/properties.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
@@ -43,11 +45,11 @@ namespace Properties
 #if NONISOTHERMAL
 NEW_TYPE_TAG(OnePTwoCOutflowProblem, INHERITS_FROM(OnePTwoCNI));
 NEW_TYPE_TAG(OnePTwoCOutflowBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCOutflowProblem));
-NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCModel, OnePTwoCOutflowProblem));
+NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCOutflowProblem));
 #else
 NEW_TYPE_TAG(OnePTwoCOutflowProblem, INHERITS_FROM(OnePTwoC));
 NEW_TYPE_TAG(OnePTwoCOutflowBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCOutflowProblem));
-NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCModel, OnePTwoCOutflowProblem));
+NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCOutflowProblem));
 #endif
 
 // Set the grid type
@@ -112,47 +114,39 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
 template <class TypeTag>
 class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        // world dimension
-        dimWorld = GridView::dimensionworld
-    };
-    enum {
+    enum
+    {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
         massOrMoleFracIdx = Indices::massOrMoleFracIdx,
+
+        // indices for the non-isothermal case
 #if NONISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx
+        temperatureIdx = Indices::temperatureIdx,
+        energyEqIdx = Indices::energyEqIdx,
 #endif
-    };
-    enum {
-        // index of the transport equation
+
+        // indices of the equations
         conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::transportEqIdx,
-#if NONISOTHERMAL
-        energyEqIdx = Indices::energyEqIdx
-#endif
+        transportEqIdx = Indices::transportEqIdx
     };
-
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     //! property that defines whether mole or mass fractions are used
-        static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
+    static const int dimWorld = GridView::dimensionworld;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     OnePTwoCOutflowProblem(TimeManager &timeManager, const GridView &gridView)
@@ -167,15 +161,11 @@ public:
                                              Problem,
                                              Name);
 
-        //stating in the console whether mole or mass fractions are used
+        // stating in the console whether mole or mass fractions are used
         if(useMoles)
-        {
             std::cout<<"problem uses mole fractions"<<std::endl;
-        }
         else
-        {
             std::cout<<"problem uses mass fractions"<<std::endl;
-        }
     }
 
     /*!
@@ -215,55 +205,49 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes values;
+
         if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
-        {
             values.setAllDirichlet();
-        }
         else
-        {
             values.setAllNeumann();
-        }
 
 //         outflow condition for the transport equation at right boundary
-        if(globalPos[0] > this->bBoxMax()[0] - eps_)
-            {
-                values.setOutflow(transportEqIdx);
-#if NONISOTHERMAL
-                values.setOutflow(energyEqIdx);
-#endif
-            }
+//         if(globalPos[0] > this->bBoxMax()[0] - eps_)
+//             {
+//                 values.setOutflow(transportEqIdx);
+// #if NONISOTHERMAL
+//                 values.setOutflow(energyEqIdx);
+// #endif
+//             }
 //        values.setAllNeumann();
+        return values;
     }
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        PrimaryVariables values = initial_(globalPos);
 
-//        condition for the N2 molefraction at left boundary
+        // condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_)
-            {
-                values[massOrMoleFracIdx] = 2.0e-5;
+        {
+            values[massOrMoleFracIdx] = 2.0e-5;
 #if NONISOTHERMAL
-                values[temperatureIdx] = 300.;
+            values[temperatureIdx] = 300.;
 #endif
-            }
+        }
 
-
+        return values;
     }
 
     /*!
@@ -276,15 +260,8 @@ public:
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    void neumann(PrimaryVariables &priVars,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
-    {
-        priVars = 0;
-    }
+    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
 
     // \}
 
@@ -304,38 +281,33 @@ public:
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
-    void sourceAtPos(PrimaryVariables &priVars,
-                     const GlobalPosition &globalPos) const
-    {
-        priVars = Scalar(0.0);
-    }
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    { return PrimaryVariables(0.0); }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
-    {
-        initial_(values, globalPos);
-    }
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    { return initial_(globalPos); }
 
     // \}
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVariables &priVars,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables priVars;
         priVars[pressureIdx] = 2e5 - 1e5*globalPos[0]; // initial condition for the pressure
         priVars[massOrMoleFracIdx] = 0.0;  // initial condition for the N2 molefraction
 #if NONISOTHERMAL
         priVars[temperatureIdx] = 290.;
 #endif
+        return priVars;
     }
 
     const Scalar eps_;

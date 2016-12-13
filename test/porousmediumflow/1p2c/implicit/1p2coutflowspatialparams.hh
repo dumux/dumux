@@ -40,20 +40,19 @@ namespace Dumux
 template<class TypeTag>
 class OnePTwoCOutflowSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
-    typedef ImplicitSpatialParamsOneP<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePTwoCOutflowSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    OnePTwoCOutflowSpatialParams(const Problem& problem, const GridView &gridView)
+        : ParentType(problem, gridView)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
@@ -65,58 +64,31 @@ public:
     ~OnePTwoCOutflowSpatialParams()
     {}
 
-
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSolution the global solution vector
-     */
-    void update(const SolutionVector &globalSolution)
-    {
-    }
-
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       const int scvIdx) const
-    {
-            return permeability_;
-    }
+    Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
+    { return permeability_; }
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
+     * \param globalPos The global position
      */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-            return porosity_;
-    }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
 
     /*!
      * \brief Define the dispersivity.
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
+     * \param scv The sub-control volume
      */
-    double dispersivity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-        return 0;
-    }
+    Scalar dispersivity(const Element &element,
+                        const SubControlVolume& scv) const
+    { return 0; }
 
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
@@ -124,15 +96,11 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param scv The sub-control volume
      */
     Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
+                             const SubControlVolume& scv) const
+    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
@@ -140,30 +108,21 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param scv The sub-control volume
      */
     Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
+                        const SubControlVolume& scv) const
+    { return 2700; /*density of granite [kg/m^3]*/ }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param scv The sub-control volume
      */
     Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
-    {
-        return lambdaSolid_;
-    }
+                                    const SubControlVolume& scv) const
+    { return lambdaSolid_; }
 
 
 
