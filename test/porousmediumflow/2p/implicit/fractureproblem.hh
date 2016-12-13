@@ -51,7 +51,7 @@ NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem))
 SET_BOOL_PROP(FractureCCProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(FractureCCProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(FractureCCProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(FractureCCProblem, SolutionDependentParameters, false);
+SET_BOOL_PROP(FractureCCProblem, SolutionDependentAdvection, false);
 
 #if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
