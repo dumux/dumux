@@ -73,22 +73,16 @@ namespace Dumux
 template<class TypeTag >
 class OnePTwoCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum { phaseIdx = Indices::phaseIdx };
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    static const int phaseIdx = Indices::phaseIdx;
+    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
     /*!
@@ -102,7 +96,7 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
@@ -114,17 +108,19 @@ public:
         ScalarField &massFraction1 = *writer.allocateManagedBuffer(numDofs);
         ScalarField &rho = *writer.allocateManagedBuffer(numDofs);
         ScalarField &mu = *writer.allocateManagedBuffer(numDofs);
-        VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
-        if (velocityOutput.enableOutput())
-        {
-            // initialize velocity field
-            for (unsigned int i = 0; i < numDofs; ++i)
-            {
-                (*velocity)[i] = Scalar(0);
-            }
-        }
+        // TODO: Implement velocity output
+        // VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+
+        // if (velocityOutput.enableOutput())
+        // {
+        //     // initialize velocity field
+        //     for (unsigned int i = 0; i < numDofs; ++i)
+        //     {
+        //         (*velocity)[i] = Scalar(0);
+        //     }
+        // }
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
@@ -135,39 +131,37 @@ public:
 
             rank[eIdx] = this->gridView_().comm().rank();
 
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), element);
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               element,
-                               fvGeometry,
-                               false /* oldSol? */);
+            auto elemVolVars = localView(this->curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            for (auto&& scv : scvs(fvGeometry))
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                const auto& volVars = elemVolVars[scv];
+                const auto dofIdxGlobal = scv.dofIndex();
 
-                pressure[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
-                delp[dofIdxGlobal] = elemVolVars[scvIdx].pressure() - 1e5;
-                moleFraction0[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
-                moleFraction1[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
-                massFraction0[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
-                massFraction1[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
-                rho[dofIdxGlobal] = elemVolVars[scvIdx].density();
-                mu[dofIdxGlobal] = elemVolVars[scvIdx].viscosity();
+                pressure[dofIdxGlobal] = volVars.pressure(phaseIdx);
+                delp[dofIdxGlobal] = volVars.pressure(phaseIdx) - 1e5;
+                moleFraction0[dofIdxGlobal] = volVars.moleFraction(phaseIdx, 0);
+                moleFraction1[dofIdxGlobal] = volVars.moleFraction(phaseIdx, 1);
+                massFraction0[dofIdxGlobal] = volVars.massFraction(phaseIdx, 0);
+                massFraction1[dofIdxGlobal] = volVars.massFraction(phaseIdx, 1);
+                rho[dofIdxGlobal] = volVars.density(phaseIdx);
+                mu[dofIdxGlobal] = volVars.viscosity(phaseIdx);
             }
 
-            // velocity output
-            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
+            // TODO: implement velocity output
+            // velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
         }
 
         writer.attachDofData(pressure, "P", isBox);
         writer.attachDofData(delp, "delp", isBox);
-        if (velocityOutput.enableOutput())
-        {
-            writer.attachDofData(*velocity,  "velocity", isBox, dim);
-        }
+        // if (velocityOutput.enableOutput())
+        // {
+        //     writer.attachDofData(*velocity,  "velocity", isBox, dim);
+        // }
         char nameMoleFraction0[42], nameMoleFraction1[42];
         snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
         snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));

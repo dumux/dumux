@@ -31,11 +31,10 @@
 
 #include "properties.hh"
 #include "model.hh"
-#include "localresidual.hh"
 #include "volumevariables.hh"
-#include "fluxvariables.hh"
 #include "indices.hh"
 
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -59,16 +58,16 @@ SET_SCALAR_PROP(OnePTwoC, Scaling, 1); //!< Scaling of the model is set to 1 by 
 SET_BOOL_PROP(OnePTwoC, UseMoles, true); //!< Define that mole fractions are used in the balance equations
 
 //! Use the 1p2c local residual function for the 1p2c model
-SET_TYPE_PROP(OnePTwoC, LocalResidual, OnePTwoCLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
+
+//! We set the replaceCompIdx to 0, i.e. the first equation is substituted with the total mass balande
+SET_INT_PROP(OnePTwoC, ReplaceCompEqIdx, 0);
 
 //! define the model
 SET_TYPE_PROP(OnePTwoC, Model, OnePTwoCModel<TypeTag>);
 
 //! define the VolumeVariables
 SET_TYPE_PROP(OnePTwoC, VolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
-
-//! define the FluxVariables
-SET_TYPE_PROP(OnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -113,6 +112,11 @@ SET_BOOL_PROP(OnePTwoC, VtkAddVelocity, false);
 // enable gravity by default
 SET_BOOL_PROP(OnePTwoC, ProblemEnableGravity, true);
 
+//physical processes to be considered by the isothermal model
+SET_BOOL_PROP(OnePTwoC, EnableAdvection, true);
+SET_BOOL_PROP(OnePTwoC, EnableMolecularDiffusion, true);
+SET_BOOL_PROP(OnePTwoC, EnableEnergyBalance, false);
+
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
@@ -143,17 +147,19 @@ SET_PROP(OnePTwoCNI, ThermalConductivityModel)
 // set isothermal Model
 SET_TYPE_PROP(OnePTwoCNI, IsothermalModel, OnePTwoCModel<TypeTag>);
 
-// set isothermal FluxVariables
-SET_TYPE_PROP(OnePTwoCNI, IsothermalFluxVariables, OnePTwoCFluxVariables<TypeTag>);
-
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePTwoCNI, IsothermalVolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(OnePTwoCNI, IsothermalLocalResidual, OnePTwoCLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(OnePTwoCNI, IsothermalIndices, OnePTwoCIndices<TypeTag>);
+
+//physical processes to be considered by the non-isothermal model
+SET_BOOL_PROP(OnePTwoCNI, EnableAdvection, true);
+SET_BOOL_PROP(OnePTwoCNI, EnableMolecularDiffusion, true);
+SET_BOOL_PROP(OnePTwoCNI, EnableEnergyBalance, true);
 
 //set isothermal NumEq
 SET_INT_PROP(OnePTwoCNI, IsothermalNumEq, 2);

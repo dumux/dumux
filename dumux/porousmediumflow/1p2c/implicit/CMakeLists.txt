@@ -1,9 +1,7 @@
 
 #install headers
 install(FILES
-fluxvariables.hh
 indices.hh
-localresidual.hh
 model.hh
 properties.hh
 propertydefaults.hh
