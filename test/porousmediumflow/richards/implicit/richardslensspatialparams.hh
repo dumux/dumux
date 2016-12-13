@@ -194,7 +194,7 @@ private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
+            if (globalPos[i] < lensLowerLeft_[i] - eps_ || globalPos[i] > lensUpperRight_[i] + eps_)
                 return false;
         }
         return true;
@@ -207,6 +207,7 @@ private:
     Scalar outerK_;
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
+    static constexpr Scalar eps_ = 3e-6;
 };
 
 } // end namespace

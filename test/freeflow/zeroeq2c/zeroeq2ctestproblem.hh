@@ -222,7 +222,7 @@ private:
             values[velocityXIdx] = injectionVelocity_;
 
         Scalar middle = 0.5 * (this->bBoxMax()[1] - this->bBoxMin()[1]);
-        if (onLeftBoundary_(globalPos) && globalPos[1] > middle - 0.2 && globalPos[1] < middle + 0.2)
+        if (onLeftBoundary_(globalPos) && globalPos[1] > middle - 0.2 - eps_ && globalPos[1] < middle + 0.2 + eps_)
             values[massOrMoleFracIdx] = injectionConcentration_;
 
         values[pressureIdx] = 1e5;

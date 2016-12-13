@@ -135,7 +135,6 @@ class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 public:
     ThreePNIConvectionProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
-        , eps_(1e-6)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -381,7 +380,7 @@ private:
     Scalar pressureHigh_;
     Scalar pressureLow_;
     Scalar darcyVelocity_;
-    const Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     int outputInterval_;
 };

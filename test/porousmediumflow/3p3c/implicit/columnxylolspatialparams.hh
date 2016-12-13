@@ -272,7 +272,7 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
-        if (0.90 <= globalPos[1])
+        if (0.90 - eps_ <= globalPos[1])
             return true;
         else return false;
     }
@@ -290,6 +290,8 @@ private:
     MaterialLawParams coarseMaterialParams_;
 
     Scalar lambdaSolid_;
+
+    static constexpr Scalar eps_ = 1e-6;
 };
 
 }

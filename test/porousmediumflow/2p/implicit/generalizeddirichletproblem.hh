@@ -113,7 +113,6 @@ public:
     GeneralizedDirichletProblem(TimeManager &timeManager,
                                 const GridView &gridView)
     : ParentType(timeManager, gridView)
-    , eps_(3e-6)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
     }
@@ -193,7 +192,7 @@ public:
     }
 
 private:
-    Scalar eps_;
+    static constexpr Scalar eps_ = 3e-6;
     std::string name_;
 };
 }

@@ -298,7 +298,7 @@ public:
         values[pressureIdx] = reservoirPressure_;
         values[switchIdx]   = initLiqSaturation_;                 // Sl primary variable
         values[xlNaClIdx]   = massTomoleFrac_(outerSalinity_);     // mole fraction
-        if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 20.0 - eps_)
+        if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 19.0 + eps_)
             values[precipNaClIdx] = initPrecipitatedSalt2_; // [kg/m^3]
         else
             values[precipNaClIdx] = initPrecipitatedSalt1_; // [kg/m^3]

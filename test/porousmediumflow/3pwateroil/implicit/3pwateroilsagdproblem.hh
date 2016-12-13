@@ -141,7 +141,7 @@ public:
      */
 
     SagdProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView), eps_(1e-6), pOut_(4e6)
+        : ParentType(timeManager, gridView), pOut_(4e6)
     {
 
         maxDepth_ = 400.0; // [m]
@@ -430,7 +430,7 @@ private:
     }
 
     Scalar maxDepth_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     Scalar pIn_;
     Scalar pOut_;
     Scalar totalMassProducedOil_;

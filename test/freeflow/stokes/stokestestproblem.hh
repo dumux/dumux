@@ -112,9 +112,7 @@ class StokesTestProblem : public StokesProblem<TypeTag>
 public:
     StokesTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
-    {
-        eps_ = 1e-6;
-    }
+    {}
 
     /*!
      * \name Problem parameters
@@ -260,7 +258,7 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->bBoxMax()[1] - eps_; }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
 };
 
 } //end namespace

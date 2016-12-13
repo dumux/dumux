@@ -130,8 +130,6 @@ public:
     Stokes2cniTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        eps_ = 1e-6;
-
         // initialize the tables of the fluid system
         FluidSystem::init();
 
@@ -236,8 +234,8 @@ private:
         values[pressureIdx] = 1e5 + 1.189*this->gravity()[1]*globalPos[1];
         values[massOrMoleFracIdx] = 1e-4;
         values[temperatureIdx] = 283.15;
-        if(globalPos[0] < 0.75 && globalPos[0] > 0.25 &&
-                globalPos[1] < 0.75 && globalPos[1] > 0.25)
+        if(globalPos[0] < 0.75 + eps_ && globalPos[0] > 0.25 - eps_ &&
+                globalPos[1] < 0.75 + eps_ && globalPos[1] > 0.25 - eps_)
         {
             values[massOrMoleFracIdx] = 0.9e-4;
             values[temperatureIdx] = 284.15;
@@ -274,7 +272,7 @@ private:
                 || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     Scalar velocity_;
 };
 } //end namespace

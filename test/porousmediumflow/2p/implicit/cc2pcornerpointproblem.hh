@@ -132,7 +132,6 @@ public:
     : ParentType(timeManager, gridView), gravity_(0)
     {
         gravity_[dimWorld-1] = 9.81;
-        eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
 
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
@@ -232,7 +231,7 @@ public:
         // set no-flux on top and bottom, hydrostatic on the rest
         // use the intersection normal to decide
         const GlobalPosition normal = intersection.centerUnitOuterNormal();
-        if (std::abs(normal[dimWorld-1]) > 0.5)
+        if (std::abs(normal[dimWorld-1]) > 0.5 - eps_)
             values.setAllNeumann();
         else
             values.setAllDirichlet();
@@ -330,7 +329,7 @@ public:
 
 private:
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 3e-6;
     std::string name_;
     GlobalPosition gravity_;
     int injectionElement_;

@@ -114,7 +114,7 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
 TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView), eps_(1e-6), depthBOR_(1000.0)
+ParentType(timeManager, gridView), depthBOR_(1000.0)
 {}
 
 /*!
@@ -168,7 +168,7 @@ Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
  */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
-    if (globalPos[0] > this->bBoxMax()[0]-1E-6 || globalPos[0] < 1e-6)
+    if (globalPos[0] > this->bBoxMax()[0] - eps_ || globalPos[0] < eps_)
         bcTypes.setAllDirichlet();
     else
         // all other boundaries
@@ -202,7 +202,7 @@ void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos)
     Scalar temp = temperatureAtPos(globalPos);
 
     // Dirichlet for pressure equation
-    bcValues[Indices::pressureEqIdx] = (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
+    bcValues[Indices::pressureEqIdx] = (globalPos[0] < eps_) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
             : (2e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1]);
 
     // Dirichlet values for transport equations
@@ -239,7 +239,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
     this->setZero(sourceValues);
-    if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
+    if (fabs(globalPos[0] - 4.8) < 0.5 + eps_ && fabs(globalPos[1] - 4.8) < 0.5 + eps_)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 //! Flag for the type of initial conditions
@@ -262,7 +262,7 @@ private:
 GlobalPosition lowerLeft_;
 GlobalPosition upperRight_;
 
-const Scalar eps_;
+static constexpr Scalar eps_ = 1e-6;
 const Scalar depthBOR_;
 };
 } //end namespace
