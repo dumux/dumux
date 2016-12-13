@@ -179,7 +179,7 @@ public:
         for (std::size_t j = 0; j < numEqFace; ++j)
             x[faceIdx][i][j] = y[i*numEqFace + j + x[cellCenterIdx].N()*numEqCellCenter];
 
-    printmatrix(std::cout,M, "umfpack", "");
+//     printmatrix(std::cout,M, "umfpack", "");
 
     return result_.converged;
   }

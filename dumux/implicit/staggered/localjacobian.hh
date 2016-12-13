@@ -205,8 +205,8 @@ private:
         // compute the derivatives of the face dofs with respect to face dofs
         dFacedFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
 
-        printmatrix(std::cout, matrix[cellCenterIdx][cellCenterIdx], "A11 neu", "");
-        printmatrix(std::cout, matrix[cellCenterIdx][faceIdx], "A12 neu", "");
+//         printmatrix(std::cout, matrix[cellCenterIdx][cellCenterIdx], "A11 neu", "");
+//         printmatrix(std::cout, matrix[cellCenterIdx][faceIdx], "A12 neu", "");
     }
 
      /*!
@@ -409,7 +409,7 @@ private:
                         prevGlobalFaceVars, curGlobalFaceVars,
                         elemBcTypes, elemFluxVarsCache);
 
-            auto originalLocalResidual = this->localResidual().faceResidual(scvf.localFaceIdx());
+            const auto originalLocalResidual = this->localResidual().faceResidual(scvf.localFaceIdx());
 
             for(const auto& globalJ : faceToFaceStencil)
             {
