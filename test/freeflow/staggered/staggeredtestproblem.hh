@@ -64,9 +64,6 @@ SET_TYPE_PROP(StaggeredTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(StaggeredTestProblem, Problem, Dumux::StaggeredTestProblem<TypeTag> );
 
-// Set the spatial parameters
-// SET_TYPE_PROP(StaggeredTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeTag> );
-
 SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFluxVariablesCache, true);
@@ -160,7 +157,7 @@ public:
         return name_;
     }
 
-    bool shouldWriteRestartFile()
+    bool shouldWriteRestartFile() const
     {
         return false;
     }
@@ -271,7 +268,7 @@ public:
     GlobalPosition initialVelocityAtPos(const GlobalPosition &globalPos) const
     {
         GlobalPosition velocity;
-        velocity[0] = 1.0;
+        velocity[0] = 0.1;
         velocity[1] = 0.0;
         return velocity;
 
@@ -288,8 +285,12 @@ public:
      */
     GlobalPosition dirichletVelocityAtPos(const GlobalPosition &pos) const
     {
-        GlobalPosition velocity;
-        velocity[0] = 1.0;
+        GlobalPosition velocity(0.0);
+        if(pos[1] < 1e-6 || pos[1] > this->bBoxMax()[1] - 1e-6)
+            velocity[0] = 0.0;
+        else
+            velocity[0] = 0.15;
+
         velocity[1] = 0.0;
         return velocity;
     }
