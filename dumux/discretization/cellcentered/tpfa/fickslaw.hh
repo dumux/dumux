@@ -62,7 +62,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -79,7 +79,7 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
                        int phaseIdx, int compIdx,
-                       const FluxVarsCache& fluxVarsCache,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
                        bool useMoles = true)
     {
         // diffusion tensors are always solution dependent
