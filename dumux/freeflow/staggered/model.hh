@@ -58,6 +58,7 @@ class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry) GlobalFVGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
@@ -70,6 +71,8 @@ class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { dofCodim = isBox ? dim : 0 };
     using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
     using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -90,6 +93,7 @@ public:
                             MultiWriter &writer)
     {
         // TODO: implement vtk output properly, account for 3d
+        using  VectorField = Dune::BlockVector<Dune::FieldVector<double, dimWorld> >;
 
         // create the required scalar fields
         const auto numElements = this->gridView_().size(0);
@@ -99,6 +103,14 @@ public:
         auto *v_x_neg = writer.allocateManagedBuffer(numElements);
         auto *v_y_pos = writer.allocateManagedBuffer(numElements);
         auto *v_y_neg = writer.allocateManagedBuffer(numElements);
+
+        VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numElements);
+
+        // initialize velocity field
+        for (unsigned int i = 0; i < numElements; ++i)
+        {
+            (*velocity)[i] = Scalar(0);
+        }
 
        auto *rank = writer.allocateManagedBuffer(numElements);
 
@@ -121,26 +133,30 @@ public:
 
                 (*p)[dofIdxGlobal] = volVars.pressure();
 
+                GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
                     auto dirIdx = scvf.directionIndex();
 
+                    velocityVector[dirIdx] += 0.5*origFaceVars.velocity();
+
                     if(scvf.unitOuterNormal()[dirIdx] > 0.0)
                     {
                         if(dirIdx == 0)
-                            (*v_x_pos) = origFaceVars.velocity();
+                            (*v_x_pos)[dofIdxGlobal] = origFaceVars.velocity();
                         if(dirIdx == 1)
-                            (*v_y_pos) = origFaceVars.velocity();
+                            (*v_y_pos)[dofIdxGlobal] = origFaceVars.velocity();
                     }
                     else
                     {
                         if(dirIdx == 0)
-                            (*v_x_neg) = origFaceVars.velocity();
+                            (*v_x_neg)[dofIdxGlobal] = origFaceVars.velocity();
                         if(dirIdx == 1)
-                            (*v_y_neg) = origFaceVars.velocity();
+                            (*v_y_neg)[dofIdxGlobal] = origFaceVars.velocity();
                     }
                 }
+                (*velocity)[dofIdxGlobal] = velocityVector;
             }
         }
         writer.attachDofData(*p, "p", isBox);
@@ -149,6 +165,7 @@ public:
         writer.attachDofData(*v_y_pos, "v_y_pos", isBox);
         writer.attachDofData(*v_y_neg, "v_y_neg", isBox);
         writer.attachCellData(*rank, "process rank");
+        writer.attachDofData(*velocity,  "velocity", isBox, dim);
     }
 
 
