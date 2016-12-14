@@ -165,7 +165,9 @@ public:
                                               const GlobalFaceVars& globalFaceVars)
     {
         FacePrimaryVariables gravityTerm(0.0);
-        gravityTerm += this->problem().gravity()[scvf.directionIndex()];
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        gravityTerm += this->problem().gravity()[scvf.directionIndex()] * insideVolVars.density();
         return gravityTerm;
     }
 

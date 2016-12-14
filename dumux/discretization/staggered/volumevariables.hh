@@ -87,7 +87,7 @@ public:
                 const Element &element,
                 const SubControlVolume &scv)
     {
-//         extrusionFactor_ = problem.boxExtrusionFactor(element, scv);
+        extrusionFactor_ = problem.boxExtrusionFactor(element, scv);
         ccPriVars_ = ccPriVars;
     }
 
