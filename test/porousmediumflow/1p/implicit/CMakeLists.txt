@@ -3,7 +3,11 @@ add_subdirectory(pointsources)
 add_input_file_links()
 add_gstat_file_links()
 
-add_executable(test_mpfa1p test_mpfa1p.cc)
+dune_symlink_to_source_files(FILES "tubesconvergencetest.py")
+
+set(CMAKE_BUILD_TYPE Debug)
+
+add_executable(test_mpfa1p EXCLUDE_FROM_ALL test_mpfa1p.cc)
 
 # isothermal tests
 add_dumux_test(test_box1p test_box1p test_box1p.cc
@@ -70,12 +74,12 @@ add_dumux_test(test_cc1pniconvection test_cc1pniconvection test_cc1pniconvection
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconvection")
 
 # dim < dimWorld tests with foamgrid
-add_dumux_test(test_box1p1d3d test_box1p1d3d test_box1p1d3d.cc
+add_dumux_test(test_box1pnetwork1d3d test_box1pnetwork1d3d test_box1pnetwork1d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox1d3d-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox1d3d-00001.vtp
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p1d3d")
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1pboxnetwork1d3d-reference.vtp
+                         ${CMAKE_CURRENT_BINARY_DIR}/1pboxnetwork1d3d-00001.vtp
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pnetwork1d3d")
 
 add_dumux_test(test_box1pfracture2d3d test_box1pfracture2d3d test_box1pfracture2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -84,12 +88,9 @@ add_dumux_test(test_box1pfracture2d3d test_box1pfracture2d3d test_box1pfracture2
                          ${CMAKE_CURRENT_BINARY_DIR}/1pboxfracture2d3d-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pfracture2d3d")
 
-add_dumux_test(test_cc1p1d3d test_cc1p1d3d test_cc1p1d3d.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc1d3d-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc1d3d-00001.vtp
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p1d3d")
+dune_add_test(SOURCES test_cc1pnetwork1d3d.cc
+              NAME test_cc1pnetwork1d3d
+              COMMAND ./tubesconvergencetest.py test_cc1pnetwork1d3d)
 
 add_dumux_test(test_cc1pfracture2d3d test_cc1pfracture2d3d test_cc1pfracture2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
