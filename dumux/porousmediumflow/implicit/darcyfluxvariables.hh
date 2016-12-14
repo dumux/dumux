@@ -213,26 +213,21 @@ protected:
             // correct the pressure gradient by the gravitational acceleration
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
-                // ask for the gravitational acceleration at the given SCV face
-                GlobalPosition g(problem.gravityAtPos(face().ipGlobal));
-
-                // calculate the phase density at the integration point. we
-                // only do this if the wetting phase is present in both cells
+                // average the phase density at the integration point.
                 Scalar SI = elemVolVars[face().i].fluidState().saturation(phaseIdx);
                 Scalar SJ = elemVolVars[face().j].fluidState().saturation(phaseIdx);
                 Scalar rhoI = elemVolVars[face().i].fluidState().density(phaseIdx);
                 Scalar rhoJ = elemVolVars[face().j].fluidState().density(phaseIdx);
+                // reduce influence if saturation is very small
                 Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
                 Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                // check whether the phase is not present in both phase
                 if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
-                    // doesn't matter because no wetting phase is present in
-                    // both cells!
                     fI = fJ = 0.5;
-                const Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
                 // make gravity acceleration a force
-                GlobalPosition f(g);
-                f *= density;
+                GlobalPosition f(problem.gravityAtPos(face().ipGlobal));
+                f *= (fI*rhoI + fJ*rhoJ)/(fI + fJ); // gravity times averaged density
 
                 // calculate the final potential gradient
                 potentialGrad_[phaseIdx] -= f;
