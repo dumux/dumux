@@ -47,7 +47,7 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -127,7 +127,7 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const FluxVariablesCache& fluxVarsCache)
+                                 const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
         fluxVars.initAndComputeFluxes(this->problem(),
@@ -135,7 +135,7 @@ public:
                                       fvGeometry,
                                       elemVolVars,
                                       scvf,
-                                      fluxVarsCache);
+                                      elemFluxVarsCache);
 
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);
