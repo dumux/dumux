@@ -22,8 +22,8 @@
  * \brief Definition of the spatial parameters for the 1p2c
  *        outlfow problem.
  */
-#ifndef DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
-#define DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
+#ifndef DUMUX_1P2C_TEST_SPATIAL_PARAMS_HH
+#define DUMUX_1P2C_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 
@@ -38,7 +38,7 @@ namespace Dumux
  *        outflow problem.
  */
 template<class TypeTag>
-class OnePTwoCOutflowSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePTwoCTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
     using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -51,7 +51,7 @@ class OnePTwoCOutflowSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePTwoCOutflowSpatialParams(const Problem& problem, const GridView &gridView)
+    OnePTwoCTestSpatialParams(const Problem& problem, const GridView &gridView)
         : ParentType(problem, gridView)
     {
         permeability_ = 1e-10;
@@ -61,7 +61,7 @@ public:
         lambdaSolid_ = 2.8;
     }
 
-    ~OnePTwoCOutflowSpatialParams()
+    ~OnePTwoCTestSpatialParams()
     {}
 
     /*!

@@ -21,16 +21,17 @@
  * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of nitrogen dissolved in the water phase.
  */
-#ifndef DUMUX_1P2C_OUTFLOW_PROBLEM_HH
-#define DUMUX_1P2C_OUTFLOW_PROBLEM_HH
+#ifndef DUMUX_1P2C_TEST_PROBLEM_HH
+#define DUMUX_1P2C_TEST_PROBLEM_HH
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
-#include "1p2coutflowspatialparams.hh"
+#include "1p2ctestspatialparams.hh"
 
 #define NONISOTHERMAL 0
 
@@ -38,7 +39,7 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class OnePTwoCOutflowProblem;
+class OnePTwoCTestProblem;
 
 namespace Properties
 {
@@ -47,39 +48,40 @@ NEW_TYPE_TAG(OnePTwoCOutflowProblem, INHERITS_FROM(OnePTwoCNI));
 NEW_TYPE_TAG(OnePTwoCOutflowBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCOutflowProblem));
 NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCOutflowProblem));
 #else
-NEW_TYPE_TAG(OnePTwoCOutflowProblem, INHERITS_FROM(OnePTwoC));
-NEW_TYPE_TAG(OnePTwoCOutflowBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCOutflowProblem));
-NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCOutflowProblem));
+NEW_TYPE_TAG(OnePTwoCTestProblem, INHERITS_FROM(OnePTwoC));
+NEW_TYPE_TAG(OnePTwoCTestBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCTestProblem));
+NEW_TYPE_TAG(OnePTwoCTestCCProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCTestProblem));
+NEW_TYPE_TAG(OnePTwoCTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCTestProblem));
 #endif
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCOutflowProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCTestProblem, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCOutflowProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCOutflowProblem, Problem, OnePTwoCOutflowProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCTestProblem, Problem, OnePTwoCTestProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCOutflowProblem,
+SET_TYPE_PROP(OnePTwoCTestProblem,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCOutflowProblem,
+SET_TYPE_PROP(OnePTwoCTestProblem,
               SpatialParams,
-              OnePTwoCOutflowSpatialParams<TypeTag>);
+              OnePTwoCTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCTestProblem, UseMoles, true);
 
 // Enable velocity output
-SET_BOOL_PROP(OnePTwoCOutflowProblem, VtkAddVelocity, true);
+SET_BOOL_PROP(OnePTwoCTestProblem, VtkAddVelocity, true);
 
 // Disable gravity
-SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePTwoCTestProblem, ProblemEnableGravity, false);
 }
 
 
@@ -100,7 +102,8 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * The water phase flows from the left side to the right due to the applied pressure
  * gradient of 1e5 Pa/m. The nitrogen is transported with the water flow
  * and leaves the domain at the right boundary
- * where an outflow boundary condition is applied.
+ * where again Dirichlet boundary conditions are applied. Here, the nitrogen mole
+ * fraction is set to 0.0 mol/mol.
  *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
@@ -112,7 +115,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * <tt>./test_cc1p2c -parameterFile ./test_cc1p2c.input</tt>
  */
 template <class TypeTag>
-class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePTwoCTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
 
@@ -149,7 +152,7 @@ class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    OnePTwoCOutflowProblem(TimeManager &timeManager, const GridView &gridView)
+    OnePTwoCTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
         , eps_(1e-6)
     {

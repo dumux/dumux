@@ -22,7 +22,7 @@
  * \brief test for the 1p2c CC model
  */
 #include <config.h>
-#include "1p2coutflowproblem.hh"
+#include "1p2ctestproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -52,6 +52,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(OnePTwoCOutflowCCProblem) ProblemTypeTag;
+    typedef TTAG(OnePTwoCTestCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
