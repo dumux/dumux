@@ -18,12 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global object of flux var caches
+ * \brief The flux variables cache filler class
  */
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_GLOBAL_FLUXVARSCACHE_FILLER_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_GLOBAL_FLUXVARSCACHE_FILLER_HH
 
 #include <dumux/implicit/properties.hh>
+#include "fluxvariablescachefillerbase.hh"
 
 namespace Dumux
 {
@@ -41,23 +42,24 @@ using CCMpfaFluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFillerImplementat
                                                                                     GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                                                     GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
-//! Implementation for only advection
+//! Implementation for purely advective problems
 template<class TypeTag>
 class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, false, false>
+               : public CCMpfaAdvectionCacheFiller<TypeTag>
 {
+    using AdvectionFiller = CCMpfaAdvectionCacheFiller<TypeTag>;
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static const bool solDependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
 
@@ -71,71 +73,13 @@ public:
                                  const SubControlVolumeFace& scvf,
                                  FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
-        // lambda function to get the permeability tensor
-        const auto* prob = &problem;
-        auto permFunction = [prob](const Element& element,
-                                   const VolumeVariables& volVars,
-                                   const SubControlVolume& scv)
-                            { return prob->spatialParams().intrinsicPermeability(scv, volVars); };
-
-        // update flux var caches
-        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
-        {
-            const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-            iv.solveLocalSystem(permFunction);
-
-            // update the transmissibilities, neumann fluxes etc in the scvf cache
-            const auto scvfIdx = scvf.index();
-            auto& cache = fluxVarsCacheContainer[scvfIdx];
-            cache.updateAdvection(scvf, iv);
-            cache.setUpdateStatus(true);
-            for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            {
-                iv.assembleNeumannFluxes(eqIdx);
-                cache.updatePhaseNeumannFlux(scvf, iv, eqIdx);
-            }
-
-            for (const auto scvfIdxJ : iv.globalScvfs())
-            {
-                if (scvfIdxJ != scvfIdx)
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                    cacheJ.updateAdvection(scvfJ, iv);
-                    cacheJ.setUpdateStatus(true);
-                    for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    {
-                        iv.assembleNeumannFluxes(eqIdx);
-                        cacheJ.updatePhaseNeumannFlux(scvfJ, iv, eqIdx);
-                    }
-                }
-            }
-        }
-        else
-        {
-            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
-            InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-            iv.solveLocalSystem(permFunction);
-
-            // update flux variables cache
-            const auto scvfIdx = scvf.index();
-            auto& cache = fluxVarsCacheContainer[scvfIdx];
-            cache.updateAdvection(scvf, iv);
-            cache.setUpdateStatus(true);
-
-            // update flux variable caches of the other scvfs of the interaction volume
-            for (const auto scvfIdxJ : iv.globalScvfs())
-            {
-                if (scvfIdxJ != scvfIdx)
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                    cacheJ.updateAdvection(scvfJ, iv);
-                    cacheJ.setUpdateStatus(true);
-                }
-            }
-        }
+        // forward to the filler for the advective quantities
+        AdvectionFiller::fillCaches(problem,
+                                    element,
+                                    fvGeometry,
+                                    elemVolVars,
+                                    scvf,
+                                    fluxVarsCacheContainer);
     }
 
     //! function to update the flux var caches during derivative calculation
@@ -147,11 +91,80 @@ public:
                                    const SubControlVolumeFace& scvf,
                                    FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
-        // Do basically nothing if advection is solution-independent
+        // Do basically nothing if advection is solution-independent. Although we have
+        // to set the update status to true here as it has been set to false before.
+        // This is for compatibility reasons with compositional models.
         if (!solDependentAdvection && useTpfaBoundary)
             fluxVarsCacheContainer[scvf.index()].setUpdateStatus(true);
         // If we don't use tpfa on the boundaries we have to update the whole thing anyway,
         // as we need the local matrices to assemble the neumann fluxes (which could be solution-dependent)
+        else
+            fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+    }
+};
+
+//! Implementation for problems considering advection & diffusion
+template<class TypeTag>
+class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, true, false>
+               : public CCMpfaAdvectionCacheFiller<TypeTag>,
+                 public CCMpfaDiffusionCacheFiller<TypeTag>
+{
+    using AdvectionFiller = CCMpfaAdvectionCacheFiller<TypeTag>;
+    using DiffusionFiller = CCMpfaDiffusionCacheFiller<TypeTag>;
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+    static const bool solDependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
+    static const bool solDependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
+
+public:
+    //! function to fill the flux var caches
+    template<class FluxVarsCacheContainer>
+    static void fillFluxVarCache(const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolumeFace& scvf,
+                                 FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+        DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+    }
+
+    //! function to update the flux var caches during derivative calculation
+    template<class FluxVarsCacheContainer>
+    static void updateFluxVarCache(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolumeFace& scvf,
+                                   FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        // Do basically nothing if the parameters are solution-independent. Although we have
+        // to set the update status to true here as it has been set to false before.
+        // This is for compatibility reasons with compositional models.
+
+        // TODO: How to treat !useTpfaBoundary???
+        if (!solDependentAdvection && !solDependentDiffusion)
+        {
+            if (useTpfaBoundary)
+                fluxVarsCacheContainer[scvf.index()].setUpdateStatus(true);
+            else
+                DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+        }
+        else if (solDependentAdvection && !solDependentDiffusion)
+            AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+        else if (!solDependentAdvection && solDependentDiffusion)
+            DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
         else
             fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
     }
