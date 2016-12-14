@@ -270,11 +270,12 @@ public:
                                 for (auto&& scvf2 : scvfs(fvGeometry))
                                 {
                                     if (scvf2.index() != scvfIdxGlobal &&
-                                        std::abs(scvf2.unitOuterNormal()*scvfNormal) < 1e-6)
+                                        std::abs(1.0 - std::abs(scvf2.unitOuterNormal()*scvfNormal)) < 1e-6)
                                     {
                                         scvfFluxes[scvfIdx] = -scvfFluxes[oppositeScvfIdx];
                                         break;
                                     }
+                                    oppositeScvfIdx++;
                                 }
                             }
                             // simplices
