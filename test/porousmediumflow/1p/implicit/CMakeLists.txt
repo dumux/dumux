@@ -5,8 +5,6 @@ add_gstat_file_links()
 
 dune_symlink_to_source_files(FILES "tubesconvergencetest.py")
 
-set(CMAKE_BUILD_TYPE Debug)
-
 add_executable(test_mpfa1p EXCLUDE_FROM_ALL test_mpfa1p.cc)
 
 # isothermal tests
