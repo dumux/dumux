@@ -1,0 +1,17 @@
+[TimeManager]
+DtInitial = 1e-1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 64 64
+
+[Problem]
+Name = test_liddrivencavity # name passed to the output routines
+LidVelocity = 1
+LiquidDensity = 1
+EnableGravity = false
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5

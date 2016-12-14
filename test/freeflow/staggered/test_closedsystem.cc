@@ -22,7 +22,7 @@
  * \brief test for the one-phase CC model
  */
 #include <config.h>
-#include "staggeredtestproblem.hh"
+#include "closedsystemtestproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -59,6 +59,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(StaggeredTestProblem) ProblemTypeTag;
+    typedef TTAG(ClosedSystemTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

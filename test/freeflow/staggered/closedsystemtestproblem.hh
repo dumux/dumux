@@ -30,6 +30,8 @@
 #include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/components/constant.hh>
+
 
 #include <dumux/linear/amgbackend.hh>
 
@@ -37,41 +39,41 @@
 namespace Dumux
 {
 template <class TypeTag>
-class StaggeredTestProblem;
+class ClosedSystemTestProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<StaggeredTestProblem<TypeTag>>
+    struct isStationary<ClosedSystemTestProblem<TypeTag>>
     { static const bool value = false; };
 }
 
 namespace Properties
 {
-NEW_TYPE_TAG(StaggeredTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(ClosedSystemTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
 
-SET_PROP(StaggeredTestProblem, Fluid)
+SET_PROP(ClosedSystemTestProblem, Fluid)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
 };
 
 // Set the grid type
-SET_TYPE_PROP(StaggeredTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ClosedSystemTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(StaggeredTestProblem, Problem, Dumux::StaggeredTestProblem<TypeTag> );
+SET_TYPE_PROP(ClosedSystemTestProblem, Problem, Dumux::ClosedSystemTestProblem<TypeTag> );
 
-SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalFVGeometryCache, true);
 
-SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(StaggeredTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalVolumeVariablesCache, true);
 
 
 // Enable gravity
-SET_BOOL_PROP(StaggeredTestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(ClosedSystemTestProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -97,7 +99,7 @@ SET_BOOL_PROP(StaggeredTestProblem, ProblemEnableGravity, true);
  * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag>
-class StaggeredTestProblem : public NavierStokesProblem<TypeTag>
+class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 {
     typedef NavierStokesProblem<TypeTag> ParentType;
 
@@ -133,13 +135,18 @@ class StaggeredTestProblem : public NavierStokesProblem<TypeTag>
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
 public:
-    StaggeredTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    ClosedSystemTestProblem(TimeManager &timeManager, const GridView &gridView)
+    : ParentType(timeManager, gridView), eps_(1e-6)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                                              std::string,
                                              Problem,
                                              Name);
+
+        lidVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             Scalar,
+                                             Problem,
+                                             LidVelocity);
     }
 
     /*!
@@ -198,10 +205,10 @@ public:
         BoundaryTypes values;
 
         Scalar eps = 1.0e-6;
-        if (globalPos[0] > this->bBoxMax()[0] - eps)
+//         if (globalPos[0] > this->bBoxMax()[0] - eps)
             values.setAllDirichlet();
-        else
-            values.setAllNeumann();
+//         else
+//             values.setAllNeumann();
 
         return values;
     }
@@ -252,7 +259,6 @@ public:
     {
         CellCenterPrimaryVariables priVars(0);
         priVars[0] = 1.0e+5; //TODO: fix indices
-        std::cout << "init from problem; " << priVars << std::endl;
         return priVars;
     }
 
@@ -268,7 +274,7 @@ public:
     GlobalPosition initialVelocityAtPos(const GlobalPosition &globalPos) const
     {
         GlobalPosition velocity;
-        velocity[0] = 0.1;
+        velocity[0] = 0.0;
         velocity[1] = 0.0;
         return velocity;
 
@@ -286,18 +292,16 @@ public:
     GlobalPosition dirichletVelocityAtPos(const GlobalPosition &pos) const
     {
         GlobalPosition velocity(0.0);
-        if(pos[1] < 1e-6 || pos[1] > this->bBoxMax()[1] - 1e-6)
-            velocity[0] = 0.0;
-        else
-            velocity[0] = 0.15;
-
-        velocity[1] = 0.0;
+        if(pos[1] > this->bBoxMax()[1] - eps_)
+            velocity[0] = lidVelocity_;
         return velocity;
     }
 
     // \}
 
 private:
+    Scalar eps_;
+    Scalar lidVelocity_;
     std::string name_;
 };
 } //end namespace

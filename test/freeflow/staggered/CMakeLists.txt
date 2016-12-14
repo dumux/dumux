@@ -1,11 +1,18 @@
 add_input_file_links()
 
-add_dumux_test(test_freeflowstaggered test_freeflowstaggered test_freeflowstaggered.cc
-               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+add_dumux_test(test_liddrivencavity test_liddrivencavity test_closedsystem.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc-00002.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_staggered")
+                 --files ${CMAKE_SOURCE_DIR}/test/references/liddrivencavity-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_liddrivencavity-00006.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_liddrivencavity test_liddrivencavity.input")
+
+add_dumux_test(test_hydrostaticpressure test_hydrostaticpressure test_closedsystem.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokeshydrostaticpressure-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure-00006.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure test_hydrostaticpressure.input")
 
 
 #install sources
