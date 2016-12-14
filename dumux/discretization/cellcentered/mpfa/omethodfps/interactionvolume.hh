@@ -147,10 +147,9 @@ public:
         this->T_ += mc.BF;
     }
 
-    template<typename UpwindFactorFunction>
-    void assembleNeumannFluxes(const UpwindFactorFunction& upwindFactor, const unsigned int eqIdx)
+    void assembleNeumannFluxes(const unsigned int eqIdx)
     {
-        ParentType::assembleNeumannFluxes(upwindFactor, eqIdx);
+        ParentType::assembleNeumannFluxes(eqIdx);
 
         if (!this->onBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return;
