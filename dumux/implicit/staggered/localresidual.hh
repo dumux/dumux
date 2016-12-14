@@ -165,24 +165,16 @@ public:
               const ElementBoundaryTypes &bcTypes,
               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        // resize the vectors for all terms
-        const auto numScv = fvGeometry.numScv();
+        // resize and reset all terms
         const auto numScvf = fvGeometry.numScvf();
-        ccResidual_.resize(numScv);
-        ccStorageTerm_.resize(numScv);
 
         ccResidual_ = 0.0;
         ccStorageTerm_ = 0.0;
 
         faceResiduals_.resize(numScvf);
         faceStorageTerms_.resize(numScvf);
-        for(int i = 0; i < numScvf; ++i)
-        {
-            faceResiduals_[i].resize(1);
-            faceStorageTerms_[i].resize(1);
-            faceResiduals_[i] = 0.0;
-            faceStorageTerms_[i] = 0.0;
-        }
+        faceResiduals_ = 0.0;
+        faceStorageTerms_ = 0.0;
 
         asImp_().evalVolumeTerms_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
         asImp_().evalFluxes_(element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
@@ -202,13 +194,13 @@ public:
     { return *problemPtr_; }
 
     const auto& ccResidual() const
-    { return ccResidual_[0]; }
+    { return ccResidual_; }
 
     const auto& faceResiduals() const
     { return faceResiduals_; }
 
     const auto& faceResidual(const int faceIdx) const
-    { return faceResiduals_[faceIdx][0]; }
+    { return faceResiduals_[faceIdx]; }
 
 
 protected:
@@ -240,7 +232,7 @@ protected:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if(!scvf.boundary())
-                ccResidual_[0] += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
+                ccResidual_ += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
         }
     }
 
@@ -257,7 +249,7 @@ protected:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if(!scvf.boundary())
-                faceResiduals_[scvf.localFaceIdx()][0] += asImp_().computeFluxForFace(scvf, fvGeometry, elemVolVars, globalFaceVars);
+                faceResiduals_[scvf.localFaceIdx()] += asImp_().computeFluxForFace(scvf, fvGeometry, elemVolVars, globalFaceVars);
         }
     }
 
@@ -276,10 +268,10 @@ protected:
             if (scvf.boundary())
             {
                 // Do the same as if the face was not on a boundary.This might need to be changed sometime...
-                ccResidual_[0] += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
+                ccResidual_ += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
 
                 // set a Dirichlet BC for the velocity. TODO: make more generic!
-                faceResiduals_[scvf.localFaceIdx()][0] = faceVars.faceVars(scvf.dofIndexSelf()).velocity() - this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
+                faceResiduals_[scvf.localFaceIdx()] = faceVars.faceVars(scvf.dofIndexSelf()).velocity() - this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
             }
         }
 
@@ -290,7 +282,7 @@ protected:
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVolVars = elemVolVars[insideScv];
-                ccResidual_[0] = insideVolVars.pressure() - 1.1e5;
+                ccResidual_ = insideVolVars.pressure() - 1.1e5;
             }
         }
     }
@@ -319,7 +311,7 @@ protected:
             CellCenterPrimaryVariables source = asImp_().computeSourceForCellCenter(element, fvGeometry, curElemVolVars, curFaceVars, scv);
             source *= scv.volume()*curExtrusionFactor;
 
-            ccResidual_[0] -= source;
+            ccResidual_ -= source;
 
             // now, treat the dofs on the facets:
             for(auto&& scvf : scvfs(fvGeometry))
@@ -327,7 +319,7 @@ protected:
                 // the source term:
                 auto faceSource = asImp_().computeSourceForFace(scvf, curElemVolVars, curFaceVars);
                 faceSource *= 0.5*scv.volume()*curExtrusionFactor;
-                faceResiduals_[scvf.localFaceIdx()][0] -= faceSource;
+                faceResiduals_[scvf.localFaceIdx()] -= faceSource;
             }
         }
     }
@@ -365,19 +357,19 @@ protected:
             prevCCStorage *= prevVolVars.extrusionFactor();
             curCCStorage *= curVolVars.extrusionFactor();
 
-            ccStorageTerm_[0] = std::move(curCCStorage);
-            ccStorageTerm_[0] -= std::move(prevCCStorage);
-            ccStorageTerm_[0] *= scv.volume();
-            ccStorageTerm_[0] /= problem().timeManager().timeStepSize();
+            ccStorageTerm_ = std::move(curCCStorage);
+            ccStorageTerm_ -= std::move(prevCCStorage);
+            ccStorageTerm_ *= scv.volume();
+            ccStorageTerm_ /= problem().timeManager().timeStepSize();
 
             // add the storage term to the residual
-            ccResidual_[0] += ccStorageTerm_[0];
+            ccResidual_ += ccStorageTerm_;
 
             // subtract the source term from the local rate
             CellCenterPrimaryVariables source = asImp_().computeSourceForCellCenter(element, fvGeometry, curElemVolVars, curFaceVars, scv);
             source *= scv.volume()*curVolVars.extrusionFactor();
 
-            ccResidual_[0] -= source;
+            ccResidual_ -= source;
 
 
             // now, treat the dofs on the facets:
@@ -386,17 +378,17 @@ protected:
                 // the storage term:
                 auto prevFaceStorage = asImp_().computeStorageForFace(scvf, prevVolVars, prevFaceVars);
                 auto curFaceStorage = asImp_().computeStorageForFace(scvf, curVolVars, prevFaceVars);
-                faceStorageTerms_[scvf.localFaceIdx()][0] = std::move(curFaceStorage);
-                faceStorageTerms_[scvf.localFaceIdx()][0] -= std::move(prevFaceStorage);
-                faceStorageTerms_[scvf.localFaceIdx()][0] *= (scv.volume()/2.0);
-                faceStorageTerms_[scvf.localFaceIdx()][0] /= problem().timeManager().timeStepSize();
+                faceStorageTerms_[scvf.localFaceIdx()] = std::move(curFaceStorage);
+                faceStorageTerms_[scvf.localFaceIdx()] -= std::move(prevFaceStorage);
+                faceStorageTerms_[scvf.localFaceIdx()] *= (scv.volume()/2.0);
+                faceStorageTerms_[scvf.localFaceIdx()] /= problem().timeManager().timeStepSize();
 
-                faceResiduals_[scvf.localFaceIdx()][0] += faceStorageTerms_[scvf.localFaceIdx()][0];
+                faceResiduals_[scvf.localFaceIdx()] += faceStorageTerms_[scvf.localFaceIdx()];
 
                 // the source term:
                 auto faceSource = asImp_().computeSourceForFace(scvf, curElemVolVars, curFaceVars);
                 faceSource *= 0.5*scv.volume()*curVolVars.extrusionFactor();
-                faceResiduals_[scvf.localFaceIdx()][0] -= faceSource;
+                faceResiduals_[scvf.localFaceIdx()] -= faceSource;
             }
         }
     }
@@ -407,10 +399,10 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    CellCenterSolutionVector ccResidual_;
-    CellCenterSolutionVector ccStorageTerm_;
-    std::vector<FaceSolutionVector> faceResiduals_;
-    std::vector<FaceSolutionVector> faceStorageTerms_;
+    CellCenterPrimaryVariables ccResidual_;
+    CellCenterPrimaryVariables ccStorageTerm_;
+    FaceSolutionVector faceResiduals_;
+    FaceSolutionVector faceStorageTerms_;
 
 private:
     Problem* problemPtr_;
