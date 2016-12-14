@@ -276,10 +276,10 @@ public:
     PrimaryVariables neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolvars,
-                             const SubControlVolumeFace& scvFace) const
+                             const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
-        return asImp_().neumannAtPos(scvFace.center());
+        return asImp_().neumannAtPos(scvf.center());
     }
 
     /*!
