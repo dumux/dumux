@@ -25,6 +25,7 @@
 #ifndef DUMUX_2P2C_INDICES_HH
 #define DUMUX_2P2C_INDICES_HH
 
+#include <dune/common/deprecated.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -77,8 +78,10 @@ public:
     static const int switchIdx = PVOffset + 1;
 
     //! Index for wetting phase pressure in a solution vector
+    DUNE_DEPRECATED_MSG("pwIdx is deprecated. Use pressureIdx instead.")
     static const int pwIdx = pressureIdx;
     //! Index of either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
+    DUNE_DEPRECATED_MSG("snOrXIdx is deprecated. Use switchIdx instead.")
     static const int snOrXIdx = switchIdx;
 
     // equation indices
