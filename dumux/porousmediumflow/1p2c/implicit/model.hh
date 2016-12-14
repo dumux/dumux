@@ -96,7 +96,7 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
@@ -110,17 +110,17 @@ public:
         ScalarField &mu = *writer.allocateManagedBuffer(numDofs);
 
         // TODO: Implement velocity output
-        // VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+        VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
-        // if (velocityOutput.enableOutput())
-        // {
-        //     // initialize velocity field
-        //     for (unsigned int i = 0; i < numDofs; ++i)
-        //     {
-        //         (*velocity)[i] = Scalar(0);
-        //     }
-        // }
+        if (velocityOutput.enableOutput())
+        {
+            // initialize velocity field
+            for (unsigned int i = 0; i < numDofs; ++i)
+            {
+                (*velocity)[i] = Scalar(0);
+            }
+        }
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
@@ -132,10 +132,10 @@ public:
             rank[eIdx] = this->gridView_().comm().rank();
 
             auto fvGeometry = localView(this->globalFvGeometry());
-            fvGeometry.bindElement(element);
+            fvGeometry.bind(element);
 
             auto elemVolVars = localView(this->curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->curSol());
+            elemVolVars.bind(element, fvGeometry, this->curSol());
 
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -153,15 +153,15 @@ public:
             }
 
             // TODO: implement velocity output
-            // velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
+            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
         }
 
         writer.attachDofData(pressure, "P", isBox);
         writer.attachDofData(delp, "delp", isBox);
-        // if (velocityOutput.enableOutput())
-        // {
-        //     writer.attachDofData(*velocity,  "velocity", isBox, dim);
-        // }
+        if (velocityOutput.enableOutput())
+        {
+            writer.attachDofData(*velocity,  "velocity", isBox, dim);
+        }
         char nameMoleFraction0[42], nameMoleFraction1[42];
         snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
         snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
