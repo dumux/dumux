@@ -40,23 +40,16 @@ namespace Dumux
 template<class TypeTag>
 class OnePSingularitySpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
-    typedef ImplicitSpatialParamsOneP<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
-
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
 public:
-    OnePSingularitySpatialParams(const GridView& gridView)
-        : ParentType(gridView)
+    OnePSingularitySpatialParams(const Problem& problem, const GridView& gridView)
+        : ParentType(problem, gridView)
     {
         permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Permeability);
         porosity_= GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Porosity);
@@ -65,27 +58,20 @@ public:
     /*!
      * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scv The sub control volume
+     * \param volVars The volume variables of the sub control volume
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 const int scvIdx) const
+    Scalar intrinsicPermeability(const SubControlVolume& scv,
+                                 const VolumeVariables& volVars) const
     {
         return permeability_;
     }
 
     /*! \brief Define the porosity in [-].
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
+     * \param scv The sub control volume
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    Scalar porosity(const SubControlVolume& scv) const
     {
         return porosity_;
     }
