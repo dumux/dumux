@@ -216,15 +216,6 @@ public:
         else
             values.setAllNeumann();
 
-//         outflow condition for the transport equation at right boundary
-//         if(globalPos[0] > this->bBoxMax()[0] - eps_)
-//             {
-//                 values.setOutflow(transportEqIdx);
-// #if NONISOTHERMAL
-//                 values.setOutflow(energyEqIdx);
-// #endif
-//             }
-//        values.setAllNeumann();
         return values;
     }
 
