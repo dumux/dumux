@@ -25,6 +25,7 @@
 #ifndef DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -66,16 +67,15 @@ SET_TYPE_PROP(OnePSingularityProblemTimeDependent, PointSource, TimeDependentPoi
 template <class TypeTag>
 class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTag>
 {
-    typedef OnePSingularityProblem<TypeTag> ParentType;
+    using ParentType = OnePSingularityProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
-
-    enum { dimWorld = GridView::dimensionworld };
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     OnePSingularityProblemTimeDependent(TimeManager &timeManager, const GridView &gridView)
