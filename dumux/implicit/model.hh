@@ -131,13 +131,13 @@ public:
         // update stencils
         stencilsVector_.update(problem);
 
-        // update the flux variables caches
-        globalfluxVarsCache_.update(problem);
-
         // initialize assembler and create matrix
         localJacobian_.init(problem);
         jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem);
+
+        // update the flux variables caches
+        globalfluxVarsCache_.update(problem);
 
         // also set the solution of the "previous" time step to the
         // initial solution.
