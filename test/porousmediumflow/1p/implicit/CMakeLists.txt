@@ -77,12 +77,12 @@ add_dumux_test(test_box1p1d3d test_box1p1d3d test_box1p1d3d.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox1d3d-00001.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p1d3d")
 
-add_dumux_test(test_box1p2d3d test_box1p2d3d test_box1p2d3d.cc
+add_dumux_test(test_box1pfracture2d3d test_box1pfracture2d3d test_box1pfracture2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox2d3d-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox2d3d-00001.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p2d3d")
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1pboxfracture2d3d-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1pboxfracture2d3d-00001.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pfracture2d3d")
 
 add_dumux_test(test_cc1p1d3d test_cc1p1d3d test_cc1p1d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -91,12 +91,12 @@ add_dumux_test(test_cc1p1d3d test_cc1p1d3d test_cc1p1d3d.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc1d3d-00001.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p1d3d")
 
-add_dumux_test(test_cc1p2d3d test_cc1p2d3d test_cc1p2d3d.cc
+add_dumux_test(test_cc1pfracture2d3d test_cc1pfracture2d3d test_cc1pfracture2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc2d3d-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc2d3d-00001.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2d3d")
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1pccfracture2d3d-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1pccfracture2d3d-00001.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pfracture2d3d")
 
 
 #install sources
@@ -106,14 +106,14 @@ install(FILES
 1pnispatialparams.hh
 1ptestproblem.hh
 1ptestspatialparams.hh
-test_box1p1d3d.cc
-test_box1p2d3d.cc
+1pboxfracture2d3d.cc
+1pboxnetwork1d3d.cc
 test_box1p.cc
 test_box1pniconduction.cc
 test_box1pniconvection.cc
 test_box1pwithamg.cc
-test_cc1p1d3d.cc
-test_cc1p2d3d.cc
+test_cc1pfracture2d3d.cc
+test_cc1pnetwork1d3d.cc
 test_cc1p.cc
 test_cc1pniconduction.cc
 test_cc1pniconvection.cc
