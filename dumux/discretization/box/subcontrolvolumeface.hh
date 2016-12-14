@@ -154,7 +154,7 @@ public:
     }
 
     //! The geometry of the sub control volume face
-    const Geometry geometry() const
+    Geometry geometry() const
     {
         return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
     }
@@ -169,6 +169,6 @@ private:
     bool boundary_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
