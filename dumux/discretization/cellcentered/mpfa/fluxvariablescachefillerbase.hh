@@ -88,10 +88,10 @@ public:
             //! set the neumann boundary conditions in case we do not use tpfa on the
             //! boundary and diffusion is not enabled (then we assume neumann BCs to be diffusive)
             if (!useTpfaBoundary && !enableDiffusion)
-                for (unsigned int eqIdx = 0; eqIdx < numPhases; ++eqIdx)
+                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 {
-                    iv.assembleNeumannFluxes(eqIdx);
-                    cache.updatePhaseNeumannFlux(scvf, iv, eqIdx);
+                    iv.assembleNeumannFluxes(phaseIdx);
+                    cache.updatePhaseNeumannFlux(scvf, iv, phaseIdx);
                 }
 
             for (const auto scvfIdxJ : iv.globalScvfs())
@@ -104,10 +104,10 @@ public:
                     cacheJ.setUpdateStatus(true);
 
                     if (!useTpfaBoundary && !enableDiffusion)
-                        for (unsigned int eqIdx = 0; eqIdx < numPhases; ++eqIdx)
+                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         {
-                            iv.assembleNeumannFluxes(eqIdx);
-                            cacheJ.updatePhaseNeumannFlux(scvfJ, iv, eqIdx);
+                            iv.assembleNeumannFluxes(phaseIdx);
+                            cacheJ.updatePhaseNeumannFlux(scvfJ, iv, phaseIdx);
                         }
                 }
             }
