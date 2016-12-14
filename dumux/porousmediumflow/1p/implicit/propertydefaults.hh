@@ -80,11 +80,11 @@ SET_TYPE_PROP(OneP, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(OneP, ImplicitMassUpwindWeight, 0.5);
+SET_SCALAR_PROP(OneP, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(OneP, ImplicitMobilityUpwindWeight, 0.5);
+SET_SCALAR_PROP(OneP, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The fluid system to use by default
 SET_TYPE_PROP(OneP, FluidSystem, FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
