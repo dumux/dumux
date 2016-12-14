@@ -381,13 +381,18 @@ private:
         mc.AL[divEqIdx_][divEqIdx_] += factor*(localD[normalDir]*shapeJacobian[3][0]);
     }
 
+    // TODO: how to do the assertion of positive coefficients for tensors?
     Tensor makeTensor_(Tensor&& tensor) const
     { return std::move(tensor); }
 
+    // turns a scalar into a tensor
     Tensor makeTensor_(Scalar&& t) const
     {
+        // make sure we have positive diffusion coefficients
+        assert(t > 0.0 && "non-positive diffusion coefficients cannot be handled by mpfa methods");
+
         Tensor T(0.0);
-        for (int i = 0; i < dim; ++i)
+        for (int i = 0; i < dimWorld; ++i)
             T[i][i] = t;
 
         return T;

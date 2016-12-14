@@ -315,11 +315,16 @@ private:
         return (tmp*normal)/detX;
     }
 
+    // calculates the omega factors entering the local matrix
     Scalar calculateOmega_(const GlobalPosition& normal,
                            const GlobalPosition& nu,
                            const Scalar detX,
                            const Scalar t) const
-    { return (normal*nu)*t/detX; }
+    {
+        // make sure we have positive diffusion coefficients
+        assert(t > 0.0 && "non-positive diffusion coefficients cannot be handled by mpfa methods");
+        return (normal*nu)*t/detX;
+    }
 
     //! Specialization for dim = 2
     template<int d = dim>

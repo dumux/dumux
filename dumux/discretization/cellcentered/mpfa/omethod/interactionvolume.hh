@@ -588,6 +588,7 @@ private:
         }
     }
 
+    // TODO: how to do the assertion of positive coefficients for tensors?
     DimVector calculateOmegas_(const LocalScvType& localScv,
                                const GlobalPosition normal,
                                const Scalar area,
@@ -607,11 +608,15 @@ private:
         return wijk;
     }
 
+    // calculates n_i^T*K_j*nu_k
     DimVector calculateOmegas_(const LocalScvType& localScv,
                                const GlobalPosition normal,
                                const Scalar area,
                                const Scalar t) const
     {
+        // make sure we have positive diffusion coefficients
+        assert(t > 0.0 && "non-positive diffusion coefficients cannot be handled by mpfa methods");
+
         DimVector wijk;
         GlobalPosition tmp(normal);
         tmp *= t;
