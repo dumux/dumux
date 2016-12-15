@@ -62,15 +62,12 @@ public:
         lambdaSolid_ = 2.8;
     }
 
-    ~OnePTwoCNISpatialParams()
-    {}
-
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param globalPos The global Position
      */
-    const Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
+    Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
     /*!
@@ -78,7 +75,7 @@ public:
      *
      * \param globalPos The global Position
      */
-    double porosityAtPos(const GlobalPosition& globalPos) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
     /*!
@@ -87,7 +84,7 @@ public:
      * \param element The current finite element
      * \param scv The sub-control volume
      */
-    double dispersivity(const Element &element,
+    Scalar dispersivity(const Element &element,
                         const SubControlVolume &scv) const
     { return 0; }
 
@@ -132,6 +129,6 @@ private:
     Scalar lambdaSolid_;
 };
 
-}
+} // end namespace Dumux
 
 #endif // DUMUX_1P2CNI_OUTFLOW_SPATIAL_PARAMS_HH

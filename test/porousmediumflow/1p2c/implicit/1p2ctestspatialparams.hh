@@ -61,9 +61,6 @@ public:
         lambdaSolid_ = 2.8;
     }
 
-    ~OnePTwoCTestSpatialParams()
-    {}
-
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
@@ -132,6 +129,6 @@ private:
     Scalar lambdaSolid_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
