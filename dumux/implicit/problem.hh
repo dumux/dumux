@@ -194,11 +194,11 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a boundaryTypes() method.");
+        //! As a default, i.e. if the user's problem does not overload any boundaryTypes method
+        //! set Dirichlet boundary conditions everywhere for all primary variables
+        BoundaryTypes bcTypes;
+        bcTypes.setAllDirichlet();
+        return bcTypes;
     }
 
     /*!
@@ -249,7 +249,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem specifies that some boundary "
                    "segments are dirichlet, but does not provide "
-                   "a dirichlet() method.");
+                   "a dirichlet() or a dirichletAtPos() method.");
     }
 
     /*!
@@ -296,12 +296,9 @@ public:
      */
     PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
-        // Throw an exception (there is no reasonable default value
-        // for Neumann conditions)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem specifies that some boundary "
-                   "segments are neumann, but does not provide "
-                   "a neumannAtPos() method.");
+        //! As a default, i.e. if the user's problem does not overload any neumann method
+        //! return no-flow Neumann boundary conditions at all Neumann boundaries
+        return PrimaryVariables(0.0);
     }
 
     /*!
@@ -350,9 +347,9 @@ public:
      */
     PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a sourceAtPos() method.");
+        //! As a default, i.e. if the user's problem does not overload any source method
+        //! return 0.0 (no source terms)
+        return PrimaryVariables(0.0);
     }
 
     /*!
@@ -449,7 +446,7 @@ public:
         // for initial values)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
-                   "a initialAtPos() method.");
+                   "an initial() or an initialAtPos() method.");
     }
 
     /*!
@@ -474,8 +471,8 @@ public:
      */
     int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
     {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide a initialPhasePresenceAtPos() method.");
+        //! As a default, i.e. if the user's problem does not overload any initialPhasePresence method
+        //! return 0 (the default phase state is depending on the model context)
         return 0;
     }
 
@@ -505,7 +502,11 @@ public:
      * are assumed to extend 1 m to the back.
      */
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    { return 1.0; }
+    {
+        //! As a default, i.e. if the user's problem does not overload any extrusion factor method
+        //! return 1.0
+        return 1.0;
+    }
 
     /*!
      * \name Simulation steering
@@ -689,9 +690,9 @@ public:
      * It could be either overwritten by the problem files, or simply
      * declared over the setName() function in the application file.
      */
-    const char *name() const
+    const std::string& name() const
     {
-        return simName_.c_str();
+        return simName_;
     }
 
     /*!
@@ -703,7 +704,7 @@ public:
      *
      * \param newName The problem's name
      */
-    void setName(const char *newName)
+    void setName(const std::string& newName)
     {
         simName_ = newName;
     }
