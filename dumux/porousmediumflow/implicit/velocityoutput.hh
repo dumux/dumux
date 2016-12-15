@@ -253,12 +253,24 @@ public:
                                                           elemFluxVarsCache);
                             scvfFluxes[scvfIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                         }
-                        // Boundary fluxes in case of Neumann conditions.
-                        // They are simply set to an average of the inner fluxes. In
-                        // this general setting, it would be very difficult to
-                        // calculate correct phase, i.e., volume, fluxes from arbitrary
-                        // Neumann conditions.
-                        else
+                    }
+
+                    // increment scvf counter
+                    scvfIdx++;
+                }
+
+                // Correct boundary fluxes in case of Neumann conditions.
+                // They are simply set to an average of the inner fluxes. In
+                // this general setting, it would be very difficult to
+                // calculate correct phase, i.e., volume, fluxes from arbitrary
+                // Neumann conditions.
+                scvfIdx = 0;
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    if (scvf.boundary())
+                    {
+                        auto bcTypes = problem_.boundaryTypes(element, scvf);
+                        if (bcTypes.hasNeumann())
                         {
                             // cubes
                             if (dim == 1 || geomType.isCube())
