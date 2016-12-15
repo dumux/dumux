@@ -55,9 +55,6 @@ SET_TYPE_PROP(TubesTestProblem, Problem, TubesTestProblem<TypeTag>);
 // Set the spatial parameters
 SET_TYPE_PROP(TubesTestProblem, SpatialParams, TubesTestSpatialParams<TypeTag>);
 
-// Set the spatial parameters
-SET_TYPE_PROP(TubesTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
-
 // the fluid
 SET_PROP(TubesTestProblem, Fluid)
 {
