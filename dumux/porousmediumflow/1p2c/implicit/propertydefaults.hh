@@ -60,7 +60,8 @@ SET_BOOL_PROP(OnePTwoC, UseMoles, true); //!< Define that mole fractions are use
 //! Use the 1p2c local residual function for the 1p2c model
 SET_TYPE_PROP(OnePTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
-//! We set the replaceCompIdx to 0, i.e. the first equation is substituted with the total mass balande
+//! We set the replaceCompIdx to 0, i.e. the first equation is substituted with
+//! the total mass balance, i.e. the phase balance
 SET_INT_PROP(OnePTwoC, ReplaceCompEqIdx, 0);
 
 //! define the model
