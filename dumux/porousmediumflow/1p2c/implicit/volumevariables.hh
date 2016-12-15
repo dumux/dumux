@@ -36,6 +36,13 @@ namespace Dumux
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the single-phase, two-component model.
+ *
+ * \note The return functions for the fluid state variables always forward to the actual
+ *       fluid state using the phaseIdx from the DuMuX property system. Furthermore, the
+ *       default value is not used, but is only here to enable calling these functions
+ *       without handing in a phase index (as in a single-phasic context there is only one phase).
+ *       This way one can use two-phase fluid systems for this one-phasic flow and transport
+ *       model by specifying which phase is present through the DuMuX property system.
  */
 template <class TypeTag>
 class OnePTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
@@ -155,26 +162,35 @@ public:
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
-    Scalar density(int pIdx = phaseIdx) const
+    Scalar density(int pIdx = 0) const
     { return fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Return the saturation
+     *
+     * This method is here for compatibility reasons with other models. The saturation
+     * is always 1.0 in a one-phasic context.
      */
-    Scalar saturation(int pIdx = phaseIdx) const
+    Scalar saturation(int pIdx = 0) const
     { return 1.0; }
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
-    Scalar molarDensity(int pIdx = phaseIdx) const
+    Scalar molarDensity(int pIdx = 0) const
     { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
      * \param compIdx The index of the component
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
     Scalar moleFraction(int pIdx, int compIdx) const
     { return fluidState_.moleFraction(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
@@ -183,6 +199,8 @@ public:
      * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
      *
      * \param compIdx The index of the component
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
     Scalar massFraction(int pIdx, int compIdx) const
     { return fluidState_.massFraction(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
@@ -191,6 +209,8 @@ public:
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
      * \param compIdx The index of the component
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
     Scalar molarity(int pIdx, int compIdx) const
     { return fluidState_.molarity(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
@@ -198,8 +218,10 @@ public:
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
-    Scalar pressure(int pIdx = phaseIdx) const
+    Scalar pressure(int pIdx = 0) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
@@ -230,16 +252,18 @@ public:
      * The term mobility is usually not employed in the one phase context.
      * The method is here for compatibility reasons with other models.
      *
-     * \param phaseIdx The phase index
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
-    Scalar mobility(int pIdx = phaseIdx) const
+    Scalar mobility(int pIdx = 0) const
     { return 1.0/fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase
      *        within the control volume.
+     *
+     * We always forward to the fluid state with the phaseIdx property (see class description).
      */
-    Scalar viscosity(int pIdx = phaseIdx) const
+    Scalar viscosity(int pIdx = 0) const
     { return fluidState_.viscosity(phaseIdx); }
 
     /*!
