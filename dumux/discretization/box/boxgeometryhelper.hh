@@ -96,7 +96,7 @@ public:
     GlobalPosition normal(const PointVector& scvfCorners,
                           const std::vector<unsigned int>& scvIndices) const
     {
-        auto normal = scvfCorners[0] - p[0];
+        auto normal = p[2] - p[1];
         normal /= normal.two_norm();
         return normal;
     }
