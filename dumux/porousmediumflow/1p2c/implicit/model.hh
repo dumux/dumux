@@ -92,38 +92,27 @@ public:
      * mass and mole fractions, and the process rank to the VTK writer.
      */
     template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol,
-                            MultiWriter &writer)
+    void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
-
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
-        ScalarField &pressure = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &delp = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &massFraction0 = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &massFraction1 = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &rho = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &mu = *writer.allocateManagedBuffer(numDofs);
+        auto& pressure = *writer.allocateManagedBuffer(numDofs);
+        auto& delp = *writer.allocateManagedBuffer(numDofs);
+        auto& moleFraction0 = *writer.allocateManagedBuffer(numDofs);
+        auto& moleFraction1 = *writer.allocateManagedBuffer(numDofs);
+        auto& massFraction0 = *writer.allocateManagedBuffer(numDofs);
+        auto& massFraction1 = *writer.allocateManagedBuffer(numDofs);
+        auto& rho = *writer.allocateManagedBuffer(numDofs);
+        auto& mu = *writer.allocateManagedBuffer(numDofs);
 
-        // TODO: Implement velocity output
-        VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        auto& velocity = *(writer.template allocateManagedBuffer<double, dimWorld>(numDofs));
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
         if (velocityOutput.enableOutput())
-        {
-            // initialize velocity field
-            for (unsigned int i = 0; i < numDofs; ++i)
-            {
-                (*velocity)[i] = Scalar(0);
-            }
-        }
+            velocity = 0.0;
 
         unsigned numElements = this->gridView_().size(0);
-        ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+        auto& rank = *writer.allocateManagedBuffer(numElements);
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
@@ -152,33 +141,26 @@ public:
                 mu[dofIdxGlobal] = volVars.viscosity(phaseIdx);
             }
 
-            // TODO: implement velocity output
-            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
+            velocityOutput.calculateVelocity(velocity, elemVolVars, fvGeometry, element, phaseIdx);
         }
 
         writer.attachDofData(pressure, "P", isBox);
         writer.attachDofData(delp, "delp", isBox);
         if (velocityOutput.enableOutput())
-        {
-            writer.attachDofData(*velocity,  "velocity", isBox, dim);
-        }
-        char nameMoleFraction0[42], nameMoleFraction1[42];
-        snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
-        snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
-        writer.attachDofData(moleFraction0, nameMoleFraction0, isBox);
-        writer.attachDofData(moleFraction1, nameMoleFraction1, isBox);
+            writer.attachDofData(velocity,  "velocity", isBox, dim);
 
-        char nameMassFraction0[42], nameMassFraction1[42];
-        snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
-        snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
-        writer.attachDofData(massFraction0, nameMassFraction0, isBox);
-        writer.attachDofData(massFraction1, nameMassFraction1, isBox);
+        writer.attachDofData(moleFraction0, "x_" + std::string(FluidSystem::componentName(0)), isBox);
+        writer.attachDofData(moleFraction1, "x_" + std::string(FluidSystem::componentName(1)), isBox);
+        writer.attachDofData(massFraction0, "X_" + std::string(FluidSystem::componentName(0)), isBox);
+        writer.attachDofData(massFraction1, "X_" + std::string(FluidSystem::componentName(1)), isBox);
+
         writer.attachDofData(rho, "rho", isBox);
         writer.attachDofData(mu, "mu", isBox);
         writer.attachCellData(rank, "process rank");
     }
 };
-}
+
+} // end namespace Dumux
 
 #include "propertydefaults.hh"
 
