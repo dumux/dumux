@@ -72,6 +72,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

@@ -71,6 +71,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

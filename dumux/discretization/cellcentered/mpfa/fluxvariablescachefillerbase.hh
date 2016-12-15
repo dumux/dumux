@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_GLOBAL_FLUXVARSCACHE_FILLER_BASE_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -150,6 +151,7 @@ class CCMpfaDiffusionCacheFiller
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -169,6 +171,11 @@ public:
                            const SubControlVolumeFace& scvf,
                            FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
+        //! If the problem does not use an mpfa method for diffusion, do nothing
+        //! This is known at compile time so it gets optimized away
+        if (MolecularDiffusionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa)
+            return;
+
         if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
         {
             const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);

@@ -60,6 +60,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Stencil = std::vector<IndexType>;
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
+
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,

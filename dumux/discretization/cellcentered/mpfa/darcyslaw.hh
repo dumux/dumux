@@ -67,6 +67,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
+
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
