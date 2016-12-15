@@ -72,12 +72,9 @@ add_dumux_test(test_cc1pniconvection test_cc1pniconvection test_cc1pniconvection
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconvection")
 
 # dim < dimWorld tests with foamgrid
-add_dumux_test(test_box1pnetwork1d3d test_box1pnetwork1d3d test_box1pnetwork1d3d.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/1pboxnetwork1d3d-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/1pboxnetwork1d3d-00001.vtp
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pnetwork1d3d")
+dune_add_test(SOURCES test_box1pnetwork1d3d.cc
+              NAME test_box1pnetwork1d3d
+              COMMAND ./tubesconvergencetest.py test_box1pnetwork1d3d)
 
 add_dumux_test(test_box1pfracture2d3d test_box1pfracture2d3d test_box1pfracture2d3d.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -105,8 +102,12 @@ install(FILES
 1pnispatialparams.hh
 1ptestproblem.hh
 1ptestspatialparams.hh
-1pboxfracture2d3d.cc
-1pboxnetwork1d3d.cc
+fractureproblem.hh
+fracturespatialparams.hh
+tubesproblem.hh
+tubesspatialparams.hh
+test_box1pfracture2d3d.cc
+test_box1pnetwork1d3d.cc
 test_box1p.cc
 test_box1pniconduction.cc
 test_box1pniconvection.cc
