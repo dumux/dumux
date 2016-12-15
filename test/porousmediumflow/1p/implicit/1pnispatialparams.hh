@@ -46,6 +46,7 @@ class OnePNISpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
@@ -65,9 +66,10 @@ public:
      * \param element The finite element
      * \param scv The sub control volume
      */
-    Scalar intrinsicPermeability(const SubControlVolume& scv) const
+    Scalar intrinsicPermeability(const SubControlVolume& scv,
+                                 const VolumeVariables& volVars) const
     {
-            return permeability_;
+        return permeability_;
     }
 
     /*!
@@ -139,6 +141,6 @@ private:
     Scalar lambdaSolid_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
