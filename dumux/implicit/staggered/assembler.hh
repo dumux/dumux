@@ -112,10 +112,10 @@ private:
         (*this->matrix_)[faceIdx][cellCenterIdx] = A21;
         (*this->matrix_)[faceIdx][faceIdx] = A22;
 
-        printmatrix(std::cout, A11, "A11", "");
-        printmatrix(std::cout, A12, "A12", "");
-        printmatrix(std::cout, A21, "A21", "");
-        printmatrix(std::cout, A22, "A22", "");
+//         printmatrix(std::cout, A11, "A11", "");
+//         printmatrix(std::cout, A12, "A12", "");
+//         printmatrix(std::cout, A21, "A21", "");
+//         printmatrix(std::cout, A22, "A22", "");
     }
 
     void setRowSizes_(CCToCCMatrixBlock &A11, CCToFaceMatrixBlock &A12,
