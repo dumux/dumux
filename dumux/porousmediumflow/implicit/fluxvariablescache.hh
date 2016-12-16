@@ -59,7 +59,6 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
@@ -182,14 +181,10 @@ class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static const int dim = GridView::dimension;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
 
     // We always use the dynamic types here to be compatible on the boundary
     using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
@@ -278,15 +273,11 @@ class MpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int dim = GridView::dimension;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
 
     // We always use the dynamic types here to be compatible on the boundary
     using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
