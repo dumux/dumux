@@ -81,7 +81,7 @@ private:
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     // The module to adapt grid. If adaptiveGrid is false, this model does nothing.
-    typedef GridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
+    typedef typename GET_PROP_TYPE(TypeTag, GridAdaptModel) GridAdaptModel;
 
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -590,10 +590,6 @@ public:
      */
     GridAdaptModel& gridAdapt()
     {
-        if (!adaptiveGrid)
-            Dune::dgrave << "adaptivity module was called despite "
-                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
-
         return *gridAdapt_;
     }
 
@@ -606,9 +602,6 @@ public:
      */
     void preAdapt()
     {
-        if (!adaptiveGrid)
-            Dune::dgrave << "adaptivity functionality was called despite "
-                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
     }
 
     /*!
@@ -620,9 +613,6 @@ public:
      */
     void postAdapt()
     {
-        if (!adaptiveGrid)
-            Dune::dgrave << "adaptivity functionality was called despite "
-                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
         // write out new grid
         //        Dune::VTKWriter<LeafGridView> vtkwriter(problem_.gridView());
         //        vtkwriter.write("latestgrid",Dune::VTK::appendedraw);
