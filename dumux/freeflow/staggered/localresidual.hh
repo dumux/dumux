@@ -235,6 +235,15 @@ protected:
                     const Scalar dirichletValue = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
                     this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
                 }
+
+                // outflow condition for the momentum balance equation
+                if(bcTypes.isOutflow(momentumBalanceIdx))
+                {
+                    if(bcTypes.isDirichlet(massBalanceIdx))
+                        this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(scvf, fvGeometry, elemVolVars, faceVars);
+                    else
+                        DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
+                }
             }
         }
     }
@@ -280,11 +289,13 @@ private:
 
         Scalar result = normalFlux * sgn * scvf.area();
 
-        if(scvf.boundary())
+        // treat outflow conditions
+        if(navierStokes && scvf.boundary())
         {
             const auto& upVolVars = (sign(scvf.outerNormalScalar()) == sign(velocitySelf)) ?
                                     elemVolVars[insideScvIdx] : elemVolVars[scvf.outsideScvIdx()] ;
-            result += velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
+
+            result += velocitySelf * velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
         }
         return result;
     }
@@ -435,10 +446,11 @@ private:
 
         Scalar result = insideVolVars.pressure() * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
 
+        // treat outflow BCs
         if(scvf.boundary())
         {
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            result += outsideVolVars.pressure() * scvf.area() * sign(scvf.outerNormalScalar());
+            const Scalar pressure = this->problem().dirichletAtPos(scvf.center())[pressureIdx];
+            result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
 
         return result;
