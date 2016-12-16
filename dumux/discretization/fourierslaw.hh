@@ -40,10 +40,10 @@ class FouriersLawImplementation
 template <class TypeTag>
 using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-} // end namespace
+} // end namespace Dumux
 
 #include <dumux/discretization/cellcentered/tpfa/fourierslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
-//#include <dumux/discretization/box/fourierslaw.hh>
+#include <dumux/discretization/box/fourierslaw.hh>
 
 #endif
