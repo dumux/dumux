@@ -19,10 +19,10 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        energy fluxes due to molecular diffusion with Fourier's law.
  */
-#ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
-#define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_FOURIERS_LAW_HH
+#define DUMUX_DISCRETIZATION_BOX_FOURIERS_LAW_HH
 
 #include <dune/common/float_cmp.hh>
 
@@ -41,15 +41,15 @@ namespace Properties
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(FluidState);
 NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(EffectiveDiffusivityModel);
+NEW_PROP_TAG(ThermalConductivityModel);
 }
 
 /*!
- * \ingroup BoxFicksLaw
- * \brief Specialization of Fick's Law for the box method.
+ * \ingroup BoxFouriersLaw
+ * \brief Specialization of Fourier's Law for the box method.
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
+class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -58,7 +58,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -82,56 +82,45 @@ public:
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
-                       int phaseIdx, int compIdx,
-                       const ElementFluxVariablesCache& elemFluxVarsCache,
-                       bool useMoles = true)
+                       const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // get inside and outside diffusion tensors and calculate the harmonic mean
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
 
         // effective diffusion tensors
-        auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                          insideVolVars.saturation(phaseIdx),
-                                                          insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
-        auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                           outsideVolVars.saturation(phaseIdx),
-                                                           outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+        auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
+        auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
 
         // scale by extrusion factor
-        insideD *= insideVolVars.extrusionFactor();
-        outsideD *= outsideVolVars.extrusionFactor();
+        insideLambda *= insideVolVars.extrusionFactor();
+        outsideLambda *= outsideVolVars.extrusionFactor();
 
         // the resulting averaged diffusion tensor
-        const auto D = harmonicMean(insideD, outsideD);
+        const auto lambda = harmonicMean(insideLambda, outsideLambda);
 
-        // evaluate gradX at integration point and interpolate density
+        // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& jacInvT = fluxVarsCache.jacInvT();
         const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
-        const auto& shapeValues = fluxVarsCache.shapeValues();
 
-        GlobalPosition gradX(0.0);
-        Scalar rho(0.0);
+        GlobalPosition gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
 
-            // density interpolation
-            rho += useMoles ? volVars.molarDensity(phaseIdx)*shapeValues[scv.index()][0]
-                            : volVars.density(phaseIdx)*shapeValues[scv.index()][0];
-
             // the mole/mass fraction gradient
             GlobalPosition gradI;
             jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
-            gradI *= useMoles ? volVars.moleFraction(phaseIdx, compIdx)
-                              : volVars.massFraction(phaseIdx, compIdx);
-            gradX += gradI;
+            gradI *= volVars.temperature();
+            gradTemp += gradI;
         }
 
         // apply the diffusion tensor and return the flux
-        auto DGradX = applyDiffusionTensor_(D, gradX);
-        return -1.0*(DGradX*scvf.unitOuterNormal())*scvf.area();
+        auto lambdaGradT = applyHeatConductivityTensor_(lambda, gradTemp);
+        return -1.0*(lambdaGradT*scvf.unitOuterNormal())*scvf.area();
     }
 
     // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
@@ -142,17 +131,17 @@ public:
     { return Stencil(0); }
 
 private:
-    static GlobalPosition applyDiffusionTensor_(const DimWorldMatrix& D, const GlobalPosition& gradI)
+    static GlobalPosition applyHeatConductivityTensor_(const DimWorldMatrix& Lambda, const GlobalPosition& gradI)
     {
         GlobalPosition result(0.0);
-        D.mv(gradI, result);
+        Lambda.mv(gradI, result);
         return result;
     }
 
-    static GlobalPosition applyDiffusionTensor_(const Scalar d, const GlobalPosition& gradI)
+    static GlobalPosition applyHeatConductivityTensor_(const Scalar lambda, const GlobalPosition& gradI)
     {
         GlobalPosition result(gradI);
-        result *= d;
+        result *= lambda;
         return result;
     }
 };
