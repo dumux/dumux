@@ -31,6 +31,14 @@
 
 namespace Dumux
 {
+// forward declarations
+template<class TypeTag>
+class GridAdaptInitializationIndicatorDefault;
+
+template<class TypeTag, bool>
+class GridAdapt;
+
+
 namespace Properties
 {
 //! Grid adaption type tag for all sequential models.
@@ -38,6 +46,9 @@ NEW_TYPE_TAG(GridAdaptTypeTag);
 
 //! Defines if the grid is h-adaptive
 NEW_PROP_TAG( AdaptiveGrid);
+
+//! The type of grid adaptation
+NEW_PROP_TAG( GridAdaptModel );
 
 //! Class defining the refinement/coarsening indicator
 NEW_PROP_TAG(AdaptionIndicator);
@@ -80,6 +91,12 @@ NEW_PROP_TAG(GridAdaptRefineAtSource);
 
 //no adaptive grid
 SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
+
+//Set default class for adaptation initialization indicator
+SET_TYPE_PROP(GridAdaptTypeTag,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
+//Set default class for adaptation
+SET_TYPE_PROP(GridAdaptTypeTag,  GridAdaptModel, GridAdapt<TypeTag, false>);
+
 
 //standard setting
 SET_INT_PROP(GridAdaptTypeTag, GridAdaptMinLevel, 0);
