@@ -292,9 +292,6 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfIndexSet;
         }
 
-        // the number of actual boundary scvf is two times the number of boundary intersections
-        numBoundaryScvf_ *= 2;
-
         // in parallel problems we might have reserved more scvfs than we actually use
         scvfs_.shrink_to_fit();
 
@@ -602,9 +599,6 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
-
-        // the number of actual boundary scvf is two times the number of boundary intersections
-        numBoundaryScvf_ *= 2;
 
         // Initialize the interaction volume seeds
         globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
