@@ -14,9 +14,26 @@ add_dumux_test(test_hydrostaticpressure test_closedsystem test_closedsystem.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_hydrostaticpressure.input")
 
+add_dumux_test(test_channel_stokes test_channel_stokes test_channel.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/channel-stokes.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes-00006.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes")
+
+add_dumux_test(test_channel_navierstokes test_channel_navierstokes test_channel.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/channel-navierstokes-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes-00006.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes")
+target_compile_definitions(test_channel_navierstokes PUBLIC "ENABLE_NAVIERSTOKES=1")
+
 
 #install sources
 install(FILES
-staggeredproblem.hh
-test_freeflowstaggered.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)
+channeltestproblem.hh
+test_channel.cc
+closedsystemtestproblem.hh
+test_closedsystem.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/staggered)
