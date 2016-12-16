@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief test for the 1p2c CC model
+ * \brief Test for the two-phase two-component CC model.
  */
 #include <config.h>
-#include "1p2ctestproblem.hh"
+#include "injectionproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -41,10 +41,20 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
+                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
+                                        "\t-Grid.File                     Name of the file containing the grid \n"
+                                        "\t                               definition in DGF format\n"
+                                        "\t-FluidSystem.NTemperature      Number of tabularization entries [-] \n"
+                                        "\t-FluidSystem.NPressure         Number of tabularization entries [-] \n"
+                                        "\t-FluidSystem.PressureLow       Low end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.PressureHigh      High end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.TemperatureLow    Low end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.TemperatureHigh   High end for tabularization of fluid properties [Pa] \n"
+                                        "\t-SimulationControl.Name        The name of the output files [-] \n"
+                                        "\t-InitialConditions.Temperature Initial temperature in the reservoir [K] \n"
+                                        "\t-InitialConditions.DepthBOR    Depth below ground surface [m] \n";
+
         std::cout << errorMessageOut
                   << "\n";
     }
@@ -52,6 +62,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(OnePTwoCTestCCProblem) ProblemTypeTag;
+    typedef TTAG(InjectionCCMpfaProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

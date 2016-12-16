@@ -202,7 +202,6 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
-private:
     //! Get the local scvs for an element
     const std::vector<SubControlVolume>& scvs(IndexType eIdx) const
     { return scvs_[eIdx]; }
@@ -211,6 +210,7 @@ private:
     const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const
     { return scvfs_[eIdx]; }
 
+private:
     const Problem& problem_() const
     { return *problemPtr_; }
 

@@ -250,7 +250,6 @@ SET_BOOL_PROP(MPNC, VtkAddSaturations, true);
 SET_BOOL_PROP(MPNC, VtkAddPressures, true);
 SET_BOOL_PROP(MPNC, VtkAddVarPressures, false);
 SET_BOOL_PROP(MPNC, VtkAddVelocities, false);
-SET_BOOL_PROP(MPNC, VtkAddVelocity, GET_PROP_VALUE(TypeTag, VtkAddVelocities));
 SET_BOOL_PROP(MPNC, VtkAddDensities, true);
 SET_BOOL_PROP(MPNC, VtkAddMobilities, true);
 SET_BOOL_PROP(MPNC, VtkAddAverageMolarMass, false);

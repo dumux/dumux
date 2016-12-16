@@ -78,41 +78,54 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
-
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
 
-        auto *p = writer.allocateManagedBuffer(numDofs);
+        auto &p = *(writer.allocateManagedBuffer(numDofs));
+
+        auto& velocity = *(writer.template allocateManagedBuffer<double, dimWorld>(numDofs));
+        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+
+        if (velocityOutput.enableOutput())
+            velocity = 0.0;
 
         unsigned numElements = this->gridView_().size(0);
-        auto *rank = writer.allocateManagedBuffer(numElements);
+        auto &rank = *(writer.allocateManagedBuffer(numElements));
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
             auto eIdx = this->elementMapper().index(element);
-            (*rank)[eIdx] = this->gridView_().comm().rank();
+            rank[eIdx] = this->gridView_().comm().rank();
 
             // get the local fv geometry
             auto fvGeometry = localView(this->globalFvGeometry());
-            fvGeometry.bindElement(element);
+            if (velocityOutput.enableOutput())
+                fvGeometry.bind(element);
+            else
+                fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(this->curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->curSol());
+            if (velocityOutput.enableOutput())
+                elemVolVars.bind(element, fvGeometry, this->curSol());
+            else
+                elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
                 const auto dofIdxGlobal = scv.dofIndex();
-                (*p)[dofIdxGlobal] = volVars.pressure();
+                p[dofIdxGlobal] = volVars.pressure();
             }
 
             // velocity output
-            //velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
+            velocityOutput.calculateVelocity(velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
         }
 
-        writer.attachDofData(*p, "p", isBox);
-        writer.attachCellData(*rank, "process rank");
+        if (velocityOutput.enableOutput())
+            writer.attachDofData(velocity,  "velocity", isBox, dim);
+
+        writer.attachDofData(p, "p", isBox);
+        writer.attachCellData(rank, "process rank");
     }
 };
 }

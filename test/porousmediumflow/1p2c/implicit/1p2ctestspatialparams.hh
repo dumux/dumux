@@ -19,10 +19,11 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the 1p2cni problems.
+ * \brief Definition of the spatial parameters for the 1p2c
+ *        outlfow problem.
  */
-#ifndef DUMUX_1P2CNI_OUTFLOW_SPATIAL_PARAMS_HH
-#define DUMUX_1P2CNI_OUTFLOW_SPATIAL_PARAMS_HH
+#ifndef DUMUX_1P2C_TEST_SPATIAL_PARAMS_HH
+#define DUMUX_1P2C_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 
@@ -30,29 +31,27 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePTwoCNIModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Definition of the spatial parameters for the 1p2cni problems.
+ * \brief Definition of the spatial parameters for the 1p2c
+ *        outflow problem.
  */
 template<class TypeTag>
-class OnePTwoCNISpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePTwoCTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
     using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePTwoCNISpatialParams(const Problem& problem, const GridView &gridView)
+    OnePTwoCTestSpatialParams(const Problem& problem, const GridView &gridView)
         : ParentType(problem, gridView)
     {
         permeability_ = 1e-10;
@@ -65,7 +64,7 @@ public:
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
-     * \param globalPos The global Position
+     * \param globalPos The global position
      */
     Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
@@ -73,7 +72,7 @@ public:
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param globalPos The global Position
+     * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
@@ -81,11 +80,11 @@ public:
     /*!
      * \brief Define the dispersivity.
      *
-     * \param element The current finite element
+     * \param element The finite element
      * \param scv The sub-control volume
      */
     Scalar dispersivity(const Element &element,
-                        const SubControlVolume &scv) const
+                        const SubControlVolume& scv) const
     { return 0; }
 
     /*!
@@ -93,11 +92,11 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The current finite element
+     * \param element The finite element
      * \param scv The sub-control volume
      */
     Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume &scv) const
+                             const SubControlVolume& scv) const
     { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
@@ -105,22 +104,23 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The current finite element
+     * \param element The finite element
      * \param scv The sub-control volume
      */
     Scalar solidDensity(const Element &element,
-                        const SubControlVolume &scv) const
+                        const SubControlVolume& scv) const
     { return 2700; /*density of granite [kg/m^3]*/ }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
      *
-     * \param element The current finite element
+     * \param element The finite element
      * \param scv The sub-control volume
      */
     Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume &scv) const
+                                    const SubControlVolume& scv) const
     { return lambdaSolid_; }
+
 
 
 private:
@@ -131,4 +131,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_1P2CNI_OUTFLOW_SPATIAL_PARAMS_HH
+#endif

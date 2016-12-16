@@ -12,9 +12,17 @@ add_dumux_test(test_box1p2c test_box1p2c test_box1p2c.cc
 add_dumux_test(test_cc1p2c test_cc1p2c test_cc1p2c.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/outflowcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/outflowcc-00009.vtu
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1p2ctestcc-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2c"
+                 --zeroThreshold {"velocity":5e-16})
+
+add_dumux_test(test_ccmpfa1p2c test_ccmpfa1p2c test_ccmpfa1p2c.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestccmpfa-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1p2ctestccmpfa-00009.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa1p2c"
                  --zeroThreshold {"velocity":5e-16})
 
 # non-isothermal tests

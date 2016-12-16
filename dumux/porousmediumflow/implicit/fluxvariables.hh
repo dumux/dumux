@@ -242,6 +242,8 @@ public:
                               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         advFluxCached_.reset();
+        advPreFlux_.fill(0.0);
+
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
@@ -264,8 +266,6 @@ public:
                                                         this->elemFluxVarsCache());
             advFluxCached_.set(phaseIdx, true);
         }
-
-
 
         const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
         const auto& insideVolVars = this->elemVolVars()[insideScv];

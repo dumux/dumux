@@ -62,7 +62,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -72,6 +72,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -79,7 +81,7 @@ public:
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
                        int phaseIdx, int compIdx,
-                       const FluxVarsCache& fluxVarsCache,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
                        bool useMoles = true)
     {
         // diffusion tensors are always solution dependent

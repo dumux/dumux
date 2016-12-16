@@ -60,7 +60,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVarsCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -72,13 +72,15 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvFace,
-                       const FluxVarsCache& fluxVarsCache)
+                       const ElementFluxVarsCache& elemFluxVarsCache)
     {
         // heat conductivities are always solution dependent (?)
         Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvFace);

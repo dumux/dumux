@@ -15,6 +15,13 @@ add_dumux_test(test_cc2p2c test_cc2p2c test_cc2p2c.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/injectioncc-00008.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2p2c")
 
+add_dumux_test(test_ccmpfa2p2c test_ccmpfa2p2c test_ccmpfa2p2c.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/injectionccmpfa-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/injectionccmpfa-00007.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa2p2c")
+
 # non-isothermal tests
 add_dumux_test(test_box2p2cni test_box2p2cni test_box2p2cni.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

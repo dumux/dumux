@@ -33,8 +33,6 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
-
 
 namespace Dumux
 {
@@ -67,9 +65,10 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Stencil = std::vector<IndexType>;
 
     static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
 public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

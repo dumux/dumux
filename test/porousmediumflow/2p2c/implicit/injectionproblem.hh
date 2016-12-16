@@ -42,6 +42,7 @@ namespace Properties
 NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
 NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCTpfaModel, InjectionProblem));
+NEW_TYPE_TAG(InjectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, InjectionProblem));
 
 // Set the grid type
 SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);

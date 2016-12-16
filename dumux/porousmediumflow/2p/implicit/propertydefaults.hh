@@ -140,7 +140,6 @@ public:
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(TwoP, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(TwoP, ProblemEnableGravity, true);

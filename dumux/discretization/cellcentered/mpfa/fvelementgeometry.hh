@@ -338,7 +338,9 @@ private:
 
         // for network grids we only want to do one scvf per half facet
         // this approach assumes conforming grids at branching facets
-        std::vector<IndexType> finishedFacets;
+        std::vector<bool> finishedFacets;
+        if (dim < dimWorld)
+            finishedFacets.resize(element.subEntities(1), false);
 
         int scvfCounter = 0;
         for (const auto& is : intersections(globalFvGeometry().gridView(), element))
@@ -348,10 +350,10 @@ private:
             if (dim < dimWorld)
             {
                 auto indexInInside = is.indexInInside();
-                if(MpfaHelper::contains(finishedFacets, indexInInside))
+                if(finishedFacets[indexInInside])
                     continue;
                 else
-                    finishedFacets.push_back(indexInInside);
+                    finishedFacets[indexInInside] = true;
             }
 
             // get the intersection corners according to generic numbering
@@ -417,7 +419,9 @@ private:
 
         // for network grids we only want to do one scvf per half facet
         // this approach assumes conforming grids at branching facets
-        std::vector<IndexType> finishedFacets;
+        std::vector<bool> finishedFacets;
+        if (dim < dimWorld)
+            finishedFacets.resize(element.subEntities(1), false);
 
         int scvfCounter = 0;
         for (const auto& is : intersections(globalFvGeometry().gridView(), element))
@@ -427,10 +431,10 @@ private:
             if (dim < dimWorld)
             {
                 auto indexInInside = is.indexInInside();
-                if(MpfaHelper::contains(finishedFacets, indexInInside))
+                if(finishedFacets[indexInInside])
                     continue;
                 else
-                    finishedFacets.push_back(indexInInside);
+                    finishedFacets[indexInInside] = true;
             }
 
             // get the intersection corners according to generic numbering

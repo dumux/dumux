@@ -44,7 +44,11 @@ public:
     using GlobalIndexType = typename GridView::IndexSet::IndexType;
     using GlobalIndexSet = std::vector<GlobalIndexType>;
 
-    using Tensor = Dune::FieldMatrix<Scalar, dim, dim>;
+    //! for network grids this means that we assume the tensors
+    //! to be given in world coordinates! If a transformation of
+    //! given data has to be performed, it has to be done in the
+    //! spatial parameters method where the permeability is returned
+    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 };
 
 /*!

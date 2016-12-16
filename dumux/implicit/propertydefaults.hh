@@ -198,6 +198,8 @@ SET_BOOL_PROP(ImplicitBase, EnableEnergyBalance, false);
 
 SET_TYPE_PROP(ImplicitBase, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
+//! vtk output
+SET_BOOL_PROP(ImplicitBase, VtkAddVelocity, false); //!< Don't reconstruct velocity per default
 
 } // namespace Properties
 

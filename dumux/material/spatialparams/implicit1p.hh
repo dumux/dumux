@@ -114,8 +114,8 @@ public:
      *
      * \return the intrinsic permeability
      */
-    DimWorldMatrix intrinsicPermeability (const SubControlVolume &scv,
-                                          const VolumeVariables &volVars) const
+    auto intrinsicPermeability (const SubControlVolume &scv,
+                                const VolumeVariables &volVars) const
     {
         return asImp_().intrinsicPermeabilityAtPos(scv.dofPosition());
     }

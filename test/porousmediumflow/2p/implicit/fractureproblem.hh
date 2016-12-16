@@ -22,7 +22,6 @@
  * \brief A discrete fracture network embedded in an impermeable matrix.
  *        The fracture is a 2D network embedded in 3D.
  */
-
 #ifndef DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 #define DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 
@@ -48,10 +47,10 @@ NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
 NEW_TYPE_TAG(FractureCCProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
 NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem));
 
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalFVGeometryCache, true);
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(FractureCCProblem, SolutionDependentParameters, false);
+SET_BOOL_PROP(FractureProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, SolutionDependentAdvection, false);
 
 #if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
