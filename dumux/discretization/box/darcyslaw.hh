@@ -84,32 +84,46 @@ public:
     {
         const auto& fluxVarCache = elemFluxVarCache[scvf];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto extrusionFactor = insideVolVars.extrusionFactor();
-        const auto K = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
+        const auto& outsideVolVars = elemVolVars[outsideScv];
+
+        auto insideK = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
+        auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv, outsideVolVars);
+
+        // scale with correct extrusion factor
+        insideK *= insideVolVars.extrusionFactor();
+        outsideK *= outsideVolVars.extrusionFactor();
+
+        const auto K = harmonicMean(insideK, outsideK);
 
         const auto& jacInvT = fluxVarCache.jacInvT();
         const auto& shapeJacobian = fluxVarCache.shapeJacobian();
+        const auto& shapeValues = fluxVarCache.shapeValues();
+
+        static const bool enableGravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+
         // evaluate gradP - rho*g at integration point
         DimVector gradP(0.0);
+        Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
+            const auto& volVars = elemVolVars[scv];
+
+            if (enableGravity)
+                rho += volVars.density(phaseIdx)*shapeValues[scv.index()][0];
+
             // the global shape function gradient
             DimVector gradI;
             jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
 
-            gradI *= elemVolVars[scv].pressure(phaseIdx);
+            gradI *= volVars.pressure(phaseIdx);
             gradP += gradI;
         }
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (enableGravity)
         {
             // gravitational acceleration
             DimVector g(problem.gravityAtPos(scvf.center()));
-
-            // interpolate the density at the IP
-            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-            const auto& outsideVolVars = elemVolVars[outsideScv];
-            Scalar rho = 0.5*(insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx));
 
             // turn gravity into a force
             g *= rho;
@@ -119,23 +133,8 @@ public:
         }
 
         // apply the permeability and return the flux
-        auto KGradP = applyPermeability(K, gradP);
-        return -1.0*(KGradP*scvf.unitOuterNormal())*scvf.area()*extrusionFactor;
-    }
-
-    static DimVector applyPermeability(const DimWorldMatrix& K, const DimVector& gradI)
-    {
-        DimVector result(0.0);
-        K.mv(gradI, result);
-
-        return result;
-    }
-
-    static DimVector applyPermeability(const Scalar k, const DimVector& gradI)
-    {
-        DimVector result(gradI);
-        result *= k;
-        return result;
+        auto KGradP = applyPermeability_(K, gradP);
+        return -1.0*(KGradP*scvf.unitOuterNormal())*scvf.area();
     }
 
     // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
@@ -146,8 +145,23 @@ public:
     {
         return Stencil(0);
     }
+private:
+    static DimVector applyPermeability_(const DimWorldMatrix& K, const DimVector& gradI)
+    {
+        DimVector result(0.0);
+        K.mv(gradI, result);
+
+        return result;
+    }
+
+    static DimVector applyPermeability_(const Scalar k, const DimVector& gradI)
+    {
+        DimVector result(gradI);
+        result *= k;
+        return result;
+    }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
