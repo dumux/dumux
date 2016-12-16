@@ -12,7 +12,8 @@ add_dumux_test(test_hydrostaticpressure test_closedsystem test_closedsystem.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/stokeshydrostaticpressure-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure-00006.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_hydrostaticpressure.input")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_hydrostaticpressure.input"
+                 --zeroThreshold {"v_x_neg":1e-15,"v_x_pos":1e-15,"v_y_neg":1e-15,"v_y_pos":1e-15,"velocity_0":1e-15,"velocity_1":1e-15})
 
 add_dumux_test(test_channel_stokes test_channel_stokes test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
