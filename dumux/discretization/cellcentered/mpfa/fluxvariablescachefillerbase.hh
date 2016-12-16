@@ -32,8 +32,10 @@ namespace Dumux
 //! Forward declaration of property tags
 namespace Properties
 {
+NEW_PROP_TAG(Indices);
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(NumComponents);
+NEW_PROP_TAG(ThermalConductivityModel);
 NEW_PROP_TAG(EffectiveDiffusivityModel);
 }
 
@@ -260,6 +262,139 @@ public:
                             cacheJ.setUpdateStatus(true);
                         }
                     }
+                }
+            }
+        }
+    }
+};
+
+//! Fills the quantities for heat conduction in the caches
+template<class TypeTag>
+class CCMpfaHeatConductionCacheFiller
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const int energyEqIdx = Indices::energyEqIdx;
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+
+public:
+    //! function to fill the flux var caches
+    template<class FluxVarsCacheContainer>
+    static void fillCaches(const Problem& problem,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const SubControlVolumeFace& scvf,
+                           FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        //! If the problem does not use an mpfa method for diffusion, do nothing
+        //! This is known at compile time so it gets optimized away
+        if (HeatConductionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa)
+            return;
+
+        // lambda function to get the thermal conductivity
+        auto getLambda = [&problem, &fvGeometry](const Element& element,
+                                                 const VolumeVariables& volVars,
+                                                 const SubControlVolume& scv)
+        { return ThermalConductivityModel::effectiveThermalConductivity(volVars,
+                                                                        problem.spatialParams(),
+                                                                        element,
+                                                                        fvGeometry,
+                                                                        scv); };
+
+        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
+        {
+            const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
+            BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
+
+            // solve for the transmissibilities
+            iv.solveLocalSystem(getLambda);
+
+            // update the caches
+            const auto scvfIdx = scvf.index();
+            auto& cache = fluxVarsCacheContainer[scvfIdx];
+            cache.updateHeatConduction(scvf, iv);
+            cache.setUpdateStatus(true);
+
+            //! set the neumann boundary conditions in case we do not use tpfa on the boundary
+            if (!useTpfaBoundary)
+                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    iv.assembleNeumannFluxes(energyEqIdx);
+                    cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
+                }
+
+            for (const auto scvfIdxJ : iv.globalScvfs())
+            {
+                if (scvfIdxJ != scvfIdx)
+                {
+                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
+                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
+                    cacheJ.updateHeatConduction(scvfJ, iv);
+                    cacheJ.setUpdateStatus(true);
+
+                    //! set the neumann boundary conditions in case we do not use tpfa on the boundary
+                    if (!useTpfaBoundary)
+                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                        {
+                            iv.assembleNeumannFluxes(energyEqIdx);
+                            cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
+                        }
+                }
+            }
+        }
+        else
+        {
+            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
+            InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
+
+            // solve for the transmissibilities
+            iv.solveLocalSystem(getLambda);
+
+            // update the caches
+            const auto scvfIdx = scvf.index();
+            auto& cache = fluxVarsCacheContainer[scvfIdx];
+            cache.updateHeatConduction(scvf, iv);
+            cache.setUpdateStatus(true);
+
+            //! set the neumann boundary conditions in case we do not use tpfa on the boundary
+            if (!useTpfaBoundary)
+                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    iv.assembleNeumannFluxes(energyEqIdx);
+                    cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
+                }
+
+            for (const auto scvfIdxJ : iv.globalScvfs())
+            {
+                if (scvfIdxJ != scvfIdx)
+                {
+                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
+                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
+                    cacheJ.updateHeatConduction(scvfJ, iv);
+                    cacheJ.setUpdateStatus(true);
+
+                    //! set the neumann boundary conditions in case we do not use tpfa on the boundary
+                    if (!useTpfaBoundary)
+                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                        {
+                            iv.assembleNeumannFluxes(energyEqIdx);
+                            cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
+                        }
                 }
             }
         }

@@ -160,13 +160,166 @@ public:
                 fluxVarsCacheContainer[scvf.index()].setUpdateStatus(true);
             else
                 DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+
+            // we're done here
+            return;
         }
-        else if (solDependentAdvection && !solDependentDiffusion)
+
+        if (solDependentAdvection)
             AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
-        else if (!solDependentAdvection && solDependentDiffusion)
+
+        if (solDependentDiffusion || !useTpfaBoundary)
             DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
-        else
-            fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+    }
+};
+
+//! Implementation for problems considering advection & heat conduction
+template<class TypeTag>
+class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, false, true>
+               : public CCMpfaAdvectionCacheFiller<TypeTag>,
+                 public CCMpfaHeatConductionCacheFiller<TypeTag>
+{
+    using AdvectionFiller = CCMpfaAdvectionCacheFiller<TypeTag>;
+    using HeatConductionFiller = CCMpfaHeatConductionCacheFiller<TypeTag>;
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+    static const bool solDependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
+    static const bool solDependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
+
+public:
+    //! function to fill the flux var caches
+    template<class FluxVarsCacheContainer>
+    static void fillFluxVarCache(const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolumeFace& scvf,
+                                 FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+        HeatConductionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+    }
+
+    //! function to update the flux var caches during derivative calculation
+    template<class FluxVarsCacheContainer>
+    static void updateFluxVarCache(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolumeFace& scvf,
+                                   FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        // Do basically nothing if the parameters are solution-independent. Although we have
+        // to set the update status to true here as it has been set to false before.
+        // This is for compatibility reasons with compositional models.
+
+        // TODO: How to treat !useTpfaBoundary???
+        if (!solDependentAdvection && !solDependentHeatConduction)
+        {
+            if (useTpfaBoundary)
+                fluxVarsCacheContainer[scvf.index()].setUpdateStatus(true);
+            else
+                fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+
+            // we're done here
+            return;
+        }
+
+        if (solDependentAdvection || !useTpfaBoundary)
+            AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+
+        if (solDependentHeatConduction || !useTpfaBoundary)
+            HeatConductionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+    }
+};
+
+//! Implementation for problems considering advection, diffusion & heat conduction
+template<class TypeTag>
+class CCMpfaFluxVariablesCacheFillerImplementation<TypeTag, true, true, true>
+               : public CCMpfaAdvectionCacheFiller<TypeTag>,
+                 public CCMpfaDiffusionCacheFiller<TypeTag>,
+                 public CCMpfaHeatConductionCacheFiller<TypeTag>
+{
+    using AdvectionFiller = CCMpfaAdvectionCacheFiller<TypeTag>;
+    using DiffusionFiller = CCMpfaDiffusionCacheFiller<TypeTag>;
+    using HeatConductionFiller = CCMpfaHeatConductionCacheFiller<TypeTag>;
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+    static const bool solDependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
+    static const bool solDependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
+    static const bool solDependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
+
+public:
+    //! function to fill the flux var caches
+    template<class FluxVarsCacheContainer>
+    static void fillFluxVarCache(const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolumeFace& scvf,
+                                 FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+        DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+        HeatConductionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+    }
+
+    //! function to update the flux var caches during derivative calculation
+    template<class FluxVarsCacheContainer>
+    static void updateFluxVarCache(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolumeFace& scvf,
+                                   FluxVarsCacheContainer& fluxVarsCacheContainer)
+    {
+        // Do basically nothing if the parameters are solution-independent. Although we have
+        // to set the update status to true here as it has been set to false before.
+        // This is for compatibility reasons with compositional models.
+
+        // TODO: How to treat !useTpfaBoundary???
+        if (!solDependentAdvection && !solDependentDiffusion && !solDependentHeatConduction)
+        {
+            if (useTpfaBoundary)
+                fluxVarsCacheContainer[scvf.index()].setUpdateStatus(true);
+            else
+            {
+                DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+                HeatConductionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+            }
+
+            // we're done here
+            return;
+        }
+
+        if (solDependentAdvection)
+            AdvectionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+
+        if (solDependentDiffusion || !useTpfaBoundary)
+            DiffusionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
+
+        if (solDependentHeatConduction || !useTpfaBoundary)
+            HeatConductionFiller::fillCaches(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCacheContainer);
     }
 };
 
