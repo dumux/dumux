@@ -116,7 +116,10 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
-        pressureIdx = Indices::pressureIdx
+        pressureIdx = Indices::pressureIdx,
+
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -147,6 +150,13 @@ public:
                                              Scalar,
                                              Problem,
                                              LidVelocity);
+
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const CellArray numCells = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                      CellArray,
+                                                      Grid,
+                                                      Cells);
+        cellSizeX_ = this->bBoxMax()[0] / numCells[0];
     }
 
     /*!
@@ -204,11 +214,14 @@ public:
     {
         BoundaryTypes values;
 
-        Scalar eps = 1.0e-6;
-//         if (globalPos[0] > this->bBoxMax()[0] - eps)
-            values.setAllDirichlet();
-//         else
-//             values.setAllNeumann();
+        // set Dirichlet values for the velocity everywhere
+        values.setDirichlet(momentumBalanceIdx);
+
+        // set a fixed pressure in one cell
+        if (isLowerLeftCell(globalPos))
+            values.setDirichlet(massBalanceIdx);
+        else
+            values.setNeumann(massBalanceIdx);
 
         return values;
     }
@@ -225,7 +238,7 @@ public:
     CellCenterPrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         CellCenterPrimaryVariables values(0);
-        values[0] = 1.0e+5;
+        values[pressureIdx] = 1.1e+5;
         return values;
     }
 
@@ -300,9 +313,17 @@ public:
     // \}
 
 private:
+
+    bool isLowerLeftCell(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
+    }
+
+
     Scalar eps_;
     Scalar lidVelocity_;
     std::string name_;
+    Scalar cellSizeX_;
 };
 } //end namespace
 
