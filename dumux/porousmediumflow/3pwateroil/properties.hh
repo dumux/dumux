@@ -67,7 +67,6 @@ NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility 
 NEW_PROP_TAG(UseSimpleModel); //!< Determines whether a simple model with only two phase states (wng) and (wn) should be used
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
-NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 }
 }
 

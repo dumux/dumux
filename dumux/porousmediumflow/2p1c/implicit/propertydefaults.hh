@@ -121,7 +121,6 @@ SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
 SET_TYPE_PROP(TwoPOneCNI, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 // disable velocity output by default
-SET_BOOL_PROP(TwoPOneCNI, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(TwoPOneCNI, ProblemEnableGravity, true);

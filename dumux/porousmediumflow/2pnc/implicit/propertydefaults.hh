@@ -190,7 +190,6 @@ private :
 SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
 
 //! Disable velocity output by default
-SET_BOOL_PROP(TwoPNC, VtkAddVelocity, false);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)

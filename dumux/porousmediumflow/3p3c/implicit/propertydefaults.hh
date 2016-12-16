@@ -157,7 +157,6 @@ SET_PROP(ThreePThreeC, EffectiveDiffusivityModel)
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(ThreePThreeC, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);

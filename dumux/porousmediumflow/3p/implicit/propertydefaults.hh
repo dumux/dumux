@@ -118,7 +118,6 @@ public:
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(ThreeP, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(ThreeP, ProblemEnableGravity, true);

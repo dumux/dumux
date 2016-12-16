@@ -111,7 +111,6 @@ SET_BOOL_PROP(ThreePWaterOilNI, UseSimpleModel, true);
 SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 // disable velocity output by default
-SET_BOOL_PROP(ThreePWaterOilNI, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(ThreePWaterOilNI, ProblemEnableGravity, true);

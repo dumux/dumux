@@ -170,7 +170,6 @@ SET_PROP(Richards, FluidState){
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(Richards, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(Richards, ProblemEnableGravity, true);

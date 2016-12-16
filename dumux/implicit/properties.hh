@@ -99,6 +99,9 @@ NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy e
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
 NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
+// vtk output
+NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output
+
 // stencils
 NEW_PROP_TAG(StencilsVector); //! The type of the global vector of stencils per element
 

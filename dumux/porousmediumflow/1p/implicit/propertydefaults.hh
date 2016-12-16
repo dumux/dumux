@@ -111,7 +111,6 @@ SET_PROP(OneP, FluidState){
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(OneP, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(OneP, ProblemEnableGravity, true);

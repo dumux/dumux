@@ -69,7 +69,6 @@ NEW_PROP_TAG(VtkAddSaturations);
 NEW_PROP_TAG(VtkAddPressures);
 NEW_PROP_TAG(VtkAddVarPressures);
 NEW_PROP_TAG(VtkAddVelocities);
-NEW_PROP_TAG(VtkAddVelocity);
 NEW_PROP_TAG(VtkAddDensities);
 NEW_PROP_TAG(VtkAddMobilities);
 NEW_PROP_TAG(VtkAddAverageMolarMass);

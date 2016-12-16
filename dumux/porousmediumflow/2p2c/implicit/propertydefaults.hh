@@ -165,7 +165,6 @@ SET_PROP(TwoPTwoC, EffectiveDiffusivityModel)
 };
 
 //! Disable velocity output by default
-SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);
 
 //! Enable gravity by default
 SET_BOOL_PROP(TwoPTwoC, ProblemEnableGravity, true);

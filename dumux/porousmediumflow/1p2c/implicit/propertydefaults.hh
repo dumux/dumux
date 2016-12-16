@@ -107,7 +107,6 @@ SET_PROP(OnePTwoC, EffectiveDiffusivityModel)
 SET_INT_PROP(OnePTwoC, PhaseIdx, 0);
 
 // disable velocity output by default
-SET_BOOL_PROP(OnePTwoC, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(OnePTwoC, ProblemEnableGravity, true);

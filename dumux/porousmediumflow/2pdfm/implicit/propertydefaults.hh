@@ -135,7 +135,6 @@ public:
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(TwoPDFM, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(TwoPDFM, ProblemEnableGravity, true);
