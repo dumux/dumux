@@ -50,8 +50,6 @@ class CCMpfaGlobalInteractionVolumeSeedsBase
 
     using IndexType = typename GridView::IndexSet::IndexType;
 
-    static const int dim = GridView::dimension;
-
 public:
     CCMpfaGlobalInteractionVolumeSeedsBase(const GridView gridView) : gridView_(gridView) {}
 

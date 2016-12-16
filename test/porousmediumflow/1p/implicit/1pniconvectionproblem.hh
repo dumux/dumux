@@ -28,6 +28,7 @@
 #include <math.h>
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/h2o.hh>
@@ -46,6 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(OnePNIConvectionProblem, INHERITS_FROM(OnePNI));
 NEW_TYPE_TAG(OnePNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePNIConvectionProblem));
 NEW_TYPE_TAG(OnePNIConvectionCCProblem, INHERITS_FROM(CCTpfaModel, OnePNIConvectionProblem));
+NEW_TYPE_TAG(OnePNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePNIConvectionProblem));
 
 // Set the grid type
 SET_TYPE_PROP(OnePNIConvectionProblem, Grid, Dune::YaspGrid<2>);

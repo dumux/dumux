@@ -7,7 +7,7 @@ UpperRight = 1 1
 Cells = 10 10
 
 [Problem]
-Name = 1ptestmpfao # name passed to the output routines
+Name = 1ptestccmpfa # name passed to the output routines
 
 [SpatialParams]
 LensLowerLeft = 0.2 0.2 # [m]
