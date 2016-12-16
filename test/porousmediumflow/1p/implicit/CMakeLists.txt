@@ -5,8 +5,6 @@ add_gstat_file_links()
 
 dune_symlink_to_source_files(FILES "tubesconvergencetest.py")
 
-add_executable(test_mpfa1p EXCLUDE_FROM_ALL test_mpfa1p.cc)
-
 # isothermal tests
 add_dumux_test(test_box1p test_box1p test_box1p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -28,6 +26,13 @@ add_dumux_test(test_cc1p test_cc1p test_cc1p.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/1ptestcc-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p")
+
+add_dumux_test(test_ccmpfa1p test_ccmpfa1p test_ccmpfa1p.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1ptestccmpfa-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/1ptestccmpfa-00001.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa1p")
 
 add_dumux_test(test_cc1pwithamg test_cc1pwithamg test_cc1pwithamg.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
