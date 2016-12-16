@@ -57,6 +57,20 @@ add_dumux_test(test_cc1p2cniconvection test_cc1p2cniconvection test_cc1p2cniconv
                          ${CMAKE_CURRENT_BINARY_DIR}/cc1p2cniconvection-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2cniconvection")
 
+add_dumux_test(test_ccmpfa1p2cniconduction test_ccmpfa1p2cniconduction test_ccmpfa1p2cniconduction.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconduction-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/ccmpfa1p2cniconduction-00006.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa1p2cniconduction")
+
+add_dumux_test(test_ccmpfa1p2cniconvection test_ccmpfa1p2cniconvection test_ccmpfa1p2cniconvection.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconvection-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/ccmpfa1p2cniconvection-00010.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa1p2cniconvection")
+
 #install sources
 install(FILES
 1p2cniconductionproblem.hh

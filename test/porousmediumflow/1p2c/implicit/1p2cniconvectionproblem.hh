@@ -47,6 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(OnePTwoCNIConvectionProblem, INHERITS_FROM(OnePTwoCNI));
 NEW_TYPE_TAG(OnePTwoCNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCNIConvectionProblem));
 NEW_TYPE_TAG(OnePTwoCNIConvectionCCProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvectionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvectionProblem));
 
 // Set the grid type
 SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Grid, Dune::YaspGrid<2>);
