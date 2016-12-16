@@ -22,7 +22,7 @@
  * \brief test for the one-phase CC model
  */
 #include <config.h>
-#include "1ptestproblem.hh"
+#include "fractureproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -43,13 +43,7 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
                                         "\t-TimeManager.TEnd               End of the simulation [s] \n"
                                         "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
-                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
-                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
-                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
+                                        "\t-Grid.File                      The grid file\n";
 
         std::cout << errorMessageOut
                   << "\n";
@@ -59,7 +53,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if HAVE_DUNE_FOAMGRID
-    typedef TTAG(OnePTwoDThreeDTestBoxProblem) ProblemTypeTag;
+    typedef TTAG(FractureCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
 #warning External grid module dune-foamgrid needed to run this example.

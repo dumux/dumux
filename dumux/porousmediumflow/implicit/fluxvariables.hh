@@ -159,13 +159,13 @@ public:
             else
                 branchingPointUpwindTerm = 0.0;
 
-            // upwind scheme
+            // upwind scheme (always do fully upwind at branching points)
+            // a weighting here would lead to an error since the derivation is based on a fully upwind scheme
+            // TODO How to implement a weight of e.g. 0.5
             if (std::signbit(flux))
-                return flux*(upwindWeight_*branchingPointUpwindTerm
-                             + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
+                return flux*branchingPointUpwindTerm;
             else
-                return flux*(upwindWeight_*upwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight_)*branchingPointUpwindTerm);
+                return flux*upwindTerm(insideVolVars);
         }
         // non-branching points and boundaries
         else

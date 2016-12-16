@@ -299,11 +299,13 @@ private:
         }
 
         // construct the sub control volume faces
+        const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(1);
+        scvfs_.resize(numInnerScvf);
+
         unsigned int scvfLocalIdx = 0;
-        scvfs_.resize(element.subEntities(1));
-        for (; scvfLocalIdx < element.subEntities(1); ++scvfLocalIdx)
+        for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
-            // find the local scv indices this scvf is connsected to
+            // find the local scv indices this scvf is connected to
             std::vector<IndexType> localScvIndices({static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                     static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 

@@ -45,50 +45,78 @@ private:
     using Scalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
+
     using ScvGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim, dimWorld>;
     using ScvfGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim-1, dimWorld>;
 
     using GlobalPosition = typename ScvGeometry::GlobalCoordinate;
-    using CornerList = std::vector<GlobalPosition>;
+    using PointVector = std::vector<GlobalPosition>;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
+    //! the maximum number of helper points used to construct the geometries
+    //! Using a statically sized point array is much faster than dynamic allocation
+    static constexpr int maxPoints = 3;
 
 public:
-    using ScvGeometryVector = std::vector<ScvGeometry>;
-    using ScvfGeometryVector = std::vector<ScvfGeometry>;
 
-    //! get sub control volume geometries from element
-    void getScvAndScvfGeometries(const typename Element::Geometry& geometry,
-                                 ScvGeometryVector& scvGeometries,
-                                 ScvfGeometryVector& scvfGeometries)
+    BoxGeometryHelper(const typename Element::Geometry& geometry)
+    : elementGeometry_(geometry), corners_(geometry.corners()),
+      p({geometry.center(), geometry.corner(0), geometry.corner(1)}) {}
+
+    //! Create a vector with the scv corners
+    PointVector getScvCorners(unsigned int localScvIdx) const
     {
-        scvGeometries.reserve(2);
-        scvfGeometries.reserve(1);
+        //! Only build the maps the first time we call this function
+        static const std::uint8_t map[2][2] =
+        {
+            {1, 0},
+            {0, 2}
+        };
 
-        // the sub control volumes
-        scvGeometries.emplace_back(Dune::GeometryType(1), std::vector<GlobalPosition>({geometry.corner(0), geometry.center()}));
-        scvGeometries.emplace_back(Dune::GeometryType(1), std::vector<GlobalPosition>({geometry.center(), geometry.corner(1)}));
-
-        // the sub control volume faces
-        scvfGeometries.emplace_back(Dune::GeometryType(0), std::vector<GlobalPosition>({geometry.center()}));
+        return PointVector( {p[map[localScvIdx][0]],
+                             p[map[localScvIdx][1]]} );
     }
 
-    //! get sub control volume geometries from element of dimension 1
-    ScvfGeometryVector getBoundaryScvfGeometries(const typename Intersection::Geometry& geometry)
+    //! Create a vector with the corners of sub control volume faces
+    PointVector getScvfCorners(unsigned int localScvfIdx) const
     {
-        return {ScvfGeometry(Dune::GeometryType(0), std::vector<GlobalPosition>({geometry.center()}))};
+        return PointVector({p[0]});
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    PointVector getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+                                       unsigned int indexInIntersection) const
+    {
+        return PointVector({geometry.corner(0)});
     }
 
     //! get scvf normal vector
-    static GlobalPosition normal(const typename Element::Geometry& geometry,
-                                 const ScvfGeometry& scvfGeometry)
+    GlobalPosition normal(const PointVector& scvfCorners,
+                          const std::vector<unsigned int>& scvIndices) const
     {
-        GlobalPosition normal = geometry.corner(1) - geometry.corner(0);
+        auto normal = p[2] - p[1];
         normal /= normal.two_norm();
         return normal;
     }
+
+    //! get scv volume
+    Scalar scvVolume(const PointVector& scvCorners) const
+    {
+        return (scvCorners[1] - scvCorners[0]).two_norm();
+    }
+
+    //! get scvf area
+    Scalar scvfArea(const PointVector& scvfCorners) const
+    {
+        return 1.0;
+    }
+
+private:
+    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    std::size_t corners_; // number of element corners
+    GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -295,8 +323,8 @@ public:
 
 private:
     const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
-    GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
     std::size_t corners_; // number of element corners
+    GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -567,8 +595,8 @@ public:
 
 private:
     const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
-    GlobalPosition p[maxPoints]; // the points needed for construction of the scv/scvf geometries
     std::size_t corners_; // number of element corners
+    GlobalPosition p[maxPoints]; // the points needed for construction of the scv/scvf geometries
 };
 
 } // end namespace Dumux
