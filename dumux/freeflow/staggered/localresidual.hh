@@ -66,6 +66,7 @@ class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeT
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -75,7 +76,12 @@ class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeT
     enum {
          // grid and world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld,
+
+        pressureIdx = Indices::pressureIdx,
+
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -188,6 +194,47 @@ public:
         flux += computeTangetialMomentumFlux_(scvf, fvGeometry, elemVolVars, globalFaceVars);
         flux += computePressureTerm_(scvf, fvGeometry, elemVolVars, globalFaceVars);
         return flux;
+    }
+
+protected:
+
+     /*!
+     * \brief Evaluate boundary conditions
+     */
+    void evalBoundary_(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const GlobalFaceVars& faceVars,
+                       const ElementBoundaryTypes& elemBcTypes,
+                       const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.boundary())
+            {
+                // For the mass-balance residual, do the same as if the face was not on a boundary.This might need to be changed sometime...
+                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
+
+                // handle the actual boundary conditions:
+                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+
+                // set a fixed pressure for cells adjacent to a wall
+                if(bcTypes.isDirichlet(massBalanceIdx) && bcTypes.isDirichlet(momentumBalanceIdx))
+                {
+                    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                    const auto& insideVolVars = elemVolVars[insideScv];
+                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(scvf.center())[pressureIdx];
+                }
+
+                // set a fixed value for the velocity
+                if(bcTypes.isDirichlet(momentumBalanceIdx))
+                {
+                    const Scalar velocity = faceVars.faceVars(scvf.dofIndexSelf()).velocity();
+                    const Scalar dirichletValue = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
+                    this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
+                }
+            }
+        }
     }
 
 

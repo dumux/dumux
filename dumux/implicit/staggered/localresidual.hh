@@ -263,28 +263,9 @@ protected:
                        const ElementBoundaryTypes& bcTypes,
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            if (scvf.boundary())
-            {
-                // Do the same as if the face was not on a boundary.This might need to be changed sometime...
-                ccResidual_ += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
-
-                // set a Dirichlet BC for the velocity. TODO: make more generic!
-                faceResiduals_[scvf.localFaceIdx()] = faceVars.faceVars(scvf.dofIndexSelf()).velocity() - this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
-            }
-        }
-
-        // set a Dirichlet BC for the pressure. TODO: make far more generic. this uses a fixed value
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            if(scvf.center()[0] < 1e-6)
-            {
-                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                const auto& insideVolVars = elemVolVars[insideScv];
-                ccResidual_ = insideVolVars.pressure() - 1.1e5;
-            }
-        }
+        DUNE_THROW(Dune::InvalidStateException,
+           "The localResidual class does not provide "
+           "a evalBoundary_() method.");
     }
 
      /*!

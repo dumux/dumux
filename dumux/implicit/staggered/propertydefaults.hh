@@ -235,6 +235,17 @@ SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::StaggeredGridUMFPackBackend<T
 //! set the block level to 2, suitable for e.g. the Dune::MultiTypeBlockMatrix
 SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
 
+//! Boundary types at a single degree of freedom
+SET_PROP(StaggeredModel, BoundaryTypes)
+{
+private:
+    enum {
+        numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter),
+        numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace)
+    };
+public:
+    using type = BoundaryTypes<numEqCellCenter + numEqFace>;
+};
 
 } // namespace Properties
 
