@@ -87,6 +87,8 @@ class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeT
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
+    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+
 public:
     // copying the local residual class is not a good idea
     StaggeredNavierStokesResidual(const StaggeredNavierStokesResidual &) = delete;
@@ -253,16 +255,17 @@ private:
     {
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
         const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.dofIndexOpposite()).velocity();
         FacePrimaryVariables normalFlux(0.0);
 
-
-        const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
-        const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
-
-        // advective part
-        const Scalar vUp = (sign(scvf.outerNormalScalar()) == sign(vAvg)) ? velocityOpposite : velocitySelf;
-        normalFlux += vAvg * vUp * insideVolVars.density();
+        if(navierStokes)
+        {
+            // advective part
+            const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
+            const Scalar vUp = (sign(scvf.outerNormalScalar()) == sign(vAvg)) ? velocityOpposite : velocitySelf;
+            normalFlux += vAvg * vUp * insideVolVars.density();
+        }
 
         // diffusive part
         const Scalar deltaV = scvf.normalInPosCoordDir() ?
@@ -312,7 +315,9 @@ private:
             const int eIdx = scvf.insideScvIdx();
             const auto& normalFace = fvGeometry.scvf(eIdx, subFaceData.localNormalFaceIdx);
 
-            tangentialFlux += computeAdvectivePartOfTangentialMomentumFlux_(scvf, normalFace, subFaceData, elemVolVars, velocity);
+            if(navierStokes)
+                tangentialFlux += computeAdvectivePartOfTangentialMomentumFlux_(scvf, normalFace, subFaceData, elemVolVars, velocity);
+
             tangentialFlux += computeDiffusivePartOfTangentialMomentumFlux_(scvf, normalFace, subFaceData, elemVolVars, velocity);
         }
         return tangentialFlux;

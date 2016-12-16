@@ -111,6 +111,8 @@ SET_BOOL_PROP(NavierStokes, VtkAddVelocity, false);
 // enable gravity by default
 SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);
 
+SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
+
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)
 // { private :
