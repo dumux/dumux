@@ -28,7 +28,7 @@
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/h2o.hh>
@@ -176,54 +176,50 @@ public:
      */
     void addOutputVtkFields()
     {
-        //Here we calculate the analytical solution
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         unsigned numDofs = this->model().numDofs();
-
         //create required scalar fields
-        ScalarField *temperatureExact = this->resultWriter().allocateManagedBuffer(numDofs);
+        auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
+        auto& temperatureExact = *(this->resultWriter().allocateManagedBuffer(numDofs));
 
         // get the first element to initialize the constant volume variables
-        const auto firstElement = *this->gridView().template begin<0>();
+        const auto someElement = *(elements(this->gridView()).begin());
+        const auto initialPriVars = initial_(GlobalPosition(0.0));
 
-        auto fvGeometry = localView(this->model().globalFvGeometry());
-        fvGeometry.bindElement(firstElement);
+        auto someFvGeometry = localView(this->model().globalFvGeometry());
+        someFvGeometry.bindElement(someElement);
+        const auto& someScv = *(scvs(someFvGeometry).begin());
 
-        auto elemVolVars = localView(this->model().curGlobalVolVars());
-        elemVolVars.bindElement(firstElement, fvGeometry, this->model().curSol());
+        VolumeVariables volVars;
+        volVars.update(initialPriVars, *this, someElement, someScv);
 
-        // just take the first volume variables for the output of the constant values
-        Scalar retardedFrontVelocity(0.0);
-        Scalar time(0.0);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
-            Scalar porosity = this->spatialParams().porosity(scv);
-            Scalar densityW = volVars.density();
-            Scalar heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-            Scalar storageW =  densityW*heatCapacityW*porosity;
-            Scalar densityS = this->spatialParams().solidDensity(firstElement, scv);
-            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(firstElement, scv);
-            Scalar storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
-            std::cout<<"storage: "<<storageTotal<<std::endl;
+        Scalar porosity = this->spatialParams().porosity(someScv);
+        Scalar densityW = volVars.density();
+        Scalar heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        Scalar storageW =  densityW*heatCapacityW*porosity;
+        Scalar densityS = this->spatialParams().solidDensity(someElement, someScv);
+        Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv);
+        Scalar storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
+        std::cout<<"storage: "<<storageTotal<<std::endl;
 
-            time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-            retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
-            std::cout<<"retarded velocity: "<<retardedFrontVelocity<<std::endl;
-            break;
-        }
+        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
+        std::cout<<"retarded velocity: "<<retardedFrontVelocity<<std::endl;
 
         for (const auto& element : elements(this->gridView()))
         {
+
+            auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 int dofIdxGlobal = scv.dofIndex();
                 auto dofPosition = scv.dofPosition();
-                (*temperatureExact)[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+                temperature[dofIdxGlobal] = this->model().curSol()[dofIdxGlobal][temperatureIdx];
+                temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
-        this->resultWriter().attachDofData(*temperatureExact, "temperatureExact", isBox);
+        this->resultWriter().attachDofData(temperature, "temperature", isBox);
+        this->resultWriter().attachDofData(temperatureExact, "temperatureExact", isBox);
     }
     /*!
      * \name Problem parameters
