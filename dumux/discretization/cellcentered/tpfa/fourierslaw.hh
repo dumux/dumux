@@ -159,7 +159,7 @@ private:
         GlobalPosition lambdaNormal;
         lambda.mv(scvf.unitOuterNormal(), lambdaNormal);
 
-        auto distanceVector = scvf.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
@@ -175,7 +175,7 @@ private:
                                   Scalar lambda,
                                   const SubControlVolume &scv)
     {
-        auto distanceVector = scvf.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 

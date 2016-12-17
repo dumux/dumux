@@ -178,7 +178,7 @@ private:
         GlobalPosition Dnormal;
         D.mv(scvf.unitOuterNormal(), Dnormal);
 
-        auto distanceVector = scvf.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
@@ -194,7 +194,7 @@ private:
                                   Scalar D,
                                   const SubControlVolume &scv)
     {
-        auto distanceVector = scvf.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 

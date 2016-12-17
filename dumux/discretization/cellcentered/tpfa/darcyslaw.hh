@@ -110,7 +110,7 @@ public:
             // and the outside neighbor
             if (scvf.boundary() || scvf.numOutsideScvs() > 1)
             {
-                const auto xOutside = scvf.center();
+                const auto xOutside = scvf.ipGlobal();
                 const auto gOutside = problem.gravityAtPos(xOutside);
                 hOutside -= rho*(gOutside*xOutside);
             }
@@ -206,7 +206,7 @@ private:
         GlobalPosition Knormal;
         K.mv(scvf.unitOuterNormal(), Knormal);
 
-        auto distanceVector = scvf.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
@@ -223,7 +223,7 @@ private:
                                   const Element& element,
                                   const SubControlVolume &scv)
     {
-        auto distanceVector = scvf.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
