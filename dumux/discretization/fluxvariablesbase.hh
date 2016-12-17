@@ -113,9 +113,9 @@ public:
             Scalar branchingPointUpwindTerm = 0.0;
             Scalar sumUpwindFluxes = 0.0;
 
-            // the inside flux
+            // if the inside flux is positive (outflow) do fully upwind and return flux
             if (!std::signbit(flux))
-                branchingPointUpwindTerm += upwindTerm(insideVolVars)*flux;
+                return upwindTerm(insideVolVars)*flux;
             else
                 sumUpwindFluxes += flux;
 
