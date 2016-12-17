@@ -37,7 +37,6 @@ NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(EnableAdvection);
 NEW_PROP_TAG(EnableMolecularDiffusion);
 NEW_PROP_TAG(EnableEnergyBalance);
-NEW_PROP_TAG(EnableGlobalElementFluxVariablesCache);
 }
 
 // forward declaration
