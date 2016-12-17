@@ -79,18 +79,18 @@ public:
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvFace,
+                       const SubControlVolumeFace& scvf,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
         // heat conductivities are always solution dependent (?)
-        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvFace);
+        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf);
 
         // Get the inside volume variables
-        const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
         // and the outside volume variables
-        const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // compute the diffusive flux
         const auto tInside = insideVolVars.temperature();
@@ -102,12 +102,12 @@ public:
     static Stencil stencil(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
+                           const SubControlVolumeFace& scvf)
     {
-        if (!scvFace.boundary())
-            return Stencil({scvFace.insideScvIdx(), scvFace.outsideScvIdx()});
+        if (!scvf.boundary())
+            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
         else
-            return Stencil({scvFace.insideScvIdx()});
+            return Stencil({scvf.insideScvIdx()});
     }
 
 private:
@@ -116,35 +116,35 @@ private:
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
                                              const ElementVolumeVariables& elemVolVars,
-                                             const SubControlVolumeFace& scvFace)
+                                             const SubControlVolumeFace& scvf)
     {
         Scalar tij;
 
-        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
         auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-        Scalar ti = calculateOmega_(problem, element, scvFace, insideLambda, insideScv);
+        Scalar ti = calculateOmega_(problem, element, scvf, insideLambda, insideScv);
 
-        if (!scvFace.boundary())
+        if (!scvf.boundary())
         {
-            const auto outsideScvIdx = scvFace.outsideScvIdx();
+            const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
             auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
-            Scalar tj = -1.0*calculateOmega_(problem, element, scvFace, outsideLambda, outsideScv);
+            Scalar tj = -1.0*calculateOmega_(problem, element, scvf, outsideLambda, outsideScv);
 
             // check for division by zero!
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = scvFace.area()*(ti * tj)/(ti + tj);
+                tij = scvf.area()*(ti * tj)/(ti + tj);
         }
         else
         {
-            tij = scvFace.area()*ti;
+            tij = scvf.area()*ti;
         }
 
         return tij;
@@ -152,14 +152,14 @@ private:
 
     static Scalar calculateOmega_(const Problem& problem,
                                   const Element& element,
-                                  const SubControlVolumeFace& scvFace,
+                                  const SubControlVolumeFace& scvf,
                                   const DimWorldMatrix &lambda,
                                   const SubControlVolume &scv)
     {
         GlobalPosition lambdaNormal;
-        lambda.mv(scvFace.unitOuterNormal(), lambdaNormal);
+        lambda.mv(scvf.unitOuterNormal(), lambdaNormal);
 
-        auto distanceVector = scvFace.center();
+        auto distanceVector = scvf.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
@@ -171,15 +171,15 @@ private:
 
     static Scalar calculateOmega_(const Problem& problem,
                                   const Element& element,
-                                  const SubControlVolumeFace& scvFace,
+                                  const SubControlVolumeFace& scvf,
                                   Scalar lambda,
                                   const SubControlVolume &scv)
     {
-        auto distanceVector = scvFace.center();
+        auto distanceVector = scvf.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = lambda * (distanceVector * scvFace.unitOuterNormal());
+        Scalar omega = lambda * (distanceVector * scvf.unitOuterNormal());
         omega *= problem.boxExtrusionFactor(element, scv);
 
         return omega;

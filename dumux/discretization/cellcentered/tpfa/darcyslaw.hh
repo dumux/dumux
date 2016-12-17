@@ -78,28 +78,28 @@ public:
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvFace,
+                       const SubControlVolumeFace& scvf,
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        const auto& fluxVarsCache = elemFluxVarsCache[scvFace];
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // Get the inside and outside volume variables
-        const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         auto hInside = insideVolVars.pressure(phaseIdx);
-        auto hOutside = scvFace.numOutsideScvs() <= 1 ? outsideVolVars.pressure(phaseIdx)
+        auto hOutside = scvf.numOutsideScvs() <= 1 ? outsideVolVars.pressure(phaseIdx)
                         : branchingFacetPressure_(phaseIdx, problem, element, fvGeometry,
-                                                  elemVolVars, scvFace,
+                                                  elemVolVars, scvf,
                                                   elemFluxVarsCache, hInside);
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
         {
             // do averaging for the density over all neighboring elements
-            const auto rho = scvFace.numOutsideScvs() <= 1 ? (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5
-                             : branchingFacetDensity_(phaseIdx, elemVolVars, scvFace, insideVolVars.density(phaseIdx));
+            const auto rho = scvf.numOutsideScvs() <= 1 ? (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5
+                             : branchingFacetDensity_(phaseIdx, elemVolVars, scvf, insideVolVars.density(phaseIdx));
 
             // ask for the gravitational acceleration in the inside neighbor
             const auto xInside = insideScv.center();
@@ -108,15 +108,15 @@ public:
             hInside -= rho*(gInside*xInside);
 
             // and the outside neighbor
-            if (scvFace.boundary() || scvFace.numOutsideScvs() > 1)
+            if (scvf.boundary() || scvf.numOutsideScvs() > 1)
             {
-                const auto xOutside = scvFace.center();
+                const auto xOutside = scvf.center();
                 const auto gOutside = problem.gravityAtPos(xOutside);
                 hOutside -= rho*(gOutside*xOutside);
             }
             else
             {
-                const auto outsideScvIdx = scvFace.outsideScvIdx();
+                const auto outsideScvIdx = scvf.outsideScvIdx();
                 // as we assemble fluxes from the neighbor to our element the outside index
                 // refers to the scv of our element, so we use the scv method
                 const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
@@ -132,19 +132,19 @@ public:
     static Stencil stencil(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
+                           const SubControlVolumeFace& scvf)
     {
-        if (scvFace.boundary())
-            return Stencil({scvFace.insideScvIdx()});
-        else if (scvFace.numOutsideScvs() > 1)
+        if (scvf.boundary())
+            return Stencil({scvf.insideScvIdx()});
+        else if (scvf.numOutsideScvs() > 1)
         {
-            Stencil stencil({scvFace.insideScvIdx()});
-            for (unsigned int i = 0; i < scvFace.numOutsideScvs(); ++i)
-                stencil.push_back(scvFace.outsideScvIdx(i));
+            Stencil stencil({scvf.insideScvIdx()});
+            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+                stencil.push_back(scvf.outsideScvIdx(i));
             return stencil;
         }
         else
-            return Stencil({scvFace.insideScvIdx(), scvFace.outsideScvIdx()});
+            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
@@ -153,25 +153,25 @@ public:
                                               const Element& element,
                                               const FVElementGeometry& fvGeometry,
                                               const ElementVolumeVariables& elemVolVars,
-                                              const SubControlVolumeFace& scvFace)
+                                              const SubControlVolumeFace& scvf)
     {
         Scalar tij;
 
-        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
-        Scalar ti = calculateOmega_(problem, scvFace, insideK, element, insideScv);
+        Scalar ti = calculateOmega_(problem, scvf, insideK, element, insideScv);
 
         // for the boundary (dirichlet) or at branching points we only need ti
-        if (scvFace.boundary() || scvFace.numOutsideScvs() > 1)
+        if (scvf.boundary() || scvf.numOutsideScvs() > 1)
         {
-            tij = scvFace.area()*ti;
+            tij = scvf.area()*ti;
         }
         // otherwise we compute a tpfa harmonic mean
         else
         {
-            const auto outsideScvIdx = scvFace.outsideScvIdx();
+            const auto outsideScvIdx = scvf.outsideScvIdx();
             // as we assemble fluxes from the neighbor to our element the outside index
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
@@ -181,15 +181,15 @@ public:
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*calculateOmega_(problem, scvFace, outsideK, outsideElement, outsideScv);
+                tj = -1.0*calculateOmega_(problem, scvf, outsideK, outsideElement, outsideScv);
             else
-                tj = calculateOmega_(problem, fvGeometry.flipScvf(scvFace.index()), outsideK, outsideElement, outsideScv);
+                tj = calculateOmega_(problem, fvGeometry.flipScvf(scvf.index()), outsideK, outsideElement, outsideScv);
 
             // check for division by zero!
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = scvFace.area()*(ti * tj)/(ti + tj);
+                tij = scvf.area()*(ti * tj)/(ti + tj);
         }
 
         return tij;
@@ -198,15 +198,15 @@ public:
 private:
     //! compute the transmissibility ti, overload for tensor permeabilites
     static Scalar calculateOmega_(const Problem& problem,
-                                  const SubControlVolumeFace& scvFace,
+                                  const SubControlVolumeFace& scvf,
                                   const DimWorldMatrix &K,
                                   const Element& element,
                                   const SubControlVolume &scv)
     {
         GlobalPosition Knormal;
-        K.mv(scvFace.unitOuterNormal(), Knormal);
+        K.mv(scvf.unitOuterNormal(), Knormal);
 
-        auto distanceVector = scvFace.center();
+        auto distanceVector = scvf.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
@@ -218,16 +218,16 @@ private:
 
     //! compute the transmissibility ti, overload for scalar permeabilites
     static Scalar calculateOmega_(const Problem& problem,
-                                  const SubControlVolumeFace& scvFace,
+                                  const SubControlVolumeFace& scvf,
                                   const Scalar K,
                                   const Element& element,
                                   const SubControlVolume &scv)
     {
-        auto distanceVector = scvFace.center();
+        auto distanceVector = scvf.center();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = K * (distanceVector * scvFace.unitOuterNormal());
+        Scalar omega = K * (distanceVector * scvf.unitOuterNormal());
         omega *= problem.boxExtrusionFactor(element, scv);
 
         return omega;
@@ -239,18 +239,18 @@ private:
                                           const Element& element,
                                           const FVElementGeometry& fvGeometry,
                                           const ElementVolumeVariables& elemVolVars,
-                                          const SubControlVolumeFace& scvFace,
+                                          const SubControlVolumeFace& scvf,
                                           const ElementFluxVarsCache& elemFluxVarsCache,
                                           Scalar insideP)
     {
-        const auto& insideFluxVarsCache = elemFluxVarsCache[scvFace];
+        const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
         Scalar sumTi(insideFluxVarsCache.tij());
         Scalar sumPTi(insideFluxVarsCache.tij()*insideP);
 
-        for (unsigned int i = 0; i < scvFace.numOutsideScvs(); ++i)
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
         {
-            const auto outsideScvIdx = scvFace.outsideScvIdx(i);
-            const auto& flippedScvf = fvGeometry.flipScvf(scvFace.index(), i);
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
             sumTi += outsideFluxVarsCache.tij();
@@ -262,17 +262,17 @@ private:
     //! compute the density at branching facets for network grids as arithmetic mean
     static Scalar branchingFacetDensity_(int phaseIdx,
                                          const ElementVolumeVariables& elemVolVars,
-                                         const SubControlVolumeFace& scvFace,
+                                         const SubControlVolumeFace& scvf,
                                          Scalar insideRho)
     {
         Scalar rho(insideRho);
-        for (unsigned int i = 0; i < scvFace.numOutsideScvs(); ++i)
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
         {
-            const auto outsideScvIdx = scvFace.outsideScvIdx(i);
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             rho += outsideVolVars.density(phaseIdx);
         }
-        return rho/(scvFace.numOutsideScvs()+1);
+        return rho/(scvf.numOutsideScvs()+1);
     }
 };
 
