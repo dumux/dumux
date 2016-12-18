@@ -101,6 +101,8 @@ class StaggeredLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+
 
 public:
 
@@ -131,6 +133,8 @@ public:
     void assemble(const Element& element, JacobianMatrix& matrix, SolutionVector& residual)
     {
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
+        if(isGhost)
+            DUNE_THROW(Dune::NotImplemented, "Support for ghost cells not implemented");
 
         // prepare the volvars/fvGeometries in case caching is disabled
         auto fvGeometry = localView(this->model_().globalFvGeometry());
@@ -145,8 +149,8 @@ public:
         auto elemFluxVarsCache = localView(this->model_().globalFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        // set the actual dof index
-        globalI_ = this->problem_().elementMapper().index(element);
+        // set the actual cell center dof index
+        ccGlobalI_ = this->problem_().elementMapper().index(element);
 
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
@@ -154,30 +158,29 @@ public:
         auto curGlobalFaceVars = this->model_().curGlobalFaceVars();
         auto& prevGlobalFaceVars = this->model_().prevGlobalFaceVars();
 
-        // calculate the local residual
-        if (isGhost)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Support for ghost cells not implemented");
-        }
-        else
-        {
-            this->localResidual().eval(element, fvGeometry,
-                                       prevElemVolVars, curElemVolVars,
-                                       prevGlobalFaceVars, curGlobalFaceVars,
-                                       elemBcTypes, elemFluxVarsCache);
-            // store residual in global container as well
-            residual[cellCenterIdx][globalI_] = this->localResidual().ccResidual();
+        // calculate the local residual for all dofs of this element
+        this->localResidual().eval(element, fvGeometry,
+                                   prevElemVolVars, curElemVolVars,
+                                   prevGlobalFaceVars, curGlobalFaceVars,
+                                   elemBcTypes, elemFluxVarsCache);
+        // store the cell center residual in global container
+        residual[cellCenterIdx][ccGlobalI_] = this->localResidual().ccResidual();
 
-            for(auto&& scvf : scvfs(fvGeometry))
-            {
-                residual[faceIdx][scvf.dofIndexSelf()] += this->localResidual().faceResidual(scvf.localFaceIdx());
-            }
+        // treat the local residua of the face dofs:
+        // create a cache to reuse some results for the calculation of the derivatives
+        FaceSolutionVector faceResidualCache;
+        faceResidualCache.resize(fvGeometry.numScvf());
+        faceResidualCache = 0.0;
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            residual[faceIdx][scvf.dofIndexSelf()] += this->localResidual().faceResidual(scvf.localFaceIdx());
+            faceResidualCache[scvf.localFaceIdx()] = this->localResidual().faceResidual(scvf.localFaceIdx());
         }
 
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
+        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual[cellCenterIdx][ccGlobalI_], faceResidualCache);
     }
 
 private:
@@ -190,23 +193,20 @@ private:
                                  ElementFluxVariablesCache& elemFluxVarsCache,
                                  const ElementBoundaryTypes& elemBcTypes,
                                  JacobianMatrix& matrix,
-                                 SolutionVector& residual,
-                                 const bool isGhost)
+                                 const CellCenterPrimaryVariables& ccResidual,
+                                 const FaceSolutionVector& faceResidualCache)
     {
         // compute the derivatives of the cell center dofs with respect to cell center dofs
-        dCCdCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
+        dCCdCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
         // compute the derivatives of the cell center dofs with respect to face dofs
-        dCCdFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
+        dCCdFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
         // compute the derivatives of the face dofs with respect to cell center dofs
-        dFacedCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
+        dFacedCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
 
         // compute the derivatives of the face dofs with respect to face dofs
-        dFacedFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
-
-//         printmatrix(std::cout, matrix[cellCenterIdx][cellCenterIdx], "A11 neu", "");
-//         printmatrix(std::cout, matrix[cellCenterIdx][faceIdx], "A12 neu", "");
+        dFacedFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
     }
 
      /*!
@@ -221,12 +221,8 @@ private:
                  ElementFluxVariablesCache& elemFluxVarsCache,
                  const ElementBoundaryTypes& elemBcTypes,
                  JacobianMatrix& matrix,
-                 SolutionVector& residual,
-                 const bool isGhost)
+                 const CellCenterPrimaryVariables& ccResidual)
     {
-        // set the actual dof index
-        auto globalI = this->problem_().elementMapper().index(element);
-
         // build derivatives with for cell center dofs w.r.t. cell center dofs
         const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
 
@@ -251,11 +247,11 @@ private:
                                         prevGlobalFaceVars, curGlobalFaceVars,
                                         elemBcTypes, elemFluxVarsCache);
 
-                auto partialDeriv = (this->localResidual().ccResidual() - residual[cellCenterIdx][globalI]);
+                auto partialDeriv = (this->localResidual().ccResidual() - ccResidual);
                 partialDeriv /= eps;
 
                 // update the global jacobian matrix with the current partial derivatives
-                this->updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], globalI, globalJ, pvIdx, partialDeriv);
+                this->updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], ccGlobalI_, globalJ, pvIdx, partialDeriv);
 
                 // restore the original volVars
                 curVolVars = origVolVars;
@@ -267,27 +263,22 @@ private:
      * \brief Computes the derivatives of the cell center dofs with respect to face dofs
      */
     void dCCdFace_(const Element& element,
-                 const FVElementGeometry& fvGeometry,
-                 const ElementVolumeVariables& prevElemVolVars,
-                 const ElementVolumeVariables& curElemVolVars,
-                 const GlobalFaceVars& prevGlobalFaceVars,
-                 GlobalFaceVars& curGlobalFaceVars,
-                 ElementFluxVariablesCache& elemFluxVarsCache,
-                 const ElementBoundaryTypes& elemBcTypes,
-                 JacobianMatrix& matrix,
-                 SolutionVector& residual,
-                 const bool isGhost)
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& prevElemVolVars,
+                   const ElementVolumeVariables& curElemVolVars,
+                   const GlobalFaceVars& prevGlobalFaceVars,
+                   GlobalFaceVars& curGlobalFaceVars,
+                   ElementFluxVariablesCache& elemFluxVarsCache,
+                   const ElementBoundaryTypes& elemBcTypes,
+                   JacobianMatrix& matrix,
+                   const CellCenterPrimaryVariables& ccResidual)
     {
-        // set the actual dof index
-        auto globalI = this->problem_().elementMapper().index(element);
-
         // build derivatives with for cell center dofs w.r.t. face dofs
         const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
 
         for(const auto& globalJ : cellCenterToFaceStencil)
         {
             // get the faceVars of the face with respect to which we are going to build the derivative
-
             auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
             auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
 
@@ -304,11 +295,11 @@ private:
                                         prevGlobalFaceVars, curGlobalFaceVars,
                                         elemBcTypes, elemFluxVarsCache);
 
-                auto partialDeriv = (this->localResidual().ccResidual() - residual[cellCenterIdx][globalI]);
+                auto partialDeriv = (this->localResidual().ccResidual() - ccResidual);
                 partialDeriv /= eps;
 
                 // update the global jacobian matrix with the current partial derivatives
-                this->updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], globalI, globalJ, pvIdx, partialDeriv);
+                this->updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], ccGlobalI_, globalJ, pvIdx, partialDeriv);
 
                 // restore the original faceVars
                 curFaceVars = origFaceVars;
@@ -316,25 +307,25 @@ private:
         }
     }
 
-
      /*!
      * \brief Computes the derivatives of the face dofs with respect to cell center dofs
      */
     void dFacedCC_(const Element& element,
-                 const FVElementGeometry& fvGeometry,
-                 const ElementVolumeVariables& prevElemVolVars,
-                 ElementVolumeVariables& curElemVolVars,
-                 const GlobalFaceVars& prevGlobalFaceVars,
-                 const GlobalFaceVars& curGlobalFaceVars,
-                 ElementFluxVariablesCache& elemFluxVarsCache,
-                 const ElementBoundaryTypes& elemBcTypes,
-                 JacobianMatrix& matrix,
-                 SolutionVector& residual,
-                 const bool isGhost)
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& prevElemVolVars,
+                   ElementVolumeVariables& curElemVolVars,
+                   const GlobalFaceVars& prevGlobalFaceVars,
+                   const GlobalFaceVars& curGlobalFaceVars,
+                   ElementFluxVariablesCache& elemFluxVarsCache,
+                   const ElementBoundaryTypes& elemBcTypes,
+                   JacobianMatrix& matrix,
+                   const FaceSolutionVector& cachedResidual)
     {
         for(auto&& scvf : scvfs(fvGeometry))
         {
-            const auto globalI = scvf.dofIndexSelf();
+            // set the actual dof index
+            const auto faceGlobalI = scvf.dofIndexSelf();
+
             // build derivatives with for face dofs w.r.t. cell center dofs
             const auto& faceToCellCenterStencil = this->model_().stencils(scvf).faceToCellCenterStencil();
 
@@ -345,14 +336,6 @@ private:
                 const auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
                 auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
                 VolumeVariables origVolVars(curVolVars);
-
-                // TODO: this requires recalculating and storing the residual. is there a better way?
-                this->localResidual().eval(element, fvGeometry,
-                        prevElemVolVars, curElemVolVars,
-                        prevGlobalFaceVars, curGlobalFaceVars,
-                        elemBcTypes, elemFluxVarsCache);
-
-                auto originalLocalResidual = this->localResidual().faceResidual(scvf.localFaceIdx());
 
                 for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
                 {
@@ -367,10 +350,10 @@ private:
                                             prevGlobalFaceVars, curGlobalFaceVars,
                                             elemBcTypes, elemFluxVarsCache);
 
-                    auto partialDeriv = (this->localResidual().faceResidual(scvf.localFaceIdx()) - originalLocalResidual);
+                    auto partialDeriv = (this->localResidual().faceResidual(scvf.localFaceIdx()) - cachedResidual[scvf.localFaceIdx()]);
                     partialDeriv /= eps;
                     // update the global jacobian matrix with the current partial derivatives
-                    this->updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], globalI, globalJ, pvIdx, partialDeriv);
+                    this->updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
 
                     // restore the original volVars
                     curVolVars = origVolVars;
@@ -379,42 +362,31 @@ private:
         }
     }
 
-
-
      /*!
      * \brief Computes the derivatives of the face dofs with respect to cell center dofs
      */
     void dFacedFace_(const Element& element,
-                 const FVElementGeometry& fvGeometry,
-                 const ElementVolumeVariables& prevElemVolVars,
-                 const ElementVolumeVariables& curElemVolVars,
-                 const GlobalFaceVars& prevGlobalFaceVars,
-                 GlobalFaceVars& curGlobalFaceVars,
-                 ElementFluxVariablesCache& elemFluxVarsCache,
-                 const ElementBoundaryTypes& elemBcTypes,
-                 JacobianMatrix& matrix,
-                 SolutionVector& residual,
-                 const bool isGhost)
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& prevElemVolVars,
+                     const ElementVolumeVariables& curElemVolVars,
+                     const GlobalFaceVars& prevGlobalFaceVars,
+                     GlobalFaceVars& curGlobalFaceVars,
+                     ElementFluxVariablesCache& elemFluxVarsCache,
+                     const ElementBoundaryTypes& elemBcTypes,
+                     JacobianMatrix& matrix,
+                     const FaceSolutionVector& cachedResidual)
     {
         for(auto&& scvf : scvfs(fvGeometry))
         {
-            const auto globalI = scvf.dofIndexSelf();
+            // set the actual dof index
+            const auto faceGlobalI = scvf.dofIndexSelf();
 
             // build derivatives with for face dofs w.r.t. cell center dofs
             const auto& faceToFaceStencil = this->model_().stencils(scvf).faceToFaceStencil();
 
-            // TODO: this requires recalculating and storing the residual. is there a better way?
-            this->localResidual().eval(element, fvGeometry,
-                        prevElemVolVars, curElemVolVars,
-                        prevGlobalFaceVars, curGlobalFaceVars,
-                        elemBcTypes, elemFluxVarsCache);
-
-            const auto originalLocalResidual = this->localResidual().faceResidual(scvf.localFaceIdx());
-
             for(const auto& globalJ : faceToFaceStencil)
             {
                 // get the faceVars of the face with respect to which we are going to build the derivative
-
                 auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
                 auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
 
@@ -431,11 +403,11 @@ private:
                                             prevGlobalFaceVars, curGlobalFaceVars,
                                             elemBcTypes, elemFluxVarsCache);
 
-                    auto partialDeriv = (this->localResidual().faceResidual(scvf.localFaceIdx()) - originalLocalResidual);
+                    auto partialDeriv = (this->localResidual().faceResidual(scvf.localFaceIdx()) - cachedResidual[scvf.localFaceIdx()]);
                     partialDeriv /= eps;
 
                     // update the global jacobian matrix with the current partial derivatives
-                    this->updateGlobalJacobian_(matrix[faceIdx][faceIdx], globalI, globalJ, pvIdx, partialDeriv);
+                    this->updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
 
                     // restore the original faceVars
                     curFaceVars = origFaceVars;
@@ -443,8 +415,6 @@ private:
             }
         }
     }
-
-
 
     /*!
      * \brief Updates the current global Jacobian matrix with the
@@ -469,7 +439,6 @@ private:
         }
     }
 
-
     //! If the global vol vars caching is enabled we have to modify the global volvar object
     template<class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
@@ -482,7 +451,7 @@ private:
     getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return elemVolVars[scv]; }
 
-    IndexType globalI_;
+    IndexType ccGlobalI_;
     int numericDifferenceMethod_;
 };
 
