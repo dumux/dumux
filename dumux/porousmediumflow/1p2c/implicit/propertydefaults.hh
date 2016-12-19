@@ -83,12 +83,6 @@ SET_PROP(OnePTwoC, FluidState){
         typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
-//! set default upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(OnePTwoC, ImplicitMassUpwindWeight, 1.0);
-
-//! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(OnePTwoC, ImplicitMobilityUpwindWeight, 1.0);
-
 //! Set the indices used by the 1p2c model
 SET_TYPE_PROP(OnePTwoC, Indices, OnePTwoCIndices<TypeTag>);
 //! The spatial parameters to be employed.

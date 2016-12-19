@@ -31,7 +31,7 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(ImplicitMassUpwindWeight);
+NEW_PROP_TAG(ImplicitUpwindWeight);
 }
 
 /*!
@@ -72,7 +72,7 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
+        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
     }
 
     const Problem& problem() const

@@ -132,12 +132,6 @@ SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSw
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
 
-//! the upwind factor for the mobility.
-SET_SCALAR_PROP(ThreePThreeC, ImplicitMassUpwindWeight, 1.0);
-
-//! set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(ThreePThreeC, ImplicitMobilityUpwindWeight, 1.0);
-
 //! Determines whether a constraint solver should be used explicitly
 SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 

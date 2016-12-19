@@ -95,12 +95,6 @@ SET_TYPE_PROP(ThreeP, Model, ThreePModel<TypeTag>);
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
 
-//! the upwind factor for the mobility.
-SET_SCALAR_PROP(ThreeP, ImplicitMassUpwindWeight, 1.0);
-
-//! set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(ThreeP, ImplicitMobilityUpwindWeight, 1.0);
-
 //! The indices required by the isothermal 3p model
 SET_TYPE_PROP(ThreeP, Indices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
 

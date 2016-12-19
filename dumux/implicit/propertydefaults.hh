@@ -198,6 +198,9 @@ SET_BOOL_PROP(ImplicitBase, EnableEnergyBalance, false);
 
 SET_TYPE_PROP(ImplicitBase, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
+//! Set the upwind weight for the advective term
+SET_SCALAR_PROP(ImplicitBase, ImplicitUpwindWeight, 1.0);
+
 //! vtk output
 SET_BOOL_PROP(ImplicitBase, VtkAddVelocity, false); //!< Don't reconstruct velocity per default
 

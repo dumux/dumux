@@ -166,12 +166,6 @@ SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag
 //! the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);
 
-//! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(TwoPNC, ImplicitMassUpwindWeight, 1.0);
-
-//! Set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(TwoPNC, ImplicitMobilityUpwindWeight, 1.0);
-
 //! The indices required by the isothermal 2pnc model
 SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
 
