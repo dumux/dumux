@@ -101,6 +101,7 @@ NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters 
 
 // vtk output
 NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output
+NEW_PROP_TAG(VtkAddProcessRank); //!< specifies if the process rank should be added the output
 
 // stencils
 NEW_PROP_TAG(StencilsVector); //! The type of the global vector of stencils per element
