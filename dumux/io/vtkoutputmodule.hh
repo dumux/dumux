@@ -34,6 +34,7 @@ namespace Properties
 {
 NEW_PROP_TAG(VtkAddVelocity);
 NEW_PROP_TAG(VtkAddProcessRank);
+NEW_PROP_TAG(VtkAddPorosity);
 NEW_PROP_TAG(VtkAddPermeability);
 }
 
@@ -197,6 +198,14 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
             rank.resize(numCells);
 
+        std::vector<Scalar> porosity;
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
+            porosity.resize(numCells);
+
+        std::vector<Scalar> permeability;
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
+            permeability.resize(numCells);
+
         for (const auto& element : elements(problem_.gridView(), Dune::Partitions::interior))
         {
             auto eIdxGlobal = problem_.elementMapper().index(element);
@@ -214,30 +223,34 @@ public:
             auto fvGeometry = localView(problem_.model().globalFvGeometry());
             auto elemVolVars = localView(problem_.model().curGlobalVolVars());
 
-            if (velocityOutput.enableOutput() || !secondVarScalarDataInfo_.empty())
+            // If velocity output is enabled we need to bind to the whole stencil
+            // otherwise element-local data is sufficient
+            if (velocityOutput.enableOutput())
+                fvGeometry.bind(element);
+            else
+                fvGeometry.bindElement(element);
+
+            // If velocity output is enabled we need to bind to the whole stencil
+            // otherwise element-local data is sufficient
+            if (velocityOutput.enableOutput())
+                elemVolVars.bind(element, fvGeometry, problem_.model().curSol());
+            else
+                elemVolVars.bindElement(element, fvGeometry, problem_.model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
             {
-                // If velocity output is enabled we need to bind to the whole stencil
-                // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
-                    fvGeometry.bind(element);
-                else
-                    fvGeometry.bindElement(element);
+                const auto dofIdxGlobal = scv.dofIndex();
+                const auto& volVars = elemVolVars[scv];
 
-                // If velocity output is enabled we need to bind to the whole stencil
-                // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
-                    elemVolVars.bind(element, fvGeometry, problem_.model().curSol());
-                else
-                    elemVolVars.bindElement(element, fvGeometry, problem_.model().curSol());
+                for (std::size_t i = 0; i < secondVarScalarDataInfo_.size(); ++i)
+                    secondVarScalarData[i][dofIdxGlobal] = secondVarScalarDataInfo_[i].get(volVars);
 
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    const auto dofIdxGlobal = scv.dofIndex();
-                    const auto& volVars = elemVolVars[scv];
+                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
+                    porosity[dofIdxGlobal] = problem_.spatialParams().porosity(scv);
 
-                    for (std::size_t i = 0; i < secondVarScalarDataInfo_.size(); ++i)
-                        secondVarScalarData[i][dofIdxGlobal] = secondVarScalarDataInfo_[i].get(volVars);
-                }
+                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
+                    permeability[dofIdxGlobal] = problem_.spatialParams().intrinsicPermeability(scv, volVars);
+
             }
 
             // velocity output
@@ -279,7 +292,15 @@ public:
 
         // the process rank
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
-            sequenceWriter_.addCellData(rank, "rank");
+            sequenceWriter_.addCellData(rank, "process rank");
+
+        // the porosity
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
+            sequenceWriter_.addCellData(porosity, "porosity");
+
+        // the permeability
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
+            sequenceWriter_.addCellData(permeability, "permeability");
 
         // also register additional (non-standardized) user fields
         for (std::size_t i = 0; i < scalarFields_.size(); ++i)
