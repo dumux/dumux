@@ -169,10 +169,11 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
-                        this->nonConstantCurGlobalVolVars()[dofIdxGlobal].update(this->curSol()[dofIdxGlobal],
-                                                                                 this->problem_(),
-                                                                                 element,
-                                                                                 scv);
+
+                        this->nonConstCurGlobalVolVars().volVars(scv.index()).update(this->curSol()[dofIdxGlobal],
+                                                                                     this->problem_(),
+                                                                                     element,
+                                                                                     scv);
                     }
                 }
 
