@@ -201,6 +201,8 @@ SET_TYPE_PROP(ImplicitBase, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 //! vtk output
 SET_BOOL_PROP(ImplicitBase, VtkAddVelocity, false); //!< Don't reconstruct velocity per default
 SET_BOOL_PROP(ImplicitBase, VtkAddProcessRank, true); //!< Add process rank to output per default
+SET_BOOL_PROP(ImplicitBase, VtkAddPorosity, false); //!< Don't add porosity to output per default
+SET_BOOL_PROP(ImplicitBase, VtkAddPermeability, false); //!< Don't add permeability to output per default
 
 } // namespace Properties
 
