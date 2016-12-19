@@ -153,6 +153,7 @@ public:
         //! (1) Register addtional (non-standardized) data fields with the vtk writer
         //!     Using the add scalar field or vector field methods
         //////////////////////////////////////////////////////////////
+        problem_.model().addVtkOutputFields(*this);
         problem_.addVtkOutputFields(*this);
 
         //! Abort if no data was registered

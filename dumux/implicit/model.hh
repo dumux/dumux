@@ -685,6 +685,13 @@ public:
     {}
 
     /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {}
+
+    /*!
      * \brief Reference to the grid view of the spatial domain.
      */
     const GridView &gridView() const
