@@ -37,8 +37,6 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(ThermalConductivityModel);
 }
 
@@ -51,7 +49,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -62,9 +59,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -85,16 +81,10 @@ public:
         // heat conductivities are always solution dependent (?)
         Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf);
 
-        // Get the inside volume variables
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-
-        // and the outside volume variables
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-        // compute the diffusive flux
-        const auto tInside = insideVolVars.temperature();
-        const auto tOutside = outsideVolVars.temperature();
+        // get the inside/outside temperatures
+        const auto tInside = elemVolVars[scvf.insideScvIdx()].temperature();
+        const auto tOutside = scvf.numOutsideScvs() == 1 ? elemVolVars[scvf.outsideScvIdx()].temperature()
+                              : branchingFacetTemperature_(problem, element, fvGeometry, elemVolVars, scvf, tInside, tij);
 
         return tij*(tInside - tOutside);
     }
@@ -112,6 +102,32 @@ public:
 
 private:
 
+    //! compute the temperature at branching facets for network grids
+    static Scalar branchingFacetTemperature_(const Problem& problem,
+                                             const Element& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const SubControlVolumeFace& scvf,
+                                             Scalar insideTemperature,
+                                             Scalar insideTi)
+    {
+        Scalar sumTi(insideTi);
+        Scalar sumTempTi(insideTi*insideTemperature);
+
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
+            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+
+            auto outsideTi = calculateTransmissibility_(problem, outsideElement, fvGeometry, elemVolVars, flippedScvf);
+            sumTi += outsideTi;
+            sumTempTi += outsideTi*outsideVolVars.temperature();
+        }
+        return sumTempTi/sumTi;
+    }
+
     static Scalar calculateTransmissibility_(const Problem& problem,
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
@@ -127,24 +143,36 @@ private:
         auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
         Scalar ti = calculateOmega_(problem, element, scvf, insideLambda, insideScv);
 
-        if (!scvf.boundary())
+        // for the boundary (dirichlet) or at branching points we only need ti
+        if (scvf.boundary() || scvf.numOutsideScvs() > 1)
+        {
+            tij = scvf.area()*ti;
+        }
+        // otherwise we compute a tpfa harmonic mean
+        else
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
 
-            auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
-            Scalar tj = -1.0*calculateOmega_(problem, element, scvf, outsideLambda, outsideScv);
+            auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars,
+                                                                                        problem.spatialParams(),
+                                                                                        outsideElement,
+                                                                                        fvGeometry,
+                                                                                        outsideScv);
+            Scalar tj;
+            if (dim == dimWorld)
+                // assume the normal vector from outside is anti parallel so we save flipping a vector
+                tj = -1.0*calculateOmega_(problem, outsideElement, scvf, outsideLambda, outsideScv);
+            else
+                tj = calculateOmega_(problem, outsideElement, fvGeometry.flipScvf(scvf.index()), outsideLambda, outsideScv);
 
             // check for division by zero!
             if (ti*tj <= 0.0)
                 tij = 0;
             else
                 tij = scvf.area()*(ti * tj)/(ti + tj);
-        }
-        else
-        {
-            tij = scvf.area()*ti;
         }
 
         return tij;
