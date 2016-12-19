@@ -69,7 +69,7 @@ public:
 
         // remove the element itself and possible ghost neighbors from the neighbor stencil
         neighborStencil_.erase(std::remove_if(neighborStencil_.begin(), neighborStencil_.end(),
-                                             [globalI](int i){ return (i == globalI); }),
+                                             [globalI](auto i){ return (i == globalI); }),
                                neighborStencil_.end());
     }
 
