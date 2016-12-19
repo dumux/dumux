@@ -225,6 +225,7 @@ private:
     {
         // build derivatives with for cell center dofs w.r.t. cell center dofs
         const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
+        auto&& scvI = fvGeometry.scv(ccGlobalI_);
 
         for(const auto& globalJ : cellCenterToCellCenterStencil)
         {
@@ -242,7 +243,7 @@ private:
                 priVars[pvIdx] += eps;
                 curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
-                this->localResidual().eval(element, fvGeometry,
+                this->localResidual().evalCellCenter(element, fvGeometry, scvI,
                                         prevElemVolVars, curElemVolVars,
                                         prevGlobalFaceVars, curGlobalFaceVars,
                                         elemBcTypes, elemFluxVarsCache);
@@ -275,6 +276,7 @@ private:
     {
         // build derivatives with for cell center dofs w.r.t. face dofs
         const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
+        auto&& scvI = fvGeometry.scv(ccGlobalI_);
 
         for(const auto& globalJ : cellCenterToFaceStencil)
         {
@@ -290,7 +292,7 @@ private:
 
                 curFaceVars.update(priVars);
 
-                this->localResidual().eval(element, fvGeometry,
+                this->localResidual().evalCellCenter(element, fvGeometry, scvI,
                                         prevElemVolVars, curElemVolVars,
                                         prevGlobalFaceVars, curGlobalFaceVars,
                                         elemBcTypes, elemFluxVarsCache);
@@ -345,7 +347,7 @@ private:
                     priVars[pvIdx] += eps;
                     curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
-                    this->localResidual().eval(element, fvGeometry,
+                    this->localResidual().evalFace(element, fvGeometry, scvf,
                                             prevElemVolVars, curElemVolVars,
                                             prevGlobalFaceVars, curGlobalFaceVars,
                                             elemBcTypes, elemFluxVarsCache);
@@ -398,7 +400,7 @@ private:
 
                     curFaceVars.update(priVars);
 
-                    this->localResidual().eval(element, fvGeometry,
+                    this->localResidual().evalFace(element, fvGeometry, scvf,
                                             prevElemVolVars, curElemVolVars,
                                             prevGlobalFaceVars, curGlobalFaceVars,
                                             elemBcTypes, elemFluxVarsCache);

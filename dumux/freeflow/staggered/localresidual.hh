@@ -210,6 +210,23 @@ protected:
                        const ElementBoundaryTypes& elemBcTypes,
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
+        evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, faceVars, elemBcTypes, elemFluxVarsCache);
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, faceVars, elemBcTypes, elemFluxVarsCache);
+        }
+    }
+
+     /*!
+     * \brief Evaluate boundary conditions for a cell center dof
+     */
+    void evalBoundaryForCellCenter_(const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const GlobalFaceVars& faceVars,
+                                    const ElementBoundaryTypes& elemBcTypes,
+                                    const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if (scvf.boundary())
@@ -227,23 +244,41 @@ protected:
                     const auto& insideVolVars = elemVolVars[insideScv];
                     this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(scvf.center())[pressureIdx];
                 }
+            }
+        }
+    }
 
-                // set a fixed value for the velocity
-                if(bcTypes.isDirichlet(momentumBalanceIdx))
-                {
-                    const Scalar velocity = faceVars.faceVars(scvf.dofIndexSelf()).velocity();
-                    const Scalar dirichletValue = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
-                    this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
-                }
+     /*!
+     * \brief Evaluate boundary conditions for a face dof
+     */
+    void evalBoundaryForFace_(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const SubControlVolumeFace& scvf,
+                              const ElementVolumeVariables& elemVolVars,
+                              const GlobalFaceVars& faceVars,
+                              const ElementBoundaryTypes& elemBcTypes,
+                              const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
+        if (scvf.boundary())
+        {
+            // handle the actual boundary conditions:
+            const auto bcTypes = this->problem().boundaryTypes(element, scvf);
 
-                // outflow condition for the momentum balance equation
-                if(bcTypes.isOutflow(momentumBalanceIdx))
-                {
-                    if(bcTypes.isDirichlet(massBalanceIdx))
-                        this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(scvf, fvGeometry, elemVolVars, faceVars);
-                    else
-                        DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
-                }
+            // set a fixed value for the velocity
+            if(bcTypes.isDirichlet(momentumBalanceIdx))
+            {
+                const Scalar velocity = faceVars.faceVars(scvf.dofIndexSelf()).velocity();
+                const Scalar dirichletValue = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
+                this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
+            }
+
+            // outflow condition for the momentum balance equation
+            if(bcTypes.isOutflow(momentumBalanceIdx))
+            {
+                if(bcTypes.isDirichlet(massBalanceIdx))
+                    this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(scvf, fvGeometry, elemVolVars, faceVars);
+                else
+                    DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }
         }
     }
