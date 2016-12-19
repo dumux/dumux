@@ -327,40 +327,6 @@ public:
         return wgPhaseOnly;
     }
 
-        /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer. Adjust this in case of anisotropic permeabilities.
-     */
-    void addOutputVtkFields()
-    {
-        // get the number of degrees of freedom
-        unsigned numDofs = this->model().numDofs();
-
-        // create the scalar field required for the permeabilities
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numDofs);
-
-        for (const auto& element : elements(this->gridView()))
-        {
-            // make sure the FVElementGeometry is bound to the element
-            auto fvGeometry = localView(this->model().globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            // make sure the FVElementGeometry is bound to the element
-            auto elemVolVars = localView(this->model().curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto dofIdxGlobal = scv.dofIndex();
-                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(scv, elemVolVars[scv]);
-            }
-        }
-
-        this->resultWriter().attachDofData(*Kxx, "permeability", isBox);
-    }
-
 private:
     // internal method for the initial condition
     void initial_(PrimaryVariables &values,
