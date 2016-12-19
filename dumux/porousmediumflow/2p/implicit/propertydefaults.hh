@@ -81,12 +81,6 @@ SET_BOOL_PROP(TwoP, EnableMolecularDiffusion, false);
 //! Isothermal model by default
 SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);
 
-//! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(TwoP, ImplicitMassUpwindWeight, 1.0);
-
-//! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(TwoP, ImplicitMobilityUpwindWeight, 1.0);
-
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(TwoP,
               Indices,

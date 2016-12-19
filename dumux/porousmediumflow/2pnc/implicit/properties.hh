@@ -73,8 +73,6 @@ NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computa
 
 NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind weight for the mass conservation equations
-NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< The value of the upwind parameter for the mobility
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 }
 }

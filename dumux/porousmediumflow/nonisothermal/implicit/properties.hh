@@ -61,7 +61,6 @@ NEW_PROP_TAG(NiOutputLevel);
 // forward declaration of other property tags
 NEW_PROP_TAG(Indices);
 NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(ImplicitMassUpwindWeight);
 NEW_PROP_TAG(FluidSystem);
 
 }

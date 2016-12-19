@@ -65,8 +65,6 @@ NEW_TYPE_TAG(CCTwoPNI, INHERITS_FROM(CCModel, TwoPNI));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
-NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters

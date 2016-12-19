@@ -9,4 +9,4 @@ File = grids/fracture.msh
 Name = fractureccmpfa # name passed to the output routines
 
 [Implicit]
-MassUpwindWeight = 1.0
+UpwindWeight = 1.0

@@ -144,12 +144,6 @@ SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<Typ
 //! Use the 2p2c VolumeVariables
 SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 
-//! Set the upwind weight for the mass conservation equations
-SET_SCALAR_PROP(TwoPTwoC, ImplicitMassUpwindWeight, 1.0);
-
-//! Set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(TwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
-
 //! Set the indices required by the isothermal 2p2c
 SET_TYPE_PROP(TwoPTwoC, Indices, TwoPTwoCIndices <TypeTag, /*PVOffset=*/0>);
 

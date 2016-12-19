@@ -39,7 +39,6 @@ namespace Properties
 {
 // forward declaration of properties
 NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(EffectiveDiffusivityModel);
 }
 
@@ -52,7 +51,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -60,13 +58,14 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = typename std::vector<IndexType>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -79,91 +78,141 @@ public:
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvFace,
+                       const SubControlVolumeFace& scvf,
                        int phaseIdx, int compIdx,
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        bool useMoles = true)
     {
         // diffusion tensors are always solution dependent
-        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvFace, phaseIdx, compIdx);
+        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
 
-        // Get the inside volume variables
-        const auto& insideScv = fvGeometry.scv(scvFace.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        // get inside/outside volume variables
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        // and the outside volume variables
-        const auto& outsideVolVars = elemVolVars[scvFace.outsideScvIdx()];
+        // lambdas to get mole/mass fractions & densities
+        auto getX = [useMoles, phaseIdx, compIdx] (const VolumeVariables& volVars)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
 
-        // compute the diffusive flux using mole fractions
-        if (useMoles)
-        {
-            const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
-            const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
-            const auto rho = 0.5*(insideVolVars.molarDensity(phaseIdx) + outsideVolVars.molarDensity(phaseIdx));
+        auto getRho = [useMoles, phaseIdx](const VolumeVariables& volVars)
+        { return useMoles? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
-            return rho*tij*(xInside - xOutside);
-        }
-        // compute the diffusive flux using mass fractions
-        else
-        {
-            const auto xInside = insideVolVars.massFraction(phaseIdx, compIdx);
-            const auto xOutside = outsideVolVars.massFraction(phaseIdx, compIdx);
-            const auto rho = 0.5*(insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx));
+        // interpolate density
+        const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(getRho(insideVolVars)+ getRho(outsideVolVars))
+                         : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
 
-            return rho*tij*(xInside - xOutside);
-        }
+        // the inside and outside mole/mass fractions
+        auto xInside = getX(insideVolVars);
+        auto xOutside = scvf.numOutsideScvs() == 1 ? getX(outsideVolVars)
+                        : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, getX, xInside, tij, phaseIdx, compIdx);
+
+        return rho*tij*(xInside - xOutside);
     }
 
     static Stencil stencil(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
+                           const SubControlVolumeFace& scvf)
     {
-        if (!scvFace.boundary())
-            return Stencil({scvFace.insideScvIdx(), scvFace.outsideScvIdx()});
+        if (!scvf.boundary())
+            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
         else
-            return Stencil({scvFace.insideScvIdx()});
+            return Stencil({scvf.insideScvIdx()});
     }
 
 private:
+
+    //! compute the mole/mass fraction at branching facets for network grids
+    template<typename GetXFunction>
+    static Scalar branchingFacetX_(const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolumeFace& scvf,
+                                   const GetXFunction& getX,
+                                   Scalar insideX, Scalar insideTi,
+                                   int phaseIdx, int compIdx)
+    {
+        Scalar sumTi(insideTi);
+        Scalar sumXTi(insideTi*insideX);
+
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
+            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+
+            auto outsideTi = calculateTransmissibility_(problem, outsideElement, fvGeometry, elemVolVars, flippedScvf, phaseIdx, compIdx);
+            sumTi += outsideTi;
+            sumXTi += outsideTi*getX(outsideVolVars);
+        }
+        return sumXTi/sumTi;
+    }
+
+    //! compute the density at branching facets for network grids as arithmetic mean
+    template<typename GetRhoFunction>
+    static Scalar branchingFacetDensity_(const ElementVolumeVariables& elemVolVars,
+                                         const SubControlVolumeFace& scvf,
+                                         const GetRhoFunction& getRho,
+                                         Scalar insideRho)
+    {
+        Scalar rho(insideRho);
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            rho += getRho(outsideVolVars);
+        }
+        return rho/(scvf.numOutsideScvs()+1);
+    }
 
 
     static Scalar calculateTransmissibility_(const Problem& problem,
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
                                              const ElementVolumeVariables& elemVolVars,
-                                             const SubControlVolumeFace& scvFace,
-                                             const int phaseIdx, const int compIdx)
+                                             const SubControlVolumeFace& scvf,
+                                             int phaseIdx, int compIdx)
     {
         Scalar tij;
 
-        const auto insideScvIdx = scvFace.insideScvIdx();
+        const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
-        Scalar ti = calculateOmega_(problem, element, scvFace, insideD, insideScv);
+        Scalar ti = calculateOmega_(problem, element, scvf, insideD, insideScv);
 
-        if (!scvFace.boundary())
+        // for the boundary (dirichlet) or at branching points we only need ti
+        if (scvf.boundary() || scvf.numOutsideScvs() > 1)
         {
-            const auto outsideScvIdx = scvFace.outsideScvIdx();
+            tij = scvf.area()*ti;
+        }
+        // otherwise we compute a tpfa harmonic mean
+        else
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
 
             auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
             outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
-            Scalar tj = -1.0*calculateOmega_(problem, element, scvFace, outsideD, outsideScv);
+
+            Scalar tj;
+            if (dim == dimWorld)
+                // assume the normal vector from outside is anti parallel so we save flipping a vector
+                tj = -1.0*calculateOmega_(problem, outsideElement, scvf, outsideD, outsideScv);
+            else
+                tj = calculateOmega_(problem, outsideElement, fvGeometry.flipScvf(scvf.index()), outsideD, outsideScv);
 
             // check if we are dividing by zero!
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = scvFace.area()*(ti * tj)/(ti + tj);
-        }
-        else
-        {
-            tij = scvFace.area()*ti;
+                tij = scvf.area()*(ti * tj)/(ti + tj);
         }
 
         return tij;
@@ -171,14 +220,14 @@ private:
 
     static Scalar calculateOmega_(const Problem& problem,
                                   const Element& element,
-                                  const SubControlVolumeFace& scvFace,
+                                  const SubControlVolumeFace& scvf,
                                   const DimWorldMatrix &D,
                                   const SubControlVolume &scv)
     {
         GlobalPosition Dnormal;
-        D.mv(scvFace.unitOuterNormal(), Dnormal);
+        D.mv(scvf.unitOuterNormal(), Dnormal);
 
-        auto distanceVector = scvFace.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
@@ -190,15 +239,15 @@ private:
 
     static Scalar calculateOmega_(const Problem& problem,
                                   const Element& element,
-                                  const SubControlVolumeFace& scvFace,
+                                  const SubControlVolumeFace& scvf,
                                   Scalar D,
                                   const SubControlVolume &scv)
     {
-        auto distanceVector = scvFace.center();
+        auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
-        Scalar omega = D * (distanceVector * scvFace.unitOuterNormal());
+        Scalar omega = D * (distanceVector * scvf.unitOuterNormal());
         omega *= problem.boxExtrusionFactor(element, scv);
 
         return omega;

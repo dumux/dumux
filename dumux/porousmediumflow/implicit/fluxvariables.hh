@@ -37,8 +37,6 @@ NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(EnableAdvection);
 NEW_PROP_TAG(EnableMolecularDiffusion);
 NEW_PROP_TAG(EnableEnergyBalance);
-NEW_PROP_TAG(ImplicitMassUpwindWeight);
-NEW_PROP_TAG(EnableGlobalElementFluxVariablesCache);
 }
 
 // forward declaration
@@ -89,10 +87,6 @@ public:
                               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
@@ -106,97 +100,7 @@ public:
                                           phaseIdx,
                                           this->elemFluxVarsCache());
 
-        Scalar massFlux = upwindScheme(flux, phaseIdx, upwindTerm);
-        return massFlux;
-    }
-
-    // For cell-centered surface and network grids (dim < dimWorld) we have to do a special upwind scheme
-    template<typename FunctionType, class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox) && GET_PROP_TYPE(T, Grid)::dimension < GET_PROP_TYPE(T, Grid)::dimensionworld, Scalar>::type
-    upwindScheme(Scalar flux, int phaseIdx, const FunctionType& upwindTerm)
-    {
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-
-        // check if this is a branching point
-        if (this->scvFace().numOutsideScvs() > 1)
-        {
-            // more complicated upwind scheme
-            // we compute a flux-weighted average of all inflowing branches
-            Scalar branchingPointUpwindTerm = 0.0;
-            Scalar sumUpwindFluxes = 0.0;
-
-            // the inside flux
-            if (!std::signbit(flux))
-                branchingPointUpwindTerm += upwindTerm(insideVolVars)*flux;
-            else
-                sumUpwindFluxes += flux;
-
-            for (unsigned int i = 0; i < this->scvFace().numOutsideScvs(); ++i)
-            {
-                 // compute the outside flux
-                const auto outsideScvIdx = this->scvFace().outsideScvIdx(i);
-                const auto outsideElement = this->fvGeometry().globalFvGeometry().element(outsideScvIdx);
-                const auto& flippedScvf = this->fvGeometry().flipScvf(this->scvFace().index(), i);
-
-                const auto outsideFlux = AdvectionType::flux(this->problem(),
-                                                             outsideElement,
-                                                             this->fvGeometry(),
-                                                             this->elemVolVars(),
-                                                             flippedScvf,
-                                                             phaseIdx,
-                                                             this->elemFluxVarsCache());
-
-                if (!std::signbit(outsideFlux))
-                    branchingPointUpwindTerm += upwindTerm(this->elemVolVars()[outsideScvIdx])*outsideFlux;
-                else
-                    sumUpwindFluxes += outsideFlux;
-            }
-
-            // the flux might be zero
-            if (sumUpwindFluxes != 0.0)
-                branchingPointUpwindTerm /= -sumUpwindFluxes;
-            else
-                branchingPointUpwindTerm = 0.0;
-
-            // upwind scheme (always do fully upwind at branching points)
-            // a weighting here would lead to an error since the derivation is based on a fully upwind scheme
-            // TODO How to implement a weight of e.g. 0.5
-            if (std::signbit(flux))
-                return flux*branchingPointUpwindTerm;
-            else
-                return flux*upwindTerm(insideVolVars);
-        }
-        // non-branching points and boundaries
-        else
-        {
-            // upwind scheme
-            const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
-            if (std::signbit(flux))
-                return flux*(upwindWeight_*upwindTerm(outsideVolVars)
-                             + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
-            else
-                return flux*(upwindWeight_*upwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
-        }
-    }
-
-    // For grids with dim == dimWorld or the box-method we use a simple upwinding scheme
-    template<typename FunctionType, class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox) || GET_PROP_TYPE(T, Grid)::dimension == GET_PROP_TYPE(T, Grid)::dimensionworld, Scalar>::type
-    upwindScheme(Scalar flux, int phaseIdx, const FunctionType& upwindTerm)
-    {
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-
-        // upwind scheme
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
-        if (std::signbit(flux))
-            return flux*(upwindWeight_*upwindTerm(outsideVolVars)
-                         + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
-        else
-            return flux*(upwindWeight_*upwindTerm(insideVolVars)
-                         + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+        return this->upwindScheme(flux, phaseIdx, upwindTerm);
     }
 
     Stencil computeStencil(const Problem& problem,
@@ -204,9 +108,6 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvFace)
     { return AdvectionType::stencil(problem, element, fvGeometry, scvFace); }
-
-private:
-    Scalar upwindWeight_;
 };
 
 
@@ -245,10 +146,6 @@ public:
         advPreFlux_.fill(0.0);
 
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
@@ -267,16 +164,7 @@ public:
             advFluxCached_.set(phaseIdx, true);
         }
 
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
-
-        if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(outsideVolVars)
-                                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
-        else
-            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(insideVolVars)
-                                          + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+        return this->upwindScheme(advPreFlux_[phaseIdx], phaseIdx, upwindTerm);
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
@@ -317,7 +205,6 @@ private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
     std::array<Scalar, numPhases> advPreFlux_;
-    Scalar upwindWeight_;
 };
 
 // specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
@@ -353,10 +240,6 @@ public:
     {
         advFluxCached_.reset();
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
@@ -375,18 +258,7 @@ public:
             advFluxCached_.set(phaseIdx, true);
         }
 
-
-
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
-
-        if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(outsideVolVars)
-                                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
-        else
-            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(insideVolVars)
-                                          + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+        return this->upwindScheme(advPreFlux_[phaseIdx], phaseIdx, upwindTerm);
     }
 
     Scalar heatConductionFlux()
@@ -427,7 +299,6 @@ private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
     std::array<Scalar, numPhases> advPreFlux_;
-    Scalar upwindWeight_;
 };
 
 // specialization for non-isothermal advection and difussion equations (e.g. non-isothermal three-phase three-component flow)
@@ -464,10 +335,6 @@ public:
     {
         advFluxCached_.reset();
         ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     template<typename FunctionType>
@@ -486,16 +353,7 @@ public:
             advFluxCached_.set(phaseIdx, true);
         }
 
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
-
-        if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(outsideVolVars)
-                                          + (1.0 - upwindWeight_)*upwindTerm(insideVolVars));
-        else
-            return advPreFlux_[phaseIdx]*(upwindWeight_*upwindTerm(insideVolVars)
-                                          + (1.0 - upwindWeight_)*upwindTerm(outsideVolVars));
+        return this->upwindScheme(advPreFlux_[phaseIdx], phaseIdx, upwindTerm);
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
@@ -550,7 +408,6 @@ private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
     std::array<Scalar, numPhases> advPreFlux_;
-    Scalar upwindWeight_;
 };
 
 } // end namespace

@@ -77,27 +77,27 @@ public:
         const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
 
         // get the scaling factor for the effective diffusive fluxes
-        auto factor = calculateEffectiveDiffusivityFactor(elemVolVars, scvf, phaseIdx);
+        auto effFactor = calculateEffectiveDiffusivityFactor(elemVolVars, scvf, phaseIdx);
 
         // if factor is zero, the flux will end up zero anyway
-        if (factor == 0.0)
+        if (effFactor == 0.0)
             return 0.0;
 
         // lambda functions depending on if we use mole or mass fractions
-        auto xDensity = [useMoles, phaseIdx] (const VolumeVariables& volVars)
-        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
-
-        auto xFraction = [useMoles, phaseIdx, compIdx] (const VolumeVariables& volVars)
+        auto getX = [useMoles, phaseIdx, compIdx] (const VolumeVariables& volVars)
         { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        auto getRho = [useMoles, phaseIdx] (const VolumeVariables& volVars)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
         // calculate Tij*xj
         Scalar flux(0.0);
         unsigned int localIdx = 0;
         for (const auto volVarIdx : volVarsStencil)
-            flux += tij[localIdx++]*xFraction(elemVolVars[volVarIdx]);
+            flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
 
         // return effective mass flux
-        return flux*interpolateDensity(elemVolVars, scvf, xDensity)*factor;
+        return flux*interpolateDensity(elemVolVars, scvf, getRho)*effFactor;
     }
 
     static Stencil stencil(const Problem& problem,
@@ -115,21 +115,21 @@ public:
     }
 
 private:
-    template<typename DensityFunction>
+    template<typename GetRhoFunction>
     static Scalar interpolateDensity(const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
-                                     const DensityFunction& rhoFunction)
+                                     const GetRhoFunction& getRho)
     {
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            Scalar rho = rhoFunction(elemVolVars[scvf.insideScvIdx()]);
+            Scalar rho = getRho(elemVolVars[scvf.insideScvIdx()]);
             for (auto outsideIdx : scvf.outsideScvIndices())
-                rho += rhoFunction(elemVolVars[outsideIdx]);
+                rho += getRho(elemVolVars[outsideIdx]);
             return rho/(scvf.outsideScvIndices().size()+1);
         }
         else
-            return rhoFunction(elemVolVars[scvf.outsideScvIdx()]);
+            return getRho(elemVolVars[scvf.outsideScvIdx()]);
     }
 
     //! Here we want to calculate the factors with which the diffusion coefficient has to be
