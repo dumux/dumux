@@ -140,6 +140,48 @@ class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
+
+    /*!
+     * \brief Apply the initial conditions to the model.
+     *
+     * \param problem The object representing the problem which needs to
+     *             be simulated.
+     */
+    void init(Problem& problem)
+    {
+        ParentType::init(problem);
+
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addSecondaryVariable("Sw", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("Sn", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("Sg", [](const VolumeVariables& v){ return v.saturation(gPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pg", [](const VolumeVariables& v){ return v.pressure(gPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhow", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhon", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhog", [](const VolumeVariables& v){ return v.density(gPhaseIdx); });
+
+        for (int i = 0; i < numPhases; ++i)
+            for (int j = 0; j < numComponents; ++j)
+                vtkOutputModule.addSecondaryVariable("x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i),
+                                                     [i,j](const VolumeVariables& v){ return v.moleFraction(i,j); });
+
+        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+    }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& phasePresence = outputModule.createScalarField("phase presence", dofCodim);
+        for (std::size_t i = 0; i < phasePresence.size(); ++i)
+            phasePresence[i] = priVarSwitch().phasePresence(i);
+    }
+
     /*!
      * \brief One Newton iteration was finished.
      * \param uCurrent The solution after the current Newton iteration
@@ -252,137 +294,6 @@ public:
     bool switched() const
     {
         return switchFlag_;
-    }
-
-    /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
-     *
-     * \param sol The solution vector
-     * \param writer The writer for multi-file VTK datasets
-     */
-    template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol,
-                            MultiWriter &writer)
-    {
-        using ScalarField = Dune::BlockVector<Dune::FieldVector<double, 1> >;
-        // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
-
-        // get the number of degrees of freedom
-        unsigned numDofs = this->numDofs();
-
-        // create the required scalar fields
-        ScalarField *saturation[numPhases];
-        ScalarField *pressure[numPhases];
-        ScalarField *density[numPhases];
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
-        {
-            saturation[phaseIdx] = writer.allocateManagedBuffer(numDofs);
-            pressure[phaseIdx] = writer.allocateManagedBuffer(numDofs);
-            density[phaseIdx] = writer.allocateManagedBuffer(numDofs);
-        }
-
-        ScalarField *phasePresence = writer.allocateManagedBuffer (numDofs);
-        ScalarField *moleFraction[numPhases][numComponents];
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                moleFraction[i][j] = writer.allocateManagedBuffer (numDofs);
-        ScalarField *temperature = writer.allocateManagedBuffer (numDofs);
-        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
-        // VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        // VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        // VectorField *velocityG = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-
-        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        // {
-        //     // initialize velocity fields
-        //     for (unsigned int i = 0; i < numDofs; ++i)
-        //     {
-        //         (*velocityN)[i] = Scalar(0);
-        //         (*velocityW)[i] = Scalar(0);
-        //         (*velocityG)[i] = Scalar(0);
-        //     }
-        // }
-
-        unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer (numElements);
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-            int eIdx = this->problem_().elementMapper().index(element);
-            (*rank)[eIdx] = this->gridView_().comm().rank();
-
-            // make sure FVElementGeometry & vol vars are bound to the element
-            auto fvGeometry = localView(this->globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(this->curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->curSol());
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
-                int dofIdxGlobal = scv.dofIndex();
-
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
-                {
-                    (*saturation[phaseIdx])[dofIdxGlobal] = volVars.saturation(phaseIdx);
-                    (*pressure[phaseIdx])[dofIdxGlobal] = volVars.pressure(phaseIdx);
-                    (*density[phaseIdx])[dofIdxGlobal] = volVars.density(phaseIdx);
-                }
-
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal] = volVars.moleFraction(phaseIdx, compIdx);
-
-                (*poro)[dofIdxGlobal] = volVars.porosity();
-                (*temperature)[dofIdxGlobal] = volVars.temperature();
-                (*phasePresence)[dofIdxGlobal] = priVarSwitch().phasePresence(dofIdxGlobal);
-
-            }
-
-            // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
-            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
-        }
-
-        writer.attachDofData(*saturation[wPhaseIdx], "Sw", isBox);
-        writer.attachDofData(*saturation[nPhaseIdx], "Sn", isBox);
-        writer.attachDofData(*saturation[gPhaseIdx], "Sg", isBox);
-        writer.attachDofData(*pressure[wPhaseIdx], "pw", isBox);
-        writer.attachDofData(*pressure[nPhaseIdx], "pn", isBox);
-        writer.attachDofData(*pressure[gPhaseIdx], "pg", isBox);
-        writer.attachDofData(*density[wPhaseIdx], "rhow", isBox);
-        writer.attachDofData(*density[nPhaseIdx], "rhon", isBox);
-        writer.attachDofData(*density[gPhaseIdx], "rhog", isBox);
-
-        for (int i = 0; i < numPhases; ++i)
-        {
-            for (int j = 0; j < numComponents; ++j)
-            {
-                std::ostringstream oss;
-                oss << "x^"
-                    << FluidSystem::componentName(j)
-                    << "_"
-                    << FluidSystem::phaseName(i);
-                writer.attachDofData(*moleFraction[i][j], oss.str().c_str(), isBox);
-            }
-        }
-        writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*temperature, "temperature", isBox);
-        writer.attachDofData(*phasePresence, "phase presence", isBox);
-
-        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        // {
-        //     writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
-        //     writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
-        //     writer.attachDofData(*velocityG,  "velocityG", isBox, dim);
-        // }
-
-        writer.attachCellData(*rank, "process rank");
     }
 
     /*!

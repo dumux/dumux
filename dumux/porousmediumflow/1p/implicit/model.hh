@@ -56,11 +56,15 @@ namespace Dumux
 template<class TypeTag >
 class OnePModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
 
@@ -68,67 +72,17 @@ class OnePModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
-    /*!
-     * \brief \copybrief ImplicitModel::addOutputVtkFields
-     *
-     * Specialization for the OnePModel, adding the pressure and
-     * the process rank to the VTK writer.
-     */
-    template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol,
-                            MultiWriter &writer)
+    void init(Problem& problem)
     {
-        // create the required scalar fields
-        unsigned numDofs = this->numDofs();
+        ParentType::init(problem);
 
-        auto &p = *(writer.allocateManagedBuffer(numDofs));
-
-        auto& velocity = *(writer.template allocateManagedBuffer<double, dimWorld>(numDofs));
-        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-
-        if (velocityOutput.enableOutput())
-            velocity = 0.0;
-
-        unsigned numElements = this->gridView_().size(0);
-        auto &rank = *(writer.allocateManagedBuffer(numElements));
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-            auto eIdx = this->elementMapper().index(element);
-            rank[eIdx] = this->gridView_().comm().rank();
-
-            // get the local fv geometry
-            auto fvGeometry = localView(this->globalFvGeometry());
-            if (velocityOutput.enableOutput())
-                fvGeometry.bind(element);
-            else
-                fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(this->curGlobalVolVars());
-            if (velocityOutput.enableOutput())
-                elemVolVars.bind(element, fvGeometry, this->curSol());
-            else
-                elemVolVars.bindElement(element, fvGeometry, this->curSol());
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
-                const auto dofIdxGlobal = scv.dofIndex();
-                p[dofIdxGlobal] = volVars.pressure();
-            }
-
-            // velocity output
-            velocityOutput.calculateVelocity(velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
-        }
-
-        if (velocityOutput.enableOutput())
-            writer.attachDofData(velocity,  "velocity", isBox, dim);
-
-        writer.attachDofData(p, "p", isBox);
-        writer.attachCellData(rank, "process rank");
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addPrimaryVariable("pressure", Indices::pressureIdx);
     }
 };
-}
+
+} // end namespace Dumux
 
 #include "propertydefaults.hh"
 

@@ -682,34 +682,14 @@ public:
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
-    {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+    {}
 
-        // create the required scalar fields
-        unsigned numDofs = asImp_().numDofs();
-
-        // global defect of the two auxiliary equations
-        ScalarField* x[numEq];
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            x[eqIdx] = writer.allocateManagedBuffer(numDofs);
-        }
-
-        for (int dofIdxGlobal = 0; dofIdxGlobal < sol.size(); dofIdxGlobal++)
-        {
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                (*x[eqIdx])[dofIdxGlobal] = sol[dofIdxGlobal][eqIdx];
-            }
-        }
-
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            std::ostringstream oss;
-            oss << "primaryVar_" << eqIdx;
-            if (isBox)
-                writer.attachVertexData(*x[eqIdx], oss.str());
-            else
-                writer.attachCellData(*x[eqIdx], oss.str());
-        }
-    }
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {}
 
     /*!
      * \brief Reference to the grid view of the spatial domain.

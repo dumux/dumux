@@ -27,6 +27,8 @@
 #include "model.hh"
 
 #include <dumux/io/restart.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+
 #include <dumux/implicit/adaptive/gridadapt.hh>
 #include <dumux/common/boundingboxtree.hh>
 
@@ -138,6 +140,8 @@ public:
      */
     void init()
     {
+        vtkOutputModule_ = std::make_shared<VtkOutputModule<TypeTag>>(asImp_());
+
         // set the initial condition of the model
         model().init(asImp_());
 
@@ -902,6 +906,12 @@ public:
     {}
 
     /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    {}
+
+    /*!
      * \brief Write the relevant secondary variables of the current
      *        solution into an VTK output file.
      */
@@ -918,6 +928,8 @@ public:
         model().addOutputVtkFields(model().curSol(), *resultWriter_);
         asImp_().addOutputVtkFields();
         resultWriter_->endWrite();
+
+        vtkOutputModule_->write(t);
     }
 
     /*!
@@ -1035,6 +1047,11 @@ public:
     void postAdapt()
     {}
 
+    VtkOutputModule<TypeTag>& vtkOutputModule() const
+    {
+        return *vtkOutputModule_;
+    }
+
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -1057,7 +1074,7 @@ protected:
         return *resultWriter_;
     }
 
-        //! Compute the point source map, i.e. which scvs have point source contributions
+    //! Compute the point source map, i.e. which scvs have point source contributions
     void computePointSourceMap_()
     {
         // get and apply point sources if any given in the problem
@@ -1112,6 +1129,7 @@ private:
     NewtonController newtonCtl_;
 
     std::shared_ptr<VtkMultiWriter> resultWriter_;
+    std::shared_ptr<VtkOutputModule<TypeTag>> vtkOutputModule_;
 
     std::shared_ptr<GridAdaptModel> gridAdapt_;
 
