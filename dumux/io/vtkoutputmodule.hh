@@ -169,20 +169,21 @@ public:
         //! (2) Assemble all variable fields with registered info
         //////////////////////////////////////////////////////////////
         auto numCells = problem_.gridView().size(0);
+        auto numDofs = problem_.model().numDofs();
 
         // get fields for all primary variables
         std::vector<std::vector<Scalar>> priVarScalarData(priVarScalarDataInfo_.size());
         for (auto&& p : priVarScalarData)
-            p.resize(numCells);
+            p.resize(numDofs);
 
         std::vector<std::vector<Scalar>> priVarVectorData(priVarVectorDataInfo_.size());
         for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
-            priVarVectorData[i].resize(numCells*priVarVectorDataInfo_[i].pvIdx.size());
+            priVarVectorData[i].resize(numDofs*priVarVectorDataInfo_[i].pvIdx.size());
 
         // get fields for all secondary variables
         std::vector<std::vector<Scalar>> secondVarScalarData(secondVarScalarDataInfo_.size());
         for (auto&& s : secondVarScalarData)
-            s.resize(numCells);
+            s.resize(numDofs);
 
         // instatiate the velocity output
         ImplicitVelocityOutput<TypeTag> velocityOutput(problem_);
@@ -191,7 +192,7 @@ public:
         if (velocityOutput.enableOutput())
         {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                velocity[phaseIdx].resize(numCells);
+                velocity[phaseIdx].resize(numDofs);
         }
 
         // maybe allocate space for the process rank
@@ -201,26 +202,29 @@ public:
 
         std::vector<Scalar> porosity;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-            porosity.resize(numCells);
+            porosity.resize(numDofs);
 
         std::vector<Scalar> permeability;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-            permeability.resize(numCells);
+            permeability.resize(numDofs);
 
         for (const auto& element : elements(problem_.gridView(), Dune::Partitions::interior))
         {
-            auto eIdxGlobal = problem_.elementMapper().index(element);
+            const auto eIdxGlobal = problem_.elementMapper().index(element);
 
-            //! primary variable data
-            for (std::size_t i = 0; i < priVarScalarDataInfo_.size(); ++i)
-                priVarScalarData[i][eIdxGlobal] = problem_.model().curSol()[eIdxGlobal][priVarScalarDataInfo_[i].pvIdx];
+            // cell-centered models
+            if(!isBox)
+            {
+                //! primary variable data
+                for (std::size_t i = 0; i < priVarScalarDataInfo_.size(); ++i)
+                    priVarScalarData[i][eIdxGlobal] = problem_.model().curSol()[eIdxGlobal][priVarScalarDataInfo_[i].pvIdx];
 
-            for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
-                for (std::size_t j = 0; j < priVarVectorDataInfo_[i].pvIdx.size(); ++j)
-                    priVarVectorData[i][eIdxGlobal*priVarVectorDataInfo_[i].pvIdx.size() + j]
-                        = problem_.model().curSol()[eIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
+                for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
+                    for (std::size_t j = 0; j < priVarVectorDataInfo_[i].pvIdx.size(); ++j)
+                        priVarVectorData[i][eIdxGlobal*priVarVectorDataInfo_[i].pvIdx.size() + j]
+                            = problem_.model().curSol()[eIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
+            }
 
-            //! secondary variables
             auto fvGeometry = localView(problem_.model().globalFvGeometry());
             auto elemVolVars = localView(problem_.model().curGlobalVolVars());
 
@@ -241,6 +245,22 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto dofIdxGlobal = scv.dofIndex();
+
+                // for box model do the privars here
+                if (isBox)
+                {
+                    //! primary variable data
+                    for (std::size_t i = 0; i < priVarScalarDataInfo_.size(); ++i)
+                        priVarScalarData[i][dofIdxGlobal] = problem_.model().curSol()[dofIdxGlobal][priVarScalarDataInfo_[i].pvIdx];
+
+                    for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
+                        for (std::size_t j = 0; j < priVarVectorDataInfo_[i].pvIdx.size(); ++j)
+                            priVarVectorData[i][dofIdxGlobal*priVarVectorDataInfo_[i].pvIdx.size() + j]
+                                = problem_.model().curSol()[dofIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
+
+                }
+
+                // secondary variables
                 const auto& volVars = elemVolVars[scv];
 
                 for (std::size_t i = 0; i < secondVarScalarDataInfo_.size(); ++i)
@@ -270,24 +290,34 @@ public:
 
         // primary variables
         for (std::size_t i = 0; i < priVarScalarDataInfo_.size(); ++i)
-            sequenceWriter_.addCellData(priVarScalarData[i], priVarScalarDataInfo_[i].name);
+            addDofDataForWriter_(sequenceWriter_, priVarScalarData[i], priVarScalarDataInfo_[i].name);
 
         for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
-            sequenceWriter_.addCellData(priVarVectorData[i], priVarVectorDataInfo_[i].name, priVarVectorDataInfo_[i].pvIdx.size());
+            addDofDataForWriter_(sequenceWriter_, priVarVectorData[i], priVarVectorDataInfo_[i].name, priVarVectorDataInfo_[i].pvIdx.size());
 
         // secondary variables
         for (std::size_t i = 0; i < secondVarScalarDataInfo_.size(); ++i)
-            sequenceWriter_.addCellData(secondVarScalarData[i], secondVarScalarDataInfo_[i].name);
+            addDofDataForWriter_(sequenceWriter_, secondVarScalarData[i], secondVarScalarDataInfo_[i].name);
 
         // the velocity field
         if (velocityOutput.enableOutput())
         {
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            if (isBox)
+            {
+                using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    sequenceWriter_.addVertexData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)),
+                                                                                 problem_.gridView(), problem_.vertexMapper(),
+                                                                                 velocity[phaseIdx], dim, dimWorld));
+            }
+            // cell-centered models
+            else
             {
                 using NestedFunction = VtkNestedFunction<GridView, ElementMapper, std::vector<GlobalPosition>>;
-                sequenceWriter_.addCellData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)),
-                                                                             problem_.gridView(), problem_.elementMapper(),
-                                                                             velocity[phaseIdx], 0, dimWorld));
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    sequenceWriter_.addCellData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)),
+                                                                                 problem_.gridView(), problem_.elementMapper(),
+                                                                                 velocity[phaseIdx], 0, dimWorld));
             }
         }
 
@@ -297,11 +327,11 @@ public:
 
         // the porosity
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-            sequenceWriter_.addCellData(porosity, "porosity");
+            addDofDataForWriter_(sequenceWriter_, porosity, "porosity");
 
         // the permeability
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-            sequenceWriter_.addCellData(permeability, "permeability");
+            addDofDataForWriter_(sequenceWriter_, permeability, "permeability");
 
         // also register additional (non-standardized) user fields
         for (std::size_t i = 0; i < scalarFields_.size(); ++i)
@@ -354,6 +384,17 @@ public:
     }
 
 private:
+
+    template<typename Writer, typename... Args>
+    void addDofDataForWriter_(Writer& writer,
+                              Args&&... args)
+    {
+        if (isBox)
+            writer.addVertexData(std::forward<Args>(args)...);
+        else
+            writer.addCellData(std::forward<Args>(args)...);
+    }
+
     const Problem& problem_;
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
     Dune::VTKSequenceWriter<GridView> sequenceWriter_;
