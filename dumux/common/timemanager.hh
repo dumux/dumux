@@ -337,15 +337,31 @@ public:
      * \brief Returns true if the current episode is finished at the
      *        current time.
      */
-    bool episodeIsOver() const
+    bool episodeIsFinished() const
     { return time() >= episodeStartTime_ + episodeLength(); }
 
     /*!
      * \brief Returns true if the current episode will be finished
      *        after the current time step.
      */
-    bool episodeWillBeOver() const
+    bool episodeWillBeFinished() const
     { return time() + timeStepSize() >= episodeStartTime_ + episodeLength(); }
+
+    /*!
+     * \brief Returns true if the current episode is finished at the
+     *        current time.
+     */
+    DUNE_DEPRECATED_MSG("episodeIsOver() is deprecated and has been replaced by episodeIsFinished() instead.")
+    bool episodeIsOver() const
+    { return episodeIsFinished(); }
+
+    /*!
+     * \brief Returns true if the current episode will be finished
+     *        after the current time step.
+     */
+    DUNE_DEPRECATED_MSG("episodeWillBeOver() is deprecated and has been replaced by episodeWillBeFinished() instead.")
+    bool episodeWillBeOver() const
+    { return episodeWillBeFinished(); }
 
 
     /*!
@@ -358,7 +374,7 @@ public:
         // wants to give it some extra time, we will return
         // the time step size it suggested instead of trying
         // to align it to the end of the episode.
-        if (episodeIsOver())
+        if (episodeIsFinished())
             return 0.0;
 
         // make sure that we don't exceed the end of the
@@ -419,7 +435,7 @@ public:
                 problem_->serialize();
 
             // notify the problem if an episode is finished
-            if (episodeIsOver()) {
+            if (episodeIsFinished()) {
                 //define what to do at the end of an episode in the problem
                 problem_->episodeEnd();
 
