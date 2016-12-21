@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a local finite volume geometry for cell-centered TPFA models
+ * \brief Base class for a local finite volume geometry for cell-centered MPFA models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
  */
@@ -34,7 +34,7 @@ namespace Dumux
 {
 /*!
  * \ingroup ImplicitModel
- * \brief Base class for the finite volume geometry vector for cell-centered TPFA models
+ * \brief Base class for the finite volume geometry vector for cell-centered MPFA models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
@@ -201,19 +201,18 @@ public:
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
         if (it != scvfIndices_.end())
         {
-            assert(flipScvfIndices_[std::distance(scvfIndices_.begin(), it)][outsideScvIdx] != -1);
-            return neighborScvfs_[ flipScvfIndices_[std::distance(scvfIndices_.begin(), it)][outsideScvIdx] ];
+            const auto localScvfIdx = std::distance(scvfIndices_.begin(), it);
+            return neighborScvfs_[flipScvfIndices_[localScvfIdx][outsideScvIdx]];
         }
         else
         {
             const auto neighborScvfIdxLocal = findLocalIndex(scvfIdx, neighborScvfIndices_);
             auto&& scvf = neighborScvfs_[neighborScvfIdxLocal];
 
-            assert(neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx] != -1);
             if (scvf.outsideScvIdx(outsideScvIdx) == scvIndices_[0])
-                return scvfs_[ neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx] ];
+                return scvfs_[neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx]];
             else
-                return neighborScvfs_[ neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx] ];
+                return neighborScvfs_[neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx]];
         }
     }
 
@@ -263,7 +262,7 @@ public:
 
         // reserve memory
         const auto numNeighbors = neighborStencil.size();
-        const auto estimate = numNeighbors*dim*(4*dim-4); // estimate holds for quadrilaterals in 2D/3D, overestimates else
+        const auto estimate = neighborScvfEstimate_(element, numNeighbors);
         neighborScvs_.reserve(numNeighbors);
         neighborScvIndices_.reserve(numNeighbors);
         neighborScvfIndices_.reserve(estimate);
@@ -274,22 +273,13 @@ public:
         unsigned int j = 0;
         for (auto globalJ : neighborStencil)
         {
-            // get data on the neighbor
-            auto elementJ = globalFvGeometry().element(globalJ);
-            const auto& scvfIndices = assemblyMap[globalI][j];
-
             // make neighbor geometries
-            makeNeighborGeometries(elementJ, globalJ, scvfIndices);
+            auto elementJ = globalFvGeometry().element(globalJ);
+            makeNeighborGeometries(elementJ, globalJ, assemblyMap[globalI][j]);
 
             // increment counter
             j++;
         }
-
-        // free unused memory
-        neighborScvs_.shrink_to_fit();
-        neighborScvIndices_.shrink_to_fit();
-        neighborScvfIndices_.shrink_to_fit();
-        neighborScvfs_.shrink_to_fit();
 
         // set up the scvf flip indices for network grids
         if (dim < dimWorld)
@@ -309,6 +299,35 @@ public:
     { return *globalFvGeometryPtr_; }
 
 private:
+
+    //! Estimates the number of neighboring scvfs that have to be prepared
+    //! The estimate holds for inner elements, overestimats on the boundary
+    int neighborScvfEstimate_(const Element& element, int numNeighbors)
+    {
+        auto type = element.geometry().type();
+
+        if (type == Dune::GeometryType(Dune::GeometryType::simplex, dim))
+        {
+            if (dim == 2)
+                return 6 + ( (numNeighbors-3 > 0) ? (numNeighbors-3)*2 : 0 );
+            if (dim == 3)
+                return 12 + ( (numNeighbors-4 > 0) ? (numNeighbors-4)*3 : 0 );
+        }
+        else if (type == Dune::GeometryType(Dune::GeometryType::cube, dim))
+        {
+            if (dim == 2)
+                return 16;
+            if (dim == 3)
+                return 120;
+        }
+        else if (type == Dune::GeometryType(Dune::GeometryType::pyramid, dim))
+            return 16 + ( (numNeighbors-4 > 0) ? (numNeighbors-4)*3 : 0 );
+        else if (type == Dune::GeometryType(Dune::GeometryType::prism, dim))
+            return 18 + ( (numNeighbors-4 > 0) ? (numNeighbors-4)*3 : 0 );
+        else
+            DUNE_THROW(Dune::NotImplemented, "Mpfa for given geometry type.");
+
+    }
 
     //! create scvs and scvfs of the bound element
     void makeElementGeometries(const Element& element)
@@ -503,7 +522,7 @@ private:
             const auto vIdxGlobal = scvf.vertexIndex();
             const auto insideScvIdx = scvf.insideScvIdx();
 
-            flipScvfIndices_[insideFace].resize(numOutsideScvs, -1);
+            flipScvfIndices_[insideFace].resize(numOutsideScvs);
             for (unsigned int nIdx = 0; nIdx < numOutsideScvs; ++nIdx)
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx(nIdx);
@@ -535,7 +554,7 @@ private:
             const auto vIdxGlobal = scvf.vertexIndex();
             const auto insideScvIdx = scvf.insideScvIdx();
 
-            neighborFlipScvfIndices_[outsideFace].resize(numOutsideScvs, -1);
+            neighborFlipScvfIndices_[outsideFace].resize(numOutsideScvs);
             for (unsigned int nIdx = 0; nIdx < numOutsideScvs; ++nIdx)
             {
                 const auto neighborScvIdx = scvf.outsideScvIdx(nIdx);
