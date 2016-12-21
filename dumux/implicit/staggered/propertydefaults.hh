@@ -65,6 +65,7 @@
 #include "newtoncontroller.hh"
 #include "model.hh"
 #include "problem.hh"
+#include "primaryvariables.hh"
 
 namespace Dumux {
 
@@ -245,6 +246,15 @@ private:
     };
 public:
     using type = BoundaryTypes<numEqCellCenter + numEqFace>;
+};
+
+SET_PROP(StaggeredModel, PrimaryVariables)
+{
+private:
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+public:
+    using type = StaggeredPrimaryVariables<TypeTag, CellCenterPrimaryVariables, FacePrimaryVariables>;
 };
 
 } // namespace Properties

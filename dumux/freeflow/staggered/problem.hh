@@ -46,6 +46,7 @@ class NavierStokesProblem : public StaggeredProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GridView::Grid Grid;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
@@ -53,13 +54,23 @@ class NavierStokesProblem : public StaggeredProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     enum {
         dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
+        dimWorld = Grid::dimensionworld,
+
+        pressureIdx = Indices::pressureIdx,
+        velocityIdx = Indices::velocityIdx
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
     NavierStokesProblem(TimeManager &timeManager, const GridView &gridView)
@@ -119,31 +130,91 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "permeability()"); }
 
 
-     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        facet.
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the dirichlet condition ought to be
-     *            set in global coordinates
-     * \param direction The direction index of the facets unit outer normal
-     */
-    FacePrimaryVariables faceDirichletAtPos(const GlobalPosition &globalPos, const int direction) const
-    {
-        return asImp_().dirichletVelocityAtPos(globalPos)[direction];
-    }
 
     /*!
-     * \brief Evaluate the initial value for a facet.
+     * \brief Evaluate the initial value for a control volume.
      *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the initial values ought to be
-     *            set (in global coordinates)
-     * \param direction The direction index of the facets unit outer normal
+     * \param values The initial values for the primary variables
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
      */
-    FacePrimaryVariables initialFaceValueAtPos(const GlobalPosition &globalPos, const int direction) const
+    using ParentType::initial;
+    PrimaryVariables initial(const SubControlVolumeFace &scvf) const
     {
-        return asImp_().initialVelocityAtPos(globalPos)[direction];
+        // forward to generic interface
+        return initialAtPos(scvf.center(), scvf.directionIndex());
+    }
+
+     /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The initial values for the primary variables
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
+     */
+    PrimaryVariables initial(const SubControlVolume &scv) const
+    {
+        // forward to generic interface
+        return initialAtPos(scv.dofPosition(), 0);
+    }
+
+     /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * For this method, the \a priVars parameter stores primary
+     * variables.
+     */
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos, const int directionIdx) const
+    {
+        auto initialValues = asImp_().initialAtPos(globalPos);
+
+        PrimaryVariables priVars(0.0);
+        priVars[pressureIdx] = initialValues.pressure;
+        priVars[velocityIdx] = initialValues.velocity[directionIdx];
+
+        return priVars;
+    }
+
+     /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The center of the finite volume which ought to be set.
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos, const int directionIdx) const
+    {
+        auto boundaryValues = asImp_().dirichletAtPos(globalPos);
+
+        PrimaryVariables priVars(0.0);
+        priVars[pressureIdx] = boundaryValues.pressure;
+        priVars[velocityIdx] = boundaryValues.velocity[directionIdx];
+
+        return priVars;
+    }
+
+     /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param scvFace the sub control volume face
+     *
+     * The method returns the boundary types information.
+     */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        return dirichletAtPos(scvf.center(), scvf.directionIndex());
     }
 
     // \}

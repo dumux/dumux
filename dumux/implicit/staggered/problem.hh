@@ -66,6 +66,9 @@ private:
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
 
     enum {
         dim = GridView::dimension,
@@ -94,35 +97,23 @@ public:
     StaggeredProblem(TimeManager &timeManager, const GridView &gridView) : ParentType(timeManager, gridView)
     {}
 
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param scvFace the sub control volume face
-     *
-     * The method returns the boundary types information.
-     */
-    CellCenterPrimaryVariables ccDirichlet(const Element &element, const SubControlVolumeFace &scvf) const
-    {
-        // forward it to the method which only takes the global coordinate
-        if (isBox)
-        {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for box method.");
-        }
-        else
-            return asImp_().dirichletAtPos(scvf.center());
-    }
 
-    CellCenterPrimaryVariables ccDirichlet(const Element &element, const SubControlVolume &scv) const
+    /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The initial values for the primary variables
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
+     */
+    using ParentType::initial;
+    PrimaryVariables initial(const SubControlVolumeFace &scvf) const
     {
-        // forward it to the method which only takes the global coordinate
-        if (!isBox)
-        {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for cell-centered method.");
-        }
-        else
-            return asImp_().dirichletAtPos(scv.dofPosition());
+        // forward to generic interface
+        return asImp_().initialAtPos(scvf.center());
     }
 
     /*!
@@ -136,26 +127,6 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     CellCenterPrimaryVariables ccDirichletAtPos(const GlobalPosition &globalPos) const
-    {
-        // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem specifies that some boundary "
-                   "segments are dirichlet, but does not provide "
-                   "a dirichlet() method.");
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the dirichlet condition ought to be
-     *            set in global coordinates
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    FacePrimaryVariables faceDirichletAtPos(const GlobalPosition &globalPos, const int direction) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)

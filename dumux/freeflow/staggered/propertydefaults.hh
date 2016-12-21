@@ -113,6 +113,25 @@ SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
 
+SET_PROP(NavierStokes, BoundaryValues)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    enum { dimWorld = GridView::dimensionworld };
+
+    struct Values
+    {
+        Dune::FieldVector<Scalar, dimWorld> velocity;
+        Scalar pressure;
+    };
+
+public:
+    using type = Values;
+};
+
+
+
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)
 // { private :

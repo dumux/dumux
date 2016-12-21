@@ -30,7 +30,6 @@
 #include <dumux/common/valgrind.hh>
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/implicit/localjacobian.hh>
 
 namespace Dumux
 {
@@ -66,12 +65,13 @@ namespace Dumux
  * evaluation point and \f$\epsilon\f$ is a small value larger than 0.
  */
 template<class TypeTag>
-class StaggeredLocalJacobian : public ImplicitLocalJacobian<TypeTag>
+class StaggeredLocalJacobian
 {
-    using ParentType = ImplicitLocalJacobian<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
@@ -106,7 +106,9 @@ class StaggeredLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 
 public:
 
-    StaggeredLocalJacobian() : ParentType()
+    StaggeredLocalJacobian(const StaggeredLocalJacobian &) = delete;
+
+    StaggeredLocalJacobian()
     {
         numericDifferenceMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
     }
@@ -121,7 +123,8 @@ public:
      */
     void init(Problem &problem)
     {
-        ParentType::init(problem);
+        problemPtr_ = &problem;
+        localResidual_.init(problem);
     }
 
     /*!
@@ -182,6 +185,20 @@ public:
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
         evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual[cellCenterIdx][ccGlobalI_], faceResidualCache);
     }
+
+     /*!
+     * \brief Returns a reference to the object which calculates the
+     *        local residual.
+     */
+    const LocalResidual &localResidual() const
+    { return localResidual_; }
+
+    /*!
+     * \brief Returns a reference to the object which calculates the
+     *        local residual.
+     */
+    LocalResidual &localResidual()
+    { return localResidual_; }
 
 private:
     void evalPartialDerivatives_(const Element& element,
@@ -419,6 +436,48 @@ private:
     }
 
     /*!
+     * \brief Returns a reference to the problem.
+     */
+    const Problem &problem_() const
+    {
+        Valgrind::CheckDefined(problemPtr_);
+        return *problemPtr_;
+    }
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    Problem &problem_()
+    {
+        Valgrind::CheckDefined(problemPtr_);
+        return *problemPtr_;
+    }
+
+    /*!
+     * \brief Returns a reference to the grid view.
+     */
+    const GridView &gridView_() const
+    { return problem_().gridView(); }
+
+    /*!
+     * \brief Returns a reference to the model.
+     */
+    const Model &model_() const
+    { return problem_().model(); }
+
+    /*!
+     * \brief Returns a reference to the model.
+     */
+    Model &model_()
+    { return problem_().model(); }
+
+    /*!
+     * \brief Returns a reference to the jacobian assembler.
+     */
+    const JacobianAssembler &jacAsm_() const
+    { return model_().jacobianAssembler(); }
+
+    /*!
      * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
      *        primary variable 'pvIdx' at dof 'col'. Specialization for cc methods.
@@ -455,6 +514,11 @@ private:
 
     IndexType ccGlobalI_;
     int numericDifferenceMethod_;
+
+    // The problem we would like to solve
+    Problem *problemPtr_;
+
+    LocalResidual localResidual_;
 };
 
 }

@@ -114,10 +114,6 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
     enum {
-        // indices of the primary variables
-        conti0EqIdx = Indices::conti0EqIdx,
-        pressureIdx = Indices::pressureIdx,
-
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx
     };
@@ -136,6 +132,9 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+
+    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
     ClosedSystemTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -226,7 +225,7 @@ public:
         return values;
     }
 
-    /*!
+        /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
@@ -235,10 +234,16 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    CellCenterPrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    using ParentType::dirichletAtPos;
+    BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        CellCenterPrimaryVariables values(0);
-        values[pressureIdx] = 1.1e+5;
+        BoundaryValues values;
+        values.pressure = 1.1e+5;
+        values.velocity = 0.0;
+
+        if(globalPos[1] > this->bBoxMax()[1] - eps_)
+            values.velocity[0] = lidVelocity_;
+
         return values;
     }
 
@@ -255,12 +260,6 @@ public:
         return CellCenterPrimaryVariables(0);
     }
 
-    // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -268,46 +267,14 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    CellCenterPrimaryVariables initialCCValuesAtPos(const GlobalPosition &globalPos) const
+    using ParentType::initial;
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
-        CellCenterPrimaryVariables priVars(0);
-        priVars[0] = 1.0e+5; //TODO: fix indices
-        return priVars;
-    }
+        InitialValues values;
+        values.pressure = 1.0e+5;
+        values.velocity = 0.0;
 
-
-    /*!
-     * \brief Evaluate the initial value for a facet.
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the initial values ought to be
-     *            set (in global coordinates)
-     * \param direction The direction index of the facets unit outer normal
-     */
-    GlobalPosition initialVelocityAtPos(const GlobalPosition &globalPos) const
-    {
-        GlobalPosition velocity;
-        velocity[0] = 0.0;
-        velocity[1] = 0.0;
-        return velocity;
-
-    }
-
-     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        facet.
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the dirichlet condition ought to be
-     *            set in global coordinates
-     * \param direction The direction index of the facets unit outer normal
-     */
-    GlobalPosition dirichletVelocityAtPos(const GlobalPosition &pos) const
-    {
-        GlobalPosition velocity(0.0);
-        if(pos[1] > this->bBoxMax()[1] - eps_)
-            velocity[0] = lidVelocity_;
-        return velocity;
+        return values;
     }
 
     // \}

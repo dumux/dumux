@@ -313,7 +313,7 @@ protected:
                             const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if(!scvf.boundary())
-            faceResiduals_[scvf.localFaceIdx()] += asImp_().computeFluxForFace(scvf, fvGeometry, elemVolVars, globalFaceVars);
+            faceResiduals_[scvf.localFaceIdx()] += asImp_().computeFluxForFace(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
     }
 
      /*!

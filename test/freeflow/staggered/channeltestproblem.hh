@@ -118,15 +118,10 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
     enum {
-        // indices of the primary variables
-        conti0EqIdx = Indices::conti0EqIdx,
-        pressureIdx = Indices::pressureIdx,
-
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -140,6 +135,9 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+
+    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
     ChannelTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -235,10 +233,28 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    CellCenterPrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    using ParentType::dirichletAtPos;
+    BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        CellCenterPrimaryVariables values(0);
-        values[pressureIdx] = 1.1e+5;
+        BoundaryValues values;
+        values.pressure = 1.1e+5;
+
+        if(isInlet(globalPos))
+        {
+            values.velocity[0] = inletVelocity_;
+            values.velocity[1] = 0.0;
+        }
+        else if(isWall(globalPos))
+        {
+            values.velocity[0] = 0.0;
+            values.velocity[1] = 0.0;
+        }
+        else if(isOutlet(globalPos))
+        {
+            values.velocity[0] = 1.0;
+            values.velocity[1] = 0.0;
+        }
+
         return values;
     }
 
@@ -268,61 +284,14 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    CellCenterPrimaryVariables initialCCValuesAtPos(const GlobalPosition &globalPos) const
+    using ParentType::initial;
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
-        CellCenterPrimaryVariables priVars(0);
-        priVars[0] = 1.0e+5; //TODO: fix indices
-        return priVars;
-    }
+        InitialValues values;
+        values.pressure = 1.1e+5;
+        values.velocity = 0.0;
 
-
-    /*!
-     * \brief Evaluate the initial value for a facet.
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the initial values ought to be
-     *            set (in global coordinates)
-     * \param direction The direction index of the facets unit outer normal
-     */
-    GlobalPosition initialVelocityAtPos(const GlobalPosition &globalPos) const
-    {
-        GlobalPosition velocity;
-        velocity[0] = 0.0;
-        velocity[1] = 0.0;
-        return velocity;
-
-    }
-
-     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        facet.
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the dirichlet condition ought to be
-     *            set in global coordinates
-     * \param direction The direction index of the facets unit outer normal
-     */
-    GlobalPosition dirichletVelocityAtPos(const GlobalPosition &pos) const
-    {
-        GlobalPosition velocity;
-
-        if(isInlet(pos))
-        {
-            velocity[0] = inletVelocity_;
-            velocity[1] = 0.0;
-        }
-        else if(isWall(pos))
-        {
-            velocity[0] = 0.0;
-            velocity[1] = 0.0;
-        }
-        else if(isOutlet(pos))
-        {
-            velocity[0] = 1.0;
-            velocity[1] = 0.0;
-        }
-
-        return velocity;
+        return values;
     }
 
     // \}

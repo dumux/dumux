@@ -63,6 +63,7 @@ NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< Returns weight of the upwind cell w
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
+NEW_PROP_TAG(BoundaryValues); //!< Type to set values on the boundary
 // \}
 }
 

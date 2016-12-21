@@ -79,6 +79,7 @@ class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeT
         dimWorld = GridView::dimensionworld,
 
         pressureIdx = Indices::pressureIdx,
+        velocityIdx = Indices::velocityIdx,
 
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx
@@ -186,7 +187,8 @@ public:
      * \param elemVolVars All volume variables for the element
      * \param globalFaceVars The face variables
      */
-    FacePrimaryVariables computeFluxForFace(const SubControlVolumeFace& scvf,
+    FacePrimaryVariables computeFluxForFace(const Element& element,
+                                            const SubControlVolumeFace& scvf,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
                                             const GlobalFaceVars& globalFaceVars)
@@ -194,7 +196,7 @@ public:
         FacePrimaryVariables flux(0.0);
         flux += computeNormalMomentumFlux_(scvf, fvGeometry, elemVolVars, globalFaceVars);
         flux += computeTangetialMomentumFlux_(scvf, fvGeometry, elemVolVars, globalFaceVars);
-        flux += computePressureTerm_(scvf, fvGeometry, elemVolVars, globalFaceVars);
+        flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
         return flux;
     }
 
@@ -242,7 +244,7 @@ protected:
                 {
                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& insideVolVars = elemVolVars[insideScv];
-                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(scvf.center())[pressureIdx];
+                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichlet(element, scvf)[pressureIdx];
                 }
             }
         }
@@ -268,7 +270,7 @@ protected:
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
                 const Scalar velocity = faceVars.faceVars(scvf.dofIndexSelf()).velocity();
-                const Scalar dirichletValue = this->problem().faceDirichletAtPos(scvf.center(), scvf.directionIndex());
+                const Scalar dirichletValue = this->problem().dirichletAtPos(scvf.center(), scvf.directionIndex())[velocityIdx];
                 this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
             }
 
@@ -276,7 +278,7 @@ protected:
             if(bcTypes.isOutflow(momentumBalanceIdx))
             {
                 if(bcTypes.isDirichlet(massBalanceIdx))
-                    this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(scvf, fvGeometry, elemVolVars, faceVars);
+                    this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(element, scvf, fvGeometry, elemVolVars, faceVars);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }
@@ -396,8 +398,8 @@ private:
                 transportedVelocity = velocity(outerDofIdx);
             else // this is the case when the outer parallal dof would lie outside the domain
             {
-                const auto boundaryVelocity = this->problem().dirichletVelocityAtPos(subFaceData.virtualOuterParallelFaceDofPos);
-                transportedVelocity = boundaryVelocity[scvf.directionIndex()];
+                const auto& pos = subFaceData.virtualOuterParallelFaceDofPos;
+                transportedVelocity = this->problem().dirichletAtPos(pos,scvf.directionIndex())[velocityIdx];
             }
         }
 
@@ -435,7 +437,7 @@ private:
 
         const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
                                     velocity(outerNormalVelocityIdx) :
-                                    this->problem().dirichletVelocityAtPos(subFaceData.virtualOuterNormalFaceDofPos)[normalDirIdx];
+                                    this->problem().dirichletAtPos(subFaceData.virtualOuterNormalFaceDofPos, normalDirIdx)[velocityIdx];
 
         const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
                                       (outerNormalVelocity - innerNormalVelocity) :
@@ -450,7 +452,7 @@ private:
         const int outerParallelFaceDofIdx = subFaceData.outerParallelFaceDofIdx;
         const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?
                                              velocity(outerParallelFaceDofIdx) :
-                                             this->problem().dirichletVelocityAtPos(subFaceData.virtualOuterParallelFaceDofPos)[scvf.directionIndex()];
+                                             this->problem().dirichletAtPos(subFaceData.virtualOuterParallelFaceDofPos, scvf.directionIndex())[velocityIdx];
 
         const Scalar parallelDeltaV = normalFace.normalInPosCoordDir() ?
                                      (outerParallelVelocity - innerParallelVelocity) :
@@ -471,10 +473,11 @@ private:
      * \param elemVolVars All volume variables for the element
      * \param globalFaceVars The face variables
      */
-    FacePrimaryVariables computePressureTerm_(const SubControlVolumeFace& scvf,
-                                      const FVElementGeometry& fvGeometry,
-                                      const ElementVolumeVariables& elemVolVars,
-                                      const GlobalFaceVars& globalFaceVars)
+    FacePrimaryVariables computePressureTerm_(const Element& element,
+                                              const SubControlVolumeFace& scvf,
+                                              const FVElementGeometry& fvGeometry,
+                                              const ElementVolumeVariables& elemVolVars,
+                                              const GlobalFaceVars& globalFaceVars)
     {
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
@@ -484,7 +487,7 @@ private:
         // treat outflow BCs
         if(scvf.boundary())
         {
-            const Scalar pressure = this->problem().dirichletAtPos(scvf.center())[pressureIdx];
+            const Scalar pressure = this->problem().dirichlet(element, scvf)[pressureIdx];
             result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
 

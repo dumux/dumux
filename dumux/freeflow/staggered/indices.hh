@@ -45,8 +45,9 @@ struct NavierStokesCommonIndices
     static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of first (for C-guys: 0th) mass conservation equation
     static constexpr int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
 
-    static constexpr int momentumBalanceIdx = PVOffset + GET_PROP_VALUE(TypeTag, NumEqCellCenter); //!< Index of the momentum balance equation
-    static constexpr int velocityIdx = PVOffset + 0; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
+    static constexpr int faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter); //!< Index of the momentum balance equation
+    static constexpr int momentumBalanceIdx = PVOffset + faceOffset; //!< Index of the momentum balance equation
+    static constexpr int velocityIdx = PVOffset + momentumBalanceIdx; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
 
     static constexpr int phaseIdx = 0; //!< Index of the fluid phase (required to use the same fluid system in coupled models)
 };
