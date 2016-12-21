@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the global interaction volume seeds of mpfa methods.
+ * \brief Base class for the global interaction volumes of the mpfa-o method.
  */
-#ifndef DUMUX_DISCRETIZATION_MPFA_L_GLOBALINTERACTIONVOLUMESEEDS_HH
-#define DUMUX_DISCRETIZATION_MPFA_L_GLOBALINTERACTIONVOLUMESEEDS_HH
+#ifndef DUMUX_DISCRETIZATION_MPFA_O_GLOBALINTERACTIONVOLUMESEEDS_HH
+#define DUMUX_DISCRETIZATION_MPFA_O_GLOBALINTERACTIONVOLUMESEEDS_HH
 
 #include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseedsbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
@@ -30,23 +30,26 @@ namespace Dumux
 {
 /*!
  * \ingroup Mpfa
- * \brief Specialization of the class for the mpfa-l method.
+ * \brief Specialization of the class for the mpfa-o method.
  */
 template<class TypeTag>
-class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::lMethod>
+class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMethod>
        : public CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>
 {
     using ParentType = CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>;
 
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using InteractionVolumeSeed = typename InteractionVolume::Seed;
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
 
-    using IndexType = typename InteractionVolume::GlobalIndexSet::value_type;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+    static const int dim = GridView::dimension;
 
 public:
     CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView& gridView) : ParentType(gridView) {}
@@ -63,10 +66,12 @@ public:
 
         // reserve memory
         const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
-        const auto numBoundaryScvf = this->problem().model().globalFvGeometry().numBoundaryScvf();
+        const auto numBoundaryVertices = this->problem().model().globalFvGeometry().numBoundaryVertices();
+        const auto numInteriorVertices = this->gridView().size(dim) - numBoundaryVertices;
 
-        seeds.reserve( std::size_t((numScvf-numBoundaryScvf)/2) );
-        boundarySeeds.reserve(numBoundaryScvf);
+        if (numInteriorVertices > 0)
+            seeds.reserve(numInteriorVertices);
+        boundarySeeds.reserve(numBoundaryVertices);
         scvfIndexMap.resize(numScvf);
 
         // Keep track of which faces have been handled already
@@ -105,38 +110,26 @@ public:
                 }
                 else
                 {
-                    // make the inner interaction volume seed only if we are on highest level of all connected elements
-                    if (isLocalMaxLevel_(element, scvf))
+                    // make the inner interaction volume seed
+                    seeds.emplace_back(Helper::makeInnerInteractionVolumeSeed(this->problem(),
+                                                                              element,
+                                                                              fvGeometry,
+                                                                              scvf));
+
+                    // update the index map entries for the global scv faces in the interaction volume
+                    for (auto scvfIdxGlobal : seeds.back().globalScvfIndices())
                     {
-                        seeds.emplace_back(Helper::makeInnerInteractionVolumeSeed(this->problem(),
-                                                                                  element,
-                                                                                  fvGeometry,
-                                                                                  scvf));
-
-                        // update the index map entries for the global scv faces in the interaction volume
-                        for (auto scvfIdxGlobal : seeds.back().globalScvfIndices())
-                        {
-                            scvfIndexMap[scvfIdxGlobal] = seedIndex;
-                            isFaceHandled[scvfIdxGlobal] = true;
-                        }
-
-                        // increment counter
-                        seedIndex++;
+                        scvfIndexMap[scvfIdxGlobal] = seedIndex;
+                        isFaceHandled[scvfIdxGlobal] = true;
                     }
+
+                    // increment counter
+                    seedIndex++;
                 }
             }
         }
     }
-
-    bool isLocalMaxLevel_(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        auto inLevel = element.level();
-        if (this->problem().model().globalFvGeometry().element(scvf.outsideScvIdx()).level() > inLevel)
-            return false;
-        return true;
-    }
 };
-
 } // end namespace
 
 

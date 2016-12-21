@@ -36,8 +36,6 @@ template<class TypeTag>
 class CCMpfaGlobalInteractionVolumeSeedsBase
 {
     using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalInteractionVolumeSeeds);
-    // the actual implementation needs to be friend
-    friend Implementation;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -51,21 +49,18 @@ class CCMpfaGlobalInteractionVolumeSeedsBase
     using IndexType = typename GridView::IndexSet::IndexType;
 
 public:
-    CCMpfaGlobalInteractionVolumeSeedsBase(const GridView gridView) : gridView_(gridView) {}
+    CCMpfaGlobalInteractionVolumeSeedsBase(const GridView& gridView) : gridView_(gridView) {}
 
     // initializes the interaction volumes or the seeds
-    void update(const Problem& problem, std::vector<bool>& boundaryVertices)
+    void update(const Problem& p, const std::vector<bool>& boundaryVertices)
     {
-        problemPtr_ = &problem;
-        seeds_.clear();
-        boundarySeeds_.clear();
-
-        auto numScvf = problem_().model().globalFvGeometry().numScvf();
-        scvfIndexMap_.resize(numScvf);
-        std::vector<bool> isFaceHandled(numScvf, false);
+        problemPtr_ = &p;
 
         // initialize the seeds according to the mpfa method
-        asImp_().initializeSeeds_(boundaryVertices, isFaceHandled);
+        asImp_().initializeSeeds(boundaryVertices,
+                                 scvfIndexMap_,
+                                 seeds_,
+                                 boundarySeeds_);
     }
 
     const InteractionVolumeSeed& seed(const SubControlVolumeFace& scvf) const
@@ -74,70 +69,13 @@ public:
     const BoundaryInteractionVolumeSeed& boundarySeed(const SubControlVolumeFace& scvf) const
     { return boundarySeeds_[scvfIndexMap_[scvf.index()]]; }
 
-private:
-
-    void initializeSeeds_(std::vector<bool>& boundaryVertices,
-                          std::vector<bool>& isFaceHandled)
-    {
-        const auto numScvf = problem_().model().globalFvGeometry().numScvf();
-        const auto numBoundaryScvf = problem_().model().globalFvGeometry().numBoundaryScvf();
-
-        // reserve memory
-        seeds_.reserve(numScvf - numBoundaryScvf);
-        boundarySeeds_.reserve(numBoundaryScvf);
-
-        IndexType boundarySeedIndex = 0;
-        IndexType seedIndex = 0;
-        for (const auto& element : elements(gridView_))
-        {
-            auto fvGeometry = localView(problem_().model().globalFvGeometry());
-            fvGeometry.bindElement(element);
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                // skip the rest if we already handled this face
-                if (isFaceHandled[scvf.index()])
-                    continue;
-
-                if (boundaryVertices[scvf.vertexIndex()])
-                {
-                    // make the boundary interaction volume seed
-                    boundarySeeds_.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(problem_(), element, fvGeometry, scvf));
-
-                    // update the index map entries for the global scv faces in the interaction volume
-                    for (auto scvfIdxGlobal : boundarySeeds_.back().globalScvfIndices())
-                    {
-                        scvfIndexMap_[scvfIdxGlobal] = boundarySeedIndex;
-                        isFaceHandled[scvfIdxGlobal] = true;
-                    }
-
-                    // increment counter
-                    boundarySeedIndex++;
-                }
-                else
-                {
-                    // make the inner interaction volume seed
-                    seeds_.emplace_back(Helper::makeInnerInteractionVolumeSeed(problem_(), element, fvGeometry, scvf));
-
-                    // update the index map entries for the global scv faces in the interaction volume
-                    for (auto scvfIdxGlobal : seeds_.back().globalScvfIndices())
-                    {
-                        scvfIndexMap_[scvfIdxGlobal] = seedIndex;
-                        isFaceHandled[scvfIdxGlobal] = true;
-                    }
-
-                    // increment counter
-                    seedIndex++;
-                }
-            }
-        }
-
-        // shrink vectors to actual size
-        seeds_.shrink_to_fit();
-        boundarySeeds_.shrink_to_fit();
-    }
-
-    const Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_; }
+
+    const GridView& gridView() const
+    { return gridView_; }
+
+private:
 
     const Implementation& asImp_() const
     { return *static_cast<Implementation*>(this); }
