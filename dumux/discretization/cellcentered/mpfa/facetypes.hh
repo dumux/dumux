@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Face types of the sub control volume faces in the mpfa method.
+ * \brief Face types of the sub control volume faces in cell-centered mpfa methods.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FACETYPES_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FACETYPES_HH
