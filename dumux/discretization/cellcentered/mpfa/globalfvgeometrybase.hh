@@ -95,6 +95,10 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
+    //! The total number of vertices on the boundary
+    std::size_t numBoundaryVertices() const
+    { return numBoundaryVertices_; }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -161,6 +165,7 @@ public:
         // Build the SCVs and SCV faces
         IndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
+        numBoundaryVertices_ = 0;
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
@@ -235,7 +240,10 @@ public:
 
                     // store info on which vertices are on the domain boundary
                     if (boundary)
+                    {
                         boundaryVertices_[vIdxGlobal] = true;
+                        numBoundaryVertices_++;
+                    }
 
                     // is vertex on a branching point?
                     if (dim < dimWorld && outsideIndices[indexInInside].size() > 1)
@@ -292,9 +300,6 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfIndexSet;
         }
 
-        // in parallel problems we might have reserved more scvfs than we actually use
-        scvfs_.shrink_to_fit();
-
         // Make the flip index set for network and surface grids
         if (dim < dimWorld)
         {
@@ -349,9 +354,7 @@ public:
     { return scvfs_[scvfIdx]; }
 
     const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
-    {
-        return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]];
-    }
+    { return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]]; }
 
     //! Get the sub control volume face indices of an scv by global index
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
@@ -378,7 +381,8 @@ private:
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<bool> boundaryVertices_;
     std::vector<bool> branchingVertices_;
-    IndexType numBoundaryScvf_;
+    std::size_t numBoundaryScvf_;
+    std::size_t numBoundaryVertices_;
     // needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<IndexType>> flipScvfIndices_;
 
@@ -435,6 +439,10 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
+    //! The total number of vertices on the boundary
+    std::size_t numBoundaryVertices() const
+    { return numBoundaryVertices_; }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -482,6 +490,7 @@ public:
         numScvs_ = gridView_.size(0);
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
+        numBoundaryVertices_ = 0;
         elementMap_.resize(numScvs_);
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
@@ -565,7 +574,10 @@ public:
 
                     // store info on which vertices are on the domain boundary
                     if (boundary)
+                    {
                         boundaryVertices_[vIdxGlobal] = true;
+                        numBoundaryVertices_++;
+                    }
 
                     // is vertex on a branching point?
                     if (dim < dimWorld && outsideIndices[indexInInside].size() > 1)
@@ -628,9 +640,10 @@ private:
     GridView gridView_;
 
     // Information on the global number of geometries
-    IndexType numScvs_;
-    IndexType numScvf_;
-    IndexType numBoundaryScvf_;
+    std::size_t numScvs_;
+    std::size_t numScvf_;
+    std::size_t numBoundaryScvf_;
+    std::size_t numBoundaryVertices_;
 
     // vectors that store the global data
     Dumux::ElementMap<GridView> elementMap_;
