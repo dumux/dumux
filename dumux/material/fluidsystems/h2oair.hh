@@ -637,7 +637,7 @@ public:
      * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
      *
      * Formula (2.42):
-     * the specifiv enthalpy of a gasphase result from the sum of (enthalpies*mass fraction) of the components
+     * the specific enthalpy of a gasphase result from the sum of (enthalpies*mass fraction) of the components
      *
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
@@ -772,7 +772,7 @@ public:
 } // end namespace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
-// forward defintions of the property tags
+// forward definitions of the property tags
 namespace Properties {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Components);

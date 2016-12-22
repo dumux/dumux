@@ -555,7 +555,7 @@ public:
 } // end namespace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
-// forward defintions of the property tags
+// forward definitions of the property tags
 namespace Properties {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Components);

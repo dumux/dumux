@@ -455,7 +455,7 @@ public:
         // for the NAPL phase, we assume currently that nothing is
         // dissolved. this means that the affinity of the NAPL
         // component to the NAPL phase is much higher than for the
-        // other components, i.e. the fugacity cofficient is much
+        // other components, i.e. the fugacity coefficient is much
         // smaller.
         if (phaseIdx == nPhaseIdx) {
             Scalar phiNapl = NAPL::vaporPressure(T)/p;
@@ -578,7 +578,7 @@ private:
 } // end namespace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
-// forward defintions of the property tags
+// forward definitions of the property tags
 namespace Properties {
     NEW_PROP_TAG(Scalar);
     NEW_PROP_TAG(Components);
