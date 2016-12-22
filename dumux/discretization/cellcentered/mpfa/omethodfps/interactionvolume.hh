@@ -147,7 +147,7 @@ public:
         this->T_ += mc.BF;
     }
 
-    void assembleNeumannFluxes(const unsigned int eqIdx)
+    void assembleNeumannFluxes(unsigned int eqIdx)
     {
         ParentType::assembleNeumannFluxes(eqIdx);
 
@@ -156,7 +156,7 @@ public:
 
         auto& neumannFluxes = this->neumannFluxes_;
         neumannFluxes.resize(this->fluxScvfIndexSet_().size() + 1);
-        neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end(), 0.0);
+        neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end()-1, 0.0);
     }
 
 private:
@@ -184,15 +184,15 @@ private:
     template<typename GetTensorFunction>
     void assemblePositiveScv(const GetTensorFunction& getTensor,
                              const LocalScvfType& localScvf,
-                             const LocalIndexType localScvfIdx,
+                             LocalIndexType localScvfIdx,
                              LocalMatrixContainer& mc,
-                             const bool boundary = false)
+                             bool boundary = false)
     {
         // get diffusion tensor in "positive" sub volume
-        const auto localScvIdx = localScvf.insideLocalScvIndex();
-        const auto& localScv = this->localScv_(localScvIdx);
-        const auto& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
-        const auto& element = this->localElement_(localScvIdx);
+        auto localScvIdx = localScvf.insideLocalScvIndex();
+        auto&& localScv = this->localScv_(localScvIdx);
+        auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
+        auto&& element = this->localElement_(localScvIdx);
         auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
 
         // the local finite element basis
@@ -204,7 +204,7 @@ private:
         auto ipLocal = localScv.geometry().local(localScvf.ip());
 
         // find normal coordinate direction and integration point for divergence condition
-        LocalIndexType divEqNormalDir = normalDir == 1 ? 0 : 1;
+        LocalIndexType divEqNormalDir = 1 - normalDir;
         LocalPosition divEqIpLocal(0.0);
         divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
         divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
@@ -230,15 +230,15 @@ private:
     template<typename GetTensorFunction>
     void assembleNegativeScv(const GetTensorFunction& getTensor,
                              const LocalScvfType& localScvf,
-                             const LocalIndexType localScvfIdx,
+                             LocalIndexType localScvfIdx,
                              LocalMatrixContainer& mc)
     {
         // get diffusion tensor in "negative" sub volume
         for (auto localScvIdx : localScvf.outsideLocalScvIndices())
         {
-            const auto& localScv = this->localScv_(localScvIdx);
-            const auto& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
-            const auto& element = this->localElement_(localScvIdx);;
+            auto&& localScv = this->localScv_(localScvIdx);
+            auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
+            auto&& element = this->localElement_(localScvIdx);;
             auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
 
             // the local finite element bases of the scvs
@@ -250,7 +250,7 @@ private:
             auto ipLocal = localScv.geometry().local(localScvf.ip());
 
             // find normals and integration points in the two scvs for condition of zero divergence
-            LocalIndexType divEqNormalDir = normalDir == 1 ? 0 : 1;
+            LocalIndexType divEqNormalDir = 1 - normalDir;
             LocalPosition divEqIpLocal(0.0);
             divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
             divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
@@ -269,12 +269,12 @@ private:
     void addFaceFluxCoefficients_(const LocalScvType& localScv,
                                   const FeLocalBasis& localBasis,
                                   const Tensor& D,
-                                  const LocalIndexType rowIdx,
+                                  LocalIndexType rowIdx,
                                   const LocalPosition& ipLocal,
-                                  const LocalIndexType normalDir,
+                                  LocalIndexType normalDir,
                                   LocalMatrixContainer& mc,
-                                  const bool isFluxEq,
-                                  const bool isRHS = false)
+                                  bool isFluxEq,
+                                  bool isRHS = false)
     {
         // In case we're on a flux continuity face, get local index
         LocalIndexType eqSystemIdx = isFluxEq ? this->findLocalIndex(this->fluxScvfIndexSet_(), rowIdx) : -1;
@@ -307,7 +307,6 @@ private:
         for (int localDir = 0; localDir < dim; localDir++)
         {
             auto localScvfIdx = localScv.localScvfIndex(localDir);
-
             if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
                 Scalar aij = factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
@@ -334,9 +333,9 @@ private:
                                      const FeLocalBasis& localBasis,
                                      const Tensor& D,
                                      const LocalPosition& ipLocal,
-                                     const LocalIndexType normalDir,
+                                     LocalIndexType normalDir,
                                      LocalMatrixContainer& mc,
-                                     const bool isBoundary = false)
+                                     bool isBoundary = false)
     {
         // fluxes on the auxiliary volume have to be scaled
         static const Scalar auxArea = 1.0 - c_;

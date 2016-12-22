@@ -123,29 +123,32 @@ public:
         outsideGlobalScvfIndices_.reserve(size);
       }
 
-    const GlobalIndexType insideGlobalScvfIndex() const
+    GlobalIndexType insideGlobalScvfIndex() const
     { return insideScvfGlobalIdx_; }
+
+    GlobalIndexType insideGlobalScvIndex() const
+    { return insideScvGlobalIdx_; }
+
+    LocalIndexType insideLocalScvIndex() const
+    { return insideScvLocalIdx_; }
+
+    GlobalIndexType outsideGlobalScvfIndex(unsigned int outsideIdx = 0) const
+    { return outsideGlobalScvfIndices_[outsideIdx]; }
+
+    GlobalIndexType outsideGlobalScvIndex(unsigned int outsideIdx = 0) const
+    { return outsideGlobalScvIndices_[outsideIdx]; }
+
+    LocalIndexType outsideLocalScvIndex(unsigned int outsideIdx = 0) const
+    { return outsideLocalScvIndices_[outsideIdx]; }
 
     const GlobalIndexSet& outsideGlobalScvfIndices() const
     { return outsideGlobalScvfIndices_; }
 
-    const GlobalIndexType outsideGlobalScvfIndex() const
-    {
-        assert(outsideGlobalScvfIndices_.size() == 1 && "outside global scvf index not uniquely defined");
-        return outsideGlobalScvfIndices_[0];
-    }
-
-    const LocalIndexType insideLocalScvIndex() const
-    { return insideScvLocalIdx_; }
+    const GlobalIndexSet& outsideGlobalScvIndices() const
+    { return outsideGlobalScvIndices_; }
 
     const LocalIndexSet& outsideLocalScvIndices() const
     { return outsideLocalScvIndices_; }
-
-    const GlobalIndexType insideGlobalScvIndex() const
-    { return insideScvGlobalIdx_; }
-
-    const GlobalIndexSet& outsideGlobalScvIndices() const
-    { return outsideGlobalScvIndices_; }
 
     MpfaFaceTypes faceType() const
     { return faceType_; }

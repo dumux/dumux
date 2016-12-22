@@ -141,41 +141,32 @@ public:
       area_(scvf.area())
     {}
 
-    const GlobalIndexType insideGlobalScvfIndex() const
+    GlobalIndexType insideGlobalScvfIndex() const
     { return scvfSeed_().insideGlobalScvfIndex(); }
+
+    GlobalIndexType insideGlobalScvIndex() const
+    { return scvfSeed_().insideGlobalScvIndex(); }
+
+    LocalIndexType insideLocalScvIndex() const
+    { return scvfSeed_().insideLocalScvIndex(); }
 
     const GlobalIndexSet& outsideGlobalScvfIndices() const
     { return scvfSeed_().outsideGlobalScvfIndices(); }
 
-    const GlobalIndexType outsideGlobalScvfIndex() const
-    {
-        assert(scvfSeed_().outsideGlobalScvfIndices().size() == 1 && "outside scvf index not uniquely defined");
-        return scvfSeed_().outsideGlobalScvfIndices()[0];
-    }
-
-    const LocalIndexType insideLocalScvIndex() const
-    { return scvfSeed_().insideLocalScvIndex(); }
+    const GlobalIndexSet& outsideGlobalScvIndices() const
+    { return scvfSeed_().outsideGlobalScvIndices(); }
 
     const LocalIndexSet& outsideLocalScvIndices() const
     { return scvfSeed_().outsideLocalScvIndices(); }
 
-    const LocalIndexType outsideLocalScvIndex() const
-    {
-        assert(scvfSeed_().outsideLocalScvIndices().size() == 1 && "outside local scv index not uniquely defined");
-        return scvfSeed_().outsideLocalScvIndices()[0];
-    }
+    GlobalIndexType outsideGlobalScvfIndex(unsigned int outsideIdx = 0) const
+    { return scvfSeed_().outsideGlobalScvfIndex(outsideIdx); }
 
-    const GlobalIndexType insideGlobalScvIndex() const
-    { return scvfSeed_().insideGlobalScvIndex(); }
+    GlobalIndexType outsideGlobalScvIndex(unsigned int outsideIdx = 0) const
+    { return scvfSeed_().outsideGlobalScvIndex(outsideIdx); }
 
-    const GlobalIndexSet& outsideGlobalScvIndices() const
-    { return scvfSeed_().outsideGlobalScvIndices(); }
-
-    const GlobalIndexType outsideGlobalScvIndex() const
-    {
-        assert(scvfSeed_().outsideGlobalScvIndices().size() == 1 && "outside scv index not uniquely defined");
-        return scvfSeed_().outsideGlobalScvIndices()[0];
-    }
+    LocalIndexType outsideLocalScvIndex(unsigned int outsideIdx = 0) const
+    { return scvfSeed_().outsideLocalScvIndex(outsideIdx); }
 
     MpfaFaceTypes faceType() const
     { return scvfSeed_().faceType(); }

@@ -82,7 +82,6 @@ public:
                 globalIndices.push_back(scvfIdxGlobal);
         }
 
-        globalIndices.shrink_to_fit();
         return globalIndices;
     }
 

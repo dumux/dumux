@@ -159,8 +159,8 @@ private:
                                  const ScvfPointerVector& scvfVector,
                                  std::vector<ScvSeedType>& scvSeeds,
                                  std::vector<ScvfSeedType>& scvfSeeds,
-                                 const GlobalIndexType scvIdx0,
-                                 const bool clockWise = false)
+                                 GlobalIndexType scvIdx0,
+                                 bool clockWise = false)
     {
         // extract the actual local indices from the containers
         LocalIndexType localScvIdx = scvSeeds.size();
@@ -220,8 +220,8 @@ private:
             auto outsideScvfVector = Implementation::getCommonAndNextScvFace(curScvf, outsideFvGeometry, clockWise);
             GlobalIndexType commonFaceCoordIdx = clockWise ? 0 : 1;
             GlobalIndexType nextFaceCoordIdx = clockWise ? 1 : 0;
-            auto& commonScvf = *outsideScvfVector[commonFaceCoordIdx];
-            auto& nextScvf = *outsideScvfVector[nextFaceCoordIdx];
+            auto&& commonScvf = *outsideScvfVector[commonFaceCoordIdx];
+            auto&& nextScvf = *outsideScvfVector[nextFaceCoordIdx];
 
             // create local scv face entity of the current scvf
             LocalIndexType outsideLocalScvIdx = localScvIdx+1;
@@ -377,7 +377,7 @@ private:
 
         for (int coordDir = 0; coordDir < dim; ++coordDir)
         {
-            const auto& actualScvf = *scvfVector[coordDir];
+            auto&& actualScvf = *scvfVector[coordDir];
 
             // if scvf is on a boundary, we create the scvfSeed and make no neighbor
             if (actualScvf.boundary())
@@ -405,8 +405,8 @@ private:
                     // find scvf in outside corresponding to the actual scvf
                     auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
                     auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
-                    const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
-                    const auto outsideScvfIdx = outsideScvf.index();
+                    auto&& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
+                    auto outsideScvfIdx = outsideScvf.index();
 
                     // check if the outside scv already exists and get its local index
                     bool outsideScvExists = false;
@@ -415,8 +415,7 @@ private:
                     {
                         if (scvSeed.globalIndex() == outsideGlobalScvIdx)
                         {
-                            outsideScvExists = true;
-                            break;
+                            outsideScvExists = true; break;
                         }
                         // keep track of local index
                         outsideLocalScvIdx++;
@@ -657,8 +656,7 @@ private:
                 {
                     if (scvSeed.globalIndex() == outsideGlobalScvIdx)
                     {
-                        outsideExists = true;
-                        break;
+                        outsideExists = true; break;
                     }
                     // keep track of local index
                     outsideLocalScvIdx++;
@@ -678,7 +676,7 @@ private:
                     // find scvf in outside corresponding to the actual scvf
                     auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
                     auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
-                    const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
+                    auto&& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
 
                     // create scvf seed
                     scvfSeeds.emplace_back(actualScvf,
@@ -725,7 +723,7 @@ private:
                         // find scvf in outside corresponding to the actual scvf
                         auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
                         auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
-                        const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
+                        auto&& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
 
                         // make scv face seed
                         scvfSeeds.emplace_back(actualScvf,

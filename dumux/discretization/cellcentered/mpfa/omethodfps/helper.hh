@@ -30,10 +30,11 @@ namespace Dumux
 /*!
  * \ingroup Mpfa
  * \brief Helper class to get the required information on an interaction volume.
- *        Specialization for the Mpfa-O method in two dimensions.
+ *        We simply forward to the mpfa-o method here.
  */
 template<class TypeTag, int dim, int dimWorld>
-class MpfaMethodHelper<TypeTag, MpfaMethods::oMethodFps, dim, dimWorld> : public MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, dim, dimWorld>
+class MpfaMethodHelper<TypeTag, MpfaMethods::oMethodFps, dim, dimWorld>
+: public MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, dim, dimWorld>
 {};
 
 } // end namespace
