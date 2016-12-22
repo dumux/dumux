@@ -72,8 +72,7 @@ SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, TwoCNIZeroEqTwoPTwoCNISpatial
 
 // Set the fluid system to use complex relations (last argument)
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNITestProblem, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                   H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // If SuperLU is not available, the UMFPack solver is used:
 #ifdef HAVE_SUPERLU
@@ -141,9 +140,8 @@ public:
         initializeGrid();
 
         // initialize the tables of the fluid system
-        FluidSystem::init();
-//         FluidSystem::init(/*tempMin=*/273.15, /*tempMax=*/373.15, /*numTemp=*/200,
-//                           /*pMin=*/1e4, /*pMax=*/2e5, /*numP=*/200);
+        FluidSystem::init(/*tempMin=*/273.15, /*tempMax=*/323.15, /*numTemp=*/50,
+                          /*pMin=*/5e4, /*pMax=*/1.5e5, /*numP=*/100);
 
         this->timeManager().startNextEpisode(episodeLength_);
     }
