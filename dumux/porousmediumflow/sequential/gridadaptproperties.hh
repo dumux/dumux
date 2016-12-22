@@ -95,7 +95,7 @@ SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
 //Set default class for adaptation initialization indicator
 SET_TYPE_PROP(GridAdaptTypeTag,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
 //Set default class for adaptation
-SET_TYPE_PROP(GridAdaptTypeTag,  GridAdaptModel, GridAdapt<TypeTag, false>);
+SET_TYPE_PROP(GridAdaptTypeTag,  GridAdaptModel, GridAdapt<TypeTag, GET_PROP_VALUE(TypeTag, AdaptiveGrid)>);
 
 
 //standard setting
