@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global object of flux var caches
+ * \brief The local object of flux var caches
  */
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
@@ -32,7 +32,8 @@ namespace Dumux
 
 /*!
  * \ingroup ImplicitModel
- * \brief Base class for the stencil local flux variables cache
+ * \brief Base class for the local flux variables cache.
+ *        Prepares the cache on all the faces in the stencil.
  */
 template<class TypeTag, bool EnableGlobalFluxVariablesCache>
 class CCMpfaElementFluxVariablesCache;
@@ -135,7 +136,8 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
-        clear();
+        fluxVarsCache_.clear();
+        globalScvfIndices_.clear();
 
         const auto& problem = globalFluxVarsCache().problem_();
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
@@ -143,8 +145,10 @@ public:
         const auto& assemblyMap = problem.model().localJacobian().assemblyMap();
         const auto globalI = problem.elementMapper().index(element);
 
-        // reserve initial guess of memory (won't be enough though - several scvfs per neighbor will be required)
-        globalScvfIndices_.reserve(fvGeometry.numScvf() + assemblyMap[globalI].size());
+        // reserve memory
+        auto numNeighborScvfs = 0;
+        for (auto&& facesInNeighbor : assemblyMap[globalI]) numNeighborScvfs += facesInNeighbor.size();
+        globalScvfIndices_.reserve(fvGeometry.numScvf() + numNeighborScvfs);
 
         // first add all the indices inside the element
         for (auto&& scvf : scvfs(fvGeometry))
@@ -155,17 +159,11 @@ public:
             for (auto fluxVarIdx : assemblyMap[globalI][j])
                 globalScvfIndices_.push_back(fluxVarIdx);
 
-        // make global indices unique
-        std::sort(globalScvfIndices_.begin(), globalScvfIndices_.end());
-        globalScvfIndices_.erase(std::unique(globalScvfIndices_.begin(), globalScvfIndices_.end()), globalScvfIndices_.end());
-
         // prepare all the caches of the scvfs inside the corresponding interaction volumes using helper class
         fluxVarsCache_.resize(globalScvfIndices_.size());
         for (auto&& scvf : scvfs(fvGeometry))
-        {
             if (!(*this)[scvf].isUpdated())
                 FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, *this);
-        }
 
         // prepare the caches in the remaining neighbors
         unsigned int j = 0;
@@ -215,12 +213,6 @@ public:
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
 
-    void clear()
-    {
-        fluxVarsCache_.clear();
-        globalScvfIndices_.clear();
-    }
-
     // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
@@ -230,16 +222,14 @@ private:
             (*this)[scvf].setUpdateStatus(false);
 
         for (auto&& scvf : scvfs(fvGeometry))
-        {
             if (!(*this)[scvf].isUpdated())
                 FluxVariablesCacheFiller::updateFluxVarCache(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf, *this);
-        }
     }
 
-    // get index of scvf in the local container
+    // get index of an scvf in the local container
     int getLocalScvfIdx_(const int scvfIdx) const
     {
-        auto it = std::lower_bound(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
+        auto it = std::find(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
         assert(globalScvfIndices_[std::distance(globalScvfIndices_.begin(), it)] == scvfIdx && "Could not find the flux vars cache for scvfIdx");
         return std::distance(globalScvfIndices_.begin(), it);
     }
