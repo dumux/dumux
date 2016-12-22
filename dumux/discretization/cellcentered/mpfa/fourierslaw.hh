@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        heat conduction fluxes with Fourier's law.
+ *        heat conduction fluxes with Fourier's law for cell-centered MPFA models.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH

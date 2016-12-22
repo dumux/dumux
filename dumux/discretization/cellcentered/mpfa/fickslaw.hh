@@ -20,7 +20,7 @@
  * \file
  * \brief This file contains the data which is required to calculate
  *        molar and mass fluxes of a component in a fluid phase over a face of a finite volume by means
- *        of Fick's Law. Specializations are provided for the different discretization methods.
+ *        of Fick's Law for cell-centered MPFA models.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH

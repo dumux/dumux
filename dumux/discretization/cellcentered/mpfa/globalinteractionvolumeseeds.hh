@@ -33,14 +33,7 @@ namespace Dumux
 //! By default we simply inherit from the base class
 //! Actual implementations for other methods have to be provided below
 template<class TypeTag, MpfaMethods method>
-class CCMpfaGlobalInteractionVolumeSeedsImplementation : public CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>
-{
-    using ParentType = CCMpfaGlobalInteractionVolumeSeedsBase<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-public:
-    CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView gridView) : ParentType(gridView)  {}
-};
+class CCMpfaGlobalInteractionVolumeSeedsImplementation;
 
 /*!
  * \ingroup Mpfa
@@ -52,6 +45,8 @@ using CCMpfaGlobalInteractionVolumeSeeds = CCMpfaGlobalInteractionVolumeSeedsImp
 } // end namespace
 
 // the specializations of this class differing from the default have to be included here
+#include <dumux/discretization/cellcentered/mpfa/omethod/globalinteractionvolumeseeds.hh>
 #include <dumux/discretization/cellcentered/mpfa/lmethod/globalinteractionvolumeseeds.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethodfps/globalinteractionvolumeseeds.hh>
 
 #endif

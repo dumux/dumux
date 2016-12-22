@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The local (stencil) volume variables class for cell centered models
+ * \brief The local (stencil) volume variables class for cell centered mpfa models
  */
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
@@ -31,7 +31,7 @@ namespace Dumux
 
 /*!
  * \ingroup ImplicitModel
- * \brief Base class for the volume variables vector
+ * \brief Base class for the local volume variables vector
  */
 template<class TypeTag, bool enableGlobalVolVarsCache>
 class CCMpfaElementVolumeVariables
@@ -145,25 +145,10 @@ public:
             ++localIdx;
         }
 
-        // if the element is connected to a boundary, additionally prepare BCs
-        bool boundary = element.hasBoundaryIntersections();
-        if (!boundary)
+        // eventually prepare boundary volume variables
+        auto estimate = boundaryVolVarsEstimate_(element, fvGeometry);
+        if (estimate > 0)
         {
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if (globalFvGeometry.scvfTouchesBoundary(scvf))
-                {
-                    boundary = true;
-                    break;
-                }
-            }
-        }
-
-        if (boundary)
-        {
-            // reserve memory (12 is the case of 3d hexahedron with one face on boundary)
-            std::size_t estimate = 12;
-            std::vector<IndexType> finishedBoundaries;
             volumeVariables_.reserve(numDofs+estimate);
             volVarIndices_.reserve(numDofs+estimate);
 
@@ -190,7 +175,7 @@ public:
                     // use the inside volume variables for neumann boundaries
                     else if (!useTpfaBoundary)
                     {
-                        volumeVariables_.emplace_back(VolumeVariables(volumeVariables_[0]));
+                        volumeVariables_.emplace_back(volumeVariables_[0]);
                         volVarIndices_.push_back(scvf.outsideScvIdx());
                     }
                 }
@@ -208,12 +193,10 @@ public:
                 for (auto scvfIdx : ivSeed.globalScvfIndices())
                 {
                     auto&& ivScvf = fvGeometry.scvf(scvfIdx);
-
                     // only proceed for scvfs on the boundary and not in the inside element
                     if (!ivScvf.boundary() || ivScvf.insideScvIdx() == eIdx)
                         continue;
 
-                    // that means we are on a not yet handled boundary scvf
                     auto insideScvIdx = ivScvf.insideScvIdx();
                     auto insideElement = globalFvGeometry.element(insideScvIdx);
 
@@ -232,20 +215,15 @@ public:
                     // use the inside volume variables for neumann boundaries
                     else if (!useTpfaBoundary)
                     {
-                        volumeVariables_.emplace_back(VolumeVariables((*this)[insideScvIdx]));
+                        volumeVariables_.emplace_back((*this)[insideScvIdx]);
                         volVarIndices_.push_back(ivScvf.outsideScvIdx());
                     }
                 }
             }
-
-            // free unused memory
-            volumeVariables_.shrink_to_fit();
-            volVarIndices_.shrink_to_fit();
         }
     }
 
     // Binding of an element, prepares only the volume variables of the element
-    // specialization for cc models
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -279,7 +257,25 @@ public:
 private:
     const GlobalVolumeVariables* globalVolVarsPtr_;
 
-    const int getLocalIdx_(const int volVarIdx) const
+    //! checks whether an scvf touches the boundary and returns an estimate of how many
+    //! boundary vol vars will be necessary. In 2d, this is the sum of faces touching
+    //! the boundary, which should be correct. In 3d, we count each face double - probably
+    //! too much for hexahedrons but might be even too little for simplices.
+    int boundaryVolVarsEstimate_(const Element& element,
+                                 const FVElementGeometry& fvGeometry)
+    {
+        int bVolVarEstimate = 0;
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            bool boundary = scvf.boundary();
+            if (boundary || (!boundary && fvGeometry.globalFvGeometry().scvfTouchesBoundary(scvf)))
+                bVolVarEstimate += dim-1;
+        }
+
+        return bVolVarEstimate;
+    }
+
+    int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(volVarIndices_.begin(), volVarIndices_.end(), volVarIdx);
         assert(it != volVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");

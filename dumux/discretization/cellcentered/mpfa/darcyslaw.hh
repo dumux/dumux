@@ -45,7 +45,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
 
 /*!
  * \ingroup DarcysLaw
- * \brief Specialization of Darcy's Law for the CCTpfa method.
+ * \brief Specialization of Darcy's Law for the CCMpfa method.
  */
 template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>

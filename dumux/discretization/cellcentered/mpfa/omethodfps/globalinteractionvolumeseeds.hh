@@ -18,19 +18,30 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Face types of the sub control volume faces in cell-centered mpfa methods.
+ * \brief Base class for the global interaction volumes of the mpfa-o-fps method.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FACETYPES_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_FACETYPES_HH
+#ifndef DUMUX_DISCRETIZATION_MPFA_O_FPS_GLOBALINTERACTIONVOLUMESEEDS_HH
+#define DUMUX_DISCRETIZATION_MPFA_O_FPS_GLOBALINTERACTIONVOLUMESEEDS_HH
+
+#include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseedsbase.hh>
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 namespace Dumux
 {
-    enum class MpfaFaceTypes : unsigned int
-    {
-        interior,
-        neumann,
-        dirichlet
-    };
+/*!
+ * \ingroup Mpfa
+ * \brief Specialization of the class for the mpfa-o-fps method.
+ */
+template<class TypeTag>
+class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMethodFps>
+      : public CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMethod>
+{
+    using ParentType = CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMethod>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView& gridView) : ParentType(gridView) {}
+};
 } // end namespace
+
 
 #endif
