@@ -83,6 +83,9 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         switchIdx = Indices::switchIdx,
         pressureIdx = Indices::pressureIdx
     };
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static const bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+    static const bool useKelvinEquation = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -90,9 +93,7 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, useKelvinEquation> MiscibleMultiPhaseComposition;
     static_assert(useMoles || (!useMoles && useConstraintSolver),
                   "if UseMoles is set false, UseConstraintSolver has to be set to true");
     typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
@@ -274,6 +275,9 @@ public:
                 Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState,
                                                                        wPhaseIdx,
                                                                        wCompIdx) * pw;
+
+                if (useKelvinEquation)
+                    partPressH2O = FluidSystem::kelvinVaporPressure(fluidState, wPhaseIdx, wCompIdx);
 
                 // get the partial pressure of the main component of the the nonwetting (gas) phase ("Air")
                 Scalar partPressAir = pn - partPressH2O;

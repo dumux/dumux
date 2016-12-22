@@ -474,6 +474,14 @@ public:
         return 1.0;
     }
 
+    template <class FluidState>
+    static Scalar kelvinVaporPressure(const FluidState &fluidState,
+                                      const int phaseIdx,
+                                      const int compIdx)
+    {
+        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::kelvinVaporPressure()");
+    }
+
     using Base::enthalpy;
     /*!
      * \brief Given all mole fractions in a phase, return the specific
