@@ -131,11 +131,10 @@ public:
             std::array<Matrix, 2> M;
             M[0] = assembleMatrix_(getTensor, interactionRegions_[0]);
             M[1] = assembleMatrix_(getTensor, interactionRegions_[1]);
-            const auto id = MpfaHelper::selectionCriterion(interactionRegions_[0], interactionRegions_[1], M[0], M[1]);
 
-            const auto& ir = interactionRegions_[id];
+            auto id = MpfaHelper::selectionCriterion(interactionRegions_[0], interactionRegions_[1], M[0], M[1]);
+            postSolve_(interactionRegions_[id]);
             T_ = M[id];
-            postSolve_(ir);
         }
     }
 
@@ -259,9 +258,9 @@ private:
         if (regionUnique_)
         {
             interactionRegions_.reserve(1);
-            const auto& scvSeed1 = seed.scvSeed(0);
-            const auto& scvSeed2 = seed.outerScvSeed(0);
-            const auto& scvSeed3 = seed.outerScvSeed(1);
+            auto&& scvSeed1 = seed.scvSeed(0);
+            auto&& scvSeed2 = seed.outerScvSeed(0);
+            auto&& scvSeed3 = seed.outerScvSeed(1);
             auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
             auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
             auto e3 = globalFvGeometry.element(scvSeed3.globalIndex());
@@ -271,10 +270,10 @@ private:
         else
         {
             interactionRegions_.reserve(2);
-            const auto& scvSeed1 = seed.scvSeed(0);
-            const auto& scvSeed2 = seed.scvSeed(1);
-            const auto& outerScvSeed1 = seed.outerScvSeed(0);
-            const auto& outerScvSeed2 = seed.outerScvSeed(1);
+            auto&& scvSeed1 = seed.scvSeed(0);
+            auto&& scvSeed2 = seed.scvSeed(1);
+            auto&& outerScvSeed1 = seed.outerScvSeed(0);
+            auto&& outerScvSeed2 = seed.outerScvSeed(1);
             auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
             auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
             auto e3 = globalFvGeometry.element(outerScvSeed1.globalIndex());

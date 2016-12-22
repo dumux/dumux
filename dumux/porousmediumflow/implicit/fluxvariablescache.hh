@@ -32,8 +32,7 @@ namespace Dumux
 {
 // forward declaration
 template<class TypeTag, DiscretizationMethods Method>
-class PorousMediumFluxVariablesCacheImplementation
-{};
+class PorousMediumFluxVariablesCacheImplementation;
 
 namespace Properties
 {
@@ -164,7 +163,7 @@ private:
 
 // forward declaration of the base class of the mpfa flux variables cache
 template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
-class MpfaPorousMediumFluxVariablesCache {};
+class MpfaPorousMediumFluxVariablesCache;
 
 //! Base class for the advective cache in mpfa methods
 template<class TypeTag>

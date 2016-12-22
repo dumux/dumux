@@ -75,7 +75,7 @@ public:
 
         unsigned int count = 0;
         ScvfVector scvfVector({nullptr});
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (auto&& scvf : scvfs(fvGeometry))
         {
             if (scvf.vertexIndex() == vIdxGlobal)
             {
@@ -473,7 +473,7 @@ public:
         auto elementCenter = element.geometry().center();
 
         LocalIndexType count = 0;
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (auto&& scvf : scvfs(fvGeometry))
         {
             if (scvf.vertexIndex() == vIdxGlobal)
             {

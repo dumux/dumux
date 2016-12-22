@@ -142,9 +142,9 @@ public:
         createLocalEntities_(seed);
 
         // reserve memory
-        const auto numLocalScvs = localScvs_.size();
-        const auto numLocalScvfs = localScvfs_.size();
-        const auto maxNumVolVars = numLocalScvs + numLocalScvfs;
+        auto numLocalScvs = localScvs_.size();
+        auto numLocalScvfs = localScvfs_.size();
+        auto maxNumVolVars = numLocalScvs + numLocalScvfs;
         volVarsStencil_ = seed.globalScvIndices(); // boundary vol vars are placed at the end
         volVarsStencil_.reserve(maxNumVolVars);
         volVarsPositions_.reserve(maxNumVolVars);
@@ -152,12 +152,12 @@ public:
         fluxFaceIndexSet_.reserve(numLocalScvfs);
 
         // the positions where the vol vars are defined at (required for the gravitational acceleration)
-        for (const auto& localScv : localScvs_)
+        for (auto&& localScv : localScvs_)
             volVarsPositions_.push_back(localScv.center());
 
         // eventually add dirichlet vol var indices and set up local index sets of flux and dirichlet faces
         LocalIndexType localScvfIdx = 0;
-        for (const auto& localScvf : localScvfs_)
+        for (auto&& localScvf : localScvfs_)
         {
             // eventually add vol var index and corresponding position
             if (localScvf.faceType() == MpfaFaceTypes::dirichlet)
@@ -203,20 +203,20 @@ public:
         T_ += D;
     }
 
-    void assembleNeumannFluxes(const unsigned int eqIdx)
+    void assembleNeumannFluxes(unsigned int eqIdx)
     {
         if (!onBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return;
 
         LocalIndexType fluxFaceIdx = 0;
-        for (const auto localFluxFaceIdx : fluxFaceIndexSet_)
+        for (auto localFluxFaceIdx : fluxFaceIndexSet_)
         {
-            const auto& localScvf = localScvf_(localFluxFaceIdx);
+            auto&& localScvf = localScvf_(localFluxFaceIdx);
             const auto faceType = localScvf.faceType();
             if (faceType == MpfaFaceTypes::neumann)
             {
-                const auto& element = localElement_(localScvf.insideLocalScvIndex());
-                const auto& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
+                auto&& element = localElement_(localScvf.insideLocalScvIndex());
+                auto&& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
                 auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf)[eqIdx];
                 neumannFlux *= globalScvf.area();
 
@@ -237,7 +237,7 @@ public:
         auto scvfGlobalIdx = scvf.index();
 
         LocalIndexType localIdx = 0;
-        for (const auto& localScvf : localScvfs_)
+        for (auto&& localScvf : localScvfs_)
         {
             if (localScvf.insideGlobalScvfIndex() == scvfGlobalIdx)
                 return LocalFaceData(localIdx, localScvf.insideLocalScvIndex(), false);
@@ -257,10 +257,10 @@ public:
     typename std::enable_if< (d < dw), LocalFaceData >::type
     getLocalFaceData(const SubControlVolumeFace& scvf) const
     {
-        const auto scvfGlobalIdx = scvf.index();
+        auto scvfGlobalIdx = scvf.index();
 
         LocalIndexType localFaceIdx = 0;
-        for (const auto& localScvf : localScvfs_)
+        for (auto&& localScvf : localScvfs_)
         {
             if (localScvf.insideGlobalScvfIndex() == scvfGlobalIdx)
                 return LocalFaceData(localFaceIdx, localScvf.insideLocalScvIndex(), false);
@@ -271,7 +271,7 @@ public:
                     return LocalFaceData(localFaceIdx, localScvf.outsideLocalScvIndex(), true);
 
                 // Now we have to find wich local scv is the one the global scvf is embedded in
-                const auto scvGlobalIdx = scvf.insideScvIdx();
+                auto scvGlobalIdx = scvf.insideScvIdx();
                 for (auto localScvIdx : localScvf.outsideLocalScvIndices())
                     if (localScv_(localScvIdx).globalIndex() == scvGlobalIdx)
                         return LocalFaceData(localFaceIdx, localScvIdx, true);
@@ -311,16 +311,16 @@ public:
         DynamicVector tij(volVarsStencil().size(), 0.0);
 
         // get the local scv and iterate over local coordinates
-        const std::size_t numLocalScvs = localScvs_.size();
-        const auto& localScv = localScv_(localFaceData.localScvIndex);
-        const auto& localScvf = localScvf_(localFaceData.localScvfIndex);
+        std::size_t numLocalScvs = localScvs_.size();
+        auto&& localScv = localScv_(localFaceData.localScvIndex);
+        auto&& localScvf = localScvf_(localFaceData.localScvfIndex);
 
         auto idxInOutside = this->findLocalIndex(localScvf.outsideLocalScvIndices(), localFaceData.localScvIndex);
-        const auto& wijk = wijk_[localFaceData.localScvfIndex][idxInOutside+1];
+        auto&& wijk = wijk_[localFaceData.localScvfIndex][idxInOutside+1];
         for (int localDir = 0; localDir < dim; localDir++)
         {
             auto localScvfIdx = localScv.localScvfIndex(localDir);
-            const auto& localScvf = localScvf_(localScvfIdx);
+            auto&& localScvf = localScvf_(localScvfIdx);
 
             // add entries from the face unknowns
             if (localScvf.faceType() != MpfaFaceTypes::dirichlet)
@@ -393,17 +393,17 @@ private:
         localScvs_.reserve(numScvs);
         localScvfs_.reserve(numScvfs);
 
-        for (const auto& scvSeed : seed.scvSeeds())
+        for (auto&& scvSeed : seed.scvSeeds())
         {
             auto element = problem_().model().globalFvGeometry().element(scvSeed.globalIndex());
             localScvs_.emplace_back(LocalScvType(problem_(), element, fvGeometry_(), scvSeed));
             localElements_.emplace_back(std::move(element));
         }
 
-        for (const auto& scvfSeed : seed.scvfSeeds())
+        for (auto&& scvfSeed : seed.scvfSeeds())
         {
             // we have to use the "inside" scv face here
-            const auto& scvf = fvGeometry_().scvf(scvfSeed.insideGlobalScvfIndex());
+            auto&& scvf = fvGeometry_().scvf(scvfSeed.insideGlobalScvfIndex());
             localScvfs_.emplace_back(LocalScvfType(scvfSeed, scvf));
         }
     }
@@ -422,16 +422,16 @@ private:
 
         // loop over the local faces
         LocalIndexType rowIdx = 0;
-        for (const auto& localScvf : localScvfs_)
+        for (auto&& localScvf : localScvfs_)
         {
             auto faceType = localScvf.faceType();
             bool hasUnknown = faceType != MpfaFaceTypes::dirichlet;
             LocalIndexType idxInFluxFaces = hasUnknown ? this->findLocalIndex(fluxScvfIndexSet_(), rowIdx) : -1;
 
             // get diffusion tensor in "positive" sub volume
-            const auto posLocalScvIdx = localScvf.insideLocalScvIndex();
-            const auto& posLocalScv = localScv_(posLocalScvIdx);
-            const auto& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
+            auto posLocalScvIdx = localScvf.insideLocalScvIndex();
+            auto&& posLocalScv = localScv_(posLocalScvIdx);
+            auto&& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
             auto element = localElement_(posLocalScvIdx);
             auto tensor = getTensor(element, elemVolVars_()[posGlobalScv], posGlobalScv);
 
@@ -443,7 +443,7 @@ private:
             for (int localDir = 0; localDir < dim; localDir++)
             {
                 auto curLocalScvfIdx = posLocalScv.localScvfIndex(localDir);
-                const auto& curLocalScvf = localScvf_(curLocalScvfIdx);
+                auto&& curLocalScvf = localScvf_(curLocalScvfIdx);
 
                 // First, add the entries associated with face pressures (unkown or dirichlet)
                 if (curLocalScvf.faceType() != MpfaFaceTypes::dirichlet)
@@ -482,8 +482,8 @@ private:
                 unsigned int indexInOutsideData = 0;
                 for (auto negLocalScvIdx : localScvf.outsideLocalScvIndices())
                 {
-                    const auto& negLocalScv = localScv_(negLocalScvIdx);
-                    const auto& negGlobalScv = fvGeometry_().scv(negLocalScv.globalIndex());
+                    auto&& negLocalScv = localScv_(negLocalScvIdx);
+                    auto&& negGlobalScv = fvGeometry_().scv(negLocalScv.globalIndex());
                     auto negElement = localElement_(negLocalScvIdx);
                     auto negTensor = getTensor(negElement, elemVolVars_()[negGlobalScv], negGlobalScv);
 
@@ -494,7 +494,7 @@ private:
                     if (dim < dimWorld)
                     {
                         // outside scvf
-                        auto&& outsideScvf = fvGeometry_().scvf(localScvf.outsideGlobalScvfIndices()[indexInOutsideData]);
+                        auto&& outsideScvf = fvGeometry_().scvf(localScvf.outsideGlobalScvfIndex(indexInOutsideData));
                         auto negNormal = outsideScvf.unitOuterNormal();
                         negNormal *= -1.0;
                         negWijk = calculateOmegas_(negLocalScv, negNormal, localScvf.area(), negTensor);
@@ -509,7 +509,7 @@ private:
                     for (int localDir = 0; localDir < dim; localDir++)
                     {
                         auto curLocalScvfIdx = negLocalScv.localScvfIndex(localDir);
-                        const auto& curLocalScvf = localScvf_(curLocalScvfIdx);
+                        auto&& curLocalScvf = localScvf_(curLocalScvfIdx);
 
                         if (curLocalScvf.faceType() != MpfaFaceTypes::dirichlet)
                         {
@@ -558,12 +558,12 @@ private:
 
         // Loop over all the faces, in this case these are all dirichlet boundaries
         LocalIndexType rowIdx = 0;
-        for (const auto& localScvf : localScvfs_)
+        for (auto&& localScvf : localScvfs_)
         {
             // get diffusion tensor in "positive" sub volume
-            const auto posLocalScvIdx = localScvf.insideLocalScvIndex();
-            const auto& posLocalScv = localScv_(posLocalScvIdx);
-            const auto& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
+            auto posLocalScvIdx = localScvf.insideLocalScvIndex();
+            auto&& posLocalScv = localScv_(posLocalScvIdx);
+            auto&& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
             auto element = localElement_(posLocalScvIdx);
             auto tensor = getTensor(element, elemVolVars_()[posGlobalScv], posGlobalScv);
 

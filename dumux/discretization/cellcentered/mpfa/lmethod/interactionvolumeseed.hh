@@ -75,9 +75,12 @@ public:
         for (auto&& localScvSeed : outerScvSeeds())
             globalIndices.push_back(localScvSeed.globalIndex());
 
-        // make the entries unique
-        std::sort(globalIndices.begin(), globalIndices.end());
-        globalIndices.erase(std::unique(globalIndices.begin(), globalIndices.end()), globalIndices.end());
+        // make the entries unique if interaction region is not uniquely defined
+        if (!isUnique())
+        {
+            std::sort(globalIndices.begin(), globalIndices.end());
+            globalIndices.erase(std::unique(globalIndices.begin(), globalIndices.end()), globalIndices.end());
+        }
 
         return globalIndices;
     }

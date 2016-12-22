@@ -70,13 +70,13 @@ public:
     GlobalIndexType globalIndex() const
     { return scvSeed_().globalIndex(); }
 
-    GlobalIndexType localScvfIndex(const LocalIndexType coordDir) const
+    GlobalIndexType localScvfIndex(LocalIndexType coordDir) const
     {
         assert(coordDir < dim);
         return scvSeed_().localScvfIndices()[coordDir];
     }
 
-    LocalIndexType getScvfIdxInScv(const LocalIndexType localScvfIndex) const
+    LocalIndexType getScvfIdxInScv(LocalIndexType localScvfIndex) const
     {
         auto it = std::find(scvSeed_().localScvfIndices().begin(), scvSeed_().localScvfIndices().end(), localScvfIndex);
         assert(it != scvSeed_().localScvfIndices().end() && "Could not find the local coordinate of the local scvf");

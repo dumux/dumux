@@ -82,10 +82,10 @@ public:
       scvfIndexGlobal_(scvSeed.globalScvfIndices()[scvSeed.contiFaceLocalIdx()]) {}
 
 
-    const GlobalIndexType globalIndex() const
+    GlobalIndexType globalIndex() const
     { return scvIndexGlobal_; }
 
-    const GlobalIndexType globalScvfIndex() const
+    GlobalIndexType globalScvfIndex() const
     { return scvfIndexGlobal_; }
 
 private:
