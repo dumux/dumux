@@ -88,14 +88,14 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
-        auto insideK = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
-        auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv, outsideVolVars);
+        auto insideK = insideVolVars.permeability();
+        auto outsideK = outsideVolVars.permeability();
 
         // scale with correct extrusion factor
         insideK *= insideVolVars.extrusionFactor();
         outsideK *= outsideVolVars.extrusionFactor();
 
-        const auto K = harmonicMean(insideK, outsideK);
+        const auto K = problem.spatialParams().meanDiffusionTensor(insideK, outsideK, scvf.unitOuterNormal());
 
         const auto& jacInvT = fluxVarCache.jacInvT();
         const auto& shapeJacobian = fluxVarCache.shapeJacobian();
