@@ -156,7 +156,7 @@ public:
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
      * are independent on the fluid composition. This assumption is true
-     * if Henry's law and Rault's law apply. If you are unsure what
+     * if Henry's law and Raoult's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
      * in some cases.
@@ -166,7 +166,7 @@ public:
     static bool isIdealMixture(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        // we assume Henry's and Rault's laws for the water phase and
+        // we assume Henry's and Raoult's laws for the water phase and
         // and no interaction between gas molecules of different
         // components, so all phases are ideal mixtures!
 
