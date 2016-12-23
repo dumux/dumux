@@ -59,6 +59,7 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -98,8 +99,9 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    Scalar intrinsicPermeability(const SubControlVolume& scv,
-                                 const VolumeVariables& volVars) const
+    Scalar permeability(const Element& element,
+                                 const SubControlVolume& scv,
+                                 const ElementSolutionVector& elemSol) const
     {
         if (isInLens_(scv.dofPosition()))
         {
@@ -118,7 +120,7 @@ public:
    * \param fvGeometry The finite volume geometry
    * \param scvIdx The local index of the sub-control volume where
    */
-    Scalar porosity(const SubControlVolume &scv) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
