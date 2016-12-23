@@ -58,6 +58,7 @@ class VtkOutputModule
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
 
@@ -227,6 +228,7 @@ public:
 
             auto fvGeometry = localView(problem_.model().globalFvGeometry());
             auto elemVolVars = localView(problem_.model().curGlobalVolVars());
+            auto curElemSol = problem_.model().elementSolution(element, problem_.model().curSol());
 
             // If velocity output is enabled we need to bind to the whole stencil
             // otherwise element-local data is sufficient
@@ -267,10 +269,10 @@ public:
                     secondVarScalarData[i][dofIdxGlobal] = secondVarScalarDataInfo_[i].get(volVars);
 
                 if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-                    porosity[dofIdxGlobal] = problem_.spatialParams().porosity(scv);
+                    porosity[dofIdxGlobal] = problem_.spatialParams().porosity(element, scv, curElemSol);
 
                 if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-                    permeability[dofIdxGlobal] = problem_.spatialParams().intrinsicPermeability(scv, volVars);
+                    permeability[dofIdxGlobal] = problem_.spatialParams().permeability(element, scv, curElemSol);
 
             }
 
