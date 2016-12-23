@@ -65,7 +65,7 @@ namespace Dumux
  * choosing either \f$p_w\f$ and \f$S_n\f$ or \f$p_n\f$ and \f$S_w\f$
  * as primary variables. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either
- * <tt>TwoPCommonIndices::pWsN</tt> or <tt>TwoPCommonIndices::pNsW</tt>. By
+ * <tt>TwoPFormulation::pwsn</tt> or <tt>TwoPFormulation::pnsw</tt>. By
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  */
 template<class TypeTag >
