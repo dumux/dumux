@@ -73,21 +73,51 @@ public:
     {}
 
     /*!
-     * \brief Averages the intrinsic permeability (Scalar).
-     * \param result averaged intrinsic permeability
-     * \param K1 intrinsic permeability of the first node
-     * \param K2 intrinsic permeability of the second node
+     * \brief Averages a diffusion coefficient (Scalar).
+     * \return the averaged diffusion coefficient
+     * \param T1 diffusion coefficient of the first scv
+     * \param T2 diffusion coefficient of the second scv
+     * \param normal The unit normal vector of the face on which to average
      */
-    void meanK(DimWorldMatrix &result,
-               Scalar K1,
-               Scalar K2) const
+    Scalar meanDiffusionTensor(const Scalar T1,
+                               const Scalar T2,
+                               const GlobalPosition& normal) const
+    { return harmonicMean(T1, T2); }
+
+    /*!
+     * \brief Averages a diffusion Tensor.
+     * \return the averaged diffusion tensor
+     * \param T1 diffusion tensor of the first scv
+     * \param T2 diffusion tensor of the second scv
+     * \param normal The unit normal vector of the face on which to average
+     */
+    DimWorldMatrix meanDiffusionTensor(const DimWorldMatrix& T1,
+                                       const DimWorldMatrix& T2,
+                                       const GlobalPosition& normal) const
     {
-        const Scalar K = harmonicMean(K1, K2);
-        for (int i = 0; i < dimWorld; ++i) {
+        // determine nT*k*n
+        GlobalPosition tmp;
+        GlobalPosition tmp2;
+        T1.mv(normal, tmp);
+        T2.mv(normal, tmp2);
+        Scalar alpha1 = tmp*normal;
+        Scalar alpha2 = tmp2*normal;
+
+        Scalar alphaHarmonic = harmonicMean(alpha1, alpha2);
+        Scalar alphaAverage = 0.5*(alpha1 + alpha2);
+
+        DimWorldMatrix T(0.0);
+        for (int i = 0; i < dimWorld; ++i)
+        {
             for (int j = 0; j < dimWorld; ++j)
-                result[i][j] = 0;
-            result[i][i] = K;
+            {
+                T[i][j] += 0.5*(T1[i][j] + T2[i][j]);
+                if (i == j)
+                    T[i][j] += alphaHarmonic - alphaAverage;
+            }
         }
+
+        return T;
     }
 
     /*!
