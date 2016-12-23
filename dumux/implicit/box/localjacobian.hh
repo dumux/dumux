@@ -128,6 +128,9 @@ public:
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
 
+        // the element solution
+        auto curElemSol = this->model_().elementSolution(element, this->model_().curSol());
+
         // calculate the actual element residual
         this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
         this->residual_ = this->localResidual().residual();
@@ -148,10 +151,22 @@ public:
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
-                evalPartialDerivative_(matrix, element, fvGeometry, prevElemVolVars, curElemVolVars, scv, elemBcTypes, elemFluxVarsCache, pvIdx);
+                evalPartialDerivative_(matrix,
+                                       element,
+                                       fvGeometry,
+                                       prevElemVolVars,
+                                       curElemVolVars,
+                                       curElemSol,
+                                       scv,
+                                       elemBcTypes,
+                                       elemFluxVarsCache,
+                                       pvIdx);
 
                 // restore the original state of the scv's volume variables
                 curVolVars = origVolVars;
+
+                // restore the original element solution
+                curElemSol[scv.index()][pvIdx] = this->model_().curSol()[scv.dofIndex()][pvIdx];
             }
 
             // TODO: what if we have an extended source stencil????
@@ -207,6 +222,7 @@ protected:
                                 const FVElementGeometry& fvGeometry,
                                 const ElementVolumeVariables& prevElemVolVars,
                                 ElementVolumeVariables& curElemVolVars,
+                                ElementSolutionVector& curElemSol,
                                 const SubControlVolume& scv,
                                 const ElementBoundaryTypes& elemBcTypes,
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
@@ -216,7 +232,6 @@ protected:
         auto& volVars = getCurVolVars(curElemVolVars, scv);
 
         ElementSolutionVector partialDeriv(element.subEntities(dim));
-        PrimaryVariables priVars(this->model_().curSol()[dofIdx]);
         Scalar eps = this->numericEpsilon(scv, volVars, pvIdx);
         Scalar delta = 0;
 
@@ -227,11 +242,11 @@ protected:
             // calculate f(x + \epsilon)
 
             // deflect primary variables
-            priVars[pvIdx] += eps;
+            curElemSol[scv.index()][pvIdx] += eps;
             delta += eps;
 
             // update the volume variables connected to the dof
-            volVars.update(priVars, this->problem_(), element, scv);
+            volVars.update(curElemSol, this->problem_(), element, scv);
 
             // calculate the deflected residual
             this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
@@ -253,11 +268,11 @@ protected:
             // need to calculate f(x - \epsilon)
 
             // deflect the primary variables
-            priVars[pvIdx] -= delta + eps;
+            curElemSol[scv.index()][pvIdx] -= delta + eps;
             delta += eps;
 
             // update the volume variables connected to the dof
-            volVars.update(priVars, this->problem_(), element, scv);
+            volVars.update(curElemSol, this->problem_(), element, scv);
 
             // calculate the deflected residual
             this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);

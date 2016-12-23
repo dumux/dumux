@@ -62,31 +62,27 @@ class ImplicitVolumeVariablesImplementation<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
 
     /*!
      * \brief Update all quantities for a given control volume
      *
-     * \param priVars A vector containing the primary variables for the control volume
+     * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
-     * \param fvGeometry The finite volume geometry for the element
-     * \param scvIdx Local index of the sub control volume which is inside the element
-     * \param isOldSol Specifies whether this is the previous solution or the current one
-     *
-     * \todo Eliminate the 'isOldSol' parameter. This implies that the
-     *       'pseudo-primary variables' must be somehow be stored
-     *       inside the PrimaryVariables. (e.g. we need to know the
-     *       phase state in the 2p2c model)
+     * \param scv The sub-control volume
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        priVars_ = priVars;
+        priVars_ = isBox ? elemSol[scv.index()] : elemSol[0];
         extrusionFactor_ = problem.boxExtrusionFactor(element, scv);
     }
 
@@ -117,7 +113,7 @@ public:
     { return extrusionFactor_; }
 
     //! The temperature is obtained from the problem as a constant for isothermal models
-    static Scalar temperature(const PrimaryVariables &priVars,
+    static Scalar temperature(const ElementSolutionVector &elemSol,
                               const Problem& problem,
                               const Element &element,
                               const SubControlVolume &scv)
@@ -152,11 +148,12 @@ class ImplicitVolumeVariablesImplementation<TypeTag, true>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum { temperatureIdx = Indices::temperatureIdx };
+    static const int temperatureIdx = Indices::temperatureIdx;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
 
@@ -170,12 +167,12 @@ public:
      * \param fvGeometry The finite volume geometry for the element
      * \param scvIdx Local index of the sub control volume which is inside the element
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
         solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, scv);
         solidDensity_ = problem.spatialParams().solidDensity(element, scv);
@@ -229,12 +226,12 @@ public:
     { return solidThermalConductivity_; }
 
     //! The temperature is a primary variable for non-isothermal models
-    static Scalar temperature(const PrimaryVariables &priVars,
+    static Scalar temperature(const ElementSolutionVector &elemSol,
                               const Problem& problem,
                               const Element &element,
                               const SubControlVolume &scv)
     {
-        return priVars[temperatureIdx];
+        return isBox ? elemSol[scv.index()][temperatureIdx] : elemSol[0][temperatureIdx];
     }
 
     //! The phase enthalpy is zero for isothermal models

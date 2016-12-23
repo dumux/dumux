@@ -53,6 +53,7 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -71,11 +72,15 @@ public:
         volumeVariables_.resize(numScv + numBoundaryScvf);
         for (const auto& element : elements(problem.gridView()))
         {
+            auto elementSol = problem.model().elementSolution(element, sol);
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(sol[scv.dofIndex()], problem, element, scv);
+                volumeVariables_[scv.index()].update(elementSol,
+                                                     problem,
+                                                     element,
+                                                     scv);
 
             // handle the boundary volume variables
             for (auto&& scvf : scvfs(fvGeometry))
@@ -92,7 +97,10 @@ public:
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
                     const auto dirichletPriVars = problem.dirichlet(element, scvf);
 
-                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
+                    volumeVariables_[scvf.outsideScvIdx()].update(ElementSolution({dirichletPriVars}),
+                                                                  problem,
+                                                                  element,
+                                                                  insideScv);
                 }
             }
         }
