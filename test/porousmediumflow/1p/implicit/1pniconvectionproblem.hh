@@ -176,21 +176,21 @@ public:
         auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
 
         const auto someElement = *(elements(this->gridView()).begin());
-        const auto initialPriVars = initial_(GlobalPosition(0.0));
+        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
 
         auto someFvGeometry = localView(this->model().globalFvGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
-        volVars.update(initialPriVars, *this, someElement, someScv);
+        volVars.update(someElemSol, *this, someElement, someScv);
 
-        const auto porosity = this->spatialParams().porosity(someScv);
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
         const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
         const auto storageW =  densityW*heatCapacityW*porosity;
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv);
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
 
         std::cout << "storage: " << storageTotal << std::endl;
