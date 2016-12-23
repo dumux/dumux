@@ -297,7 +297,7 @@ public:
         return forchCoeff;
     }
 
-    const Problem& problem_()
+    const Problem& problem()
     {
         return *problemPtr_;
     }
