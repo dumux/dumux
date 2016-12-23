@@ -66,6 +66,7 @@ private:
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum {
@@ -489,11 +490,12 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
-    Scalar boxExtrusionFactor(const Element &element,
-                              const SubControlVolume &scv) const
+    Scalar extrusionFactor(const Element &element,
+                           const SubControlVolume &scv,
+                           const ElementSolutionVector &elemSol) const
     {
         // forward to generic interface
-        return asImp_().extrusionFactorAtPos(scv.dofPosition());
+        return asImp_().extrusionFactorAtPos(scv.center());
     }
 
     /*!
