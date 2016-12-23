@@ -73,10 +73,14 @@ public:
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
+            // get the element solution
+            auto elemSol = problem.model().elementSolution(element, sol);
+
+            // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
             {
-                volumeVariables_[eIdx][scv.index()].update(sol[scv.dofIndex()],
+                volumeVariables_[eIdx][scv.index()].update(elemSol,
                                                            problem,
                                                            element,
                                                            scv);

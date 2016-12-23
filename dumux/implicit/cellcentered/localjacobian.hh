@@ -83,6 +83,7 @@ class CCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using AssemblyMap = typename GET_PROP_TYPE(TypeTag, AssemblyMap);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -139,8 +140,12 @@ public:
         // set the actual dof index
         globalI_ = this->problem_().elementMapper().index(element);
 
+        // check for boundaries on the element
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
+
+        // The actual solution in the element
+        auto curElemSol = this->model_().elementSolution(element, this->model_().curSol());
 
         // calculate the local residual
         if (isGhost)
@@ -150,7 +155,12 @@ public:
         }
         else
         {
-            this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+            this->localResidual().eval(element,
+                                       fvGeometry,
+                                       prevElemVolVars,
+                                       curElemVolVars,
+                                       elemBcTypes,
+                                       elemFluxVarsCache);
             this->residual_ = this->localResidual().residual();
             // store residual in global container as well
             residual[globalI_] = this->localResidual().residual(0);
@@ -159,7 +169,16 @@ public:
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, elemFluxVarsCache, elemBcTypes, matrix, residual, isGhost);
+        evalPartialDerivatives_(element,
+                                fvGeometry,
+                                prevElemVolVars,
+                                curElemVolVars,
+                                elemFluxVarsCache,
+                                elemBcTypes,
+                                matrix,
+                                residual,
+                                curElemSol,
+                                isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
         // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
@@ -188,6 +207,7 @@ private:
                                  const ElementBoundaryTypes& elemBcTypes,
                                  JacobianMatrix& matrix,
                                  SolutionVector& residual,
+                                 ElementSolution& curElemSol,
                                  const bool isGhost)
     {
         // get stencil informations
@@ -203,7 +223,7 @@ private:
         neighborElements.reserve(numNeighbors);
 
         // get the elements and calculate the flux into the element in the undeflected state
-        Dune::BlockVector<PrimaryVariables> origFlux(numNeighbors);
+        ElementSolution origFlux(numNeighbors);
         origFlux = 0.0;
 
         unsigned int j = 0;
@@ -215,7 +235,11 @@ private:
             for (auto fluxVarIdx : assemblyMap_[globalI_][j])
             {
                 auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ, fvGeometry, curElemVolVars, scvf, elemFluxVarsCache);
+                origFlux[j] += localRes.evalFlux_(elementJ,
+                                                  fvGeometry,
+                                                  curElemVolVars,
+                                                  scvf,
+                                                  elemFluxVarsCache);
             }
 
             ++j;
@@ -227,7 +251,7 @@ private:
         VolumeVariables origVolVars(curVolVars);
 
         // derivatives in the neighbors with repect to the current elements
-        Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
+        ElementSolution neighborDeriv(numNeighbors);
         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
         {
             // derivatives of element dof with respect to itself
@@ -237,7 +261,6 @@ private:
                 partialDeriv[pvIdx] = 1.0;
 
             neighborDeriv = 0.0;
-            PrimaryVariables priVars(this->model_().curSol()[globalI_]);
 
             Scalar eps = this->numericEpsilon(scv, curVolVars, pvIdx);
             Scalar delta = 0;
@@ -248,17 +271,22 @@ private:
                 // calculate f(x + \epsilon)
 
                 // deflect primary variables
-                priVars[pvIdx] += eps;
+                curElemSol[0][pvIdx] += eps;
                 delta += eps;
 
                 // update the volume variables and the flux var cache
-                curVolVars.update(priVars, this->problem_(), element, scv);
+                curVolVars.update(curElemSol, this->problem_(), element, scv);
                 elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+                    this->localResidual().eval(element,
+                                               fvGeometry,
+                                               prevElemVolVars,
+                                               curElemVolVars,
+                                               elemBcTypes,
+                                               elemFluxVarsCache);
 
                     // store the residual and the storage term
                     partialDeriv = this->localResidual().residual(0);
@@ -270,7 +298,11 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache);
+                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k],
+                                                               fvGeometry,
+                                                               curElemVolVars,
+                                                               scvf,
+                                                               elemFluxVarsCache);
                     }
                 }
             }
@@ -290,17 +322,22 @@ private:
                 // need to calculate f(x - \epsilon)
 
                 // deflect the primary variables
-                priVars[pvIdx] -= delta + eps;
+                curElemSol[0][pvIdx] -= delta + eps;
                 delta += eps;
 
                 // update the volume variables and the flux var cache
-                curVolVars.update(priVars, this->problem_(), element, scv);
+                curVolVars.update(curElemSol, this->problem_(), element, scv);
                 elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 if (!isGhost)
                 {
                     // calculate the residual with the deflected primary variables
-                    this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+                    this->localResidual().eval(element,
+                                               fvGeometry,
+                                               prevElemVolVars,
+                                               curElemVolVars,
+                                               elemBcTypes,
+                                               elemFluxVarsCache);
 
                     // subtract the residual from the derivative storage
                     partialDeriv -= this->localResidual().residual(0);
@@ -312,7 +349,11 @@ private:
                     for (auto fluxVarIdx : assemblyMap_[globalI_][k])
                     {
                         auto&& scvf = fvGeometry.scvf(fluxVarIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k], fvGeometry, curElemVolVars, scvf, elemFluxVarsCache);
+                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k],
+                                                               fvGeometry,
+                                                               curElemVolVars,
+                                                               scvf,
+                                                               elemFluxVarsCache);
                     }
                 }
             }
@@ -334,6 +375,9 @@ private:
 
             // restore the original state of the scv's volume variables
             curVolVars = origVolVars;
+
+            // restore the current element solution
+            curElemSol[0][pvIdx] = this->model_().curSol()[globalI_][pvIdx];
 
             // update the global jacobian matrix with the current partial derivatives
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);

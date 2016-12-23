@@ -62,6 +62,7 @@ class ImplicitModel
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
@@ -285,6 +286,30 @@ public:
      */
     SolutionVector &prevSol()
     { return uPrev_; }
+
+    /*!
+     * \brief Obtains the current solution inside a given element.
+     *        Specialization for the box method.
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), ElementSolution>::type
+    elementSolution(const Element& element, const SolutionVector& sol) const
+    {
+        auto numVert = element.subEntities(dofCodim);
+        ElementSolution elemSol(numVert);
+        for (int v = 0; v < numVert; ++v)
+            elemSol[v] = sol[vertexMapper().subIndex(element, v, dofCodim)];
+        return elemSol;
+    }
+
+    /*!
+     * \brief Obtains the current solution inside a given element.
+     *        Specialization for cell-centered methods.
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), ElementSolution>::type
+    elementSolution(const Element& element, const SolutionVector& sol) const
+    { return ElementSolution({ sol[elementMapper().index(element)] }); }
 
     /*!
      * \brief Returns the operator assembler for the global jacobian of
