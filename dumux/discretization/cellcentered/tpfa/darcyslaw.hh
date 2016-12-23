@@ -160,8 +160,10 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto insideK = problem.spatialParams().intrinsicPermeability(insideScv, insideVolVars);
-        Scalar ti = calculateOmega_(problem, scvf, insideK, element, insideScv);
+        Scalar ti = calculateOmega_(scvf,
+                                    insideVolVars.permeability(),
+                                    insideScv,
+                                    insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
@@ -175,15 +177,19 @@ public:
             // as we assemble fluxes from the neighbor to our element the outside index
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideK = problem.spatialParams().intrinsicPermeability(outsideScv, outsideVolVars);
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*calculateOmega_(problem, scvf, outsideK, outsideElement, outsideScv);
+                tj = -1.0*calculateOmega_(scvf,
+                                          outsideVolVars.permeability(),
+                                          outsideScv,
+                                          outsideVolVars.extrusionFactor());
             else
-                tj = calculateOmega_(problem, fvGeometry.flipScvf(scvf.index()), outsideK, outsideElement, outsideScv);
+                tj = calculateOmega_(fvGeometry.flipScvf(scvf.index()),
+                                     outsideVolVars.permeability(),
+                                     outsideScv,
+                                     outsideVolVars.extrusionFactor());
 
             // check for division by zero!
             if (ti*tj <= 0.0)
@@ -197,11 +203,10 @@ public:
 
 private:
     //! compute the transmissibility ti, overload for tensor permeabilites
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const SubControlVolumeFace& scvf,
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
                                   const DimWorldMatrix &K,
-                                  const Element& element,
-                                  const SubControlVolume &scv)
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
     {
         GlobalPosition Knormal;
         K.mv(scvf.unitOuterNormal(), Knormal);
@@ -211,24 +216,23 @@ private:
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = Knormal * distanceVector;
-        omega *= problem.boxExtrusionFactor(element, scv);
+        omega *= extrusionFactor;
 
         return omega;
     }
 
     //! compute the transmissibility ti, overload for scalar permeabilites
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const SubControlVolumeFace& scvf,
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
                                   const Scalar K,
-                                  const Element& element,
-                                  const SubControlVolume &scv)
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
     {
         auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = K * (distanceVector * scvf.unitOuterNormal());
-        omega *= problem.boxExtrusionFactor(element, scv);
+        omega *= extrusionFactor;
 
         return omega;
     }
