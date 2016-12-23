@@ -103,6 +103,7 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     // copy some indices for convenience
@@ -168,20 +169,20 @@ public:
         auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
 
         const auto someElement = *(elements(this->gridView()).begin());
-        const auto initialPriVars = initial_(GlobalPosition(0.0));
+        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
 
         auto someFvGeometry = localView(this->model().globalFvGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
-        volVars.update(initialPriVars, *this, someElement, someScv);
+        volVars.update(someElemSol, *this, someElement, someScv);
 
-        const auto porosity = this->spatialParams().porosity(someScv);
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
         const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv);
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, someFvGeometry, someScv);
@@ -197,7 +198,7 @@ public:
                 auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
-                temperatureExact[globalIdx] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
+                temperatureExact[globalIdx] = temperatureHigh_ + (someElemSol[0][temperatureIdx] - temperatureHigh_)
                                               *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
                 temperature[globalIdx] = this->model().curSol()[globalIdx][temperatureIdx];
             }

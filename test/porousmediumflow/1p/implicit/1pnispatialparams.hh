@@ -49,96 +49,56 @@ class OnePNISpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
 
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
 public:
     OnePNISpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
-    {
-        permeability_ = 1e-10;
-        porosity_ = 0.4;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
-    }
+    : ParentType(problem, gridView) {}
 
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
-     * \param element The finite element
-     * \param scv The sub control volume
+     * \param globalPos The global position
      */
-    Scalar intrinsicPermeability(const SubControlVolume& scv,
-                                 const VolumeVariables& volVars) const
-    {
-        return permeability_;
-    }
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return 1e-10; }
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The finite element
-     * \param scv The sub control volume
+     * \param globalPos The global position
      */
-    Scalar porosity(const SubControlVolume& scv) const
-    {
-            return porosity_;
-    }
-
-    /*!
-     * \brief Define the dispersivity.
-     *
-     * \param element The finite element
-     * \param scv The sub control volume
-     */
-    Scalar dispersivity(const Element &element,
-                        const SubControlVolume& scv) const
-    {
-        return 0;
-    }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 0.4; }
 
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param scv The sub control volume
+     * \param globalPos The global position
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
+    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param scv The sub control volume
+     * \param globalPos The global position
      */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    { return 2700; /*density of granite [kg/m^3]*/ }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
      *
-     * \param element The finite element
-     * \param scv The sub control volume
+     * \param globalPos The global position
      */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv) const
-    {
-        return lambdaSolid_;
-    }
-
-private:
-    Scalar permeability_;
-    Scalar porosity_;
-    Scalar lambdaSolid_;
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
+    { return 2.8; }
 };
 
 } // end namespace Dumux
