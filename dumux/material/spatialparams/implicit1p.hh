@@ -57,14 +57,13 @@ class ImplicitSpatialParamsOneP
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-
-    enum { dimWorld = GridView::dimensionworld };
-    enum { dim = GridView::dimension};
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CoordScalar = typename GridView::ctype;
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
@@ -92,41 +91,28 @@ public:
     }
 
     /*!
-     * \brief Averages the intrinsic permeability (Tensor).
-     * \param result averaged intrinsic permeability
-     * \param K1 intrinsic permeability of the first node
-     * \param K2 intrinsic permeability of the second node
-     */
-    void meanK(DimWorldMatrix &result,
-               const DimWorldMatrix &K1,
-               const DimWorldMatrix &K2) const
-    {
-        // entry-wise harmonic mean. this is almost certainly wrong if
-        // you have off-main diagonal entries in your permeabilities!
-        for (int i = 0; i < dimWorld; ++i)
-            for (int j = 0; j < dimWorld; ++j)
-                result[i][j] = harmonicMean(K1[i][j], K2[i][j]);
-    }
-
-    /*!
-     * \brief Function for defining the intrinsic (absolute) permeability.
+     * \brief Function for defining the permeability.
      *        That is possibly solution dependent.
      *
-     * \return the intrinsic permeability
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return permeability
      */
-    auto intrinsicPermeability (const SubControlVolume &scv,
-                                const VolumeVariables &volVars) const
+    auto permeability(const Element& element,
+                      const SubControlVolume& scv,
+                      const ElementSolutionVector& elemSol) const
     {
-        return asImp_().intrinsicPermeabilityAtPos(scv.dofPosition());
+        return asImp_().permeabilityAtPos(scv.center());
     }
 
     /*!
-     * \brief Function for defining the intrinsic (absolute) permeability.
+     * \brief Function for defining the permeability.
      *
-     * \return intrinsic (absolute) permeability
-     * \param globalPos The position of the center of the element
+     * \return permeability
+     * \param globalPos The position of the center of the scv
      */
-    DimWorldMatrix intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    DimWorldMatrix permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
@@ -135,28 +121,117 @@ public:
 
     /*!
      * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
      * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
-     * \return porosity
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
      */
-    Scalar porosity(const SubControlVolume &scv) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
     {
-        return asImp_().porosityAtPos(scv.dofPosition());
+        return asImp_().porosityAtPos(scv.center());
     }
 
     /*!
      * \brief Function for defining the porosity.
      *
      * \return porosity
-     * \param globalPos The position of the center of the element
+     * \param globalPos The position of the center of the scv
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
                    "a porosityAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    Scalar solidHeatCapacity(const Element &element,
+                             const SubControlVolume& scv,
+                             const ElementSolutionVector& elemSol) const
+    {
+        return asImp_().solidHeatCapacityAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The position of the center of the element
+     */
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a solidHeatCapacityAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    Scalar solidDensity(const Element &element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
+    {
+        return asImp_().solidDensityAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The position of the center of the element
+     */
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a solidDensityAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    Scalar solidThermalConductivity(const Element &element,
+                                    const SubControlVolume& scv,
+                                    const ElementSolutionVector& elemSol) const
+    {
+        return asImp_().solidThermalConductivityAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     *
+     * \param globalPos The position of the center of the element
+     */
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a solidThermalConductivityAtPos() method.");
     }
 
     /*!
