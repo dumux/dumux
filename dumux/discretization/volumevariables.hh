@@ -32,6 +32,7 @@ namespace Dumux
 
 namespace Properties
 {
+NEW_PROP_TAG(SpatialParams);
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(Indices);
 }
@@ -60,6 +61,7 @@ class ImplicitVolumeVariablesImplementation<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -67,6 +69,10 @@ class ImplicitVolumeVariablesImplementation<TypeTag, false>
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
+
+    using PermeabilityType = decltype(std::declval<SpatialParams>().permeability(Element(),
+                                                                                 SubControlVolume(),
+                                                                                 ElementSolutionVector()));
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -83,7 +89,7 @@ public:
                 const SubControlVolume &scv)
     {
         priVars_ = isBox ? elemSol[scv.index()] : elemSol[0];
-        extrusionFactor_ = problem.boxExtrusionFactor(element, scv);
+        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
     }
 
     /*!
@@ -157,6 +163,8 @@ class ImplicitVolumeVariablesImplementation<TypeTag, true>
 
 public:
 
+    using typename ParentType::PermeabilityType;
+
     /*!
      * \brief Update all quantities for a given control volume
      *
@@ -174,9 +182,9 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, scv);
-        solidDensity_ = problem.spatialParams().solidDensity(element, scv);
-        solidThermalConductivity_ = problem.spatialParams().solidThermalConductivity(element, scv);
+        solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, scv, elemSol);
+        solidDensity_ = problem.spatialParams().solidDensity(element, scv, elemSol);
+        solidThermalConductivity_ = problem.spatialParams().solidThermalConductivity(element, scv, elemSol);
     }
 
     /*!
