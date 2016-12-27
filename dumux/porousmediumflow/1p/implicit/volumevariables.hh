@@ -167,6 +167,9 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
+    /*!
+     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     */
     PermeabilityType permeability() const
     { return permeability_; }
 
