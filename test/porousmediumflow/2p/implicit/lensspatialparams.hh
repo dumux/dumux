@@ -131,10 +131,9 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar intrinsicPermeability (const SubControlVolume &scv,
-                                  const VolumeVariables& volVars) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        if (isInLens_(scv.dofPosition()))
+        if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
     }

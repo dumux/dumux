@@ -116,8 +116,7 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar intrinsicPermeability (const SubControlVolume &scv,
-                                  const VolumeVariables& volVars) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         return 1e-10;
     }
@@ -129,7 +128,7 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar porosity(const SubControlVolume &scv) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
