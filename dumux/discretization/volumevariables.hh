@@ -163,8 +163,6 @@ class ImplicitVolumeVariablesImplementation<TypeTag, true>
 
 public:
 
-    using typename ParentType::PermeabilityType;
-
     /*!
      * \brief Update all quantities for a given control volume
      *
