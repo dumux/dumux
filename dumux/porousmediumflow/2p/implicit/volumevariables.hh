@@ -42,19 +42,20 @@ namespace Dumux
 template <class TypeTag>
 class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
+    enum
+    {
         pwsn = Indices::pwsn,
         pnsw = Indices::pnsw,
         pressureIdx = Indices::pressureIdx,
@@ -65,26 +66,29 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
     // export type of fluid state for non-isothermal models
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using typename ParentType::PermeabilityType;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
@@ -95,25 +99,27 @@ public:
             / fluidState_.viscosity(nPhaseIdx);
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // energy related quantities not belonging to the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, scv);
+        asImp_().updateEnergy_(elemSol, problem, element, scv);
     }
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element, scv);
+        Scalar t = Implementation::temperature_(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const auto& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
 
         if (int(formulation) == pwsn) {
             Scalar sn = priVars[saturationIdx];
@@ -229,8 +235,14 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
+    /*!
+     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     */
+    PermeabilityType permeability() const
+    { return permeability_; }
+
 protected:
-    static Scalar temperature_(const PrimaryVariables &priVars,
+    static Scalar temperature_(const ElementSolutionVector &elemSol,
                                const Problem& problem,
                                const Element &element,
                                const SubControlVolume &scv)
@@ -249,14 +261,15 @@ protected:
     /*!
      * \brief Called by update() to compute the energy related quantities.
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const ElementSolutionVector &elemSol,
                        const Problem &problem,
                        const Element &element,
                        const SubControlVolume& scv)
-    { }
+    {}
 
     FluidState fluidState_;
     Scalar porosity_;
+    PermeabilityType permeability_;
     Scalar mobility_[numPhases];
 
 private:
