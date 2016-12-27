@@ -417,6 +417,10 @@ public:
             // prepare the model for the next time integration
             problem_->advanceTimeLevel();
 
+            // write restart file if mandated by the problem
+            if (problem_->shouldWriteRestartFile())
+                problem_->serialize();
+
             // advance the simulated time by the current time step size
             time_ += dt;
             ++timeStepIdx_;
@@ -429,10 +433,6 @@ public:
                     <<", time step size:"<<dt
                     <<"\n";
             }
-
-            // write restart file if mandated by the problem
-            if (problem_->shouldWriteRestartFile())
-                problem_->serialize();
 
             // notify the problem if an episode is finished
             if (episodeIsFinished()) {
@@ -485,8 +485,8 @@ public:
         res.serializeStream() << episodeIndex_ << " "
                               << episodeStartTime_ << " "
                               << episodeLength_ << " "
-                              << time_ << " "
-                              << timeStepIdx_ << " ";
+                              << time_ + timeStepSize() << " "
+                              << timeStepIdx_ + 1 << " ";
         res.serializeSectionEnd();
     }
 

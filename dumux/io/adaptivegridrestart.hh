@@ -105,12 +105,11 @@ public:
 #if HAVE_DUNE_ALUGRID
         Dune::BackupRestoreFacility<Grid>::backup(problem.grid(), gridName);
 #else
-        double time = problem.timeManager().time();
         problem.grid().template writeGrid
 #if ! DUNE_VERSION_NEWER(DUNE_COMMON, 2, 5)
         <Dune::xdr>
 #endif // Dune < 3.0
-        (gridName, time);
+        (gridName, problem.timeManager().time() + problem.timeManager().timeStepSize());
 #endif
     }
 
@@ -139,7 +138,8 @@ private:
             std::cerr << "Be sure to provide a parameter Problem.Name if you want to restart." << std::endl;
             oss << problem.name();
         }
-        oss << "_time=" << problem.timeManager().time() << "_rank=" << rank << ".grs";
+        oss << "_time=" << problem.timeManager().time() + problem.timeManager().timeStepSize()
+            << "_rank=" << rank << ".grs";
         return oss.str();
     }
 };
