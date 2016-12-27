@@ -59,7 +59,7 @@ class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition Dune::FieldVector<CoordScalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
     ImplicitSpatialParams(const Problem &problem, const GridView &gridView)
@@ -75,7 +75,7 @@ public:
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv
+                                               const SubControlVolume& scv,
                                                const ElementSolutionVector& elemSol) const
     {
         return asImp_().materialLawParamsAtPos(scv.center());
