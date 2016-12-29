@@ -166,7 +166,7 @@ public:
         return
             this->timeManager().timeStepIndex() == 0 ||
             this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeOver() ||
+            this->timeManager().episodeWillBeFinished() ||
             this->timeManager().willBeFinished();
     }
 

@@ -308,7 +308,7 @@ public:
         if (this->gridView().comm().rank() == 0)
         {
             if (this->timeManager().timeStepIndex() % freqMassOutput_ == 0
-                || this->timeManager().episodeWillBeOver())
+                || this->timeManager().episodeWillBeFinished())
             {
                 PrimaryVariables storageChange(0.);
                 storageChange = storageLastTimestep_ - storage;

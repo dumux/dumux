@@ -208,7 +208,7 @@ public:
 
         if (timeStepIndex == 0 ||
             timeStepIndex % 100 == 0 ||   //after every 1000000 secs
-            this->timeManager().episodeWillBeOver() ||
+            this->timeManager().episodeWillBeFinished() ||
             this->timeManager().willBeFinished())
         {
             std::cout<<" totalMassProducedOil_ : "<< totalMassProducedOil_ << " Time: " << time+dt << std::endl;

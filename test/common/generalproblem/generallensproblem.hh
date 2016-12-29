@@ -222,7 +222,7 @@ public:
     {
         if (this->timeManager().time() < eps_ ||
             this->timeManager().willBeFinished() ||
-            this->timeManager().episodeWillBeOver())
+            this->timeManager().episodeWillBeFinished())
         {
             return true;
         }

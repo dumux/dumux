@@ -453,7 +453,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
 
     // Abort error damping if there will be a possibly tiny timestep compared with last one
     // This might be the case if the episode or simulation comes to an end.
-    if( problem().timeManager().episodeWillBeOver()
+    if( problem().timeManager().episodeWillBeFinished()
             || problem().timeManager().willBeFinished())
     {
         problem().variables().cellData(eIdxGlobalI).errorCorrection() = 0.;
@@ -876,7 +876,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
 
     timer_.stop();
 
-    if(problem().timeManager().willBeFinished() or problem().timeManager().episodeWillBeOver())
+    if(problem().timeManager().willBeFinished() or problem().timeManager().episodeWillBeFinished())
         Dune::dinfo << "Subdomain routines took " << timer_.elapsed() << " seconds" << std::endl;
 
     return;
