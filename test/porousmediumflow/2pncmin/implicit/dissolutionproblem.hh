@@ -188,7 +188,7 @@ public:
     bool shouldWriteOutput() const
     {
         return this->timeManager().timeStepIndex() % 1 == 0 ||
-               this->timeManager().episodeWillBeOver() ||
+               this->timeManager().episodeWillBeFinished() ||
                this->timeManager().willBeFinished();
     }
 

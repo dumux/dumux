@@ -17,6 +17,10 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
 * IMPROVEMENTS and ENHANCEMENTS:
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+    - shouldWriteRestartFile() is now, as shouldWriteOutput() already was,
+      called before the time level is advanced. So it might be necessary to use
+      ...WillBeFinished instead of ...IsFinished for writing restart files at
+      the correct time.
     - In the ZeroEq models, the properties BBoxMinIsWall and BBoxMaxIsWall have
       been replaced by the functions bBoxMaxIsWall() and bBoxMaxIsWall() in the
       problem file.
