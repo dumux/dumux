@@ -353,7 +353,7 @@ public:
         Scalar massFracNaCl_Max_lPhase = this->spatialParams().solubilityLimit();
         Scalar moleFracNaCl_Max_lPhase = massToMoleFrac_(massFracNaCl_Max_lPhase);
         Scalar moleFracNaCl_Max_gPhase = moleFracNaCl_Max_lPhase / volVars.pressure(nPhaseIdx);
-        Scalar saltPorosity = this->spatialParams().porosityMin(scv);
+        Scalar saltPorosity = this->spatialParams().porosityMin(element, scv);
 
         // liquid phase
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
@@ -369,7 +369,8 @@ public:
         if (precipSalt*this->timeManager().timeStepSize() + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
             precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/this->timeManager().timeStepSize();
 
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().porosity(scv) - saltPorosity  && precipSalt > 0)
+        auto curElemSol = this->model().elementSolution(element, this->model().curSol());
+        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().porosity(element, scv, curElemSol) - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
