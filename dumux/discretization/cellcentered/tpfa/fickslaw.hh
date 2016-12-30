@@ -183,7 +183,10 @@ private:
 
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
-        Scalar ti = calculateOmega_(problem, element, scvf, insideD, insideScv);
+        Scalar ti = calculateOmega_(scvf,
+                                    insideD,
+                                    insideScv,
+                                    insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
@@ -196,7 +199,6 @@ private:
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
 
             auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
             outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
@@ -204,9 +206,15 @@ private:
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*calculateOmega_(problem, outsideElement, scvf, outsideD, outsideScv);
+                tj = -1.0*calculateOmega_(scvf,
+                                          outsideD,
+                                          outsideScv,
+                                          outsideVolVars.extrusionFactor());
             else
-                tj = calculateOmega_(problem, outsideElement, fvGeometry.flipScvf(scvf.index()), outsideD, outsideScv);
+                tj = calculateOmega_(fvGeometry.flipScvf(scvf.index()),
+                                     outsideD,
+                                     outsideScv,
+                                     outsideVolVars.extrusionFactor());
 
             // check if we are dividing by zero!
             if (ti*tj <= 0.0)
@@ -218,11 +226,10 @@ private:
         return tij;
     }
 
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const Element& element,
-                                  const SubControlVolumeFace& scvf,
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
                                   const DimWorldMatrix &D,
-                                  const SubControlVolume &scv)
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
     {
         GlobalPosition Dnormal;
         D.mv(scvf.unitOuterNormal(), Dnormal);
@@ -232,23 +239,22 @@ private:
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = Dnormal * distanceVector;
-        omega *= problem.boxExtrusionFactor(element, scv);
+        omega *= extrusionFactor;
 
         return omega;
     }
 
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const Element& element,
-                                  const SubControlVolumeFace& scvf,
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
                                   Scalar D,
-                                  const SubControlVolume &scv)
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
     {
         auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = D * (distanceVector * scvf.unitOuterNormal());
-        omega *= problem.boxExtrusionFactor(element, scv);
+        omega *= extrusionFactor;
 
         return omega;
     }
