@@ -334,6 +334,8 @@ public:
             auto elemVolVars = localView(this->curGlobalVolVars());
             elemVolVars.bindElement(element, fvGeometry, this->curSol());
 
+            auto curElemSol = this->elementSolution(element, this->curSol());
+
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
@@ -364,7 +366,7 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     (*molarity[compIdx])[dofIdxGlobal] = (volVars.molarity(wPhaseIdx, compIdx));
 
-                auto K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(scv, volVars));
+                auto K = this->perm_(this->problem_().spatialParams().permeability(element, scv, curElemSol));
 
                 for (int j = 0; j<dim; ++j)
                     (*Perm[j])[dofIdxGlobal] = K[j][j];

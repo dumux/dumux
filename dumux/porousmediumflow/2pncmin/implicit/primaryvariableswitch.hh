@@ -67,8 +67,8 @@ class TwoPNCMinPrimaryVariableSwitch : public Dumux::PrimaryVariableSwitch<TypeT
     };
 
     enum {
-            plSg = TwoPNCFormulation::plSg,
-            pgSl = TwoPNCFormulation::pgSl,
+            pwsn = TwoPNCFormulation::pwsn,
+            pnsw = TwoPNCFormulation::pnsw,
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
@@ -144,9 +144,9 @@ protected:
                           << ", coordinated: " << globalPos << ", sumxl: "
                           << sumxl << std::endl;
                 newPhasePresence = bothPhases;
-                if (formulation == pgSl)
+                if (formulation == pnsw)
                     priVars[switchIdx] = 0.0;
-                else if (formulation == plSg)
+                else if (formulation == pwsn)
                     priVars[switchIdx] = 1.0;
                 //Here unlike 2pnc model we do not switch all components to to mole fraction in gas phase
             }
@@ -171,10 +171,10 @@ protected:
                           << ", coordinated: " << globalPos << ", sumxg: "
                           << sumxg << std::endl;
                 newPhasePresence = bothPhases;
-                //saturation of the liquid phase set to 0.9999 (if formulation pgSl and vice versa)
-                if (formulation == pgSl)
+                //saturation of the liquid phase set to 0.9999 (if formulation pnsw and vice versa)
+                if (formulation == pnsw)
                     priVars[switchIdx] = 0.999;
-                else if (formulation == plSg)
+                else if (formulation == pwsn)
                     priVars[switchIdx] = 0.001;
 
             }
