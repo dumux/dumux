@@ -82,6 +82,18 @@ public:
     }
 
     /*!
+     * \brief Called by the TimeManager in order to
+     *        initialize the problem.
+     *
+     * We initialize the spatial parameters here.
+     */
+    void init()
+    {
+        ParentType::init();
+        spatialParams_->init();
+    }
+
+    /*!
      * \name Problem parameters
      */
     // \{
