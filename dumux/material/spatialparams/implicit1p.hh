@@ -73,6 +73,11 @@ public:
     {}
 
     /*!
+     * \brief Called by the Problem to initialize the spatial params.
+     */
+    void init() {}
+
+    /*!
      * \brief Averages a diffusion coefficient (Scalar).
      * \return the averaged diffusion coefficient
      * \param T1 diffusion coefficient of the first scv
