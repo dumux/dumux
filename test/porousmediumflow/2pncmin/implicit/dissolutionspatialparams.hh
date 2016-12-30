@@ -24,6 +24,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
+#include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
 namespace Dumux
 {
@@ -59,13 +61,14 @@ public:
 template<class TypeTag>
 class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 {
+    using ThisType = DissolutionSpatialparams<TypeTag>;
     using ParentType = ImplicitSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using CoordScalar = typename GridView::ctype;
     enum {
         dim=GridView::dimension,
@@ -84,15 +87,14 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
 
+    using PorosityLaw = PorosityPrecipitation<TypeTag>;
+    using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag, Scalar>;
+
 public:
     DissolutionSpatialparams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView), initialPermeability_(0.0)
+    : ParentType(problem, gridView),
+      permLaw_(problem)
     {
-        // set main diagonal entries of the permeability tensor to a value
-        // setting to one value means: isotropic, homogeneous
-        for (int i = 0; i < dim; i++)
-            initialPermeability_[i][i] = 2.23e-14;
-
         // residual saturations
         materialParams_.setSwr(0.2);
         materialParams_.setSnr(1e-3);
@@ -100,6 +102,23 @@ public:
         // parameters of Brooks & Corey Law
         materialParams_.setPe(500);
         materialParams_.setLambda(2);
+    }
+
+    /*!
+     * \brief Called by the Problem to initialize the spatial params.
+     */
+    void init()
+    {
+        using namespace std::placeholders;
+        using InitParamFunction = std::function<Scalar(const Element&, const SubControlVolume&)>;
+
+        InitParamFunction minPoro = std::bind(&ThisType::porosityMin, this, _1, _2);
+        InitParamFunction initPoro = [](const Element&, const SubControlVolume&) { return 0.11; };
+        InitParamFunction initPerm = [](const Element&, const SubControlVolume&) { return 2.23e-14; };
+
+        poroLaw_.init(std::move(initPoro), std::move(minPoro));
+        initPoro = [](const Element&, const SubControlVolume&) { return 0.11; };
+        permLaw_.init(std::move(initPoro), std::move(initPerm));
     }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
@@ -111,21 +130,10 @@ public:
      *
      *  Solution dependent permeability function
      */
-    Tensor solDependentIntrinsicPermeability(const SubControlVolume& scv,
-                                             const VolumeVariables& volVars) const
-    {
-        // Kozeny-Carman relation
-        auto initialPorosity = porosity(scv);
-        auto factor = std::pow((1-initialPorosity)/(1-volVars.porosity()), 2)
-                      * std::pow(volVars.porosity()/initialPorosity, 3);
-
-        auto perm = initialPermeability_;
-
-        for (int i = 0; i < dim; i++)
-            perm[i][i] *= factor;
-
-        return perm;
-    }
+    Scalar permeability(const Element& element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
+    { return permLaw_.evaluatePermeability(element, scv, elemSol); }
 
     /*!
      * \brief Define the minimum porosity \f$[-]\f$ after salt precipitation
@@ -135,10 +143,8 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    Scalar porosityMin(const SubControlVolume &scv) const
-    {
-        return 1e-5;
-    }
+    Scalar porosityMin(const Element& element, const SubControlVolume &scv) const
+    { return 1e-5; }
 
     /*!
      * \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
@@ -148,39 +154,30 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    Scalar porosity(const SubControlVolume &scv) const
-    {
-        return 0.11;
-    }
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
+    { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
 
 
     Scalar solidity(const SubControlVolume &scv) const
-    {
-
-        return 1.0 - porosity(scv);
-    }
+    { return 1.0 - porosityAtPos(scv.center()); }
 
     Scalar solubilityLimit() const
-    {
-        return 0.26;
-    }
+    { return 0.26; }
 
     Scalar theta(const SubControlVolume &scv) const
-    {
-        return 10.0;
-    }
-
+    { return 10.0; }
 
     // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const SubControlVolume &scv) const
-    {
-        return materialParams_;
-    }
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    { return materialParams_; }
 
 private:
-    Tensor initialPermeability_;
     MaterialLawParams materialParams_;
+
+    PorosityLaw poroLaw_;
+    PermeabilityLaw permLaw_;
 };
 
 } // end namespace Dumux
