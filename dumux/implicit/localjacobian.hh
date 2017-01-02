@@ -75,12 +75,9 @@ private:
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -138,9 +135,9 @@ public:
     { return localResidual_; }
 
     /*!
-     * \brief Returns the residual of the equations at subcontrolvolume i.
+     * \brief Returns the residual of the equations at dof i.
      *
-     * \param i The local subcontrolvolume index on which
+     * \param i The local dof index on which
      *          the equations are defined
      */
     const PrimaryVariables &residual(const int i) const
@@ -202,9 +199,7 @@ protected:
     { return problem_().vertexMapper(); }
 
 
-    Scalar numericEpsilon(const SubControlVolume& scv,
-                          const VolumeVariables& volVar,
-                          const int pvIdx) const
+    Scalar numericEpsilon(const Scalar priVar) const
     {
         // define the base epsilon as the geometric mean of 1 and the
         // resolution of the scalar type. E.g. for standard 64 bit
@@ -218,7 +213,6 @@ protected:
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
-        Scalar priVar = volVar.priVar(pvIdx);
         return baseEps*(std::abs(priVar) + 1.0);
     }
 

@@ -232,7 +232,7 @@ protected:
         auto& volVars = getCurVolVars(curElemVolVars, scv);
 
         ElementSolutionVector partialDeriv(element.subEntities(dim));
-        Scalar eps = this->numericEpsilon(scv, volVars, pvIdx);
+        Scalar eps = this->numericEpsilon(volVars.priVars(pvIdx));
         Scalar delta = 0;
 
         // calculate the residual with the forward deflected primary variables
