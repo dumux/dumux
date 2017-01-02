@@ -50,32 +50,17 @@ public:
                 const Element& element,
                 const FVElementGeometry& fvGeometry)
     {
-
-        const auto globalI = problem.elementMapper().index(element);
-
         cellCenterToCellCenterStencil_.clear();
         cellCenterToFaceStencil_.clear();
-
-        // the cell center dof indices
-        cellCenterToCellCenterStencil_.push_back(globalI);
 
         // loop over sub control faces
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            if (!scvf.boundary())
-                cellCenterToCellCenterStencil_.push_back(scvf.outsideScvIdx());
-
-            cellCenterToFaceStencil_.push_back(scvf.dofIndexSelf());
+            FluxVariables fluxVars;
+            fluxVars.computeCellCenterToCellCenterStencil(cellCenterToCellCenterStencil_, problem, element, fvGeometry, scvf);
+            fluxVars.computeCellCenterToFaceStencil(cellCenterToFaceStencil_, problem, element, fvGeometry, scvf);
         }
-
-        // make values unique
-        std::sort(cellCenterToCellCenterStencil_.begin(), cellCenterToCellCenterStencil_.end());
-        cellCenterToCellCenterStencil_.erase(std::unique(cellCenterToCellCenterStencil_.begin(), cellCenterToCellCenterStencil_.end()), cellCenterToCellCenterStencil_.end());
-
-        std::sort(cellCenterToFaceStencil_.begin(), cellCenterToFaceStencil_.end());
-        cellCenterToFaceStencil_.erase(std::unique(cellCenterToFaceStencil_.begin(), cellCenterToFaceStencil_.end()), cellCenterToFaceStencil_.end());
     }
-
 
     //! The full element stencil (all element this element is interacting with)
     const Stencil& cellCenterToCellCenterStencil() const
@@ -88,8 +73,6 @@ public:
     {
         return cellCenterToFaceStencil_;
     }
-
-
 
 private:
     Stencil cellCenterToCellCenterStencil_;
@@ -116,28 +99,10 @@ public:
     {
         faceToCellCenterStencil_.clear();
         faceToFaceStencil_.clear();
-        const int eIdx = scvf.insideScvIdx();
 
-        faceToCellCenterStencil_.push_back(eIdx);
-
-        faceToFaceStencil_.push_back(scvf.dofIndexSelf());
-        faceToFaceStencil_.push_back(scvf.dofIndexOpposite());
-
-        for(const auto& data : scvf.pairData())
-        {
-            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
-            const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
-            if(!normalFace.boundary())
-                faceToCellCenterStencil_.push_back(outerParallelElementDofIdx);
-
-            const auto& outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelFaceDofIdx >= 0)
-                faceToFaceStencil_.push_back(outerParallelFaceDofIdx);
-
-            faceToFaceStencil_.push_back(data.normalPair.first);
-            if(!scvf.boundary())
-                faceToFaceStencil_.push_back(data.normalPair.second);
-        }
+        FluxVariables fluxVars;
+        fluxVars.computeFaceToCellCenterStencil(faceToCellCenterStencil_,problem, fvGeometry, scvf);
+        fluxVars.computeFaceToFaceStencil(faceToFaceStencil_,problem, fvGeometry, scvf);
     }
 
      //! The full face stencil (all dofs this face is interacting with)

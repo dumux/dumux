@@ -113,6 +113,10 @@ SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
 
+SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
+
+SET_BOOL_PROP(NavierStokes, EnableComponentTransport, false);
+
 SET_PROP(NavierStokes, BoundaryValues)
 {
 private:
@@ -129,7 +133,6 @@ private:
 public:
     using type = Values;
 };
-
 
 
 //! average is used as default model to compute the effective thermal heat conductivity

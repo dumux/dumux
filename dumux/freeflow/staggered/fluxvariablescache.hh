@@ -63,18 +63,7 @@ public:
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
-    {
-        FluxVariables fluxVars;
-        stencil_ = fluxVars.computeCellCenterStencil(problem, element, fvGeometry, scvf);
-    }
-
-    const Stencil& stencil() const
-    { return stencil_; }
-
-
-
-private:
-    Stencil stencil_;
+    {}
 };
 
 } // end namespace

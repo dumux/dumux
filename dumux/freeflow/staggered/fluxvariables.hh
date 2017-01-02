@@ -32,14 +32,13 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(EnableAdvection);
-NEW_PROP_TAG(EnableMolecularDiffusion);
+NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalance);
+NEW_PROP_TAG(EnableInertiaTerms);
 }
 
 // forward declaration
-template<class TypeTag, bool enableAdvection, bool enableMolecularDiffusion, bool enableEnergyBalance>
+template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
 class FreeFlowFluxVariablesImpl;
 
 /*!
@@ -49,415 +48,317 @@ class FreeFlowFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
-                                                                         GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
-                                                                         GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
+                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
-
-// specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
+/*!
+ * \ingroup Discretization
+ * \brief Base class for the flux variables
+ *        Actual flux variables inherit from this class
+ */
+// specialization for immiscible, isothermal flow
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, false, false>
-: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, false, false>>
+class FreeFlowFluxVariablesImpl<TypeTag, false, false>
+: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, false, false>>
 {
-    using ParentType = FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, false, false>>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::vector<IndexType>;
+
+    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+
+    enum {
+         // grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+
+        pressureIdx = Indices::pressureIdx,
+        velocityIdx = Indices::velocityIdx,
+
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx
+    };
 
 public:
 
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const GlobalFaceVars& globalFaceVars,
+                                  const SubControlVolumeFace &scvf,
+                                  const FluxVariablesCache& fluxVarsCache)
     {
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
-    }
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
 
-    template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
-    {
-        Scalar flux = 1.0;/*AdvectionType::flux(this->problem(),
-                                          this->element(),
-                                          this->fvGeometry(),
-                                          this->elemVolVars(),
-                                          this->scvFace(),
-                                          phaseIdx,
-                                          this->fluxVarsCache());*/
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
 
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+        // if we are on an inflow/outflow boundary, use the volVars of the element itself
+        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
-        if (std::signbit(flux))
-            return flux*upwindFunction(outsideVolVars, insideVolVars);
+        CellCenterPrimaryVariables flux(0.0);
+
+        if(sign(scvf.outerNormalScalar()) == sign(velocity))
+            flux[0] = insideVolVars.density() * velocity;
         else
-            return flux*upwindFunction(insideVolVars, outsideVolVars);
+            flux[0] = outsideVolVars.density() * velocity;
+        return flux * scvf.area() * sign(scvf.outerNormalScalar());
     }
 
-    Stencil computeCellCenterStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
+    void computeCellCenterToCellCenterStencil(Stencil& stencil,
+                                              const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const SubControlVolumeFace& scvf)
     {
-        Stencil cellCenterStencil;
-
-        // the cell center dof indices
-        cellCenterStencil.push_back(scvFace.insideScvIdx());
-
-        // the face dof indices
-        cellCenterStencil.push_back(scvFace.dofIndexSelf());
-        if (!scvFace.boundary())
-            cellCenterStencil.push_back(scvFace.outsideScvIdx());
-
-        return cellCenterStencil;
+        // the first entry is always the cc dofIdx itself
+        if(stencil.empty())
+            stencil.push_back(scvf.insideScvIdx());
+        if(!scvf.boundary())
+            stencil.push_back(scvf.outsideScvIdx());
     }
 
-    Stencil computeFaceStencil(const Problem& problem,
-                               const SubControlVolumeFace& scvFace)
+    void computeCellCenterToFaceStencil(Stencil& stencil,
+                                        const Problem& problem,
+                                        const Element& element,
+                                        const FVElementGeometry& fvGeometry,
+                                        const SubControlVolumeFace& scvf)
     {
-        Stencil faceStencil;
+        stencil.push_back(scvf.dofIndexSelf());
+    }
 
-        // normal element dof indices
-        faceStencil.push_back(scvFace.insideScvIdx());
-        if (!scvFace.boundary())
-            faceStencil.push_back(scvFace.outsideScvIdx());
+    void computeFaceToCellCenterStencil(Stencil& stencil,
+                                        const Problem& problem,
+                                        const FVElementGeometry& fvGeometry,
+                                        const SubControlVolumeFace& scvf)
+    {
+        const int eIdx = scvf.insideScvIdx();
+        stencil.push_back(scvf.insideScvIdx());
 
-        // the normal face dof indices
-        faceStencil.push_back(scvFace.dofIndexSelf());
-        faceStencil.push_back(scvFace.dofIndexOpposite());
-
-        for(const auto& data : scvFace.pairData())
+        for(const auto& data : scvf.pairData())
         {
-            const auto& outerParallelElementDofIdx = data.outerParallelElementDofIdx;
-            const auto& outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelElementDofIdx >= 0)
-                faceStencil.push_back(outerParallelElementDofIdx);
+            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
+            const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
+            if(!normalFace.boundary())
+                stencil.push_back(outerParallelElementDofIdx);
+        }
+    }
+
+    void computeFaceToFaceStencil(Stencil& stencil,
+                                  const Problem& problem,
+                                  const FVElementGeometry& fvGeometry,
+                                  const SubControlVolumeFace& scvf)
+    {
+        // the first entries are always the face dofIdx itself and the one of the opposing face
+        if(stencil.empty())
+        {
+            stencil.push_back(scvf.dofIndexSelf());
+            stencil.push_back(scvf.dofIndexOpposite());
+        }
+
+        for(const auto& data : scvf.pairData())
+        {
+            stencil.push_back(data.normalPair.first);
+            const auto outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
             if(outerParallelFaceDofIdx >= 0)
-                faceStencil.push_back(outerParallelFaceDofIdx);
-
-            faceStencil.push_back(data.normalPair.first);
-            if(!scvFace.boundary())
-                faceStencil.push_back(data.normalPair.second);
+                stencil.push_back(outerParallelFaceDofIdx);
+            if(!scvf.boundary())
+                stencil.push_back(data.normalPair.second);
         }
-
-        return faceStencil;
-    }
-};
-
-
-// specialization for isothermal advection molecularDiffusion equations
-template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, true, false>
-: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, true, false>>
-{
-    using ParentType = FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, true, false>>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-
-public:
-
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
-    {
-        advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
     }
 
-    template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
-    {
-        if (!advFluxCached_[phaseIdx])
-        {
+    /*!
+    * \brief Returns the normal part of the momentum flux
+    * \param scvf The sub control volume face
+    * \param fvGeometry The finite-volume geometry
+    * \param elemVolVars All volume variables for the element
+    * \param globalFaceVars The face variables
+    */
+   FacePrimaryVariables computeNormalMomentumFlux(const Problem& problem,
+                                                  const SubControlVolumeFace& scvf,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars,
+                                                  const GlobalFaceVars& globalFaceVars)
+   {
+       const auto insideScvIdx = scvf.insideScvIdx();
+       const auto& insideVolVars = elemVolVars[insideScvIdx];
+       const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
+       const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.dofIndexOpposite()).velocity();
+       FacePrimaryVariables normalFlux(0.0);
 
-            advPreFlux_[phaseIdx] = AdvectionType::flux(this->problem(),
-                                                        this->element(),
-                                                        this->fvGeometry(),
-                                                        this->elemVolVars(),
-                                                        this->scvFace(),
-                                                        phaseIdx,
-                                                        this->fluxVarsCache());
-            advFluxCached_.set(phaseIdx, true);
-        }
+       if(navierStokes)
+       {
+           // advective part
+           const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
+           const Scalar vUp = (sign(scvf.outerNormalScalar()) == sign(vAvg)) ? velocityOpposite : velocitySelf;
+           normalFlux += vAvg * vUp * insideVolVars.density();
+       }
 
+       // diffusive part
+       const Scalar deltaV = scvf.normalInPosCoordDir() ?
+                             (velocitySelf - velocityOpposite) :
+                             (velocityOpposite - velocitySelf);
 
+       const Scalar deltaX = scvf.selfToOppositeDistance();
+       normalFlux -= insideVolVars.viscosity() * 2.0 * deltaV/deltaX;
 
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+       // account for the orientation of the face
+       const Scalar sgn = -1.0 * sign(scvf.outerNormalScalar());
 
-        if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
-        else
-            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
-    }
+       Scalar result = normalFlux * sgn * scvf.area();
 
-    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
-    {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(),
-                                                   this->element(),
-                                                   this->fvGeometry(),
-                                                   this->elemVolVars(),
-                                                   this->scvFace(),
-                                                   phaseIdx, compIdx,
-                                                   this->fluxVarsCache());
-        return flux;
-    }
+       // treat outflow conditions
+       if(navierStokes && scvf.boundary())
+       {
+           const auto& upVolVars = (sign(scvf.outerNormalScalar()) == sign(velocitySelf)) ?
+                                   elemVolVars[insideScvIdx] : elemVolVars[scvf.outsideScvIdx()] ;
 
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        // unifiy advective and diffusive stencil
-        Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, fvGeometry, scvFace);
+           result += velocitySelf * velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
+       }
+       return result;
+   }
 
-        stencil.insert(stencil.end(), diffusionStencil.begin(), diffusionStencil.end());
-        std::sort(stencil.begin(), stencil.end());
-        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
+   /*!
+   * \brief Returns the tangential part of the momentum flux
+   * \param scvf The sub control volume face
+   * \param fvGeometry The finite-volume geometry
+   * \param elemVolVars All volume variables for the element
+   * \param globalFaceVars The face variables
+   */
+  FacePrimaryVariables computeTangetialMomentumFlux(const Problem& problem,
+                                                    const SubControlVolumeFace& scvf,
+                                                    const FVElementGeometry& fvGeometry,
+                                                    const ElementVolumeVariables& elemVolVars,
+                                                    const GlobalFaceVars& globalFaceVars)
+  {
+      FacePrimaryVariables tangentialFlux(0.0);
 
-        return stencil;
-    }
-private:
-    //! simple caching if advection flux is used twice with different upwind function
-    std::bitset<numPhases> advFluxCached_;
-    std::array<Scalar, numPhases> advPreFlux_;
-};
+      // convenience function to get the velocity on a face
+      auto velocity = [&globalFaceVars](const int dofIdx)
+      {
+          return globalFaceVars.faceVars(dofIdx).velocity();
+      };
 
-// specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
-template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, false, true>
-: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, false, true>>
-{
-    using ParentType = FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, false, true>>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+      // account for all sub-faces
+      for(auto subFaceData : scvf.pairData())
+      {
+          const int eIdx = scvf.insideScvIdx();
+          const auto& normalFace = fvGeometry.scvf(eIdx, subFaceData.localNormalFaceIdx);
 
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+          if(navierStokes)
+              tangentialFlux += computeAdvectivePartOfTangentialMomentumFlux_(problem, scvf, normalFace, subFaceData, elemVolVars, velocity);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-
-public:
-
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
-    {
-        advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
-    }
-
-    template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
-    {
-        if (!advFluxCached_[phaseIdx])
-        {
-
-            advPreFlux_[phaseIdx] = AdvectionType::flux(this->problem(),
-                                                        this->element(),
-                                                        this->fvGeometry(),
-                                                        this->elemVolVars(),
-                                                        this->scvFace(),
-                                                        phaseIdx,
-                                                        this->fluxVarsCache());
-            advFluxCached_.set(phaseIdx, true);
-        }
-
-
-
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
-
-        if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
-        else
-            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
-    }
-
-    Scalar heatConductionFlux()
-    {
-        Scalar flux = HeatConductionType::flux(this->problem(),
-                                               this->element(),
-                                               this->fvGeometry(),
-                                               this->elemVolVars(),
-                                               this->scvFace(),
-                                               this->fluxVarsCache());
-        return flux;
-    }
-
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        // unifiy advective and diffusive stencil
-        Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil energyStencil = HeatConductionType::stencil(problem, element, fvGeometry, scvFace);
-
-        stencil.insert(stencil.end(), energyStencil.begin(), energyStencil.end());
-        std::sort(stencil.begin(), stencil.end());
-        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
-
-        return stencil;
-    }
+          tangentialFlux += computeDiffusivePartOfTangentialMomentumFlux_(problem, scvf, normalFace, subFaceData, elemVolVars, velocity);
+      }
+      return tangentialFlux;
+  }
 
 private:
-    //! simple caching if advection flux is used twice with different upwind function
-    std::bitset<numPhases> advFluxCached_;
-    std::array<Scalar, numPhases> advPreFlux_;
-};
 
-// specialization for non-isothermal advection and difussion equations (e.g. non-isothermal three-phase three-component flow)
-template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, true, true>
-: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, true, true>>
-{
-    using ParentType = FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, true, true>>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+  template<class SubFaceData, class VelocityHelper>
+  FacePrimaryVariables computeAdvectivePartOfTangentialMomentumFlux_(const Problem& problem,
+                                                                     const SubControlVolumeFace& scvf,
+                                                                     const SubControlVolumeFace& normalFace,
+                                                                     const SubFaceData& subFaceData,
+                                                                     const ElementVolumeVariables& elemVolVars,
+                                                                     VelocityHelper velocity)
+  {
+      const Scalar transportingVelocity = velocity(subFaceData.normalPair.first);
+      const auto insideScvIdx = normalFace.insideScvIdx();
+      const auto outsideScvIdx = normalFace.outsideScvIdx();
 
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+      const bool innerElementIsUpstream = ( sign(normalFace.outerNormalScalar()) == sign(transportingVelocity) );
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+      const auto& upVolVars = innerElementIsUpstream ? elemVolVars[insideScvIdx] : elemVolVars[outsideScvIdx];
 
-public:
+      Scalar transportedVelocity(0.0);
 
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const FluxVariablesCache& fluxVarsCache)
-    {
-        advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, fluxVarsCache);
-    }
+      if(innerElementIsUpstream)
+          transportedVelocity = velocity(scvf.dofIndexSelf());
+      else
+      {
+          const int outerDofIdx = subFaceData.outerParallelFaceDofIdx;
+          if(outerDofIdx >= 0)
+              transportedVelocity = velocity(outerDofIdx);
+          else // this is the case when the outer parallal dof would lie outside the domain
+          {
+              const auto& pos = subFaceData.virtualOuterParallelFaceDofPos;
+              transportedVelocity = problem.dirichletAtPos(pos,scvf.directionIndex())[velocityIdx];
+          }
+      }
 
-    template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindFunction)
-    {
-        if (!advFluxCached_[phaseIdx])
-        {
+      const Scalar momentum = upVolVars.density() * transportedVelocity;
+      const int sgn = sign(normalFace.outerNormalScalar());
 
-            advPreFlux_[phaseIdx] = AdvectionType::flux(this->problem(),
-                                                        this->element(),
-                                                        this->fvGeometry(),
-                                                        this->elemVolVars(),
-                                                        this->scvFace(),
-                                                        phaseIdx,
-                                                        this->fluxVarsCache());
-            advFluxCached_.set(phaseIdx, true);
-        }
+      return transportingVelocity * momentum * sgn * normalFace.area() * 0.5;
+  }
 
+  template<class SubFaceData, class VelocityHelper>
+  FacePrimaryVariables computeDiffusivePartOfTangentialMomentumFlux_(const Problem& problem,
+                                                                     const SubControlVolumeFace& scvf,
+                                                                     const SubControlVolumeFace& normalFace,
+                                                                     const SubFaceData& subFaceData,
+                                                                     const ElementVolumeVariables& elemVolVars,
+                                                                     VelocityHelper velocity)
+  {
+      FacePrimaryVariables tangentialDiffusiveFlux(0.0);
 
+      const auto normalDirIdx = directionIndex(std::move(normalFace.unitOuterNormal()));
+      const auto insideScvIdx = normalFace.insideScvIdx();
+      const auto outsideScvIdx = normalFace.outsideScvIdx();
 
-        const auto& insideScv = this->fvGeometry().scv(this->scvFace().insideScvIdx());
-        const auto& insideVolVars = this->elemVolVars()[insideScv];
-        const auto& outsideVolVars = this->elemVolVars()[this->scvFace().outsideScvIdx()];
+      const auto& insideVolVars = elemVolVars[insideScvIdx];
+      const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-        if (std::signbit(advPreFlux_[phaseIdx]))
-            return advPreFlux_[phaseIdx]*upwindFunction(outsideVolVars, insideVolVars);
-        else
-            return advPreFlux_[phaseIdx]*upwindFunction(insideVolVars, outsideVolVars);
-    }
+      // the averaged viscosity at the face normal to our face of interest (where we assemble the face residual)
+      const Scalar muAvg = (insideVolVars.viscosity() + outsideVolVars.viscosity()) * 0.5;
 
-    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
-    {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(),
-                                                   this->element(),
-                                                   this->fvGeometry(),
-                                                   this->elemVolVars(),
-                                                   this->scvFace(),
-                                                   phaseIdx, compIdx,
-                                                   this->fluxVarsCache());
-        return flux;
-    }
+      // the normal derivative
+      const int innerNormalVelocityIdx = subFaceData.normalPair.first;
+      const int outerNormalVelocityIdx = subFaceData.normalPair.second;
 
-    Scalar heatConductionFlux()
-    {
-        Scalar flux = HeatConductionType::flux(this->problem(),
-                                               this->element(),
-                                               this->fvGeometry(),
-                                               this->elemVolVars(),
-                                               this->scvFace(),
-                                               this->fluxVarsCache());
-        return flux;
-    }
+      const Scalar innerNormalVelocity = velocity(innerNormalVelocityIdx);
 
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        // unifiy advective and diffusive stencil
-        Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil energyStencil = HeatConductionType::stencil(problem, element, fvGeometry, scvFace);
+      const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
+                                  velocity(outerNormalVelocityIdx) :
+                                  problem.dirichletAtPos(subFaceData.virtualOuterNormalFaceDofPos, normalDirIdx)[velocityIdx];
 
-        stencil.insert(stencil.end(), diffusionStencil.begin(), diffusionStencil.end());
-        stencil.insert(stencil.end(), energyStencil.begin(), energyStencil.end());
-        std::sort(stencil.begin(), stencil.end());
-        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
+      const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
+                                    (outerNormalVelocity - innerNormalVelocity) :
+                                    (innerNormalVelocity - outerNormalVelocity);
 
-        return stencil;
-    }
+      const Scalar normalDerivative = normalDeltaV / subFaceData.normalDistance;
+      tangentialDiffusiveFlux -= muAvg * normalDerivative;
 
-private:
-    //! simple caching if advection flux is used twice with different upwind function
-    std::bitset<numPhases> advFluxCached_;
-    std::array<Scalar, numPhases> advPreFlux_;
+      // the parallel derivative
+      const Scalar innerParallelVelocity = velocity(scvf.dofIndexSelf());
+
+      const int outerParallelFaceDofIdx = subFaceData.outerParallelFaceDofIdx;
+      const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?
+                                           velocity(outerParallelFaceDofIdx) :
+                                           problem.dirichletAtPos(subFaceData.virtualOuterParallelFaceDofPos, scvf.directionIndex())[velocityIdx];
+
+      const Scalar parallelDeltaV = normalFace.normalInPosCoordDir() ?
+                                   (outerParallelVelocity - innerParallelVelocity) :
+                                   (innerParallelVelocity - outerParallelVelocity);
+
+      const Scalar parallelDerivative = parallelDeltaV / subFaceData.parallelDistance;
+      tangentialDiffusiveFlux -= muAvg * parallelDerivative;
+
+      const Scalar sgn = sign(normalFace.outerNormalScalar());
+      return tangentialDiffusiveFlux * sgn * normalFace.area() * 0.5;
+  }
 };
 
 } // end namespace
