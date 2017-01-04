@@ -1,5 +1,6 @@
 add_subdirectory(adaptive)
 add_subdirectory(box)
+add_subdirectory(fem)
 add_subdirectory(cellcentered)
 add_subdirectory(cornerpoint)
 

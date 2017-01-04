@@ -36,6 +36,7 @@
 #include <dune/common/version.hh>
 
 #include <dumux/implicit/box/properties.hh>
+#include <dumux/implicit/fem/properties.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
@@ -76,6 +77,28 @@ public:
 
 //! Box: use the non-overlapping AMG
 SET_PROP(BoxModel, AmgTraits)
+{
+public:
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    enum {
+        numEq = JacobianMatrix::block_type::rows,
+        dofCodim = Grid::dimension,
+        isNonOverlapping = true,
+        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+    };
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
+    typedef NonoverlappingSolverTraits<MType, VType, isParallel> SolverTraits;
+    typedef typename SolverTraits::Comm Comm;
+    typedef typename SolverTraits::LinearOperator LinearOperator;
+    typedef typename SolverTraits::ScalarProduct ScalarProduct;
+    typedef typename SolverTraits::Smoother Smoother;
+};
+
+//! Fem: use the non-overlapping AMG
+SET_PROP(FemModel, AmgTraits)
 {
 public:
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
