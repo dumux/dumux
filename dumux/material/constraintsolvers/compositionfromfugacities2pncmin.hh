@@ -144,8 +144,8 @@ protected:
 };
 
 template <class Scalar, class FluidSystem>
-DUNE_DEPRECATED_MSG("compositionFromFugacities2pncmin is deprecated. Use CompositionFromFugacities2pncmin (capital C) instead.")
-class compositionFromFugacities2pncmin
+class DUNE_DEPRECATED_MSG("compositionFromFugacities2pncmin is deprecated. Use CompositionFromFugacities2pncmin (capital C) instead.")
+  compositionFromFugacities2pncmin
   : public CompositionFromFugacities2pncmin<Scalar, FluidSystem>
 { };
 } // end namespace Dumux

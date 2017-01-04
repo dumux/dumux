@@ -247,7 +247,7 @@ public:
         if (phasePresence == bothPhases)
         {
             // both phases are present, phase composition results from
-            // the gas <-> liquid equilibrium. This is
+            // the nonwetting <-> wetting equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
             // constraint solver
 
@@ -286,12 +286,12 @@ public:
                                     /(fugCoeffG[compIdx]*fluidState.pressure(nPhaseIdx));
 
             moleFrac[wCompIdx] =  priVars[switchIdx];
-            Scalar sumMoleFracNotGas = 0;
+            Scalar sumMoleFracOtherComponents = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                    sumMoleFracNotGas+=moleFrac[compIdx];
+                sumMoleFracOtherComponents+=moleFrac[compIdx];
 
-            sumMoleFracNotGas += moleFrac[wCompIdx];
-            moleFrac[nCompIdx] = 1 - sumMoleFracNotGas;
+            sumMoleFracOtherComponents += moleFrac[wCompIdx];
+            moleFrac[nCompIdx] = 1 - sumMoleFracOtherComponents;
 
             // Set fluid state mole fractions
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
@@ -312,9 +312,9 @@ public:
         }
         else if (phasePresence == wPhaseOnly)
         {
-            // only the liquid phase is present, i.e. liquid phase
+            // only the wetting phase is present, i.e. wetting
             // composition is stored explicitly.
-            // extract _mass_ fractions in the gas phase
+            // extract _mass_ fractions in the nonwetting phase
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
@@ -375,7 +375,7 @@ public:
     // { return initialPorosity_;}
 
     // /*!
-    //  * \brief Returns the mole fraction of the salinity in the liquid phase
+    //  * \brief Returns the mole fraction of the salinity in the wetting phase
     //  */
     // Scalar moleFracSalinity() const
     // {
@@ -383,7 +383,7 @@ public:
     // }
 
     // /*!
-    //  * \brief Returns the salinity (mass fraction) in the liquid phase
+    //  * \brief Returns the salinity (mass fraction) in the wetting phase
     //  */
     // Scalar salinity() const
     // {
