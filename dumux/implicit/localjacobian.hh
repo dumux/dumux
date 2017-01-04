@@ -67,7 +67,6 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitLocalJacobian
 {
-private:
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -78,7 +77,6 @@ private:
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
