@@ -262,7 +262,7 @@ private:
 
             neighborDeriv = 0.0;
 
-            Scalar eps = this->numericEpsilon(curVolVars.priVars(pvIdx));
+            Scalar eps = this->numericEpsilon(curVolVars.priVar(pvIdx));
             Scalar delta = 0;
 
             if (numericDifferenceMethod_ >= 0)
