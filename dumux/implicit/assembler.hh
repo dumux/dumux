@@ -53,13 +53,12 @@ class ImplicitAssembler
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::FieldVector<Scalar, numEq> VectorBlock;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-
-    // copying the jacobian assembler is not a good idea
-    ImplicitAssembler(const ImplicitAssembler &);
-
 public:
 
+    //! copying the jacobian assembler is not a good idea
+    ImplicitAssembler(const ImplicitAssembler&) = delete;
+
+    //! default constructor
     ImplicitAssembler() : problemPtr_(nullptr)
     {}
 
