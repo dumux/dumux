@@ -47,113 +47,67 @@ NEW_TYPE_TAG(ElSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ElSpatialParams, SpatialParams, ElSpatialParams<TypeTag>);
-
 }
 
 template<class TypeTag>
 class ElSpatialParams
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename Grid::ctype CoordScalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    enum { dimWorld=GridView::dimensionworld };
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using LameParams = Dune::FieldVector<Scalar,2>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
 
-    ElSpatialParams(const Problem& problem, const GridView &gridView)
-    {
-        // rock density
-        rockDensity_ = 2650.0;
-        // Lame Parameters
-        lambda_ = 3e9;
-        mu_ = 3e9;
-        // Young's modulus
-        E_ = 1e7;
-        // Poisson's ration
-        nu_ = 0.3;
-     }
-
-    ~ElSpatialParams()
-    {}
+    //! The constructor
+    ElSpatialParams(const Problem& problem, const GridView &gridView) {}
 
     /*!
      * \brief Define the rock density \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param element The finite element
-     * \param scvIdx The local index of the sub-control volume where
+     * \param ipSol The solution at the integration point
      */
-    const Scalar rockDensity(const Element &element, const SubControlVolume& scv) const
-    {
-        return rockDensity_;
-    }
-
-    /*!
-     * \brief Define the rock density \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \param globalPos The position for which the rock density should be returned
-     */
-    const Scalar rockDensity(const GlobalPosition &globalPos) const
-    {
-        return rockDensity_;
-    }
+    Scalar rockDensity(const Element &element,
+                       const PrimaryVariables& ipSol) const
+    { return 2650.0; }
 
     /*!
      * \brief Define the Lame parameters \f$\mathrm{[Pa]}\f$.
      *
      * \param element The finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume where
+     * \param ipSol The solution at the integration point
      */
-    const Dune::FieldVector<Scalar,2> lameParams(const Element &element, const SubControlVolume& scv) const
-    {
-        // Lame parameters
-        Dune::FieldVector<Scalar, 2> param;
-
-        param[0] = lambda_;
-        param[1] = mu_;
-
-        return param;
-    }
+    LameParams lameParams(const Element &element,
+                          const PrimaryVariables& ipSol) const
+    { return LameParams({3e9, 3e9}); }
 
     /*!
      * \brief Define Young's modulus E \f$\mathrm{[Pa]}\f$.
      *
      * \param element The finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume where
+     * \param ipSol The solution at the integration point
      */
-    const Scalar E(const Element &element, const SubControlVolume& scv) const
-    {
-        return E_;
-    }
+    Scalar E(const Element &element,
+             const PrimaryVariables& ipSol) const
+    { return 1e7; }
 
     /*!
      * \brief Define Poisson's ratio \f$\mathrm{[-]}\f$.
      *
      * \param element The finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume where
+     * \param ipSol The solution at the integration point
      */
-    const Scalar nu(const Element &element, const SubControlVolume& scv) const
-    {
-        return nu_;
-    }
-
-private:
-    Scalar rockDensity_;
-    Scalar lambda_;
-    Scalar mu_;
-    Scalar E_;
-    Scalar nu_;
-    static constexpr Scalar eps_ = 3e-6;
+    Scalar nu(const Element &element,
+              const PrimaryVariables& ipSol) const
+    { return 0.3; }
 };
 }
 #endif

@@ -19,7 +19,7 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup ElasticBoxModel
+ * \ingroup ElasticFemModel
  * \file
  *
  * \brief Defines the properties required for the linear elasticity model.
@@ -28,9 +28,7 @@
 #ifndef DUMUX_ELASTIC_PROPERTIES_HH
 #define DUMUX_ELASTIC_PROPERTIES_HH
 
-#include <dumux/implicit/properties.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/fem/properties.hh>
 
 namespace Dumux
 {
@@ -42,7 +40,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit model for elastic deformations of the medium
-NEW_TYPE_TAG(Elastic, INHERITS_FROM(ImplicitBase));
+NEW_TYPE_TAG(Elastic, INHERITS_FROM(FemModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -51,6 +49,7 @@ NEW_TYPE_TAG(Elastic, INHERITS_FROM(ImplicitBase));
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
+NEW_PROP_TAG(MechanicalLaw); //!< The constitutive equation for stresses as a funtion of displacement
 }
 
 }

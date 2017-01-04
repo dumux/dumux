@@ -59,17 +59,16 @@ namespace Dumux
 template<class TypeTag >
 class ElasticModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MechanicalLaw = typename GET_PROP_TYPE(TypeTag, MechanicalLaw);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SecondaryVariables = typename GET_PROP_TYPE(TypeTag, SecondaryVariables);
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dim = GridView::dimension };
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    static const int dim = GridView::dimension;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
@@ -82,98 +81,92 @@ public:
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
-
         // create the required scalar fields
-        unsigned numDofs = this->numDofs();
+        unsigned numVert = this->gridView_().size(dim);
         unsigned numElements = this->gridView_().size(0);
 
-        ScalarField &ux = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &uy = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &uz = *writer.allocateManagedBuffer(numDofs);
-        VectorField &sigmax = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
-        VectorField &sigmay = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
-        VectorField &sigmaz = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
+        auto& ux = *writer.allocateManagedBuffer(numVert);
+        auto& uy = *writer.allocateManagedBuffer(numVert);
+        auto& uz = *writer.allocateManagedBuffer(numVert);
+        auto& sigmax = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
+        auto& sigmay = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
+        auto& sigmaz = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
+        auto& rank = *writer.allocateManagedBuffer(numElements);
 
         // initialize stress fields
         for (unsigned int i = 0; i < numElements; ++i)
         {
             sigmax[i] = 0;
             if (dim > 1)
-            {
                 sigmay[i] = 0;
-            }
             if (dim > 2)
-            {
                 sigmaz[i] = 0;
-            }
-         }
+        }
 
-        ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+        auto localView = this->feBasis().localView();
+        auto localIndexSet = this->feBasis().localIndexSet();
 
         for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            int eIdx = this->problem_().model().elementMapper().index(element);
+            auto eIdx = this->problem_().model().elementMapper().index(element);
+
+            // rank output
             rank[eIdx] = this->gridView_().comm().rank();
 
-            // make sure FVElementGeometry and the volume variables are bound to the element
-            this->fvGeometries_().bind(element);
-            this->curVolVars_().bind(element);
+            // bind local restrictions to element
+            localView.bind(element);
+            localIndexSet.bind(localView);
 
-            const auto& fvGeometry = this->fvGeometries(element);
-            for (const auto& scv : fvGeometry.scvs())
+            // obtain the finite element
+            const auto& fe = localView.tree().finiteElement();
+
+            // loop over dofs inside the element and store solution at vertices
+            // TODO HOW TO INCLUDE SUBSAMPLING
+            const auto numLocalDofs = fe.localBasis().size();
+            ElementSolution elemSol(numLocalDofs);
+            for (int i = 0; i < numLocalDofs; ++i)
             {
-                int dofIdxGlobal = scv.dofIndex();
-                const auto& volVars = this->curVolVars(scv);
+                // only proceed for vertex dofs
+                if (fe.localCoefficients().localKey(i).codim() != dim)
+                    continue;
 
-                ux[dofIdxGlobal] = volVars.displacement(0);
+                auto dofIdxGlobal = localIndexSet.index(i);
+
+                auto dofSol = sol[dofIdxGlobal];
+                ux[dofIdxGlobal] = dofSol[Indices::u(0)];
                 if (dim >= 2)
-                    uy[dofIdxGlobal] = volVars.displacement(1);
+                    uy[dofIdxGlobal] = dofSol[Indices::u(1)];
                 if (dim >= 3)
-                    uz[dofIdxGlobal] = volVars.displacement(2);
+                    uz[dofIdxGlobal] = dofSol[Indices::u(2)];
+
+                elemSol[i] = std::move(dofSol);
             }
 
-            // In the box method, the stress is evaluated on the FE-Grid. However, to get an
-            // average apparent stress for the cell, all contributing stresses have to be interpolated.
-            DimMatrix stress(0.0);
-            unsigned int counter = 0;
+            // obtain element geometry
+            auto eg = element.geometry();
 
-            // loop over the faces
-            for (const auto& scvFace : fvGeometry.scvfs())
-            {
-                if (scvFace.boundary())
-                {
-                    BoundaryTypes bcTypes = this->problem_().boundaryTypes(element, scvFace);
-                    if (bcTypes.hasNeumann())
-                        continue;
-                }
+            // evaluate shape function data and secondary variables at the cell center
+            IpData ipData(eg, eg.local(eg.center()), fe.localBasis());
+            SecondaryVariables secVars;
+            secVars.update(elemSol, this->problem_(), element, ipData);
 
-                //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                FluxVariables fluxVars;
-                fluxVars.initAndComputeFluxes(this->problem_(), element, scvFace);
+            // get the lame parameters
+            const auto& lameParams = this->problem_().spatialParams().lameParams(element, secVars.priVars());
 
-                // Add up stresses for each scv face.
-                // Beware the sign convention applied here: compressive stresses are negative
-                stress += fluxVars.stressTensor();
-                counter++;
-            }
-
-            // divide by the number of added stress tensors and add to container
-            stress /= counter;
-            sigmax[eIdx] += stress[0];
+            // compute the stress tensor and add to container
+            auto sigma = MechanicalLaw::stressTensor(element, ipData, secVars, elemSol, lameParams);
+            sigmax[eIdx] += sigma[0];
             if (dim >= 2)
-                sigmay[eIdx] += stress[1];
+                sigmay[eIdx] += sigma[1];
             if (dim == 3)
-                sigmaz[eIdx] += stress[2];
-            }
+                sigmaz[eIdx] += sigma[2];
         }
 
-        writer.attachDofData(ux, "ux", isBox);
+        writer.attachDofData(ux, "ux", true);
         if (dim >= 2)
-            writer.attachDofData(uy, "uy", isBox);
+            writer.attachDofData(uy, "uy", true);
         if (dim == 3)
-            writer.attachDofData(uz, "uz", isBox);
+            writer.attachDofData(uz, "uz", true);
         writer.attachCellData(sigmax, "stress X", dim);
         if (dim >= 2)
         writer.attachCellData(sigmay, "stress Y", dim);

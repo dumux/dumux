@@ -31,83 +31,95 @@ namespace Dumux
 {
 /*!
  *
- * \ingroup ElasticBoxModel
- * \ingroup ImplicitLocalResidual
+ * \ingroup ElasticFemModel
+ * \ingroup FemImplicitLocalResidual
  * \brief Calculate the local Jacobian for the linear
  *        elasticity model
  *
- * This class is used to fill the gaps in BoxLocalResidual for
+ * This class is used to fill the gaps in FemLocalResidual for
  * the linear elasticity model.
  */
 template<class TypeTag>
 class ElasticLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-protected:
-    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
 
-    enum { dim = GridView::dimension };
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MechanicalLaw = typename GET_PROP_TYPE(TypeTag, MechanicalLaw);
+    using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SecondaryVariables = typename GET_PROP_TYPE(TypeTag, SecondaryVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    static constexpr int dimWorld = GridView::dimension;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    using typename ParentType::FluxTermType;
+
     /*!
      * \brief Evaluate the amount of all conservation quantities
      *        within a finite volume.
      *
-     *        \param storage The storage of a quantity in the sub-control volume
-     *        \param scvIdx The index of the considered face of the sub-control volume
-     *        \param usePrevSol Evaluate function with solution of current or previous time step
+     *        \param element The finite element
+     *        \param ipData Data on shape values and gradients at the integration point
+     *        \param secVars Secondary variables object evaluated at integration point
+     *        \param elemSol The current primary variables at the dofs of the element
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv, const VolumeVariables& volVars) const
+    PrimaryVariables computeStorage(const Element& element,
+                                    const IpData& ipData,
+                                    const SecondaryVariables& secVars,
+                                    const ElementSolution& elemSol) const
     {
         // quasistationary conditions assumed
         return PrimaryVariables(0.0);
     }
 
     /*!
-     * \brief Evaluate the stress across a face of a sub-control
-     *        volume.
+     * \brief Evaluate the stresses.
      *
-     *        \param flux The stress over the SCV (sub-control-volume) face
-     *        \param fIdx The index of the considered face of the sub control volume
-     *        \param onBoundary A boolean variable to specify whether the flux variables
-     *               are calculated for interior SCV faces or boundary faces, default=false
+     *        \param element The finite element
+     *        \param ipData Data on shape values and gradients at the integration point
+     *        \param secVars Secondary variables object evaluated at integration point
+     *        \param elemSol The current primary variables at the dofs of the element
      */
-    PrimaryVariables computeFlux(const SubControlVolumeFace& scvFace) const
+    FluxTermType computeFlux(const Element& element,
+                             const IpData& ipData,
+                             const SecondaryVariables& secVars,
+                             const ElementSolution& elemSol) const
     {
-        FluxVariables fluxVars;
-        fluxVars.initAndComputeFluxes(this->problem_(), this->element_(), scvFace);
-        return fluxVars.stressVector();
+        const auto& lameParams = this->problem().spatialParams().lameParams(element, secVars.priVars());
+        return MechanicalLaw::stressTensor(element, ipData, secVars, elemSol, lameParams);
     }
 
     /*!
      * \brief Calculate the source term of the equation
-     *        \param source The source/sink in the SCV is the gravity term in the momentum balance
-     *        \param scvIdx The index of the vertex of the sub control volume
+     *
+     *        \param element The finite element
+     *        \param ipData Data on shape values and gradients at the integration point
+     *        \param secVars Secondary variables object evaluated at integration point
+     *        \param elemSol The current primary variables at the dofs of the element
      *
      */
-    PrimaryVariables computeSource(const SubControlVolume& scv)
+    PrimaryVariables computeSource(const Element& element,
+                                   const IpData& ipData,
+                                   const SecondaryVariables& secVars,
+                                   const ElementSolution& elemSol) const
     {
         PrimaryVariables source(0.0);
 
-        source += ParentType::computeSource(scv);
+        source += ParentType::computeSource(element, ipData, secVars);
 
         // gravity term of the solid matrix in the momentum balance
-        DimVector gravityTerm(0.0);
-        gravityTerm = this->problem_().gravity();
-        gravityTerm *= this->problem_().model().curVolVars(scv).rockDensity();
+        GlobalPosition gravityTerm(0.0);
+        gravityTerm = this->problem().gravityAtPos(ipData.ipGlobal());
+        gravityTerm *= secVars.rockDensity();
 
-        for (int i = 0; i < dim; ++i)
+        for (int i = 0; i < dimWorld; ++i)
           source[Indices::momentum(i)] += gravityTerm[i];
 
         return source;
