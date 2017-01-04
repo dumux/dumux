@@ -142,7 +142,7 @@ public:
             Scalar kr;
             if (phaseIdx == wPhaseIdx)
                 kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
-            else // ATTENTION: krn requires the liquid saturation // as parameter!
+            else // ATTENTION: krn requires the wetting-phase saturation as parameter!
                 kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
 
             mobility_[phaseIdx] = kr / fluidState_.viscosity(phaseIdx);
@@ -254,7 +254,7 @@ public:
         // now comes the tricky part: calculate phase composition
         if (phasePresence == bothPhases) {
             // both phases are present, phase composition results from
-            // the gas <-> liquid equilibrium. This is
+            // the nonwetting <-> wetting equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
             // constraint solver
 
@@ -282,12 +282,12 @@ public:
                     moleFrac[compIdx] = priVars[compIdx];
 
 
-            Scalar sumMoleFracNotGas = 0;
+            Scalar sumMoleFracOtherComponents = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                    sumMoleFracNotGas+=moleFrac[compIdx];
+                    sumMoleFracOtherComponents+=moleFrac[compIdx];
 
-            sumMoleFracNotGas += moleFrac[wCompIdx];
-            moleFrac[nCompIdx] = 1 - sumMoleFracNotGas;
+            sumMoleFracOtherComponents += moleFrac[wCompIdx];
+            moleFrac[nCompIdx] = 1 - sumMoleFracOtherComponents;
 
 
             // Set fluid state mole fractions
@@ -306,9 +306,9 @@ public:
 
         }
         else if (phasePresence == wPhaseOnly){
-        // only the liquid phase is present, i.e. liquid phase
+        // only the wetting phase is present, i.e. wetting phase
         // composition is stored explicitly.
-        // extract _mass_ fractions in the gas phase
+        // extract _mass_ fractions in the nonwetting phase
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
