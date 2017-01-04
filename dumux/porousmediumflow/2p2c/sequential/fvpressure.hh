@@ -286,7 +286,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
 
     // Abort error damping if there will be a possibly tiny timestep compared with last one
     // This might be the case if the episode or simulation comes to an end.
-    if( problem().timeManager().episodeWillBeOver()
+    if( problem().timeManager().episodeWillBeFinished()
             || problem().timeManager().willBeFinished())
     {
         problem().variables().cellData(eIdxGlobalI).errorCorrection() = 0.;

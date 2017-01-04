@@ -434,13 +434,13 @@ public:
         {
             if (timeManager().timeStepIndex() % outputInterval_ == 0
                 || timeManager().willBeFinished()
-                || timeManager().episodeWillBeOver())
+                || timeManager().episodeWillBeFinished())
             {
                 return true;
             }
         }
         else if (timeManager().willBeFinished()
-                 || timeManager().episodeWillBeOver() || timeManager().timeStepIndex() == 0)
+                 || timeManager().episodeWillBeFinished() || timeManager().timeStepIndex() == 0)
         {
             return true;
         }

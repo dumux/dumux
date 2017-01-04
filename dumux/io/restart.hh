@@ -93,7 +93,7 @@ public:
         const std::string magicCookie = magicRestartCookie_(problem.gridView());
         fileName_ = restartFileName_(problem.gridView(),
                                      problem.name(),
-                                     problem.timeManager().time());
+                                     problem.timeManager().time()+problem.timeManager().timeStepSize());
 
         // open output file and write magic cookie
         outStream_.open(fileName_.c_str());
