@@ -31,7 +31,6 @@ namespace Dumux
  * \ingroup TwoPNCModel
  * \ingroup ImplicitIndices
  * \brief Enumerates the formulations which the two-phase n-component model accepts.
- *
  */
 struct TwoPNCFormulation
 {

@@ -762,7 +762,7 @@ protected:
     { return problem_().gridView(); }
 
     /*!
-     * \brief Reference to the local residal object
+     * \brief Reference to the local residual object
      */
     LocalResidual &localResidual_()
     { return localJacobian_.localResidual(); }
@@ -878,7 +878,7 @@ protected:
     }
 
     // the problem we want to solve. defines the constitutive
-    // relations, matxerial laws, etc.
+    // relations, material laws, etc.
     Problem *problemPtr_;
 
     // calculates the local jacobian matrix for a given element

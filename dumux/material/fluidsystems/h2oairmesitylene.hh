@@ -145,7 +145,7 @@ public:
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
      * are independent on the fluid composition. This assumption is true
-     * if Henry's law and Rault's law apply. If you are unsure what
+     * if Henry's law and Raoult's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
      * in some cases.
@@ -155,7 +155,7 @@ public:
     static bool isIdealMixture(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        // we assume Henry's and Rault's laws for the water phase and
+        // we assume Henry's and Raoult's laws for the water phase and
         // and no interaction between gas molecules of different
         // components, so all phases are ideal mixtures!
         return true;
@@ -464,7 +464,7 @@ public:
         // for the NAPL phase, we assume currently that nothing is
         // dissolved. this means that the affinity of the NAPL
         // component to the NAPL phase is much higher than for the
-        // other components, i.e. the fugacity cofficient is much
+        // other components, i.e. the fugacity coefficient is much
         // smaller.
         if (phaseIdx == nPhaseIdx) {
             Scalar phiNapl = NAPL::vaporPressure(T)/p;
@@ -587,7 +587,7 @@ private:
 } // end namespace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
-// forward defintions of the property tags
+// forward definitions of the property tags
 namespace Properties {
     NEW_PROP_TAG(Scalar);
     NEW_PROP_TAG(Components);
