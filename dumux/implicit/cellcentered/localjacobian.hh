@@ -388,28 +388,6 @@ private:
         }
     }
 
-    /*!
-     * \brief Updates the current global Jacobian matrix with the
-     *        partial derivatives of all equations in regard to the
-     *        primary variable 'pvIdx' at dof 'col'.
-     */
-    void updateGlobalJacobian_(JacobianMatrix& matrix,
-                               const int globalI,
-                               const int globalJ,
-                               const int pvIdx,
-                               const PrimaryVariables &partialDeriv)
-    {
-        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-        {
-            // A[i][col][eqIdx][pvIdx] is the rate of change of
-            // the residual of equation 'eqIdx' at dof 'i'
-            // depending on the primary variable 'pvIdx' at dof
-            // 'col'.
-            matrix[globalI][globalJ][eqIdx][pvIdx] = partialDeriv[eqIdx];
-            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
-        }
-    }
-
     //! If the global vol vars caching is enabled we have to modify the global volvar object
     template<class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
