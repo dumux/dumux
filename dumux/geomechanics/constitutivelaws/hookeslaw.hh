@@ -43,7 +43,6 @@ template <class TypeTag>
 class HookesLaw
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
