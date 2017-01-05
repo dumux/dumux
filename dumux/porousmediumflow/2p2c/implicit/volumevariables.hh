@@ -95,6 +95,7 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static const bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
     static_assert(useMoles || (!useMoles && useConstraintSolver),
                   "if UseMoles is set false, UseConstraintSolver has to be set to true");
+    static const bool useKelvinEquation = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -251,6 +252,9 @@ public:
                 Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState,
                                                                        wPhaseIdx,
                                                                        wCompIdx) * pw;
+
+                if (useKelvinEquation)
+                    partPressH2O = FluidSystem::kelvinVaporPressure(fluidState, wPhaseIdx, wCompIdx);
 
                 // get the partial pressure of the main component of the the nonwetting (gas) phase ("Air")
                 Scalar partPressAir = pn - partPressH2O;

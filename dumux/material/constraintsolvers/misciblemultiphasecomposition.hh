@@ -57,7 +57,7 @@ namespace Dumux {
  * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
  * - if the setEnthalpy parameter is true, also specific enthalpies of *all* phases
  */
-template <class Scalar, class FluidSystem>
+template <class Scalar, class FluidSystem, bool useKelvinEquation = false>
 class MiscibleMultiPhaseComposition
 {
     static constexpr int numPhases = FluidSystem::numPhases;
@@ -71,6 +71,14 @@ class MiscibleMultiPhaseComposition
 public:
     /*!
      * \brief @copybrief Dumux::MiscibleMultiPhaseComposition
+     *
+     * This function additionally considers a lowering of the saturation vapor pressure
+     * of the wetting phase by the Kelvin equation:
+     * \f[
+     * p^\textrm{w}_\textrm{sat,Kelvin}
+     * = p^\textrm{w}_\textrm{sat}
+     *   \exp \left( -\frac{p_\textrm{c}}{\varrho_\textrm{w} R_\textrm{w} T} \right)
+     * \f]
      *
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
@@ -128,22 +136,43 @@ public:
 
         // assemble the equations expressing the fact that the
         // fugacities of each component are equal in all phases
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            Scalar entryCol1 =
-                fluidState.fugacityCoefficient(/*phaseIdx=*/0, compIdx)
-                * fluidState.pressure(/*phaseIdx=*/0);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
             int col1Idx = compIdx;
+            Scalar entryPhase0 = 0.0;
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                Scalar entry = fluidState.fugacityCoefficient(phaseIdx, compIdx)
+                               * fluidState.pressure(phaseIdx);
 
-            for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx) {
-                int rowIdx = (phaseIdx - 1)*numComponents + compIdx;
-                int col2Idx = phaseIdx*numComponents + compIdx;
+                // modify the saturation vapor pressure of the wetting component by the Kelvin equation
+                if (compIdx == FluidSystem::wCompIdx
+                    && phaseIdx == FluidSystem::wPhaseIdx
+                    && useKelvinEquation)
+                {
+                    // a new fluidState is needed, because mole fractions are unknown
+                    FluidState purePhaseFluidState;
+                    // assign all phase pressures, needed for capillary pressure
+                    for (unsigned int idx = 0; idx < numPhases; ++idx)
+                    {
+                        purePhaseFluidState.setPressure(idx, fluidState.pressure(idx));
+                    }
+                    purePhaseFluidState.setTemperature(fluidState.temperature());
+                    purePhaseFluidState.setMoleFraction(phaseIdx, compIdx, 1.0);
+                    entry = FluidSystem::kelvinVaporPressure(purePhaseFluidState, phaseIdx, compIdx);
+                }
 
-                Scalar entryCol2 =
-                    fluidState.fugacityCoefficient(phaseIdx, compIdx)
-                    * fluidState.pressure(phaseIdx);
-
-                M[rowIdx][col1Idx] = entryCol1;
-                M[rowIdx][col2Idx] = -entryCol2;
+                if (phaseIdx == 0)
+                {
+                    entryPhase0 = entry;
+                }
+                else
+                {
+                    int rowIdx = (phaseIdx - 1)*numComponents + compIdx;
+                    int col2Idx = phaseIdx*numComponents + compIdx;
+                    M[rowIdx][col1Idx] = entryPhase0;
+                    M[rowIdx][col2Idx] = -entry;
+                }
             }
         }
 
