@@ -31,16 +31,15 @@
 namespace Dumux
 {
 /*!
- * \ingroup ElasticBoxModel
- * \ingroup ImplicitVolumeVariables
+ * \ingroup ElasticFemModel
+ * \ingroup FemImplicitSecondaryVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the linear elasticity model.
  */
 template <class TypeTag>
-class ElasticSecondaryVariablesBase : public FemSecondaryVariablesBase<TypeTag>
+class ElasticSecondaryVariables : public FemSecondaryVariablesBase<TypeTag>
 {
     using ParentType = FemSecondaryVariablesBase<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, SecondaryVariables);
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -80,11 +79,6 @@ public:
         // the density of the solid material
         rockDensity_ = problem.spatialParams().rockDensity(element, this->priVars());
     }
-
-    /*!
-     * \brief Sets the evaluation point used in the by the local jacobian.
-     */
-    void setEvalPoint(const Implementation* sv) {}
 
     /*!
       * \brief Return the Lame parameter lambda \f$\mathrm{[Pa]}\f$ within the control volume.

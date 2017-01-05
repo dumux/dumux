@@ -59,7 +59,7 @@ SET_TYPE_PROP(Elastic, LocalResidual, ElasticLocalResidual<TypeTag>);
 SET_TYPE_PROP(Elastic, Model, ElasticModel<TypeTag>);
 
 //! define the VolumeVariables
-SET_TYPE_PROP(Elastic, SecondaryVariables, ElasticSecondaryVariablesBase<TypeTag>);
+SET_TYPE_PROP(Elastic, SecondaryVariables, ElasticSecondaryVariables<TypeTag>);
 
 //! Set the indices used by the linear elasticity model
 SET_TYPE_PROP(Elastic, Indices, ElasticIndices<>);
