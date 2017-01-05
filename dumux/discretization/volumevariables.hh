@@ -70,10 +70,6 @@ class ImplicitVolumeVariablesImplementation<TypeTag, false>
 
 public:
 
-    using PermeabilityType = decltype(std::declval<SpatialParams>().permeability(Element(),
-                                                                                 SubControlVolume(),
-                                                                                 ElementSolutionVector()));
-
     /*!
      * \brief Update all quantities for a given control volume
      *

@@ -88,12 +88,14 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using PorosityLaw = PorosityPrecipitation<TypeTag>;
-    using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag, Scalar>;
+    using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag>;
 
 public:
+    // type used for the permeability (i.e. tensor or scalar)
+    using PermeabilityType = Scalar;
+
     DissolutionSpatialparams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView),
-      permLaw_(problem)
+    : ParentType(problem, gridView)
     {
         // residual saturations
         materialParams_.setSwr(0.2);
@@ -109,24 +111,16 @@ public:
      */
     void init()
     {
-        using namespace std::placeholders;
-        using InitParamFunction = std::function<Scalar(const Element&, const SubControlVolume&)>;
-
-        InitParamFunction minPoro = std::bind(&ThisType::porosityMin, this, _1, _2);
-        InitParamFunction initPoro = [](const Element&, const SubControlVolume&) { return 0.11; };
-        InitParamFunction initPerm = [](const Element&, const SubControlVolume&) { return 2.23e-14; };
-
-        poroLaw_.init(std::move(initPoro), std::move(minPoro));
-        initPoro = [](const Element&, const SubControlVolume&) { return 0.11; };
-        permLaw_.init(std::move(initPoro), std::move(initPerm));
+        //! Intitialize the parameter laws
+        poroLaw_.init(*this);
+        permLaw_.init(*this);
     }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
      *
      *  \param element The finite volume element
-     *  \param fvGeometry The finite-volume geometry in the box scheme
-     *  \param scvIdx The local vertex index
+     *  \param scv The sub-control volume
      *
      *  Solution dependent permeability function
      */
@@ -136,23 +130,37 @@ public:
     { return permLaw_.evaluatePermeability(element, scv, elemSol); }
 
     /*!
-     * \brief Define the minimum porosity \f$[-]\f$ after salt precipitation
+     *  \brief Define the minimum porosity \f$[-]\f$ distribution
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     *  \param element The finite element
+     *  \param scv The sub-control volume
      */
-    Scalar porosityMin(const Element& element, const SubControlVolume &scv) const
+    Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
     { return 1e-5; }
 
     /*!
-     * \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
+     *  \brief Define the initial porosity \f$[-]\f$ distribution
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     */
+    Scalar initialPorosity(const Element& element, const SubControlVolume &scv) const
+    { return 0.11; }
+
+    /*!
+     *  \brief Define the initial permeability \f$[m^2]\f$ distribution
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     */
+    Scalar initialPermeability(const Element& element, const SubControlVolume &scv) const
+    { return 2.23e-14; }
+
+    /*!
+     *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
      */
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,

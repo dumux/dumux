@@ -55,6 +55,7 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -107,7 +108,7 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 public:
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using typename ParentType::PermeabilityType;
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
