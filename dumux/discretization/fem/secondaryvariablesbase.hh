@@ -65,7 +65,7 @@ public:
         priVars_ = 0.0;
         for (int i = 0; i < elemSol.size(); ++i)
         {
-            auto tmp = elemSol[i];
+            PrimaryVariables tmp(elemSol[i]);
             tmp *= ipData.shapeValues()[i];
             priVars_ += tmp;
         }
