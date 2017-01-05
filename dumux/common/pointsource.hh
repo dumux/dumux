@@ -25,6 +25,8 @@
 #ifndef DUMUX_POINTSOURCE_HH
 #define DUMUX_POINTSOURCE_HH
 
+#include <functional>
+
 #include <dumux/common/boundingboxtree.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/propertysystem.hh>
