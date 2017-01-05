@@ -353,7 +353,7 @@ public:
         Scalar massFracNaCl_Max_lPhase = this->spatialParams().solubilityLimit();
         Scalar moleFracNaCl_Max_lPhase = massToMoleFrac_(massFracNaCl_Max_lPhase);
         Scalar moleFracNaCl_Max_gPhase = moleFracNaCl_Max_lPhase / volVars.pressure(nPhaseIdx);
-        Scalar saltPorosity = this->spatialParams().porosityMin(element, scv);
+        Scalar saltPorosity = this->spatialParams().minPorosity(element, scv);
 
         // liquid phase
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)

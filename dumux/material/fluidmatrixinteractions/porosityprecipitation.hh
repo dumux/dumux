@@ -42,6 +42,7 @@ class PorosityPrecipitation
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ScvOperator = SubControlVolumeOperator<TypeTag>;
@@ -52,16 +53,11 @@ class PorosityPrecipitation
     static const int numSolidPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
 
     using Element = typename GridView::template Codim<0>:: Entity;
-    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-
-    using InitPoroField = std::function<Scalar(const Element&, const SubControlVolume&)>;
 
 public:
-    void init(InitPoroField&& initPoro,
-              InitPoroField&& minPoro)
+    void init(const SpatialParams& spatialParams)
     {
-        initPoro_ = initPoro;
-        minPoro_ = minPoro;
+        spatialParamsPtr_ = &spatialParams;
     }
 
     // calculates the porosity in a sub-control volume
@@ -75,12 +71,15 @@ public:
         for (unsigned int solidPhaseIdx = 0; solidPhaseIdx < numSolidPhases; ++solidPhaseIdx)
             sumPrecipitates += priVars[numComponents + solidPhaseIdx];
 
-        return std::max(minPoro_(element, scv), initPoro_(element, scv) - sumPrecipitates);
+        auto minPoro = spatialParams_().minPorosity(element, scv);
+        return std::max(minPoro, minPoro - sumPrecipitates);
     }
 
 private:
-    InitPoroField initPoro_;
-    InitPoroField minPoro_;
+    const SpatialParams& spatialParams_() const
+    { return *spatialParamsPtr_; }
+
+    const SpatialParams* spatialParamsPtr_;
 };
 
 } // namespace Dumux
