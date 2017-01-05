@@ -27,7 +27,6 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/discretization/fem/ipdata.hh>
 #include "properties.hh"
 
 namespace Dumux
