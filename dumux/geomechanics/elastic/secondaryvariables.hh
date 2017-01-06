@@ -51,9 +51,7 @@ class ElasticSecondaryVariables : public FemSecondaryVariablesBase<TypeTag>
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
     using DimVector = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
