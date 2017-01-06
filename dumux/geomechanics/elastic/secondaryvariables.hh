@@ -79,33 +79,33 @@ public:
     }
 
     /*!
-      * \brief Return the Lame parameter lambda \f$\mathrm{[Pa]}\f$ within the control volume.
+      * \brief Return the Lame parameter lambda \f$\mathrm{[Pa]}\f$ at the integration point.
       */
     Scalar lambda() const
     { return lambda_; }
 
     /*!
-      * \brief Return the Lame parameter mu \f$\mathrm{[Pa]}\f$ within the control volume.
+      * \brief Return the Lame parameter mu \f$\mathrm{[Pa]}\f$ at the integration point.
       */
     Scalar mu() const
     { return mu_; }
 
     /*!
-     * \brief Returns the rock density \f$\mathrm{[kg / m^3]}\f$ within the control volume .
+     * \brief Returns the rock density \f$\mathrm{[kg / m^3]}\f$ at the integration point.
      */
     Scalar rockDensity() const
     { return rockDensity_; }
 
     /*!
      * \brief Returns the solid displacement \f$\mathrm{[m]}\f$ in space
-     * directions dimIdx within the control volume.
+     * directions dimIdx at the integration point.
      */
     Scalar displacement(int dimIdx) const
     { return displacement_[dimIdx]; }
 
     /*!
      * \brief Returns the solid displacement vector \f$\mathrm{[m]}\f$
-     *  within the control volume.
+     *  at the integration point.
      */
     const DimVector& displacement() const
     { return displacement_; }
