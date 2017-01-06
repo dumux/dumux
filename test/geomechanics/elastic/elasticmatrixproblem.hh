@@ -41,7 +41,7 @@ namespace Properties
 NEW_TYPE_TAG(ElasticMatrixProblem, INHERITS_FROM(FemModel, Elastic, ElSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
 SET_TYPE_PROP(ElasticMatrixProblem, Problem, Dumux::ElasticMatrixProblem<TypeTag>);
@@ -145,13 +145,15 @@ public:
     {
         BoundaryTypes values;
 
+        // use Neumann BC of not stated otherwise
         values.setAllNeumann();
 
+        // set Dirichlet BCs
+        values.setDirichlet(uyIdx);
         if(globalPos[0] < eps_)
         {
-            values.setDirichlet(uyIdx);
             values.setDirichlet(uxIdx);
-            if(dim == 3 && globalPos[2] < eps_)
+            if(globalPos[2] < eps_)
                 values.setDirichlet(uzIdx);
         }
 
@@ -174,9 +176,6 @@ public:
                              const ElementSolutionVector& elemSol,
                              const IpData& ipData) const
     {
-        if (ipData.ipGlobal()[0] < this->bBoxMax()[0] - eps_)
-            return PrimaryVariables(0.0);
-
         // interpolate solution
         PrimaryVariables ipSol(0.0);
         for (int i = 0; i < elemSol.size(); ++i)
@@ -205,7 +204,7 @@ public:
         PrimaryVariables values(0.0);
         sigma.mv(normal, values);
 
-        return PrimaryVariables({-10.0, 0});
+        return values;
     }
     // \}
 

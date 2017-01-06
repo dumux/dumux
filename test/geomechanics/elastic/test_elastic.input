@@ -6,5 +6,5 @@ TEnd = 1 # [s]
 EnableGravity = 0
 
 [Grid]
-UpperRight = 10 10
-Cells = 80 80
+UpperRight = 10 1 10
+Cells = 10 10 10
