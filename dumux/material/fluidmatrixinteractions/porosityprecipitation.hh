@@ -72,7 +72,7 @@ public:
             sumPrecipitates += priVars[numComponents + solidPhaseIdx];
 
         auto minPoro = spatialParams_().minPorosity(element, scv);
-        return std::max(minPoro, minPoro - sumPrecipitates);
+        return std::max(minPoro, spatialParams_().initialPorosity(element, scv) - sumPrecipitates);
     }
 
 private:

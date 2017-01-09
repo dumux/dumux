@@ -146,13 +146,6 @@ public:
         // porosity value, as the porous media media properties change related to salt precipitation will not be
         // accounted otherwise.
 
-        // // overwrite porosity
-        // // porosity evaluation
-        // auto initialPorosity = problem.spatialParams().porosity(scv);
-        // auto minimumPorosity = problem.spatialParams().porosityMin(scv);
-        // this->porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
-        // this->permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
-
         salinity_= 0.0;
         moleFractionSalinity_ = 0.0;
         for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
