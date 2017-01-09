@@ -92,6 +92,8 @@ public:
 
     /*!
      * \brief Harmonic average of a discontinuous tensorial field at discontinuity interface
+     * \note We do a harmonic average of the part normal to the interface (alpha*I) and
+     *       an arithmetic average of the tangential part (T - alpha*I).
      * \return the averaged tensor
      * \param T1 first tensor
      * \param T2 second tensor
@@ -127,8 +129,8 @@ public:
     }
 
     /*!
-     * \brief Function for defining the permeability.
-     *        That is possibly solution dependent.
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
@@ -143,7 +145,8 @@ public:
     }
 
     /*!
-     * \brief Function for defining the permeability.
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
      *
      * \return permeability
      * \param globalPos The position of the center of the scv
