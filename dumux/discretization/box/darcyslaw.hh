@@ -95,7 +95,7 @@ public:
         insideK *= insideVolVars.extrusionFactor();
         outsideK *= outsideVolVars.extrusionFactor();
 
-        const auto K = problem.spatialParams().meanDiffusionTensor(insideK, outsideK, scvf.unitOuterNormal());
+        const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
 
         const auto& jacInvT = fluxVarCache.jacInvT();
         const auto& shapeJacobian = fluxVarCache.shapeJacobian();

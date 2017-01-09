@@ -78,38 +78,39 @@ public:
     void init() {}
 
     /*!
-     * \brief Averages a diffusion coefficient (Scalar).
-     * \return the averaged diffusion coefficient
-     * \param T1 diffusion coefficient of the first scv
-     * \param T2 diffusion coefficient of the second scv
-     * \param normal The unit normal vector of the face on which to average
+     * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
+     *        (for compatibility reasons with the function below)
+     * \return the averaged scalar
+     * \param T1 first scalar parameter
+     * \param T2 second scalar parameter
+     * \param normal The unit normal vector of the interface
      */
-    Scalar meanDiffusionTensor(const Scalar T1,
-                               const Scalar T2,
-                               const GlobalPosition& normal) const
+    Scalar harmonicMean(const Scalar T1,
+                        const Scalar T2,
+                        const GlobalPosition& normal) const
     { return harmonicMean(T1, T2); }
 
     /*!
-     * \brief Averages a diffusion Tensor.
-     * \return the averaged diffusion tensor
-     * \param T1 diffusion tensor of the first scv
-     * \param T2 diffusion tensor of the second scv
-     * \param normal The unit normal vector of the face on which to average
+     * \brief Harmonic average of a discontinuous tensorial field at discontinuity interface
+     * \return the averaged tensor
+     * \param T1 first tensor
+     * \param T2 second tensor
+     * \param normal The unit normal vector of the interface
      */
-    DimWorldMatrix meanDiffusionTensor(const DimWorldMatrix& T1,
-                                       const DimWorldMatrix& T2,
-                                       const GlobalPosition& normal) const
+    DimWorldMatrix harmonicMean(const DimWorldMatrix& T1,
+                                const DimWorldMatrix& T2,
+                                const GlobalPosition& normal) const
     {
         // determine nT*k*n
         GlobalPosition tmp;
         GlobalPosition tmp2;
         T1.mv(normal, tmp);
         T2.mv(normal, tmp2);
-        Scalar alpha1 = tmp*normal;
-        Scalar alpha2 = tmp2*normal;
+        const Scalar alpha1 = tmp*normal;
+        const Scalar alpha2 = tmp2*normal;
 
-        Scalar alphaHarmonic = harmonicMean(alpha1, alpha2);
-        Scalar alphaAverage = 0.5*(alpha1 + alpha2);
+        const Scalar alphaHarmonic = harmonicMean(alpha1, alpha2);
+        const Scalar alphaAverage = 0.5*(alpha1 + alpha2);
 
         DimWorldMatrix T(0.0);
         for (int i = 0; i < dimWorld; ++i)
