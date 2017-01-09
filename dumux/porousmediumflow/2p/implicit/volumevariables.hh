@@ -47,6 +47,8 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
@@ -74,7 +76,6 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 public:
     // export type of fluid state for non-isothermal models
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using typename ParentType::PermeabilityType;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update

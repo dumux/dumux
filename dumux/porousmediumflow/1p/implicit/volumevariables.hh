@@ -45,6 +45,8 @@ class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -58,7 +60,6 @@ class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 public:
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using typename ParentType::PermeabilityType;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
