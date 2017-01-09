@@ -32,7 +32,6 @@ namespace Dumux
 
 namespace Properties
 {
-NEW_PROP_TAG(SpatialParams);
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(Indices);
 }
@@ -61,7 +60,6 @@ class ImplicitVolumeVariablesImplementation<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
