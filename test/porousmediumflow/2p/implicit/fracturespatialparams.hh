@@ -73,23 +73,23 @@ class FractureSpatialParams : public ImplicitSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using CoordScalar = typename GridView::Traits::Grid::ctype;
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-public:
     //get the material law from the property system
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
+
+public:
+    // export permeability type
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
@@ -112,9 +112,7 @@ public:
     /*!
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
@@ -124,9 +122,7 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
@@ -146,6 +142,6 @@ private:
     MaterialLawParams materialParams_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

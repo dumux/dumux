@@ -53,11 +53,11 @@ SET_PROP(LensSpatialParams, MaterialLaw)
 private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<EffectiveLaw>;
 };
 }
 /*!
@@ -69,30 +69,29 @@ public:
 template<class TypeTag>
 class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<CoordScalar,dimWorld,dimWorld> Tensor;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+
+    //get the material law from the property system
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
-    //get the material law from the property system
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    // export permeability type
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
@@ -102,10 +101,8 @@ public:
     LensSpatialParams(const Problem& problem, const GridView& gridView)
     : ParentType(problem, gridView)
     {
-        lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[0];
-        lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft)[1];
-        lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[0];
-        lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight)[1];
+        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
+        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -127,9 +124,7 @@ public:
     /*!
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
@@ -141,9 +136,7 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
@@ -151,9 +144,7 @@ public:
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
@@ -167,7 +158,7 @@ private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
+            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
                 return false;
         }
         return true;
@@ -180,8 +171,11 @@ private:
     Scalar outerK_;
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
+
+    static constexpr Scalar eps_ = 1.5e-7;
 };
 
-} // end namespace
+} // end namespace Dumux
+
 #endif
 
