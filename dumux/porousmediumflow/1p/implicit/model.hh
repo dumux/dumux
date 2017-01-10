@@ -27,7 +27,8 @@
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
+
 #include "properties.hh"
 
 namespace Dumux
@@ -65,6 +66,8 @@ class OnePModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
+    using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
+
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
 
@@ -79,6 +82,8 @@ public:
         // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
         vtkOutputModule.addPrimaryVariable("pressure", Indices::pressureIdx);
+
+        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
 };
 

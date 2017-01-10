@@ -32,6 +32,9 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
+
 #include "1pnispatialparams.hh"
 
 namespace Dumux
@@ -156,20 +159,15 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
     {
-        //Here we calculate the analytical solution
-        auto numDofs = this->model().numDofs();
-
-        auto& temperatureExact = *(this->resultWriter().allocateManagedBuffer(numDofs));
-        auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
+        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
         const auto someElement = *(elements(this->gridView()).begin());
         const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        const auto someInitSol = initial_(someElement.geometry().center());
 
         auto someFvGeometry = localView(this->model().globalFvGeometry());
         someFvGeometry.bindElement(someElement);
@@ -198,13 +196,10 @@ public:
                 auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
-                temperatureExact[globalIdx] = temperatureHigh_ + (someElemSol[0][temperatureIdx] - temperatureHigh_)
+                temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
                                               *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
-                temperature[globalIdx] = this->model().curSol()[globalIdx][temperatureIdx];
             }
         }
-        this->resultWriter().attachDofData(temperatureExact, "temperatureExact", isBox);
-        this->resultWriter().attachDofData(temperature, "temperature", isBox);
     }
     /*!
      * \name Problem parameters
