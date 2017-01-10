@@ -120,7 +120,7 @@ public:
         fluidState.setTemperature(t);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const auto& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         if (int(formulation) == pwsn) {
             Scalar sn = priVars[saturationIdx];
