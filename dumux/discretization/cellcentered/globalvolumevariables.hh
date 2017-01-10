@@ -72,12 +72,11 @@ public:
         volumeVariables_.resize(numScv + numBoundaryScvf);
         for (const auto& element : elements(problem.gridView()))
         {
-            auto elementSol = problem.model().elementSolution(element, sol);
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(elementSol,
+                volumeVariables_[scv.index()].update(problem.model().elementSolution(element, sol),
                                                      problem,
                                                      element,
                                                      scv);
@@ -95,9 +94,9 @@ public:
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
+                    const ElementSolution dirichletPriVars({problem.dirichlet(element, scvf)});
 
-                    volumeVariables_[scvf.outsideScvIdx()].update(ElementSolution({dirichletPriVars}),
+                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
                                                                   problem,
                                                                   element,
                                                                   insideScv);

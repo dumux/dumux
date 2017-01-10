@@ -43,6 +43,7 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
@@ -94,8 +95,8 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -129,7 +130,7 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(eIdx);
-        volumeVariables_[localIdx].update(ElementSolution({sol[eIdx]}),
+        volumeVariables_[localIdx].update(globalVolVars().problem_().model().elementSolution(element, sol),
                                           globalVolVars().problem_(),
                                           element,
                                           scvI);
@@ -141,7 +142,7 @@ public:
         {
             const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
-            volumeVariables_[localIdx].update(ElementSolution({sol[globalJ]}),
+            volumeVariables_[localIdx].update(globalVolVars().problem_().model().elementSolution(elementJ, sol),
                                               globalVolVars().problem_(),
                                               elementJ,
                                               scvJ);
@@ -160,11 +161,11 @@ public:
             const auto bcTypes = globalVolVars().problem_().boundaryTypes(element, scvf);
             if (bcTypes.hasOnlyDirichlet())
             {
-                const auto dirichletPriVars = globalVolVars().problem_().dirichlet(element, scvf);
+                const ElementSolution dirichletPriVars({globalVolVars().problem_().dirichlet(element, scvf)});
 
                 volumeVariables_.resize(localIdx+1);
                 volVarIndices_.resize(localIdx+1);
-                volumeVariables_[localIdx].update(ElementSolution({dirichletPriVars}),
+                volumeVariables_[localIdx].update(dirichletPriVars,
                                                   globalVolVars().problem_(),
                                                   element,
                                                   scvI);
@@ -186,7 +187,10 @@ public:
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(ElementSolution({sol[eIdx]}), globalVolVars().problem_(), element, scv);
+        volumeVariables_[0].update(globalVolVars().problem_().model().elementSolution(element, sol),
+                                   globalVolVars().problem_(),
+                                   element,
+                                   scv);
         volVarIndices_[0] = scv.index();
     }
 
