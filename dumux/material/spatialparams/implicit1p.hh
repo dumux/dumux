@@ -88,7 +88,7 @@ public:
     Scalar harmonicMean(const Scalar T1,
                         const Scalar T2,
                         const GlobalPosition& normal) const
-    { return harmonicMean(T1, T2); }
+    { return Dumux::harmonicMean(T1, T2); }
 
     /*!
      * \brief Harmonic average of a discontinuous tensorial field at discontinuity interface
@@ -111,7 +111,7 @@ public:
         const Scalar alpha1 = tmp*normal;
         const Scalar alpha2 = tmp2*normal;
 
-        const Scalar alphaHarmonic = harmonicMean(alpha1, alpha2);
+        const Scalar alphaHarmonic = Dumux::harmonicMean(alpha1, alpha2);
         const Scalar alphaAverage = 0.5*(alpha1 + alpha2);
 
         DimWorldMatrix T(0.0);
