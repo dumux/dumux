@@ -902,12 +902,6 @@ public:
     // \}
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by writeOutput().
-     */
-    void addOutputVtkFields()
-    {}
-
-    /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
     void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
@@ -923,15 +917,7 @@ public:
         if (verbose && gridView().comm().rank() == 0)
             std::cout << "Writing result file for \"" << asImp_().name() << "\"\n";
 
-        // calculate the time _after_ the time was updated
-        Scalar t = timeManager().time() + timeManager().timeStepSize();
-        createResultWriter_();
-        resultWriter_->beginWrite(t);
-        model().addOutputVtkFields(model().curSol(), *resultWriter_);
-        asImp_().addOutputVtkFields();
-        resultWriter_->endWrite();
-
-        vtkOutputModule_->write(t);
+        vtkOutputModule_->write(timeManager().time() + timeManager().timeStepSize());
     }
 
     /*!

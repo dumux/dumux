@@ -25,7 +25,10 @@
 #ifndef DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 #define DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 
+#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
+
 #include <dumux/common/basicproperties.hh>
+
 #include "newtoncontroller.hh"
 
 namespace Dumux
@@ -45,54 +48,90 @@ NEW_PROP_TAG(SolutionVector);
 template <class TypeTag>
 class NewtonConvergenceWriter
 {
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
-
-    NewtonConvergenceWriter(NewtonController &ctl)
-    : ctl_(ctl)
+    NewtonConvergenceWriter(NewtonController &ctl, const GridView& gridView)
+    : ctl_(ctl),
+      writer_(gridView, "convergence", "", "")
     {
         timeStepIndex_ = 0;
         iteration_ = 0;
+
+        const auto numDofs = ctl_.method().model().numDofs();
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            def_[eqIdx].resize(numDofs);
+            delta_[eqIdx].resize(numDofs);
+            x_[eqIdx].resize(numDofs);
+        }
+
+        if (isBox)
+        {
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                writer_.addVertexData(x_[eqIdx], "x_" + std::to_string(eqIdx));
+                writer_.addVertexData(delta_[eqIdx], "delta_" + std::to_string(eqIdx));
+                writer_.addVertexData(def_[eqIdx], "defect_" + std::to_string(eqIdx));
+            }
+        }
+        else
+        {
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                writer_.addCellData(x_[eqIdx], "x_" + std::to_string(eqIdx));
+                writer_.addCellData(delta_[eqIdx], "delta_" + std::to_string(eqIdx));
+                writer_.addCellData(def_[eqIdx], "defect_" + std::to_string(eqIdx));
+            }
+        }
     }
 
-    void beginTimestep()
+    void advanceTimeStep()
     {
         ++timeStepIndex_;
         iteration_ = 0;
     }
 
-    void beginIteration(const GridView &gridView)
+    void advanceIteration()
     {
-        ++ iteration_;
-        if (!vtkMultiWriter_)
-            vtkMultiWriter_ = std::make_shared<VtkMultiWriter>(gridView, "convergence");
-        vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
+        ++iteration_;
     }
 
-    void writeFields(const SolutionVector &uLastIter,
-                     const SolutionVector &deltaU)
+    void write(const SolutionVector &uLastIter,
+               const SolutionVector &deltaU)
     {
-        ctl_.method().model().addConvergenceVtkFields(*vtkMultiWriter_, uLastIter, deltaU);
-    }
+        SolutionVector residual(uLastIter);
+        ctl_.method().model().globalResidual(residual, uLastIter);
 
-    void endIteration()
-    { vtkMultiWriter_->endWrite(); }
+        for (unsigned int dofIdxGlobal = 0; dofIdxGlobal < deltaU.size(); dofIdxGlobal++)
+        {
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                x_[eqIdx][dofIdxGlobal] = uLastIter[dofIdxGlobal][eqIdx];
+                delta_[eqIdx][dofIdxGlobal] = - deltaU[dofIdxGlobal][eqIdx];
+                def_[eqIdx][dofIdxGlobal] = residual[dofIdxGlobal][eqIdx];
+            }
+        }
 
-    void endTimestep()
-    {
-        iteration_ = 0;
+        writer_.write(timeStepIndex_ + iteration_ / 100.0);
     }
 
 private:
     int timeStepIndex_;
     int iteration_;
-    std::shared_ptr<VtkMultiWriter> vtkMultiWriter_;
+
+    std::array<std::vector<Scalar>, numEq> def_;
+    std::array<std::vector<Scalar>, numEq> delta_;
+    std::array<std::vector<Scalar>, numEq> x_;
+
     NewtonController &ctl_;
+    Dune::VTKSequenceWriter<GridView> writer_;
 };
 
 } // namespace Dumux
