@@ -32,6 +32,15 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+// forward declaration
+NEW_PROP_TAG(EnableComponentTransport);
+NEW_PROP_TAG(EnableEnergyBalance);
+NEW_PROP_TAG(EnableInertiaTerms);
+}
+
 /*!
  * \ingroup CCModel
  * \ingroup StaggeredLocalResidual
@@ -40,8 +49,23 @@ namespace Dumux
  *
  * \todo Please doc me more!
  */
+
+
+
+// forward declaration
+template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
+class StaggeredNavierStokesResidualImpl;
+
 template<class TypeTag>
-class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeTag>
+using StaggeredNavierStokesResidual = StaggeredNavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
+                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+
+
+// template<class TypeTag>
+// class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeTag>
+// {
+template<class TypeTag>
+class StaggeredNavierStokesResidualImpl<TypeTag, false, false> : public Dumux::StaggeredLocalResidual<TypeTag>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
@@ -93,9 +117,9 @@ class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeT
 
 public:
     // copying the local residual class is not a good idea
-    StaggeredNavierStokesResidual(const StaggeredNavierStokesResidual &) = delete;
+    StaggeredNavierStokesResidualImpl(const StaggeredNavierStokesResidualImpl &) = delete;
 
-    StaggeredNavierStokesResidual() = default;
+    StaggeredNavierStokesResidualImpl() = default;
 
 
     CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
@@ -303,6 +327,164 @@ private:
         }
         return result;
     }
+};
+
+// specialization for miscible, isothermal flow
+template<class TypeTag>
+class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
+{
+    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false, false>;
+    friend class StaggeredLocalResidual<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
+    enum {
+         // grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+
+        pressureIdx = Indices::pressureIdx,
+        velocityIdx = Indices::velocityIdx,
+
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+
+        conti0EqIdx = Indices::conti0EqIdx
+    };
+
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+
+    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+     /*!
+     * \brief Evaluate the rate of change of all conservation
+     *        quantites (e.g. phase mass) within a sub-control
+     *        volume of a finite volume element for the immiscible models.
+     * \param scv The sub control volume
+     * \param volVars The current or previous volVars
+     * \note This function should not include the source and sink terms.
+     * \note The volVars can be different to allow computing
+     *       the implicit euler time derivative here
+     */
+    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
+                                    const VolumeVariables& volVars)
+    {
+        CellCenterPrimaryVariables storage;
+        // compute storage term of all components within all phases
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            auto eqIdx = conti0EqIdx + compIdx;
+            auto s = volVars.molarDensity(0)
+                     * volVars.moleFraction(0, compIdx);
+
+//             if (eqIdx != replaceCompEqIdx)
+                storage[eqIdx] += s;
+
+            // in case one balance is substituted by the total mass balance
+//             if (replaceCompEqIdx < numComponents)
+//                 storage[replaceCompEqIdx] += s;
+        }
+    }
+};
+
+// specialization for immiscible, non-isothermal flow
+template<class TypeTag>
+class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
+{
+    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false, false>;
+    friend class StaggeredLocalResidual<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+
+    enum {
+         // grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+
+        pressureIdx = Indices::pressureIdx,
+        velocityIdx = Indices::velocityIdx,
+
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        energyBalanceIdx = Indices::energyBalanceIdx
+    };
+
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+
+    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+     /*!
+     * \brief Evaluate the rate of change of all conservation
+     *        quantites (e.g. phase mass) within a sub-control
+     *        volume of a finite volume element for the immiscible models.
+     * \param scv The sub control volume
+     * \param volVars The current or previous volVars
+     * \note This function should not include the source and sink terms.
+     * \note The volVars can be different to allow computing
+     *       the implicit euler time derivative here
+     */
+    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
+                                    const VolumeVariables& volVars)
+    {
+        CellCenterPrimaryVariables storage;
+        storage[massBalanceIdx] = volVars.density(0);
+        storage[energyBalanceIdx] = volVars.density(0) * volVars.internalEnergy(0);
+        return storage;
+    }
+};
+
+// specialization for miscible, non-isothermal flow
+template<class TypeTag>
+class StaggeredNavierStokesResidualImpl<TypeTag, true, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false, true>,
+                                                               public StaggeredNavierStokesResidualImpl<TypeTag, true, false>
+{
 };
 
 }

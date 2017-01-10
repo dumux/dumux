@@ -34,6 +34,7 @@ namespace Properties
 {
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(Indices);
+NEW_PROP_TAG(EnableEnergyTransport);
 }
 
 // forward declaration
@@ -47,7 +48,7 @@ class StaggeredVolumeVariablesImplementation;
  *        is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-using StaggeredVolumeVariables = StaggeredVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using StaggeredVolumeVariables = StaggeredVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyTransport)>;
 
 /*!
  * \ingroup StaggeredVolumeVariables
@@ -181,10 +182,6 @@ public:
                 const SubControlVolume &scv)
     {
         ParentType::update(ccPriVars, problem, element, scv);
-
-        solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, scv);
-        solidDensity_ = problem.spatialParams().solidDensity(element, scv);
-        solidThermalConductivity_ = problem.spatialParams().solidThermalConductivity(element, scv);
     }
 
     /*!
@@ -205,19 +202,6 @@ public:
     Scalar enthalpy(const int phaseIdx) const
     { return asImp_().fluidState().enthalpy(phaseIdx); }
 
-    /*!
-     * \brief Returns the total heat capacity \f$\mathrm{[J/(kg K)]}\f$ of the rock matrix in
-     *        the sub-control volume.
-     */
-    Scalar solidHeatCapacity() const
-    { return solidHeatCapacity_; }
-
-    /*!
-     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the rock matrix in
-     *        the sub-control volume.
-     */
-    Scalar solidDensity() const
-    { return solidDensity_; }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of a fluid phase in
@@ -226,12 +210,6 @@ public:
     Scalar fluidThermalConductivity(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(asImp_().fluidState(), phaseIdx); }
 
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in
-     *        the sub-control volume.
-     */
-    Scalar solidThermalConductivity() const
-    { return solidThermalConductivity_; }
 
     //! The temperature is a primary variable for non-isothermal models
     static Scalar temperature(const CellCenterPrimaryVariables &priVars,
@@ -257,11 +235,6 @@ protected:
     { return *static_cast<const Implementation*>(this); }
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
-
-private:
-    Scalar solidHeatCapacity_;
-    Scalar solidDensity_;
-    Scalar solidThermalConductivity_;
 };
 
 } // end namespace Dumux

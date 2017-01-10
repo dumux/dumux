@@ -43,10 +43,6 @@
 #include <dumux/discretization/staggered/globalvolumevariables.hh>
 #include <dumux/discretization/staggered/volumevariables.hh>
 
-
-#include <dumux/freeflow/staggered/fluxvariables.hh>
-#include <dumux/freeflow/staggered/fluxvariablescache.hh>
-
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/indices.hh>
@@ -144,13 +140,6 @@ SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, Dumux::StaggeredLocalResidual<T
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(StaggeredModel, ImplicitIsBox, false);
-
-//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
-//! by default, we set the flux variables to ones for porous media
-SET_TYPE_PROP(StaggeredModel, FluxVariables, FreeFlowFluxVariables<TypeTag>);
-
-//! The flux variables cache class, by default the one for porous media
-SET_TYPE_PROP(StaggeredModel, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 SET_TYPE_PROP(StaggeredModel, NewtonController, StaggeredNewtonController<TypeTag>);
 

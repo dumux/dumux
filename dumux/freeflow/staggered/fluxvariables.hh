@@ -361,6 +361,58 @@ private:
   }
 };
 
+
+// specialization for miscible, isothermal flow
+template<class TypeTag>
+class FreeFlowFluxVariablesImpl<TypeTag, true, false>
+: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, false>>, public FreeFlowFluxVariablesImpl<TypeTag, false, false>
+{
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Stencil = std::vector<IndexType>;
+
+    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+
+    using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
+
+    enum {
+         // grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+
+        pressureIdx = Indices::pressureIdx,
+        velocityIdx = Indices::velocityIdx,
+
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx
+    };
+
+public:
+    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const GlobalFaceVars& globalFaceVars,
+                                  const SubControlVolumeFace &scvf,
+                                  const FluxVariablesCache& fluxVarsCache)
+    {
+        CellCenterPrimaryVariables priVars(0.0);
+        priVars[0] = ParentType::computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
+//         priVars[1] = ParentType::computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
+        return priVars;
+    }
+};
+
 } // end namespace
 
 #endif

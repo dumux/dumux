@@ -34,6 +34,8 @@
 #include "indices.hh"
 #include "problem.hh"
 #include "localresidual.hh"
+#include "fluxvariables.hh"
+#include "fluxvariablescache.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -43,6 +45,13 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+// forward declaration
+NEW_PROP_TAG(FluxVariables);
+NEW_PROP_TAG(FluxVariablesCache);
+}
 // \{
 
 ///////////////////////////////////////////////////////////////////////////
@@ -60,6 +69,13 @@ SET_TYPE_PROP(NavierStokes, Model, NavierStokesModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+
+//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+//! by default, we set the flux variables to ones for porous media
+SET_TYPE_PROP(NavierStokes, FluxVariables, FreeFlowFluxVariables<TypeTag>);
+
+//! The flux variables cache class, by default the one for porous media
+SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 //! Enable advection
 SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
