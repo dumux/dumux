@@ -51,7 +51,6 @@ private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using VtkMultiWriter = typename GET_PROP_TYPE(TypeTag, VtkMultiWriter);
     using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
     using Model = typename GET_PROP_TYPE(TypeTag, Model);
@@ -715,16 +714,6 @@ public:
         simName_ = newName;
     }
 
-
-    /*!
-     * \brief Returns the number of the current VTK file.
-     */
-    int currentVTKFileNumber()
-    {
-        createResultWriter_();
-        return resultWriter_->curWriterNum();
-    }
-
     /*!
      * \brief The GridView which used by the problem.
      */
@@ -855,8 +844,7 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        createResultWriter_();
-        resultWriter_->serialize(res);
+        vtkOutputModule_->serialize(res);
         model().serialize(res);
     }
 
@@ -894,8 +882,7 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        createResultWriter_();
-        resultWriter_->deserialize(res);
+        vtkOutputModule_->deserialize(res);
         model().deserialize(res);
     }
 
@@ -1049,19 +1036,6 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    //! Returns the applied VTK-writer for the output
-    VtkMultiWriter& resultWriter()
-    {
-        createResultWriter_();
-        return *resultWriter_;
-    }
-    //! \copydoc IMPETProblem::resultWriter()
-    VtkMultiWriter& resultWriter() const
-    {
-        createResultWriter_();
-        return *resultWriter_;
-    }
-
     //! Compute the point source map, i.e. which scvs have point source contributions
     void computePointSourceMap_()
     {
@@ -1086,19 +1060,6 @@ protected:
 
 
 private:
-    // makes sure that the result writer exists
-    void createResultWriter_()
-    {
-        if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
-
-        // Tell the result writer that the grid changes if we are adaptive
-        if (adaptiveGrid)
-        {
-            resultWriter_->gridChanged();
-        }
-    }
-
     std::string simName_;
     const GridView gridView_;
 
@@ -1116,7 +1077,6 @@ private:
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
-    std::shared_ptr<VtkMultiWriter> resultWriter_;
     std::shared_ptr<VtkOutputModule<TypeTag>> vtkOutputModule_;
 
     std::shared_ptr<GridAdaptModel> gridAdapt_;

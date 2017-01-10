@@ -385,6 +385,41 @@ public:
         vectorFields_.clear();
     }
 
+    /*!
+     * \brief This method writes the complete state of the problem
+     *        to the harddisk.
+     *
+     * The file will start with the prefix returned by the name()
+     * method, has the current time of the simulation clock in it's
+     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
+     * file.)  See Restart for details.
+     *
+     * \tparam Restarter The serializer type
+     *
+     * \param res The serializer object
+     */
+    template <class Restarter>
+    void serialize(Restarter &res)
+    {
+        // TODO implement
+    }
+
+    /*!
+     * \brief This method restores the complete state of the problem
+     *        from disk.
+     *
+     * It is the inverse of the serialize() method.
+     *
+     * \tparam Restarter The deserializer type
+     *
+     * \param res The deserializer object
+     */
+    template <class Restarter>
+    void deserialize(Restarter &res)
+    {
+        // TODO implement
+    }
+
 private:
 
     template<typename Writer, typename... Args>
