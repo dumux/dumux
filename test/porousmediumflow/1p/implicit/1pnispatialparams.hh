@@ -21,8 +21,8 @@
  *
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
-#ifndef DUMUX_1P2CNI_OUTFLOW_SPATIAL_PARAMS_HH
-#define DUMUX_1P2CNI_OUTFLOW_SPATIAL_PARAMS_HH
+#ifndef DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
+#define DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 
@@ -40,19 +40,16 @@ class OnePNISpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
     using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+
     OnePNISpatialParams(const Problem& problem, const GridView &gridView)
     : ParentType(problem, gridView) {}
 
@@ -61,7 +58,7 @@ public:
      *
      * \param globalPos The global position
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return 1e-10; }
 
     /*!
@@ -69,7 +66,7 @@ public:
      *
      * \param globalPos The global position
      */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!

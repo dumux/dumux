@@ -79,6 +79,7 @@ class TubesTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // Grid and world dimension
     static const int dim = GridView::dimension;
@@ -144,8 +145,9 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
-    Scalar boxExtrusionFactor(const Element &element,
-                              const SubControlVolume &scv) const
+    Scalar extrusionFactor(const Element &element,
+                           const SubControlVolume &scv,
+                           const ElementSolutionVector& elemSol) const
     {
         const auto radius = this->spatialParams().radius(scv);
         return M_PI*radius*radius;
@@ -230,7 +232,8 @@ public:
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        const auto K = this->spatialParams().intrinsicPermeability(scv, elemVolVars[scv]);
+        const auto K = this->spatialParams().permeability(element, scv,
+                                    this->model().elementSolution(element, this->model().curSol()));
 
         using std::sin;
         if (globalPos[2] > 0.5 - eps_)

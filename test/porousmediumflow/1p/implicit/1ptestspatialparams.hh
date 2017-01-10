@@ -60,9 +60,7 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using IndexSet = typename GridView::IndexSet;
     using ScalarVector = std::vector<Scalar>;
 
@@ -75,6 +73,9 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+
     OnePTestSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView),
           randomPermeability_(gridView.size(dim), 0.0),
@@ -92,16 +93,16 @@ public:
     }
 
     /*!
-     * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
+     * \return the intrinsic permeability
      */
-    Scalar permeability(const Element& element,
-                                 const SubControlVolume& scv,
-                                 const ElementSolutionVector& elemSol) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
         if (isInLens_(scv.dofPosition()))
         {
@@ -116,9 +117,7 @@ public:
 
     /*! \brief Define the porosity in [-].
    *
-   * \param element The finite element
-   * \param fvGeometry The finite volume geometry
-   * \param scvIdx The local index of the sub-control volume where
+   * \param globalPos The global position where we evaluate
    */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }

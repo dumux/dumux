@@ -56,13 +56,13 @@ class FractureSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
@@ -76,9 +76,7 @@ public:
     /*!
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     Scalar permeabilityAtPos (const GlobalPosition& globalPos) const
     { return 1e-12; }
@@ -86,9 +84,7 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }

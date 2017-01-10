@@ -56,7 +56,7 @@ subprocess.call(['cat', testname + '.log'])
 # check the rates, we expect rates around 2
 for r in results:
     if int(round(r)) is not 2:
-        sys.stderr.write("*"*70 + "\n", "The convergence rates were not close enough to 2! Test failed.\n", "*"*70 + "\n")
+        sys.stderr.write("*"*70 + "\n" + "The convergence rates were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
 sys.exit(0)
