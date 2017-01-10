@@ -223,7 +223,7 @@ private:
         neighborElements.reserve(numNeighbors);
 
         // get the elements and calculate the flux into the element in the undeflected state
-        ElementSolution origFlux(numNeighbors);
+        Dune::BlockVector<PrimaryVariables> origFlux(numNeighbors);
         origFlux = 0.0;
 
         unsigned int j = 0;
@@ -251,7 +251,7 @@ private:
         VolumeVariables origVolVars(curVolVars);
 
         // derivatives in the neighbors with repect to the current elements
-        ElementSolution neighborDeriv(numNeighbors);
+        Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
         {
             // derivatives of element dof with respect to itself
