@@ -314,7 +314,7 @@ private:
   {
       FacePrimaryVariables tangentialDiffusiveFlux(0.0);
 
-      const auto normalDirIdx = directionIndex(std::move(normalFace.unitOuterNormal()));
+      const auto normalDirIdx = normalFace.directionIndex();
       const auto insideScvIdx = normalFace.insideScvIdx();
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
@@ -383,6 +383,7 @@ class FreeFlowFluxVariablesImpl<TypeTag, true, false>
     using Stencil = std::vector<IndexType>;
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
     using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
 
@@ -395,7 +396,8 @@ class FreeFlowFluxVariablesImpl<TypeTag, true, false>
         velocityIdx = Indices::velocityIdx,
 
         massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        conti0EqIdx = Indices::conti0EqIdx
     };
 
 public:

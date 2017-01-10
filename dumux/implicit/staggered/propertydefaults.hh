@@ -28,10 +28,8 @@
 #define DUMUX_STAGGERED_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-// #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/staggered/globalfvgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
-#include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/staggered/stencils.hh>
@@ -42,6 +40,7 @@
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/globalvolumevariables.hh>
 #include <dumux/discretization/staggered/volumevariables.hh>
+#include <dumux/discretization/staggered/globalfacevariables.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
@@ -96,15 +95,7 @@ public:
     typedef Dumux::StaggeredSubControlVolume<ScvGeometry, IndexType> type;
 };
 
-SET_PROP(StaggeredModel, SubControlVolumeFace)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-public:
-    typedef Dumux::StaggeredSubControlVolumeFace<ScvfGeometry, IndexType> type;
-};
+SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
@@ -115,8 +106,6 @@ SET_TYPE_PROP(StaggeredModel, DofMapper, typename GET_PROP_TYPE(TypeTag, Element
 //! The global current volume variables vector class
 SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::StaggeredGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
-//! The volume variables vector class
-// SET_TYPE_PROP(StaggeredModel, VolumeVariables, Dumux::StaggeredVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 //! The global flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::StaggeredGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 

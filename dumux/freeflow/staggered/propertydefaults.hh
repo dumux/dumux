@@ -43,6 +43,11 @@
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1p.hh>
 
+#include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
+#include <dumux/discretization/staggered/freeflow/facevariables.hh>
+
+
 namespace Dumux
 {
 
@@ -51,6 +56,7 @@ namespace Properties
 // forward declaration
 NEW_PROP_TAG(FluxVariables);
 NEW_PROP_TAG(FluxVariablesCache);
+NEW_PROP_TAG(StaggeredGeometryHelper);
 }
 // \{
 
@@ -60,6 +66,29 @@ NEW_PROP_TAG(FluxVariablesCache);
 namespace Properties {
 SET_INT_PROP(NavierStokes, NumEq, 1); //!< set the number of equations to 1
 SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
+
+//! The sub-controlvolume face
+SET_PROP(NavierStokes, SubControlVolumeFace)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
+    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+public:
+    typedef Dumux::StaggeredSubControlVolumeFace<ScvfGeometry, IndexType> type;
+};
+
+//! The geometry helper required for the stencils, etc.
+SET_PROP(NavierStokes, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = StaggeredGeometryHelper<GridView>;
+};
+
+//! The variables living on the faces
+SET_TYPE_PROP(NavierStokes, FaceVariables, StaggeredFaceVariables<TypeTag>);
 
 //! The local residual function
 SET_TYPE_PROP(NavierStokes, LocalResidual, StaggeredNavierStokesResidual<TypeTag>);

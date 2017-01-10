@@ -18,54 +18,35 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global face variables class for staggered grid models
+ * \brief The face variables class for free flow staggered grid models
  */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {
-
 template<class TypeTag>
-class StaggeredGlobalFaceVariables
+class StaggeredFaceVariables
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 public:
-    void update(Problem& problem, const FaceSolutionVector& sol)
+    void update(const FacePrimaryVariables &facePrivars)
     {
-        problemPtr_ = &problem;
-
-        faceVariables_.resize(problem.model().numFaceDofs());
-        assert(faceVariables_.size() == sol.size());
-
-        for(int i = 0; i < problem.model().numFaceDofs(); ++i)
-        {
-            faceVariables_[i].update(sol[i]);
-        }
+        velocity_ = facePrivars[0];
     }
 
-    const FaceVariables& faceVars(const IndexType facetIdx) const
-    { return faceVariables_[facetIdx]; }
+    Scalar velocity() const
+    {
+        return velocity_;
+    }
 
-    FaceVariables& faceVars(const IndexType facetIdx)
-    { return faceVariables_[facetIdx]; }
+
 private:
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
-    const Problem* problemPtr_;
-
-    std::vector<FaceVariables> faceVariables_;
+    Scalar velocity_;
 };
-
 
 } // end namespace
 

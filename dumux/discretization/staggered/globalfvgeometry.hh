@@ -27,8 +27,6 @@
 
 #include <dumux/common/elementmap.hh>
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
-#include <dumux/discretization/staggered/staggeredgeometryhelper.hh>
 
 namespace Dumux
 {
@@ -64,7 +62,7 @@ class StaggeredGlobalFVGeometry<TypeTag, true>
         dimWorld = GridView::dimensionworld
     };
 
-    using GeometryHelper = StaggeredGeometryHelper<GridView>;
+    using GeometryHelper = typename GET_PROP_TYPE(TypeTag, StaggeredGeometryHelper);
 
 public:
     //! Constructor
