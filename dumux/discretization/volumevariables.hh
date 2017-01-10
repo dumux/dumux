@@ -82,9 +82,16 @@ public:
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        priVars_ = isBox ? elemSol[scv.index()] : elemSol[0];
+        priVars_ = extractDofPriVars(elemSol, scv);
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
     }
+
+    /*!
+     * \brief Returns the primary variables at the dof associated with a given scv.
+     */
+    static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
+                                                     const SubControlVolume& scv)
+    { return isBox ? elemSol[scv.index()] : elemSol[0]; }
 
     /*!
      * \brief Return the vector of primary variables

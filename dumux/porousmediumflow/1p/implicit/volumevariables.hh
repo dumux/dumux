@@ -91,7 +91,7 @@ public:
         fluidState.setTemperature(t);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        const auto& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
