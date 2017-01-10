@@ -52,6 +52,7 @@ class CCMpfaAdvectionCacheFiller
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -73,7 +74,7 @@ public:
         auto getK = [&problem](const Element& element,
                                const VolumeVariables& volVars,
                                const SubControlVolume& scv)
-        { return problem.spatialParams().intrinsicPermeability(scv, volVars); };
+        { return volVars.permeability(); };
 
         // update flux var caches
         if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
@@ -332,11 +333,10 @@ public:
 
             //! set the neumann boundary conditions in case we do not use tpfa on the boundary
             if (!useTpfaBoundary)
-                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
-                    iv.assembleNeumannFluxes(energyEqIdx);
-                    cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
-                }
+            {
+                iv.assembleNeumannFluxes(energyEqIdx);
+                cache.updateHeatNeumannFlux(scvf, iv);
+            }
 
             for (const auto scvfIdxJ : iv.globalScvfs())
             {
@@ -349,11 +349,10 @@ public:
 
                     //! set the neumann boundary conditions in case we do not use tpfa on the boundary
                     if (!useTpfaBoundary)
-                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        {
-                            iv.assembleNeumannFluxes(energyEqIdx);
-                            cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
-                        }
+                    {
+                        iv.assembleNeumannFluxes(energyEqIdx);
+                        cache.updateHeatNeumannFlux(scvf, iv);
+                    }
                 }
             }
         }
@@ -371,14 +370,6 @@ public:
             cache.updateHeatConduction(scvf, iv);
             cache.setUpdateStatus(true);
 
-            //! set the neumann boundary conditions in case we do not use tpfa on the boundary
-            if (!useTpfaBoundary)
-                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
-                    iv.assembleNeumannFluxes(energyEqIdx);
-                    cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
-                }
-
             for (const auto scvfIdxJ : iv.globalScvfs())
             {
                 if (scvfIdxJ != scvfIdx)
@@ -387,14 +378,6 @@ public:
                     auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
                     cacheJ.updateHeatConduction(scvfJ, iv);
                     cacheJ.setUpdateStatus(true);
-
-                    //! set the neumann boundary conditions in case we do not use tpfa on the boundary
-                    if (!useTpfaBoundary)
-                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        {
-                            iv.assembleNeumannFluxes(energyEqIdx);
-                            cache.updateHeatNeumannFlux(scvf, iv, energyEqIdx);
-                        }
                 }
             }
         }

@@ -94,6 +94,7 @@ class CCMpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -131,7 +132,10 @@ public:
         // update the volume variables of the element at hand
         auto eIdx = problem.elementMapper().index(element);
         auto&& scvI = fvGeometry.scv(eIdx);
-        volumeVariables_[localIdx].update(sol[eIdx], problem, element, scvI);
+        volumeVariables_[localIdx].update(problem.model().elementSolution(element, sol),
+                                          problem,
+                                          element,
+                                          scvI);
         volVarIndices_[localIdx] = scvI.index();
         ++localIdx;
 
@@ -140,7 +144,10 @@ public:
         {
             const auto& elementJ = globalFvGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
-            volumeVariables_[localIdx].update(sol[globalJ], problem, elementJ, scvJ);
+            volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
+                                              problem,
+                                              elementJ,
+                                              scvJ);
             volVarIndices_[localIdx] = scvJ.index();
             ++localIdx;
         }
@@ -166,8 +173,10 @@ public:
                     {
                         // boundary volume variables
                         VolumeVariables dirichletVolVars;
-                        const auto dirichletPriVars = problem.dirichlet(element, scvf);
-                        dirichletVolVars.update(dirichletPriVars, problem, element, scvI);
+                        dirichletVolVars.update(ElementSolution({problem.dirichlet(element, scvf)}),
+                                                problem,
+                                                element,
+                                                scvI);
 
                         volumeVariables_.emplace_back(std::move(dirichletVolVars));
                         volVarIndices_.push_back(scvf.outsideScvIdx());
@@ -206,8 +215,10 @@ public:
                         // boundary volume variables
                         VolumeVariables dirichletVolVars;
                         auto&& ivScv = fvGeometry.scv(insideScvIdx);
-                        const auto dirichletPriVars = problem.dirichlet(insideElement, ivScvf);
-                        dirichletVolVars.update(dirichletPriVars, problem, insideElement, ivScv);
+                        dirichletVolVars.update(ElementSolution({problem.dirichlet(insideElement, ivScvf)}),
+                                                problem,
+                                                insideElement,
+                                                ivScv);
 
                         volumeVariables_.emplace_back(std::move(dirichletVolVars));
                         volVarIndices_.push_back(ivScvf.outsideScvIdx());
@@ -234,7 +245,10 @@ public:
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(sol[eIdx], globalVolVars().problem_(), element, scv);
+        volumeVariables_[0].update(globalVolVars().problem_().model().elementSolution(element, sol),
+                                   globalVolVars().problem_(),
+                                   element,
+                                   scv);
         volVarIndices_[0] = scv.index();
     }
 
