@@ -34,8 +34,6 @@ namespace Properties
 {
 NEW_PROP_TAG(VtkAddVelocity);
 NEW_PROP_TAG(VtkAddProcessRank);
-NEW_PROP_TAG(VtkAddPorosity);
-NEW_PROP_TAG(VtkAddPermeability);
 }
 
 namespace Dumux
@@ -201,14 +199,6 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
             rank.resize(numCells);
 
-        std::vector<Scalar> porosity;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-            porosity.resize(numDofs);
-
-        std::vector<Scalar> permeability;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-            permeability.resize(numDofs);
-
         for (const auto& element : elements(problem_.gridView(), Dune::Partitions::interior))
         {
             const auto eIdxGlobal = problem_.elementMapper().index(element);
@@ -267,13 +257,6 @@ public:
 
                 for (std::size_t i = 0; i < secondVarScalarDataInfo_.size(); ++i)
                     secondVarScalarData[i][dofIdxGlobal] = secondVarScalarDataInfo_[i].get(volVars);
-
-                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-                    porosity[dofIdxGlobal] = problem_.spatialParams().porosity(element, scv, curElemSol);
-
-                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-                    permeability[dofIdxGlobal] = problem_.spatialParams().permeability(element, scv, curElemSol);
-
             }
 
             // velocity output
@@ -326,14 +309,6 @@ public:
         // the process rank
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
             sequenceWriter_.addCellData(rank, "process rank");
-
-        // the porosity
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-            addDofDataForWriter_(sequenceWriter_, porosity, "porosity");
-
-        // the permeability
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-            addDofDataForWriter_(sequenceWriter_, permeability, "permeability");
 
         // also register additional (non-standardized) user fields
         for (std::size_t i = 0; i < scalarFields_.size(); ++i)
