@@ -25,7 +25,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_NONISOTHERMAL_MODEL_HH
 #define DUMUX_POROUSMEDIUMFLOW_NONISOTHERMAL_MODEL_HH
 
-// #include <dumux/implicit/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
 {
@@ -60,5 +60,7 @@ public:
 };
 
 } // end namespace Dumux
+
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 
 #endif
