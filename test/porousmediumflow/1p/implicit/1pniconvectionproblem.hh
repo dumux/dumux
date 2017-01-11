@@ -162,18 +162,11 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
     {
-        //Here we calculate the analytical solution
-        auto numDofs = this->model().numDofs();
-
-        //create required scalar fields
-        auto& temperatureExact = *(this->resultWriter().allocateManagedBuffer(numDofs));
-        auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
+        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
         const auto someElement = *(elements(this->gridView()).begin());
         const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
@@ -192,30 +185,25 @@ public:
         const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
+        std::cout << "storage: " << storageTotal << '\n';
 
-        std::cout << "storage: " << storageTotal << std::endl;
-
-        const auto time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-        const auto retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
-
-        std::cout << "retarded velocity: " << retardedFrontVelocity << std::endl;
+        const Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
+        std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
         for (const auto& element : elements(this->gridView()))
         {
             auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
-
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto globalIdx = scv.dofIndex();
-                const auto& globalPos = scv.dofPosition();
-                temperatureExact[globalIdx] = globalPos[0] < retardedFrontVelocity*time ? temperatureHigh_ : temperatureLow_;
-                temperature[globalIdx] = this->model().curSol()[globalIdx][temperatureIdx];
+                auto dofIdxGlobal = scv.dofIndex();
+                auto dofPosition = scv.dofPosition();
+                temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
-        this->resultWriter().attachDofData(temperature, "temperature", isBox);
-        this->resultWriter().attachDofData(temperatureExact, "temperatureExact", isBox);
     }
+
     /*!
      * \name Problem parameters
      */

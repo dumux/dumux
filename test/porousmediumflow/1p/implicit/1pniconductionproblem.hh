@@ -97,16 +97,11 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     // copy some indices for convenience
@@ -130,9 +125,6 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
@@ -201,6 +193,7 @@ public:
             }
         }
     }
+
     /*!
      * \name Problem parameters
      */
@@ -277,20 +270,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.

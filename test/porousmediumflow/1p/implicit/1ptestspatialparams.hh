@@ -107,7 +107,7 @@ public:
         if (isInLens_(scv.dofPosition()))
         {
             if(randomField_)
-                return randomPermeability_[scv.dofIndex()];
+                return randomPermeability_[indexSet_.index(element)];
             else
                 return permeabilityLens_;
         }
