@@ -151,11 +151,11 @@ public:
      * \return permeability
      * \param globalPos The position of the center of the scv
      */
-    DimWorldMatrix permeabilityAtPos(const GlobalPosition& globalPos) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
-                   "a intrinsicPermeabilityAtPos() method.");
+                   "a permeability() or permeabilityAtPos() method.");
     }
 
     /*!
