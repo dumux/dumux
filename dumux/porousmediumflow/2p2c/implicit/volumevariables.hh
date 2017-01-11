@@ -46,18 +46,20 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
     using ParentType = ImplicitVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
-    };
 
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
+    // component indices
+    enum
+    {
         wCompIdx = Indices::wCompIdx,
         nCompIdx = Indices::nCompIdx,
         wPhaseIdx = Indices::wPhaseIdx,
@@ -65,41 +67,44 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     };
 
     // present phases
-    enum {
+    enum
+    {
         wPhaseOnly = Indices::wPhaseOnly,
         nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases
     };
 
     // formulations
-    enum {
+    enum
+    {
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
         pwsn = TwoPTwoCFormulation::pwsn,
         pnsw = TwoPTwoCFormulation::pnsw
     };
 
     // primary variable indices
-    enum {
+    enum
+    {
         switchIdx = Indices::switchIdx,
         pressureIdx = Indices::pressureIdx
     };
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    enum { dim = GridView::dimension};
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useKelvinEquation = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
+    static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
     static_assert(useMoles || (!useMoles && useConstraintSolver),
                   "if UseMoles is set false, UseConstraintSolver has to be set to true");
-    static const bool useKelvinEquation = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
-    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    static constexpr int dim = GridView::dimension;
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int dofCodim = isBox ? dim : 0;
 
 public:
 
@@ -108,19 +113,19 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
         /////////////
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -147,24 +152,26 @@ public:
                                                                            nCompIdx);
         }
 
-        // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
+        // porosity & permeabilty
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(priVars, problem, element, scv);
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
         auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         /////////////
         // set the saturations
@@ -191,7 +198,7 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
 
         if (formulation == pwsn) {
@@ -550,6 +557,12 @@ public:
     { return porosity_; }
 
     /*!
+     * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
+     */
+    PermeabilityType permeability() const
+    { return permeability_; }
+
+    /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
@@ -559,6 +572,7 @@ public:
 protected:
 
     Scalar porosity_; //!< Effective porosity within the control volume
+    PermeabilityType permeability_; //!< Effective permeability within the control volume
     Scalar relativePermeability_[numPhases]; //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;

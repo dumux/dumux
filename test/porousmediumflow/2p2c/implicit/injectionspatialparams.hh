@@ -66,26 +66,24 @@ class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename Grid::ctype;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
-
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    using CoordScalar = typename Grid::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
@@ -124,14 +122,10 @@ public:
     /*!
      * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
-    Scalar intrinsicPermeability(const SubControlVolume& scv,
-                                 const VolumeVariables& volVars) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.center();
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
@@ -140,13 +134,10 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
-    Scalar porosity(const SubControlVolume& scv) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.center();
         if (isFineMaterial_(globalPos))
             return finePorosity_;
         return coarsePorosity_;
@@ -157,14 +148,10 @@ public:
      * \brief Returns the parameter object for the capillary-pressure/
      *        saturation material law
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const SubControlVolume& scv) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.center();
         if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         return coarseMaterialParams_;
@@ -175,45 +162,30 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
+    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    { return 2700; /*density of granite [kg/m^3]*/ }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv) const
-    {
-        return lambdaSolid_;
-    }
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
+    { return lambdaSolid_; }
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
