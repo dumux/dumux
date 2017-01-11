@@ -46,11 +46,15 @@ class OnePTwoCTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+
     OnePTwoCTestSpatialParams(const Problem& problem, const GridView &gridView)
         : ParentType(problem, gridView)
     {
@@ -66,7 +70,7 @@ public:
      *
      * \param globalPos The global position
      */
-    Scalar intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return permeability_; }
 
     /*!
@@ -82,9 +86,11 @@ public:
      *
      * \param element The finite element
      * \param scv The sub-control volume
+     * \param elemSol The solution for all dofs of the element
      */
     Scalar dispersivity(const Element &element,
-                        const SubControlVolume& scv) const
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
     { return 0; }
 
     /*!
@@ -92,11 +98,13 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param scv The sub-control volume
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      */
     Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv) const
+                             const SubControlVolume& scv,
+                             const ElementSolutionVector& elemSol) const
     { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
@@ -104,21 +112,25 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param scv The sub-control volume
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      */
     Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv) const
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
     { return 2700; /*density of granite [kg/m^3]*/ }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
      *
-     * \param element The finite element
-     * \param scv The sub-control volume
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      */
     Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv) const
+                                    const SubControlVolume& scv,
+                                    const ElementSolutionVector& elemSol) const
     { return lambdaSolid_; }
 
 

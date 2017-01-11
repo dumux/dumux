@@ -132,7 +132,9 @@ class OnePTwoCNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static const int dofCodim = isBox ? dimWorld : 0;
 
 public:
     OnePTwoCNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
@@ -163,60 +165,49 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
     {
-        unsigned numDofs = this->model().numDofs();
-        //create required scalar fields
-        auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
-        auto& temperatureExact = *(this->resultWriter().allocateManagedBuffer(numDofs));
+        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
-        // get the first element to initialize the constant volume variables
         const auto someElement = *(elements(this->gridView()).begin());
-        const auto initialPriVars = initial_(GlobalPosition(0.0));
+        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        const auto someInitSol = initial_(someElement.geometry().center());
 
         auto someFvGeometry = localView(this->model().globalFvGeometry());
         someFvGeometry.bindElement(someElement);
-        const auto& someScv = *(scvs(someFvGeometry).begin());
+        const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
-        volVars.update(initialPriVars, *this, someElement, someScv);
+        volVars.update(someElemSol, *this, someElement, someScv);
 
-        Scalar porosity = this->spatialParams().porosity(someScv);
-        Scalar densityW = volVars.density();
-        Scalar heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-        Scalar densityS = this->spatialParams().solidDensity(someElement, someScv);
-        Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv);
-        Scalar storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
-        Scalar effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars,
-                                                                                                     this->spatialParams(),
-                                                                                                     someElement,
-                                                                                                     someFvGeometry,
-                                                                                                     someScv);
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
+        const auto densityW = volVars.density();
+        const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
+        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
+                                                                                                         someElement, someFvGeometry, someScv);
         Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-
 
         for (const auto& element : elements(this->gridView()))
         {
             auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
+
             for (auto&& scv : scvs(fvGeometry))
             {
-                int dofIdxGlobal = scv.dofIndex();
-                auto dofPosition = scv.dofPosition();
+                auto globalIdx = scv.dofIndex();
+                const auto& globalPos = scv.dofPosition();
 
-                temperature[dofIdxGlobal] = this->model().curSol()[dofIdxGlobal][temperatureIdx];
-                temperatureExact[dofIdxGlobal] = temperatureHigh_
-                                                    + (initialPriVars[temperatureIdx] - temperatureHigh_)
-                                                    * std::erf(0.5*std::sqrt(dofPosition[0]*dofPosition[0]*storage/time/effectiveThermalConductivity));
+                temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
+                                              *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
         }
-        this->resultWriter().attachDofData(temperature, "temperature", isBox);
-        this->resultWriter().attachDofData(temperatureExact, "temperatureExact", isBox);
     }
+
     /*!
      * \name Problem parameters
      */
