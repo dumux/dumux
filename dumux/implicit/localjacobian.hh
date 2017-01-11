@@ -67,7 +67,6 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitLocalJacobian
 {
-private:
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
