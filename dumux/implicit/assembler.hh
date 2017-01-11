@@ -34,26 +34,15 @@ namespace Dumux {
 template<class TypeTag>
 class ImplicitAssembler
 {
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
-    enum{ dim = GridView::dimension };
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
-    typedef Dune::FieldVector<Scalar, numEq> VectorBlock;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     // copying the jacobian assembler is not a good idea
     ImplicitAssembler(const ImplicitAssembler &);
