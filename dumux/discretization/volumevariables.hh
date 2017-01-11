@@ -238,7 +238,7 @@ public:
                               const Element &element,
                               const SubControlVolume &scv)
     {
-        return isBox ? elemSol[scv.index()][temperatureIdx] : elemSol[0][temperatureIdx];
+        return ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
     }
 
     //! The phase enthalpy is zero for isothermal models
