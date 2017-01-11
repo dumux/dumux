@@ -84,7 +84,7 @@ public:
     {
         const auto& fluxVarCache = elemFluxVarCache[scvf];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& outsideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
