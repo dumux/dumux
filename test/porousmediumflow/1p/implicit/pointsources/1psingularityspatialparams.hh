@@ -45,9 +45,13 @@ class OnePSingularitySpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+
     OnePSingularitySpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
@@ -58,20 +62,28 @@ public:
     /*!
      * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
      *
+     * \param element The element
      * \param scv The sub control volume
-     * \param volVars The volume variables of the sub control volume
+     * \param elemSol The element solution vector
+     * \return the intrinsic permeability
      */
-    Scalar intrinsicPermeability(const SubControlVolume& scv,
-                                 const VolumeVariables& volVars) const
+    Scalar permeability(const Element& element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
     {
         return permeability_;
     }
 
     /*! \brief Define the porosity in [-].
      *
+     * \param element The element
      * \param scv The sub control volume
+     * \param elemSol The element solution vector
+     * \return the porosity
      */
-    Scalar porosity(const SubControlVolume& scv) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
     {
         return porosity_;
     }
@@ -80,6 +92,6 @@ private:
     Scalar permeability_, porosity_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
