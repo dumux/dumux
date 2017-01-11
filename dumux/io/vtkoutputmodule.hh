@@ -311,31 +311,31 @@ public:
             sequenceWriter_.addCellData(rank, "process rank");
 
         // also register additional (non-standardized) user fields
-        for (std::size_t i = 0; i < scalarFields_.size(); ++i)
+        for (auto&& field : scalarFields_)
         {
-            if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(0)))
-                sequenceWriter_.addCellData(scalarFields_[i].first, scalarFields_[i].second);
-            else if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(dim)))
-                sequenceWriter_.addVertexData(scalarFields_[i].first, scalarFields_[i].second);
+            if (field.first.size() == std::size_t(problem_.gridView().size(0)))
+                sequenceWriter_.addCellData(field.first, field.second);
+            else if (field.first.size() == std::size_t(problem_.gridView().size(dim)))
+                sequenceWriter_.addVertexData(field.first, field.second);
             else
                 DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
         }
 
-        for (std::size_t i = 0; i < vectorFields_.size(); ++i)
+        for (auto&& field : vectorFields_)
         {
-            if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(0)))
+            if (field.first.size() == std::size_t(problem_.gridView().size(0)))
             {
                 using NestedFunction = VtkNestedFunction<GridView, ElementMapper, std::vector<GlobalPosition>>;
-                sequenceWriter_.addCellData(std::make_shared<NestedFunction>(vectorFields_[i].second,
+                sequenceWriter_.addCellData(std::make_shared<NestedFunction>(field.second,
                                                                              problem_.gridView(), problem_.elementMapper(),
-                                                                             vectorFields_[i].first, 0, dimWorld));
+                                                                             field.first, 0, dimWorld));
             }
-            else if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(dim)))
+            else if (field.first.size() == std::size_t(problem_.gridView().size(dim)))
             {
                 using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
-                sequenceWriter_.addVertexData(std::make_shared<NestedFunction>(vectorFields_[i].second,
+                sequenceWriter_.addVertexData(std::make_shared<NestedFunction>(field.second,
                                                                                problem_.gridView(), problem_.vertexMapper(),
-                                                                               vectorFields_[i].first, dim, dimWorld));
+                                                                               field.first, dim, dimWorld));
             }
             else
                 DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk vector field!");
@@ -415,8 +415,8 @@ private:
     std::vector<PriVarVectorDataInfo> priVarVectorDataInfo_;
     std::vector<SecondVarScalarDataInfo> secondVarScalarDataInfo_;
 
-    std::vector<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
-    std::vector<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
+    std::list<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
+    std::list<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
 };
 
 } // end namespace Dumux
