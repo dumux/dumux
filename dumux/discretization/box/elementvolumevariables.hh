@@ -128,13 +128,16 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
+        // get the solution at the dofs of the element
+        auto elemSol = globalVolVars().problem_().model().elementSolution(element, sol);
+
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
         {
             // TODO: INTERFACE SOLVER
             // globalVolVars().problem_().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
-            volumeVariables_[scv.index()].update(sol[scv.dofIndex()], globalVolVars().problem_(), element, scv);
+            volumeVariables_[scv.index()].update(elemSol, globalVolVars().problem_(), element, scv);
         }
     }
 

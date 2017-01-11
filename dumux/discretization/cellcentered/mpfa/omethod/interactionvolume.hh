@@ -432,12 +432,13 @@ private:
             auto posLocalScvIdx = localScvf.insideLocalScvIndex();
             auto&& posLocalScv = localScv_(posLocalScvIdx);
             auto&& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
+            auto&& posVolVars = elemVolVars_()[posGlobalScv];
             auto element = localElement_(posLocalScvIdx);
-            auto tensor = getTensor(element, elemVolVars_()[posGlobalScv], posGlobalScv);
+            auto tensor = getTensor(element, posVolVars, posGlobalScv);
 
             // the omega factors of the "positive" sub volume
             auto posWijk = calculateOmegas_(posLocalScv, localScvf.unitOuterNormal(), localScvf.area(), tensor);
-            posWijk *= problem_().boxExtrusionFactor(element, posGlobalScv);
+            posWijk *= posVolVars.extrusionFactor();
 
             // Check the local directions of the positive sub volume
             for (int localDir = 0; localDir < dim; localDir++)
@@ -484,8 +485,9 @@ private:
                 {
                     auto&& negLocalScv = localScv_(negLocalScvIdx);
                     auto&& negGlobalScv = fvGeometry_().scv(negLocalScv.globalIndex());
+                    auto&& negVolVars = elemVolVars_()[negGlobalScv];
                     auto negElement = localElement_(negLocalScvIdx);
-                    auto negTensor = getTensor(negElement, elemVolVars_()[negGlobalScv], negGlobalScv);
+                    auto negTensor = getTensor(negElement, negVolVars, negGlobalScv);
 
                     // the omega factors of the "negative" sub volume
                     DimVector negWijk;
@@ -503,7 +505,7 @@ private:
                         negWijk = calculateOmegas_(negLocalScv, localScvf.unitOuterNormal(), localScvf.area(), negTensor);
 
                     // scale by extrusion factpr
-                    negWijk *= problem_().boxExtrusionFactor(negElement, negGlobalScv);
+                    negWijk *= negVolVars.extrusionFactor();
 
                     // Check local directions of negative sub volume
                     for (int localDir = 0; localDir < dim; localDir++)
@@ -564,12 +566,13 @@ private:
             auto posLocalScvIdx = localScvf.insideLocalScvIndex();
             auto&& posLocalScv = localScv_(posLocalScvIdx);
             auto&& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
+            auto&& posVolVars = elemVolVars_()[posGlobalScv];
             auto element = localElement_(posLocalScvIdx);
-            auto tensor = getTensor(element, elemVolVars_()[posGlobalScv], posGlobalScv);
+            auto tensor = getTensor(element, posVolVars, posGlobalScv);
 
             // the omega factors of the "positive" sub volume
             auto posWijk = calculateOmegas_(posLocalScv, localScvf.unitOuterNormal(), localScvf.area(), tensor);
-            posWijk *= problem_().boxExtrusionFactor(element, posGlobalScv);
+            posWijk *= posVolVars.extrusionFactor();
 
             for (int localDir = 0; localDir < dim; localDir++)
             {

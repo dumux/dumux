@@ -136,7 +136,9 @@ public:
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(problem.model().curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, problem.model().curSol());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
+
+            auto curElemSol = problem.model().elementSolution(element, curSol);
 
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -148,10 +150,10 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    elemVolVars[dofIdxGlobal].update(curSol[dofIdxGlobal], problem, element, scv);
-                    const auto& globalPos = scv.dofPosition();
+                    auto&& volVars = elemVolVars[scv];
+                    volVars.update(curElemSol, problem, element, scv);
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], elemVolVars[dofIdxGlobal], dofIdxGlobal, globalPos))
+                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
                         switched = true;
 
                 }
@@ -178,6 +180,8 @@ public:
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
+            auto curElemSol = problem.model().elementSolution(element, curSol);
+
             auto& curGlobalVolVars = problem.model().nonConstCurGlobalVolVars();
 
             for (auto&& scv : scvs(fvGeometry))
@@ -190,10 +194,10 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    curGlobalVolVars.volVars(dofIdxGlobal).update(curSol[dofIdxGlobal], problem, element, scv);
-                    const auto& globalPos = scv.dofPosition();
+                    auto&& volVars = curGlobalVolVars.volVars(scv);
+                    volVars.update(curElemSol, problem, element, scv);
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], curGlobalVolVars.volVars(dofIdxGlobal), dofIdxGlobal, globalPos))
+                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
                         switched = true;
 
                 }

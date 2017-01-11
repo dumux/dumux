@@ -103,58 +103,107 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     // the parent class needs to access the variable switch
     friend typename GET_PROP_TYPE(TypeTag, BaseModel);
-
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    enum {
+    // privar indices
+    enum
+    {
             pressureIdx = Indices::pressureIdx,
             switchIdx = Indices::switchIdx
     };
-    enum {
+    // phase indices
+    enum
+    {
             wPhaseIdx = Indices::wPhaseIdx,
             nPhaseIdx = Indices::nPhaseIdx
     };
-    enum {
+    // component indices
+    enum
+    {
             wCompIdx = FluidSystem::wCompIdx,
             nCompIdx = FluidSystem::nCompIdx
     };
-    enum {
+    // phase state indices
+    enum
+    {
             wPhaseOnly = Indices::wPhaseOnly,
             nPhaseOnly = Indices::nPhaseOnly,
             bothPhases = Indices::bothPhases
     };
-    enum {
+    // formulation indices
+    enum
+    {
             pwsn = TwoPNCFormulation::pwsn,
             pnsw = TwoPNCFormulation::pnsw,
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CoordScalar = typename GridView::ctype;
-    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
+    /*!
+     * \brief Apply the initial conditions to the model.
+     *
+     * \param problem The object representing the problem which needs to
+     *             be simulated.
+     */
+    void init(Problem& problem)
+    {
+        ParentType::init(problem);
+
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addSecondaryVariable("Sg", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("Sl", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pg", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pl", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pc", [](const VolumeVariables& v){ return v.capillaryPressure(); });
+        vtkOutputModule.addSecondaryVariable("rhoL", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhoG", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobL", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobG", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
+        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+
+        vtkOutputModule.addSecondaryVariable("Kxx",
+                                             [this](const VolumeVariables& v){ return this->perm_(v.permeability())[0][0]; });
+        if (dim >= 2)
+            vtkOutputModule.addSecondaryVariable("Kyy",
+                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[1][1]; });
+        if (dim >= 3)
+            vtkOutputModule.addSecondaryVariable("Kzz",
+                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[2][2]; });
+
+        for (int i = 0; i < numPhases; ++i)
+            for (int j = 0; j < numComponents; ++j)
+                vtkOutputModule.addSecondaryVariable("x" + FluidSystem::componentName(j) + FluidSystem::phaseName(i),
+                                                     [i,j](const VolumeVariables& v){ return v.moleFraction(i,j); });
+
+        for (int j = 0; j < numComponents; ++j)
+            vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(j),
+                                                 [j](const VolumeVariables& v){ return v.molarity(wPhaseIdx,j); });
+    }
+
+
+
     /*!
      * \brief One Newton iteration was finished.
      * \param uCurrent The solution after the current Newton iteration
@@ -240,164 +289,7 @@ public:
      *        at least one dof after the last timestep.
      */
     bool switched() const
-    {
-        return switchFlag_;
-    }
-
-    /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
-     *
-     * \param sol The solution vector
-     * \param writer The writer for multi-file VTK datasets
-     */
-    template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol,
-                            MultiWriter &writer)
-    {
-
-        using ScalarField = Dune::BlockVector<Dune::FieldVector<double, 1> >;
-        // using VectorField = Dune::BlockVector<Dune::FieldVector<double, dim>>;
-
-        // get the number of degrees of freedom
-        auto numDofs = this->numDofs();
-
-        ScalarField *Sg            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *Sl            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pg            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pl            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pc            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoL          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoG          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobL          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobG          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *temperature   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *poro          = writer.allocateManagedBuffer (numDofs);
-        // VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
-        // VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
-        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-
-        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        // {
-        //     // initialize velocity fields
-        //     for (unsigned int i = 0; i < numDofs; ++i)
-        //     {
-        //         (*velocityN)[i] = Scalar(0);
-        //         (*velocityW)[i] = Scalar(0);
-        //     }
-        // }
-
-        ScalarField *moleFraction[numPhases][numComponents];
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                moleFraction[i][j] = writer.allocateManagedBuffer(numDofs);
-
-        ScalarField *molarity[numComponents];
-        for (int j = 0; j < numComponents ; ++j)
-            molarity[j] = writer.allocateManagedBuffer(numDofs);
-
-        ScalarField *Perm[dim];
-        for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
-            Perm[j] = writer.allocateManagedBuffer(numDofs);
-
-        auto numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer (numElements);
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-            auto eIdxGlobal = this->problem_().elementMapper().index(element);
-            (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
-
-            auto fvGeometry = localView(this->globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(this->curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->curSol());
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
-                auto dofIdxGlobal = scv.dofIndex();
-
-                (*Sg)[dofIdxGlobal]             = volVars.saturation(nPhaseIdx);
-                (*Sl)[dofIdxGlobal]             = volVars.saturation(wPhaseIdx);
-                (*pg)[dofIdxGlobal]             = volVars.pressure(nPhaseIdx);
-                (*pl)[dofIdxGlobal]             = volVars.pressure(wPhaseIdx);
-                (*pc)[dofIdxGlobal]             = volVars.capillaryPressure();
-                (*rhoL)[dofIdxGlobal]           = volVars.density(wPhaseIdx);
-                (*rhoG)[dofIdxGlobal]           = volVars.density(nPhaseIdx);
-                (*mobL)[dofIdxGlobal]           = volVars.mobility(wPhaseIdx);
-                (*mobG)[dofIdxGlobal]           = volVars.mobility(nPhaseIdx);
-                (*poro)[dofIdxGlobal]           = volVars.porosity();
-                (*temperature)[dofIdxGlobal]    = volVars.temperature();
-
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= volVars.moleFraction(phaseIdx,compIdx);
-
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    (*molarity[compIdx])[dofIdxGlobal] = (volVars.molarity(wPhaseIdx, compIdx));
-
-                auto K = perm_(this->problem_().spatialParams().intrinsicPermeability(scv, volVars));
-
-                for (int j = 0; j<dim; ++j)
-                    (*Perm[j])[dofIdxGlobal] = K[j][j];
-            };
-
-            // // velocity output
-            // if(velocityOutput.enableOutput()){
-            //     velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-            //     velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
-            // }
-
-        } // loop over element
-
-        writer.attachDofData(*Sg, "Sg", isBox);
-        writer.attachDofData(*Sl, "Sl", isBox);
-        writer.attachDofData(*pg, "pg", isBox);
-        writer.attachDofData(*pl, "pl", isBox);
-        writer.attachDofData(*pc, "pc", isBox);
-        writer.attachDofData(*rhoL, "rhoL", isBox);
-        writer.attachDofData(*rhoG, "rhoG", isBox);
-        writer.attachDofData(*mobL, "mobL", isBox);
-        writer.attachDofData(*mobG, "mobG", isBox);
-        writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*temperature, "temperature", isBox);
-        writer.attachDofData(*Perm[0], "Kxx", isBox);
-        if (dim >= 2)
-            writer.attachDofData(*Perm[1], "Kyy", isBox);
-        if (dim == 3)
-            writer.attachDofData(*Perm[2], "Kzz", isBox);
-
-        for (int i = 0; i < numPhases; ++i)
-        {
-            for (int j = 0; j < numComponents; ++j)
-            {
-                std::ostringstream oss;
-                oss << "x"
-                    << FluidSystem::componentName(j)
-                    << FluidSystem::phaseName(i);
-                writer.attachDofData(*moleFraction[i][j], oss.str(), isBox);
-            }
-        }
-
-        for (int j = 0; j < numComponents; ++j)
-        {
-            std::ostringstream oss;
-            oss << "m^w_"
-                << FluidSystem::componentName(j);
-            writer.attachDofData(*molarity[j], oss.str().c_str(), isBox);
-        }
-
-        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        // {
-        //     writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
-        //     writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
-        // }
-
-        writer.attachCellData(*rank, "process rank");
-    }
+    { return switchFlag_; }
 
     /*!
      * \brief Write the current solution to a restart file.

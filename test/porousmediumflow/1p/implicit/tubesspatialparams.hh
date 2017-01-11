@@ -45,9 +45,13 @@ class TubesTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+
     TubesTestSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
@@ -71,14 +75,16 @@ public:
     }
 
     /*!
-     * \brief Function for defining the intrinsic (absolute) permeability.
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
+     * \param element The element
      * \param scv The sub control volume
-     * \param volVars The volume variables in the sub control volumes
+     * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
-    Scalar intrinsicPermeability (const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
         const Scalar radius = this->radius(scv);
         const Scalar gamma = 2; // quadratic velocity profile (Poiseuille flow)
@@ -88,10 +94,14 @@ public:
     /*!
      * \brief Returns the porosity \f$[-]\f$
      *
+     * \param element The element
      * \param scv The sub control volume
+     * \param elemSol The element solution vector
      * \return the porosity
      */
-    Scalar porosity(const SubControlVolume &scv) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
     { return 1.0; }
 
 private:

@@ -311,6 +311,15 @@ public:
         heatConductionTij_ = interactionVolume.getTransmissibilities(localFaceData);
     }
 
+    // update cached objects for heat conduction
+    template<typename InteractionVolume>
+    void updateHeatNeumannFlux(const SubControlVolumeFace &scvf,
+                               const InteractionVolume& interactionVolume)
+    {
+        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
+        heatNeumannFlux_ = interactionVolume.getNeumannFlux(localFaceData);
+    }
+
     //! Returns the volume variables indices necessary for heat conduction flux
     //! computation. This includes all participating boundary volume variables
     //! and it can be different for the phases & components.

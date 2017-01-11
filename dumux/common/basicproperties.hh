@@ -32,7 +32,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/io/gridcreator.hh>
-#include <dumux/io/vtkmultiwriter.hh>
 
 namespace Dumux
 {
@@ -91,9 +90,6 @@ NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 
 //! Property to define the output level
 NEW_PROP_TAG(VtkOutputLevel);
-
-//! the type of VTK Writer to be used, i.e. ascii or binary (Dune::VTK::appendraw) format
-NEW_PROP_TAG(VtkMultiWriter);
 
 ///////////////////////////////////
 // Default values for properties:
@@ -158,15 +154,6 @@ SET_TYPE_PROP(NumericModel, PointSourceHelper, BoundingBoxTreePointSourceHelper<
 
 //! Set default output level to 0 -> only primary variables are added to output
 SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
-
-//! set the VtkMultiWriter such that it uses the ascii format by default
-SET_PROP(NumericModel, VtkMultiWriter)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-public:
-    typedef VtkMultiWriter<GridView> type;
-};
 
 } // namespace Properties
 } // namespace Dumux

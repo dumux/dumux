@@ -27,7 +27,8 @@
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
 #define DUMUX_ONEP_TWOC_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
+
 #include "properties.hh"
 
 namespace Dumux
@@ -73,90 +74,43 @@ namespace Dumux
 template<class TypeTag >
 class OnePTwoCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
     static const int phaseIdx = Indices::phaseIdx;
-    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
+
     /*!
-     * \brief \copybrief ImplicitModel::addOutputVtkFields
+     * \brief Apply the initial conditions to the model.
      *
-     * Specialization for the OnePTwoCModel, adding pressure,
-     * mass and mole fractions, and the process rank to the VTK writer.
+     * \param problem The object representing the problem which needs to
+     *             be simulated.
      */
-    template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
+    void init(Problem& problem)
     {
-        // create the required scalar fields
-        unsigned numDofs = this->numDofs();
-        auto& pressure = *writer.allocateManagedBuffer(numDofs);
-        auto& delp = *writer.allocateManagedBuffer(numDofs);
-        auto& moleFraction0 = *writer.allocateManagedBuffer(numDofs);
-        auto& moleFraction1 = *writer.allocateManagedBuffer(numDofs);
-        auto& massFraction0 = *writer.allocateManagedBuffer(numDofs);
-        auto& massFraction1 = *writer.allocateManagedBuffer(numDofs);
-        auto& rho = *writer.allocateManagedBuffer(numDofs);
-        auto& mu = *writer.allocateManagedBuffer(numDofs);
+        ParentType::init(problem);
 
-        auto& velocity = *(writer.template allocateManagedBuffer<double, dimWorld>(numDofs));
-        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addSecondaryVariable("P", [](const VolumeVariables& v){ return v.pressure(phaseIdx); });
+        vtkOutputModule.addSecondaryVariable("delp", [](const VolumeVariables& v){ return v.pressure(phaseIdx) - 1.0e5; });
+        vtkOutputModule.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(phaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mu", [](const VolumeVariables& v){ return v.viscosity(phaseIdx); });
+        vtkOutputModule.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(0)),
+                                             [](const VolumeVariables& v){ return v.moleFraction(phaseIdx, 0); });
+        vtkOutputModule.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(1)),
+                                             [](const VolumeVariables& v){ return v.moleFraction(phaseIdx, 1); });
+        vtkOutputModule.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(0)),
+                                             [](const VolumeVariables& v){ return v.massFraction(phaseIdx, 0); });
+        vtkOutputModule.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(1)),
+                                             [](const VolumeVariables& v){ return v.massFraction(phaseIdx, 1); });
 
-        if (velocityOutput.enableOutput())
-            velocity = 0.0;
-
-        unsigned numElements = this->gridView_().size(0);
-        auto& rank = *writer.allocateManagedBuffer(numElements);
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-           int eIdx = this->problem_().model().elementMapper().index(element);
-
-            rank[eIdx] = this->gridView_().comm().rank();
-
-            auto fvGeometry = localView(this->globalFvGeometry());
-            fvGeometry.bind(element);
-
-            auto elemVolVars = localView(this->curGlobalVolVars());
-            elemVolVars.bind(element, fvGeometry, this->curSol());
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
-                const auto dofIdxGlobal = scv.dofIndex();
-
-                pressure[dofIdxGlobal] = volVars.pressure(phaseIdx);
-                delp[dofIdxGlobal] = volVars.pressure(phaseIdx) - 1e5;
-                moleFraction0[dofIdxGlobal] = volVars.moleFraction(phaseIdx, 0);
-                moleFraction1[dofIdxGlobal] = volVars.moleFraction(phaseIdx, 1);
-                massFraction0[dofIdxGlobal] = volVars.massFraction(phaseIdx, 0);
-                massFraction1[dofIdxGlobal] = volVars.massFraction(phaseIdx, 1);
-                rho[dofIdxGlobal] = volVars.density(phaseIdx);
-                mu[dofIdxGlobal] = volVars.viscosity(phaseIdx);
-            }
-
-            velocityOutput.calculateVelocity(velocity, elemVolVars, fvGeometry, element, phaseIdx);
-        }
-
-        writer.attachDofData(pressure, "P", isBox);
-        writer.attachDofData(delp, "delp", isBox);
-        if (velocityOutput.enableOutput())
-            writer.attachDofData(velocity,  "velocity", isBox, dim);
-
-        writer.attachDofData(moleFraction0, "x_" + std::string(FluidSystem::componentName(0)), isBox);
-        writer.attachDofData(moleFraction1, "x_" + std::string(FluidSystem::componentName(1)), isBox);
-        writer.attachDofData(massFraction0, "X_" + std::string(FluidSystem::componentName(0)), isBox);
-        writer.attachDofData(massFraction1, "X_" + std::string(FluidSystem::componentName(1)), isBox);
-
-        writer.attachDofData(rho, "rho", isBox);
-        writer.attachDofData(mu, "mu", isBox);
-        writer.attachCellData(rank, "process rank");
+        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
 };
 

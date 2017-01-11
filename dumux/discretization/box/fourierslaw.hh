@@ -99,7 +99,7 @@ public:
         outsideLambda *= outsideVolVars.extrusionFactor();
 
         // the resulting averaged diffusion tensor
-        const auto lambda = harmonicMean(insideLambda, outsideLambda);
+        const auto lambda = problem.spatialParams().harmonicMean(insideLambda, outsideLambda, scvf.unitOuterNormal());
 
         // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];

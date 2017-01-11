@@ -71,129 +71,44 @@ namespace Dumux
 template<class TypeTag >
 class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
 public:
+
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Apply the initial conditions to the model.
      *
-     *        \param sol The global solution vector
-     *        \param writer The writer for multi-file VTK datasets
+     * \param problem The object representing the problem which needs to
+     *             be simulated.
      */
-    template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol,
-                            MultiWriter &writer)
+    void init(Problem& problem)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        // typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        ParentType::init(problem);
 
-        // get the number of degrees of freedom
-        unsigned numDofs = this->numDofs();
-
-        // create the required scalar fields
-        ScalarField *pw = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pn = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pc = writer.allocateManagedBuffer(numDofs);
-        ScalarField *sw = writer.allocateManagedBuffer(numDofs);
-        ScalarField *sn = writer.allocateManagedBuffer(numDofs);
-        ScalarField *rhoW = writer.allocateManagedBuffer(numDofs);
-        ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
-        ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
-        ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
-        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
-        ScalarField *Te = writer.allocateManagedBuffer(numDofs);
-        // VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        // VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        // ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-
-        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        // {
-        //     // initialize velocity fields
-        //     for (unsigned int i = 0; i < numDofs; ++i)
-        //     {
-        //         (*velocityN)[i] = Scalar(0);
-        //         (*velocityW)[i] = Scalar(0);
-        //     }
-        // }
-
-        unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer(numElements);
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-            int eIdx = this->elementMapper().index(element);
-            (*rank)[eIdx] = this->gridView_().comm().rank();
-
-            // make sure FVElementGeometry & vol vars are bound to the element
-            auto fvGeometry = localView(this->globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(this->curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->curSol());
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto dofIdxGlobal = scv.dofIndex();
-                const auto& volVars = elemVolVars[scv];
-
-                (*pw)[dofIdxGlobal] = volVars.pressure(wPhaseIdx);
-                (*pn)[dofIdxGlobal] = volVars.pressure(nPhaseIdx);
-                (*pc)[dofIdxGlobal] = volVars.capillaryPressure();
-                (*sw)[dofIdxGlobal] = volVars.saturation(wPhaseIdx);
-                (*sn)[dofIdxGlobal] = volVars.saturation(nPhaseIdx);
-                (*rhoW)[dofIdxGlobal] = volVars.density(wPhaseIdx);
-                (*rhoN)[dofIdxGlobal] = volVars.density(nPhaseIdx);
-                (*mobW)[dofIdxGlobal] = volVars.mobility(wPhaseIdx);
-                (*mobN)[dofIdxGlobal] = volVars.mobility(nPhaseIdx);
-                (*poro)[dofIdxGlobal] = volVars.porosity();
-                (*Te)[dofIdxGlobal] = volVars.temperature();
-            }
-
-            // // velocity output
-            // velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-            // velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
-        }
-
-        writer.attachDofData(*sn, "Sn", isBox);
-        writer.attachDofData(*sw, "Sw", isBox);
-        writer.attachDofData(*pn, "pn", isBox);
-        writer.attachDofData(*pw, "pw", isBox);
-        writer.attachDofData(*pc, "pc", isBox);
-        writer.attachDofData(*rhoW, "rhoW", isBox);
-        writer.attachDofData(*rhoN, "rhoN", isBox);
-        writer.attachDofData(*mobW, "mobW", isBox);
-        writer.attachDofData(*mobN, "mobN", isBox);
-        writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*Te, "temperature", isBox);
-
-        // if (velocityOutput.enableOutput()) // check if velocity output is demanded
-        // {
-        //     writer.attachDofData(*velocityW,  "velocityW", isBox, dim);
-        //     writer.attachDofData(*velocityN,  "velocityN", isBox, dim);
-        // }
-
-        writer.attachCellData(*rank, "process rank");
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addSecondaryVariable("Sw", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("Sn", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pc", [](const VolumeVariables& v){ return v.capillaryPressure(); });
+        vtkOutputModule.addSecondaryVariable("rhoW", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhoN", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
     }
 };
-}
+
+} // end namespace Dumux
 
 #include "propertydefaults.hh"
 

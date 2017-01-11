@@ -96,9 +96,9 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static const char *phaseName(int phaseIdx)
+    static const std::string& phaseName(int phaseIdx)
     {
-        static const char *name[] = {
+        static const std::string name[] = {
             "w",
             "n"
         };
@@ -199,9 +199,9 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static const char *componentName(int compIdx)
+    static const std::string& componentName(int compIdx)
     {
-        static const char *name[] = {
+        static const std::string name[] = {
             H2O::name(),
             N2::name()
         };

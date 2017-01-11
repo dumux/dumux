@@ -34,8 +34,6 @@ namespace Properties
 {
 NEW_PROP_TAG(VtkAddVelocity);
 NEW_PROP_TAG(VtkAddProcessRank);
-NEW_PROP_TAG(VtkAddPorosity);
-NEW_PROP_TAG(VtkAddPermeability);
 }
 
 namespace Dumux
@@ -58,6 +56,7 @@ class VtkOutputModule
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
 
@@ -200,14 +199,6 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
             rank.resize(numCells);
 
-        std::vector<Scalar> porosity;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-            porosity.resize(numDofs);
-
-        std::vector<Scalar> permeability;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-            permeability.resize(numDofs);
-
         for (const auto& element : elements(problem_.gridView(), Dune::Partitions::interior))
         {
             const auto eIdxGlobal = problem_.elementMapper().index(element);
@@ -227,6 +218,7 @@ public:
 
             auto fvGeometry = localView(problem_.model().globalFvGeometry());
             auto elemVolVars = localView(problem_.model().curGlobalVolVars());
+            auto curElemSol = problem_.model().elementSolution(element, problem_.model().curSol());
 
             // If velocity output is enabled we need to bind to the whole stencil
             // otherwise element-local data is sufficient
@@ -265,13 +257,6 @@ public:
 
                 for (std::size_t i = 0; i < secondVarScalarDataInfo_.size(); ++i)
                     secondVarScalarData[i][dofIdxGlobal] = secondVarScalarDataInfo_[i].get(volVars);
-
-                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-                    porosity[dofIdxGlobal] = problem_.spatialParams().porosity(scv);
-
-                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-                    permeability[dofIdxGlobal] = problem_.spatialParams().intrinsicPermeability(scv, volVars);
-
             }
 
             // velocity output
@@ -325,40 +310,32 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
             sequenceWriter_.addCellData(rank, "process rank");
 
-        // the porosity
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity))
-            addDofDataForWriter_(sequenceWriter_, porosity, "porosity");
-
-        // the permeability
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability))
-            addDofDataForWriter_(sequenceWriter_, permeability, "permeability");
-
         // also register additional (non-standardized) user fields
-        for (std::size_t i = 0; i < scalarFields_.size(); ++i)
+        for (auto&& field : scalarFields_)
         {
-            if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(0)))
-                sequenceWriter_.addCellData(scalarFields_[i].first, scalarFields_[i].second);
-            else if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(dim)))
-                sequenceWriter_.addVertexData(scalarFields_[i].first, scalarFields_[i].second);
+            if (field.first.size() == std::size_t(problem_.gridView().size(0)))
+                sequenceWriter_.addCellData(field.first, field.second);
+            else if (field.first.size() == std::size_t(problem_.gridView().size(dim)))
+                sequenceWriter_.addVertexData(field.first, field.second);
             else
                 DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
         }
 
-        for (std::size_t i = 0; i < vectorFields_.size(); ++i)
+        for (auto&& field : vectorFields_)
         {
-            if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(0)))
+            if (field.first.size() == std::size_t(problem_.gridView().size(0)))
             {
                 using NestedFunction = VtkNestedFunction<GridView, ElementMapper, std::vector<GlobalPosition>>;
-                sequenceWriter_.addCellData(std::make_shared<NestedFunction>(vectorFields_[i].second,
+                sequenceWriter_.addCellData(std::make_shared<NestedFunction>(field.second,
                                                                              problem_.gridView(), problem_.elementMapper(),
-                                                                             vectorFields_[i].first, 0, dimWorld));
+                                                                             field.first, 0, dimWorld));
             }
-            else if (scalarFields_[i].first.size() == std::size_t(problem_.gridView().size(dim)))
+            else if (field.first.size() == std::size_t(problem_.gridView().size(dim)))
             {
                 using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
-                sequenceWriter_.addVertexData(std::make_shared<NestedFunction>(vectorFields_[i].second,
+                sequenceWriter_.addVertexData(std::make_shared<NestedFunction>(field.second,
                                                                                problem_.gridView(), problem_.vertexMapper(),
-                                                                               vectorFields_[i].first, dim, dimWorld));
+                                                                               field.first, dim, dimWorld));
             }
             else
                 DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk vector field!");
@@ -383,6 +360,41 @@ public:
         vectorFields_.clear();
     }
 
+    /*!
+     * \brief This method writes the complete state of the problem
+     *        to the harddisk.
+     *
+     * The file will start with the prefix returned by the name()
+     * method, has the current time of the simulation clock in it's
+     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
+     * file.)  See Restart for details.
+     *
+     * \tparam Restarter The serializer type
+     *
+     * \param res The serializer object
+     */
+    template <class Restarter>
+    void serialize(Restarter &res)
+    {
+        // TODO implement
+    }
+
+    /*!
+     * \brief This method restores the complete state of the problem
+     *        from disk.
+     *
+     * It is the inverse of the serialize() method.
+     *
+     * \tparam Restarter The deserializer type
+     *
+     * \param res The deserializer object
+     */
+    template <class Restarter>
+    void deserialize(Restarter &res)
+    {
+        // TODO implement
+    }
+
 private:
 
     template<typename Writer, typename... Args>
@@ -403,8 +415,8 @@ private:
     std::vector<PriVarVectorDataInfo> priVarVectorDataInfo_;
     std::vector<SecondVarScalarDataInfo> secondVarScalarDataInfo_;
 
-    std::vector<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
-    std::vector<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
+    std::list<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
+    std::list<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
 };
 
 } // end namespace Dumux

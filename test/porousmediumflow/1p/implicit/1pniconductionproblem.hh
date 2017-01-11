@@ -32,6 +32,9 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
+
 #include "1pnispatialparams.hh"
 
 namespace Dumux
@@ -94,15 +97,11 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     // copy some indices for convenience
@@ -126,9 +125,6 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
@@ -155,33 +151,28 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
     {
-        //Here we calculate the analytical solution
-        auto numDofs = this->model().numDofs();
-
-        auto& temperatureExact = *(this->resultWriter().allocateManagedBuffer(numDofs));
-        auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
+        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
         const auto someElement = *(elements(this->gridView()).begin());
-        const auto initialPriVars = initial_(GlobalPosition(0.0));
+        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        const auto someInitSol = initial_(someElement.geometry().center());
 
         auto someFvGeometry = localView(this->model().globalFvGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
-        volVars.update(initialPriVars, *this, someElement, someScv);
+        volVars.update(someElemSol, *this, someElement, someScv);
 
-        const auto porosity = this->spatialParams().porosity(someScv);
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
         const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv);
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, someFvGeometry, someScv);
@@ -197,14 +188,12 @@ public:
                 auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
-                temperatureExact[globalIdx] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
+                temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
                                               *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
-                temperature[globalIdx] = this->model().curSol()[globalIdx][temperatureIdx];
             }
         }
-        this->resultWriter().attachDofData(temperatureExact, "temperatureExact", isBox);
-        this->resultWriter().attachDofData(temperature, "temperature", isBox);
     }
+
     /*!
      * \name Problem parameters
      */
@@ -281,20 +270,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.

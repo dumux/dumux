@@ -55,6 +55,9 @@ class OnePTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -78,23 +81,24 @@ class OnePTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
 public:
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
         //calculate all secondary variables from the primary variables and store results in fluidstate
-        completeFluidState(priVars, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
-        porosity_ = problem.spatialParams().porosity(scv);
-        dispersivity_ = problem.spatialParams().dispersivity(element, scv);
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -107,25 +111,22 @@ public:
                                                              phaseIdx,
                                                              phaseCompIdx,
                                                              transportCompIdx);
-
-        Valgrind::CheckDefined(porosity_);
-        Valgrind::CheckDefined(dispersivity_);
-        Valgrind::CheckDefined(diffCoeff_);
     }
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector &elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume &scv,
                                    FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(priVars, problem, element, scv);
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
         fluidState.setSaturation(phaseIdx, 1.);
 
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
         if(useMoles)
@@ -272,9 +273,16 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
+    /*!
+     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     */
+    PermeabilityType permeability() const
+    { return permeability_; }
+
 protected:
     Scalar porosity_;    //!< Effective porosity within the control volume
     GlobalPosition dispersivity_;
+    PermeabilityType permeability_;
     Scalar diffCoeff_;
     FluidState fluidState_;
 

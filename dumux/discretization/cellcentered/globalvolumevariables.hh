@@ -53,6 +53,7 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -75,7 +76,10 @@ public:
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(sol[scv.dofIndex()], problem, element, scv);
+                volumeVariables_[scv.index()].update(problem.model().elementSolution(element, sol),
+                                                     problem,
+                                                     element,
+                                                     scv);
 
             // handle the boundary volume variables
             for (auto&& scvf : scvfs(fvGeometry))
@@ -90,9 +94,12 @@ public:
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = problem.dirichlet(element, scvf);
+                    const ElementSolution dirichletPriVars({problem.dirichlet(element, scvf)});
 
-                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars, problem, element, insideScv);
+                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
+                                                                  problem,
+                                                                  element,
+                                                                  insideScv);
                 }
             }
         }

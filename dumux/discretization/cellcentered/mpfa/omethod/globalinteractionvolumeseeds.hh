@@ -67,7 +67,7 @@ public:
         // reserve memory
         const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
         const auto numBoundaryVertices = this->problem().model().globalFvGeometry().numBoundaryVertices();
-        const auto numInteriorVertices = this->gridView().size(dim) - numBoundaryVertices;
+        const int numInteriorVertices = this->gridView().size(dim) - numBoundaryVertices;
 
         if (numInteriorVertices > 0)
             seeds.reserve(numInteriorVertices);

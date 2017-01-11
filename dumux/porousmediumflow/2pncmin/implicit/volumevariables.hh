@@ -58,7 +58,7 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
@@ -115,17 +115,18 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
         // Update parent type (also completes the fluid state)
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
         /////////////
         // calculate the remaining quantities
         /////////////
+        auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -145,12 +146,6 @@ public:
         // porosity value, as the porous media media properties change related to salt precipitation will not be
         // accounted otherwise.
 
-        // overwrite porosity
-        // porosity evaluation
-        auto initialPorosity = problem.spatialParams().porosity(scv);
-        auto minimumPorosity = problem.spatialParams().porosityMin(scv);
-        this->porosity_ = std::max(minimumPorosity, std::max(0.0, initialPorosity - sumPrecipitates_));
-
         salinity_= 0.0;
         moleFractionSalinity_ = 0.0;
         for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
@@ -167,17 +162,18 @@ public:
      * \copydoc ImplicitModel::completeFluidState
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
 
     {
-        Scalar t = BaseType::temperature(priVars, problem, element, scv);
+        Scalar t = BaseType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
         auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
+        auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
 
         /////////////
         // set the saturations
@@ -214,7 +210,7 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         auto pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures

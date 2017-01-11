@@ -29,7 +29,6 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
-#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include "newtonconvergencewriter.hh"
@@ -166,9 +165,8 @@ public:
      * \brief Constructor
      */
     NewtonController(const Problem &problem)
-    : endIterMsgStream_(std::ostringstream::out)
-    , convergenceWriter_(asImp_())
-    , linearSolver_(problem)
+    : endIterMsgStream_(std::ostringstream::out),
+      linearSolver_(problem)
     {
         enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
@@ -300,7 +298,11 @@ public:
         numSteps_ = 0;
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
-            convergenceWriter_.beginTimestep();
+        {
+            if (!convergenceWriter_)
+                convergenceWriter_ = std::make_unique<ConvergenceWriter>(asImp_(), problem_().gridView());
+            convergenceWriter_->advanceTimeStep();
+        }
     }
 
     /*!
@@ -495,10 +497,7 @@ public:
      *        of equations.
      */
     void newtonEnd()
-    {
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
-            convergenceWriter_.endTimestep();
-    }
+    {}
 
     /*!
      * \brief Called if the Newton method broke down.
@@ -632,10 +631,10 @@ protected:
     void writeConvergence_(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence)) {
-            convergenceWriter_.beginIteration(this->gridView_());
-            convergenceWriter_.writeFields(uLastIter, deltaU);
-            convergenceWriter_.endIteration();
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
+        {
+            convergenceWriter_->advanceIteration();
+            convergenceWriter_->write(uLastIter, deltaU);
         }
     }
 
@@ -670,7 +669,7 @@ protected:
     NewtonMethod *method_;
     bool verbose_;
 
-    ConvergenceWriter convergenceWriter_;
+    std::unique_ptr<ConvergenceWriter> convergenceWriter_;
 
     // shift criterion variables
     Scalar shift_;

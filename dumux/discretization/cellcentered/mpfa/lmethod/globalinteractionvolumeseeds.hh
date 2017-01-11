@@ -64,8 +64,10 @@ public:
         // reserve memory
         const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
         const auto numBoundaryScvf = this->problem().model().globalFvGeometry().numBoundaryScvf();
+        const int numInteriorScvf = (numScvf-numBoundaryScvf)/2;
 
-        seeds.reserve( std::size_t((numScvf-numBoundaryScvf)/2) );
+        if (numInteriorScvf > 0)
+            seeds.reserve( numInteriorScvf );
         boundarySeeds.reserve(numBoundaryScvf);
         scvfIndexMap.resize(numScvf);
 

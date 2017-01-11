@@ -45,13 +45,17 @@ class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+
+    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
 
@@ -60,31 +64,34 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
         // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     };
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector &elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(priVars, problem, element, scv);
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+
         fluidState.setTemperature(t);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
@@ -162,6 +169,12 @@ public:
     { return porosity_; }
 
     /*!
+     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     */
+    PermeabilityType permeability() const
+    { return permeability_; }
+
+    /*!
      * \brief Return the fluid state of the control volume.
      */
     const FluidState &fluidState() const
@@ -170,6 +183,7 @@ public:
 protected:
     FluidState fluidState_;
     Scalar porosity_;
+    PermeabilityType permeability_;
 
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

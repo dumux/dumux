@@ -47,38 +47,38 @@ NEW_PROP_TAG(MaterialLawParams);
 template<class TypeTag>
 class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
-    enum {
-        dimWorld = GridView::dimensionworld
-    };
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
     ImplicitSpatialParams(const Problem &problem, const GridView &gridView)
-    :ImplicitSpatialParamsOneP<TypeTag>(problem, gridView)
-    { }
+    : ImplicitSpatialParamsOneP<TypeTag>(problem, gridView)
+    {}
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const SubControlVolume &scv) const
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
     {
-            return asImp_().materialLawParamsAtPos(scv.dofPosition());
+        return asImp_().materialLawParamsAtPos(scv.center());
     }
 
     /*!

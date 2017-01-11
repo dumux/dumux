@@ -239,7 +239,7 @@ public:
                         continue;
 
                     // store info on which vertices are on the domain boundary
-                    if (boundary)
+                    if (boundary && !boundaryVertices_[vIdxGlobal])
                     {
                         boundaryVertices_[vIdxGlobal] = true;
                         numBoundaryVertices_++;
@@ -573,7 +573,7 @@ public:
                         continue;
 
                     // store info on which vertices are on the domain boundary
-                    if (boundary)
+                    if (boundary && !boundaryVertices_[vIdxGlobal])
                     {
                         boundaryVertices_[vIdxGlobal] = true;
                         numBoundaryVertices_++;

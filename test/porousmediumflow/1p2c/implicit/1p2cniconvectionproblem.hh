@@ -141,7 +141,9 @@ class OnePTwoCNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static const int dofCodim = isBox ? dimWorld : 0;
 
 public:
     OnePTwoCNIConvectionProblem(TimeManager &timeManager, const GridView &gridView)
@@ -171,57 +173,48 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
     {
-        unsigned numDofs = this->model().numDofs();
-        //create required scalar fields
-        auto& temperature = *(this->resultWriter().allocateManagedBuffer(numDofs));
-        auto& temperatureExact = *(this->resultWriter().allocateManagedBuffer(numDofs));
+        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
-        // get the first element to initialize the constant volume variables
         const auto someElement = *(elements(this->gridView()).begin());
-        const auto initialPriVars = initial_(GlobalPosition(0.0));
+        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
 
         auto someFvGeometry = localView(this->model().globalFvGeometry());
         someFvGeometry.bindElement(someElement);
-        const auto& someScv = *(scvs(someFvGeometry).begin());
+        const auto someScv = *(scvs(someFvGeometry).begin());
 
         VolumeVariables volVars;
-        volVars.update(initialPriVars, *this, someElement, someScv);
+        volVars.update(someElemSol, *this, someElement, someScv);
 
-        Scalar porosity = this->spatialParams().porosity(someScv);
-        Scalar densityW = volVars.density();
-        Scalar heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-        Scalar storageW =  densityW*heatCapacityW*porosity;
-        Scalar densityS = this->spatialParams().solidDensity(someElement, someScv);
-        Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv);
-        Scalar storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
-        std::cout<<"storage: "<<storageTotal<<std::endl;
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
+        const auto densityW = volVars.density();
+        const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        const auto storageW =  densityW*heatCapacityW*porosity;
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
+        std::cout << "storage: " << storageTotal << '\n';
 
-        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-        Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
-        std::cout<<"retarded velocity: "<<retardedFrontVelocity<<std::endl;
+        const Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
+        std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
         for (const auto& element : elements(this->gridView()))
         {
-
             auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
-                int dofIdxGlobal = scv.dofIndex();
+                auto dofIdxGlobal = scv.dofIndex();
                 auto dofPosition = scv.dofPosition();
-                temperature[dofIdxGlobal] = this->model().curSol()[dofIdxGlobal][temperatureIdx];
                 temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
-        this->resultWriter().attachDofData(temperature, "temperature", isBox);
-        this->resultWriter().attachDofData(temperatureExact, "temperatureExact", isBox);
     }
+
     /*!
      * \name Problem parameters
      */
@@ -304,20 +297,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(0.0); }
 
     /*!
      * \brief Evaluate the initial value for a control volume.

@@ -55,9 +55,11 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
@@ -110,21 +112,20 @@ public:
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
-     * \param priVars The primary Variables
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
-        Implementation::completeFluidState(priVars, problem, element, scv, fluidState_);
+        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
         /////////////
-        const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -158,26 +159,26 @@ public:
             }
         }
 
-        // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
+        // porosity & permeability
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
-     * \param isOldSol Specifies whether this is the previous solution or the current one
-     * \param priVars The primary Variables
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
 
     {
-        Scalar t = ParentType::temperature(priVars, problem, element, scv);
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
         auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
+        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         /////////////
         // set the saturations
@@ -214,7 +215,7 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         auto pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures
@@ -414,9 +415,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
-    {
-        return fluidState_.pressure(phaseIdx);
-    }
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Returns temperature inside the sub-control volume.
@@ -435,9 +434,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar mobility(int phaseIdx) const
-    {
-        return mobility_[phaseIdx];
-    }
+    { return mobility_[phaseIdx]; }
 
     /*!
      * \brief Returns the effective capillary pressure within the control volume
@@ -451,6 +448,12 @@ public:
      */
     Scalar porosity() const
     { return porosity_; }
+
+    /*!
+     * \brief Returns the permeability within the control volume.
+     */
+    PermeabilityType permeability() const
+    { return permeability_; }
 
 
     /*!
@@ -482,9 +485,7 @@ public:
       * \param compIdx the index of the component
       */
      Scalar massFraction(int phaseIdx, int compIdx) const
-     {
-        return fluidState_.massFraction(phaseIdx, compIdx);
-     }
+     { return fluidState_.massFraction(phaseIdx, compIdx); }
 
      /*!
       * \brief Returns the mole fraction of a component in the phase
@@ -493,13 +494,12 @@ public:
       * \param compIdx the index of the component
       */
      Scalar moleFraction(int phaseIdx, int compIdx) const
-     {
-        return fluidState_.moleFraction(phaseIdx, compIdx);
-     }
+     { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
 protected:
-    Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
+    Scalar porosity_;               //!< Effective porosity within the control volume
+    PermeabilityType permeability_; //!> Effective permeability within the control volume
+    Scalar mobility_[numPhases];    //!< Effective mobility within the control volume
     Scalar density_;
     FluidState fluidState_;
 

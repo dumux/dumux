@@ -10,6 +10,5 @@ install(FILES
   plotmateriallaw3p.hh
   plotthermalconductivitymodel.hh
   restart.hh
-  vtkmultiwriter.hh
   vtknestedfunction.hh
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)

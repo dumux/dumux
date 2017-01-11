@@ -141,7 +141,7 @@ private:
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
         auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-        Scalar ti = calculateOmega_(problem, element, scvf, insideLambda, insideScv);
+        Scalar ti = calculateOmega_(scvf, insideLambda, insideScv, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
@@ -164,9 +164,9 @@ private:
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*calculateOmega_(problem, outsideElement, scvf, outsideLambda, outsideScv);
+                tj = -1.0*calculateOmega_(scvf, outsideLambda, outsideScv, outsideVolVars.extrusionFactor());
             else
-                tj = calculateOmega_(problem, outsideElement, fvGeometry.flipScvf(scvf.index()), outsideLambda, outsideScv);
+                tj = calculateOmega_(fvGeometry.flipScvf(scvf.index()), outsideLambda, outsideScv, outsideVolVars.extrusionFactor());
 
             // check for division by zero!
             if (ti*tj <= 0.0)
@@ -178,11 +178,10 @@ private:
         return tij;
     }
 
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const Element& element,
-                                  const SubControlVolumeFace& scvf,
-                                  const DimWorldMatrix &lambda,
-                                  const SubControlVolume &scv)
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
+                                  const DimWorldMatrix& lambda,
+                                  const SubControlVolume& scv,
+                                  Scalar extrusionFactor)
     {
         GlobalPosition lambdaNormal;
         lambda.mv(scvf.unitOuterNormal(), lambdaNormal);
@@ -192,25 +191,20 @@ private:
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = lambdaNormal * distanceVector;
-        omega *= problem.boxExtrusionFactor(element, scv);
-
-        return omega;
+        return omega*extrusionFactor;
     }
 
-    static Scalar calculateOmega_(const Problem& problem,
-                                  const Element& element,
-                                  const SubControlVolumeFace& scvf,
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
                                   Scalar lambda,
-                                  const SubControlVolume &scv)
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
     {
         auto distanceVector = scvf.ipGlobal();
         distanceVector -= scv.center();
         distanceVector /= distanceVector.two_norm2();
 
         Scalar omega = lambda * (distanceVector * scvf.unitOuterNormal());
-        omega *= problem.boxExtrusionFactor(element, scv);
-
-        return omega;
+        return omega*extrusionFactor;
     }
 };
 
