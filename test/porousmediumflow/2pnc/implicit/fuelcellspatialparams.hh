@@ -74,33 +74,26 @@ template<class TypeTag>
 class FuelCellSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename Grid::ctype;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-
-        wPhaseIdx = FluidSystem::wPhaseIdx
-    };
-
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
-    using DimVector = Dune::FieldVector<CoordScalar,dim>;
-    using DimMatrix = Dune::FieldMatrix<CoordScalar,dim,dim>;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
+
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using PermeabilityType = DimWorldMatrix;
 
     /*!
      * \brief The constructor
@@ -129,51 +122,36 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the hydraulic conductivity \f$[m^2]\f$
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const DimMatrix intrinsicPermeability(const SubControlVolume& scv,
-                                          const VolumeVariables& volVars) const
+    DimWorldMatrix permeabilityAtPos(const GlobalPosition& globalPos) const
     { return K_; }
 
     /*!
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param globalPos The global position
      */
-    Scalar porosity(const SubControlVolume& scv) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.dofPosition();
-
-        if (globalPos[1]<eps_)
+        if (globalPos[1] < eps_)
             return porosity_;
         else
             return 0.2;
-
     }
 
     /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const SubControlVolume& scv) const
-    {
-        return materialParams_;
-    }
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    { return materialParams_; }
 
 private:
-    DimMatrix K_;
+    DimWorldMatrix K_;
     Scalar porosity_;
     Scalar eps_;
     MaterialLawParams materialParams_;

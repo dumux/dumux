@@ -28,8 +28,8 @@
 #include <dumux/porousmediumflow/2pnc/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/constants.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
+#include <dumux/io/vtkoutputmodule.hh>
 
 #include "fuelcellspatialparams.hh"
 
@@ -79,31 +79,41 @@ template <class TypeTag>
 class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    // Select the electrochemistry method
+    using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
 
     enum
     {
         numComponents = FluidSystem::numComponents,
         numSecComponents = FluidSystem::numSecComponents,
     };
+    // phase indices
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
+    // component indices
     enum
     {
         wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
         nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
     };
+    // privar indices
     enum
     {
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
@@ -111,20 +121,11 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    // Select the electrochemistry method
-    using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
-    using Constant = Constants<Scalar>;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 public:
     /*!
@@ -208,7 +209,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
-     * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -226,8 +226,6 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -246,30 +244,6 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann
-     *        boundary segment in dependency on the current solution.
-     *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
-     * \param elemVolVars All volume variables for the element
-     *
-     * This method is used for cases, when the Neumann condition depends on the
-     * solution and requires some quantities that are specific to the fully-implicit method.
-     * The \a values store the mass flux of each phase normal to the boundary.
-     * Negative values indicate an inflow.
-     */
-     PrimaryVariables neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolvars,
-                             const SubControlVolumeFace& scvFace) const
-     { return PrimaryVariables(0.0); }
-
-    /*!
      * \name Volume terms
      */
 
@@ -277,40 +251,29 @@ public:
     /*!
      * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        return initial_(globalPos);
-    }
+    { return initial_(globalPos); }
 
     /*!
      * \brief Return the initial phase state inside a sub control volume.
      *
-     * \param element The element of the sub control volume
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The sub control volume index
+     * \param scv The sub control volume
      */
 
     int initialPhasePresence(const SubControlVolume& scv) const
-    {
-        return Indices::bothPhases;
-    }
+    { return Indices::bothPhases; }
 
     /*!
-     * \brief Add problem specific vtk output for the electrochemistry
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
     {
-        // get the number of degrees of freedom
-        auto numDofs = this->model().numDofs();
-
         // create the required scalar fields
-        auto& currentDensity = *(this->resultWriter().allocateManagedBuffer (numDofs));
-        auto& reactionSourceH2O = *(this->resultWriter().allocateManagedBuffer (numDofs));
-        auto& reactionSourceO2 = *(this->resultWriter().allocateManagedBuffer (numDofs));
+        auto& currentDensity = outputModule.createScalarField("currentDensity [A/cm^2]", dofCodim);
+        auto& reactionSourceH2O = outputModule.createScalarField("reactionSourceH2O [mol/(sm^2)]", dofCodim);
+        auto& reactionSourceO2 = outputModule.createScalarField("reactionSourceO2 [mol/(sm^2)]", dofCodim);
 
         for (const auto& element : elements(this->gridView()))
         {
@@ -347,10 +310,6 @@ public:
                 }
             }
         }
-
-        this->resultWriter().attachDofData(reactionSourceH2O, "reactionSourceH2O [mol/(sm^2)]", isBox);
-        this->resultWriter().attachDofData(reactionSourceO2, "reactionSourceO2 [mol/(sm^2)]", isBox);
-        this->resultWriter().attachDofData(currentDensity, "currentDensity [A/cm^2]", isBox);
     }
 
 private:

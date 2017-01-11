@@ -178,7 +178,7 @@ public:
         fluidState.setTemperature(t);
 
         auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
-        auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
+        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         /////////////
         // set the saturations
@@ -215,7 +215,7 @@ public:
         /////////////
 
         // calculate capillary pressure
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         auto pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures
