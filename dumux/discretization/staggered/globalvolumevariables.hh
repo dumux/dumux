@@ -55,6 +55,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using IndexType = typename GridView::IndexSet::IndexType;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -64,6 +65,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
 
@@ -82,7 +84,11 @@ public:
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(sol[cellCenterIdx][scv.dofIndex()], problem, element, scv);
+            {
+                PrimaryVariables priVars(0.0);
+                priVars[cellCenterIdx] = sol[cellCenterIdx][scv.dofIndex()];
+                volumeVariables_[scv.index()].update(priVars, problem, element, scv);
+            }
 
             // handle the boundary volume variables
             for (auto&& scvf : scvfs(fvGeometry))
@@ -95,14 +101,14 @@ public:
                 const auto insideScvIdx = scvf.insideScvIdx();
                 const auto& insideScv = fvGeometry.scv(insideScvIdx);
 
-                auto boundaryPriVars = CellCenterPrimaryVariables(0.0);
+                PrimaryVariables boundaryPriVars(0.0);
 
                 for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx))
-                        boundaryPriVars[eqIdx] = problem.dirichlet(element, scvf)[eqIdx];
+                        boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichlet(element, scvf)[eqIdx];
                     else if(bcTypes.isNeumann(eqIdx))
-                        boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                        boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else

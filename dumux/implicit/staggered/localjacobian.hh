@@ -255,9 +255,11 @@ private:
             for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
             {
                 const Scalar eps = 1e-4; // TODO: do properly
-                CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
 
-                priVars[pvIdx] += eps;
+                PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
+                                         FacePrimaryVariables(0.0));
+
+                priVars[cellCenterIdx][pvIdx] += eps;
                 curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
                 this->localResidual().evalCellCenter(element, fvGeometry, scvI,
@@ -359,9 +361,12 @@ private:
                 for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
                 {
                     const Scalar eps = 1e-4; // TODO: do properly
-                    CellCenterPrimaryVariables priVars(this->model_().curSol()[cellCenterIdx][globalJ]);
 
-                    priVars[pvIdx] += eps;
+                    PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
+                                             FacePrimaryVariables(0.0));
+
+                    priVars[cellCenterIdx][pvIdx] += eps;
+
                     curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
                     this->localResidual().evalFace(element, fvGeometry, scvf,

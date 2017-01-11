@@ -44,31 +44,62 @@ class StaggeredPrimaryVariables : public Dune::MultiTypeBlockVector<CellCenterPr
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
-    using PrimaryVariables = Dune::MultiTypeBlockVector<CellCenterPrimaryVariables, FacePrimaryVariables>;
+    using ParentType = Dune::MultiTypeBlockVector<CellCenterPrimaryVariables, FacePrimaryVariables>;
 
 public:
     StaggeredPrimaryVariables() = default;
 
-    StaggeredPrimaryVariables(const Scalar value)
+     /*!
+     * \brief Constructor to initialize all entries with the same value
+     *
+     * \param value The value
+     */
+    StaggeredPrimaryVariables(const Scalar value) noexcept
     {
         (*this)[cellCenterIdx] = value;
         (*this)[faceIdx] = value;
     }
 
-    const auto& operator [](const unsigned int i) const
+     /*!
+     * \brief Constructor to initialize the cellcenter and face primary values with given values
+     *
+     * \param ccPriVars The cellcenter primary variables used for initialization
+     * \param facePriVars The face primary variables used for initialization
+     */
+    StaggeredPrimaryVariables(CellCenterPrimaryVariables&& ccPriVars, FacePrimaryVariables&& facePriVars) noexcept
     {
-        if(i < Indices::faceOffset)
-            return PrimaryVariables::operator[](cellCenterIdx)[i];
-        else
-            return PrimaryVariables::operator[](faceIdx)[i - Indices::faceOffset];
+        (*this)[cellCenterIdx] = std::move(ccPriVars);
+        (*this)[faceIdx] = std::move(facePriVars);
     }
 
-    auto& operator [](const unsigned int i)
+     /*!
+     * \brief Operator overload which allows to automatically access the "right" priVars vector via pvIdx.
+     *        const version
+     * \note: the ParentType (DUNE multitypeblockvector) [] operator has to be visible (using ...)
+     *
+     * \param pvIdx The global index of the primary variable
+     */
+    using ParentType::operator [];
+    const Scalar& operator [](const unsigned int pvIdx) const
     {
-        if(i < Indices::faceOffset)
-            return PrimaryVariables::operator[](cellCenterIdx)[i];
+        if(pvIdx < Indices::faceOffset)
+            return ParentType::operator[](cellCenterIdx)[pvIdx];
         else
-            return PrimaryVariables::operator[](faceIdx)[i - Indices::faceOffset];
+            return ParentType::operator[](faceIdx)[pvIdx - Indices::faceOffset];
+    }
+
+     /*!
+     * \brief Operator overload which allows to automatically access the "right" priVars vector via pvIdx
+     *        non-const version
+     *
+     * \param pvIdx The global index of the primary variable
+     */
+    Scalar& operator [](const unsigned int pvIdx)
+    {
+        if(pvIdx < Indices::faceOffset)
+            return ParentType::operator[](cellCenterIdx)[pvIdx];
+        else
+            return ParentType::operator[](faceIdx)[pvIdx - Indices::faceOffset];
     }
 };
 

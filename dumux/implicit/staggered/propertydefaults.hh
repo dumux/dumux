@@ -39,7 +39,6 @@
 
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/globalvolumevariables.hh>
-#include <dumux/discretization/staggered/volumevariables.hh>
 #include <dumux/discretization/staggered/globalfacevariables.hh>
 
 #include <dune/common/fvector.hh>

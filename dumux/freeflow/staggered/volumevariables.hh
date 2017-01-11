@@ -25,7 +25,7 @@
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
 #include "properties.hh"
-#include <dumux/discretization/staggered/volumevariables.hh>
+#include <dumux/discretization/volumevariables.hh>
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
@@ -39,15 +39,15 @@ namespace Dumux
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class NavierStokesVolumeVariables : public StaggeredVolumeVariables<TypeTag>
+class NavierStokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    using ParentType = StaggeredVolumeVariables<TypeTag>;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -60,7 +60,7 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const CellCenterPrimaryVariables &priVars,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -73,7 +73,7 @@ public:
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const CellCenterPrimaryVariables& priVars,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
