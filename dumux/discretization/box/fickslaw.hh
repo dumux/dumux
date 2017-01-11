@@ -103,7 +103,7 @@ public:
         outsideD *= outsideVolVars.extrusionFactor();
 
         // the resulting averaged diffusion tensor
-        const auto D = harmonicMean(insideD, outsideD);
+        const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
 
         // evaluate gradX at integration point and interpolate density
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
