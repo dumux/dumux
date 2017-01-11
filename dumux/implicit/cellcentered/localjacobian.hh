@@ -173,11 +173,11 @@ public:
                                 fvGeometry,
                                 prevElemVolVars,
                                 curElemVolVars,
+                                curElemSol,
                                 elemFluxVarsCache,
                                 elemBcTypes,
                                 matrix,
                                 residual,
-                                curElemSol,
                                 isGhost);
 
         // TODO: calculate derivatives in the case of an extended source stencil
@@ -203,11 +203,11 @@ private:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
                                  ElementVolumeVariables& curElemVolVars,
+                                 ElementSolution& curElemSol,
                                  ElementFluxVariablesCache& elemFluxVarsCache,
                                  const ElementBoundaryTypes& elemBcTypes,
                                  JacobianMatrix& matrix,
                                  SolutionVector& residual,
-                                 ElementSolution& curElemSol,
                                  const bool isGhost)
     {
         // get stencil informations
