@@ -35,7 +35,6 @@
 #include <dumux/discretization/cellcentered/tpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/stencils.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -65,9 +64,6 @@ SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, Dumux::CCTpfaElementVolumeVar
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, Dumux::CCTpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
-
-//! The stencil container, tpfa leads to a symmetric global matrix
-SET_TYPE_PROP(CCTpfaModel, StencilsVector, Dumux::CCSymmetricStencilsVector<TypeTag>);
 
 SET_PROP(CCTpfaModel, SubControlVolumeFace)
 {

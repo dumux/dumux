@@ -117,11 +117,10 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        auto eIdx = globalVolVars().problem_().elementMapper().index(element);
-
-        // stencil information
-        const auto& neighborStencil = globalVolVars().problem_().model().stencils(element).neighborStencil();
-        const auto numDofs = neighborStencil.size() + 1;
+        const auto& problem = globalVolVars().problem_();
+        const auto globalI = problem.elementMapper().index(element);
+        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
+        const auto numDofs = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
         volumeVariables_.resize(numDofs);
@@ -129,21 +128,21 @@ public:
         int localIdx = 0;
 
         // update the volume variables of the element at hand
-        auto&& scvI = fvGeometry.scv(eIdx);
-        volumeVariables_[localIdx].update(globalVolVars().problem_().model().elementSolution(element, sol),
-                                          globalVolVars().problem_(),
+        auto&& scvI = fvGeometry.scv(globalI);
+        volumeVariables_[localIdx].update(problem.model().elementSolution(element, sol),
+                                          problem,
                                           element,
                                           scvI);
         volVarIndices_[localIdx] = scvI.index();
         ++localIdx;
 
         // Update the volume variables of the neighboring elements
-        for (auto globalJ : neighborStencil)
+        for (const auto& dataJ : assemblyMapI)
         {
-            const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
-            auto&& scvJ = fvGeometry.scv(globalJ);
-            volumeVariables_[localIdx].update(globalVolVars().problem_().model().elementSolution(elementJ, sol),
-                                              globalVolVars().problem_(),
+            const auto& elementJ = fvGeometry.globalFvGeometry().element(dataJ.globalJ);
+            auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
+            volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
+                                              problem,
                                               elementJ,
                                               scvJ);
             volVarIndices_[localIdx] = scvJ.index();
@@ -158,15 +157,15 @@ public:
                 continue;
 
             // check if boundary is a pure dirichlet boundary
-            const auto bcTypes = globalVolVars().problem_().boundaryTypes(element, scvf);
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
             if (bcTypes.hasOnlyDirichlet())
             {
-                const ElementSolution dirichletPriVars({globalVolVars().problem_().dirichlet(element, scvf)});
+                const ElementSolution dirichletPriVars({problem.dirichlet(element, scvf)});
 
                 volumeVariables_.resize(localIdx+1);
                 volVarIndices_.resize(localIdx+1);
                 volumeVariables_[localIdx].update(dirichletPriVars,
-                                                  globalVolVars().problem_(),
+                                                  problem,
                                                   element,
                                                   scvI);
                 volVarIndices_[localIdx] = scvf.outsideScvIdx();

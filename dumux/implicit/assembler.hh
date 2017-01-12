@@ -176,27 +176,7 @@ private:
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
-        auto numDofs = problem_().model().numDofs();
-
-        // allocate raw matrix
-        matrix_ = std::make_shared<JacobianMatrix>(numDofs, numDofs, JacobianMatrix::random);
-
-        // set the row sizes
-        asImp_().setRowSizes_();
-
-        // set the indices
-        asImp_().addIndices_();
-    }
-
-    //! Set the row sizes
-    void setRowSizes_()
-    {
-        DUNE_THROW(Dune::NotImplemented, "Actual implementation does not provide a setRowSizes_() method!");
-    }
-
-    void addIndices_()
-    {
-        DUNE_THROW(Dune::NotImplemented, "Actual implementation does not provide a addIndices_() method!");
+        DUNE_THROW(Dune::NotImplemented, "Actual implementation does not provide a createMatrix_() method!");
     }
 
     Implementation &asImp_()

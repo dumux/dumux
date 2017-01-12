@@ -23,6 +23,8 @@
 #ifndef DUMUX_CC_ASSEMBLER_HH
 #define DUMUX_CC_ASSEMBLER_HH
 
+#include <dune/istl/matrixindexset.hh>
+
 #include <dumux/implicit/properties.hh>
 #include <dumux/implicit/assembler.hh>
 
@@ -35,40 +37,30 @@ namespace Dumux {
 template<class TypeTag>
 class CCAssembler : public ImplicitAssembler<TypeTag>
 {
-    typedef ImplicitAssembler<TypeTag> ParentType;
     friend class ImplicitAssembler<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IndexSet::IndexType IndexType;
-
-    void setRowSizes_()
+    void createMatrix_()
     {
-        for (const auto& element : elements(this->gridView_()))
+        const auto numDofs = this->problem_().model().numDofs();
+
+        // allocate raw matrix
+        this->matrix_ = std::make_shared<JacobianMatrix>(numDofs, numDofs, JacobianMatrix::random);
+
+        // get occupation pattern of the matrix
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(numDofs, numDofs);
+
+        const auto& assemblyMap = this->problem_().model().localJacobian().assemblyMap();
+        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
         {
-            // the global index of the element at hand
-            const auto globalI = this->elementMapper_().index(element);
-            const auto& stencil = this->model_().stencils(element).elementStencil();
-
-            this->matrix().setrowsize(globalI, stencil.size());
+            occupationPattern.add(globalI, globalI);
+            for (const auto& dataJ : assemblyMap[globalI])
+                occupationPattern.add(dataJ.globalJ, globalI);
         }
-        this->matrix().endrowsizes();
-    }
 
-    void addIndices_()
-    {
-        for (const auto& element : elements(this->gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = this->elementMapper_().index(element);
-            const auto& stencil = this->model_().stencils(element).elementStencil();
-
-            for (auto&& globalJ : stencil)
-                this->matrix().addindex(globalI, globalJ);
-        }
-        this->matrix().endindices();
+        // export pattern to matrix
+        occupationPattern.exportIdx(*this->matrix_);
     }
 };
 

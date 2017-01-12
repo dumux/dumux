@@ -211,8 +211,7 @@ private:
                                  const bool isGhost)
     {
         // get stencil informations
-        const auto& neighborStencil = this->model_().stencils(element).neighborStencil();
-        const auto numNeighbors = neighborStencil.size();
+        const auto numNeighbors = assemblyMap_[globalI_].size();
 
         // the localresidual class used for the flux calculations
         LocalResidual localRes;
@@ -227,14 +226,14 @@ private:
         origFlux = 0.0;
 
         unsigned int j = 0;
-        for (auto globalJ : neighborStencil)
+        for (const auto& dataJ : assemblyMap_[globalI_])
         {
-            auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            auto elementJ = fvGeometry.globalFvGeometry().element(dataJ.globalJ);
             neighborElements.push_back(elementJ);
 
-            for (auto fluxVarIdx : assemblyMap_[globalI_][j])
+            for (auto scvfIdx : dataJ.scvfsJ)
             {
-                auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+                auto&& scvf = fvGeometry.scvf(scvfIdx);
                 origFlux[j] += localRes.evalFlux_(elementJ,
                                                   fvGeometry,
                                                   curElemVolVars,
@@ -295,9 +294,9 @@ private:
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                 {
-                    for (auto fluxVarIdx : assemblyMap_[globalI_][k])
+                    for (auto scvfIdx : assemblyMap_[globalI_][k].scvfsJ)
                     {
-                        auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+                        auto&& scvf = fvGeometry.scvf(scvfIdx);
                         neighborDeriv[k] += localRes.evalFlux_(neighborElements[k],
                                                                fvGeometry,
                                                                curElemVolVars,
@@ -346,9 +345,9 @@ private:
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                 {
-                    for (auto fluxVarIdx : assemblyMap_[globalI_][k])
+                    for (auto scvfIdx : assemblyMap_[globalI_][k].scvfsJ)
                     {
-                        auto&& scvf = fvGeometry.scvf(fluxVarIdx);
+                        auto&& scvf = fvGeometry.scvf(scvfIdx);
                         neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k],
                                                                fvGeometry,
                                                                curElemVolVars,
@@ -383,8 +382,8 @@ private:
             this->updateGlobalJacobian_(matrix, globalI_, globalI_, pvIdx, partialDeriv);
 
             j = 0;
-            for (auto globalJ : neighborStencil)
-                this->updateGlobalJacobian_(matrix, globalJ, globalI_, pvIdx, neighborDeriv[j++]);
+            for (const auto& dataJ : assemblyMap_[globalI_])
+                this->updateGlobalJacobian_(matrix, dataJ.globalJ, globalI_, pvIdx, neighborDeriv[j++]);
         }
     }
 

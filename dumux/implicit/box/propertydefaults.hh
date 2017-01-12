@@ -35,7 +35,6 @@
 #include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/globalfvgeometry.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
-#include <dumux/discretization/box/stencils.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -53,7 +52,6 @@ namespace Dumux {
 // forward declarations
 template<class TypeTag> class BoxLocalResidual;
 template<class TypeTag> class BoxElementBoundaryTypes;
-template<class TypeTag> class BoxStencilsVector;
 
 namespace Properties {
 //! Set the corresponding discretization method property
@@ -100,9 +98,6 @@ SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
 
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper));
-
-//! The stencil container
-SET_TYPE_PROP(BoxModel, StencilsVector, BoxStencilsVector<TypeTag>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(BoxModel, GlobalVolumeVariables, BoxGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);

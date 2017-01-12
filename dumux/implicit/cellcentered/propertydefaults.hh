@@ -76,8 +76,8 @@ SET_TYPE_PROP(CCModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, G
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 
-//! Set the AssemblyMap to the CCAssemblyMap
-SET_TYPE_PROP(CCModel, AssemblyMap, Dumux::CCAssemblyMap<TypeTag>);
+//! Set the AssemblyMap to the CCAssemblyMap (default: symmetric occupation pattern)
+SET_TYPE_PROP(CCModel, AssemblyMap, Dumux::CCSymmetricAssemblyMap<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);

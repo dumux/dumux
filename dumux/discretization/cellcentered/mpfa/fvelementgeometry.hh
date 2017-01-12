@@ -256,30 +256,23 @@ public:
 
         // get some references for convenience
         const auto& problem = globalFvGeometry().problem_();
-        const auto& assemblyMap = problem.model().localJacobian().assemblyMap();
-        const auto& neighborStencil = problem.model().stencils(element).neighborStencil();
         const auto globalI = problem.elementMapper().index(element);
+        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
 
         // reserve memory
-        const auto numNeighbors = neighborStencil.size();
+        const auto numNeighbors = assemblyMapI.size();
         const auto estimate = neighborScvfEstimate_(element, numNeighbors);
         neighborScvs_.reserve(numNeighbors);
         neighborScvIndices_.reserve(numNeighbors);
         neighborScvfIndices_.reserve(estimate);
         neighborScvfs_.reserve(estimate);
 
-        // build scvfs in neighbors
+        // make neighbor geometries
         // use the assembly map to determine which faces are necessary
-        unsigned int j = 0;
-        for (auto globalJ : neighborStencil)
-        {
-            // make neighbor geometries
-            auto elementJ = globalFvGeometry().element(globalJ);
-            makeNeighborGeometries(elementJ, globalJ, assemblyMap[globalI][j]);
-
-            // increment counter
-            j++;
-        }
+        for (auto&& dataJ : assemblyMapI)
+            makeNeighborGeometries(globalFvGeometry().element(dataJ.globalJ),
+                                   dataJ.globalJ,
+                                   dataJ.scvfsJ);
 
         // set up the scvf flip indices for network grids
         if (dim < dimWorld)

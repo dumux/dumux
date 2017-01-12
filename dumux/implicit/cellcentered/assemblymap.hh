@@ -19,26 +19,35 @@
 /*!
  * \file
  * \brief Stores the face indices corresponding to the neighbors of an element
- *        that contribute to the derivative calculation
+ *        that contribute to the derivative calculation. This is used for
+ *        finite-volume schemes with symmetric sparsity pattern in the global matrix.
  */
-#ifndef DUMUX_CC_ASSEMBLY_MAP_HH
-#define DUMUX_CC_ASSEMBLY_MAP_HH
+#ifndef DUMUX_CC_SYMMETRIC_ASSEMBLY_MAP_HH
+#define DUMUX_CC_SYMMETRIC_ASSEMBLY_MAP_HH
+
+#include <dune/istl/bcrsmatrix.hh>
 
 #include <dumux/implicit/properties.hh>
-
 
 namespace Dumux
 {
 
 template<class TypeTag>
-class CCAssemblyMap
+class CCSymmetricAssemblyMap
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Map = std::vector< std::vector< std::vector<IndexType> > >;
+
+    struct DataJ
+    {
+        IndexType globalJ;
+        std::vector<IndexType> scvfsJ;
+    };
+
+    using Map = std::vector<std::vector<DataJ>>;
 
 public:
 
@@ -52,58 +61,51 @@ public:
         map_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
-            // get a local finite volume geometry object that is bindable
-            auto fvGeometryJ = localView(problem.model().globalFvGeometry());
+            // We are looking for the elements I, for which this element J is in the flux stencil
+            auto globalJ = problem.elementMapper().index(element);
 
-            auto globalI = problem.elementMapper().index(element);
-            const auto& neighborStencil = problem.model().stencils(element).neighborStencil();
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            map_[globalI].reserve(neighborStencil.size());
-            for (auto globalJ : neighborStencil)
+            // obtain the data of J in elements I
+            std::vector<std::pair<IndexType, DataJ>> dataJForI;
+
+            // loop over sub control faces
+            for (auto&& scvf : scvfs(fvGeometry))
             {
-                const auto& elementJ = fvGeometryJ.globalFvGeometry().element(globalJ);
+                FluxVariables fluxVars;
+                const auto& stencil = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
 
-                // find the flux vars needed for the calculation of the flux into element
-                std::vector<IndexType> fluxVarIndices;
-
-                // only non-ghost neighbors (J) have to be considered, derivatives from non-ghost to ghost dofs
-                // are assembled when assembling the ghost element (I)
-                if (elementJ.partitionType() != Dune::GhostEntity)
+                // insert our index in the neighbor stencils of the elements in the flux stencil
+                for (auto globalI : stencil)
                 {
-                    fvGeometryJ.bindElement(elementJ);
-                    for (auto&& scvFaceJ : scvfs(fvGeometryJ))
-                    {
-                        auto fluxVarsIdx = scvFaceJ.index();
+                    if (globalI == globalJ)
+                        continue;
 
-                        // if globalI is in flux var stencil, add to list
-                        FluxVariables fluxVars;
-                        const auto fluxStencil = fluxVars.computeStencil(problem, elementJ, fvGeometryJ, scvFaceJ);
+                    auto it = std::find_if(dataJForI.begin(),
+                                           dataJForI.end(),
+                                           [globalI](const auto& pair) { return pair.first == globalI; });
 
-                        for (auto globalIdx : fluxStencil)
-                        {
-                            if (globalIdx == globalI)
-                            {
-                                fluxVarIndices.push_back(fluxVarsIdx);
-                                break;
-                            }
-                        }
-                    }
+                    if (it != dataJForI.end())
+                        it->second.scvfsJ.push_back(scvf.index());
+                    else
+                        dataJForI.emplace_back(std::make_pair(globalI,
+                                                             DataJ({globalJ, std::vector<IndexType>({scvf.index()})})));
                 }
-                map_[globalI].emplace_back(std::move(fluxVarIndices));
             }
+
+            for (auto&& pair : dataJForI)
+                map_[pair.first].emplace_back(std::move(pair.second));
         }
     }
 
-    //! Some implementations of the assembly map can be solution-dependent and need to be updated
-    void update() {}
-
-    const std::vector<std::vector<IndexType>>& operator [] (const IndexType globalI) const
+    const std::vector<DataJ>& operator[] (const IndexType globalI) const
     { return map_[globalI]; }
 
 private:
     Map map_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
