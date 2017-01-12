@@ -141,13 +141,14 @@ public:
 
         const auto& problem = globalFluxVarsCache().problem_();
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
-        const auto& neighborStencil = problem.model().stencils(element).neighborStencil();
-        const auto& assemblyMap = problem.model().localJacobian().assemblyMap();
+
         const auto globalI = problem.elementMapper().index(element);
+        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
 
         // reserve memory
-        auto numNeighborScvfs = 0;
-        for (auto&& facesInNeighbor : assemblyMap[globalI]) numNeighborScvfs += facesInNeighbor.size();
+        unsigned int numNeighborScvfs = 0;
+        for (auto&& dataJ : assemblyMapI)
+            numNeighborScvfs += dataJ.scvfsJ.size();
         globalScvfIndices_.reserve(fvGeometry.numScvf() + numNeighborScvfs);
 
         // first add all the indices inside the element
@@ -155,9 +156,9 @@ public:
             globalScvfIndices_.push_back(scvf.index());
 
         // for the indices in the neighbors, use assembly map of the local jacobian
-        for (unsigned int j = 0; j < neighborStencil.size(); ++j)
-            for (auto fluxVarIdx : assemblyMap[globalI][j])
-                globalScvfIndices_.push_back(fluxVarIdx);
+        for (auto&& dataJ : assemblyMapI)
+            for (auto scvfIdx : dataJ.scvfsJ)
+                globalScvfIndices_.push_back(scvfIdx);
 
         // prepare all the caches of the scvfs inside the corresponding interaction volumes using helper class
         fluxVarsCache_.resize(globalScvfIndices_.size());
@@ -166,21 +167,17 @@ public:
                 FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, *this);
 
         // prepare the caches in the remaining neighbors
-        unsigned int j = 0;
-        for (auto globalJ : neighborStencil)
+        for (auto&& dataJ : assemblyMapI)
         {
-            for (auto fluxVarIdx : assemblyMap[globalI][j])
+            for (auto scvfIdx : dataJ.scvfsJ)
             {
-                const auto& scvf = fvGeometry.scvf(fluxVarIdx);
+                const auto& scvf = fvGeometry.scvf(scvfIdx);
                 if (!(*this)[scvf].isUpdated())
                 {
-                    auto elementJ = globalFvGeometry.element(globalJ);
+                    auto elementJ = globalFvGeometry.element(dataJ.globalJ);
                     FluxVariablesCacheFiller::fillFluxVarCache(problem, elementJ, fvGeometry, elemVolVars, scvf, *this);
                 }
             }
-
-            // increment counter
-            j++;
         }
     }
 

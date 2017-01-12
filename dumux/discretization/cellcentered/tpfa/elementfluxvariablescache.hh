@@ -145,39 +145,35 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
-        const auto globalI = globalFluxVarsCache().problem_().elementMapper().index(element);
-        const auto& neighborStencil = globalFluxVarsCache().problem_().model().stencils(element).neighborStencil();
-        const auto numNeighbors = neighborStencil.size();
+        const auto& problem = globalFluxVarsCache().problem_();
+        const auto globalI = problem.elementMapper().index(element);
+        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
+        const auto numNeighbors = assemblyMapI.size();
 
         // find the number of scv faces that need to be prepared
         auto numScvf = fvGeometry.numScvf();
-        for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
-        {
-            const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
-            numScvf += fluxVarIndicesJ.size();
-        }
+        for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
+            numScvf += assemblyMapI[localIdxJ].scvfsJ.size();
 
         // fill the containers with the data on the scv faces inside the actual element
         fluxVarsCache_.resize(numScvf);
         globalScvfIndices_.resize(numScvf);
-        IndexType localScvfIdx = 0;
+        unsigned int localScvfIdx = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            fluxVarsCache_[localScvfIdx].update(problem, element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
 
         // add required data on the scv faces in the neighboring elements
-        for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
+        for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
-            const auto elementJ = fvGeometry.globalFvGeometry().element(neighborStencil[localIdxJ]);
-
-            for (auto fluxVarIdx : fluxVarIndicesJ)
+            const auto elementJ = fvGeometry.globalFvGeometry().element(assemblyMapI[localIdxJ].globalJ);
+            for (auto scvfIdx : assemblyMapI[localIdxJ].scvfsJ)
             {
-                auto&& scvfJ = fvGeometry.scvf(fluxVarIdx);
-                fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
+                auto&& scvfJ = fvGeometry.scvf(scvfIdx);
+                fluxVarsCache_[localScvfIdx].update(problem, elementJ, fvGeometry, elemVolVars, scvfJ);
                 globalScvfIndices_[localScvfIdx] = scvfJ.index();
                 localScvfIdx++;
             }

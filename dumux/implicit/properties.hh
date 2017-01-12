@@ -103,9 +103,6 @@ NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters 
 NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output
 NEW_PROP_TAG(VtkAddProcessRank); //!< specifies if the process rank should be added the output
 
-// stencils
-NEW_PROP_TAG(StencilsVector); //! The type of the global vector of stencils per element
-
 // high level simulation control
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method

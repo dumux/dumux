@@ -71,7 +71,6 @@ class ImplicitModel
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
-    using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
@@ -128,9 +127,6 @@ public:
 
         // resize and update the volVars with the initial solution
         curGlobalVolVars_.update(problem, curSol());
-
-        // update stencils
-        stencilsVector_.update(problem);
 
         // initialize assembler and create matrix
         localJacobian_.init(problem);
@@ -845,22 +841,11 @@ protected:
     // the flux variables cache vector vector
     GlobalFluxVariablesCache globalfluxVarsCache_;
 
-    // the stencils vector
-    StencilsVector stencilsVector_;
-
     // the finite volume element geometries
     std::shared_ptr<GlobalFVGeometry> globalFvGeometryPtr_;
 
     // container to store the box volumes
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
-
-public:
-    //! Get stencils related to an entity of specified codimension
-    // Cell-centered discretizations typically only implement element stencils
-    // Vertex-centered discretizations both vertex and element stencils
-    template <class Entity>
-    auto stencils(const Entity& entity) const -> decltype(stencilsVector_.get(entity))
-    { return stencilsVector_.get(entity); }
 
 private:
     /*!

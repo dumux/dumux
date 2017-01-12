@@ -23,6 +23,8 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
+#include <dune/istl/matrixindexset.hh>
+
 #include <dumux/implicit/properties.hh>
 #include <dumux/implicit/assembler.hh>
 
@@ -35,40 +37,37 @@ namespace Dumux {
 template<class TypeTag>
 class BoxAssembler : public ImplicitAssembler<TypeTag>
 {
-    typedef ImplicitAssembler<TypeTag> ParentType;
     friend class ImplicitAssembler<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static const int dim = GridView::dimension;
 
-    typedef typename GridView::IndexSet::IndexType IndexType;
-
-    void setRowSizes_()
+    void createMatrix_()
     {
-        for (const auto& vertex : vertices(this->gridView_()))
+        const auto numDofs = this->problem_().model().numDofs();
+
+        // allocate raw matrix
+        this->matrix_ = std::make_shared<JacobianMatrix>(numDofs, numDofs, JacobianMatrix::random);
+
+        // get occupation pattern of the matrix
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(numDofs, numDofs);
+
+        for (const auto& element : elements(this->problem_().gridView()))
         {
-            // the global index of the element at hand
-            const auto globalI = this->vertexMapper_().index(vertex);
-            const auto& stencil = this->model_().stencils(vertex).vertexStencil();
-
-            this->matrix().setrowsize(globalI, stencil.size());
+            for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
+            {
+                const auto globalI = this->problem_().vertexMapper().subIndex(element, vIdx, dim);
+                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(dim); ++vIdx2)
+                {
+                    const auto globalJ = this->problem_().vertexMapper().subIndex(element, vIdx2, dim);
+                    occupationPattern.add(globalI, globalJ);
+                    occupationPattern.add(globalJ, globalI);
+                }
+            }
         }
-        this->matrix().endrowsizes();
-
-    }
-
-    void addIndices_()
-    {
-        for (const auto& vertex : vertices(this->gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = this->vertexMapper_().index(vertex);
-            const auto& stencil = this->model_().stencils(vertex).vertexStencil();
-
-            for (auto&& globalJ : stencil)
-                this->matrix().addindex(globalI, globalJ);
-        }
-        this->matrix().endindices();
+        // export pattern to matrix
+        occupationPattern.exportIdx(*this->matrix_);
     }
 };
 

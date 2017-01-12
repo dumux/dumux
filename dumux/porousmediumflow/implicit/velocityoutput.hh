@@ -65,7 +65,6 @@ class ImplicitVelocityOutput
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
-    using Stencil = std::vector<IndexType>;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ReferenceElements = Dune::ReferenceElements<CoordScalar, dim>;
@@ -89,8 +88,9 @@ public:
                 // resize to the number of vertices of the grid
                 cellNum_.assign(problem.gridView().size(dim), 0);
 
-                for (const auto& vertex : vertices(problem.gridView()))
-                    cellNum_[problem.vertexMapper().index(vertex)] = getStencil(vertex).size();
+                for (const auto& element : elements(problem.gridView()))
+                    for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
+                        ++cellNum_[problem.vertexMapper().subIndex(element, vIdx, dim)];
             }
         }
     }
@@ -111,8 +111,7 @@ public:
     // compiler error. However, that call is needed for calculating velocities
     // if the cell-centered discretization is used. By proceeding as in the
     // following lines, that call will only be compiled if cell-centered
-    // actually is used. For the same reason we also provide a isBox-specific
-    // implementation of the getStencil method below.
+    // actually is used.
     template <class T = TypeTag>
     typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
     problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
@@ -123,18 +122,6 @@ public:
     typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
     problemBoundaryTypes(const Element& element, const SubControlVolume& scv) const
     { return BoundaryTypes(); }
-
-    //! returns the elements connected to a vertex
-    template<class T = TypeTag>
-    const typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), Stencil>::type&
-    getStencil(const Vertex& vertex) const
-    { return problem_.model().stencils(vertex).elementIndices(); }
-
-    //! we should never call this method for cc models
-    template<class T = TypeTag>
-    const typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), Stencil>::type
-    getStencil(const Vertex& vertex) const
-    { return Stencil(0); }
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil

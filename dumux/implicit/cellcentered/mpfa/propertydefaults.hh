@@ -39,7 +39,6 @@
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
-#include <dumux/discretization/cellcentered/mpfa/stencils.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseeds.hh>
 #include <dumux/implicit/cellcentered/mpfa/localresidual.hh>
@@ -92,9 +91,6 @@ SET_TYPE_PROP(CCMpfaModel, ElementVolumeVariables, Dumux::CCMpfaElementVolumeVar
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel, ElementFluxVariablesCache, Dumux::CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
-
-//! The stencil container, some mpfa methods might lead to non-symmetric global systems
-SET_TYPE_PROP(CCMpfaModel, StencilsVector, Dumux::CCMpfaStencilsVector<TypeTag>);
 
 SET_PROP(CCMpfaModel, SubControlVolumeFace)
 {

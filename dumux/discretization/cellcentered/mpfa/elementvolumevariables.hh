@@ -121,8 +121,9 @@ public:
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
 
         // stencil information
-        const auto& neighborStencil = problem.model().stencils(element).neighborStencil();
-        const auto numDofs = neighborStencil.size() + 1;
+        const auto globalI = problem.elementMapper().index(element);
+        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
+        const auto numDofs = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
         volumeVariables_.resize(numDofs);
@@ -140,10 +141,10 @@ public:
         ++localIdx;
 
         // Update the volume variables of the neighboring elements
-        for (auto globalJ : neighborStencil)
+        for (auto&& dataJ : assemblyMapI)
         {
-            const auto& elementJ = globalFvGeometry.element(globalJ);
-            auto&& scvJ = fvGeometry.scv(globalJ);
+            const auto& elementJ = globalFvGeometry.element(dataJ.globalJ);
+            auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
             volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
                                               problem,
                                               elementJ,
