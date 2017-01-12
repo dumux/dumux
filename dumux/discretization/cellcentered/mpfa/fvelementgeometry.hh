@@ -277,6 +277,20 @@ public:
         // set up the scvf flip indices for network grids
         if (dim < dimWorld)
             makeFlipIndexSet();
+
+        //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
+        //! on additional DOFs not included in the discretization schemes' occupation pattern
+        const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
+        if (!additionalDofDependencies.empty())
+        {
+            neighborScvs_.reserve(neighborScvs_.size() + additionalDofDependencies.size());
+            neighborScvIndices_.reserve(neighborScvIndices_.size() + additionalDofDependencies.size());
+            for (auto globalJ : additionalDofDependencies)
+            {
+                neighborScvs_.emplace_back(globalFvGeometry().element(globalJ).geometry(), globalJ);
+                neighborScvIndices_.emplace_back(globalJ);
+            }
+        }
     }
 
     //! Binding of an element preparing the geometries only inside the element

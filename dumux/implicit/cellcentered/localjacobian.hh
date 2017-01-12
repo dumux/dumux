@@ -180,19 +180,17 @@ public:
                                 residual,
                                 isGhost);
 
-        // TODO: calculate derivatives in the case of an extended source stencil
-        // const auto& extendedSourceStencil = model_().stencils(element).extendedSourceStencil();
-        // for (auto&& globalJ : extendedSourceStencil)
-        // {
-        //     for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-        //         {
-        //             evalPartialDerivativeSource_(partialDeriv, globalJ, pvIdx, neighborToFluxVars[globalJ]);
-
-        //             // update the local stiffness matrix with the partial derivatives
-        //             updateLocalJacobian_(j, pvIdx, partialDeriv);
-        //         }
-               // ++j;
-        // }
+       // compute derivatives with respect to additional user defined DOF dependencies
+       const auto& additionalDofDepedencies = this->problem_().getAdditionalDofDependencies(globalI_);
+       if (!additionalDofDepedencies.empty() && !isGhost)
+       {
+            evalAdditionalDerivatives_(additionalDofDepedencies,
+                                       element,
+                                       fvGeometry,
+                                       curElemVolVars,
+                                       matrix,
+                                       residual);
+       }
     }
 
     const AssemblyMap& assemblyMap() const
@@ -213,10 +211,6 @@ private:
         // get stencil informations
         const auto numNeighbors = assemblyMap_[globalI_].size();
 
-        // the localresidual class used for the flux calculations
-        LocalResidual localRes;
-        localRes.init(this->problem_());
-
         // container to store the neighboring elements
         std::vector<Element> neighborElements;
         neighborElements.reserve(numNeighbors);
@@ -234,11 +228,11 @@ private:
             for (auto scvfIdx : dataJ.scvfsJ)
             {
                 auto&& scvf = fvGeometry.scvf(scvfIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ,
-                                                  fvGeometry,
-                                                  curElemVolVars,
-                                                  scvf,
-                                                  elemFluxVarsCache);
+                origFlux[j] += this->localResidual().evalFlux_(elementJ,
+                                                               fvGeometry,
+                                                               curElemVolVars,
+                                                               scvf,
+                                                               elemFluxVarsCache);
             }
 
             ++j;
@@ -297,11 +291,11 @@ private:
                     for (auto scvfIdx : assemblyMap_[globalI_][k].scvfsJ)
                     {
                         auto&& scvf = fvGeometry.scvf(scvfIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k],
-                                                               fvGeometry,
-                                                               curElemVolVars,
-                                                               scvf,
-                                                               elemFluxVarsCache);
+                        neighborDeriv[k] += this->localResidual().evalFlux_(neighborElements[k],
+                                                                            fvGeometry,
+                                                                            curElemVolVars,
+                                                                            scvf,
+                                                                            elemFluxVarsCache);
                     }
                 }
             }
@@ -348,11 +342,11 @@ private:
                     for (auto scvfIdx : assemblyMap_[globalI_][k].scvfsJ)
                     {
                         auto&& scvf = fvGeometry.scvf(scvfIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k],
-                                                               fvGeometry,
-                                                               curElemVolVars,
-                                                               scvf,
-                                                               elemFluxVarsCache);
+                        neighborDeriv[k] -= this->localResidual().evalFlux_(neighborElements[k],
+                                                                            fvGeometry,
+                                                                            curElemVolVars,
+                                                                            scvf,
+                                                                            elemFluxVarsCache);
                     }
                 }
             }
@@ -387,6 +381,97 @@ private:
         }
     }
 
+    void evalAdditionalDerivatives_(const std::vector<IndexType>& additionalDofDependencies,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    ElementVolumeVariables& curElemVolVars,
+                                    JacobianMatrix& matrix,
+                                    SolutionVector& residual)
+    {
+        // get the elements and calculate the flux into the element in the undeflected state
+        auto&& scv = fvGeometry.scv(globalI_);
+        const auto source = this->localResidual().computeSource(element, fvGeometry, curElemVolVars, scv);
+
+        for (auto globalJ : additionalDofDependencies)
+        {
+            auto&& scvJ = fvGeometry.scv(globalJ);
+            auto& curVolVarsJ = getCurVolVars(curElemVolVars, scvJ);
+            const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            auto curElemSolJ = this->model_().elementSolution(elementJ, this->model_().curSol());
+
+            // save a copy of the original vol vars
+            auto origVolVarsJ = curVolVarsJ;
+
+            // derivatives with repect to the additional DOF we depend on
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                // derivatives of element dof with respect to itself
+                PrimaryVariables partialDeriv(0.0);
+                const auto eps = this->numericEpsilon(scvJ, curVolVarsJ, pvIdx);
+                Scalar delta = 0;
+
+                if (numericDifferenceMethod_ >= 0)
+                {
+                    // we are not using backward differences, i.e. we need to
+                    // calculate f(x + \epsilon)
+
+                    // deflect primary variables
+                    curElemSolJ[0][pvIdx] += eps;
+                    delta += eps;
+
+                    // update the volume variables and the flux var cache
+                    curVolVarsJ.update(curElemSolJ, this->problem_(), elementJ, scvJ);
+
+                    // calculate the source with the deflected primary variables
+                    partialDeriv = this->localResidual().computeSource(element, fvGeometry, curElemVolVars, scv);
+                }
+                else
+                {
+                    // we are using backward differences, i.e. we don't need
+                    // to calculate f(x + \epsilon) and we can recycle the
+                    // (already calculated) source f(x)
+                    partialDeriv = source;
+                }
+
+                if (numericDifferenceMethod_ <= 0)
+                {
+                    // we are not using forward differences, i.e. we
+                    // need to calculate f(x - \epsilon)
+
+                    // deflect the primary variables
+                    curElemSolJ[0][pvIdx] -= delta + eps;
+                    delta += eps;
+
+                    // update the volume variables and the flux var cache
+                    curVolVarsJ.update(curElemSolJ, this->problem_(), elementJ, scvJ);
+
+                    // calculate the source with the deflected primary variables and subtract
+                    partialDeriv -= this->localResidual().computeSource(element, fvGeometry, curElemVolVars, scv);
+                }
+                else
+                {
+                    // we are using forward differences, i.e. we don't need to
+                    // calculate f(x - \epsilon) and we can recycle the
+                    // (already calculated) source f(x)
+                    partialDeriv -= source;
+                }
+
+                // divide difference in residuals by the magnitude of the
+                // deflections between the two function evaluation
+                partialDeriv /= delta;
+
+                // restore the original state of the scv's volume variables
+                curVolVarsJ = origVolVarsJ;
+
+                // restore the current element solution
+                curElemSolJ[0][pvIdx] = this->model_().curSol()[globalJ][pvIdx];
+
+                // update the global jacobian matrix with the current partial derivatives
+                this->updateGlobalJacobian_(matrix, globalI_, globalJ, pvIdx, partialDeriv);
+            }
+        }
+    }
+
     //! If the global vol vars caching is enabled we have to modify the global volvar object
     template<class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
@@ -404,6 +489,6 @@ private:
     AssemblyMap assemblyMap_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

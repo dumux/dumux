@@ -172,6 +172,27 @@ public:
                 ++localIdx;
             }
         }
+
+        //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
+        //! on additional DOFs not included in the discretization schemes' occupation pattern
+        const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
+        if (!additionalDofDependencies.empty())
+        {
+            volumeVariables_.resize(volumeVariables_.size() + additionalDofDependencies.size());
+            volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
+            for (auto globalJ : additionalDofDependencies)
+            {
+                const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+                auto&& scvJ = fvGeometry.scv(globalJ);
+
+                volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
+                                                  problem,
+                                                  elementJ,
+                                                  scvJ);
+                volVarIndices_[localIdx] = scvJ.index();
+                ++localIdx;
+            }
+        }
     }
 
     // Binding of an element, prepares only the volume variables of the element

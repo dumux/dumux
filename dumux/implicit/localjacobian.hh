@@ -224,39 +224,13 @@ protected:
     /*!
      * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
-     *        primary variable 'pvIdx' at dof 'col'. Specialization for cc methods.
+     *        primary variable 'pvIdx' at dof 'col'.
      */
-    template<class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox)>::type
-    updateGlobalJacobian_(JacobianMatrix& matrix,
-                          const int globalI,
-                          const int globalJ,
-                          const int pvIdx,
-                          const PrimaryVariables &partialDeriv)
-    {
-        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-        {
-            // A[i][col][eqIdx][pvIdx] is the rate of change of
-            // the residual of equation 'eqIdx' at dof 'i'
-            // depending on the primary variable 'pvIdx' at dof
-            // 'col'.
-            matrix[globalI][globalJ][eqIdx][pvIdx] = partialDeriv[eqIdx];
-            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
-        }
-    }
-
-    /*!
-     * \brief Updates the current global Jacobian matrix with the
-     *        partial derivatives of all equations in regard to the
-     *        primary variable 'pvIdx' at dof 'col'. Specialization for the box method.
-     */
-    template<class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox)>::type
-    updateGlobalJacobian_(JacobianMatrix& matrix,
-                          const int globalI,
-                          const int globalJ,
-                          const int pvIdx,
-                          const PrimaryVariables &partialDeriv)
+    void updateGlobalJacobian_(JacobianMatrix& matrix,
+                               const int globalI,
+                               const int globalJ,
+                               const int pvIdx,
+                               const PrimaryVariables &partialDeriv)
     {
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
         {
@@ -265,7 +239,6 @@ protected:
             // depending on the primary variable 'pvIdx' at dof
             // 'col'.
             matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
-            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
         }
     }
 
@@ -277,6 +250,6 @@ protected:
     ElementSolutionVector residual_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
