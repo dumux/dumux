@@ -211,10 +211,6 @@ private:
         // get stencil informations
         const auto numNeighbors = assemblyMap_[globalI_].size();
 
-        // the localresidual class used for the flux calculations
-        LocalResidual localRes;
-        localRes.init(this->problem_());
-
         // container to store the neighboring elements
         std::vector<Element> neighborElements;
         neighborElements.reserve(numNeighbors);
@@ -232,11 +228,11 @@ private:
             for (auto scvfIdx : dataJ.scvfsJ)
             {
                 auto&& scvf = fvGeometry.scvf(scvfIdx);
-                origFlux[j] += localRes.evalFlux_(elementJ,
-                                                  fvGeometry,
-                                                  curElemVolVars,
-                                                  scvf,
-                                                  elemFluxVarsCache);
+                origFlux[j] += this->localResidual().evalFlux_(elementJ,
+                                                               fvGeometry,
+                                                               curElemVolVars,
+                                                               scvf,
+                                                               elemFluxVarsCache);
             }
 
             ++j;
@@ -295,11 +291,11 @@ private:
                     for (auto scvfIdx : assemblyMap_[globalI_][k].scvfsJ)
                     {
                         auto&& scvf = fvGeometry.scvf(scvfIdx);
-                        neighborDeriv[k] += localRes.evalFlux_(neighborElements[k],
-                                                               fvGeometry,
-                                                               curElemVolVars,
-                                                               scvf,
-                                                               elemFluxVarsCache);
+                        neighborDeriv[k] += this->localResidual().evalFlux_(neighborElements[k],
+                                                                            fvGeometry,
+                                                                            curElemVolVars,
+                                                                            scvf,
+                                                                            elemFluxVarsCache);
                     }
                 }
             }
@@ -346,11 +342,11 @@ private:
                     for (auto scvfIdx : assemblyMap_[globalI_][k].scvfsJ)
                     {
                         auto&& scvf = fvGeometry.scvf(scvfIdx);
-                        neighborDeriv[k] -= localRes.evalFlux_(neighborElements[k],
-                                                               fvGeometry,
-                                                               curElemVolVars,
-                                                               scvf,
-                                                               elemFluxVarsCache);
+                        neighborDeriv[k] -= this->localResidual().evalFlux_(neighborElements[k],
+                                                                            fvGeometry,
+                                                                            curElemVolVars,
+                                                                            scvf,
+                                                                            elemFluxVarsCache);
                     }
                 }
             }
