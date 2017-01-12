@@ -57,6 +57,11 @@ class CCAssembler : public ImplicitAssembler<TypeTag>
             occupationPattern.add(globalI, globalI);
             for (const auto& dataJ : assemblyMap[globalI])
                 occupationPattern.add(dataJ.globalJ, globalI);
+
+            // reserve index for additional user defined DOF dependencies
+            const auto& additionalDofDependencies = this->problem_().getAdditionalDofDependencies(globalI);
+            for (auto globalJ : additionalDofDependencies)
+                occupationPattern.add(globalI, globalJ);
         }
 
         // export pattern to matrix

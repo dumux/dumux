@@ -89,8 +89,7 @@ public:
                     if (it != dataJForI.end())
                         it->second.scvfsJ.push_back(scvf.index());
                     else
-                        dataJForI.emplace_back(std::make_pair(globalI,
-                                                             DataJ({globalJ, std::vector<IndexType>({scvf.index()})})));
+                        dataJForI.emplace_back(std::make_pair(globalI, DataJ({globalJ, std::vector<IndexType>({scvf.index()})})));
                 }
             }
 

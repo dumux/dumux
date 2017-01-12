@@ -46,9 +46,9 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitProblem
 {
-private:
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexType = typename GridView::IndexSet::IndexType;
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
@@ -76,7 +76,7 @@ private:
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
-    using CoordScalar = typename GridView::Grid::ctype;
+    using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -1001,6 +1001,20 @@ public:
 
         return source;
     }
+
+    /*!
+     * \brief Function to add additional DOF dependencies, i.e. the residual of DOF globalIdx depends
+     * on additional DOFs not included in the discretization schemes' occupation pattern
+     *
+     * \param globalIdx The index of the DOF that depends on additional DOFs
+     * \return A vector of the additional DOFs the DOF with index globalIdx depends on
+     *
+     * \note This will lead to additional matrix entries and derivative computations automatically
+     *       This function is used when creating the matrix and when computing entries of the jacobian matrix
+     * Per default we don't have additional DOFs
+     */
+    std::vector<IndexType> getAdditionalDofDependencies(IndexType globalIdx) const
+    { return std::vector<IndexType>(); }
 
     /*!
      * \brief Capability to introduce problem-specific routines at the
