@@ -68,8 +68,8 @@ public:
      */
     StaggeredPrimaryVariables(CellCenterPrimaryVariables&& ccPriVars, FacePrimaryVariables&& facePriVars) noexcept
     {
-        (*this)[cellCenterIdx] = std::move(ccPriVars);
-        (*this)[faceIdx] = std::move(facePriVars);
+        (*this)[cellCenterIdx] = std::forward<decltype(ccPriVars)>(ccPriVars);
+        (*this)[faceIdx] = std::forward<decltype(facePriVars)>(facePriVars);
     }
 
      /*!
