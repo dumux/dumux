@@ -77,6 +77,7 @@ class ImplicitLocalJacobian
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -117,7 +118,7 @@ public:
      *
      * \param element The DUNE Codim<0> entity which we look at.
      */
-    void assemble(const Element& element, JacobianMatrix& matrix)
+    void assemble(const Element& element, JacobianMatrix& matrix, SolutionVector& residual)
     {
         DUNE_THROW(Dune::NotImplemented, "Assemble routine not provided by the actual implementation of the local jacobian!");
     }
@@ -201,9 +202,7 @@ protected:
     { return problem_().vertexMapper(); }
 
 
-    Scalar numericEpsilon(const SubControlVolume& scv,
-                          const VolumeVariables& volVar,
-                          const int pvIdx) const
+    Scalar numericEpsilon(const Scalar priVar) const
     {
         // define the base epsilon as the geometric mean of 1 and the
         // resolution of the scalar type. E.g. for standard 64 bit
@@ -217,7 +216,6 @@ protected:
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
-        Scalar priVar = volVar.priVar(pvIdx);
         return baseEps*(std::abs(priVar) + 1.0);
     }
 
@@ -225,13 +223,17 @@ protected:
      * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
      *        primary variable 'pvIdx' at dof 'col'.
+     * \param matrix A block matrix with block depth 1
      */
-    void updateGlobalJacobian_(JacobianMatrix& matrix,
+    template<class Matrix>
+    void updateGlobalJacobian_(Matrix& matrix,
                                const int globalI,
                                const int globalJ,
                                const int pvIdx,
                                const PrimaryVariables &partialDeriv)
     {
+        assert(partialDeriv.size() == numEq);
+
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
         {
             // A[i][col][eqIdx][pvIdx] is the rate of change of
