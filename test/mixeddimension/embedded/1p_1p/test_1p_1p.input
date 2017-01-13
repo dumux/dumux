@@ -1,0 +1,52 @@
+[MixedDimension]
+UseIterativeSolver = false
+NumCircleSegments = 100
+
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+MaxTimeStepSize = 1
+DtInitialBulkProblem = 1 # [s]
+DtInitialLowDimProblem = 1 # [s]
+EpisodeTime = 1 # [s]
+
+[VesselGrid]
+LowerLeft = 0 0 0
+UpperRight = 0 0 1
+Cells = 40
+
+[TissueGrid]
+#File = ./grids/cylinder.msh
+#Refinement = 10
+LowerLeft = -1 -1 0
+UpperRight = 1 1 1
+Cells = 40 40 40
+
+[Problem]
+Name = test_1p1dstokes
+NormIntegrationOrder = 1
+NormExcludeInnerBulk = true
+IntegrationOrder = 2
+LiquidKinematicViscosity = 1 # [m^2/s]
+LiquidDensity = 1 # [kg/m^3]
+
+[IterativeAlgorithm]
+MaxIterations = 100
+Tolerance = 1.0e-5
+Verbose = 1
+IntegrationOrder = 1
+
+[SpatialParams]
+PermeabilityTissue = 1 # [m^2]
+Radius = 0.33 # [m]
+
+[Vtk]
+AddVelocity = 0
+
+[BoundaryConditions1D]
+PressureInput = 2.0
+DeltaPressure = 1.0
+
+[Newton]
+MaxRelativeShift = 1e-5
+MaxSteps = 60

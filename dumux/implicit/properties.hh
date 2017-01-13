@@ -100,6 +100,10 @@ NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat c
 NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP); //!< if the permeability has to be evaluated at the scvf integration point (for evaluating analytical fields)
 
+// specify if we evaluate the permeability in the volume (for discontinuous fields)
+// or at the scvf center for analytical permeability fields (e.g. convergence studies)
+NEW_PROP_TAG(EvaluatePermeabilityAtScvfCenter);
+
 // vtk output
 NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output
 NEW_PROP_TAG(VtkAddProcessRank); //!< specifies if the process rank should be added the output

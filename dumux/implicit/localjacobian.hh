@@ -91,12 +91,8 @@ class ImplicitLocalJacobian
 public:
     // copying a local jacobian is not a good idea
     ImplicitLocalJacobian(const ImplicitLocalJacobian &) = delete;
-
-    ImplicitLocalJacobian()
-    {
-        Valgrind::SetUndefined(problemPtr_);
-    }
-
+    // default constructor
+    ImplicitLocalJacobian() = default;
 
     /*!
      * \brief Initialize the local Jacobian object.
@@ -157,19 +153,13 @@ protected:
      * \brief Returns a reference to the problem.
      */
     const Problem &problem_() const
-    {
-        Valgrind::CheckDefined(problemPtr_);
-        return *problemPtr_;
-    }
+    { return *problemPtr_; }
 
     /*!
      * \brief Returns a reference to the problem.
      */
     Problem &problem_()
-    {
-        Valgrind::CheckDefined(problemPtr_);
-        return *problemPtr_;
-    }
+    { return *problemPtr_; }
 
     /*!
      * \brief Returns a reference to the grid view.
