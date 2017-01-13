@@ -196,7 +196,7 @@ public:
     const AssemblyMap& assemblyMap() const
     { return assemblyMap_; }
 
-private:
+protected:
     void evalPartialDerivatives_(const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
@@ -255,7 +255,7 @@ private:
 
             neighborDeriv = 0.0;
 
-            Scalar eps = this->numericEpsilon(scv, curVolVars, pvIdx);
+            Scalar eps = this->numericEpsilon(curVolVars.priVar(pvIdx));
             Scalar delta = 0;
 
             if (numericDifferenceMethod_ >= 0)
@@ -407,7 +407,7 @@ private:
             {
                 // derivatives of element dof with respect to itself
                 PrimaryVariables partialDeriv(0.0);
-                const auto eps = this->numericEpsilon(scvJ, curVolVarsJ, pvIdx);
+                const auto eps = this->numericEpsilon(curVolVarsJ.priVar(pvIdx));
                 Scalar delta = 0;
 
                 if (numericDifferenceMethod_ >= 0)
