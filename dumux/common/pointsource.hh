@@ -64,6 +64,7 @@ class PointSource
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -142,7 +143,9 @@ public:
     // to be overloaded by derived classes
     void update(const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const FVElementGeometry &fvGeometry,
+                const ElementVolumeVariables &elemVolVars,
+                const SubControlVolume &scv)
     {}
 
     //! set the number of embeddings for this point source
@@ -252,6 +255,8 @@ public:
     // to be overloaded by derived classes
     void update(const Problem &problem,
                 const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const ElementVolumeVariables &elemVolVars,
                 const SubControlVolume &scv)
     { this->values_ = valueFunction_(problem.timeManager(), this->position()); }
 
