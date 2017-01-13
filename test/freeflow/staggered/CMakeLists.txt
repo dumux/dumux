@@ -30,6 +30,12 @@ add_dumux_test(test_channel_navierstokes test_channel_navierstokes test_channel.
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes")
 target_compile_definitions(test_channel_navierstokes PUBLIC "ENABLE_NAVIERSTOKES=1")
 
+add_dumux_test(test_donea test_donea test_donea.cc
+               ${CMAKE_CURRENT_BINARY_DIR}/test_donea)
+
+add_dumux_test(test_kovasznay test_kovasznay test_kovasznay.cc
+               ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay)
+
 
 #install sources
 install(FILES
