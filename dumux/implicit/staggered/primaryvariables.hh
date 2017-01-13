@@ -103,6 +103,54 @@ public:
     }
 };
 
+/*!
+ * \brief This class generates a range [a,b) which can be used in a for loop, e.g.
+ *        for(auto i : range(3) { ... i=0,1,2 }   or
+ *        for(auto i : range(5, 8) { ... i=5,6,7 }
+ *        see: https://en.wikipedia.org/wiki/Generator_(computer_programming)
+ *        TODO: should this be moved to the math.hh header?
+ */
+class range
+{
+public:
+    // constructors
+    range(int end): last_(end), iter_(0) {}
+    range(int begin, int end): last_(end), iter_(begin) {}
+    range() = delete;
+
+    // Iterable functions
+     const range& begin() const { return *this; }
+     const range& end() const { return *this; }
+
+    // Iterator functions
+    bool operator!=(const range&) const { return iter_ < last_; }
+    void operator++() { ++iter_; }
+    int operator*() const { return iter_; }
+private:
+    int last_;
+    int iter_;
+};
+
+/*!
+* \brief Class which provides two ranges of indices (cc and face)
+*        cc: for(auto i : PriVarIndices(cellCenterIdx)) { ... }
+*        face: for(auto i : PriVarIndices(faceIdx)) { ... }
+*/
+template<class TypeTag>
+class PriVarIndices : public range
+{
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    using cellCenterIdx = typename DofTypeIndices::CellCenterIdx;
+    using faceIdx = typename DofTypeIndices::FaceIdx;
+
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+
+public:
+    PriVarIndices(cellCenterIdx) : range(0, numEqCellCenter) {}
+    PriVarIndices(faceIdx) : range(numEqCellCenter, numEqCellCenter + numEqFace) {}
+};
+
 } // namespace Dumux
 
 #endif

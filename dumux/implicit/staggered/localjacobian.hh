@@ -30,6 +30,7 @@
 #include <dumux/common/valgrind.hh>
 
 #include <dumux/implicit/properties.hh>
+#include "primaryvariables.hh"
 
 namespace Dumux
 {
@@ -84,6 +85,7 @@ class StaggeredLocalJacobian
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -102,6 +104,8 @@ class StaggeredLocalJacobian
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+
+    using PriVarIndices = typename Dumux::PriVarIndices<TypeTag>;
 
 
 public:
@@ -252,14 +256,14 @@ private:
             auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
             VolumeVariables origVolVars(curVolVars);
 
-            for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
+            for(auto pvIdx : PriVarIndices(cellCenterIdx))
             {
                 const Scalar eps = 1e-4; // TODO: do properly
 
                 PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
                                          FacePrimaryVariables(0.0));
 
-                priVars[cellCenterIdx][pvIdx] += eps;
+                priVars[pvIdx] += eps;
                 curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
                 this->localResidual().evalCellCenter(element, fvGeometry, scvI,
@@ -303,13 +307,13 @@ private:
             auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
             auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
 
-            for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
+            for(auto pvIdx : PriVarIndices(faceIdx))
             {
+                PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
                 const Scalar eps = 1e-4; // TODO: do properly
-                FacePrimaryVariables priVars(this->model_().curSol()[faceIdx][globalJ]);
                 priVars[pvIdx] += eps;
 
-                curFaceVars.update(priVars);
+                curFaceVars.update(priVars[faceIdx]);
 
                 this->localResidual().evalCellCenter(element, fvGeometry, scvI,
                                         prevElemVolVars, curElemVolVars,
@@ -358,14 +362,14 @@ private:
                 auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
                 VolumeVariables origVolVars(curVolVars);
 
-                for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
+                for(auto pvIdx : PriVarIndices(cellCenterIdx))
                 {
                     const Scalar eps = 1e-4; // TODO: do properly
 
                     PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
                                              FacePrimaryVariables(0.0));
 
-                    priVars[cellCenterIdx][pvIdx] += eps;
+                    priVars[pvIdx] += eps;
 
                     curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
 
@@ -414,13 +418,14 @@ private:
                 auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
                 auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
 
-                for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
+                for(auto pvIdx : PriVarIndices(faceIdx))
                 {
                     const Scalar eps = 1e-10; // TODO: do properly
-                    FacePrimaryVariables priVars(this->model_().curSol()[faceIdx][globalJ]);
+
+                    PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
                     priVars[pvIdx] += eps;
 
-                    curFaceVars.update(priVars);
+                    curFaceVars.update(priVars[faceIdx]);
 
                     this->localResidual().evalFace(element, fvGeometry, scvf,
                                             prevElemVolVars, curElemVolVars,
