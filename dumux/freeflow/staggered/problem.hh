@@ -63,7 +63,9 @@ class NavierStokesProblem : public ImplicitProblem<TypeTag>
         dimWorld = Grid::dimensionworld,
 
         pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx
+        velocityIdx = Indices::velocityIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -177,8 +179,8 @@ public:
         auto initialValues = asImp_().initialAtPos(globalPos);
 
         PrimaryVariables priVars(0.0);
-        priVars[pressureIdx] = initialValues.pressure;
-        priVars[velocityIdx] = initialValues.velocity[directionIdx];
+        priVars[pressureIdx] = initialValues[cellCenterIdx][pressureIdx];
+        priVars[velocityIdx] = initialValues[faceIdx][directionIdx];
 
         return priVars;
     }
@@ -197,8 +199,8 @@ public:
         auto boundaryValues = asImp_().dirichletAtPos(globalPos);
 
         PrimaryVariables priVars(0.0);
-        priVars[pressureIdx] = boundaryValues.pressure;
-        priVars[velocityIdx] = boundaryValues.velocity[directionIdx];
+        priVars[pressureIdx] = boundaryValues[cellCenterIdx][pressureIdx];
+        priVars[velocityIdx] = boundaryValues[faceIdx][directionIdx];
 
         return priVars;
     }
@@ -215,6 +217,26 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         return dirichletAtPos(scvf.center(), scvf.directionIndex());
+    }
+
+     /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The center of the finite volume which ought to be set.
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos, const int directionIdx) const
+    {
+        auto sourceValues = asImp_().sourceAtPos(globalPos);
+
+        PrimaryVariables priVars(0.0);
+        priVars[pressureIdx] = sourceValues[cellCenterIdx][pressureIdx];
+        priVars[velocityIdx] = sourceValues[faceIdx][directionIdx];
+
+        return priVars;
     }
 
     // \}

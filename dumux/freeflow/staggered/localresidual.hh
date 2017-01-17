@@ -185,11 +185,14 @@ public:
                                               const ElementVolumeVariables& elemVolVars,
                                               const GlobalFaceVars& globalFaceVars)
     {
-        FacePrimaryVariables gravityTerm(0.0);
+        FacePrimaryVariables source(0.0);
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        gravityTerm += this->problem().gravity()[scvf.directionIndex()] * insideVolVars.density();
-        return gravityTerm;
+        source += this->problem().gravity()[scvf.directionIndex()] * insideVolVars.density();
+
+        source += this->problem().sourceAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
+
+        return source;
     }
 
      /*!
@@ -257,7 +260,7 @@ protected:
                 {
                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& insideVolVars = elemVolVars[insideScv];
-                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichlet(element, scvf)[pressureIdx];
+                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.dofPosition(), 0)[pressureIdx];
                 }
             }
         }

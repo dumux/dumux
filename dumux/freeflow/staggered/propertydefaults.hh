@@ -166,19 +166,14 @@ SET_BOOL_PROP(NavierStokes, EnableComponentTransport, false);
 SET_PROP(NavierStokes, BoundaryValues)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CellCenterBoundaryValues = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    enum { dimWorld = GridView::dimensionworld };
-
-    struct Values
-    {
-        Dune::FieldVector<Scalar, dimWorld> velocity;
-        Scalar pressure;
-    };
-
+    using FaceBoundaryValues = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                 GridView::dimension>;
 public:
-    using type = Values;
+    using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
+
 
 
 //! average is used as default model to compute the effective thermal heat conductivity
