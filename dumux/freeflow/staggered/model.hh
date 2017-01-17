@@ -170,6 +170,25 @@ public:
         writer.attachDofData(*velocity,  "velocity", isBox, dim);
     }
 
+    auto velocity(const Element& element) const
+    {
+        GlobalPosition velocityVector(0.0);
+
+        // get the local fv geometry
+        auto fvGeometry = localView(this->globalFvGeometry());
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
+                auto dirIdx = scvf.directionIndex();
+                velocityVector[dirIdx] += 0.5*origFaceVars.velocity();
+            }
+        }
+        return velocityVector;
+    }
+
 
 };
 }
