@@ -101,7 +101,12 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
+        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
+        pressureIdx = Indices::pressureIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -120,6 +125,7 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
     DoneaTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -159,36 +165,25 @@ public:
     Scalar temperature() const
     { return 298.0; }
 
-
     /*!
      * \brief Return the sources within the domain.
      *
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    CellCenterPrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        CellCenterPrimaryVariables source(0.0);
-        return source;
-
-    }
-
-    /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
-     */
-    FacePrimaryVariables faceSourceAtPos(const GlobalPosition &globalPos) const
-    {
-        FacePrimaryVariables source(0.0);
+        SourceValues source(0.0);
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        source[0] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-                        + (-2.0 * 24.0*y - 72.0*y*y + 48.0*y*y*y)*x + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-        source[1] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-                        + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y + 24.0*y*y*y - 12.0*y*y*y*y;
+        source[momentumXBalanceIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
+                                      + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
+                                      + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
+                                      + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
+        source[momentumYBalanceIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
+                                      + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
+                                      + 24.0*y*y*y - 12.0*y*y*y*y;
         return source;
     }
     // \}
@@ -208,11 +203,8 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
+        // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(momentumBalanceIdx);
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx+1); // TODO ??
-        // set Dirichlet values for the pressure everywhere
         values.setDirichlet(massBalanceIdx);
 
         return values;
@@ -226,9 +218,9 @@ public:
         Scalar y = globalPos[1];
 
         BoundaryValues dirichletValues;
-        dirichletValues.pressure = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-        dirichletValues.velocity[0] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        dirichletValues.velocity[1] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
+        dirichletValues[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
+        dirichletValues[velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
+        dirichletValues[velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
 
         return dirichletValues;
     }
@@ -263,8 +255,9 @@ public:
     InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         InitialValues values;
-        values.pressure = 0.0;
-        values.velocity = 0.0;
+        values[pressureIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
 
         return values;
     }
@@ -303,7 +296,7 @@ public:
                 auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
-                p_exact[globalIdx] = dirichletAtPos(globalPos).pressure;
+                p_exact[globalIdx] = dirichletAtPos(globalPos)[pressureIdx];
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -313,16 +306,16 @@ public:
                     if(scvf.unitOuterNormal()[dirIdx] > 0.0)
                     {
                         if(dirIdx == 0)
-                            v_x_pos_exact[globalIdx] = dirichletAtPos(globalPos).velocity[0];
+                            v_x_pos_exact[globalIdx] = dirichletAtPos(globalPos)[velocityXIdx];
                         if(dirIdx == 1)
-                            v_y_pos_exact[globalIdx] = dirichletAtPos(globalPos).velocity[1];
+                            v_y_pos_exact[globalIdx] = dirichletAtPos(globalPos)[velocityYIdx];
                     }
                     else
                     {
                         if(dirIdx == 0)
-                            v_x_neg_exact[globalIdx] = dirichletAtPos(globalPos).velocity[0];
+                            v_x_neg_exact[globalIdx] = dirichletAtPos(globalPos)[velocityXIdx];
                         if(dirIdx == 1)
-                            v_y_neg_exact[globalIdx] = dirichletAtPos(globalPos).velocity[1];
+                            v_y_neg_exact[globalIdx] = dirichletAtPos(globalPos)[velocityYIdx];
                     }
                 }
             }
