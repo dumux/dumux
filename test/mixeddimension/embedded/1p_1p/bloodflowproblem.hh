@@ -25,10 +25,6 @@
 #ifndef DUMUX_BLOOD_FLOW_PROBLEM_HH
 #define DUMUX_BLOOD_FLOW_PROBLEM_HH
 
-#include <dune/geometry/quadraturerules.hh>
-#include <dune/geometry/referenceelements.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
@@ -269,7 +265,7 @@ public:
                      const SubControlVolume &scv) const
     {
         // compute source at every integration point
-        const auto bulkVolVars = this->couplingManager().bulkVolVars(source.id());
+        const auto& bulkVolVars = this->couplingManager().bulkVolVars(source.id());
         const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[pressureIdx];
 
         // calculate the source
