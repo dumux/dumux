@@ -27,9 +27,7 @@
 
 #include <dumux/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
-
-#include "localresidual.hh"
-#include "problem.hh"
+#include "properties.hh"
 
 namespace Dumux
 {
@@ -106,139 +104,47 @@ namespace Dumux
 template<class TypeTag >
 class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
 public:
+
     /*!
-     * \brief All relevant primary and secondary of a given
-     *        solution to an ouput writer.
+     * \brief Apply the initial conditions to the model.
      *
-     * \param sol The current solution which ought to be written to disk
-     * \param writer The VtkMultiWriter which is be used to write the data
+     * \param problem The object representing the problem which needs to
+     *             be simulated.
      */
-    template <class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
+    void init(Problem& problem)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
-        bool gravity =GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        ParentType::init(problem);
 
-        // get the number of degrees of freedom
-        unsigned numDofs = this->numDofs();
-
-        // create the required scalar fields
-        ScalarField *pw = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pn = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pc = writer.allocateManagedBuffer(numDofs);
-        ScalarField *sw = writer.allocateManagedBuffer(numDofs);
-        ScalarField *sn = writer.allocateManagedBuffer(numDofs);
-        ScalarField *rhoW = writer.allocateManagedBuffer(numDofs);
-        ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
-        ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
-        ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
-        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
-        ScalarField *Te = writer.allocateManagedBuffer(numDofs);
-        ScalarField *ph = writer.allocateManagedBuffer(numDofs);
-        ScalarField *wc = writer.allocateManagedBuffer(numDofs);
-
-
-        VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
-        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-
-        if (velocityOutput.enableOutput())
-        {
-            // initialize velocity field
-            for (unsigned int i = 0; i < numDofs; ++i)
-            {
-                (*velocity)[i] = Scalar(0);
-            }
-        }
-
-        unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer (numElements);
-
-        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
-        {
-            int eIdx = this->problem_().model().elementMapper().index(element);
-
-            (*rank)[eIdx] = this->gridView_().comm().rank();
-
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), element);
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               element,
-                               fvGeometry,
-                               false /* oldSol? */);
-
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-            {
-                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-
-                (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
-                (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
-                (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
-                (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
-                (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                if (gravity)
-                    (*ph)[dofIdxGlobal] = elemVolVars[scvIdx].pressureHead(wPhaseIdx);
-                (*wc)[dofIdxGlobal] = elemVolVars[scvIdx].waterContent(wPhaseIdx);
-
-            }
-
-            // velocity output
-            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, /*phaseIdx=*/0);
-        }
-
-        writer.attachDofData(*sn, "Sn", isBox);
-        writer.attachDofData(*sw, "Sw", isBox);
-        writer.attachDofData(*pn, "pn", isBox);
-        writer.attachDofData(*pw, "pw", isBox);
-        writer.attachDofData(*pc, "pc", isBox);
-        writer.attachDofData(*rhoW, "rhoW", isBox);
-        writer.attachDofData(*rhoN, "rhoN", isBox);
-        writer.attachDofData(*mobW, "mobW", isBox);
-        writer.attachDofData(*mobN, "mobN", isBox);
-        writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*Te, "temperature", isBox);
-        if (gravity)
-            writer.attachDofData(*ph, "pressure head", isBox);
-        writer.attachDofData(*wc, "water content", isBox);
-
-
-        if (velocityOutput.enableOutput())
-        {
-            writer.attachDofData(*velocity,  "velocity", isBox, dim);
-        }
-        writer.attachCellData(*rank, "process rank");
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addSecondaryVariable("Sw", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("Sn", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("pc", [](const VolumeVariables& v){ return v.capillaryPressure(); });
+        vtkOutputModule.addSecondaryVariable("rhoW", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhoN", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
+        if(GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity));
+            vtkOutputModule.addSecondaryVariable("pressure head", [](const VolumeVariables& v){ return v.pressureHead(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("water content", [](const VolumeVariables& v){ return v.waterContent(wPhaseIdx); });
     }
 };
-}
+
+} // end namespace Dumux
 
 #include "propertydefaults.hh"
 

@@ -38,21 +38,19 @@ namespace Dumux
 template <class TypeTag>
 struct RichardsIndices
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     //////////
     // primary variable indices
     //////////
 
     //! Primary variable index for the wetting phase pressure
-    static const int pwIdx = 0;
-    //! Primary variable index for the wetting phase pressure head (used for pressure head formulation)
-    static const int hIdx = 0;
+    static const int pressureIdx = 0;
     //////////
     // equation indices
     //////////
     //! Equation index for the mass conservation of the wetting phase
-    static const int contiEqIdx = 0;
+    static const int conti0EqIdx = 0;
 
     //////////
     // phase indices
@@ -62,6 +60,6 @@ struct RichardsIndices
 };
 // \}
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -51,11 +51,10 @@ SET_PROP(RichardsLensSpatialParams, MaterialLaw)
 private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
 };
 }
 
@@ -67,27 +66,23 @@ public:
 template<class TypeTag>
 class RichardsLensSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
-    //get the material law from the property system
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    //! The parameters of the material law to be used
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    // export permeability type
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief Constructor
@@ -95,9 +90,13 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsLensSpatialParams(const GridView& gridView)
-        : ParentType(gridView)
+    RichardsLensSpatialParams(const Problem& problem, const GridView& gridView)
+        : ParentType(problem, gridView)
     {
+
+        lensLowerLeft_ = {1.0, 2.0};
+        lensUpperRight_ = {4.0, 3.0};
+
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
         lensMaterialParams_.setSnr(0.0);
@@ -118,15 +117,10 @@ public:
     /*!
      * \brief Returns the intrinsic permeability tensor [m^2] at a given location
      *
-     * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position where we evaluate
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 int scvIdx) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
@@ -135,28 +129,10 @@ public:
     /*!
      * \brief Returns the porosity [] at a given location
      *
-     * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position where we evaluate
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
-
-    /*!
-     * \brief Returns the parameters for the material law at a given location
-     *
-     * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
-    {
-        return materialLawParams(fvGeometry.subContVol[scvIdx].global);
-    }
 
     /*!
      * \brief Returns the parameters for the material law at a given location
@@ -166,39 +142,24 @@ public:
      *
      * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParams(const GlobalPosition &globalPos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
     {
-
         if (isInLens_(globalPos))
             return lensMaterialParams_;
         return outerMaterialParams_;
-    }
-
-    /*!
-     * \brief Set the bounding box of the low-permeability lens
-     *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
-     *
-     * \param lensLowerLeft the lower left corner of the lens
-     * \param lensUpperRight the upper right corner of the lens
-     */
-    void setLensCoords(const GlobalPosition& lensLowerLeft,
-                       const GlobalPosition& lensUpperRight)
-    {
-        lensLowerLeft_ = lensLowerLeft;
-        lensUpperRight_ = lensUpperRight;
     }
 
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
+            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
                 return false;
         }
         return true;
     }
+
+    static constexpr Scalar eps_ = 1.5e-7;
 
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
@@ -209,7 +170,7 @@ private:
     MaterialLawParams outerMaterialParams_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
 

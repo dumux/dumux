@@ -19,170 +19,120 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the residual for the Richards fully implicit model.
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the n-phase immiscible fully implicit models.
  */
 #ifndef DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 
-#include "properties.hh"
-
 namespace Dumux
 {
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the residual for the Richards fully implicit model.
+ * \ingroup OnePModel
+ * \ingroup RichardsLocalResidual
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the n-phase immiscible fully implicit models.
  */
 template<class TypeTag>
 class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    // first index for the mass balance
+    enum { conti0EqIdx = Indices::conti0EqIdx };
+
     enum {
-        contiEqIdx = Indices::contiEqIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
-
 public:
-    /*!
-     * \brief Constructor. Sets the upwind weight.
-     */
-    RichardsLocalResidual()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    };
 
     /*!
      * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub control
-     *        volume of a finite volume element for the Richards
-     *        model.
-     *
-     * This function should not include the source and sink terms.
-     *
-     * \param storage Stores the average mass per unit volume for each phase \f$\mathrm{[kg/m^3]}\f$
-     * \param scvIdx The sub control volume index of the current element
-     * \param usePrevSol Calculate the storage term of the previous solution
-     *                   instead of the model's current solution.
+     *        quantites (e.g. phase mass) within a sub-control
+     *        volume of a finite volume element for the immiscible models.
+     * \param scv The sub control volume
+     * \param volVars The current or previous volVars
+     * \note This function should not include the source and sink terms.
+     * \note The volVars can be different to allow computing
+     *       the implicit euler time derivative here
      */
-    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
+    PrimaryVariables computeStorage(const SubControlVolume& scv,
+                                    const VolumeVariables& volVars) const
     {
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const VolumeVariables &volVars =
-            usePrevSol ?
-            this->prevVolVars_(scvIdx) :
-            this->curVolVars_(scvIdx);
+        // partial time derivative of the phase mass
+        PrimaryVariables storage;
+        storage[conti0EqIdx] = volVars.porosity()
+                               * volVars.density(wPhaseIdx)
+                               * volVars.saturation(wPhaseIdx);
 
-        // partial time derivative of the wetting phase mass
-        //pressure head formulation
-        storage[contiEqIdx] =
-                volVars.saturation(wPhaseIdx)
-                * volVars.porosity();
-        // pressure formulation
-        if (!useHead)
-            storage[contiEqIdx] *= volVars.density(wPhaseIdx);
+        //! The energy storage in the fluid phase with index phaseIdx
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, wPhaseIdx);
+
+        //! The energy storage in the solid matrix
+        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+
+        return storage;
     }
 
 
     /*!
-     * \brief Evaluates the mass flux over a face of a subcontrol
-     *        volume.
-     *
-     * \param flux Stores the total mass fluxes over a sub-control volume face
-     *             of the current element \f$\mathrm{[kg/s]}\f$
-     * \param fIdx The sub control volume face index inside the current
-     *                element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
+     * \brief Evaluate the mass flux over a face of a sub control volume
+     * \param scvf The sub control volume face to compute the flux on
      */
-    void computeFlux(PrimaryVariables &flux, const int fIdx, bool onBoundary=false) const
+    PrimaryVariables computeFlux(const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolumeFace& scvf,
+                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.update(this->problem_(),
-                        this->element_(),
-                        this->fvGeometry_(),
-                        fIdx,
-                        this->curVolVars_(),
-                        onBoundary);
+        fluxVars.initAndComputeFluxes(this->problem(),
+                                      element,
+                                      fvGeometry,
+                                      elemVolVars,
+                                      scvf,
+                                      elemFluxVarsCache);
 
-        flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, fluxVars);
-        asImp_()->computeDiffusiveFlux(flux, fluxVars);
-    }
+        PrimaryVariables flux;
+        // the physical quantities for which we perform upwinding
+        auto upwindTerm = [](const VolumeVariables& volVars)
+                          { return volVars.density(wPhaseIdx)*volVars.mobility(wPhaseIdx); };
 
-    /*!
-     * \brief Evaluates the advective mass flux of all components over
-     *        a face of a sub-control volume.
-     *
-     * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
-     */
+        flux[conti0EqIdx] = fluxVars.advectiveFlux(wPhaseIdx, upwindTerm);
 
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        // data attached to upstream and the downstream vertices
-        // of the current phase
-        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(wPhaseIdx));
-        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(wPhaseIdx));
+        //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);
 
-        //pressure head formulation
-        flux[contiEqIdx] =
-            fluxVars.volumeFlux(wPhaseIdx);
-        //pressure formulation
-        if(!useHead)
-            flux[contiEqIdx] *=((    massUpwindWeight_)*up.density(wPhaseIdx)
-                                +
-                                (1 - massUpwindWeight_)*dn.density(wPhaseIdx));
-    }
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
-    /*!
-     * \brief Adds the diffusive flux to the flux vector over
-     *        the face of a sub-control volume.
-     *
-     * \param flux The diffusive flux over the sub-control-volume face for each phase
-     * \param fluxVars The flux variables at the current SCV
-     *
-     * This function doesn't do anything but may be used by the
-     * non-isothermal three-phase models to calculate diffusive heat
-     * fluxes
-     */
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
-    {
-        // diffusive fluxes
-        flux += 0.0;
-    }
-
-protected:
-    Implementation *asImp_()
-    {
-        return static_cast<Implementation *> (this);
-    }
-
-    const Implementation *asImp_() const
-    {
-        return static_cast<const Implementation *> (this);
+        return flux;
     }
 
 private:
-    Scalar massUpwindWeight_;
+    Implementation *asImp_()
+    { return static_cast<Implementation *> (this); }
 
-
+    const Implementation *asImp_() const
+    { return static_cast<const Implementation *> (this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif
