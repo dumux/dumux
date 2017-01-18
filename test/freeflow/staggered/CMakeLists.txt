@@ -31,10 +31,14 @@ add_dumux_test(test_channel_navierstokes test_channel_navierstokes test_channel.
 target_compile_definitions(test_channel_navierstokes PUBLIC "ENABLE_NAVIERSTOKES=1")
 
 add_dumux_test(test_donea test_donea test_donea.cc
-               ${CMAKE_CURRENT_BINARY_DIR}/test_donea)
+      python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+        --script fuzzy
+        --files ${CMAKE_SOURCE_DIR}/test/references/stokes-donea-reference.vtu
+                ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00002.vtu
+        --command "${CMAKE_CURRENT_BINARY_DIR}/test_donea")
 
-add_dumux_test(test_kovasznay test_kovasznay test_kovasznay.cc
-               ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay)
+#add_dumux_test(test_kovasznay test_kovasznay test_kovasznay.cc
+#               ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay)
 
 
 #install sources

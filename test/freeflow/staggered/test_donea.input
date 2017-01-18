@@ -1,5 +1,5 @@
 [TimeManager]
-DtInitial = 1e-1 # [s]
+DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
@@ -7,8 +7,7 @@ UpperRight = 1 1
 Cells = 40 40
 
 [Problem]
-Name = test_donea_stokes # name passed to the output routines
-InletVelocity = 0
+Name = test_donea # name passed to the output routines
 LiquidDensity = 1
 EnableGravity = false
 

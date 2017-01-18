@@ -217,12 +217,12 @@ public:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        BoundaryValues dirichletValues;
-        dirichletValues[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-        dirichletValues[velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        dirichletValues[velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
+        BoundaryValues values;
+        values[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
+        values[velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
+        values[velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
 
-        return dirichletValues;
+        return values;
     }
 
     /*!
@@ -271,12 +271,11 @@ public:
     {
         //Here we calculate the analytical solution
         const auto numElements = this->gridView().size(0);
-        auto& p_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
+        auto& pExact = *(this->resultWriter().allocateManagedBuffer(numElements));
+        auto& velocityExact = *(this->resultWriter()).template allocateManagedBuffer<double, dimWorld>(numElements);
 
-        auto& v_x_pos_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& v_x_neg_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& v_y_pos_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& v_y_neg_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
+        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+        typename DofTypeIndices::FaceIdx faceIdx;
 
         const auto someElement = *(elements(this->gridView()).begin());
 
@@ -293,38 +292,22 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto globalIdx = scv.dofIndex();
+                auto dofIdxGlobal = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
-                p_exact[globalIdx] = dirichletAtPos(globalPos)[pressureIdx];
+                pExact[dofIdxGlobal] = dirichletAtPos(globalPos)[pressureIdx];
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     auto dirIdx = scvf.directionIndex();
-
-                    if(scvf.unitOuterNormal()[dirIdx] > 0.0)
-                    {
-                        if(dirIdx == 0)
-                            v_x_pos_exact[globalIdx] = dirichletAtPos(globalPos)[velocityXIdx];
-                        if(dirIdx == 1)
-                            v_y_pos_exact[globalIdx] = dirichletAtPos(globalPos)[velocityYIdx];
-                    }
-                    else
-                    {
-                        if(dirIdx == 0)
-                            v_x_neg_exact[globalIdx] = dirichletAtPos(globalPos)[velocityXIdx];
-                        if(dirIdx == 1)
-                            v_y_neg_exact[globalIdx] = dirichletAtPos(globalPos)[velocityYIdx];
-                    }
+                    velocityVector[dirIdx] += 0.5*dirichletAtPos(globalPos)[faceIdx][dirIdx];
                 }
+                velocityExact[dofIdxGlobal] = velocityVector;
             }
         }
-        this->resultWriter().attachDofData(v_x_pos_exact, "v_x_pos_exact", false);
-        this->resultWriter().attachDofData(v_x_neg_exact, "v_x_neg_exact", false);
-        this->resultWriter().attachDofData(v_y_pos_exact, "v_y_pos_exact", false);
-        this->resultWriter().attachDofData(v_y_neg_exact, "v_y_neg_exact", false);
-        this->resultWriter().attachDofData(p_exact, "p_exact", false);
+        this->resultWriter().attachDofData(pExact, "p_exact", false);
+        this->resultWriter().attachDofData(velocityExact,  "velocity_exact", false, dim);
     }
 
 private:
