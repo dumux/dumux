@@ -119,7 +119,12 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
+        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
+        pressureIdx = Indices::pressureIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -138,6 +143,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
     ChannelTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -188,9 +194,9 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    CellCenterPrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return CellCenterPrimaryVariables(0);
+        return SourceValues(0.0);
     }
     // \}
     /*!
@@ -237,22 +243,22 @@ public:
     BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryValues values;
-        values.pressure = 1.1e+5;
+        values[pressureIdx] = 1.1e+5;
 
         if(isInlet(globalPos))
         {
-            values.velocity[0] = inletVelocity_;
-            values.velocity[1] = 0.0;
+            values[velocityXIdx] = inletVelocity_;
+            values[velocityYIdx] = 0.0;
         }
         else if(isWall(globalPos))
         {
-            values.velocity[0] = 0.0;
-            values.velocity[1] = 0.0;
+            values[velocityXIdx] = 0.0;
+            values[velocityYIdx] = 0.0;
         }
         else if(isOutlet(globalPos))
         {
-            values.velocity[0] = 1.0;
-            values.velocity[1] = 0.0;
+            values[velocityXIdx] = 1.0;
+            values[velocityYIdx]= 0.0;
         }
 
         return values;
@@ -288,8 +294,9 @@ public:
     InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         InitialValues values;
-        values.pressure = 1.1e+5;
-        values.velocity = 0.0;
+        values[pressureIdx] = 1.1e+5;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
 
         return values;
     }
