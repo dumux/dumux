@@ -29,8 +29,7 @@ namespace Dumux
 {
 // forward declaration of the base class
 template<class TypeTag, MpfaMethods MpfaMethod>
-class CCMpfaInteractionVolumeImplementation
-{};
+class CCMpfaInteractionVolumeImplementation;
 
 /*!
  * \ingroup Mpfa
