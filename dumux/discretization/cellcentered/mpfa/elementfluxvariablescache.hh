@@ -127,7 +127,7 @@ public:
                      const ElementVolumeVariables& elemVolVars)
     {
         // TODO
-        DUNE_THROW(Dune::InvalidStateException, "Does local flux var cache binding make sense in general?");
+        DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
     }
 
     // This function is called by the CCLocalResidual before flux calculations during assembly.
@@ -187,7 +187,7 @@ public:
                   const SubControlVolumeFace& scvf)
     {
         // TODO
-        DUNE_THROW(Dune::InvalidStateException, "Does binding of one scvf make sense in general?");
+        DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
     }
 
     // access operators in the case of no caching
