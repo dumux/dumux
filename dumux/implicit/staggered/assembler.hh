@@ -134,50 +134,39 @@ private:
         occupationPatternA21.resize(numDofsFace, numDofsCC);
         occupationPatternA22.resize(numDofsFace, numDofsFace);
 
+        const auto& assemblyMap = this->problem_().model().localJacobian().assemblyMap();
+
         for (const auto& element : elements(this->gridView_()))
         {
             // the global index of the element at hand
             const auto globalI = this->elementMapper_().index(element);
-            const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
-            const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
 
-
-            for (auto&& globalJ : cellCenterToCellCenterStencil)
+            for (auto&& globalJ : assemblyMap(cellCenterIdx, cellCenterIdx, globalI))
                 occupationPatternA11.add(globalI, globalJ);
-            for (auto&& globalJ : cellCenterToFaceStencil)
+            for (auto&& globalJ : assemblyMap(cellCenterIdx, faceIdx, globalI))
                 occupationPatternA12.add(globalI, globalJ);
+
+
+            auto fvGeometry = localView(this->problem_().model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            // loop over sub control faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto globalI = scvf.dofIndexSelf();
+                for (auto&& globalJ : assemblyMap(faceIdx, cellCenterIdx, scvf.index()))
+                    occupationPatternA21.add(globalI, globalJ);
+                for (auto&& globalJ : assemblyMap(faceIdx, faceIdx, scvf.index()))
+                    occupationPatternA22.add(globalI, globalJ);
+            }
         }
-
-        auto ptr1 = this->model_().getFullFaceToCellCenterStencilsPtr();
-        auto ptr2 = this->model_().getFullfaceToFaceStencilsPtr();
-
-        assert((ptr1 && ptr2) && "pointers to full face stencils are empty!");
-
-        const auto& fullFaceToCellCenterStencils = ptr1.get()[0];
-        const auto& fullfaceToFaceStencils = ptr2.get()[0];
-
-        int globalI = 0;
-        for(const auto& stencil : fullFaceToCellCenterStencils)
-        {
-            for(auto&& globalJ : stencil)
-            occupationPatternA21.add(globalI, globalJ);
-            ++globalI;
-        }
-
-        globalI = 0;
-        for(const auto& stencil : fullfaceToFaceStencils)
-        {
-            for(auto&& globalJ : stencil)
-            occupationPatternA22.add(globalI, globalJ);
-            ++globalI;
-        }
-
         // export patterns to matrices
         occupationPatternA11.exportIdx(A11);
         occupationPatternA12.exportIdx(A12);
         occupationPatternA21.exportIdx(A21);
         occupationPatternA22.exportIdx(A22);
     }
+
 
 };
 

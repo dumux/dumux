@@ -45,10 +45,15 @@ class StaggeredAssemblyMap
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
+    using CellCenterIdxType = typename DofTypeIndices::CellCenterIdx;
+    using FaceIdxType = typename DofTypeIndices::FaceIdx;
+
     using CellCenterToCellCenterMap = std::vector<std::vector<IndexType>>;
     using CellCenterToFaceMap = std::vector<std::vector<IndexType>>;
     using FaceToCellCenterMap = std::vector<std::vector<IndexType>>;
     using FaceToFaceMap = std::vector<std::vector<IndexType>>;
+
+    using Stencil = std::vector<IndexType>;
 
 public:
 
@@ -59,43 +64,62 @@ public:
      */
     void init(const Problem& problem)
     {
-
         const auto numDofsCC = problem.model().numCellCenterDofs();
         const auto numDofsFace = problem.model().numFaceDofs();
+        const auto numBoundaryFacets = problem.gridView().grid().numBoundarySegments();
         cellCenterToCellCenterMap_.resize(numDofsCC);
         cellCenterToFaceMap_.resize(numDofsCC);
-        faceToCellCenterMap_.resize(numDofsFace);
-        faceToFaceMap_.resize(numDofsFace);
+        faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
+        faceToFaceMap_.resize(2*numDofsFace - numBoundaryFacets);
 
-        cellCenterToCellCenterMap_[0] = std::vector<IndexType>{1,2,3};
-        cellCenterToFaceMap_[0] = std::vector<IndexType>{4,5,6};
-        faceToCellCenterMap_[0] = std::vector<IndexType>{7,8,9};
-        faceToFaceMap_[0] = std::vector<IndexType>{10,11,12};
+        std::vector<Stencil> fullFaceToCellCenterStencils;
+        fullFaceToCellCenterStencils.resize(numDofsFace);
+        std::vector<Stencil> fullfaceToFaceStencils;
+        fullfaceToFaceStencils.resize(numDofsFace);
+
+        FluxVariables fluxVars;
+        for(auto&& element: elements(problem.gridView()))
+        {
+            // restrict the FvGeometry locally and bind to the element
+            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            // loop over sub control faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto dofIdxCellCenter = problem.elementMapper().index(element);
+                fluxVars.computeCellCenterToCellCenterStencil(cellCenterToCellCenterMap_[dofIdxCellCenter], problem, element, fvGeometry, scvf);
+                fluxVars.computeCellCenterToFaceStencil(cellCenterToFaceMap_[dofIdxCellCenter], problem, element, fvGeometry, scvf);
+
+                const auto scvfIdx = scvf.index();
+                fluxVars.computeFaceToCellCenterStencil(faceToCellCenterMap_[scvfIdx],problem, fvGeometry, scvf);
+                fluxVars.computeFaceToFaceStencil(faceToFaceMap_[scvfIdx],problem, fvGeometry, scvf);
+            }
+        }
     }
 
-    template< std::size_t index1, std::size_t index2 >
-    const std::vector<IndexType>& operator() (const std::integral_constant< std::size_t, index1 > indexVariable1,
-                                              const std::integral_constant< std::size_t, index2 > indexVariable2,
-                                              const IndexType globalI)
+    const std::vector<IndexType>& operator() (CellCenterIdxType, CellCenterIdxType, const IndexType globalI) const
     {
-        DUNE_UNUSED_PARAMETER(indexVariable1);
-        DUNE_UNUSED_PARAMETER(indexVariable2);
-
-        if(index1 == cellCenterIdx && index2 == cellCenterIdx)
-            return cellCenterToCellCenterMap_[globalI];
-        else if(index1 == cellCenterIdx && index2 == faceIdx)
-            return cellCenterToFaceMap_[globalI];
-        else if(index1 == faceIdx && index2 == cellCenterIdx)
-            return cellCenterToFaceMap_[globalI];
-        else if(index1 == faceIdx && index2 == faceIdx)
-            return faceToFaceMap_[globalI];
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid indices");
+        return cellCenterToCellCenterMap_[globalI];
     }
 
+    const std::vector<IndexType>& operator() (CellCenterIdxType, FaceIdxType, const IndexType globalI) const
+    {
+        return cellCenterToFaceMap_[globalI];
+    }
 
+    const std::vector<IndexType>& operator() (FaceIdxType, CellCenterIdxType, const IndexType globalI) const
+    {
+        return faceToCellCenterMap_[globalI];
+    }
+
+    const std::vector<IndexType>& operator() (FaceIdxType, FaceIdxType, const IndexType globalI) const
+    {
+        return faceToFaceMap_[globalI];
+    }
 
 private:
+
     CellCenterToCellCenterMap cellCenterToCellCenterMap_;
     CellCenterToFaceMap cellCenterToFaceMap_;
     FaceToCellCenterMap faceToCellCenterMap_;

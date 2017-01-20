@@ -31,6 +31,7 @@
 
 #include <dumux/implicit/properties.hh>
 #include "primaryvariables.hh"
+#include "assemblymap.hh"
 
 namespace Dumux
 {
@@ -107,6 +108,8 @@ class StaggeredLocalJacobian
 
     using PriVarIndices = typename Dumux::PriVarIndices<TypeTag>;
 
+    using AssemblyMap = Dumux::StaggeredAssemblyMap<TypeTag>;
+
 
 public:
 
@@ -129,6 +132,7 @@ public:
     {
         problemPtr_ = &problem;
         localResidual_.init(problem);
+        assemblyMap_.init(problem);
     }
 
     /*!
@@ -204,6 +208,9 @@ public:
     LocalResidual &localResidual()
     { return localResidual_; }
 
+    const AssemblyMap& assemblyMap() const
+    { return assemblyMap_; }
+
 private:
     void evalPartialDerivatives_(const Element& element,
                                  const FVElementGeometry& fvGeometry,
@@ -245,10 +252,9 @@ private:
                  const CellCenterPrimaryVariables& ccResidual)
     {
         // build derivatives with for cell center dofs w.r.t. cell center dofs
-        const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
         auto&& scvI = fvGeometry.scv(ccGlobalI_);
 
-        for(const auto& globalJ : cellCenterToCellCenterStencil)
+        for(const auto& globalJ : assemblyMap_(cellCenterIdx, cellCenterIdx, ccGlobalI_))
         {
             // get the volVars of the element with respect to which we are going to build the derivative
             auto&& scvJ = fvGeometry.scv(globalJ);
@@ -298,10 +304,9 @@ private:
                    const CellCenterPrimaryVariables& ccResidual)
     {
         // build derivatives with for cell center dofs w.r.t. face dofs
-        const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
         auto&& scvI = fvGeometry.scv(ccGlobalI_);
 
-        for(const auto& globalJ : cellCenterToFaceStencil)
+        for(const auto& globalJ : assemblyMap_(cellCenterIdx, faceIdx, ccGlobalI_))
         {
             // get the faceVars of the face with respect to which we are going to build the derivative
             auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
@@ -352,9 +357,7 @@ private:
             const auto faceGlobalI = scvf.dofIndexSelf();
 
             // build derivatives with for face dofs w.r.t. cell center dofs
-            const auto& faceToCellCenterStencil = this->model_().stencils(scvf).faceToCellCenterStencil();
-
-            for(const auto& globalJ : faceToCellCenterStencil)
+            for(const auto& globalJ : assemblyMap_(faceIdx, cellCenterIdx, scvf.index()))
             {
                 // get the volVars of the element with respect to which we are going to build the derivative
                 auto&& scvJ = fvGeometry.scv(globalJ);
@@ -410,9 +413,7 @@ private:
             const auto faceGlobalI = scvf.dofIndexSelf();
 
             // build derivatives with for face dofs w.r.t. cell center dofs
-            const auto& faceToFaceStencil = this->model_().stencils(scvf).faceToFaceStencil();
-
-            for(const auto& globalJ : faceToFaceStencil)
+            for(const auto& globalJ : assemblyMap_(faceIdx, faceIdx, scvf.index()))
             {
                 // get the faceVars of the face with respect to which we are going to build the derivative
                 auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
@@ -529,6 +530,8 @@ private:
     Problem *problemPtr_;
 
     LocalResidual localResidual_;
+
+    AssemblyMap assemblyMap_;
 };
 
 }
