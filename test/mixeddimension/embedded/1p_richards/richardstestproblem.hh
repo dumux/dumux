@@ -232,6 +232,37 @@ public:
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
 
+    //! Called after every time step
+    //! Output the total global exchange term
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+
+        PrimaryVariables source(0.0);
+
+        if (!(this->timeManager().time() < 0.0))
+        {
+            for (const auto& element : elements(this->gridView()))
+            {
+                auto fvGeometry = localView(this->model().globalFvGeometry());
+                fvGeometry.bindElement(element);
+
+                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
+                    pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
+                    source += pointSources;
+                }
+            }
+        }
+
+        std::cout << "Global integrated source (soil): " << source << " (kg/s) / "
+                  <<                           source*3600*24*1000 << " (g/day)" << '\n';
+    }
+
     // \}
     /*!
      * \name Boundary conditions

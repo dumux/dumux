@@ -29,6 +29,7 @@
 
 #include <dumux/mixeddimension/problem.hh>
 #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanager.hh>
+#include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
 #include <dumux/mixeddimension/integrationpointsource.hh>
 
 namespace Dumux
@@ -44,7 +45,8 @@ NEW_TYPE_TAG(RosiTestProblem, INHERITS_FROM(MixedDimension));
 SET_TYPE_PROP(RosiTestProblem, Problem, Dumux::RosiTestProblem<TypeTag>);
 
 // Set the coupling manager
-SET_TYPE_PROP(RosiTestProblem, CouplingManager, Dumux::CCBBoxTreeEmbeddedCouplingManager<TypeTag>);
+//SET_TYPE_PROP(RosiTestProblem, CouplingManager, Dumux::CCBBoxTreeEmbeddedCouplingManager<TypeTag>);
+SET_TYPE_PROP(RosiTestProblem, CouplingManager, Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<TypeTag>);
 
 // Set the two sub-problems of the global problem
 SET_TYPE_PROP(RosiTestProblem, LowDimProblemTypeTag, TTAG(RootsystemTestCCProblem));

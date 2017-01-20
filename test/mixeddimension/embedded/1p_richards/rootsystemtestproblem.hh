@@ -59,6 +59,13 @@ public:
 // Set the grid type
 SET_TYPE_PROP(RootsystemTestProblem, Grid, Dune::FoamGrid<1, 3>);
 
+SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentAdvection, false);
+SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentHeatConduction, false);
+
 // Set the problem property
 SET_TYPE_PROP(RootsystemTestProblem, Problem, RootsystemTestProblem<TypeTag>);
 
@@ -213,12 +220,12 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);
-        if (scvf.center()[2] + eps_ > this->bBoxMax()[2] )
+        if (scvf.center()[2] + eps_ > this->bBoxMax()[2])
         {
             const auto r = this->spatialParams().radius(this->gridView().indexSet().index(element));
             values[conti0EqIdx] = GET_RUNTIME_PARAM(TypeTag,
                                                     Scalar,
-                                                    BoundaryConditions.TranspirationRate)/(M_PI*r*r);
+                                                    BoundaryConditions.TranspirationRate)/(M_PI*r*r)/scvf.area();
         }
         return values;
 
@@ -296,6 +303,37 @@ public:
         const Scalar sourceValue = 2* M_PI *rootRadius * Kr *(bulkVolVars.pressure(0) - pressure1D)
                                    *bulkVolVars.density(0);
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
+    }
+
+    //! Called after every time step
+    //! Output the total global exchange term
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+
+        PrimaryVariables source(0.0);
+
+        if (!(this->timeManager().time() < 0.0))
+        {
+            for (const auto& element : elements(this->gridView()))
+            {
+                auto fvGeometry = localView(this->model().globalFvGeometry());
+                fvGeometry.bindElement(element);
+
+                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
+                    pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
+                    source += pointSources;
+                }
+            }
+        }
+
+        std::cout << "Global integrated source (root): " << source << " (kg/s) / "
+                  <<                           source*3600*24*1000 << " (g/day)" << '\n';
     }
 
     bool shouldWriteRestartFile() const

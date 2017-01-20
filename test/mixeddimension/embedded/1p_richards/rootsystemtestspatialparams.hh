@@ -25,6 +25,7 @@
 #define DUMUX_ROOTSYSTEM_TEST_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/components/simpleh2o.hh>
 
 namespace Dumux
 {
@@ -45,7 +46,9 @@ class RootsystemTestSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
@@ -102,8 +105,10 @@ public:
                 rootParams_[eIdx].radialPerm = Kr_;  //Kr
             }
             else //order >= 3
+            {
                 rootParams_[eIdx].axialPerm = Kx_; //Kx
                 rootParams_[eIdx].radialPerm = Kr_; //Kr
+            }
         }
     }
 
@@ -111,15 +116,15 @@ public:
      * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
      *
      * \param ipGlobal The integration point
-     * \note Kx has units [m^4] so we have to divide by the cross-section area
+     * \note Kx has units [m^4/(Pa*s)] so we have to divide by the cross-section area
+     *       and multiply with a characteristic viscosity
      */
-    Scalar permeability(const Element& element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-        auto eIdx = gridView_.indexSet().index(element);
-        const auto r = radius(eIdx);
-        return Kx_ / (M_PI*r*r);
+        const Scalar r = rootParams(element).radius;
+        return Kx_ / (M_PI*r*r) * SimpleH2O<Scalar>::liquidViscosity(285.15, elemSol[0][Indices::pressureIdx]);
     }
 
     /*!

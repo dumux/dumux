@@ -18,7 +18,6 @@ Cells = 20 20 20
 
 [Problem]
 Name = rosi
-EnableGravity = false
 
 [SpatialParams]
 Permeability = 2.57e-12 # [m^2]
