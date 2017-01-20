@@ -559,7 +559,7 @@ public:
     /*!
      * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
      */
-    PermeabilityType permeability() const
+    const PermeabilityType& permeability() const
     { return permeability_; }
 
     /*!
