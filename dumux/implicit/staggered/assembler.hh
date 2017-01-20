@@ -25,6 +25,7 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/implicit/assembler.hh>
+#include <dune/istl/matrixindexset.hh>
 
 namespace Dumux {
 
@@ -103,9 +104,7 @@ private:
         auto A21 = FaceToCCMatrixBlock(faceSize, cellCenterSize, FaceToCCMatrixBlock::random);
         auto A22 = FaceToFaceMatrixBlock(faceSize, faceSize, FaceToFaceMatrixBlock::random);
 
-
-        setRowSizes_(A11, A12, A21, A22);
-        addIndices_(A11, A12, A21, A22);
+        setupMatrices_(A11, A12, A21, A22);
 
         (*this->matrix_)[cellCenterIdx][cellCenterIdx] = A11;
         (*this->matrix_)[cellCenterIdx][faceIdx] = A12;
@@ -118,37 +117,23 @@ private:
 //         printmatrix(std::cout, A22, "A22", "");
     }
 
-    void setRowSizes_(CCToCCMatrixBlock &A11, CCToFaceMatrixBlock &A12,
-                      FaceToCCMatrixBlock &A21, FaceToFaceMatrixBlock &A22)
-    {
-        for (const auto& element : elements(this->gridView_()))
-        {
-            // the global index of the element at hand
-            const auto globalI = this->elementMapper_().index(element);
-            const auto& cellCenterToCellCenterStencil = this->model_().stencils(element).cellCenterToCellCenterStencil();
-            const auto& cellCenterToFaceStencil = this->model_().stencils(element).cellCenterToFaceStencil();
-
-            A11.setrowsize(globalI, cellCenterToCellCenterStencil.size());
-            A12.setrowsize(globalI, cellCenterToFaceStencil.size());
-        }
-        A11.endrowsizes();
-        A12.endrowsizes();
-
-        for(int faceDofxIdx = 0; faceDofxIdx < this->gridView_().size(1); ++faceDofxIdx)
-        {
-            const auto faceToCellSize = this->model_().fullFaceToCellCenterStencilSize(faceDofxIdx);
-            const auto faceToFaceSize = this->model_().fullfaceToFaceStencilSize(faceDofxIdx);
-
-            A21.setrowsize(faceDofxIdx, faceToCellSize);
-            A22.setrowsize(faceDofxIdx, faceToFaceSize);
-        }
-        A21.endrowsizes();
-        A22.endrowsizes();
-    }
-
-    void addIndices_(CCToCCMatrixBlock &A11, CCToFaceMatrixBlock &A12,
+    void setupMatrices_(CCToCCMatrixBlock &A11, CCToFaceMatrixBlock &A12,
                      FaceToCCMatrixBlock &A21, FaceToFaceMatrixBlock &A22)
     {
+        // get sub matrix sizes
+        const auto numDofsCC = this->problem_().model().numCellCenterDofs();
+        const auto numDofsFace = this->problem_().model().numFaceDofs();
+
+        // get occupation pattern of the matrix
+        Dune::MatrixIndexSet occupationPatternA11;
+        Dune::MatrixIndexSet occupationPatternA12;
+        Dune::MatrixIndexSet occupationPatternA21;
+        Dune::MatrixIndexSet occupationPatternA22;
+        occupationPatternA11.resize(numDofsCC, numDofsCC);
+        occupationPatternA12.resize(numDofsCC, numDofsFace);
+        occupationPatternA21.resize(numDofsFace, numDofsCC);
+        occupationPatternA22.resize(numDofsFace, numDofsFace);
+
         for (const auto& element : elements(this->gridView_()))
         {
             // the global index of the element at hand
@@ -158,12 +143,10 @@ private:
 
 
             for (auto&& globalJ : cellCenterToCellCenterStencil)
-                A11.addindex(globalI, globalJ);
+                occupationPatternA11.add(globalI, globalJ);
             for (auto&& globalJ : cellCenterToFaceStencil)
-                A12.addindex(globalI, globalJ);
+                occupationPatternA12.add(globalI, globalJ);
         }
-        A11.endindices();
-        A12.endindices();
 
         auto ptr1 = this->model_().getFullFaceToCellCenterStencilsPtr();
         auto ptr2 = this->model_().getFullfaceToFaceStencilsPtr();
@@ -177,7 +160,7 @@ private:
         for(const auto& stencil : fullFaceToCellCenterStencils)
         {
             for(auto&& globalJ : stencil)
-            A21.addindex(globalI, globalJ);
+            occupationPatternA21.add(globalI, globalJ);
             ++globalI;
         }
 
@@ -185,12 +168,15 @@ private:
         for(const auto& stencil : fullfaceToFaceStencils)
         {
             for(auto&& globalJ : stencil)
-            A22.addindex(globalI, globalJ);
+            occupationPatternA22.add(globalI, globalJ);
             ++globalI;
         }
 
-        A21.endindices();
-        A22.endindices();
+        // export patterns to matrices
+        occupationPatternA11.exportIdx(A11);
+        occupationPatternA12.exportIdx(A12);
+        occupationPatternA21.exportIdx(A21);
+        occupationPatternA22.exportIdx(A22);
     }
 
 };
