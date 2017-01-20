@@ -223,7 +223,7 @@ public:
         values.setDirichlet(momentumBalanceIdx);
 
         // set a fixed pressure in one cell
-        if (isLowerLeftCell(globalPos))
+        if (isLowerLeftCell_(globalPos))
             values.setDirichlet(massBalanceIdx);
         else
             values.setNeumann(massBalanceIdx);
@@ -289,7 +289,7 @@ public:
 
 private:
 
-    bool isLowerLeftCell(const GlobalPosition& globalPos) const
+    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
     }

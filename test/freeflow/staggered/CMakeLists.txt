@@ -41,6 +41,7 @@ add_dumux_test(test_kovasznay test_kovasznay test_kovasznay.cc
                ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay)
 
 
+
 #install sources
 install(FILES
 channeltestproblem.hh

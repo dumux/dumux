@@ -63,7 +63,7 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(KovasznayTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(KovasznayTestProblem, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
 SET_TYPE_PROP(KovasznayTestProblem, Problem, Dumux::KovasznayTestProblem<TypeTag> );
@@ -139,10 +139,17 @@ public:
                                              Problem,
                                              Name);
 
-        kinematicViscosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasKinematicViscosity);
+        kinematicViscosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidKinematicViscosity);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber
                         - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
+
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const CellArray numCells = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                      CellArray,
+                                                      Grid,
+                                                      Cells);
+        cellSizeX_ = this->bBoxMax()[0] / numCells[0];
     }
 
     /*!
@@ -182,7 +189,7 @@ public:
      */
     SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues{0.0};
+        return SourceValues(0.0);
     }
 
     // \}
@@ -205,13 +212,11 @@ public:
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
 
-        // set Dirichlet values for the pressure only in the lower left corner
-//        if (globalPos[0] < -0.5+1e-6 && globalPos[1] < -0.5+1e-6)
-        if (globalPos[0] < 0.0+1e-6 && globalPos[1] < 0.0+1e-6)
-                values.setDirichlet(massBalanceIdx);
+        // set a fixed pressure in one cell
+        if (isLowerLeftCell_(globalPos))
+            values.setDirichlet(massBalanceIdx);
         else
-                values.setOutflow(massBalanceIdx);
-        // TODO error: face at 0 0.0125 has neither Dirichlet nor Neumann BC. // omega = [-0.5, -0.5]x[0.5, 0.5]
+            values.setNeumann(massBalanceIdx);
 
         return values;
     }
@@ -317,7 +322,14 @@ public:
     }
 
 private:
+
+    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < (this->bBoxMin()[0] + 0.5*cellSizeX_ + eps_);
+    }
+
     Scalar eps_;
+    Scalar cellSizeX_;
     std::string name_;
 
     Scalar kinematicViscosity_;
