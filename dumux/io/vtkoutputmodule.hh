@@ -291,16 +291,16 @@ public:
             {
                 using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    sequenceWriter_.addVertexData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)),
-                                                                                 problem_.gridView(), problem_.vertexMapper(),
-                                                                                 velocity[phaseIdx], dim, dimWorld));
+                    sequenceWriter_.addVertexData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
+                                                                                   problem_.gridView(), problem_.vertexMapper(),
+                                                                                   velocity[phaseIdx], dim, dimWorld));
             }
             // cell-centered models
             else
             {
                 using NestedFunction = VtkNestedFunction<GridView, ElementMapper, std::vector<GlobalPosition>>;
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    sequenceWriter_.addCellData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)),
+                    sequenceWriter_.addCellData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
                                                                                  problem_.gridView(), problem_.elementMapper(),
                                                                                  velocity[phaseIdx], 0, dimWorld));
             }

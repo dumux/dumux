@@ -34,7 +34,6 @@
 namespace Dumux
 {
 
-//At the moment this property is defined in the individual models -> should be changed
 namespace Properties
 {
     NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
@@ -52,6 +51,7 @@ class ImplicitVelocityOutput
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -246,6 +246,9 @@ public:
                     FluxVariables fluxVars;
                     fluxVars.initAndComputeFluxes(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                    scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
+                                                                                            fvGeometry.scv(scvf.insideScvIdx()),
+                                                                                            problem_.model().elementSolution(element, problem_.model().curSol()));
                 }
                 else
                 {
@@ -255,6 +258,9 @@ public:
                         FluxVariables fluxVars;
                         fluxVars.initAndComputeFluxes(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                        scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
+                                                                                                fvGeometry.scv(scvf.insideScvIdx()),
+                                                                                                problem_.model().elementSolution(element, problem_.model().curSol()));
                     }
                 }
 
