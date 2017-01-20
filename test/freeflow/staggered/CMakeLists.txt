@@ -37,8 +37,8 @@ add_dumux_test(test_donea test_donea test_donea.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00002.vtu
         --command "${CMAKE_CURRENT_BINARY_DIR}/test_donea")
 
-#add_dumux_test(test_kovasznay test_kovasznay test_kovasznay.cc
-#               ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay)
+add_dumux_test(test_kovasznay test_kovasznay test_kovasznay.cc
+               ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay)
 
 
 #install sources

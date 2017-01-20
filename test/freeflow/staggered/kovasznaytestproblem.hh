@@ -104,7 +104,12 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
+        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
+        pressureIdx = Indices::pressureIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -123,6 +128,7 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
     KovasznayTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -174,21 +180,11 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    CellCenterPrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return CellCenterPrimaryVariables{0.0};
+        return SourceValues{0.0};
     }
 
-    /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
-     */
-    FacePrimaryVariables faceSourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return FacePrimaryVariables{0.0};
-    }
     // \}
     /*!
      * \name Boundary conditions
@@ -206,10 +202,8 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere TODO isInflow!
+        // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
-        // set Dirichlet values for the velocity everywhere TODO isInflow!
-        values.setDirichlet(momentumBalanceIdx+1); // TODO ??
 
         // set Dirichlet values for the pressure only in the lower left corner
 //        if (globalPos[0] < -0.5+1e-6 && globalPos[1] < -0.5+1e-6)
@@ -229,12 +223,12 @@ public:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        BoundaryValues dirichletValues;
-        dirichletValues.pressure = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-        dirichletValues.velocity[0] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
-        dirichletValues.velocity[1] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
+        BoundaryValues values;
+        values[pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
+        values[velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
+        values[velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
 
-        return dirichletValues;
+        return values;
     }
 
     /*!
@@ -267,8 +261,9 @@ public:
     InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         InitialValues values;
-        values.pressure = 0.0;
-        values.velocity = 0.0;
+        values[pressureIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
 
         return values;
     }
@@ -282,12 +277,11 @@ public:
     {
         //Here we calculate the analytical solution
         const auto numElements = this->gridView().size(0);
-        auto& p_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
+        auto& pExact = *(this->resultWriter().allocateManagedBuffer(numElements));
+        auto& velocityExact = *(this->resultWriter()).template allocateManagedBuffer<double, dimWorld>(numElements);
 
-        auto& v_x_pos_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& v_x_neg_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& v_y_pos_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& v_y_neg_exact = *(this->resultWriter().allocateManagedBuffer(numElements));
+        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+        typename DofTypeIndices::FaceIdx faceIdx;
 
         const auto someElement = *(elements(this->gridView()).begin());
 
@@ -304,38 +298,22 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto globalIdx = scv.dofIndex();
+                auto dofIdxGlobal = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
-                p_exact[globalIdx] = dirichletAtPos(globalPos).pressure;
+                pExact[dofIdxGlobal] = dirichletAtPos(globalPos)[pressureIdx];
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     auto dirIdx = scvf.directionIndex();
-
-                    if(scvf.unitOuterNormal()[dirIdx] > 0.0)
-                    {
-                        if(dirIdx == 0)
-                            v_x_pos_exact[globalIdx] = dirichletAtPos(globalPos).velocity[0];
-                        if(dirIdx == 1)
-                            v_y_pos_exact[globalIdx] = dirichletAtPos(globalPos).velocity[1];
-                    }
-                    else
-                    {
-                        if(dirIdx == 0)
-                            v_x_neg_exact[globalIdx] = dirichletAtPos(globalPos).velocity[0];
-                        if(dirIdx == 1)
-                            v_y_neg_exact[globalIdx] = dirichletAtPos(globalPos).velocity[1];
-                    }
+                    velocityVector[dirIdx] += 0.5*dirichletAtPos(globalPos)[faceIdx][dirIdx];
                 }
+                velocityExact[dofIdxGlobal] = velocityVector;
             }
         }
-        this->resultWriter().attachDofData(v_x_pos_exact, "v_x_pos_exact", false);
-        this->resultWriter().attachDofData(v_x_neg_exact, "v_x_neg_exact", false);
-        this->resultWriter().attachDofData(v_y_pos_exact, "v_y_pos_exact", false);
-        this->resultWriter().attachDofData(v_y_neg_exact, "v_y_neg_exact", false);
-        this->resultWriter().attachDofData(p_exact, "p_exact", false);
+        this->resultWriter().attachDofData(pExact, "p_exact", false);
+        this->resultWriter().attachDofData(velocityExact,  "velocity_exact", false, dim);
     }
 
 private:
