@@ -74,7 +74,6 @@ class StaggeredBaseModel : public ImplicitModel<TypeTag>
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
-    using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
     using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
@@ -118,9 +117,6 @@ public:
         this->curGlobalVolVars_.update(problem, this->curSol());
 
         curGlobalFaceVariables_.update(problem, this->curSol()[faceIdx]);
-
-        // update stencils
-        this->stencilsVector_.update(problem);
 
         // update the flux variables caches
         this->globalfluxVarsCache_.update(problem);

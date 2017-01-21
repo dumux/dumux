@@ -32,7 +32,6 @@
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/staggered/stencils.hh>
 
 #include <dumux/discretization/staggered/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
@@ -113,9 +112,6 @@ SET_TYPE_PROP(StaggeredModel, LocalJacobian, Dumux::StaggeredLocalJacobian<TypeT
 
 //! Assembler for the global jacobian matrix
 SET_TYPE_PROP(StaggeredModel, JacobianAssembler, Dumux::StaggeredAssembler<TypeTag>);
-
-//! The stencil container
-SET_TYPE_PROP(StaggeredModel, StencilsVector, Dumux::StaggeredStencilsVector<TypeTag>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);

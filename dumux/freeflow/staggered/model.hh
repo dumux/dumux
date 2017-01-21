@@ -69,7 +69,6 @@ class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
-    using StencilsVector = typename GET_PROP_TYPE(TypeTag, StencilsVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
