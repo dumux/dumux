@@ -170,23 +170,23 @@ public:
     { return scvfSeed_().faceType(); }
 
     GlobalPosition ip() const
-    { return scvf_().ipGlobal(); }
+    { return globalScvf().ipGlobal(); }
 
     GlobalPosition unitOuterNormal() const
-    { return scvf_().unitOuterNormal(); }
+    { return globalScvf().unitOuterNormal(); }
 
     Scalar area() const
-    { return scvf_().area(); }
+    { return globalScvf().area(); }
 
     bool boundary() const
     { return scvfSeed_().boundary(); }
 
+    const SubControlVolumeFace& globalScvf() const
+    { return *scvfPtr_; }
+
 private:
     const LocalScvfSeed& scvfSeed_() const
     { return *seedPtr_; }
-
-    const SubControlVolumeFace& scvf_() const
-    { return *scvfPtr_; }
 
     const LocalScvfSeed* seedPtr_;
     const SubControlVolumeFace* scvfPtr_;

@@ -72,11 +72,12 @@ class CCMpfaGlobalFVGeometryBase<TypeTag, true>
     using IndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
 public:
     //! Constructor
@@ -87,17 +88,29 @@ public:
     std::size_t numScv() const
     { return scvs_.size(); }
 
-    //! The total number of sun control volume faces
+    //! The total number of sub control volume faces
     std::size_t numScvf() const
     { return scvfs_.size(); }
 
-    //! The total number of boundary sub control volume faces
-    std::size_t numBoundaryScvf() const
-    { return numBoundaryScvf_; }
+    //! The total number of scvfs on the domain boundaries
+    std::size_t numDomainBoundaryScvf() const
+    { return numDomainBoundaryScvf_; }
 
-    //! The total number of vertices on the boundary
-    std::size_t numBoundaryVertices() const
-    { return numBoundaryVertices_; }
+    //! The total number of scvfs on the interior boundaries
+    std::size_t numInteriorBoundaryScvf() const
+    { return numInteriorBoundaryScvf_; }
+
+    //! The total number of scvfs connected to branching points
+    std::size_t numBranchingPointScvf() const
+    { return numBranchingPointScvf_; }
+
+    //! The total number of vertices connected to branching points
+    std::size_t numBranchingPointVertices() const
+    { return numBranchingPointVertices_; }
+
+    //! The total number of vertices on interior and domain boundaries
+    std::size_t numInteriorOrDomainBoundaryVertices() const
+    { return numInteriorOrDomainBoundaryVertices_; }
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
@@ -115,60 +128,70 @@ public:
     const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
     { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
-    //! Returns whether or not an scvf touches the boundary (has to be called before getting an interaction volume)
-    bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
-    { return boundaryVertices_[scvf.vertexIndex()]; }
+    //! Returns whether or not an scvf is on an interior boundary
+    bool isOnInteriorBoundary(const SubControlVolumeFace& scvf) const
+    { return enableInteriorBoundaries ? interiorBoundaryScvfs_[scvf.index()] : false; }
+
+    //! Returns whether or not an scvf touches the domain boundary
+    bool touchesDomainBoundary(const SubControlVolumeFace& scvf) const
+    { return domainBoundaryVertices_[scvf.vertexIndex()]; }
+
+    //! Returns whether or not an scvf touches the domain boundary
+    bool touchesInteriorBoundary(const SubControlVolumeFace& scvf) const
+    {  return enableInteriorBoundaries ? interiorBoundaryVertices_[scvf.vertexIndex()] : false; }
+
+    //! Returns whether or not an scvf touches an interior or a domain boundary (has to be called before getting an interaction volume)
+    bool touchesInteriorOrDomainBoundary(const SubControlVolumeFace& scvf) const
+    { return touchesDomainBoundary(scvf) || touchesInteriorBoundary(scvf); }
 
     //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
-    bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
-    {
-        if (dim == dimWorld)
-            return false;
-        else
-            return branchingVertices_[scvf.vertexIndex()];
-    }
+    bool touchesBranchingPoint(const SubControlVolumeFace& scvf) const
+    { return dim == dimWorld ? false : branchingVertices_[scvf.vertexIndex()]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
     {
         problemPtr_ = &problem;
 
-        // clear containers (necessary after grid refinement)
-        scvs_.clear();
-        scvfs_.clear();
-        scvfIndicesOfScv_.clear();
-        boundaryVertices_.clear();
-        elementMap_.clear();
+        // resize containers
+        const auto numVert = gridView_.size(dim);
+        const auto numScvs = gridView_.size(0);
+        const auto numScvfs = MpfaHelper::getGlobalNumScvf(gridView_);
 
-        // reserve memory
-        std::size_t numScvs = gridView_.size(0);
-        std::size_t numScvfs = MpfaHelper::getGlobalNumScvf(gridView_);
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvfs);
         scvfIndicesOfScv_.resize(numScvs);
-        boundaryVertices_.resize(gridView_.size(dim), false);
         elementMap_.resize(numScvs);
 
-        // keep track of branching points
+        // Keep track of domain (and mabybe interior) boundaries
+        domainBoundaryVertices_.resize(numVert, false);
+        std::vector<bool> interiorOrDomainBoundaryVertices(numVert, false);
+        if (enableInteriorBoundaries)
+        {
+            interiorBoundaryVertices_.resize(numVert, false);
+            interiorBoundaryScvfs_.resize(numScvfs, false);
+        }
+
+        // Maybe keep track of branching points
         if (dim < dimWorld)
             branchingVertices_.resize(gridView_.size(dim), false);
 
         // find vertices on processor boundaries
-        auto isGhostVertex = MpfaHelper::findGhostVertices(problem, gridView_);
+        const auto isGhostVertex = MpfaHelper::findGhostVertices(problem, gridView_);
 
-        // the quadrature point to be used on the scvf
-        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
-
-        // Instantiate a helper class to pass it to the scvf constructors
-        MpfaHelper helper;
+        // the quadrature point to be used on the scvfs
+        static const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
         // Build the SCVs and SCV faces
         IndexType scvfIdx = 0;
-        numBoundaryScvf_ = 0;
-        numBoundaryVertices_ = 0;
+        numDomainBoundaryScvf_ = 0;
+        numInteriorBoundaryScvf_ = 0;
+        numBranchingPointScvf_ = 0;
+        numBranchingPointVertices_ = 0;
+        numInteriorOrDomainBoundaryVertices_ = 0;
         for (const auto& element : elements(gridView_))
         {
-            auto eIdx = problem.elementMapper().index(element);
+            const auto eIdx = problem.elementMapper().index(element);
 
             // the element geometry
             auto elementGeometry = element.geometry();
@@ -200,25 +223,26 @@ public:
             // construct the sub control volume faces
             for (const auto& is : intersections(gridView_, element))
             {
-                auto indexInInside = is.indexInInside();
-                bool boundary = is.boundary();
-                bool neighbor = is.neighbor();
+                const auto indexInInside = is.indexInInside();
+                const bool boundary = is.boundary();
+                const bool neighbor = is.neighbor();
+                const bool interiorBoundary = enableInteriorBoundaries ? problem.isInteriorBoundary(element, is) : false;
 
                 // for network grids, skip the rest if handled already
                 if (dim < dimWorld && neighbor && outsideIndices[indexInInside].empty())
                     continue;
 
                 // determine the outside volvar indices
-                std::vector<IndexType> nIndices;
-                if (neighbor && dim == dimWorld)
-                    nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
+                const std::vector<IndexType> nIndices = neighbor && dim == dimWorld ?
+                                                        std::vector<IndexType>({problem.elementMapper().index(is.outside())}) :
+                                                        std::vector<IndexType>();
 
                 // get the intersection corners according to generic numbering
-                auto numCorners = is.geometry().corners();
+                const auto numCorners = is.geometry().corners();
                 std::vector<GlobalPosition> isCorners(numCorners);
 
                 // if outside level > inside level, use the outside element in the following
-                bool useNeighbor = neighbor && is.outside().level() > element.level();
+                const bool useNeighbor = neighbor && is.outside().level() > element.level();
                 const auto& e = useNeighbor ? is.outside() : element;
                 const auto indexInElement = useNeighbor ? is.indexInOutside() : indexInInside;
                 const auto eg = e.geometry();
@@ -231,31 +255,29 @@ public:
                 for (unsigned int c = 0; c < numCorners; ++c)
                 {
                     // get the global vertex index the scv face is connected to
-                    auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
-                    auto vIdxGlobal = problem.vertexMapper().subIndex(e, vIdxLocal, dim);
+                    const auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
+                    const auto vIdxGlobal = problem.vertexMapper().subIndex(e, vIdxLocal, dim);
 
                     // do not build scvfs connected to a processor boundary
                     if (isGhostVertex[vIdxGlobal])
                         continue;
 
-                    // store info on which vertices are on the domain boundary
-                    if (boundary && !boundaryVertices_[vIdxGlobal])
-                    {
-                        boundaryVertices_[vIdxGlobal] = true;
-                        numBoundaryVertices_++;
-                    }
-
                     // is vertex on a branching point?
                     if (dim < dimWorld && outsideIndices[indexInInside].size() > 1)
+                    {
+                        if (!branchingVertices_[vIdxGlobal])
+                            numBranchingPointVertices_++;
                         branchingVertices_[vIdxGlobal] = true;
+                        numBranchingPointScvf_++;
+                    }
 
-                    // make the scv face (for inside scvfs on network grids, use precalculated outside indices)
+                    // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     if (!boundary)
                     {
                         const auto& outsideScvIndices = dim == dimWorld ? nIndices : outsideIndices[indexInInside];
                         scvfIndexSet.push_back(scvfIdx);
-                        scvfs_.emplace_back(helper,
-                                            helper.getScvfCorners(isCorners, c),
+                        scvfs_.emplace_back(MpfaHelper(),
+                                            MpfaHelper::getScvfCorners(isCorners, c),
                                             is.centerUnitOuterNormal(),
                                             vIdxGlobal,
                                             vIdxLocal,
@@ -268,20 +290,40 @@ public:
                     }
                     else
                     {
-                        nIndices.resize(1);
-                        nIndices[0] = numScvs + numBoundaryScvf_++;
+                        const std::vector<IndexType> boundaryIdx = [&] ()
+                                                                   {
+                                                                        IndexType bIdx = numScvs + numDomainBoundaryScvf_++;
+                                                                        return std::vector<IndexType>({bIdx});
+                                                                   } ();
                         scvfIndexSet.push_back(scvfIdx);
-                        scvfs_.emplace_back(helper,
-                                            helper.getScvfCorners(isCorners, c),
+                        scvfs_.emplace_back(MpfaHelper(),
+                                            MpfaHelper::getScvfCorners(isCorners, c),
                                             is.centerUnitOuterNormal(),
                                             vIdxGlobal,
                                             vIdxLocal,
                                             scvfIdx,
                                             eIdx,
-                                            nIndices,
+                                            boundaryIdx,
                                             q,
                                             boundary
                                             );
+                    }
+
+                    // if a new interior or domain boundary has been found, increase counter
+                    if ((boundary || interiorBoundary) && !interiorOrDomainBoundaryVertices[vIdxGlobal])
+                    {
+                        interiorOrDomainBoundaryVertices[vIdxGlobal] = true;
+                        numInteriorOrDomainBoundaryVertices_++;
+                    }
+
+                    // store info on which vertices are on the domain/interior boundary
+                    if (boundary)
+                        domainBoundaryVertices_[vIdxGlobal] = true;
+                    if (enableInteriorBoundaries && interiorBoundary)
+                    {
+                        interiorBoundaryVertices_[vIdxGlobal] = true;
+                        interiorBoundaryScvfs_[scvfIdx] = true;
+                        numInteriorBoundaryScvf_++;
                     }
 
                     // increment scvf counter
@@ -333,8 +375,11 @@ public:
             }
         }
 
+        // make sure we found as many scvfs as previously estimated
+        assert(scvfIdx == numScvfs);
+
         // Initialize the interaction volume seeds
-        globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
+        globalInteractionVolumeSeeds_.update(problem, interiorOrDomainBoundaryVertices);
     }
 
     /*!
@@ -379,10 +424,15 @@ private:
 
     // vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    std::vector<bool> boundaryVertices_;
+    std::vector<bool> domainBoundaryVertices_;
+    std::vector<bool> interiorBoundaryScvfs_;
+    std::vector<bool> interiorBoundaryVertices_;
     std::vector<bool> branchingVertices_;
-    std::size_t numBoundaryScvf_;
-    std::size_t numBoundaryVertices_;
+    std::size_t numInteriorOrDomainBoundaryVertices_;
+    std::size_t numDomainBoundaryScvf_;
+    std::size_t numInteriorBoundaryScvf_;
+    std::size_t numBranchingPointScvf_;
+    std::size_t numBranchingPointVertices_;
     // needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<IndexType>> flipScvfIndices_;
 
@@ -416,11 +466,13 @@ class CCMpfaGlobalFVGeometryBase<TypeTag, false>
     using IndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
 public:
     //! Constructor
@@ -435,13 +487,25 @@ public:
     std::size_t numScvf() const
     { return numScvf_; }
 
-    //! The total number of boundary sub control volume faces
-    std::size_t numBoundaryScvf() const
-    { return numBoundaryScvf_; }
+    //! The total number of scvfs on the interior boundaries
+    std::size_t numDomainBoundaryScvf() const
+    { return numDomainBoundaryScvf_; }
+
+    //! The total number of scvfs on the interior boundaries
+    std::size_t numInteriorBoundaryScvf() const
+    { return numInteriorBoundaryScvf_; }
+
+    //! The total number of scvfs connected to branching points
+    std::size_t numBranchingPointScvf() const
+    { return numBranchingPointScvf_; }
+
+    //! The total number of vertices connected to branching points
+    std::size_t numBranchingPointVertices() const
+    { return numBranchingPointVertices_; }
 
     //! The total number of vertices on the boundary
-    std::size_t numBoundaryVertices() const
-    { return numBoundaryVertices_; }
+    std::size_t numInteriorOrDomainBoundaryVertices() const
+    { return numInteriorOrDomainBoundaryVertices_; }
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
@@ -463,38 +527,52 @@ public:
     const BoundaryInteractionVolumeSeed& boundaryInteractionVolumeSeed(const SubControlVolumeFace& scvf) const
     { return globalInteractionVolumeSeeds_.boundarySeed(scvf); }
 
-    //! Returns whether or not an scvf touches the boundary (has to be called before getting an interaction volume)
-    bool scvfTouchesBoundary(const SubControlVolumeFace& scvf) const
-    { return boundaryVertices_[scvf.vertexIndex()]; }
+    //! Returns whether or not an scvf is on an interior boundary
+    bool isOnInteriorBoundary(const SubControlVolumeFace& scvf) const
+    { return enableInteriorBoundaries ? interiorBoundaryScvfs_[scvf.index()] : false; }
+
+    //! Returns whether or not an scvf touches the domain boundary
+    bool touchesDomainBoundary(const SubControlVolumeFace& scvf) const
+    { return domainBoundaryVertices_[scvf.vertexIndex()]; }
+
+    //! Returns whether or not an scvf touches the domain boundary
+    bool touchesInteriorBoundary(const SubControlVolumeFace& scvf) const
+    { return enableInteriorBoundaries ? interiorBoundaryVertices_[scvf.vertexIndex()] : false; }
+
+    //! Returns whether or not an scvf touches an interior or a domain boundary (has to be called before getting an interaction volume)
+    bool touchesInteriorOrDomainBoundary(const SubControlVolumeFace& scvf) const
+    { return touchesDomainBoundary(scvf) || touchesInteriorBoundary(scvf); }
 
     //! Returns whether or not a vertex is on a processor boundary
     bool isGhostVertex(const IndexType vIdxGlobal) const
     { return ghostVertices_[vIdxGlobal]; }
 
     //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
-    bool scvfTouchesBranchingPoint(const SubControlVolumeFace& scvf) const
-    { return branchingVertices_[scvf.vertexIndex()]; }
+    bool touchesBranchingPoint(const SubControlVolumeFace& scvf) const
+    { return dim < dimWorld ? branchingVertices_[scvf.vertexIndex()] : false; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update(const Problem& problem)
     {
         problemPtr_ = &problem;
 
-        // clear containers (necessary after grid refinement)
-        scvfIndicesOfScv_.clear();
-        neighborVolVarIndices_.clear();
-        boundaryVertices_.clear();
-        elementMap_.clear();
-
-        // reserve memory or resize the containers
+        // resize the containers
+        const auto numScvfs = MpfaHelper::getGlobalNumScvf(gridView_);
+        const auto numVert = gridView_.size(dim);
         numScvs_ = gridView_.size(0);
-        numScvf_ = 0;
-        numBoundaryScvf_ = 0;
-        numBoundaryVertices_ = 0;
+
         elementMap_.resize(numScvs_);
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
-        boundaryVertices_.resize(gridView_.size(dim), false);
+
+        // keep track of the domain (and maybe interior) boundaries
+        domainBoundaryVertices_.resize(numVert, false);
+        std::vector<bool> interiorOrDomainBoundaryVertices(numVert, false);
+        if (enableInteriorBoundaries)
+        {
+            interiorBoundaryScvfs_.resize(numScvfs, false);
+            interiorBoundaryVertices_.resize(numVert, false);
+        }
 
         // keep track of branching points
         if (dim < dimWorld)
@@ -504,9 +582,16 @@ public:
         ghostVertices_ = MpfaHelper::findGhostVertices(problem, gridView_);
 
         // Store necessary info on SCVs and SCV faces
+        // reset counters for the tracking of the indices
+        numScvf_ = 0;
+        numDomainBoundaryScvf_ = 0;
+        numInteriorBoundaryScvf_ = 0;
+        numBranchingPointScvf_ = 0;
+        numBranchingPointVertices_ = 0;
+        numInteriorOrDomainBoundaryVertices_ = 0;
         for (const auto& element : elements(gridView_))
         {
-            auto eIdx = problem.elementMapper().index(element);
+            const auto eIdx = problem.elementMapper().index(element);
 
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
@@ -515,7 +600,7 @@ public:
             auto eg = element.geometry();
 
             // the element-wise index sets for finite volume geometry
-            auto numLocalFaces = MpfaHelper::getNumLocalScvfs(eg.type());
+            const auto numLocalFaces = MpfaHelper::getNumLocalScvfs(eg.type());
             std::vector<IndexType> scvfsIndexSet;
             std::vector< std::vector<IndexType> > neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
@@ -542,20 +627,22 @@ public:
             // construct the sub control volume faces
             for (const auto& is : intersections(gridView_, element))
             {
-                auto indexInInside = is.indexInInside();
-                bool boundary = is.boundary();
-                bool neighbor = is.neighbor();
+                const auto indexInInside = is.indexInInside();
+                const bool boundary = is.boundary();
+                const bool neighbor = is.neighbor();
+                const bool interiorBoundary = enableInteriorBoundaries ? problem.isInteriorBoundary(element, is) : false;
+
                 // for network grids, skip the rest if handled already
                 if (dim < dimWorld && neighbor && outsideIndices[indexInInside].empty())
                     continue;
 
                 // determine the outside volvar indices
-                std::vector<IndexType> nIndices;
-                if (neighbor && dim == dimWorld)
-                    nIndices = std::vector<IndexType>( {problem.elementMapper().index(is.outside())} );
+                const std::vector<IndexType> nIndices = neighbor && dim == dimWorld ?
+                                                        std::vector<IndexType>({problem.elementMapper().index(is.outside())}) :
+                                                        std::vector<IndexType>();
 
                 // if outside level > inside level, use the outside element in the following
-                bool useNeighbor = neighbor && is.outside().level() > element.level();
+                const bool useNeighbor = neighbor && is.outside().level() > element.level();
                 const auto& e = useNeighbor ? is.outside() : element;
                 const auto indexInElement = useNeighbor ? is.indexInOutside() : indexInInside;
                 const auto eg = e.geometry();
@@ -572,16 +659,14 @@ public:
                     if (ghostVertices_[vIdxGlobal])
                         continue;
 
-                    // store info on which vertices are on the domain boundary
-                    if (boundary && !boundaryVertices_[vIdxGlobal])
-                    {
-                        boundaryVertices_[vIdxGlobal] = true;
-                        numBoundaryVertices_++;
-                    }
-
                     // is vertex on a branching point?
                     if (dim < dimWorld && outsideIndices[indexInInside].size() > 1)
+                    {
+                        if (!branchingVertices_[vIdxGlobal])
+                            numBranchingPointVertices_++;
                         branchingVertices_[vIdxGlobal] = true;
+                        numBranchingPointScvf_++;
+                    }
 
                     // store information on the scv face (for inner scvfs on network grids use precalculated outside indices)
                     if (!boundary)
@@ -592,10 +677,30 @@ public:
                     }
                     else
                     {
-                        nIndices.resize(1);
-                        nIndices[0] = numScvs_ + numBoundaryScvf_++;
+                        const std::vector<IndexType> boundaryIdx = [&] ()
+                                                                   {
+                                                                        IndexType bIdx = numScvs_ + numDomainBoundaryScvf_++;
+                                                                        return std::vector<IndexType>({bIdx});
+                                                                   } ();
                         scvfsIndexSet.push_back(numScvf_++);
-                        neighborVolVarIndexSet.push_back(nIndices);
+                        neighborVolVarIndexSet.push_back(boundaryIdx);
+                    }
+
+                    // if a new interior or domain boundary has been found, increase counter
+                    if ((boundary || interiorBoundary) && !interiorOrDomainBoundaryVertices[vIdxGlobal])
+                    {
+                        interiorOrDomainBoundaryVertices[vIdxGlobal] = true;
+                        numInteriorOrDomainBoundaryVertices_++;
+                    }
+
+                    // store info on which vertices are on the domain/interior boundary
+                    if (boundary)
+                        domainBoundaryVertices_[vIdxGlobal] = true;
+                    if (enableInteriorBoundaries && interiorBoundary)
+                    {
+                        interiorBoundaryVertices_[vIdxGlobal] = true;
+                        interiorBoundaryScvfs_[numScvf_-1] = true;
+                        numInteriorBoundaryScvf_++;
                     }
 
                     // increment counter
@@ -612,8 +717,11 @@ public:
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
 
+        // make sure we found as many scvfs as previously estimated
+        assert(numScvf_ == numScvfs);
+
         // Initialize the interaction volume seeds
-        globalInteractionVolumeSeeds_.update(problem, boundaryVertices_);
+        globalInteractionVolumeSeeds_.update(problem, interiorOrDomainBoundaryVertices);
     }
 
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
@@ -642,14 +750,19 @@ private:
     // Information on the global number of geometries
     std::size_t numScvs_;
     std::size_t numScvf_;
-    std::size_t numBoundaryScvf_;
-    std::size_t numBoundaryVertices_;
+    std::size_t numDomainBoundaryScvf_;
+    std::size_t numInteriorBoundaryScvf_;
+    std::size_t numBranchingPointScvf_;
+    std::size_t numBranchingPointVertices_;
+    std::size_t numInteriorOrDomainBoundaryVertices_;
 
     // vectors that store the global data
     Dumux::ElementMap<GridView> elementMap_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector< std::vector< std::vector<IndexType> > > neighborVolVarIndices_;
-    std::vector<bool> boundaryVertices_;
+    std::vector<bool> domainBoundaryVertices_;
+    std::vector<bool> interiorBoundaryScvfs_;
+    std::vector<bool> interiorBoundaryVertices_;
     std::vector<bool> ghostVertices_;
     std::vector<bool> branchingVertices_;
 

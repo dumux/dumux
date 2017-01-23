@@ -41,6 +41,7 @@
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseeds.hh>
+#include <dumux/discretization/cellcentered/mpfa/interiorboundarydata.hh>
 #include <dumux/implicit/cellcentered/mpfa/localresidual.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 
@@ -107,6 +108,18 @@ public:
 
 // By default, we use tpfa on the boundaries
 SET_BOOL_PROP(CCMpfaModel, UseTpfaBoundary, true);
+
+// By default, we disable interior boundaries
+SET_BOOL_PROP(CCMpfaModel, EnableInteriorBoundaries, false);
+
+// By default, interior boundaries are static
+SET_BOOL_PROP(CCMpfaModel, MpfaFacetCoupling, false);
+
+// The default interior Dirichlet boundary data
+SET_TYPE_PROP(CCMpfaModel, InteriorBoundaryData, InteriorBoundaryData<TypeTag>);
+
+// By default, we use simple coupling conditions (Xi = 1)
+SET_SCALAR_PROP(CCMpfaModel, MpfaXi, 1.0);
 
 // By default, we set the quadrature point to the mid point of the element facets
 SET_SCALAR_PROP(CCMpfaModel, MpfaQ, 0.0);

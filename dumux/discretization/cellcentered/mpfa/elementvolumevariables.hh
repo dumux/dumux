@@ -194,8 +194,8 @@ public:
             // Update boundary volume variables in the neighbors
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                // skip the rest if the scvf does not touch a boundary
-                if (!globalFvGeometry.scvfTouchesBoundary(scvf))
+                // skip the rest if the scvf does not touch a domain boundary
+                if (!globalFvGeometry.touchesDomainBoundary(scvf))
                     continue;
 
                 // loop over all the scvfs in the interaction region
@@ -304,7 +304,7 @@ private:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             bool boundary = scvf.boundary();
-            if (boundary || (!boundary && fvGeometry.globalFvGeometry().scvfTouchesBoundary(scvf)))
+            if (boundary || (!boundary && fvGeometry.globalFvGeometry().touchesDomainBoundary(scvf)))
                 bVolVarEstimate += dim-1;
         }
 

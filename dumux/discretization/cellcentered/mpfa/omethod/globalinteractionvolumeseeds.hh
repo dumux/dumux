@@ -55,7 +55,7 @@ public:
     CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView& gridView) : ParentType(gridView) {}
 
     template<typename SeedVector, typename BoundarySeedVector>
-    void initializeSeeds(const std::vector<bool>& boundaryVertices,
+    void initializeSeeds(const std::vector<bool>& interiorOrDomainBoundaryVertices,
                          std::vector<IndexType>& scvfIndexMap,
                          SeedVector& seeds,
                          BoundarySeedVector& boundarySeeds)
@@ -66,12 +66,12 @@ public:
 
         // reserve memory
         const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
-        const auto numBoundaryVertices = this->problem().model().globalFvGeometry().numBoundaryVertices();
-        const int numInteriorVertices = this->gridView().size(dim) - numBoundaryVertices;
+        const auto numInteriorOrDomainBoundaryVertices = this->problem().model().globalFvGeometry().numInteriorOrDomainBoundaryVertices();
+        const int numInteriorVertices = this->gridView().size(dim) - numInteriorOrDomainBoundaryVertices;
 
         if (numInteriorVertices > 0)
             seeds.reserve(numInteriorVertices);
-        boundarySeeds.reserve(numBoundaryVertices);
+        boundarySeeds.reserve(numInteriorOrDomainBoundaryVertices);
         scvfIndexMap.resize(numScvf);
 
         // Keep track of which faces have been handled already
@@ -90,7 +90,7 @@ public:
                 if (isFaceHandled[scvf.index()])
                     continue;
 
-                if (boundaryVertices[scvf.vertexIndex()])
+                if (interiorOrDomainBoundaryVertices[scvf.vertexIndex()])
                 {
                     // make the boundary interaction volume seed
                     boundarySeeds.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(this->problem(),

@@ -1019,6 +1019,22 @@ public:
     { return std::vector<IndexType>(); }
 
     /*!
+     * \brief Function to mark intersections as interior boundaries. This functionality is only
+     *        available for models using a cell-centered Mpfa scheme. The corresponding boundary
+     *        types and conditions are obtained from the standard methods.
+     *
+     * \param element The finite element
+     * \param intersection The intersection within the element
+     * \return boolean to mark an intersection as an interior boundary
+     *
+     * Per default we don't have interior boundaries
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, bool>::type
+    isInteriorBoundary(const Element& element, const Intersection& intersection) const
+    { return false; }
+
+    /*!
      * \brief Capability to introduce problem-specific routines at the
      * beginning of the grid adaptation
      *

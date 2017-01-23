@@ -351,9 +351,6 @@ private:
         const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdx);
 
-        // Instantiate helper class to pass it to scvf constructors
-        MpfaHelper helper;
-
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
 
@@ -407,8 +404,8 @@ private:
                 if (globalFvGeometry().isGhostVertex(vIdxGlobal))
                     continue;
 
-                scvfs_.emplace_back(helper,
-                                    helper.getScvfCorners(isCorners, c),
+                scvfs_.emplace_back(MpfaHelper(),
+                                    MpfaHelper::getScvfCorners(isCorners, c),
                                     is.centerUnitOuterNormal(),
                                     vIdxGlobal,
                                     vIdxLocal,
@@ -436,9 +433,6 @@ private:
         // get data on the scv faces
         const auto& scvFaceIndices = globalFvGeometry().scvfIndicesOfScv(eIdxGlobal);
         const auto& neighborVolVarIndices = globalFvGeometry().neighborVolVarIndices(eIdxGlobal);
-
-        // Instantiate a helper class to pass it to scvf constructors
-        MpfaHelper helper;
 
         // the quadrature point to be used on the scvf
         const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
@@ -491,8 +485,8 @@ private:
                 // only build the scvf if it is in the list of necessary indices
                 if (MpfaHelper::contains(scvfIndices, scvFaceIndices[scvfCounter]))
                 {
-                    neighborScvfs_.emplace_back(helper,
-                                                helper.getScvfCorners(isCorners, c),
+                    neighborScvfs_.emplace_back(MpfaHelper(),
+                                                MpfaHelper::getScvfCorners(isCorners, c),
                                                 is.centerUnitOuterNormal(),
                                                 vIdxGlobal,
                                                 vIdxLocal,

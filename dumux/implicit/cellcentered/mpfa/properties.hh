@@ -49,6 +49,10 @@ NEW_PROP_TAG(InteractionVolume); //! The inner interaction volume type
 NEW_PROP_TAG(BoundaryInteractionVolume); //! The interaction volume type used on the boundaries
 NEW_PROP_TAG(GlobalInteractionVolumeSeeds); //! Class storing and managing the interaction volume seeds
 NEW_PROP_TAG(UseTpfaBoundary); //! This property specifies whether or not tpfa is to be used to handle the boundary fluxes
+NEW_PROP_TAG(EnableInteriorBoundaries); //! Enables or disables the use of internal boundaries on interior scvfs
+NEW_PROP_TAG(InteriorBoundaryData); //! Stores and obtains additional data on interior boundaries
+NEW_PROP_TAG(MpfaFacetCoupling); //! Specifies if the interior boundaries are static or coupled to another domain
+NEW_PROP_TAG(MpfaXi); //! Parameter for the coupling conditions when using mpfa in a context with coupling on facets (0 <= xi <= 1)
 NEW_PROP_TAG(MpfaQ); //! The quadrature point on the sub control volume faces (0.0 <= q <= 1.0)
 NEW_PROP_TAG(MpfaC); //! Parameterisation of the size of the auxiliary volume in the FPS scheme
 NEW_PROP_TAG(MpfaP); //! The quadrature point on the auxiliary sub faces in the FPS scheme

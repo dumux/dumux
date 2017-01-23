@@ -227,7 +227,7 @@ private:
     int getLocalScvfIdx_(const int scvfIdx) const
     {
         auto it = std::find(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
-        assert(globalScvfIndices_[std::distance(globalScvfIndices_.begin(), it)] == scvfIdx && "Could not find the flux vars cache for scvfIdx");
+        assert(it != globalScvfIndices_.end() && "Could not find the flux vars cache for scvfIdx");
         return std::distance(globalScvfIndices_.begin(), it);
     }
 

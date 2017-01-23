@@ -445,6 +445,7 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
@@ -454,11 +455,14 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
     using LocalBasis = std::array<GlobalPosition, dim>;
 
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
 public:
     // returns shared pointers to the scv faces that share a vertex in the order of a right hand system
@@ -522,22 +526,51 @@ public:
                                          const Element& element,
                                          const SubControlVolumeFace& scvf)
     {
-        if (!scvf.boundary())
+        // We do simplified checks if interior boundaries are disabled
+        if (!enableInteriorBoundaries)
+        {
+            if (!scvf.boundary())
+                return MpfaFaceTypes::interior;
+
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+            if (bcTypes.hasOnlyNeumann())
+                return MpfaFaceTypes::neumann;
+            if (bcTypes.hasOnlyDirichlet())
+                return MpfaFaceTypes::dirichlet;
+
+            // throw exception
+            return throwBoundaryExceptionMessage(bcTypes);
+        }
+        else
+        {
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+
+            // if we are on an interior boundary return interior types
+            if (problem.model().globalFvGeometry().isOnInteriorBoundary(scvf))
+            {
+                if (bcTypes.hasOnlyNeumann())
+                    return MpfaFaceTypes::interiorNeumann;
+                if (bcTypes.hasOnlyDirichlet())
+                    return MpfaFaceTypes::interiorDirichlet;
+
+                // throw exception
+                return throwBoundaryExceptionMessage(bcTypes);
+            }
+
+            if (scvf.boundary())
+            {
+                if (bcTypes.hasOnlyNeumann())
+                    return MpfaFaceTypes::neumann;
+                if (bcTypes.hasOnlyDirichlet())
+                    return MpfaFaceTypes::dirichlet;
+
+                // throw exception
+                return throwBoundaryExceptionMessage(bcTypes);
+            }
+
+            // This is an interior scvf
             return MpfaFaceTypes::interior;
-
-        auto bcTypes = problem.boundaryTypes(element, scvf);
-        if (bcTypes.hasOnlyNeumann())
-            return MpfaFaceTypes::neumann;
-        if (bcTypes.hasOnlyDirichlet())
-            return MpfaFaceTypes::dirichlet;
-
-        // throw for outflow or mixed boundary conditions
-        if (bcTypes.hasOutflow())
-            DUNE_THROW(Dune::NotImplemented, "outflow BC for mpfa schemes");
-        if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
-            DUNE_THROW(Dune::InvalidStateException, "Mixed BC are not allowed for cellcentered schemes");
-
-        DUNE_THROW(Dune::InvalidStateException, "unknown boundary condition type");
+        }
     }
 
     // returns a vector, which maps a bool (true if ghost vertex) to each vertex index
@@ -582,6 +615,36 @@ public:
     template<typename V1, typename V2>
     static bool contains(const std::vector<V1>& vector, const V2 value)
     { return std::find(vector.begin(), vector.end(), value) != vector.end(); }
+
+    // calculates the product of a transposed vector n, a Matrix M and another vector v (n^T M v)
+    static Scalar nT_M_v(const GlobalPosition& n,
+                         const DimWorldMatrix& M,
+                         const GlobalPosition& v)
+    {
+        GlobalPosition tmp;
+        M.mv(v, tmp);
+        return n*tmp;
+    }
+
+    // calculates the product of a transposed vector n, a Scalar M and another vector v (n^T M v)
+    static Scalar nT_M_v(const GlobalPosition& n,
+                         const Scalar M,
+                         const GlobalPosition& v)
+    {
+        return M*(n*v);
+    }
+
+private:
+    static MpfaFaceTypes throwBoundaryExceptionMessage(const BoundaryTypes& bcTypes)
+    {
+        // throw for outflow or mixed boundary conditions
+        if (bcTypes.hasOutflow())
+            DUNE_THROW(Dune::NotImplemented, "outflow BC for mpfa schemes");
+        if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
+            DUNE_THROW(Dune::InvalidStateException, "Mixed BC are not allowed for cellcentered schemes");
+
+        DUNE_THROW(Dune::InvalidStateException, "unknown boundary condition type");
+    }
 };
 
 /*!

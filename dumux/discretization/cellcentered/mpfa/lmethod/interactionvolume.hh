@@ -85,9 +85,10 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod> : pub
     static const int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using LocalBasis = std::array<GlobalPosition, dim>;
     using InteractionRegion = Dumux::InteractionRegion<TypeTag>;
 
-    using Vector = typename Traits::Vector;
+    using CoefficientVector = typename Traits::Vector;
     using Tensor = typename Traits::Tensor;
 
 public:
@@ -151,7 +152,7 @@ public:
     }
 
     //! returns the transmissibilities corresponding to the bound scvf
-    Vector getTransmissibilities(const LocalFaceData& localFaceData) const
+    CoefficientVector getTransmissibilities(const LocalFaceData& localFaceData) const
     {
         assert(systemSolved_ && "Transmissibilities not calculated yet. You have to call solveLocalSystem() beforehand.");
 
@@ -178,6 +179,15 @@ public:
         assert(systemSolved_ && "globalScvfs not set yet. You have to call solveLocalSystem() beforehand.");
         return globalScvfIndices_;
     }
+
+    //! Boundaries will be treated by a different mpfa method (e.g. o method). Thus, on
+    //! faces in l-method interaction volumes there will never be a Neumann flux contribution.
+    Scalar getNeumannFlux(const LocalFaceData& localFaceData, unsigned int eqIdx) const
+    { return 0.0; }
+
+    //! See comment of getNeumannFlux()
+    CoefficientVector getNeumannFluxTransformationCoefficients(const LocalFaceData& localFaceData) const
+    { return CoefficientVector(0.0); }
 
     const Matrix& matrix() const
     { return T_; }
@@ -331,7 +341,10 @@ private:
     calculateXi_(const GlobalPosition& nu1,
                  const GlobalPosition& nu2,
                  const Scalar detX) const
-    { return crossProduct<Scalar>(nu1, nu2)/detX; }
+    {
+        LocalBasis basis({nu1, nu2});
+        return MpfaHelper::calculateDetX(basis)/detX;
+    }
 
     const Seed& seed_() const
     { return seedPtr_; }

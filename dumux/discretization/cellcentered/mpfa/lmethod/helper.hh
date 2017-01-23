@@ -45,7 +45,7 @@ class MpfaMethodHelper<TypeTag, MpfaMethods::lMethod, /*dim*/2, /*dimWorld*/2>
     static const int dimWorld = 2;
 
     // The mpfa-o helper class used to construct the boundary interaction volume seeds
-    using oMethodHelper = CCMpfaHelperImplementation<TypeTag, MpfaMethods::oMethod, 2, 2>;
+    using oMethodHelper = CCMpfaHelperImplementation<TypeTag, MpfaMethods::oMethod, dim, dimWorld>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -64,7 +64,6 @@ class MpfaMethodHelper<TypeTag, MpfaMethods::lMethod, /*dim*/2, /*dimWorld*/2>
 
     using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
     using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using LocalIndexSet = typename InteractionVolume::LocalIndexSet;
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
     using Matrix = typename InteractionVolume::Matrix;
 public:
@@ -175,6 +174,70 @@ private:
         outerScvSeeds.emplace_back(e4Scvfs[otherScvfIdx]->insideScvIdx(),
                                    e4Scvfs[otherScvfIdx]->index());
     }
+};
+
+/*!
+ * \ingroup Mpfa
+ * \brief Helper class to get the required information on an interaction volume.
+ *        Specialization for the Mpfa-L method for 2d embedded in 3d space.
+ */
+template<class TypeTag>
+class MpfaMethodHelper<TypeTag, MpfaMethods::lMethod, /*dim*/2, /*dimWorld*/3>
+{
+    using Implementation = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+
+    static const int dim = 2;
+    static const int dimWorld = 3;
+
+    // The mpfa-o helper class used to construct the boundary interaction volume seeds
+    using oMethodHelper = CCMpfaHelperImplementation<TypeTag, MpfaMethods::oMethod, dim, dimWorld>;
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using InteractionVolumeSeed = typename InteractionVolume::Seed;
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+
+    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using Matrix = typename InteractionVolume::Matrix;
+public:
+
+    //! We know that this is only called for scvfs NOT touching:
+    //!     - branching points
+    //!     - domain boundaries
+    //!     - interior boundaries
+    //! Thus, here we can use the same algorithm as in the 2d case.
+    static InteractionVolumeSeed makeInnerInteractionVolumeSeed(const Problem& problem,
+                                                                const Element& element,
+                                                                const FVElementGeometry& fvGeometry,
+                                                                const SubControlVolumeFace& scvf)
+    {
+        return MpfaMethodHelper<TypeTag, MpfaMethods::lMethod, 2, 2>::makeInnerInteractionVolumeSeed(problem,
+                                                                                                     element,
+                                                                                                     fvGeometry,
+                                                                                                     scvf);
+    }
+
+    //! Here we simply forward to the o-method helper (we use o-interaction volumes on the boundary)
+    static BoundaryInteractionVolumeSeed makeBoundaryInteractionVolumeSeed(const Problem& problem,
+                                                                           const Element& element,
+                                                                           const FVElementGeometry& fvGeometry,
+                                                                           const SubControlVolumeFace& scvf)
+    { return oMethodHelper::makeBoundaryInteractionVolumeSeed(problem, element, fvGeometry, scvf); }
+
+    //! The selection criterion is the same as in the dim = 2 = dimWorld case
+    template<class InteractionRegion>
+    static LocalIndexType selectionCriterion(const InteractionRegion& I1,
+                                             const InteractionRegion& I2,
+                                             const Matrix& M1,
+                                             const Matrix& M2)
+    { return MpfaMethodHelper<TypeTag, MpfaMethods::lMethod, 2, 2>::selectionCriterion(I1, I2, M1, M2); }
 };
 
 } // end namespace

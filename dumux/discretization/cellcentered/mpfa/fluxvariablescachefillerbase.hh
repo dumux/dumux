@@ -47,8 +47,6 @@ class CCMpfaAdvectionCacheFiller
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -56,18 +54,19 @@ class CCMpfaAdvectionCacheFiller
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static const bool enableDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+    static constexpr bool enableDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
 
 public:
     //! function to fill the flux var caches
-    template<class FluxVarsCacheContainer>
+    template<class FluxVarsCacheContainer, class InteractionVolume>
     static void fillCaches(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf,
+                           InteractionVolume& iv,
                            FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
         // lambda function to get the permeability tensor
@@ -76,68 +75,24 @@ public:
                                const SubControlVolume& scv)
         { return volVars.permeability(); };
 
-        // update flux var caches
-        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
+        // solve the local system subject to the permeability
+        iv.solveLocalSystem(getK);
+
+        // update the transmissibilities etc for each phase
+        const auto scvfIdx = scvf.index();
+        const auto scvfLocalFaceData = iv.getLocalFaceData(scvf);
+        auto& scvfCache = fluxVarsCacheContainer[scvfIdx];
+        scvfCache.updateAdvection(iv, scvf, scvfLocalFaceData);
+
+        //! Update the transmissibilities in the other scvfs of the interaction volume
+        for (auto scvfIdxJ : iv.globalScvfs())
         {
-            const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-            iv.solveLocalSystem(getK);
-
-            // update the transmissibilities etc for each phase
-            const auto scvfIdx = scvf.index();
-            auto& cache = fluxVarsCacheContainer[scvfIdx];
-            cache.updateAdvection(scvf, iv);
-            cache.setUpdateStatus(true);
-
-            //! set the neumann boundary conditions in case we do not use tpfa on the
-            //! boundary and diffusion is not enabled (then we assume neumann BCs to be diffusive)
-            if (!useTpfaBoundary && !enableDiffusion)
-                for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
-                    iv.assembleNeumannFluxes(phaseIdx);
-                    cache.updatePhaseNeumannFlux(scvf, iv, phaseIdx);
-                }
-
-            for (const auto scvfIdxJ : iv.globalScvfs())
+            if (scvfIdxJ != scvfIdx)
             {
-                if (scvfIdxJ != scvfIdx)
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                    cacheJ.updateAdvection(scvfJ, iv);
-                    cacheJ.setUpdateStatus(true);
-
-                    if (!useTpfaBoundary && !enableDiffusion)
-                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        {
-                            iv.assembleNeumannFluxes(phaseIdx);
-                            cacheJ.updatePhaseNeumannFlux(scvfJ, iv, phaseIdx);
-                        }
-                }
-            }
-        }
-        else
-        {
-            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
-            InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-            iv.solveLocalSystem(getK);
-
-            // update flux variables cache
-            const auto scvfIdx = scvf.index();
-            auto& cache = fluxVarsCacheContainer[scvfIdx];
-            cache.updateAdvection(scvf, iv);
-            cache.setUpdateStatus(true);
-
-            // update flux variable caches of the other scvfs of the interaction volume
-            for (const auto scvfIdxJ : iv.globalScvfs())
-            {
-                if (scvfIdxJ != scvfIdx)
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                    cacheJ.updateAdvection(scvfJ, iv);
-                    cacheJ.setUpdateStatus(true);
-                }
+                // update cache of scvfJ
+                const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
+                const auto scvfJLocalFaceData = iv.getLocalFaceData(scvfJ);
+                fluxVarsCacheContainer[scvfIdxJ].updateAdvection(iv, scvfJ, scvfJLocalFaceData);
             }
         }
     }
@@ -152,8 +107,6 @@ class CCMpfaDiffusionCacheFiller
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -161,107 +114,57 @@ class CCMpfaDiffusionCacheFiller
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
 
 public:
     //! function to fill the flux var caches
-    template<class FluxVarsCacheContainer>
+    template<class FluxVarsCacheContainer, class InteractionVolume>
     static void fillCaches(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf,
+                           InteractionVolume& iv,
                            FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
-        //! If the problem does not use an mpfa method for diffusion, do nothing
-        //! This is known at compile time so it gets optimized away
-        if (MolecularDiffusionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa)
-            return;
-
-        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
+        //! update the cache for all components in all phases. We exclude the case
+        //! phaseIdx = compIdx here, as diffusive fluxes of the major component in its
+        //! own phase are not calculated explicitly during assembly (see compositional local residual)
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-
-            //! update the cache for all components in all phases. We exclude the case
-            //! phaseIdx = compIdx here, as diffusive fluxes of the major component in its
-            //! own phase are not calculated explicitly during assembly (see compositional local residual)
-            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+                if (phaseIdx == compIdx)
+                    continue;
+
+                // lambda function to get the diffusion coefficient/tensor
+                auto getD = [phaseIdx, compIdx](const Element& element,
+                                                const VolumeVariables& volVars,
+                                                const SubControlVolume& scv)
+                { return volVars.diffusionCoefficient(phaseIdx, compIdx); };
+
+                // solve for the transmissibilities
+                iv.solveLocalSystem(getD);
+
+                // update the caches
+                const auto scvfIdx = scvf.index();
+                const auto scvfLocalFaceData = iv.getLocalFaceData(scvf);
+                auto& scvfCache = fluxVarsCacheContainer[scvfIdx];
+                scvfCache.updateDiffusion(iv, scvf, scvfLocalFaceData, phaseIdx, compIdx);
+
+                //! Update the caches in the other scvfs of the interaction volume
+                for (auto scvfIdxJ : iv.globalScvfs())
                 {
-                    if (phaseIdx == compIdx)
-                        continue;
-
-                    // lambda function to get the diffusion coefficient/tensor
-                    auto getD = [phaseIdx, compIdx](const Element& element,
-                                                    const VolumeVariables& volVars,
-                                                    const SubControlVolume& scv)
-                    { return volVars.diffusionCoefficient(phaseIdx, compIdx); };
-
-                    // solve for the transmissibilities
-                    iv.solveLocalSystem(getD);
-
-                    // update the caches
-                    const auto scvfIdx = scvf.index();
-                    auto& cache = fluxVarsCacheContainer[scvfIdx];
-                    cache.updateDiffusion(scvf, iv, phaseIdx, compIdx);
-                    cache.setUpdateStatus(true);
-
-                    for (const auto scvfIdxJ : iv.globalScvfs())
+                    if (scvfIdxJ != scvfIdx)
                     {
-                        if (scvfIdxJ != scvfIdx)
-                        {
-                            const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                            auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                            cacheJ.updateDiffusion(scvfJ, iv, phaseIdx, compIdx);
-                            cacheJ.setUpdateStatus(true);
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
-            InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
+                        // store scvf pointer and local face data
+                        const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
+                        const auto scvfJLocalFaceData = iv.getLocalFaceData(scvfJ);
 
-            //! update the cache for all components in all phases. We exclude the case
-            //! phaseIdx = compIdx here, as diffusive fluxes of the major component in its
-            //! own phase are not calculated explicitly during assembly (see compositional local residual)
-            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {
-                for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    if (phaseIdx == compIdx)
-                        continue;
-
-                    // lambda function to get the diffusion coefficient/tensor
-                    // TODO: How to include effective diffusivity?
-                    auto getD = [phaseIdx, compIdx](const Element& element,
-                                                    const VolumeVariables& volVars,
-                                                    const SubControlVolume& scv)
-                    { return volVars.diffusionCoefficient(phaseIdx, compIdx); };
-
-                    // solve for the transmissibilities
-                    iv.solveLocalSystem(getD);
-
-                    // update the caches
-                    const auto scvfIdx = scvf.index();
-                    auto& cache = fluxVarsCacheContainer[scvfIdx];
-                    cache.updateDiffusion(scvf, iv, phaseIdx, compIdx);
-                    cache.setUpdateStatus(true);
-
-                    for (const auto scvfIdxJ : iv.globalScvfs())
-                    {
-                        if (scvfIdxJ != scvfIdx)
-                        {
-                            const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                            auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                            cacheJ.updateDiffusion(scvfJ, iv, phaseIdx, compIdx);
-                            cacheJ.setUpdateStatus(true);
-                        }
+                        // update cache
+                        fluxVarsCacheContainer[scvfIdxJ].updateDiffusion(iv, scvfJ, scvfJLocalFaceData, phaseIdx, compIdx);
                     }
                 }
             }
@@ -280,7 +183,6 @@ class CCMpfaHeatConductionCacheFiller
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
@@ -294,19 +196,15 @@ class CCMpfaHeatConductionCacheFiller
 
 public:
     //! function to fill the flux var caches
-    template<class FluxVarsCacheContainer>
+    template<class FluxVarsCacheContainer, class InteractionVolume>
     static void fillCaches(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf,
+                           InteractionVolume& iv,
                            FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
-        //! If the problem does not use an mpfa method for diffusion, do nothing
-        //! This is known at compile time so it gets optimized away
-        if (HeatConductionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa)
-            return;
-
         // lambda function to get the thermal conductivity
         auto getLambda = [&problem, &fvGeometry](const Element& element,
                                                  const VolumeVariables& volVars,
@@ -317,68 +215,26 @@ public:
                                                                         fvGeometry,
                                                                         scv); };
 
-        if (problem.model().globalFvGeometry().scvfTouchesBoundary(scvf))
+        // solve for the transmissibilities
+        iv.solveLocalSystem(getLambda);
+
+        // update the caches
+        const auto scvfIdx = scvf.index();
+        const auto scvfLocalFaceData = iv.getLocalFaceData(scvf);
+        auto& scvfCache = fluxVarsCacheContainer[scvfIdx];
+        scvfCache.updateHeatConduction(iv, scvf, scvfLocalFaceData);
+
+        //! Update the caches in the other scvfs of the interaction volume
+        for (auto scvfIdxJ : iv.globalScvfs())
         {
-            const auto& seed = problem.model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf);
-            BoundaryInteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-
-            // solve for the transmissibilities
-            iv.solveLocalSystem(getLambda);
-
-            // update the caches
-            const auto scvfIdx = scvf.index();
-            auto& cache = fluxVarsCacheContainer[scvfIdx];
-            cache.updateHeatConduction(scvf, iv);
-            cache.setUpdateStatus(true);
-
-            //! set the neumann boundary conditions in case we do not use tpfa on the boundary
-            if (!useTpfaBoundary)
+            if (scvfIdxJ != scvfIdx)
             {
-                iv.assembleNeumannFluxes(energyEqIdx);
-                cache.updateHeatNeumannFlux(scvf, iv);
-            }
+                // store scvf pointer and local face data
+                const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
+                const auto scvfJLocalFaceData = iv.getLocalFaceData(scvfJ);
 
-            for (const auto scvfIdxJ : iv.globalScvfs())
-            {
-                if (scvfIdxJ != scvfIdx)
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                    cacheJ.updateHeatConduction(scvfJ, iv);
-                    cacheJ.setUpdateStatus(true);
-
-                    //! set the neumann boundary conditions in case we do not use tpfa on the boundary
-                    if (!useTpfaBoundary)
-                    {
-                        iv.assembleNeumannFluxes(energyEqIdx);
-                        cache.updateHeatNeumannFlux(scvf, iv);
-                    }
-                }
-            }
-        }
-        else
-        {
-            const auto& seed = problem.model().globalFvGeometry().interactionVolumeSeed(scvf);
-            InteractionVolume iv(seed, problem, fvGeometry, elemVolVars);
-
-            // solve for the transmissibilities
-            iv.solveLocalSystem(getLambda);
-
-            // update the caches
-            const auto scvfIdx = scvf.index();
-            auto& cache = fluxVarsCacheContainer[scvfIdx];
-            cache.updateHeatConduction(scvf, iv);
-            cache.setUpdateStatus(true);
-
-            for (const auto scvfIdxJ : iv.globalScvfs())
-            {
-                if (scvfIdxJ != scvfIdx)
-                {
-                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
-                    auto& cacheJ = fluxVarsCacheContainer[scvfIdxJ];
-                    cacheJ.updateHeatConduction(scvfJ, iv);
-                    cacheJ.setUpdateStatus(true);
-                }
+                // update cache
+                fluxVarsCacheContainer[scvfIdxJ].updateHeatConduction(iv, scvfJ, scvfJLocalFaceData);
             }
         }
     }
