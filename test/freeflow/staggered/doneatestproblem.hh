@@ -127,6 +127,10 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
 public:
     DoneaTestProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView), eps_(1e-6)
@@ -308,6 +312,77 @@ public:
         }
         this->resultWriter().attachDofData(pExact, "p_exact", false);
         this->resultWriter().attachDofData(velocityExact,  "velocity_exact", false, dim);
+    }
+
+    /*!
+     * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
+     *
+     */
+    BoundaryValues calculateL2Error()
+    {
+        BoundaryValues sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
+        BoundaryValues analyticalSolution(0.0);
+        BoundaryValues numericalSolution(0.0); // TODO type
+        int numElements(0);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                    auto dofIdxGlobal = scv.dofIndex();
+                    const auto& globalPos = scv.dofPosition();
+
+                    analyticalSolution = dirichletAtPos(globalPos);
+
+                    numericalSolution[pressureIdx] = this->model().curSol()[cellCenterIdx][pressureIdx][dofIdxGlobal]; // Multitypeblockvector
+                    numericalSolution[velocityXIdx] = this->model().curSol()[faceIdx][velocityXIdx][dofIdxGlobal];
+                    numericalSolution[velocityYIdx] = this->model().curSol()[faceIdx][velocityYIdx][dofIdxGlobal];
+
+                    sumError[pressureIdx] += (analyticalSolution[pressureIdx] - numericalSolution[pressureIdx]) * (analyticalSolution[pressureIdx] - numericalSolution[pressureIdx]);
+                    sumError[velocityXIdx] += (analyticalSolution[velocityXIdx] - numericalSolution[velocityXIdx]) * (analyticalSolution[velocityXIdx] - numericalSolution[velocityXIdx]);
+                    sumError[velocityYIdx] += (analyticalSolution[velocityYIdx] - numericalSolution[velocityYIdx]) * (analyticalSolution[velocityYIdx] - numericalSolution[velocityYIdx]);
+
+                    sumReference[pressureIdx] += (analyticalSolution[pressureIdx]) * (analyticalSolution[pressureIdx]);
+                    sumReference[velocityXIdx] += (analyticalSolution[velocityXIdx]) * (analyticalSolution[velocityXIdx]);
+                    sumReference[velocityYIdx] += (analyticalSolution[velocityYIdx]) * (analyticalSolution[velocityYIdx]);
+
+                    ++numElements;
+            }
+        }
+
+//    	l2NormAbs = std::sqrt(sumError / numElements);
+        l2NormRel[pressureIdx] = std::sqrt(sumError[pressureIdx] / numElements / sumReference[pressureIdx]);
+        l2NormRel[velocityXIdx] = std::sqrt(sumError[velocityXIdx] / numElements / sumReference[velocityXIdx]);
+        l2NormRel[velocityYIdx] = std::sqrt(sumError[velocityYIdx] / numElements / sumReference[velocityYIdx]);
+
+        return l2NormRel; // TODO return both errors??
+    }
+
+    /*!
+     * \brief Write the L2 error into an output file
+     *
+     */
+    void writeOutput(const bool verbose = true)
+    {
+        ParentType::writeOutput(verbose);
+
+        BoundaryValues l2error = calculateL2Error();
+
+        std::cout.precision(8);
+        std::cout << "** L2 error for "
+                    << std::setw(6) << this->gridView().size(0)
+            " elements: "
+            std::scientific
+            "L2(p) = "
+            l2error[pressureIdx]
+            ", L2(vx) = "
+            l2error[velocityXIdx]
+            << ", L2(vy) = "
+            l2error[velocityYIdx]
+            std::endl;
     }
 
 private:
