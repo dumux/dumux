@@ -64,7 +64,8 @@ NEW_PROP_TAG(StaggeredGeometryHelper);
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
-SET_INT_PROP(NavierStokes, NumEq, 1); //!< set the number of equations to 1
+SET_INT_PROP(NavierStokes, NumEqCellCenter, 1); //!< set the number of equations to 1
+SET_INT_PROP(NavierStokes, NumEqFace, 1); //!< set the number of equations to 1
 SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
 
 //! The sub-controlvolume face

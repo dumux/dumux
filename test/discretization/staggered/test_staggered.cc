@@ -36,7 +36,9 @@
 #include <dumux/discretization/staggered/globalfvgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/subcontrolvolume.hh>
-#include <dumux/discretization/staggered/subcontrolvolumeface.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
+
+#include <dumux/freeflow/staggered/propertydefaults.hh>
 
 namespace Dumux
 {
@@ -57,7 +59,7 @@ private:
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel));
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel, NavierStokes));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 

@@ -130,6 +130,15 @@ SET_TYPE_PROP(StaggeredModel, NewtonController, StaggeredNewtonController<TypeTa
 SET_INT_PROP(StaggeredModel, NumEqCellCenter, 1);
 SET_INT_PROP(StaggeredModel, NumEqFace, 1);
 
+SET_PROP(StaggeredModel, NumEq)
+{
+private:
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+public:
+    static constexpr auto value = numEqCellCenter + numEqFace;
+};
+
 //! A vector of primary variables
 SET_TYPE_PROP(StaggeredModel,
               CellCenterPrimaryVariables,
