@@ -92,7 +92,7 @@ class BaseStaggeredGeometryHelper
 
 public:
     BaseStaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView), offset_(0/*gridView.size(0)*/)
+    : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView)
     {
         fillPairData_();
     }
@@ -104,7 +104,7 @@ public:
     {
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();
-        return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, dim-1) + offset_;
+        return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, dim-1);
     }
 
      /*!
@@ -114,7 +114,7 @@ public:
     {
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();
-        return gridView_.indexSet().subIndex(this->intersection_.inside(), localOppositeIdx_(inIdx), dim-1) + this->offset_;
+        return gridView_.indexSet().subIndex(this->intersection_.inside(), localOppositeIdx_(inIdx), dim-1);
     }
 
      /*!
@@ -150,8 +150,7 @@ private:
      */
     void fillPairData_()
     {
-        const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
-        const int indexInInside = intersection_.indexInInside();
+        const int localFacetIdx = intersection_.indexInInside();
 
         // initialize values that could remain unitialized if the intersection lies on a boundary
         for(auto& data : pairData_)
@@ -163,81 +162,54 @@ private:
         }
 
         // set the inner parts of the normal pairs
-        const auto localInnerNormalDofIndices = asImp_().getLocalInnerNormalDofIndices_(indexInInside);
-        asImp_().setInnerNormalPairs_(localInnerNormalDofIndices);
+        const auto localIndices = asImp_().getLocalIndices_(localFacetIdx);
+        asImp_().setInnerIndices_(localIndices);
 
         // get the positions of the faces normal to the intersection within the element
-        std::vector<GlobalPosition> innerNormalFacePos;
-        innerNormalFacePos.reserve(numPairs);
+        innerNormalFacePos_.reserve(numPairs);
         if(dimWorld == 2)
         {
-            const auto& innerNormalFacet1 = element_.template subEntity <1> (localInnerNormalDofIndices.normalLocalDofIdx1);
-            const auto& innerNormalFacet2 = element_.template subEntity <1> (localInnerNormalDofIndices.normalLocalDofIdx2);
-            innerNormalFacePos.emplace_back(innerNormalFacet1.geometry().center());
-            innerNormalFacePos.emplace_back(innerNormalFacet2.geometry().center());
+            const auto& innerNormalFacet1 = getFacet_(localIndices.normalLocalDofIdx1, element_);
+            const auto& innerNormalFacet2 = getFacet_(localIndices.normalLocalDofIdx2, element_);
+            innerNormalFacePos_.emplace_back(innerNormalFacet1.geometry().center());
+            innerNormalFacePos_.emplace_back(innerNormalFacet2.geometry().center());
         }
-        if(dimWorld == 3)
-        {
-            DUNE_THROW(Dune::NotImplemented, "3d not ready yet");
-        }
+//        if(dimWorld == 3)
+//        {
+////            DUNE_THROW(Dune::NotImplemented, "3d not ready yet");
+//            const auto& innerNormalFacet1 = getFacet_(localIndices.normalLocalDofIdx1, element_);
+//            const auto& innerNormalFacet2 = getFacet_(localIndices.normalLocalDofIdx2, element_);
+//            const auto& innerNormalFacet3 = getFacet_(localIndices.normalLocalDofIdx3, element_);
+//            const auto& innerNormalFacet4 = getFacet_(localIndices.normalLocalDofIdx4, element_);
+//            innerNormalFacePos_.emplace_back(innerNormalFacet1.geometry().center());
+//            innerNormalFacePos_.emplace_back(innerNormalFacet2.geometry().center());
+//            innerNormalFacePos_.emplace_back(innerNormalFacet3.geometry().center());
+//            innerNormalFacePos_.emplace_back(innerNormalFacet4.geometry().center());
+//        }
 
         // go into the direct neighbor element
         if(intersection_.neighbor())
         {
             // the direct neighbor element and the respective intersection index
-            const auto& directNeighbor = intersection_.outside();
+            const auto& directNeighborElement = intersection_.outside();
 
-            for(const auto& neighborIntersection : intersections(gridView_, directNeighbor))
+            for(const auto& directNeighborElementIntersection : intersections(gridView_, directNeighborElement))
             {
-                const int neighborIsIdx = neighborIntersection.indexInInside();
+
+                const int directNeighborElemIsIdx = directNeighborElementIntersection.indexInInside();
                 // skip the directly neighboring face itself and its opposing one
-                if(facetIsNormal_(neighborIsIdx, intersection_.indexInOutside()))
+                if(facetIsNormal_(directNeighborElemIsIdx, intersection_.indexInOutside()))
                 {
-                    // iterate over facets sub-entities
-                    for(int i = 0; i < numFacetSubEntities; ++i)
+                    setPairInfo_(directNeighborElemIsIdx, directNeighborElement, false);
+
+                    // go into the adjacent neighbor element to get parallel dof info
+                    if(directNeighborElementIntersection.neighbor())
                     {
-                        int localCommonEntIdx = referenceElement.subEntity(neighborIsIdx, 1, i, dim);
-                        int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, directNeighbor);
-
-                        // fill the normal pair entries
-                        for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
+                        const auto& diagonalNeighborElement = directNeighborElementIntersection.outside();
+                        for(const auto& dIs : intersections(gridView_, diagonalNeighborElement))
                         {
-                            if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
-                            {
-                                pairData_[pairIdx].normalPair.second = gridView_.indexSet().subIndex(directNeighbor, neighborIsIdx, dim-1) + offset_;
-                                const auto& outerNormalFacet = directNeighbor.template subEntity <1> (neighborIsIdx);
-                                const auto outerNormalFacetPos = outerNormalFacet.geometry().center();
-                                pairData_[pairIdx].normalDistance = (innerNormalFacePos[pairIdx] - outerNormalFacetPos).two_norm();
-                            }
-                        }
-                    }
-
-                    // go into the adjacent neighbor element
-                    if(neighborIntersection.neighbor())
-                    {
-                        const auto& diagonalNeighbor = neighborIntersection.outside();
-                        for(const auto& dIs : intersections(gridView_, diagonalNeighbor))
-                        {
-                            if(facetIsNormal_(dIs.indexInInside(), neighborIntersection.indexInOutside()))
-                            {
-                                for(int i = 0; i < numFacetSubEntities; ++i)
-                                {
-                                    int localCommonEntIdx = referenceElement.subEntity(dIs.indexInInside(), 1, i, dim);
-                                    int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, diagonalNeighbor);
-
-
-                                    for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
-                                    {
-                                        if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
-                                        {
-                                            pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(diagonalNeighbor, dIs.indexInInside(), dim-1) + offset_;
-                                            const auto& selfFacet = element_.template subEntity <1> (indexInInside);
-                                            const auto& parallelFacet = diagonalNeighbor.template subEntity <1> (dIs.indexInInside());
-                                            pairData_[pairIdx].parallelDistance = (selfFacet.geometry().center() - parallelFacet.geometry().center()).two_norm();
-                                        }
-                                    }
-                                }
-                            }
+                            if(facetIsNormal_(dIs.indexInInside(), directNeighborElementIntersection.indexInOutside()))
+                                setPairInfo_(dIs.indexInInside(), diagonalNeighborElement, true);
                         }
                     }
                 }
@@ -250,30 +222,13 @@ private:
             {
                 if(facetIsNormal_(normalIntersection.indexInInside(), intersection_.indexInInside()) && normalIntersection.neighbor())
                 {
-                    const auto& neighbor = normalIntersection.outside();
+                    const auto& neighborElement = normalIntersection.outside();
 
-                    for(const auto& neighborIs : intersections(gridView_, neighbor))
+                    for(const auto& neighborElementIs : intersections(gridView_, neighborElement))
                     {
-                    // iterate over facets sub-entities
-                        if(neighborIs.indexInInside() != normalIntersection.indexInOutside())
-                        {
-                            for(int i = 0; i < numFacetSubEntities; ++i)
-                            {
-                                int localCommonEntIdx = referenceElement.subEntity(neighborIs.indexInInside(), 1, i, dim);
-                                int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, neighbor);
-
-                                // fill the parallel pair entries
-                                for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
-                                {
-                                    if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
-                                    {
-                                        pairData_[pairIdx].outerParallelFaceDofIdx = gridView_.indexSet().subIndex(neighbor, neighborIs.indexInInside(), dim-1) + offset_;
-                                        const auto& parallelFacet = neighbor.template subEntity <1> (neighborIs.indexInInside());
-                                        pairData_[pairIdx].parallelDistance = (intersection_.geometry().center() - parallelFacet.geometry().center()).two_norm();
-                                    }
-                                }
-                            }
-                        }
+                        // iterate over facets sub-entities
+                        if(facetIsNormal_(normalIntersection.indexInInside(), neighborElementIs.indexInInside()))
+                            setPairInfo_(neighborElementIs.indexInInside(), neighborElement, true);
                     }
                 }
             }
@@ -286,7 +241,7 @@ private:
                 const auto& boundaryFacetCenter = intersection_.geometry().center();
                 const auto distance = boundaryFacetCenter - elementCenter;
 
-                pairData_[pairIdx].virtualOuterNormalFaceDofPos = innerNormalFacePos[pairIdx] + distance;
+                pairData_[pairIdx].virtualOuterNormalFaceDofPos = innerNormalFacePos_[pairIdx] + distance;
                 pairData_[pairIdx].normalDistance = std::move(distance.two_norm());
             }
         }
@@ -327,13 +282,54 @@ protected:
         return this->gridView_.indexSet().subIndex(element, localIdx, codimCommonEntity);
     };
 
+    auto getFacet_(const int localFacetIdx, const Element& element) const
+    {
+        return element.template subEntity <1> (localFacetIdx);
+    };
+
+    void setPairInfo_(const int isIdx, const Element& element, const bool isParallel)
+    {
+        const int numFacetSubEntities = 2;
+        const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
+
+        // iterate over facets sub-entities
+        for(int i = 0; i < numFacetSubEntities; ++i)
+        {
+            int localCommonEntIdx = referenceElement.subEntity(isIdx, 1, i, dim);
+            int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, element);
+
+            // fill the normal pair entries
+            for(int pairIdx = 0; pairIdx < numPairs; ++pairIdx)
+            {
+                    if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
+                    {
+                            auto& dofIdx = isParallel ? pairData_[pairIdx].outerParallelFaceDofIdx : pairData_[pairIdx].normalPair.second;
+                            dofIdx = gridView_.indexSet().subIndex(element, isIdx, dim-1);
+                            if(isParallel)
+                            {
+                                    const auto& selfFacet = getFacet_(intersection_.indexInInside(), element_);
+                                    const auto& parallelFacet = getFacet_(isIdx, element);
+                                    pairData_[pairIdx].parallelDistance = (selfFacet.geometry().center() - parallelFacet.geometry().center()).two_norm();
+                            }
+                            else
+                            {
+                                    const auto& outerNormalFacet = getFacet_(isIdx, element);
+                                    const auto outerNormalFacetPos = outerNormalFacet.geometry().center();
+                                    pairData_[pairIdx].normalDistance = (innerNormalFacePos_[pairIdx] - outerNormalFacetPos).two_norm();
+                            }
+                    }
+            }
+    }
+    }
+
     // TODO: check whether to use references here or not
     const Intersection intersection_; //! The intersection of interest
     const Element element_; //! The respective element
     const typename Element::Geometry elementGeometry_; //! Reference to the element geometry
     const GridView gridView_;
-    const int offset_; //! Offset for intersection dof indexing
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //! collection of pair information
+
+    std::vector<GlobalPosition> innerNormalFacePos_;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -377,7 +373,7 @@ public:
     {}
 
 private:
-    static auto getLocalInnerNormalDofIndices_(const int directNeighborIsIdx)
+    static auto getLocalIndices_(const int localFacetIdx)
     {
         struct Indices
         {
@@ -389,7 +385,7 @@ private:
 
         Indices indices;
 
-        switch(directNeighborIsIdx)
+        switch(localFacetIdx)
         {
             case 0:
                 indices.normalLocalDofIdx1 = 3;
@@ -422,10 +418,10 @@ private:
     }
 
     template<class Indices>
-    void setInnerNormalPairs_(const Indices& indices)
+    void setInnerIndices_(const Indices& indices)
     {
-        this->pairData_[0].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx1, dim-1) + this->offset_;
-        this->pairData_[1].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx2, dim-1) + this->offset_;
+        this->pairData_[0].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx1, dim-1);
+        this->pairData_[1].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx2, dim-1);
         this->pairData_[0].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx1, codimCommonEntity);
         this->pairData_[1].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx2, codimCommonEntity);
 
@@ -513,14 +509,14 @@ public:
     {}
 
 private:
-    auto getLocalInnerNormalDofIndices_(const int directNeighborIsIdx)
+    auto getLocalIndices_(const int directdirectNeighborElemIsIdx)
     {
         // TODO: 3D
         DUNE_THROW(Dune::NotImplemented, "3d helper not ready yet");
     }
 
     template<class Indices>
-    void setInnerNormalPairs_(const Indices& indices)
+    void setInnerIndices_(const Indices& indices)
     {
         // TODO: 3D
         DUNE_THROW(Dune::NotImplemented, "3d helper not ready yet");
