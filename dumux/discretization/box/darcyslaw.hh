@@ -64,7 +64,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
-    using Stencil = std::vector<IndexType>;
 
     enum { dim = GridView::dimension};
     enum { dimWorld = GridView::dimensionworld};
@@ -137,14 +136,6 @@ public:
         return -1.0*(KGradP*scvf.unitOuterNormal())*scvf.area();
     }
 
-    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        return Stencil(0);
-    }
 private:
     static DimVector applyPermeability_(const DimWorldMatrix& K, const DimVector& gradI)
     {

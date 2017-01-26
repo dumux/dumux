@@ -65,7 +65,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = typename std::vector<IndexType>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -122,13 +121,6 @@ public:
         auto lambdaGradT = applyHeatConductivityTensor_(lambda, gradTemp);
         return -1.0*(lambdaGradT*scvf.unitOuterNormal())*scvf.area();
     }
-
-    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    { return Stencil(0); }
 
 private:
     static GlobalPosition applyHeatConductivityTensor_(const DimWorldMatrix& Lambda, const GlobalPosition& gradI)

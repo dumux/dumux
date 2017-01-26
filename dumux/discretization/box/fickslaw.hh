@@ -65,7 +65,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = typename std::vector<IndexType>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -133,13 +132,6 @@ public:
         auto DGradX = applyDiffusionTensor_(D, gradX);
         return -1.0*(DGradX*scvf.unitOuterNormal())*scvf.area();
     }
-
-    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    { return Stencil(0); }
 
 private:
     static GlobalPosition applyDiffusionTensor_(const DimWorldMatrix& D, const GlobalPosition& gradI)

@@ -65,7 +65,6 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, false> : public FluxVa
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
@@ -101,12 +100,6 @@ public:
 
         return this->applyUpwindScheme(upwindTerm, flux, phaseIdx);
     }
-
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    { return AdvectionType::stencil(problem, element, fvGeometry, scvFace); }
 };
 
 
@@ -120,7 +113,6 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, false> : public FluxVar
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -177,28 +169,6 @@ public:
         return flux;
     }
 
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        // In the case of cctpfa or box the stencils for all laws are the same...
-        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCTpfa
-            || GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)
-        {
-            return AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        }
-
-        // ...in general: unifiy advective and diffusive stencil
-        Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, fvGeometry, scvFace);
-
-        stencil.insert(stencil.end(), diffusionStencil.begin(), diffusionStencil.end());
-        std::sort(stencil.begin(), stencil.end());
-        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
-
-        return stencil;
-    }
 private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
@@ -215,7 +185,6 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, true> : public FluxVar
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -269,29 +238,6 @@ public:
         return flux;
     }
 
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        // In the case of cctpfa or box the stencils for all laws are the same...
-        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCTpfa
-            || GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)
-        {
-            return AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        }
-
-        // ...in general: unifiy advective and heat conduction stencil
-        Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil energyStencil = HeatConductionType::stencil(problem, element, fvGeometry, scvFace);
-
-        stencil.insert(stencil.end(), energyStencil.begin(), energyStencil.end());
-        std::sort(stencil.begin(), stencil.end());
-        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
-
-        return stencil;
-    }
-
 private:
     //! simple caching if advection flux is used twice with different upwind function
     std::bitset<numPhases> advFluxCached_;
@@ -308,7 +254,6 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, true> : public FluxVari
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Stencil = std::vector<IndexType>;
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -373,31 +318,6 @@ public:
                                                this->scvFace(),
                                                this->elemFluxVarsCache());
         return flux;
-    }
-
-    Stencil computeStencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvFace)
-    {
-        // In the case of cctpfa or box the stencils for all laws are the same...
-        if (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::CCTpfa
-            || GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)
-        {
-            return AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        }
-
-        // ...in general: unifiy advective, diffusive and heat conduction stencil
-        Stencil stencil = AdvectionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil diffusionStencil = MolecularDiffusionType::stencil(problem, element, fvGeometry, scvFace);
-        Stencil energyStencil = HeatConductionType::stencil(problem, element, fvGeometry, scvFace);
-
-        stencil.insert(stencil.end(), diffusionStencil.begin(), diffusionStencil.end());
-        stencil.insert(stencil.end(), energyStencil.begin(), energyStencil.end());
-        std::sort(stencil.begin(), stencil.end());
-        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
-
-        return stencil;
     }
 
 private:

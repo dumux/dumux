@@ -26,15 +26,23 @@
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
+#include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/upwindscheme.hh>
 
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-}
+template<class TypeTag, class UpwindScheme, class FluxStencil>
+class FluxVariablesBaseImplementation;
+
+/*!
+ * \ingroup Discretization
+ * \brief The flux variables base class class
+ *        The upwind scheme is chosen depending on the discretization method
+ */
+template<class TypeTag>
+using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>, FluxStencil<TypeTag>>;
+
 /*!
  * \ingroup Discretization
  * \brief Implementation of the base class of the flux variables
@@ -42,7 +50,7 @@ namespace Properties
  * \param TypeTag The type tag
  * \param UpwindScheme The type used for the upwinding of the advective fluxes
  */
-template<class TypeTag, class UpwindScheme>
+template<class TypeTag, class UpwindScheme, class FluxStencil>
 class FluxVariablesBaseImplementation
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -99,8 +107,15 @@ public:
         return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
     }
 
-    Stencil computeStencil(const Problem& problem, const Element& element, const SubControlVolumeFace& scvFace)
-    { DUNE_THROW(Dune::InvalidStateException, "computeStencil() routine is not provided by the implementation."); }
+    static Stencil computeStencil(const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const SubControlVolumeFace& scvf)
+    {
+        //! Give the upwind scheme access to the cached variables
+        //! Forward to the discretization specific implementation
+        return FluxStencil::stencil(problem, element, fvGeometry, scvf);
+    }
 
 private:
     const Problem* problemPtr_;              //! Pointer to the problem
@@ -111,14 +126,6 @@ private:
     const ElementFluxVariablesCache* elemFluxVarsCachePtr_;
 };
 
-/*!
- * \ingroup Discretization
- * \brief The flux variables base class class
- *        The upwind scheme is chosen depending on the discretization method
- */
-template<class TypeTag>
-using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>>;
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

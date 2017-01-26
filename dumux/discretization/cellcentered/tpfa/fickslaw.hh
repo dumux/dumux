@@ -56,7 +56,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = typename std::vector<IndexType>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -107,17 +106,6 @@ public:
                         : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, getX, xInside, tij, phaseIdx, compIdx);
 
         return rho*tij*(xInside - xOutside);
-    }
-
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        if (!scvf.boundary())
-            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
-        else
-            return Stencil({scvf.insideScvIdx()});
     }
 
 private:

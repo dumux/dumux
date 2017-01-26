@@ -215,20 +215,6 @@ public:
                flux + interiorNeumannFlux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
     }
 
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
-
-        // return the scv (element) indices in the interaction region
-        if (globalFvGeometry.touchesInteriorOrDomainBoundary(scvf))
-            return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
-        else
-            return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
-    }
-
 private:
     static Scalar interpolateDensity(const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,

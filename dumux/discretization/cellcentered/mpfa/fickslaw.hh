@@ -61,7 +61,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
@@ -228,20 +227,6 @@ public:
         return useTpfaBoundary ?
                flux + interiorNeumannFlux :
                flux + interiorNeumannFlux + fluxVarsCache.componentNeumannFlux(compIdx);
-    }
-
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
-
-        // return the scv (element) indices in the interaction region
-        if (globalFvGeometry.touchesInteriorOrDomainBoundary(scvf))
-            return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
-        else
-            return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
     }
 
 private:
