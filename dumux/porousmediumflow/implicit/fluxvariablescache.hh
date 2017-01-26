@@ -57,6 +57,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -77,6 +78,7 @@ public:
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
     {
         const auto geometry = element.geometry();
@@ -87,10 +89,6 @@ public:
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
         localBasis.evaluateFunction(ipLocal, shapeValues_); // do we need the shapeValues for the flux?
-
-        // The stencil info is obsolete for the box method.
-        // It is here for compatibility with cc methods
-        stencil_ = Stencil(0);
     }
 
     const std::vector<ShapeJacobian>& shapeJacobian() const
@@ -102,6 +100,8 @@ public:
     const JacobianInverseTransposed& jacInvT() const
     { return jacInvT_; }
 
+    // The stencil info is obsolete for the box method.
+    // It is here for compatibility with cc methods
     const Stencil& stencil() const
     {
         return stencil_;
@@ -138,8 +138,7 @@ public:
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
     {
-        FluxVariables fluxVars;
-        stencil_ = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
+        stencil_ = FluxVariables::computeStencil(problem, element, fvGeometry, scvf);
         tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
     }
 

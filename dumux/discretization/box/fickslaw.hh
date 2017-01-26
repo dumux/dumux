@@ -39,7 +39,6 @@ namespace Properties
 {
 // forward declaration of properties
 NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidState);
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(EffectiveDiffusivityModel);
 }
@@ -53,7 +52,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);

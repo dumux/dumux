@@ -132,7 +132,7 @@ public:
         // temporary resizing of the cache
         fluxVarsCache_.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
-            (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, scvf);
+            (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
     }
 
     void bindScvf(const Element& element,
@@ -141,7 +141,7 @@ public:
                   const SubControlVolumeFace& scvf)
     {
         fluxVarsCache_.resize(fvGeometry.numScvf());
-        (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, scvf);
+        (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
     }
 
     // access operator
