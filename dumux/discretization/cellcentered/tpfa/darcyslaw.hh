@@ -232,15 +232,15 @@ public:
         // check if we evaluate the permeability in the volume (for discontinuous fields, default)
         // or at the scvf center for analytical permeability fields (e.g. convergence studies)
         auto getPermeability = [&problem](const VolumeVariables& volVars,
-                                          const GlobalPosition& scvfCenter)
+                                          const GlobalPosition& scvfIpGlobal)
                                {
-                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfCenter))
-                                        return problem.spatialParams().permeabilityAtPos(scvfCenter);
+                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
+                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
                                     else
                                         return volVars.permeability();
                                };
 
-        const Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.center()),
+        const Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()),
                                           insideScv, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -262,13 +262,13 @@ public:
             {
                 // normal grids
                 if (dim == dimWorld)
-                    return -1.0*calculateOmega_(scvf, getPermeability(outsideVolVars, scvf.center()),
+                    return -1.0*calculateOmega_(scvf, getPermeability(outsideVolVars, scvf.ipGlobal()),
                                             outsideScv, outsideVolVars.extrusionFactor());
 
                 // embedded surface and network grids
                 //(the outside normal vector might differ from the inside normal vector)
                 else
-                    return calculateOmega_(fvGeometry.flipScvf(scvf.index()), getPermeability(outsideVolVars, scvf.center()),
+                    return calculateOmega_(fvGeometry.flipScvf(scvf.index()), getPermeability(outsideVolVars, scvf.ipGlobal()),
                                            outsideScv, outsideVolVars.extrusionFactor());
 
             }();
