@@ -57,10 +57,9 @@ using PorousMediumFluxVariables = PorousMediumFluxVariablesImpl<TypeTag, GET_PRO
 
 // specialization for pure advective flow (e.g. 1p/2p/3p immiscible darcy flow)
 template<class TypeTag>
-class PorousMediumFluxVariablesImpl<TypeTag, true, false, false>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, false>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, false, false> : public FluxVariablesBase<TypeTag>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, false>>;
+    using ParentType = FluxVariablesBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -100,7 +99,7 @@ public:
                                           phaseIdx,
                                           this->elemFluxVarsCache());
 
-        return this->upwindScheme(flux, phaseIdx, upwindTerm);
+        return this->applyUpwindScheme(upwindTerm, flux, phaseIdx);
     }
 
     Stencil computeStencil(const Problem& problem,
@@ -113,10 +112,9 @@ public:
 
 // specialization for isothermal advection molecularDiffusion equations
 template<class TypeTag>
-class PorousMediumFluxVariablesImpl<TypeTag, true, true, false>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, false>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, true, false> : public FluxVariablesBase<TypeTag>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, false>>;
+    using ParentType = FluxVariablesBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -164,7 +162,7 @@ public:
             advFluxCached_.set(phaseIdx, true);
         }
 
-        return this->upwindScheme(advPreFlux_[phaseIdx], phaseIdx, upwindTerm);
+        return this->applyUpwindScheme(upwindTerm, advPreFlux_[phaseIdx], phaseIdx);
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
@@ -209,10 +207,9 @@ private:
 
 // specialization for non-isothermal advective flow (e.g. non-isothermal one-phase darcy equation)
 template<class TypeTag>
-class PorousMediumFluxVariablesImpl<TypeTag, true, false, true>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, true>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, false, true> : public FluxVariablesBase<TypeTag>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, false, true>>;
+    using ParentType = FluxVariablesBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -258,7 +255,7 @@ public:
             advFluxCached_.set(phaseIdx, true);
         }
 
-        return this->upwindScheme(advPreFlux_[phaseIdx], phaseIdx, upwindTerm);
+        return this->applyUpwindScheme(upwindTerm, advPreFlux_[phaseIdx], phaseIdx);
     }
 
     Scalar heatConductionFlux()
@@ -303,10 +300,9 @@ private:
 
 // specialization for non-isothermal advection and difussion equations (e.g. non-isothermal three-phase three-component flow)
 template<class TypeTag>
-class PorousMediumFluxVariablesImpl<TypeTag, true, true, true>
-: public FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, true>>
+class PorousMediumFluxVariablesImpl<TypeTag, true, true, true> : public FluxVariablesBase<TypeTag>
 {
-    using ParentType = FluxVariablesBase<TypeTag, PorousMediumFluxVariablesImpl<TypeTag, true, true, true>>;
+    using ParentType = FluxVariablesBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -353,7 +349,7 @@ public:
             advFluxCached_.set(phaseIdx, true);
         }
 
-        return this->upwindScheme(advPreFlux_[phaseIdx], phaseIdx, upwindTerm);
+        return this->applyUpwindScheme(upwindTerm, advPreFlux_[phaseIdx], phaseIdx);
     }
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
