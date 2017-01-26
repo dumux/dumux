@@ -1,0 +1,13 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1e6 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 50 50
+
+[Problem]
+Name = ccmpfatracer # name passed to the output routines
+
+[Vtk]
+AddVelocity = false
