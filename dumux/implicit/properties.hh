@@ -98,11 +98,10 @@ NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the paramet
 NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy equation
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
 NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters for the heat conduction fluxes depend on the solution
-NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP); //!< if the permeability has to be evaluated at the scvf integration point (for evaluating analytical fields)
 
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
-NEW_PROP_TAG(EvaluatePermeabilityAtScvfCenter);
+NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 
 // vtk output
 NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output

@@ -65,7 +65,7 @@ public:
 SET_TYPE_PROP(BloodFlowProblem, SpatialParams, BloodFlowSpatialParams<TypeTag>);
 
 // evaluate analytical permeability field at scvf center
-SET_BOOL_PROP(BloodFlowProblem, EvaluatePermeabilityAtScvfCenter, true);
+SET_BOOL_PROP(BloodFlowProblem, EvaluatePermeabilityAtScvfIP, true);
 
 // disable gravity
 SET_BOOL_PROP(BloodFlowProblem, ProblemEnableGravity, false);
