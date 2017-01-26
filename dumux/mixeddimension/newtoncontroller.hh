@@ -30,7 +30,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include "linearsolveracceptsmultitypematrix.hh"
+#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 
 namespace Dumux
 {
