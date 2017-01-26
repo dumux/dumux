@@ -1,18 +1,18 @@
 [TimeManager]
-DtInitial = 1e-1 # [s]
+DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
 LowerLeft = -0.5 -0.5
 UpperRight = 2 1.5
-Cells = 100 100
+Cells = 50 50
 
 [Problem]
 Name = test_kovasznay # name passed to the output routines
-InletVelocity = 0
 LiquidDensity = 1
 EnableGravity = false
 LiquidKinematicViscosity = 0.025
+PrintL2Error = false
 
 [ Newton ]
 MaxSteps = 10
