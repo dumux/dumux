@@ -1,3 +1,5 @@
+
+
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
@@ -139,6 +141,11 @@ public:
                                              std::string,
                                              Problem,
                                              Name);
+
+        printL2Error_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                     bool,
+                                                     Problem,
+                                                     PrintL2Error);
     }
 
     /*!
@@ -159,6 +166,23 @@ public:
     bool shouldWriteRestartFile() const
     {
         return false;
+    }
+
+    void postTimeStep() const
+    {
+        if(printL2Error_)
+        {
+            const auto l2error = calculateL2Error();
+            const int numCellCenterDofs = this->model().numCellCenterDofs();
+            const int numFaceDofs = this->model().numFaceDofs();
+            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                    << std::scientific
+                    << "L2(p) = " << l2error.first[pressureIdx] << " / " << l2error.second[pressureIdx]
+                    << ", L2(vx) = " << l2error.first[velocityXIdx] << " / " << l2error.second[velocityXIdx]
+                    << ", L2(vy) = " << l2error.first[velocityYIdx] << " / " << l2error.second[velocityYIdx]
+                    << std::endl;
+        }
     }
 
     /*!
@@ -318,12 +342,18 @@ public:
      * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
      *
      */
-    BoundaryValues calculateL2Error()
+    auto calculateL2Error() const
     {
         BoundaryValues sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
-        BoundaryValues analyticalSolution(0.0);
-        BoundaryValues numericalSolution(0.0); // TODO type
-        int numElements(0);
+
+        const int numFaceDofs = this->model().numFaceDofs();
+
+        std::vector<Scalar> staggeredVolume(numFaceDofs);
+        std::vector<Scalar> errorVelocity(numFaceDofs);
+        std::vector<Scalar> velocityReference(numFaceDofs);
+        std::vector<int> directionIndex(numFaceDofs);
+
+        Scalar totalVolume = 0.0;
 
         for (const auto& element : elements(this->gridView()))
         {
@@ -332,62 +362,66 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                    auto dofIdxGlobal = scv.dofIndex();
-                    const auto& globalPos = scv.dofPosition();
+                // treat cell-center dofs
+                const auto dofIdxCellCenter = scv.dofIndex();
+                const auto& posCellCenter = scv.dofPosition();
+                const auto analyticalSolutionCellCenter = dirichletAtPos(posCellCenter)[cellCenterIdx];
+                const auto numericalSolutionCellCenter = this->model().curSol()[cellCenterIdx][dofIdxCellCenter];
+                sumError[cellCenterIdx] += squaredDiff(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
+                sumReference[cellCenterIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
+                totalVolume += scv.volume();
 
-                    analyticalSolution = dirichletAtPos(globalPos);
-
-                    numericalSolution[pressureIdx] = this->model().curSol()[cellCenterIdx][pressureIdx][dofIdxGlobal]; // Multitypeblockvector
-                    numericalSolution[velocityXIdx] = this->model().curSol()[faceIdx][velocityXIdx][dofIdxGlobal];
-                    numericalSolution[velocityYIdx] = this->model().curSol()[faceIdx][velocityYIdx][dofIdxGlobal];
-
-                    sumError[pressureIdx] += (analyticalSolution[pressureIdx] - numericalSolution[pressureIdx]) * (analyticalSolution[pressureIdx] - numericalSolution[pressureIdx]);
-                    sumError[velocityXIdx] += (analyticalSolution[velocityXIdx] - numericalSolution[velocityXIdx]) * (analyticalSolution[velocityXIdx] - numericalSolution[velocityXIdx]);
-                    sumError[velocityYIdx] += (analyticalSolution[velocityYIdx] - numericalSolution[velocityYIdx]) * (analyticalSolution[velocityYIdx] - numericalSolution[velocityYIdx]);
-
-                    sumReference[pressureIdx] += (analyticalSolution[pressureIdx]) * (analyticalSolution[pressureIdx]);
-                    sumReference[velocityXIdx] += (analyticalSolution[velocityXIdx]) * (analyticalSolution[velocityXIdx]);
-                    sumReference[velocityYIdx] += (analyticalSolution[velocityYIdx]) * (analyticalSolution[velocityYIdx]);
-
-                    ++numElements;
+                // treat face dofs
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    const int dofIdxFace = scvf.dofIndexSelf();
+                    const int dirIdx = scvf.directionIndex();
+                    const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[faceIdx][dirIdx];
+                    const auto numericalSolutionFace = this->model().curSol()[faceIdx][dofIdxFace][momentumBalanceIdx];
+                    directionIndex[dofIdxFace] = dirIdx;
+                    errorVelocity[dofIdxFace] = squaredDiff(analyticalSolutionFace, numericalSolutionFace);
+                    velocityReference[dofIdxFace] = squaredDiff(analyticalSolutionFace, 0.0);
+                    const Scalar staggeredHalfVolume = 0.5 * scv.volume();
+                    staggeredVolume[dofIdxFace] = staggeredVolume[dofIdxFace] + staggeredHalfVolume;
+                }
             }
         }
 
-//    	l2NormAbs = std::sqrt(sumError / numElements);
-        l2NormRel[pressureIdx] = std::sqrt(sumError[pressureIdx] / numElements / sumReference[pressureIdx]);
-        l2NormRel[velocityXIdx] = std::sqrt(sumError[velocityXIdx] / numElements / sumReference[velocityXIdx]);
-        l2NormRel[velocityYIdx] = std::sqrt(sumError[velocityYIdx] / numElements / sumReference[velocityYIdx]);
+        // get the absolute and relative discrete L2-error for cell-center dofs
+        l2NormAbs[cellCenterIdx] = std::sqrt(sumError[cellCenterIdx] / totalVolume);
+        l2NormRel[cellCenterIdx] = std::sqrt(sumError[cellCenterIdx] / sumReference[cellCenterIdx]);
 
-        return l2NormRel; // TODO return both errors??
+        // get the absolute and relative discrete L2-error for face dofs
+        for(int i = 0; i < numFaceDofs; ++i)
+        {
+            const int dirIdx = directionIndex[i];
+            const auto error = errorVelocity[i];
+            const auto ref = velocityReference[i];
+            const auto volume = staggeredVolume[i];
+            sumError[faceIdx][dirIdx] += error * volume;
+            sumReference[faceIdx][dirIdx] += ref * volume;
+        }
+
+        for(int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+        {
+            l2NormAbs[faceIdx][dirIdx] = std::sqrt(sumError[faceIdx][dirIdx] / totalVolume);
+            l2NormRel[faceIdx][dirIdx] = std::sqrt(sumError[faceIdx][dirIdx] / sumReference[faceIdx][dirIdx]);
+        }
+        return std::make_pair(l2NormAbs, l2NormRel);
     }
 
-    /*!
-     * \brief Write the L2 error into an output file
-     *
-     */
-    void writeOutput(const bool verbose = true)
-    {
-        ParentType::writeOutput(verbose);
-
-        BoundaryValues l2error = calculateL2Error();
-
-        std::cout.precision(8);
-        std::cout << "** L2 error for "
-                    << std::setw(6) << this->gridView().size(0)
-            " elements: "
-            std::scientific
-            "L2(p) = "
-            l2error[pressureIdx]
-            ", L2(vx) = "
-            l2error[velocityXIdx]
-            << ", L2(vy) = "
-            l2error[velocityYIdx]
-            std::endl;
-    }
 
 private:
+    template<class T>
+    T squaredDiff(const T& a, const T& b) const
+    {
+        return (a-b)*(a-b);
+    }
+
     Scalar eps_;
     std::string name_;
+    bool printL2Error_;
+
 };
 } //end namespace
 
