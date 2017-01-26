@@ -167,25 +167,12 @@ private:
 
         // get the positions of the faces normal to the intersection within the element
         innerNormalFacePos_.reserve(numPairs);
-        if(dimWorld == 2)
+
+        for(int i = 0; i < numPairs; ++i)
         {
-            const auto& innerNormalFacet1 = getFacet_(localIndices.normalLocalDofIdx1, element_);
-            const auto& innerNormalFacet2 = getFacet_(localIndices.normalLocalDofIdx2, element_);
-            innerNormalFacePos_.emplace_back(innerNormalFacet1.geometry().center());
-            innerNormalFacePos_.emplace_back(innerNormalFacet2.geometry().center());
+           const auto& innerNormalFacet = getFacet_(localIndices.normalLocalDofIdx[i], element_);
+           innerNormalFacePos_.emplace_back(innerNormalFacet.geometry().center());
         }
-//        if(dimWorld == 3)
-//        {
-////            DUNE_THROW(Dune::NotImplemented, "3d not ready yet");
-//            const auto& innerNormalFacet1 = getFacet_(localIndices.normalLocalDofIdx1, element_);
-//            const auto& innerNormalFacet2 = getFacet_(localIndices.normalLocalDofIdx2, element_);
-//            const auto& innerNormalFacet3 = getFacet_(localIndices.normalLocalDofIdx3, element_);
-//            const auto& innerNormalFacet4 = getFacet_(localIndices.normalLocalDofIdx4, element_);
-//            innerNormalFacePos_.emplace_back(innerNormalFacet1.geometry().center());
-//            innerNormalFacePos_.emplace_back(innerNormalFacet2.geometry().center());
-//            innerNormalFacePos_.emplace_back(innerNormalFacet3.geometry().center());
-//            innerNormalFacePos_.emplace_back(innerNormalFacet4.geometry().center());
-//        }
 
         // go into the direct neighbor element
         if(intersection_.neighbor())
@@ -377,10 +364,8 @@ private:
     {
         struct Indices
         {
-            int normalLocalDofIdx1;
-            int normalLocalDofIdx2;
-            int localCommonEntIdx1;
-            int localCommonEntIdx2;
+            std::array<int, 2> normalLocalDofIdx;
+            std::array<int, 2> localCommonEntIdx;
         };
 
         Indices indices;
@@ -388,28 +373,28 @@ private:
         switch(localFacetIdx)
         {
             case 0:
-                indices.normalLocalDofIdx1 = 3;
-                indices.normalLocalDofIdx2 = 2;
-                indices.localCommonEntIdx1 = 2;
-                indices.localCommonEntIdx2 = 0;
+                indices.normalLocalDofIdx[0] = 3;
+                indices.normalLocalDofIdx[1] = 2;
+                indices.localCommonEntIdx[0] = 2;
+                indices.localCommonEntIdx[1] = 0;
                 break;
             case 1:
-                indices.normalLocalDofIdx1 = 2;
-                indices.normalLocalDofIdx2 = 3;
-                indices.localCommonEntIdx1 = 1;
-                indices.localCommonEntIdx2 = 3;
+                indices.normalLocalDofIdx[0] = 2;
+                indices.normalLocalDofIdx[1] = 3;
+                indices.localCommonEntIdx[0] = 1;
+                indices.localCommonEntIdx[1] = 3;
                 break;
             case 2:
-                indices.normalLocalDofIdx1 = 0;
-                indices.normalLocalDofIdx2 = 1;
-                indices.localCommonEntIdx1 = 0;
-                indices.localCommonEntIdx2 = 1;
+                indices.normalLocalDofIdx[0] = 0;
+                indices.normalLocalDofIdx[1] = 1;
+                indices.localCommonEntIdx[0] = 0;
+                indices.localCommonEntIdx[1] = 1;
                 break;
             case 3:
-                indices.normalLocalDofIdx1 = 1;
-                indices.normalLocalDofIdx2 = 0;
-                indices.localCommonEntIdx1 = 3;
-                indices.localCommonEntIdx2 = 2;
+                indices.normalLocalDofIdx[0] = 1;
+                indices.normalLocalDofIdx[1] = 0;
+                indices.localCommonEntIdx[0] = 3;
+                indices.localCommonEntIdx[1] = 2;
                 break;
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
@@ -420,13 +405,13 @@ private:
     template<class Indices>
     void setInnerIndices_(const Indices& indices)
     {
-        this->pairData_[0].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx1, dim-1);
-        this->pairData_[1].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx2, dim-1);
-        this->pairData_[0].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx1, codimCommonEntity);
-        this->pairData_[1].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx2, codimCommonEntity);
+        this->pairData_[0].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx[0], dim-1);
+        this->pairData_[1].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx[1], dim-1);
+        this->pairData_[0].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx[0], codimCommonEntity);
+        this->pairData_[1].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx[1], codimCommonEntity);
 
-        this->pairData_[0].localNormalFaceIdx = indices.normalLocalDofIdx1;
-        this->pairData_[1].localNormalFaceIdx = indices.normalLocalDofIdx2;
+        this->pairData_[0].localNormalFaceIdx = indices.normalLocalDofIdx[0];
+        this->pairData_[1].localNormalFaceIdx = indices.normalLocalDofIdx[1];
     }
 
      /*!
@@ -509,10 +494,58 @@ public:
     {}
 
 private:
-    auto getLocalIndices_(const int directdirectNeighborElemIsIdx)
+    auto getLocalIndices_(const int localFacetIdx)
     {
-        // TODO: 3D
-        DUNE_THROW(Dune::NotImplemented, "3d helper not ready yet");
+        struct Indices
+        {
+            std::array<int, 4> normalLocalDofIdx;
+            std::array<int, 4> localCommonEntIdx;
+        };
+
+        Indices indices;
+
+        switch(localFacetIdx)
+        {
+            case 0:
+                indices.normalLocalDofIdx[0] = 3;
+                indices.normalLocalDofIdx[1] = 2;
+                indices.normalLocalDofIdx[2] = 4;
+                indices.normalLocalDofIdx[3] = 5;
+                indices.localCommonEntIdx[0] = 2;
+                indices.localCommonEntIdx[1] = 0;
+                break;
+            case 1:
+                indices.normalLocalDofIdx[0] = 2;
+                indices.normalLocalDofIdx[1] = 3;
+                indices.normalLocalDofIdx[2] = 4;
+                indices.normalLocalDofIdx[3] = 5;
+                break;
+            case 2:
+                indices.normalLocalDofIdx[0] = 0;
+                indices.normalLocalDofIdx[1] = 1;
+                indices.normalLocalDofIdx[2] = 4;
+                indices.normalLocalDofIdx[3] = 5;
+                break;
+            case 3:
+                indices.normalLocalDofIdx[0] = 1;
+                indices.normalLocalDofIdx[1] = 0;
+                indices.normalLocalDofIdx[2] = 4;
+                indices.normalLocalDofIdx[3] = 5;
+            case 4:
+                indices.normalLocalDofIdx[0] = 0;
+                indices.normalLocalDofIdx[1] = 1;
+                indices.normalLocalDofIdx[2] = 3;
+                indices.normalLocalDofIdx[3] = 2;
+            case 5:
+                indices.normalLocalDofIdx[0] = 0;
+                indices.normalLocalDofIdx[1] = 1;
+                indices.normalLocalDofIdx[2] = 2;
+                indices.normalLocalDofIdx[3] = 3;
+                break;
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
+        }
+        return indices;
     }
 
     template<class Indices>
