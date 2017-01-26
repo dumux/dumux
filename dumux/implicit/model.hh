@@ -786,9 +786,11 @@ protected:
             Dune::GeometryType geomType = element.geometry().type();
             const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-            for (const auto& intersection : intersections(gridView_(), element)) {
-                if (intersection.boundary()) {
-                    if (isBox)
+            for (const auto& intersection : intersections(gridView_(), element))
+            {
+                if (isBox)
+                {
+                    if (intersection.boundary())
                     {
                         // add all vertices on the intersection to the set of
                         // boundary vertices
@@ -806,7 +808,10 @@ protected:
                             boundaryIndices_[vIdxGlobal] = true;
                         }
                     }
-                    else
+                }
+                else
+                {
+                    if (intersection.boundary() || problem_().isInteriorBoundary(element, intersection))
                     {
                         int eIdxGlobal = elementMapper().index(element);
                         boundaryIndices_[eIdxGlobal] = true;

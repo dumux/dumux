@@ -109,9 +109,6 @@ public:
 // By default, we use tpfa on the boundaries
 SET_BOOL_PROP(CCMpfaModel, UseTpfaBoundary, true);
 
-// By default, we disable interior boundaries
-SET_BOOL_PROP(CCMpfaModel, EnableInteriorBoundaries, false);
-
 // By default, interior boundaries are static
 SET_BOOL_PROP(CCMpfaModel, MpfaFacetCoupling, false);
 

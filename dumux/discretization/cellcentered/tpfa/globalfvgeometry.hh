@@ -156,8 +156,11 @@ public:
 
             for (const auto& intersection : intersections(gridView_, element))
             {
+                // check if intersection is on interior boundary
+                const auto isInteriorBoundary = problem.isInteriorBoundary(element, intersection);
+
                 // inner sub control volume faces
-                if (intersection.neighbor())
+                if (intersection.neighbor() && !isInteriorBoundary)
                 {
                     if (dim == dimWorld)
                     {
@@ -165,7 +168,8 @@ public:
                         scvfs_.emplace_back(intersection,
                                             intersection.geometry(),
                                             scvfIdx,
-                                            std::vector<IndexType>({eIdx, nIdx}));
+                                            std::vector<IndexType>({eIdx, nIdx}),
+                                            false);
                         scvfsIndexSet.push_back(scvfIdx++);
                     }
                     // this is for network grids
@@ -183,20 +187,21 @@ public:
                             scvfs_.emplace_back(intersection,
                                                 intersection.geometry(),
                                                 scvfIdx,
-                                                scvIndices);
+                                                scvIndices,
+                                                false);
                             scvfsIndexSet.push_back(scvfIdx++);
                             outsideIndices[indexInInside].clear();
                         }
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary())
+                else if (intersection.boundary() || isInteriorBoundary)
                 {
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
-                                        std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++})
-                                        );
+                                        std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
+                                        true);
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
             }
@@ -391,8 +396,11 @@ public:
 
             for (const auto& intersection : intersections(gridView_, element))
             {
+                // check if intersection is on interior boundary
+                const auto isInteriorBoundary = problem.isInteriorBoundary(element, intersection);
+
                 // inner sub control volume faces
-                if (intersection.neighbor())
+                if (intersection.neighbor() && !isInteriorBoundary)
                 {
                     if (dim == dimWorld)
                     {
@@ -417,7 +425,7 @@ public:
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary())
+                else if (intersection.boundary() || isInteriorBoundary)
                 {
                     scvfsIndexSet.push_back(numScvf_++);
                     neighborVolVarIndexSet.push_back({numScvs_ + numBoundaryScvf_++});

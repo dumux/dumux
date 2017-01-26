@@ -79,6 +79,9 @@ SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 //! Set the AssemblyMap to the CCAssemblyMap (default: symmetric occupation pattern)
 SET_TYPE_PROP(CCModel, AssemblyMap, Dumux::CCSymmetricAssemblyMap<TypeTag>);
 
+// By default, we disable interior boundaries
+SET_BOOL_PROP(CCModel, EnableInteriorBoundaries, false);
+
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
 

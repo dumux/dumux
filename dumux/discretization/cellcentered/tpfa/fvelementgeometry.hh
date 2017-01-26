@@ -375,6 +375,9 @@ private:
         int scvfCounter = 0;
         for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
         {
+            // check if intersection is on interior boundary
+            const auto isInteriorBoundary = globalFvGeometry().problem_().isInteriorBoundary(element, intersection);
+
             if (dim < dimWorld)
                 if (handledScvf[intersection.indexInInside()])
                     continue;
@@ -386,7 +389,8 @@ private:
                 scvfs_.emplace_back(intersection,
                                     intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
-                                    scvIndices);
+                                    scvIndices,
+                                    intersection.boundary() || isInteriorBoundary);
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
 
@@ -418,11 +422,14 @@ private:
         int scvfCounter = 0;
         for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
         {
+            // check if intersection is on interior boundary
+            const auto isInteriorBoundary = globalFvGeometry().problem_().isInteriorBoundary(element, intersection);
+
             if (dim < dimWorld)
                 if (handledScvf[intersection.indexInInside()])
                     continue;
 
-            if (intersection.neighbor())
+            if (intersection.neighbor() && !isInteriorBoundary)
             {
                 // only create subcontrol faces where the outside element is the bound element
                 if (dim == dimWorld)
@@ -434,7 +441,8 @@ private:
                         neighborScvfs_.emplace_back(intersection,
                                                     intersection.geometry(),
                                                     scvFaceIndices[scvfCounter],
-                                                    scvIndices);
+                                                    scvIndices,
+                                                    false);
 
                         neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
                     }
@@ -454,7 +462,8 @@ private:
                             neighborScvfs_.emplace_back(intersection,
                                                         intersection.geometry(),
                                                         scvFaceIndices[scvfCounter],
-                                                        scvIndices);
+                                                        scvIndices,
+                                                        false);
 
                             neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
                             break;
@@ -468,7 +477,7 @@ private:
                     handledScvf[intersection.indexInInside()] = true;
                 scvfCounter++;
             }
-            else if (intersection.boundary())
+            else if (intersection.boundary() || isInteriorBoundary)
             {
                 // for surface and network grids mark that we handled this face
                 if (dim < dimWorld)
