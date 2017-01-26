@@ -159,14 +159,13 @@ public:
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
     {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(),
-                                                   this->element(),
-                                                   this->fvGeometry(),
-                                                   this->elemVolVars(),
-                                                   this->scvFace(),
-                                                   phaseIdx, compIdx,
-                                                   this->elemFluxVarsCache());
-        return flux;
+        return MolecularDiffusionType::flux(this->problem(),
+                                            this->element(),
+                                            this->fvGeometry(),
+                                            this->elemVolVars(),
+                                            this->scvFace(),
+                                            phaseIdx, compIdx,
+                                            this->elemFluxVarsCache());
     }
 
 private:
@@ -229,13 +228,12 @@ public:
 
     Scalar heatConductionFlux()
     {
-        Scalar flux = HeatConductionType::flux(this->problem(),
-                                               this->element(),
-                                               this->fvGeometry(),
-                                               this->elemVolVars(),
-                                               this->scvFace(),
-                                               this->elemFluxVarsCache());
-        return flux;
+        return HeatConductionType::flux(this->problem(),
+                                        this->element(),
+                                        this->fvGeometry(),
+                                        this->elemVolVars(),
+                                        this->scvFace(),
+                                        this->elemFluxVarsCache());
     }
 
 private:
@@ -299,25 +297,23 @@ public:
 
     Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
     {
-        Scalar flux = MolecularDiffusionType::flux(this->problem(),
-                                                   this->element(),
-                                                   this->fvGeometry(),
-                                                   this->elemVolVars(),
-                                                   this->scvFace(),
-                                                   phaseIdx, compIdx,
-                                                   this->elemFluxVarsCache());
-        return flux;
+        return MolecularDiffusionType::flux(this->problem(),
+                                            this->element(),
+                                            this->fvGeometry(),
+                                            this->elemVolVars(),
+                                            this->scvFace(),
+                                            phaseIdx, compIdx,
+                                            this->elemFluxVarsCache());
     }
 
     Scalar heatConductionFlux()
     {
-        Scalar flux = HeatConductionType::flux(this->problem(),
-                                               this->element(),
-                                               this->fvGeometry(),
-                                               this->elemVolVars(),
-                                               this->scvFace(),
-                                               this->elemFluxVarsCache());
-        return flux;
+        return HeatConductionType::flux(this->problem(),
+                                        this->element(),
+                                        this->fvGeometry(),
+                                        this->elemVolVars(),
+                                        this->scvFace(),
+                                        this->elemFluxVarsCache());
     }
 
 private:
