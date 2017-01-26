@@ -158,6 +158,9 @@ SET_BOOL_PROP(ImplicitBase, SolutionDependentAdvection, true);
 SET_BOOL_PROP(ImplicitBase, SolutionDependentMolecularDiffusion, true);
 SET_BOOL_PROP(ImplicitBase, SolutionDependentHeatConduction, true);
 
+//! by default we consider discontinous (at scvfs) permeability fields
+SET_BOOL_PROP(ImplicitBase, EvaluatePermeabilityAtScvfIP, false);
+
 //! by default, boundary conditions are not constant over time
 SET_BOOL_PROP(ImplicitBase, ConstantBoundaryConditions, false);
 
