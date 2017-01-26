@@ -8,10 +8,18 @@ parser.add_argument('-f1', '--reference', type=str, required=True, help='Referen
 parser.add_argument('-f2', '--newSolution', type=str, required=True, help='NewSolution csv-file')
 parser.add_argument('-xMin', '--xMin', type=float, required=False, default=-1e99, help='Restrict data to x>xMin')
 parser.add_argument('-xMax', '--xMax', type=float, required=False, default=1e99, help='Restrict data to x>xMax')
-parser.add_argument('-x1', '--xData1', type=int, required=True, help='Column index of x data in reference')
-parser.add_argument('-x2', '--xData2', type=int, required=True, help='Column index of x data in reference')
-parser.add_argument('-y1', '--yData1', type=int, required=True, help='Column index of y data in newSolution')
-parser.add_argument('-y2', '--yData2', type=int, required=True, help='Column index of y data in newSolution')
+group1 = parser.add_mutually_exclusive_group(required=True)
+group1.add_argument('-x1', '--xData1', type=int, help='Column index of x data in reference')
+group1.add_argument('-x1Name', '--xDataName1', type=str, help='Name x data in reference')
+group2 = parser.add_mutually_exclusive_group(required=True)
+group2.add_argument('-x2', '--xData2', type=int, help='Column index of x data in newSolution')
+group2.add_argument('-x2Name', '--xDataName2', type=str, help='Name x data in reference')
+group3 = parser.add_mutually_exclusive_group(required=True)
+group3.add_argument('-y1', '--yData1', type=int, help='Column index of y data in newSolution')
+group3.add_argument('-y1Name', '--yDataName1', type=str, help='Name y data in reference')
+group4 = parser.add_mutually_exclusive_group(required=True)
+group4.add_argument('-y2', '--yData2', type=int, help='Column index of y data in newSolution')
+group4.add_argument('-y2Name', '--yDataName2', type=str, help='Name y data in newSolution')
 parser.add_argument('-p', '--percent', action='store_true', help='Print errors in percent')
 parser.add_argument('-f', '--force', action='store_true', help='Ignore \'not-matching\' errors')
 parser.add_argument('-v', '--verbose', action='store_true', help='Verbosity of the script')
@@ -20,16 +28,33 @@ args = vars(parser.parse_args())
 with open(args['reference'], 'rb') as referenceFile:
   reader = csv.reader(referenceFile)
   reference = list(reader)
+  if(args['xDataName1'] is not None):
+    indexReferenceX = reference[0].index(args['xDataName1'])
+  else:
+    indexReferenceX = args['xData1']
+  if(args['yDataName1'] is not None):
+    indexReferenceY = reference[0].index(args['yDataName1'])
+  else:
+    indexReferenceY = args['yData1']
+
 with open(args['newSolution'], 'rb') as newSolutionFile:
   reader = csv.reader(newSolutionFile)
   newSolution = list(reader)
+  if(args['xDataName2'] is not None):
+    indexNewSolutionX = reference[0].index(args['xDataName2'])
+  else:
+    indexNewSolutionX = args['xData2']
+  if(args['yDataName2'] is not None):
+    indexNewSolutionY = reference[0].index(args['yDataName2'])
+  else:
+    indexNewSolutionY = args['yData2']
 
-if (reference[0][args['xData1']] != newSolution[0][args['xData2']] and not args['force']):
-    print "X-Identifier not equal: ref=", reference[0][args['xData1']], ",new=", newSolution[0][args['xData2']], ". Aborting! (Use -f to continue anyway)"
+if (reference[0][indexReferenceX] != reference[0][indexNewSolutionX] and not args['force']):
+    print "X-Identifier not equal: ref=", reference[0][indexReferenceX], ",new=", reference[0][indexNewSolutionX], ". Aborting! (Use -f to continue anyway)"
     exit (1)
 
-if (reference[0][args['yData1']] != newSolution[0][args['yData2']] and not args['force']):
-    print "Y-Identifier not equal. ref=", reference[0][args['yData1']], ",new=", newSolution[0][args['yData2']], ". Aborting! (Use -f to continue anyway)"
+if (reference[0][indexReferenceY] != newSolution[0][indexNewSolutionY] and not args['force']):
+    print "Y-Identifier not equal. ref=", reference[0][indexReferenceY], ",new=", newSolution[0][indexNewSolutionY], ". Aborting! (Use -f to continue anyway)"
     exit (2)
 
 if (len(reference) != len(newSolution)):
@@ -41,9 +66,10 @@ sumError = 0.0
 sumReference = 0.0
 sumDistance = 0.0
 numPoints = 0
+
 for i in range(1,len(reference)):
-    coord_ref = float(reference[i][args['xData1']])
-    coord_newSolution = float(newSolution[i][args['xData2']])
+    coord_ref = float(reference[i][indexReferenceX])
+    coord_newSolution = float(newSolution[i][indexNewSolutionX])
     if (coord_ref != coord_newSolution):
         print "Coordinates not equal: ref=", coord_ref, ",new=", coord_newSolution, ". Aborting!"
         exit (4)
@@ -51,13 +77,13 @@ for i in range(1,len(reference)):
         continue
 
     if (i == 1):
-        distance = 0.5*(float(reference[2][args['xData1']]) - float(reference[1][args['xData1']]))
+        distance = 0.5*(float(reference[2][indexReferenceX]) - float(reference[1][indexReferenceX]))
     elif (i == len(reference)-1):
-        distance = 0.5*(float(reference[len(reference)-1][args['xData1']]) - float(reference[len(reference)-2][args['xData1']]))
+        distance = 0.5*(float(reference[len(reference)-1][indexReferenceX]) - float(reference[len(reference)-2][indexReferenceX]))
     else:
-        distance = 0.5*(float(reference[i+1][args['xData1']]) - float(reference[i-1][args['xData1']]))
-    sumError += ((float(reference[i][args['yData1']])-float(newSolution[i][args['yData2']]))**2)*distance
-    sumReference += ((float(reference[i][args['yData1']]))**2)*distance
+        distance = 0.5*(float(reference[i+1][indexReferenceX]) - float(reference[i-1][indexReferenceX]))
+    sumError += ((float(reference[i][indexReferenceY])-float(newSolution[i][indexNewSolutionY]))**2)*distance
+    sumReference += ((float(reference[i][indexReferenceY]))**2)*distance
     sumDistance += distance
     numPoints += 1
 
