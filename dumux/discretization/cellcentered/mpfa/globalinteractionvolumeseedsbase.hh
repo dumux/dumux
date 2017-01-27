@@ -52,12 +52,12 @@ public:
     CCMpfaGlobalInteractionVolumeSeedsBase(const GridView& gridView) : gridView_(gridView) {}
 
     // initializes the interaction volumes or the seeds
-    void update(const Problem& p, const std::vector<bool>& boundaryVertices)
+    void update(const Problem& p, const std::vector<bool>& interiorOrDomainBoundaryVertices)
     {
         problemPtr_ = &p;
 
         // initialize the seeds according to the mpfa method
-        asImp_().initializeSeeds(boundaryVertices,
+        asImp_().initializeSeeds(interiorOrDomainBoundaryVertices,
                                  scvfIndexMap_,
                                  seeds_,
                                  boundarySeeds_);

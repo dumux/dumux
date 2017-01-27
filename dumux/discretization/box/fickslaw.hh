@@ -39,7 +39,6 @@ namespace Properties
 {
 // forward declaration of properties
 NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidState);
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(EffectiveDiffusivityModel);
 }
@@ -53,7 +52,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -65,7 +63,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = typename std::vector<IndexType>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -133,13 +130,6 @@ public:
         auto DGradX = applyDiffusionTensor_(D, gradX);
         return -1.0*(DGradX*scvf.unitOuterNormal())*scvf.area();
     }
-
-    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    { return Stencil(0); }
 
 private:
     static GlobalPosition applyDiffusionTensor_(const DimWorldMatrix& D, const GlobalPosition& gradI)

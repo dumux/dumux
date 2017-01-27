@@ -68,9 +68,9 @@ public:
         problemPtr_ = &problem;
 
         auto numScv = problem.model().globalFvGeometry().numScv();
-        auto numBoundaryScvf = problem.model().globalFvGeometry().numBoundaryScvf();
+        auto numDomainBoundaryScvf = problem.model().globalFvGeometry().numDomainBoundaryScvf();
 
-        volumeVariables_.resize(numScv + numBoundaryScvf);
+        volumeVariables_.resize(numScv + numDomainBoundaryScvf);
         for (const auto& element : elements(problem.gridView()))
         {
             auto fvGeometry = localView(problem.model().globalFvGeometry());

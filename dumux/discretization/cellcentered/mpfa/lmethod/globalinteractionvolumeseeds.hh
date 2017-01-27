@@ -52,7 +52,7 @@ public:
     CCMpfaGlobalInteractionVolumeSeedsImplementation(const GridView& gridView) : ParentType(gridView) {}
 
     template<typename SeedVector, typename BoundarySeedVector>
-    void initializeSeeds(const std::vector<bool>& boundaryVertices,
+    void initializeSeeds(const std::vector<bool>& interiorOrDomainBoundaryVertices,
                          std::vector<IndexType>& scvfIndexMap,
                          SeedVector& seeds,
                          BoundarySeedVector& boundarySeeds)
@@ -63,12 +63,17 @@ public:
 
         // reserve memory
         const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
-        const auto numBoundaryScvf = this->problem().model().globalFvGeometry().numBoundaryScvf();
-        const int numInteriorScvf = (numScvf-numBoundaryScvf)/2;
+        const auto numIBScvf = this->problem().model().globalFvGeometry().numInteriorBoundaryScvf();
+        const auto numDBScvf = this->problem().model().globalFvGeometry().numDomainBoundaryScvf();
+        const auto numBPScvf = this->problem().model().globalFvGeometry().numBranchingPointScvf();
 
-        if (numInteriorScvf > 0)
-            seeds.reserve( numInteriorScvf );
-        boundarySeeds.reserve(numBoundaryScvf);
+        const int numLMethodIVs = (numScvf-numIBScvf-numDBScvf-numBPScvf)/2;
+        const auto numOMethodIVs = this->problem().model().globalFvGeometry().numInteriorOrDomainBoundaryVertices()
+                                   + this->problem().model().globalFvGeometry().numBranchingPointVertices();
+
+        if (numLMethodIVs > 0)
+            seeds.reserve( numLMethodIVs );
+        boundarySeeds.reserve(numOMethodIVs);
         scvfIndexMap.resize(numScvf);
 
         // Keep track of which faces have been handled already
@@ -87,7 +92,12 @@ public:
                 if (isFaceHandled[scvf.index()])
                     continue;
 
-                if (boundaryVertices[scvf.vertexIndex()])
+                // make boundary interaction volume seeds (o-method seeds) on:
+                //      - interior boundaries
+                //      - domain boundaries
+                //      - branching points (l-method can not handle this)
+                if (interiorOrDomainBoundaryVertices[scvf.vertexIndex()]
+                    || this->problem().model().globalFvGeometry().touchesBranchingPoint(scvf))
                 {
                     // make the boundary interaction volume seed
                     boundarySeeds.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(this->problem(),

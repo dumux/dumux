@@ -42,8 +42,8 @@ class MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, /*dim*/2, /*dimWorld*/2>
 {
     using Implementation = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
 
-    static const int dim = 2;
-    static const int dimWorld = 2;
+    static constexpr int dim = 2;
+    static constexpr int dimWorld = 2;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -67,6 +67,9 @@ class MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, /*dim*/2, /*dimWorld*/2>
 
     using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
     using LocalIndexSet = typename InteractionVolume::LocalIndexSet;
+
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
+
 public:
     static InteractionVolumeSeed makeInnerInteractionVolumeSeed(const Problem& problem,
                                                                 const Element& element,
@@ -107,7 +110,9 @@ public:
         scvSeeds.shrink_to_fit();
         scvfSeeds.shrink_to_fit();
 
-        return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
+        // check if touches domain boundary (not only interior boundary)
+        const bool boundary = problem.model().globalFvGeometry().touchesDomainBoundary(scvf);
+        return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), boundary);
     }
 
 private:
@@ -120,13 +125,13 @@ private:
                                  const SubControlVolumeFace& scvf)
     {
         // Check whether or not we are touching the boundary here
-        bool onBoundary = problem.model().globalFvGeometry().scvfTouchesBoundary(scvf);
+        const bool onBoundary = problem.model().globalFvGeometry().touchesDomainBoundary(scvf);
 
         // Get the two scv faces in the first scv
-        auto scvfVector = Implementation::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
+        const auto scvfVector = Implementation::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
 
         // The global index of the first scv of the interaction region
-        auto scvIdx0 = scvf.insideScvIdx();
+        const auto scvIdx0 = scvf.insideScvIdx();
 
         // rotate counter clockwise and create the entities
         performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0);
@@ -134,7 +139,7 @@ private:
         if (onBoundary)
         {
             // the local scvf index of the second local face of the first local scv
-            LocalIndexType storeIdx = scvfSeeds.size();
+            const LocalIndexType storeIdx = scvfSeeds.size();
 
             // clockwise rotation until hitting the boundary again
             performRotation_(problem, scvfVector, scvSeeds, scvfSeeds, scvIdx0, /*clockwise*/true);
@@ -170,7 +175,7 @@ private:
         auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
 
         // Start/continue interaction region construction from the given scv face
-        LocalIndexType startScvfIdx = clockWise ? 1 : 0;
+        const LocalIndexType startScvfIdx = clockWise ? 1 : 0;
         auto curScvf = *scvfVector[startScvfIdx];
         bool firstIteration = true;
         bool finished = false;
@@ -178,17 +183,16 @@ private:
         while (!finished)
         {
             // Get some indices beforehand
-            GlobalIndexType outsideGlobalScvIdx = curScvf.outsideScvIdx();
-            LocalIndexType insideLocalScvIdx = firstIteration ? 0 : localScvIdx;
+            const GlobalIndexType outsideGlobalScvIdx = curScvf.outsideScvIdx();
+            const LocalIndexType insideLocalScvIdx = firstIteration ? 0 : localScvIdx;
 
             // the current element inside of the scv face
-            auto insideElement = problem.model().globalFvGeometry().element(curScvf.insideScvIdx());
-            auto faceType = Implementation::getMpfaFaceType(problem, insideElement, curScvf);
+            const auto insideElement = problem.model().globalFvGeometry().element(curScvf.insideScvIdx());
+            const auto faceType = Implementation::getMpfaFaceType(problem, insideElement, curScvf);
 
             // if the face touches the boundary, create a boundary scvf entity
             if (curScvf.boundary())
             {
-                assert(faceType == MpfaFaceTypes::neumann || faceType == MpfaFaceTypes::dirichlet);
                 scvfSeeds.emplace_back( curScvf,
                                         insideLocalScvIdx,
                                         LocalIndexSet(),
@@ -208,29 +212,49 @@ private:
                                         GlobalIndexSet({scvfVector[1]->index()}),
                                         faceType );
 
+                // create duplicate face if it is an interior boundary,
+                if (faceType != MpfaFaceTypes::interior)
+                    scvfSeeds.emplace_back( *scvfVector[1],
+                                            0,
+                                            LocalIndexSet({insideLocalScvIdx}),
+                                            GlobalIndexSet({curScvf.index()}),
+                                            faceType );
+
                 // rotation loop is finished
                 finished = true; return;
             }
 
             // If we get here, there are outside entities
-            auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
+            const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
             outsideFvGeometry.bindElement(outsideElement);
 
             // get the two scv faces in the outside element that share the vertex
-            auto outsideScvfVector = Implementation::getCommonAndNextScvFace(curScvf, outsideFvGeometry, clockWise);
-            GlobalIndexType commonFaceCoordIdx = clockWise ? 0 : 1;
-            GlobalIndexType nextFaceCoordIdx = clockWise ? 1 : 0;
-            auto&& commonScvf = *outsideScvfVector[commonFaceCoordIdx];
-            auto&& nextScvf = *outsideScvfVector[nextFaceCoordIdx];
+            const auto outsideScvfVector = Implementation::getCommonAndNextScvFace(curScvf, outsideFvGeometry, clockWise);
+            const GlobalIndexType commonFaceCoordIdx = clockWise ? 0 : 1;
+            const GlobalIndexType nextFaceCoordIdx = clockWise ? 1 : 0;
+            const auto& commonScvf = *outsideScvfVector[commonFaceCoordIdx];
+            const auto& nextScvf = *outsideScvfVector[nextFaceCoordIdx];
 
             // create local scv face entity of the current scvf
-            LocalIndexType outsideLocalScvIdx = localScvIdx+1;
+            const LocalIndexType outsideLocalScvIdx = localScvIdx+1;
             scvfSeeds.emplace_back( curScvf,
                                     insideLocalScvIdx,
                                     LocalIndexSet({outsideLocalScvIdx}),
                                     GlobalIndexSet({commonScvf.index()}),
                                     faceType );
             localScvfIdx++;
+
+            // create duplicate face if it is an interior boundary,
+            if (faceType != MpfaFaceTypes::interior)
+            {
+                // face from "outside" to "inside", index sets change
+                scvfSeeds.emplace_back( commonScvf,
+                                        outsideLocalScvIdx,
+                                        LocalIndexSet({insideLocalScvIdx}),
+                                        GlobalIndexSet({curScvf.index()}),
+                                        faceType );
+                localScvfIdx++;
+            }
 
             // create index set storing the two local scvf indices
             LocalIndexSet localScvfs(2);
@@ -239,7 +263,9 @@ private:
 
             // create "outside" scv
             GlobalIndexSet globalScvfIndices({outsideScvfVector[0]->index(), outsideScvfVector[1]->index()});
-            scvSeeds.emplace_back(std::move(globalScvfIndices), std::move(localScvfs), outsideGlobalScvIdx);
+            scvSeeds.emplace_back(std::move(globalScvfIndices),
+                                  std::move(localScvfs),
+                                  outsideGlobalScvIdx);
             localScvIdx++;
 
             // create the next scvf in the following iteration
@@ -291,21 +317,24 @@ public:
                                                                 const SubControlVolumeFace& scvf)
     {
         // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
-        if (!problem.model().globalFvGeometry().scvfTouchesBranchingPoint(scvf))
-            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeInnerInteractionVolumeSeed(problem, element, fvGeometry, scvf);
+        if (!problem.model().globalFvGeometry().touchesBranchingPoint(scvf))
+            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeInnerInteractionVolumeSeed(problem,
+                                                                                                         element,
+                                                                                                         fvGeometry,
+                                                                                                         scvf);
 
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
-        scvSeeds.reserve(20);
-        scvfSeeds.reserve(20);
+        scvSeeds.reserve(50);
+        scvfSeeds.reserve(50);
 
         // The vertex index around which we construct the interaction volume
-        auto vIdxGlobal = scvf.vertexIndex();
+        const auto vIdxGlobal = scvf.vertexIndex();
 
         // Get the two scv faces in the scv
-        auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
+        const auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
 
         // fill the entity seed data
         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvfVector, vIdxGlobal);
@@ -326,21 +355,24 @@ public:
                                                                    const SubControlVolumeFace& scvf)
     {
         // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
-        if (!problem.model().globalFvGeometry().scvfTouchesBranchingPoint(scvf))
-            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeBoundaryInteractionVolumeSeed(problem, element, fvGeometry, scvf);
+        if (!problem.model().globalFvGeometry().touchesBranchingPoint(scvf))
+            return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeBoundaryInteractionVolumeSeed(problem,
+                                                                                                            element,
+                                                                                                            fvGeometry,
+                                                                                                            scvf);
 
         std::vector<ScvSeed> scvSeeds;
         std::vector<ScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
-        scvSeeds.reserve(20);
-        scvfSeeds.reserve(20);
+        scvSeeds.reserve(50);
+        scvfSeeds.reserve(50);
 
         // The vertex index around which we construct the interaction volume
-        auto vIdxGlobal = scvf.vertexIndex();
+        const auto vIdxGlobal = scvf.vertexIndex();
 
         // Get the two scv faces in the scv
-        auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
+        const auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
 
         // fill the entity seed data
         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvfVector, vIdxGlobal);
@@ -373,11 +405,11 @@ private:
 
         // make the scvf seeds for the two scvfs connected to the scv
         auto& actualScvSeed = scvSeeds.back();
-        LocalIndexType actualLocalScvIdx = scvSeeds.size()-1;
+        const LocalIndexType actualLocalScvIdx = scvSeeds.size()-1;
 
         for (int coordDir = 0; coordDir < dim; ++coordDir)
         {
-            auto&& actualScvf = *scvfVector[coordDir];
+            const auto& actualScvf = *scvfVector[coordDir];
 
             // if scvf is on a boundary, we create the scvfSeed and make no neighbor
             if (actualScvf.boundary())
@@ -398,15 +430,15 @@ private:
                 for (auto outsideGlobalScvIdx : actualScvf.outsideScvIndices())
                 {
                     // get outside element, fvgeometry etc.
-                    auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
+                    const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
                     auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
                     outsideFvGeometry.bindElement(outsideElement);
 
                     // find scvf in outside corresponding to the actual scvf
-                    auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
-                    auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
-                    auto&& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
-                    auto outsideScvfIdx = outsideScvf.index();
+                    const auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
+                    const auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
+                    const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
+                    const auto outsideScvfIdx = outsideScvf.index();
 
                     // check if the outside scv already exists and get its local index
                     bool outsideScvExists = false;
@@ -415,7 +447,8 @@ private:
                     {
                         if (scvSeed.globalIndex() == outsideGlobalScvIdx)
                         {
-                            outsideScvExists = true; break;
+                            outsideScvExists = true;
+                            break;
                         }
                         // keep track of local index
                         outsideLocalScvIdx++;
@@ -426,31 +459,36 @@ private:
                     bool insideScvfExists = false;
                     LocalIndexType outsideLocalScvfIdx = 0;
                     LocalIndexType insideLocalScvfIdx = 0;
+
+                    // If the outside scvf exists, we need to find out its face type
+                    // We initialize it here to please the compiler
+                    MpfaFaceTypes outsideScvfFaceType = MpfaFaceTypes::interior;
+
                     for (auto&& scvfSeed : scvfSeeds)
                     {
                         if (Implementation::contains(actualScvf.outsideScvIndices(), scvfSeed.insideGlobalScvIndex()) &&
                             Implementation::contains(scvfSeed.outsideGlobalScvIndices(), actualScvf.insideScvIdx()))
+                        {
+                            outsideScvfFaceType = scvfSeed.faceType();
                             outsideScvfExists = true;
-                        else
-                            if (!outsideScvfExists)
-                                outsideLocalScvfIdx++;
+                        }
+                        else if (!outsideScvfExists)
+                            outsideLocalScvfIdx++;
 
                         if (scvfSeed.insideGlobalScvIndex() == actualScvf.insideScvIdx() &&
                             scvfSeed.outsideGlobalScvIndices().size() == actualScvf.outsideScvIndices().size() &&
                             std::equal(scvfSeed.outsideGlobalScvIndices().begin(), scvfSeed.outsideGlobalScvIndices().end(), actualScvf.outsideScvIndices().begin()))
+                        {
                             insideScvfExists = true;
-                        else
-                            if (!insideScvfExists)
-                                insideLocalScvfIdx++;
+                        }
+                        else if (!insideScvfExists)
+                            insideLocalScvfIdx++;
                     }
-
-                    // we should never have two local scv faces existing inside and in an outside element
-                    assert(!(outsideScvfExists && insideScvfExists) && "The scv face seems to exist twice!");
 
                     // outside scv has to be created
                     if (!outsideScvExists)
                     {
-                        // The face does not yet exist
+                        // No face exists yet
                         if (!insideScvfExists && !outsideScvfExists)
                         {
                             // set the local scvfIndex of the face that is about to created
@@ -461,7 +499,7 @@ private:
                                                    actualLocalScvIdx,
                                                    Implementation::getMpfaFaceType(problem, element, actualScvf));
 
-                            // pass the actual outside indices to the new scvf seed
+                            // pass the outside index that is about to be created to the new scvf seed
                             scvfSeeds.back().addOutsideData(outsideScvfIdx, static_cast<LocalIndexType>(scvSeeds.size()));
                         }
                         else if (insideScvfExists && !outsideScvfExists)
@@ -471,8 +509,24 @@ private:
                         }
                         else if (!insideScvfExists && outsideScvfExists)
                         {
-                            // set the local scvfIndex of the outside face
-                            actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
+                            // if outside is an interior boundary, we create a duplicate local scvf here for inside
+                            if (outsideScvfFaceType == MpfaFaceTypes::interiorDirichlet ||
+                                outsideScvfFaceType == MpfaFaceTypes::interiorNeumann)
+                            {
+                                // set the local scvfIndex of the face that is about to created
+                                actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
+
+                                // create scvf seed
+                                scvfSeeds.emplace_back(actualScvf,
+                                                       actualLocalScvIdx,
+                                                       Implementation::getMpfaFaceType(problem, element, actualScvf));
+
+                                // pass the outside index that is about to be created to the new scvf seed
+                                scvfSeeds.back().addOutsideData(outsideScvfIdx, static_cast<LocalIndexType>(scvSeeds.size()));
+                            }
+                            else
+                                // set the local scvfIndex of the outside face
+                                actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
 
                             // pass info on inside to the outside scvf seed
                             scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), actualLocalScvIdx);
@@ -499,8 +553,24 @@ private:
                         }
                         else if (!insideScvfExists && outsideScvfExists)
                         {
-                            // set the local scvfIndex of the found outside local scv face seed
-                            actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
+                            // if outside is an interior boundary, we create a duplicate local scvf here for inside
+                            if (outsideScvfFaceType == MpfaFaceTypes::interiorDirichlet ||
+                                outsideScvfFaceType == MpfaFaceTypes::interiorNeumann)
+                            {
+                                // set the local scvfIndex of the face that is about to created
+                                actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
+
+                                // create scvf seed
+                                scvfSeeds.emplace_back(actualScvf,
+                                                       actualLocalScvIdx,
+                                                       Implementation::getMpfaFaceType(problem, element, actualScvf));
+
+                                // pass the actual outside indices to the new scvf seed
+                                scvfSeeds.back().addOutsideData(outsideScvfIdx, outsideLocalScvIdx);
+                            }
+                            else
+                                // set the local scvfIndex of the found outside local scv face seed
+                                actualScvSeed.setLocalScvfIndex(coordDir, outsideLocalScvfIdx);
 
                             // pass info on inside to the outside found local scvf seed
                             scvfSeeds[outsideLocalScvfIdx].addOutsideData(actualScvf.index(), actualLocalScvIdx);
@@ -562,10 +632,10 @@ public:
         scvfSeeds.reserve(50);
 
         // The vertex index around which we construct the interaction volume
-        auto vIdxGlobal = scvf.vertexIndex();
+        const auto vIdxGlobal = scvf.vertexIndex();
 
         // Get the three scv faces in the scv
-        auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
+        const auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
 
         // create the scv entity seeds
         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvfVector, vIdxGlobal);
@@ -590,10 +660,10 @@ public:
         scvfSeeds.reserve(50);
 
         // The vertex index around which we construct the interaction volume
-        auto vIdxGlobal = scvf.vertexIndex();
+        const auto vIdxGlobal = scvf.vertexIndex();
 
         // Get the three scv faces in the scv
-        auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
+        const auto scvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, element, fvGeometry);
 
         // create the scv entity seeds
         fillEntitySeeds_(scvSeeds, scvfSeeds, problem, element, fvGeometry, scvfVector, vIdxGlobal);
@@ -624,7 +694,7 @@ private:
 
         // make the scvf seeds for the three scvfs connected to the scv
         auto& actualScvSeed = scvSeeds.back();
-        LocalIndexType actualLocalScvIdx = scvSeeds.size()-1;
+        const LocalIndexType actualLocalScvIdx = scvSeeds.size()-1;
 
         for (int coordDir = 0; coordDir < dim; ++coordDir)
         {
@@ -637,17 +707,16 @@ private:
                 actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
                 // create the scvf seed
-                auto faceType = Implementation::getMpfaFaceType(problem, element, actualScvf);
                 scvfSeeds.emplace_back( actualScvf,
                                         actualLocalScvIdx,
                                         LocalIndexSet(),
                                         GlobalIndexSet(),
-                                        faceType );
+                                        Implementation::getMpfaFaceType(problem, element, actualScvf) );
             }
             else
             {
-                auto outsideGlobalScvIdx = actualScvf.outsideScvIdx();
-                auto globalScvfIndex = actualScvf.index();
+                const auto outsideGlobalScvIdx = actualScvf.outsideScvIdx();
+                const auto globalScvfIndex = actualScvf.index();
 
                 // check if the outside scv already exists and get its local index
                 bool outsideExists = false;
@@ -656,7 +725,8 @@ private:
                 {
                     if (scvSeed.globalIndex() == outsideGlobalScvIdx)
                     {
-                        outsideExists = true; break;
+                        outsideExists = true;
+                        break;
                     }
                     // keep track of local index
                     outsideLocalScvIdx++;
@@ -669,14 +739,14 @@ private:
                     actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
                     // get outside element, fvgeometry etc.
-                    auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
+                    const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
                     auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
                     outsideFvGeometry.bindElement(outsideElement);
 
                     // find scvf in outside corresponding to the actual scvf
-                    auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
-                    auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
-                    auto&& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
+                    const auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
+                    const auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
+                    const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
 
                     // create scvf seed
                     scvfSeeds.emplace_back(actualScvf,
@@ -699,8 +769,23 @@ private:
                         // boundary scvf seeds have no outside scvf
                         if (!scvfSeed.boundary() && scvfSeed.outsideGlobalScvfIndex() == globalScvfIndex)
                         {
+                            const auto faceType = scvfSeed.faceType();
+                            // on interior boundaries we have to create a new face
+                            if (faceType != MpfaFaceTypes::interior)
+                            {
+                                // set the local scvfIndex of the face that is about to created
+                                actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
+
+                                // create local scvf
+                                scvfSeeds.emplace_back(actualScvf,
+                                                       actualLocalScvIdx,
+                                                       LocalIndexSet({scvfSeed.insideLocalScvIndex()}),
+                                                       GlobalIndexSet({scvfSeed.insideGlobalScvfIndex()}),
+                                                       faceType);
+                            }
                             // pass local scvf index to local scv
-                            actualScvSeed.setLocalScvfIndex(coordDir, localScvfIdx);
+                            else
+                                actualScvSeed.setLocalScvfIndex(coordDir, localScvfIdx);
 
                             // we found the corresponding face
                             found = true; break;
@@ -716,20 +801,20 @@ private:
                         actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
                         // get outside element, fvgeometry etc.
-                        auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
+                        const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
                         auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
                         outsideFvGeometry.bindElement(outsideElement);
 
                         // find scvf in outside corresponding to the actual scvf
-                        auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
-                        auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
-                        auto&& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
+                        const auto outsideScvfVector = Implementation::getScvFacesAtVertex(vIdxGlobal, outsideElement, outsideFvGeometry);
+                        const auto commonFaceLocalIdx = Implementation::getCommonFaceLocalIndex(actualScvf, outsideScvfVector);
+                        const auto& outsideScvf = *outsideScvfVector[commonFaceLocalIdx];
 
                         // make scv face seed
                         scvfSeeds.emplace_back(actualScvf,
                                                actualLocalScvIdx,
-                                               LocalIndexSet( {outsideLocalScvIdx} ),
-                                               GlobalIndexSet( {outsideScvf.index()} ),
+                                               LocalIndexSet({outsideLocalScvIdx}),
+                                               GlobalIndexSet({outsideScvf.index()}),
                                                Implementation::getMpfaFaceType(problem, element, actualScvf));
                     }
                 }

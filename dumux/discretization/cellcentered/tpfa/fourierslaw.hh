@@ -53,7 +53,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = typename std::vector<IndexType>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -87,17 +86,6 @@ public:
                               : branchingFacetTemperature_(problem, element, fvGeometry, elemVolVars, scvf, tInside, tij);
 
         return tij*(tInside - tOutside);
-    }
-
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        if (!scvf.boundary())
-            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
-        else
-            return Stencil({scvf.insideScvIdx()});
     }
 
 private:

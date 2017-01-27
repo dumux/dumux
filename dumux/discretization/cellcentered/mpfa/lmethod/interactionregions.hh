@@ -36,6 +36,7 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
 
@@ -46,6 +47,7 @@ private:
     using LocalIndexType = typename InteractionVolume::LocalIndexType;
     using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using LocalBasis = std::array<GlobalPosition, dim>;
 
 public:
     LocalIndexType contiFaceLocalIdx;
@@ -58,7 +60,7 @@ public:
 
     std::array<GlobalIndexType, 2> globalScvfs;
 
-    // Constructor for dim == 2
+    // Constructor signature for dim == 2
     template<class ScvSeedType, class OuterScvSeedType>
     InteractionRegion(const Problem& problem,
                       const FVElementGeometry& fvGeometry,
@@ -107,21 +109,36 @@ public:
         scvIndices[1] = scv2.index();
         scvIndices[2] = scv3.index();
 
-        // calculate nus and detXs
-        static const Dune::FieldMatrix<Scalar, dim, dim> R = {{0.0, 1.0}, {-1.0, 0.0}};
+        // set up the local basis of the elements
+        LocalBasis basis1, basis2, basis3, basis4;
+        basis1[0] = f1 - scvCenters[0];
+        basis1[1] = f2 - scvCenters[0];
+        basis2[0] = v - scvCenters[1];
+        basis2[1] = f1 - scvCenters[1];
+        basis3[0] = f2 - scvCenters[2];
+        basis3[1] = v - scvCenters[2];
+        basis4[0] = basis1[0];
+        basis4[1] = v - scvCenters[0];
+
+        // calculate nus
+        const auto nus1 = MpfaHelper::calculateInnerNormals(basis1);
+        const auto nus2 = MpfaHelper::calculateInnerNormals(basis2);
+        const auto nus3 = MpfaHelper::calculateInnerNormals(basis3);
+        const auto nus4 = MpfaHelper::calculateInnerNormals(basis1);
+
         nu.resize(7);
-        R.mv(f2-scvCenters[0], nu[0]);
-        R.mv(scvCenters[0]-f1, nu[1]);
-        R.mv(f1-scvCenters[1], nu[2]);
-        R.mv(scvCenters[1]-v, nu[3]);
-        R.mv(v-scvCenters[2], nu[4]);
-        R.mv(scvCenters[2]-f2, nu[5]);
-        R.mv(v-scvCenters[0], nu[6]);
+        nu[0] = nus1[0];
+        nu[1] = nus1[1];
+        nu[2] = nus2[0];
+        nu[3] = nus2[1];
+        nu[4] = nus3[0];
+        nu[5] = nus3[1];
+        nu[6] = nus4[0];
 
         detX.resize(3);
-        detX[0] = (f1-scvCenters[0])*nu[0];
-        detX[1] = (v-scvCenters[1])*nu[2];
-        detX[2] = (f2-scvCenters[2])*nu[4];
+        detX[0] = MpfaHelper::calculateDetX(basis1);
+        detX[1] = MpfaHelper::calculateDetX(basis2);
+        detX[2] = MpfaHelper::calculateDetX(basis3);
     }
 };
 }; //end namespace

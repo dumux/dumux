@@ -46,18 +46,26 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
+    // Always use the dynamic type for vectors (compatibility with the boundary)
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using DynamicVector = typename BoundaryInteractionVolume::Vector;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
+
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+    static constexpr bool facetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
 public:
     // state the discretization method this implementation belongs to
@@ -76,8 +84,55 @@ public:
         const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
         const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
 
+        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
+        // For interior Neumann boundaries when using Tpfa for Neumann boundary conditions, we simply
+        // return the user-specified flux. Note that for compositional models we attribute the influxes
+        // to the major components, thus we do it per phase in Darcy's law. However, for single-phasic models
+        // wesolve the phase mass balance equation AND the transport equation, thus, in that case we incorporate
+        // the Neumann BCs here. We assume compIdx = eqIdx.
+        // Note that this way of including interior Neumann fluxes fails for mpnc models where n != m.
+        if (numPhases == 1
+            && isInteriorBoundary
+            && useTpfaBoundary
+            && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
+            return scvf.area()*
+                   elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
+                   problem.neumann(element,
+                                   fvGeometry,
+                                   elemVolVars,
+                                   scvf)[compIdx];
+
+
         // get the scaling factor for the effective diffusive fluxes
-        auto effFactor = calculateEffectiveDiffusivityFactor(elemVolVars, scvf, phaseIdx);
+        const auto effFactor = [&] ()
+        {
+            // Treat interior boundaries differently
+            if (isInteriorBoundary)
+            {
+                const auto& data = fluxVarsCache.interiorBoundaryDataSelf();
+
+                // interpolate as usual for interior Neumann faces without facet coupling
+                if (data.faceType() == MpfaFaceTypes::interiorNeumann && !facetCoupling)
+                    return calculateEffectiveDiffusivityFactor(elemVolVars, scvf, phaseIdx);
+                // use harmonic mean between the interior and the facet volvars
+                else
+                {
+                    const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                    const auto factor = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
+                                                                           insideVolVars.saturation(phaseIdx),
+                                                                           /*Diffusion coefficient*/ 1.0);
+
+                    const auto facetVolVars = data.facetVolVars(fvGeometry);
+                    const auto outsideFactor = EffDiffModel::effectiveDiffusivity(facetVolVars.porosity(),
+                                                                                  facetVolVars.saturation(phaseIdx),
+                                                                                  /*Diffusion coefficient*/ 1.0);
+
+                    return harmonicMean(factor, outsideFactor);
+                }
+            }
+            else
+                return calculateEffectiveDiffusivityFactor(elemVolVars, scvf, phaseIdx);
+        } ();
 
         // if factor is zero, the flux will end up zero anyway
         if (effFactor == 0.0)
@@ -90,28 +145,88 @@ public:
         auto getRho = [useMoles, phaseIdx] (const VolumeVariables& volVars)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
+        // calculate the density at the interface
+        const auto rho = [&] ()
+        {
+            // maybe use the density of the interior BC on the facet
+            if (isInteriorBoundary)
+            {
+                const auto& data = fluxVarsCache.interiorBoundaryDataSelf();
+
+                if (facetCoupling || data.faceType() == MpfaFaceTypes::interiorDirichlet)
+                    return useMoles ? data.facetVolVars(fvGeometry).molarDensity(phaseIdx) : data.facetVolVars(fvGeometry).density(phaseIdx);
+                else
+                    return interpolateDensity(elemVolVars, scvf, getRho);
+            }
+            else
+                return interpolateDensity(elemVolVars, scvf, getRho);
+        } ();
+
         // calculate Tij*xj
         Scalar flux(0.0);
         unsigned int localIdx = 0;
         for (const auto volVarIdx : volVarsStencil)
             flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
 
-        // return effective mass flux
-        return flux*interpolateDensity(elemVolVars, scvf, getRho)*effFactor;
-    }
+        // if no interior boundaries are present, return effective mass flux
+        if (!enableInteriorBoundaries)
+            return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
 
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
+        //////////////////////////////////////////////////////////////////
+        // Handle interior boundaries
+        //////////////////////////////////////////////////////////////////
 
-        // return the scv (element) indices in the interaction region
-        if (globalFvGeometry.scvfTouchesBoundary(scvf))
-            return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
-        else
-            return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
+        // get coefficients to transform the vector of interior neumann boundary conditions
+        const auto& cij = fluxVarsCache.diffusionCij(phaseIdx, compIdx);
+
+        // The vector of interior neumann fluxes
+        DynamicVector facetCouplingFluxes(cij.size(), 0.0);
+        for (auto&& data : fluxVarsCache.interiorBoundaryData())
+        {
+            // Add additional Dirichlet fluxes for interior Dirichlet faces
+            if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
+            {
+                // The transmissibilities of interior dirichlet boundaries are placed at the end
+                // So we simply keep incrementing the local index
+                const auto x = useMoles ?
+                               data.facetVolVars(fvGeometry).moleFraction(phaseIdx, compIdx) :
+                               data.facetVolVars(fvGeometry).massFraction(phaseIdx, compIdx);
+                flux += tij[localIdx + data.localIndexInInteractionVolume()]*x;
+            }
+
+            // add neumann fluxes for interior Neumann faces
+            if (facetCoupling && data.faceType() == MpfaFaceTypes::interiorNeumann)
+            {
+                // get the scvf corresponding to actual interior boundary face
+                const auto& curScvf = fvGeometry.scvf(data.scvfIndex());
+
+                // get the volvars of the actual interior neumann face
+                const auto facetVolVars = data.facetVolVars(fvGeometry);
+
+                // calculate "lekage factor"
+                const auto n = curScvf.unitOuterNormal();
+                const auto v = [&] ()
+                                {
+                                    auto res = n;
+                                    res *= -0.5*facetVolVars.extrusionFactor();
+                                    res -= curScvf.ipGlobal();
+                                    res += curScvf.facetCorner();
+                                    res /= res.two_norm2();
+                                    return res;
+                                } ();
+
+                // add value to vector of interior neumann fluxes
+                facetCouplingFluxes[data.localIndexInInteractionVolume()] += MpfaHelper::nT_M_v(n,
+                                                                                                  facetVolVars.diffusionCoefficient(phaseIdx, compIdx),
+                                                                                                  v);
+            }
+        }
+
+        // return overall resulting flux
+        const Scalar interiorNeumannFlux = facetCoupling ? cij*facetCouplingFluxes : 0.0;
+        return useTpfaBoundary ?
+               flux + interiorNeumannFlux :
+               flux + interiorNeumannFlux + fluxVarsCache.componentNeumannFlux(compIdx);
     }
 
 private:
@@ -141,19 +256,25 @@ private:
                                                       const unsigned int phaseIdx)
     {
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        auto factor = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
+        const auto factor = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
                                                          insideVolVars.saturation(phaseIdx),
                                                          /*Diffusion coefficient*/ 1.0);
 
         if (!scvf.boundary())
         {
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            auto outsideFactor = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
+            // interpret outside factor as arithmetic mean
+            Scalar outsideFactor = 0.0;
+            for (auto outsideIdx : scvf.outsideScvIndices())
+            {
+                const auto& outsideVolVars = elemVolVars[outsideIdx];
+                outsideFactor += EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
                                                                     outsideVolVars.saturation(phaseIdx),
                                                                     /*Diffusion coefficient*/ 1.0);
+            }
+            outsideFactor /= scvf.outsideScvIndices().size();
 
             // use the harmonic mean of the two
-            factor = harmonicMean(factor, outsideFactor);
+            return harmonicMean(factor, outsideFactor);
         }
 
         return factor;

@@ -54,12 +54,21 @@ public:
     // the default constructor
     CCTpfaSubControlVolumeFace() = default;
 
-    //! Constructor with intersection
+    /*!
+     * \brief Constructor with intersection
+     *
+     * \param is The intersection
+     * \param isGeometry The geometry of the intersection
+     * \param scvfIndex The global index of this scv face
+     * \param scvIndices The inside/outside scv indices connected to this face
+     * \param isBoundary Bool to specify whether or not the scvf is on an interior or the domain boundary
+     */
     template <class Intersection>
     CCTpfaSubControlVolumeFace(const Intersection& is,
                                const typename Intersection::Geometry& isGeometry,
                                IndexType scvfIndex,
-                               const std::vector<IndexType>& scvIndices)
+                               const std::vector<IndexType>& scvIndices,
+                               bool isBoundary)
     : ParentType(),
       geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
@@ -67,7 +76,7 @@ public:
       unitOuterNormal_(is.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
-      boundary_(is.boundary())
+      boundary_(isBoundary)
       {
           corners_.resize(isGeometry.corners());
           for (int i = 0; i < isGeometry.corners(); ++i)

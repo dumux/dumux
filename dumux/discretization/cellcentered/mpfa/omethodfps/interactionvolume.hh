@@ -41,8 +41,14 @@ template<class TypeTag>
 class CCMpfaOFpsInteractionVolumeTraits : public CCMpfaOInteractionVolumeTraits<TypeTag>
 {
 public:
-    // the fps method uses its own interaction volumes at the boundary
-    using BoundaryInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>;
+    // Interior boundaries can not yet be handled by the currend o-method fps implementation
+    // In that case we use the o-interactionvolume, otherwise we use its own interaction volumes at the boundary
+    // TODO Fix the std::conditional
+    using BoundaryInteractionVolume = typename CCMpfaOInteractionVolumeTraits<TypeTag>::BoundaryInteractionVolume;
+    // using BoundaryInteractionVolume = typename std::conditional<GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries),
+    //                                                             typename CCMpfaOInteractionVolumeTraits<TypeTag>::BoundaryInteractionVolume,
+    //                                                             typename CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>
+    //                                                             >::type;
 
     // The local sub-control volume type differs from the standard mpfa-o method
     using LocalScvType = CCMpfaOFpsLocalScv<TypeTag>;
@@ -61,6 +67,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     using LocalScvType = typename Traits::LocalScvType;
@@ -116,6 +123,9 @@ public:
     {
         if (dim == 3)
             DUNE_THROW(Dune::NotImplemented, "Fps scheme in 3d");
+
+        //! add entry to the vector of neumann fluxes
+        addAuxiliaryCellNeumannFlux_();
     }
 
     template<typename GetTensorFunction>
@@ -147,19 +157,18 @@ public:
         this->T_ += mc.BF;
     }
 
-    void assembleNeumannFluxes(unsigned int eqIdx)
-    {
-        ParentType::assembleNeumannFluxes(eqIdx);
+private:
 
-        if (!this->onBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
+    void addAuxiliaryCellNeumannFlux_()
+    {
+        if (!this->onDomainOrInteriorBoundary() || GET_PROP_VALUE(TypeTag, UseTpfaBoundary))
             return;
 
+        // add one entry to the vector of neumann fluxes
         auto& neumannFluxes = this->neumannFluxes_;
         neumannFluxes.resize(this->fluxScvfIndexSet_().size() + 1);
-        neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end()-1, 0.0);
+        neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end()-1, PrimaryVariables(0.0));
     }
-
-private:
 
     template<typename GetTensorFunction>
     void assembleLocalMatrices_(const GetTensorFunction& getTensor, LocalMatrixContainer& mc)
@@ -277,7 +286,7 @@ private:
                                   bool isRHS = false)
     {
         // In case we're on a flux continuity face, get local index
-        LocalIndexType eqSystemIdx = isFluxEq ? this->findLocalIndex(this->fluxScvfIndexSet_(), rowIdx) : -1;
+        LocalIndexType eqSystemIdx = isFluxEq ? this->findIndexInVector(this->fluxScvfIndexSet_(), rowIdx) : -1;
 
         // Fluxes stemming from the RHS have to have the opposite sign
         Scalar factor = isRHS ? 1.0 : -1.0;
@@ -298,7 +307,7 @@ private:
         localD *= localScv.geometry().integrationElement(ipLocal);
 
         // add matrix entries for the pressure in the cell center
-        auto cellPressureIdx = this->findLocalIndex(this->volVarsStencil(), localScv.globalIndex());
+        auto cellPressureIdx = this->findIndexInVector(this->volVarsStencil(), localScv.globalIndex());
         Scalar bi0 = factor*(localD[normalDir]*shapeJacobian[0][0]);
         if (!isRHS) mc.BF[rowIdx][cellPressureIdx] += bi0;
         if (isFluxEq) B[eqSystemIdx][cellPressureIdx] += bi0;
@@ -310,14 +319,14 @@ private:
             if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
                 Scalar aij = factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
-                auto colIdx = this->findLocalIndex(this->fluxScvfIndexSet_(), localScvfIdx);
+                auto colIdx = this->findIndexInVector(this->fluxScvfIndexSet_(), localScvfIdx);
                 if (!isRHS) mc.AF[rowIdx][colIdx] += aij;
                 if (isFluxEq) A[eqSystemIdx][colIdx] += aij;
             }
             else
             {
                 Scalar bij = factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
-                auto colIdx = this->localScvs_.size() + this->findLocalIndex(this->dirichletScvfIndexSet_(), localScvfIdx);
+                auto colIdx = this->localScvs_.size() + this->findIndexInVector(this->dirichletScvfIndexSet_(), localScvfIdx);
                 if (!isRHS) mc.BF[rowIdx][colIdx] += bij;
                 if (isFluxEq) B[eqSystemIdx][colIdx] += bij;
             }
@@ -355,7 +364,7 @@ private:
         localD *= localScv.geometry().integrationElement(ipLocal);
 
         // add matrix entries for the pressure in the cell center
-        auto cellPressureIdx = this->findLocalIndex(this->volVarsStencil(), localScv.globalIndex());
+        auto cellPressureIdx = this->findIndexInVector(this->volVarsStencil(), localScv.globalIndex());
         mc.BL[divEqIdx_][cellPressureIdx] += factor*(localD[normalDir]*shapeJacobian[0][0]);
 
         // Add entries from the local scv faces
@@ -365,12 +374,12 @@ private:
 
             if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
-                auto colIdx = this->findLocalIndex(this->fluxScvfIndexSet_(), localScvfIdx);
+                auto colIdx = this->findIndexInVector(this->fluxScvfIndexSet_(), localScvfIdx);
                 mc.AL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
             }
             else
             {
-                auto colIdx = this->localScvs_.size() + this->findLocalIndex(this->dirichletScvfIndexSet_(), localScvfIdx);
+                auto colIdx = this->localScvs_.size() + this->findIndexInVector(this->dirichletScvfIndexSet_(), localScvfIdx);
                 mc.BL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
             }
         }

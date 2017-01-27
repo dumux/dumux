@@ -63,7 +63,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -196,24 +195,6 @@ public:
 
             return fluxVarsCache.tij()*(pInside - pOutside);
         }
-    }
-
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        if (scvf.boundary())
-            return Stencil({scvf.insideScvIdx()});
-        else if (scvf.numOutsideScvs() > 1)
-        {
-            Stencil stencil({scvf.insideScvIdx()});
-            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-                stencil.push_back(scvf.outsideScvIdx(i));
-            return stencil;
-        }
-        else
-            return Stencil({scvf.insideScvIdx(), scvf.outsideScvIdx()});
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations

@@ -57,6 +57,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -77,6 +78,7 @@ public:
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
     {
         const auto geometry = element.geometry();
@@ -87,10 +89,6 @@ public:
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
         localBasis.evaluateFunction(ipLocal, shapeValues_); // do we need the shapeValues for the flux?
-
-        // The stencil info is obsolete for the box method.
-        // It is here for compatibility with cc methods
-        stencil_ = Stencil(0);
     }
 
     const std::vector<ShapeJacobian>& shapeJacobian() const
@@ -102,6 +100,8 @@ public:
     const JacobianInverseTransposed& jacInvT() const
     { return jacInvT_; }
 
+    // The stencil info is obsolete for the box method.
+    // It is here for compatibility with cc methods
     const Stencil& stencil() const
     {
         return stencil_;
@@ -138,8 +138,7 @@ public:
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
     {
-        FluxVariables fluxVars;
-        stencil_ = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
+        stencil_ = FluxVariables::computeStencil(problem, element, fvGeometry, scvf);
         tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
     }
 
@@ -174,64 +173,70 @@ class MpfaAdvectionCache
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
 
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+
+    static constexpr bool facetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     // We always use the dynamic types here to be compatible on the boundary
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
-    using TransmissibilityVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
     using PositionVector = typename BoundaryInteractionVolume::PositionVector;
 
 public:
-    MpfaAdvectionCache() { phaseNeumannFluxes_.fill(0.0); }
-
     //! update cached objects
-    template<typename InteractionVolume>
-    void updateAdvection(const SubControlVolumeFace &scvf,
-                         const InteractionVolume& interactionVolume)
+    template<class InteractionVolume, class LocalFaceData>
+    void updateAdvection(const InteractionVolume& interactionVolume,
+                         const SubControlVolumeFace &scvf,
+                         const LocalFaceData& scvfLocalFaceData)
     {
-        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
-        volVarsStencil_ = interactionVolume.volVarsStencil();
-        volVarsPositions_ = interactionVolume.volVarsPositions();
-        tij_ = interactionVolume.getTransmissibilities(localFaceData);
-    }
+        // update the quantities that are equal for all phases
+        advectionVolVarsStencil_ = interactionVolume.volVarsStencil();
+        advectionVolVarsPositions_ = interactionVolume.volVarsPositions();
+        advectionTij_ = interactionVolume.getTransmissibilities(scvfLocalFaceData);
 
-    //! update cached neumann boundary flux
-    template<typename InteractionVolume>
-    void updatePhaseNeumannFlux(const SubControlVolumeFace &scvf,
-                                const InteractionVolume& interactionVolume,
-                                const unsigned int phaseIdx)
-    {
-        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
-        phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(localFaceData);
+        // we will need the neumann flux transformation only on interior boundaries with facet coupling
+        if (enableInteriorBoundaries && facetCoupling)
+            advectionCij_ = interactionVolume.getNeumannFluxTransformationCoefficients(scvfLocalFaceData);
+
+        // The neumann fluxes always have to be set per phase
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            phaseNeumannFluxes_[phaseIdx] = interactionVolume.getNeumannFlux(scvfLocalFaceData, phaseIdx);
     }
 
     //! Returns the volume variables indices necessary for flux computation
     //! This includes all participating boundary volume variables. Since we
     //! do not allow mixed BC for the mpfa this is the same for all phases.
-    const Stencil& advectionVolVarsStencil(const unsigned int phaseIdx) const
-    { return volVarsStencil_; }
+    const Stencil& advectionVolVarsStencil() const
+    { return advectionVolVarsStencil_; }
 
     //! Returns the position on which the volume variables live. This is
     //! necessary as we need to evaluate gravity also for the boundary volvars
-    const PositionVector& advectionVolVarsPositions(const unsigned int phaseIdx) const
-    { return volVarsPositions_; }
+    const PositionVector& advectionVolVarsPositions() const
+    { return advectionVolVarsPositions_; }
 
     //! Returns the transmissibilities associated with the volume variables
     //! All phases flow through the same rock, thus, tij are equal for all phases
-    const TransmissibilityVector& advectionTij(const unsigned int phaseIdx) const
-    { return tij_; }
+    const CoefficientVector& advectionTij() const
+    { return advectionTij_; }
+
+    //! Returns the vector of coefficients with which the vector of neumann boundary conditions
+    //! has to be multiplied in order to transform them on the scvf this cache belongs to
+    const CoefficientVector& advectionCij() const
+    { return advectionCij_; }
 
     //! If the useTpfaBoundary property is set to false, the boundary conditions
     //! are put into the local systems leading to possible contributions on all faces
-    Scalar advectionNeumannFlux(const unsigned int phaseIdx) const
+    Scalar advectionNeumannFlux(unsigned int phaseIdx) const
     { return phaseNeumannFluxes_[phaseIdx]; }
 
 private:
     // Quantities associated with advection
-    Stencil volVarsStencil_;
-    PositionVector volVarsPositions_;
-    TransmissibilityVector tij_;
+    Stencil advectionVolVarsStencil_;
+    PositionVector advectionVolVarsPositions_;
+    CoefficientVector advectionTij_;
+    CoefficientVector advectionCij_;
     std::array<Scalar, numPhases> phaseNeumannFluxes_;
 };
 
@@ -246,43 +251,76 @@ class MpfaDiffusionCache
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     // We always use the dynamic types here to be compatible on the boundary
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
-    using TransmissibilityVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
     using PositionVector = typename BoundaryInteractionVolume::PositionVector;
 
 public:
+    //! The constructor. Initializes the Neumann flux to zero
+    MpfaDiffusionCache() { componentNeumannFluxes_.fill(0.0); }
+
     // update cached objects for the diffusive fluxes
-    template<typename InteractionVolume>
-    void updateDiffusion(const SubControlVolumeFace &scvf,
-                         const InteractionVolume& interactionVolume,
-                         const unsigned int phaseIdx,
-                         const unsigned int compIdx)
+    template<typename InteractionVolume, class LocalFaceData>
+    void updateDiffusion(const InteractionVolume& interactionVolume,
+                         const SubControlVolumeFace &scvf,
+                         const LocalFaceData& scvfLocalFaceData,
+                         unsigned int phaseIdx,
+                         unsigned int compIdx)
     {
-        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
         diffusionVolVarsStencils_[phaseIdx][compIdx] = interactionVolume.volVarsStencil();
-        diffusionTij_[phaseIdx][compIdx] = interactionVolume.getTransmissibilities(localFaceData);
+        diffusionTij_[phaseIdx][compIdx] = interactionVolume.getTransmissibilities(scvfLocalFaceData);
+
+        if (enableInteriorBoundaries)
+            diffusionCij_[phaseIdx][compIdx] = interactionVolume.getNeumannFluxTransformationCoefficients(scvfLocalFaceData);
+
+        //! For compositional models, we associate neumann fluxes with the phases (main components)
+        //! This is done in the AdvectionCache. However, in single-phasic models we solve the phase AND
+        //! the component mass balance equations. Thus, in this case we have diffusive neumann contributions.
+        //! we assume compIdx = eqIdx
+        if (numPhases == 1 && phaseIdx != compIdx)
+            componentNeumannFluxes_[compIdx] = interactionVolume.getNeumannFlux(scvfLocalFaceData, compIdx);
+
     }
 
     //! Returns the volume variables indices necessary for diffusive flux
     //! computation. This includes all participating boundary volume variables
     //! and it can be different for the phases & components.
-    const Stencil& diffusionVolVarsStencil(const unsigned int phaseIdx,
-                                           const unsigned int compIdx) const
+    const Stencil& diffusionVolVarsStencil(unsigned int phaseIdx,
+                                           unsigned int compIdx) const
     { return diffusionVolVarsStencils_[phaseIdx][compIdx]; }
 
     //! Returns the transmissibilities associated with the volume variables
     //! This can be different for the phases & components.
-    const TransmissibilityVector& diffusionTij(const unsigned int phaseIdx,
-                                               const unsigned int compIdx) const
+    const CoefficientVector& diffusionTij(unsigned int phaseIdx,
+                                          unsigned int compIdx) const
     { return diffusionTij_[phaseIdx][compIdx]; }
+
+    //! Returns the vector of coefficients with which the vector of neumann boundary conditions
+    //! has to be multiplied in order to transform them on the scvf this cache belongs to
+    const CoefficientVector& diffusionCij(unsigned int phaseIdx,
+                                          unsigned int compIdx) const
+    { return diffusionCij_[phaseIdx][compIdx]; }
+
+    //! If the useTpfaBoundary property is set to false, the boundary conditions
+    //! are put into the local systems leading to possible contributions on all faces
+    Scalar componentNeumannFlux(unsigned int compIdx) const
+    {
+        assert(numPhases == 1);
+        return componentNeumannFluxes_[compIdx];
+    }
 
 private:
     // Quantities associated with molecular diffusion
     std::array< std::array<Stencil, numComponents>, numPhases> diffusionVolVarsStencils_;
-    std::array< std::array<TransmissibilityVector, numComponents>, numPhases> diffusionTij_;
+    std::array< std::array<CoefficientVector, numComponents>, numPhases> diffusionTij_;
+    std::array< std::array<CoefficientVector, numComponents>, numPhases> diffusionCij_;
+
+    // diffusive neumann flux for single-phasic models
+    std::array<Scalar, numComponents> componentNeumannFluxes_;
 };
 
 //! Base class for the heat conduction cache in mpfa methods
@@ -297,27 +335,23 @@ class MpfaHeatConductionCache
     // We always use the dynamic types here to be compatible on the boundary
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
-    using TransmissibilityVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
+
+    static constexpr int energyEqIdx = GET_PROP_TYPE(TypeTag, Indices)::energyEqIdx;
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 public:
-    MpfaHeatConductionCache() : heatNeumannFlux_(0.0) {}
-
     // update cached objects for heat conduction
-    template<typename InteractionVolume>
-    void updateHeatConduction(const SubControlVolumeFace &scvf,
-                              const InteractionVolume& interactionVolume)
+    template<typename InteractionVolume, class LocalFaceData>
+    void updateHeatConduction(const InteractionVolume& interactionVolume,
+                              const SubControlVolumeFace &scvf,
+                              const LocalFaceData& scvfLocalFaceData)
     {
-        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
         heatConductionVolVarsStencil_ = interactionVolume.volVarsStencil();
-        heatConductionTij_ = interactionVolume.getTransmissibilities(localFaceData);
-    }
+        heatConductionTij_ = interactionVolume.getTransmissibilities(scvfLocalFaceData);
+        heatNeumannFlux_ = interactionVolume.getNeumannFlux(scvfLocalFaceData, energyEqIdx);
 
-    // update cached objects for heat conduction
-    template<typename InteractionVolume>
-    void updateHeatNeumannFlux(const SubControlVolumeFace &scvf,
-                               const InteractionVolume& interactionVolume)
-    {
-        const auto& localFaceData = interactionVolume.getLocalFaceData(scvf);
-        heatNeumannFlux_ = interactionVolume.getNeumannFlux(localFaceData);
+        if (enableInteriorBoundaries)
+            heatConductionCij_ = interactionVolume.getNeumannFluxTransformationCoefficients(scvfLocalFaceData);
     }
 
     //! Returns the volume variables indices necessary for heat conduction flux
@@ -328,8 +362,13 @@ public:
 
     //! Returns the transmissibilities associated with the volume variables
     //! This can be different for the phases & components.
-    const TransmissibilityVector& heatConductionTij() const
+    const CoefficientVector& heatConductionTij() const
     { return heatConductionTij_; }
+
+    //! Returns the vector of coefficients with which the vector of neumann boundary conditions
+    //! has to be multiplied in order to transform them on the scvf this cache belongs to
+    const CoefficientVector& heatConductionCij() const
+    { return heatConductionCij_; }
 
     //! If the useTpfaBoundary property is set to false, the boundary conditions
     //! are put into the local systems leading to possible contributions on all faces
@@ -339,7 +378,8 @@ public:
 private:
     // Quantities associated with heat conduction
     Stencil heatConductionVolVarsStencil_;
-    TransmissibilityVector heatConductionTij_;
+    CoefficientVector heatConductionTij_;
+    CoefficientVector heatConductionCij_;
     Scalar heatNeumannFlux_;
 };
 
@@ -349,168 +389,104 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
        : public MpfaPorousMediumFluxVariablesCache<TypeTag,
                                                    GET_PROP_VALUE(TypeTag, EnableAdvection),
                                                    GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
-                                                   GET_PROP_VALUE(TypeTag, EnableEnergyBalance)> {};
-
-// specialization for the case of pure advection
-template<class TypeTag>
-class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false>
-             : public MpfaAdvectionCache<TypeTag>
+                                                   GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
 {
-    using AdvectionCache = MpfaAdvectionCache<TypeTag>;
+    using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ParentType = MpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
+                                                                   GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
+                                                                   GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+
+    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
 public:
     //! the constructor
-    MpfaPorousMediumFluxVariablesCache()
-    : AdvectionCache(),
-      isUpdated_(false)
+    PorousMediumFluxVariablesCacheImplementation()
+    : ParentType(),
+      isUpdated_(false),
+      interiorBoundaryInfoSelf_(false, -1)
     {}
 
     //! Returns whether or not this cache has been updated
     bool isUpdated() const
     { return isUpdated_; }
 
-    //! Sets the update status from outside. Allows an update of the cache specific
-    //! to processes that have solution dependent parameters, e.g. only updating
-    //! the diffusion transmissibilities leaving the advective ones untouched
+    //! Sets the update status from outside. This is used to only update
+    //! the cache once after solving the local system. When visiting an scvf
+    //! of the same interaction region again, the update is skipped.
     void setUpdateStatus(const bool status)
     {
         isUpdated_ = status;
     }
 
+    //! maybe update data on interior Dirichlet boundaries
+    template<class InteractionVolume>
+    void updateInteriorBoundaryData(const InteractionVolume& interactionVolume,
+                                    const SubControlVolumeFace &scvf)
+    {
+        if (enableInteriorBoundaries)
+        {
+            interiorBoundaryData_ = interactionVolume.interiorBoundaryData();
+
+            // check if the actual scvf is on an interior Dirichlet boundary
+            const auto scvfIdx = scvf.index();
+            unsigned int indexInData = 0;
+            for (auto&& data : interiorBoundaryData_)
+            {
+                if (data.scvfIndex() == scvfIdx)
+                {
+                    interiorBoundaryInfoSelf_ = std::make_pair(true, indexInData);
+                    break;
+                }
+
+                indexInData++;
+            }
+        }
+    }
+
+    bool isInteriorBoundary() const
+    { return interiorBoundaryInfoSelf_.first; }
+
+    const std::vector<InteriorBoundaryData>& interiorBoundaryData() const
+    { return interiorBoundaryData_; }
+
+    const InteriorBoundaryData& interiorBoundaryDataSelf() const
+    {
+        assert(interiorBoundaryInfoSelf_.first && "Trying to obtain interior boundary data on a face that is not marked as such");
+        assert(interiorBoundaryInfoSelf_.second != -1 && "The index to the interior boundary data of this face has not been set");
+        return interiorBoundaryData_[interiorBoundaryInfoSelf_.second];
+    }
+
 private:
+    // indicates whether or not this cache has been fully updated
     bool isUpdated_;
+
+    // if this face is an interior Dirichlet boundary itself, store additional data
+    std::pair<bool, unsigned int> interiorBoundaryInfoSelf_;
+
+    // contains all the interior Dirichlet boundary data within the stencil of this face
+    std::vector<InteriorBoundaryData> interiorBoundaryData_;
 };
+
+// specialization for the case of pure advection
+template<class TypeTag>
+class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public MpfaAdvectionCache<TypeTag> {};
 
 // specialization for the case of advection & diffusion
 template<class TypeTag>
-class MpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false>
-             : public MpfaAdvectionCache<TypeTag>,
-               public MpfaDiffusionCache<TypeTag>
-{
-    using AdvectionCache = MpfaAdvectionCache<TypeTag>;
-    using DiffusionCache = MpfaDiffusionCache<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-
-public:
-    // the constructor
-    MpfaPorousMediumFluxVariablesCache()
-    : AdvectionCache(),
-      DiffusionCache(),
-      isUpdated_(false)
-    {}
-
-    //! For compositional problems, neumann fluxes are not associated with a phase anymore
-    //! TODO: How to implement neumann fluxes for !useTpfa
-    template<typename InteractionVolume>
-    void updatePhaseNeumannFlux(const SubControlVolumeFace &scvf,
-                                const InteractionVolume& interactionVolume,
-                                const unsigned int phaseIdx) {}
-
-    //! TODO: How to implement neumann fluxes for !useTpfa
-    Scalar advectionNeumannFlux(const unsigned int phaseIdx) const
-    { return 0.0; }
-
-    //! Returns whether or not this cache has been updated
-    bool isUpdated() const
-    { return isUpdated_; }
-
-    //! Sets the update status from outside. Allows an update of the cache specific
-    //! to processes that have solution dependent parameters, e.g. only updating
-    //! the diffusion transmissibilities leaving the advective ones untouched
-    void setUpdateStatus(const bool status)
-    {
-        isUpdated_ = status;
-    }
-
-private:
-    bool isUpdated_;
-};
+class MpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false> : public MpfaAdvectionCache<TypeTag>,
+                                                                       public MpfaDiffusionCache<TypeTag> {};
 
 // specialization for the case of advection & heat conduction
 template<class TypeTag>
-class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, true>
-             : public MpfaAdvectionCache<TypeTag>,
-               public MpfaHeatConductionCache<TypeTag>
-{
-    using AdvectionCache = MpfaAdvectionCache<TypeTag>;
-    using HeatConductionCache = MpfaHeatConductionCache<TypeTag>;
-
-public:
-    // the constructor
-    MpfaPorousMediumFluxVariablesCache()
-    : AdvectionCache(),
-      HeatConductionCache(),
-      isUpdated_(false)
-    {}
-
-    //! Returns whether or not this cache has been updated
-    bool isUpdated() const
-    { return isUpdated_; }
-
-    //! Sets the update status from outside. Allows an update of the cache specific
-    //! to processes that have solution dependent parameters, e.g. only updating
-    //! the diffusion transmissibilities leaving the advective ones untouched
-    void setUpdateStatus(const bool status)
-    {
-        isUpdated_ = status;
-    }
-
-private:
-    bool isUpdated_;
-};
+class MpfaPorousMediumFluxVariablesCache<TypeTag, true, false, true> : public MpfaAdvectionCache<TypeTag>,
+                                                                       public MpfaHeatConductionCache<TypeTag> {};
 
 // specialization for the case of advection, diffusion & heat conduction
 template<class TypeTag>
-class MpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true>
-             : public MpfaAdvectionCache<TypeTag>,
-               public MpfaDiffusionCache<TypeTag>,
-               public MpfaHeatConductionCache<TypeTag>
-{
-    using AdvectionCache = MpfaAdvectionCache<TypeTag>;
-    using DiffusionCache = MpfaDiffusionCache<TypeTag>;
-    using HeatConductionCache = MpfaHeatConductionCache<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-
-public:
-    // the constructor
-    MpfaPorousMediumFluxVariablesCache()
-    : AdvectionCache(),
-      DiffusionCache(),
-      HeatConductionCache(),
-      isUpdated_(false)
-    {}
-
-    //! TODO: How to implement neumann fluxes for !useTpfa when diffusion/heat conduction is active?
-    template<typename InteractionVolume>
-    void updatePhaseNeumannFlux(const SubControlVolumeFace &scvf,
-                                const InteractionVolume& interactionVolume,
-                                const unsigned int phaseIdx) {}
-
-
-    //! This method is needed for compatibility reasons
-    //! TODO: How to implement neumann fluxes for !useTpfa when diffusion is active?
-    Scalar advectionNeumannFlux(const unsigned int phaseIdx) const
-    { return 0.0; }
-
-    //! Returns whether or not this cache has been updated
-    bool isUpdated() const
-    { return isUpdated_; }
-
-    //! Sets the update status from outside. Allows an update of the cache specific
-    //! to processes that have solution dependent parameters, e.g. only updating
-    //! the diffusion transmissibilities leaving the advective ones untouched
-    void setUpdateStatus(const bool status)
-    {
-        isUpdated_ = status;
-    }
-
-private:
-    bool isUpdated_;
-};
+class MpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public MpfaAdvectionCache<TypeTag>,
+                                                                      public MpfaDiffusionCache<TypeTag>,
+                                                                      public MpfaHeatConductionCache<TypeTag> {};
 
 } // end namespace
 

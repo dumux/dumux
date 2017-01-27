@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUMESEED_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include "localsubcontrolentityseeds.hh"
 
 namespace Dumux
@@ -45,13 +46,13 @@ public:
 
     CCMpfaOInteractionVolumeSeed(std::vector<LocalScvSeed>&& scvSeeds,
                                  std::vector<LocalScvfSeed>&& scvfSeeds,
-                                 bool onBoundary)
-    : onBoundary_(onBoundary),
+                                 bool onDomainOrInteriorBoundary)
+    : onDomainOrInteriorBoundary_(onDomainOrInteriorBoundary),
       scvSeeds_(std::move(scvSeeds)),
       scvfSeeds_(std::move(scvfSeeds)) {}
 
-    bool onBoundary() const
-    { return onBoundary_; }
+    bool onDomainOrInteriorBoundary() const
+    { return onDomainOrInteriorBoundary_; }
 
     const std::vector<LocalScvSeed>& scvSeeds() const
     { return scvSeeds_; }
@@ -78,15 +79,18 @@ public:
         for (auto&& localScvfSeed : scvfSeeds())
         {
             globalIndices.push_back(localScvfSeed.insideGlobalScvfIndex());
-            for (auto scvfIdxGlobal : localScvfSeed.outsideGlobalScvfIndices())
-                globalIndices.push_back(scvfIdxGlobal);
+
+            // add outside indices for interior faces
+            if (localScvfSeed.faceType() == MpfaFaceTypes::interior)
+                for (auto scvfIdxGlobal : localScvfSeed.outsideGlobalScvfIndices())
+                    globalIndices.push_back(scvfIdxGlobal);
         }
 
         return globalIndices;
     }
 
 private:
-    bool onBoundary_;
+    bool onDomainOrInteriorBoundary_;
     std::vector<LocalScvSeed> scvSeeds_;
     std::vector<LocalScvfSeed> scvfSeeds_;
 };

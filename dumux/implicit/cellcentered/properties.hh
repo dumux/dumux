@@ -44,6 +44,7 @@ namespace Properties
 NEW_TYPE_TAG(CCModel, INHERITS_FROM(ImplicitBase));
 
 NEW_PROP_TAG(AssemblyMap);
+NEW_PROP_TAG(EnableInteriorBoundaries); //! Enables or disables the use of internal boundaries on interior scvfs
 }
 }
 

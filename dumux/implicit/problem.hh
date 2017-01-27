@@ -1019,6 +1019,21 @@ public:
     { return std::vector<IndexType>(); }
 
     /*!
+     * \brief Function to set intersections as interior boundaries. This functionality is only
+     *        available for models using cell-centered schemes. The corresponding boundary
+     *        types and conditions are obtained from the standard methods.
+     *
+     * \param element The finite element
+     * \param intersection The intersection within the element
+     * \return boolean to mark an intersection as an interior boundary
+     *
+     * Per default we don't have interior boundaries
+     */
+    template<class T = TypeTag>
+    bool isInteriorBoundary(const Element& element, const Intersection& intersection) const
+    { return false; }
+
+    /*!
      * \brief Capability to introduce problem-specific routines at the
      * beginning of the grid adaptation
      *

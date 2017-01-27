@@ -136,9 +136,7 @@ public:
     CCMpfaOLocalScvf(const LocalScvfSeed& scvfSeed,
                      const SubControlVolumeFace& scvf)
     : seedPtr_(&scvfSeed),
-      ip_(scvf.ipGlobal()),
-      normal_(scvf.unitOuterNormal()),
-      area_(scvf.area())
+      scvfPtr_(&scvf)
     {}
 
     GlobalIndexType insideGlobalScvfIndex() const
@@ -172,25 +170,26 @@ public:
     { return scvfSeed_().faceType(); }
 
     GlobalPosition ip() const
-    { return ip_; }
+    { return globalScvf().ipGlobal(); }
 
     GlobalPosition unitOuterNormal() const
-    { return normal_; }
+    { return globalScvf().unitOuterNormal(); }
 
     Scalar area() const
-    { return area_; }
+    { return globalScvf().area(); }
 
     bool boundary() const
     { return scvfSeed_().boundary(); }
+
+    const SubControlVolumeFace& globalScvf() const
+    { return *scvfPtr_; }
 
 private:
     const LocalScvfSeed& scvfSeed_() const
     { return *seedPtr_; }
 
     const LocalScvfSeed* seedPtr_;
-    GlobalPosition ip_;
-    GlobalPosition normal_;
-    Scalar area_;
+    const SubControlVolumeFace* scvfPtr_;
 };
 } // end namespace
 

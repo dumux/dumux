@@ -79,6 +79,7 @@ public:
         LocalIndexType localScvIndex;
         bool isOutside;
 
+        //! Constructor fully initializing the members
         LocalFaceData(const LocalIndexType faceIndex,
                       const LocalIndexType scvIndex,
                       bool isOut)
@@ -113,12 +114,12 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getTransmissibilities() method."); }
 
     //! returns the neumann flux corresponding to a local scvf
-    Scalar getNeumannFlux(const LocalFaceData& localFaceData) const
+    Scalar getNeumannFlux(const LocalFaceData& localFaceData, unsigned int eqIdx) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getNeumannFlux() method."); }
 
     //! returns the local index in a vector for a given global index
     template<typename IdxType1, typename IdxType2>
-    LocalIndexType findLocalIndex(const std::vector<IdxType1>& vector, const IdxType2 globalIdx) const
+    LocalIndexType findIndexInVector(const std::vector<IdxType1>& vector, const IdxType2 globalIdx) const
     {
         auto it = std::find(vector.begin(), vector.end(), globalIdx);
         assert(it != vector.end() && "could not find local index in the vector for the given global index!");
