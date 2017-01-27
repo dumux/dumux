@@ -38,24 +38,22 @@ namespace Dumux {
 template <class TypeTag>
 class RichardsNewtonController : public NewtonController<TypeTag>
 {
-    typedef NewtonController<TypeTag> ParentType;
+    using ParentType = NewtonController<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    enum { pressureIdx = Indices::pressureIdx };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum { pwIdx = Indices::pwIdx };
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum { dim = GridView::dimension };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
-    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
     /*!
@@ -82,46 +80,46 @@ public:
     {
         ParentType::newtonUpdate(uCurrentIter, uLastIter, deltaU);
 
-        if ( (!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch)) && (!useHead) )
+        if ((!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch)))
         {
             // do not clamp anything after 5 iterations
             if (this->numSteps_ > 4)
                 return;
 
             // clamp saturation change to at most 20% per iteration
-            FVElementGeometry fvGeometry;
-            const GridView &gridView = this->problem_().gridView();
-            for (const auto& element : elements(gridView)) {
-                fvGeometry.update(gridView, element);
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            const auto gridView = this->problem_().gridView();
+            for (const auto& element : elements(gridView))
+            {
+                auto fvGeometry = localView(this->model_().globalFvGeometry());
+                fvGeometry.bindElement(element);
+
+                for (auto&& scv : scvs(fvGeometry))
                 {
-                    int dofIdxGlobal = this->model_().dofMapper().subIndex(element, scvIdx, dofCodim);
+                    auto dofIdxGlobal = scv.dofIndex();
 
                     // calculate the old wetting phase saturation
-                    const SpatialParams &spatialParams = this->problem_().spatialParams();
-                    const MaterialLawParams &mp = spatialParams.materialLawParams(element, fvGeometry, scvIdx);
-                    Scalar pcMin = MaterialLaw::pc(mp, 1.0);
-                    Scalar pw = uLastIter[dofIdxGlobal][pwIdx];
-                    Scalar pn = std::max(this->problem_().referencePressure(element, fvGeometry, scvIdx),
-                                         pw + pcMin);
-                    Scalar pcOld = pn - pw;
-                    Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(mp, pcOld));
+                    const auto& spatialParams = this->problem_().spatialParams();
+                    const auto& elemSol = this->model_().elementSolution(element, this->model_().curSol());
+                    const MaterialLawParams &materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
+                    const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
+                    const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
+                    const Scalar pn = std::max(this->problem_().nonWettingReferencePressure(), pw + pcMin);
+                    const Scalar pcOld = pn - pw;
+                    const Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(materialLawParams, pcOld));
 
                     // convert into minimum and maximum wetting phase
                     // pressures
-                    Scalar pwMin = pn - MaterialLaw::pc(mp, SwOld - 0.2);
-                    Scalar pwMax = pn - MaterialLaw::pc(mp, SwOld + 0.2);
+                    const Scalar pwMin = pn - MaterialLaw::pc(materialLawParams, SwOld - 0.2);
+                    const Scalar pwMax = pn - MaterialLaw::pc(materialLawParams, SwOld + 0.2);
 
                     // clamp the result
-                    pw = uCurrentIter[dofIdxGlobal][pwIdx];
-                    pw = std::max(pwMin, std::min(pw, pwMax));
-                    uCurrentIter[dofIdxGlobal][pwIdx] = pw;
-
+                    uCurrentIter[dofIdxGlobal][pressureIdx] = std::max(pwMin, std::min(uCurrentIter[dofIdxGlobal][pressureIdx], pwMax));
                 }
             }
         }
     }
 };
-}
+
+} // end namespace Dumux
 
 #endif

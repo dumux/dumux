@@ -119,7 +119,7 @@ public:
      *
      * \param phaseIdx index of the phase
      */
-    static const char *phaseName(int phaseIdx)
+    static const std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
         case wPhaseIdx: return "liquid";
@@ -223,7 +223,7 @@ public:
      *
      * \param compIdx index of the component
      */
-    static const char *componentName(int compIdx)
+    static const std::string componentName(int compIdx)
     {
         switch (compIdx)
         {

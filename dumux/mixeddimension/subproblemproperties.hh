@@ -18,48 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Index names for the Richards model.
+ * \ingroup MixedDimension
+ * \brief Base class for subproblems of coupled problems
  */
-#ifndef DUMUX_RICHARDS_INDICES_HH
-#define DUMUX_RICHARDS_INDICES_HH
+#ifndef DUMUX_SUB_PROBLEM_PROPERTIES_HH
+#define DUMUX_SUB_PROBLEM_PROPERTIES_HH
 
-#include "properties.hh"
+#include <dumux/common/propertysystem.hh>
 
 namespace Dumux
 {
-// \{
-
-/*!
- * \ingroup RichardsModel
- * \ingroup ImplicitIndices
- * \brief Index names for the Richards model.
- */
-
-template <class TypeTag>
-struct RichardsIndices
+namespace Properties
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    //////////
-    // primary variable indices
-    //////////
-
-    //! Primary variable index for the wetting phase pressure
-    static const int pressureIdx = 0;
-    //////////
-    // equation indices
-    //////////
-    //! Equation index for the mass conservation of the wetting phase
-    static const int conti0EqIdx = 0;
-
-    //////////
-    // phase indices
-    //////////
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase;
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase;
-};
-// \}
-
-} // end namespace Dumux
-
+    //! The type of the coupling manager
+    NEW_PROP_TAG(GlobalProblemTypeTag);
+    NEW_PROP_TAG(CouplingManager);
+}
+}
 #endif

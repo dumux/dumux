@@ -27,7 +27,7 @@
 #include "properties.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/implicit/volumevariables.hh>
+#include <dumux/discretization/volumevariables.hh>
 
 namespace Dumux
 {
@@ -43,112 +43,85 @@ namespace Dumux
 template <class TypeTag>
 class RichardsVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
-    enum{hIdx = Indices::hIdx,
-         pwIdx = Indices::pwIdx,
+    enum{
+         pressureIdx = Indices::pressureIdx,
          wPhaseIdx = Indices::wPhaseIdx,
          nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const bool isOldSol)
+                const SubControlVolume& scv)
     {
         assert(!FluidSystem::isLiquid(nPhaseIdx));
 
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
-
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
         //////////
         // specify the other parameters
         //////////
-        const MaterialLawParams &matParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        relativePermeabilityWetting_ =
-            MaterialLaw::krw(matParams,
-                             fluidState_.saturation(wPhaseIdx));
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        porosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
+        relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
+        pnRef_ = problem.nonWettingReferencePressure();
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        // energy related quantities not belonging to the fluid state
+        asImp_().updateEnergy_(elemSol, problem, element, scv);
     }
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const int scvIdx,
+                                   const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        // temperature
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                fvGeometry, scvIdx);
+        Scalar t = Implementation::temperature_(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        const MaterialLawParams &matParams =
-                problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
-        pnRef_ = problem.referencePressure(element, fvGeometry, scvIdx);
-        gravity_ = problem.gravity().two_norm();
+        const Scalar minPc = MaterialLaw::pc(materialParams, 1.0);
+        fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
+        fluidState.setPressure(nPhaseIdx, std::max(problem.nonWettingReferencePressure(), priVars[pressureIdx] + minPc));
 
-        // pressure head formulation
-        if (useHead){
-            Scalar pw = (0.01*priVars[hIdx])*1000.0 * gravity_ ;
-            fluidState.setPressure(wPhaseIdx, pw);
-            fluidState.setPressure(nPhaseIdx, 0.0);
+        // saturations
+        const Scalar sw = MaterialLaw::sw(materialParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
+        fluidState.setSaturation(wPhaseIdx, sw);
+        fluidState.setSaturation(nPhaseIdx, 1 - sw);
 
-            // saturations
-            Scalar sw = MaterialLaw::sw(matParams,-fluidState.pressure(wPhaseIdx));
-            fluidState.setSaturation(wPhaseIdx, sw);
-            fluidState.setSaturation(nPhaseIdx, 1 - sw);
-        }
-        else{ //pressure formulation
-
-            Scalar minPc = MaterialLaw::pc(matParams, 1.0);
-            fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
-            fluidState.setPressure(nPhaseIdx, std::max(pnRef_, priVars[pwIdx] + minPc));
-
-            // saturations
-            Scalar sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
-            fluidState.setSaturation(wPhaseIdx, sw);
-            fluidState.setSaturation(nPhaseIdx, 1 - sw);
-        }
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
@@ -179,6 +152,12 @@ public:
      */
     Scalar porosity() const
     { return porosity_; }
+
+    /*!
+     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     */
+    PermeabilityType permeability() const
+    { return permeability_; }
 
     /*!
      * \brief Returns the average absolute saturation [] of a given
@@ -263,11 +242,7 @@ public:
      */
     Scalar capillaryPressure() const
     {
-        // pressure head formulation
-        if (useHead)
-            return -fluidState_.pressure(wPhaseIdx);
-        else // pressure  formulation
-            return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
+        return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
     }
 
     /*!
@@ -280,14 +255,13 @@ public:
      * defined by the problem.
      *
      * \param phaseIdx The index of the fluid phase
+     * \note this function is here as a convenience to the user to not have to
+     *       manually do a conversion. It is not correct if the density is not constant
+     *       or the gravity different
      */
     Scalar pressureHead(const int phaseIdx) const
     {
-        // pressure head formulation
-        if (useHead)
-            return (100.) *(fluidState_.pressure(phaseIdx))/ fluidState_.density(phaseIdx)/ gravity_;
-        else // pressure  formulation
-            return (100.) *(fluidState_.pressure(phaseIdx) - pnRef_)/ fluidState_.density(phaseIdx)/ gravity_;
+        return 100.0 *(fluidState_.pressure(phaseIdx) - pnRef_)/fluidState_.density(phaseIdx)/9.81;
     }
 
     /*!
@@ -298,44 +272,45 @@ public:
      * the saturation devided by the porosity
 
      * \param phaseIdx The index of the fluid phase
+     * \note this function is here as a convenience to the user to not have to
+     *       manually do a conversion.
      */
-    Scalar waterContent (const int phaseIdx) const
-    { return fluidState_.saturation(phaseIdx)* porosity_; }
+    Scalar waterContent(const int phaseIdx) const
+    {
+        return fluidState_.saturation(phaseIdx)* porosity_;
+    }
 
 protected:
-    static Scalar temperature_(const PrimaryVariables &primaryVariables,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int scvIdx)
+    static Scalar temperature_(const ElementSolutionVector &elemSol,
+                               const Problem& problem,
+                               const Element &element,
+                               const SubControlVolume &scv)
     {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+        return problem.temperatureAtPos(scv.dofPosition());
     }
 
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,
-                            int phaseIdx)
+                            const int phaseIdx)
     {
         return 0;
     }
 
     /*!
-     * \brief Called by update() to compute the energy related quantities
+     * \brief Called by update() to compute the energy related quantities.
      */
-    void updateEnergy_(const PrimaryVariables &priVars,
+    void updateEnergy_(const ElementSolutionVector &elemSol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       const bool isOldSol)
-    { }
+                       const SubControlVolume& scv)
+    {}
 
     FluidState fluidState_;
     Scalar relativePermeabilityWetting_;
     Scalar porosity_;
-    static Scalar pnRef_;
-    static Scalar gravity_;
+    PermeabilityType permeability_;
+    Scalar pnRef_;
 
 private:
     Implementation &asImp_()
@@ -345,11 +320,6 @@ private:
     { return *static_cast<const Implementation*>(this); }
 };
 
-template <class TypeTag>
-typename RichardsVolumeVariables<TypeTag>::Scalar RichardsVolumeVariables<TypeTag>::pnRef_;
-template <class TypeTag>
-typename RichardsVolumeVariables<TypeTag>::Scalar RichardsVolumeVariables<TypeTag>::gravity_;
-
-}
+} // end namespace Dumux
 
 #endif

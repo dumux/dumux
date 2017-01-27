@@ -68,10 +68,7 @@ NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the Richards model
 NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase
 NEW_PROP_TAG(NonwettingPhase); //!< Fluid which represents the non-wetting phase
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
-NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< The value of the weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
-NEW_PROP_TAG(UseHead); //!< Defines whether pressure [Pa] (false) or pressure head [cm] (true) is used
 
 // \}
 }

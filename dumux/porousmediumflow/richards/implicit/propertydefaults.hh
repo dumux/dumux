@@ -28,16 +28,13 @@
 #ifndef DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 #define DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 
-#include "fluxvariables.hh"
 #include "model.hh"
-#include "problem.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
-#include "newtoncontroller.hh"
 #include "localresidual.hh"
+#include "newtoncontroller.hh"
 
-#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -57,9 +54,6 @@ SET_INT_PROP(Richards, NumEq, 1);
 //! Number of fluid phases considered
 SET_INT_PROP(Richards, NumPhases, 2);
 
-//! Use pressure [Pa] by default
-SET_BOOL_PROP(Richards, UseHead, false);
-
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
@@ -69,17 +63,17 @@ SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
 //! The class for the volume averaged quantities
 SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
-//! The class for the quantities required for the flux calculation
-SET_TYPE_PROP(Richards, FluxVariables, RichardsFluxVariables<TypeTag>);
-
-//! The class of the newton controller
+//! Smarter newton controller
 SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
 
-//! The upwind weight for the mass conservation equations
-SET_SCALAR_PROP(Richards, ImplicitMassUpwindWeight, 1.0);
+//! Enable advection
+SET_BOOL_PROP(Richards, EnableAdvection, true);
 
-//! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(Richards, ImplicitMobilityUpwindWeight, 1.0);
+//! The two-phase model has no molecular diffusion
+SET_BOOL_PROP(Richards, EnableMolecularDiffusion, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
 
 //! The class with all index definitions for the model
 SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
@@ -93,14 +87,7 @@ SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
  *
  * By default this is just retrieved from the material law.
  */
-SET_PROP(Richards, MaterialLawParams)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-
-public:
-    typedef typename MaterialLaw::Params type;
-};
+SET_TYPE_PROP(Richards, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 /*!
  * \brief The wetting phase used.
@@ -112,11 +99,13 @@ public:
  * of the liquid phase is _much_ lower than the viscosity of the
  * wetting phase.
  */
+
 SET_PROP(Richards, WettingPhase)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
+    using type = FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar>>;
 };
 
 /*!
@@ -128,10 +117,11 @@ public:
  * Richards model does not conserve the non-wetting phase.
  */
 SET_PROP(Richards, NonwettingPhase)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::GasPhase<Scalar, NullComponent<Scalar> > type;
+    using type = FluidSystems::GasPhase<Scalar, NullComponent<Scalar>>;
 };
 
 /*!
@@ -144,15 +134,14 @@ public:
  * model only makes very limited sense.
  */
 SET_PROP(Richards, FluidSystem)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = typename GET_PROP_TYPE(TypeTag, WettingPhase);
+    using NonwettingPhase = typename GET_PROP_TYPE(TypeTag, NonwettingPhase);
 
 public:
-    typedef FluidSystems::TwoPImmiscible<Scalar,
-                                                WettingPhase,
-                                                NonwettingPhase> type;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 /*!
@@ -161,15 +150,14 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(Richards, FluidState){
-    private:
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    public:
-        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+SET_PROP(Richards, FluidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
-
-// disable velocity output by default
 
 // enable gravity by default
 SET_BOOL_PROP(Richards, ProblemEnableGravity, true);
@@ -185,14 +173,11 @@ SET_SCALAR_PROP(Richards, SpatialParamsForchCoeff, 0.55);
 SET_PROP(RichardsNI, ThermalConductivityModel)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
-
-//! temperature is already written by the isothermal model
-SET_BOOL_PROP(RichardsNI, NiOutputLevel, 0);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
@@ -200,9 +185,6 @@ SET_BOOL_PROP(RichardsNI, NiOutputLevel, 0);
 
 // set isothermal Model
 SET_TYPE_PROP(RichardsNI, IsothermalModel, RichardsModel<TypeTag>);
-
-// set isothermal FluxVariables
-SET_TYPE_PROP(RichardsNI, IsothermalFluxVariables, RichardsFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
