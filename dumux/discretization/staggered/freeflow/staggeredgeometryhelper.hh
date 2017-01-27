@@ -86,7 +86,10 @@ class BaseStaggeredGeometryHelper
 
     //TODO include assert that checks for quad geometry
     static constexpr int codimCommonEntity = 2; //TODO: 3d?
-    static constexpr int numFacetSubEntities = 2; // TODO: 3d?
+    static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4; // TODO: 3d?
+
+    static constexpr int codimIntersection =  1; // TODO: 3d?
+
 
     using Implementation = typename Dumux::StaggeredGeometryHelper<GridView, dim>;
 
@@ -95,6 +98,15 @@ public:
     : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView)
     {
         fillPairData_();
+
+        if(intersection.neighbor() && ( pairData_[0].normalPair.second < 0 ))
+            std::cout << "wrong 0" << std::endl;
+        if(intersection.neighbor() && ( pairData_[1].normalPair.second < 0 ))
+            std::cout << "wrong 1" << std::endl;
+        if(intersection.neighbor() && ( pairData_[2].normalPair.second < 0 ))
+            std::cout << "wrong 2" << std::endl;
+        if(intersection.neighbor() && ( pairData_[3].normalPair.second < 0 ))
+            std::cout << "wrong 3" << std::endl;
     }
 
      /*!
@@ -104,7 +116,7 @@ public:
     {
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();
-        return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, dim-1);
+        return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
     }
 
      /*!
@@ -114,7 +126,7 @@ public:
     {
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();
-        return gridView_.indexSet().subIndex(this->intersection_.inside(), localOppositeIdx_(inIdx), dim-1);
+        return gridView_.indexSet().subIndex(this->intersection_.inside(), localOppositeIdx_(inIdx), codimIntersection);
     }
 
      /*!
@@ -123,8 +135,8 @@ public:
     Scalar selfToOppositeDistance() const
     {
         const auto inIdx = intersection_.indexInInside();
-        const auto self = element_.template subEntity <1> (inIdx);
-        const auto opposite = element_.template subEntity <1> (localOppositeIdx_(inIdx));
+        const auto self = getFacet_(inIdx, element_);
+        const auto opposite = getFacet_(localOppositeIdx_(inIdx), element_);
         return (self.geometry().center() - opposite.geometry().center()).two_norm();
     }
 
@@ -167,6 +179,7 @@ private:
 
         // get the positions of the faces normal to the intersection within the element
         innerNormalFacePos_.reserve(numPairs);
+
 
         for(int i = 0; i < numPairs; ++i)
         {
@@ -276,13 +289,12 @@ protected:
 
     void setPairInfo_(const int isIdx, const Element& element, const bool isParallel)
     {
-        const int numFacetSubEntities = 2;
         const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
 
         // iterate over facets sub-entities
         for(int i = 0; i < numFacetSubEntities; ++i)
         {
-            int localCommonEntIdx = referenceElement.subEntity(isIdx, 1, i, dim);
+            int localCommonEntIdx = referenceElement.subEntity(isIdx, 1, i, codimCommonEntity);
             int globalCommonEntIdx = localToGlobalCommonEntityIdx_(localCommonEntIdx, element);
 
             // fill the normal pair entries
@@ -291,7 +303,7 @@ protected:
                     if(globalCommonEntIdx == pairData_[pairIdx].globalCommonEntIdx)
                     {
                             auto& dofIdx = isParallel ? pairData_[pairIdx].outerParallelFaceDofIdx : pairData_[pairIdx].normalPair.second;
-                            dofIdx = gridView_.indexSet().subIndex(element, isIdx, dim-1);
+                            dofIdx = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
                             if(isParallel)
                             {
                                     const auto& selfFacet = getFacet_(intersection_.indexInInside(), element_);
@@ -314,7 +326,7 @@ protected:
     {
         for(int i = 0; i < numPairs; ++i)
         {
-            this->pairData_[i].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx[i], dim-1);
+            this->pairData_[i].normalPair.first = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.normalLocalDofIdx[i], codimIntersection);
             this->pairData_[i].globalCommonEntIdx = this->gridView_.indexSet().subIndex(this->intersection_.inside(), indices.localCommonEntIdx[i], codimCommonEntity);
             this->pairData_[i].localNormalFaceIdx = indices.normalLocalDofIdx[i];
         }
@@ -492,6 +504,7 @@ private:
                 indices.localCommonEntIdx[1] = 2;
                 indices.localCommonEntIdx[2] = 7;
                 indices.localCommonEntIdx[3] = 11;
+                break;
             case 4:
                 indices.normalLocalDofIdx[0] = 0;
                 indices.normalLocalDofIdx[1] = 1;
@@ -501,6 +514,7 @@ private:
                 indices.localCommonEntIdx[1] = 5;
                 indices.localCommonEntIdx[2] = 7;
                 indices.localCommonEntIdx[3] = 6;
+                break;
             case 5:
                 indices.normalLocalDofIdx[0] = 0;
                 indices.normalLocalDofIdx[1] = 1;
