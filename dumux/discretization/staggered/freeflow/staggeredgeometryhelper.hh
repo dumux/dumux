@@ -59,25 +59,18 @@ inline static int directionIndex(Vector&& vector)
     return idx;
 }
 
-//! A class to create sub control volume and sub control volume face geometries per element
-template <class GridView, int dim = GridView::dimension >
-class StaggeredGeometryHelper
-{};
-
+//! A class to create face information per intersection
 template<class GridView>
-class BaseStaggeredGeometryHelper
+class StaggeredGeometryHelper
 {
     using Scalar = typename GridView::ctype;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
-
     using ScvGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim, dimWorld>;
     using ScvfGeometry = Dune::CachedMultiLinearGeometry<Scalar, dim-1, dimWorld>;
 
     using GlobalPosition = typename ScvGeometry::GlobalCoordinate;
-    using PointVector = std::vector<GlobalPosition>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -85,28 +78,16 @@ class BaseStaggeredGeometryHelper
     using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
     //TODO include assert that checks for quad geometry
-    static constexpr int codimCommonEntity = 2; //TODO: 3d?
-    static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4; // TODO: 3d?
-
-    static constexpr int codimIntersection =  1; // TODO: 3d?
-
-
-    using Implementation = typename Dumux::StaggeredGeometryHelper<GridView, dim>;
+    static constexpr int codimIntersection =  1;
+    static constexpr int codimCommonEntity = 2;
+    static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4;
+    static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
 
 public:
-    BaseStaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
+    StaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
     : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView)
     {
         fillPairData_();
-
-        if(intersection.neighbor() && ( pairData_[0].normalPair.second < 0 ))
-            std::cout << "wrong 0" << std::endl;
-        if(intersection.neighbor() && ( pairData_[1].normalPair.second < 0 ))
-            std::cout << "wrong 1" << std::endl;
-        if(intersection.neighbor() && ( pairData_[2].normalPair.second < 0 ))
-            std::cout << "wrong 2" << std::endl;
-        if(intersection.neighbor() && ( pairData_[3].normalPair.second < 0 ))
-            std::cout << "wrong 3" << std::endl;
     }
 
      /*!
@@ -174,8 +155,8 @@ private:
         }
 
         // set the inner parts of the normal pairs
-        const auto localIndices = asImp_().getLocalIndices_(localFacetIdx);
-        asImp_().setInnerIndices_(localIndices);
+        const auto localIndices = getLocalIndices_(localFacetIdx);
+        setInnerIndices_(localIndices);
 
         // get the positions of the faces normal to the intersection within the element
         innerNormalFacePos_.reserve(numPairs);
@@ -246,10 +227,9 @@ private:
             }
         }
 
-        asImp_().treatVirtualOuterParallelFaceDofs_();
+        treatVirtualOuterParallelFaceDofs_();
     }
 
-protected:
      /*!
      * \brief Returns the local opposing intersection index
      *
@@ -336,129 +316,41 @@ protected:
     * \brief Sets the position of "virtual" dofs on facets which are perpendicular to facets on the domain boundary.
     *        This is required to account e.g. for wall friction.
     */
-   void treatVirtualOuterParallelFaceDofs_()
-   {
-       // get the local index of the facet we are dealing with in this class
-       const int localIntersectionIdx = this->intersection_.indexInInside();
-
-       // iterate over all intersections of the element, this facet is part of
-       for(const auto& is : intersections(this->gridView_, this->element_))
-       {
-           const int otherIsIdx = is.indexInInside();
-           // check if any of these intersection, which are normal to our facet, lie on the domain boundary
-           if(( !is.neighbor() ) &&  this->facetIsNormal_(localIntersectionIdx, otherIsIdx) )
-           {
-               const auto& elementCenter = this->element_.geometry().center();
-               const auto& boundaryFacetCenter = is.geometry().center();
-
-               const auto distance = boundaryFacetCenter - elementCenter;
-               const auto virtualOuterParallelFaceDofPos = this->intersection_.geometry().center() + distance;
-
-               auto foundCorrectIdx = [otherIsIdx](const auto& x) { return x.localNormalFaceIdx == otherIsIdx; };
-               const int index = std::find_if(this->pairData_.begin(), this->pairData_.end(), foundCorrectIdx) - this->pairData_.begin();
-
-               assert(this->pairData_[index].outerParallelFaceDofIdx == -1);
-
-               this->pairData_[index].virtualOuterParallelFaceDofPos = std::move(virtualOuterParallelFaceDofPos);
-               this->pairData_[index].parallelDistance = std::move(distance.two_norm());
-           }
-       }
-   }
-
-    // TODO: check whether to use references here or not
-    const Intersection intersection_; //! The intersection of interest
-    const Element element_; //! The respective element
-    const typename Element::Geometry elementGeometry_; //! Reference to the element geometry
-    const GridView gridView_;
-    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //! collection of pair information
-
-    std::vector<GlobalPosition> innerNormalFacePos_;
-
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
-};
-
-
-template<class GridView>
-class StaggeredGeometryHelper<GridView, 2> : public BaseStaggeredGeometryHelper<GridView>
-{
-    friend class BaseStaggeredGeometryHelper<GridView>;
-    using Intersection = typename GridView::Intersection;
-    using ParentType = BaseStaggeredGeometryHelper<GridView>;
-
-public:
-    StaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : ParentType(intersection, gridView)
-    {}
-
-private:
-    static auto getLocalIndices_(const int localFacetIdx)
+    void treatVirtualOuterParallelFaceDofs_()
     {
-        struct Indices
-        {
-            std::array<int, 2> normalLocalDofIdx;
-            std::array<int, 2> localCommonEntIdx;
-        };
+        // get the local index of the facet we are dealing with in this class
+        const int localIntersectionIdx = this->intersection_.indexInInside();
 
-        Indices indices;
-
-        switch(localFacetIdx)
+        // iterate over all intersections of the element, this facet is part of
+        for(const auto& is : intersections(this->gridView_, this->element_))
         {
-            case 0:
-                indices.normalLocalDofIdx[0] = 3;
-                indices.normalLocalDofIdx[1] = 2;
-                indices.localCommonEntIdx[0] = 2;
-                indices.localCommonEntIdx[1] = 0;
-                break;
-            case 1:
-                indices.normalLocalDofIdx[0] = 2;
-                indices.normalLocalDofIdx[1] = 3;
-                indices.localCommonEntIdx[0] = 1;
-                indices.localCommonEntIdx[1] = 3;
-                break;
-            case 2:
-                indices.normalLocalDofIdx[0] = 0;
-                indices.normalLocalDofIdx[1] = 1;
-                indices.localCommonEntIdx[0] = 0;
-                indices.localCommonEntIdx[1] = 1;
-                break;
-            case 3:
-                indices.normalLocalDofIdx[0] = 1;
-                indices.normalLocalDofIdx[1] = 0;
-                indices.localCommonEntIdx[0] = 3;
-                indices.localCommonEntIdx[1] = 2;
-                break;
-            default:
-                DUNE_THROW(Dune::InvalidStateException, "Something went terribly wrong");
+            const int otherIsIdx = is.indexInInside();
+            // check if any of these intersection, which are normal to our facet, lie on the domain boundary
+            if(( !is.neighbor() ) &&  this->facetIsNormal_(localIntersectionIdx, otherIsIdx) )
+            {
+                const auto& elementCenter = this->element_.geometry().center();
+                const auto& boundaryFacetCenter = is.geometry().center();
+
+                const auto distance = boundaryFacetCenter - elementCenter;
+                const auto virtualOuterParallelFaceDofPos = this->intersection_.geometry().center() + distance;
+
+                auto foundCorrectIdx = [otherIsIdx](const auto& x) { return x.localNormalFaceIdx == otherIsIdx; };
+                const int index = std::find_if(this->pairData_.begin(), this->pairData_.end(), foundCorrectIdx) - this->pairData_.begin();
+
+                assert(this->pairData_[index].outerParallelFaceDofIdx == -1);
+
+                this->pairData_[index].virtualOuterParallelFaceDofPos = std::move(virtualOuterParallelFaceDofPos);
+                this->pairData_[index].parallelDistance = std::move(distance.two_norm());
+            }
         }
-        return indices;
     }
-};
 
-template<class GridView>
-class StaggeredGeometryHelper<GridView, 3> : public BaseStaggeredGeometryHelper<GridView>
-{
-    friend class BaseStaggeredGeometryHelper<GridView>;
-    using Intersection = typename GridView::Intersection;
-    using ParentType = BaseStaggeredGeometryHelper<GridView>;
-
-public:
-    StaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : ParentType(intersection, gridView)
-    {}
-
-private:
-    auto getLocalIndices_(const int localFacetIdx)
+    auto getLocalIndices_(const int localFacetIdx) const
     {
         struct Indices
         {
-            std::array<int, 4> normalLocalDofIdx;
-            std::array<int, 4> localCommonEntIdx;
+            std::array<int, numPairs> normalLocalDofIdx;
+            std::array<int, numPairs> localCommonEntIdx;
         };
 
         Indices indices;
@@ -468,44 +360,57 @@ private:
             case 0:
                 indices.normalLocalDofIdx[0] = 3;
                 indices.normalLocalDofIdx[1] = 2;
-                indices.normalLocalDofIdx[2] = 4;
-                indices.normalLocalDofIdx[3] = 5;
                 indices.localCommonEntIdx[0] = 2;
                 indices.localCommonEntIdx[1] = 0;
-                indices.localCommonEntIdx[2] = 4;
-                indices.localCommonEntIdx[3] = 8;
+                if(dim == 3)
+                {
+                    indices.normalLocalDofIdx[2] = 4;
+                    indices.normalLocalDofIdx[3] = 5;
+                    indices.localCommonEntIdx[2] = 4;
+                    indices.localCommonEntIdx[3] = 8;
+                }
                 break;
             case 1:
                 indices.normalLocalDofIdx[0] = 2;
                 indices.normalLocalDofIdx[1] = 3;
-                indices.normalLocalDofIdx[2] = 4;
-                indices.normalLocalDofIdx[3] = 5;
                 indices.localCommonEntIdx[0] = 1;
                 indices.localCommonEntIdx[1] = 3;
-                indices.localCommonEntIdx[2] = 5;
-                indices.localCommonEntIdx[3] = 9;
+                if(dim == 3)
+                {
+                    indices.normalLocalDofIdx[2] = 4;
+                    indices.normalLocalDofIdx[3] = 5;
+                    indices.localCommonEntIdx[2] = 5;
+                    indices.localCommonEntIdx[3] = 9;
+                }
                 break;
             case 2:
                 indices.normalLocalDofIdx[0] = 0;
                 indices.normalLocalDofIdx[1] = 1;
-                indices.normalLocalDofIdx[2] = 4;
-                indices.normalLocalDofIdx[3] = 5;
                 indices.localCommonEntIdx[0] = 0;
                 indices.localCommonEntIdx[1] = 1;
-                indices.localCommonEntIdx[2] = 6;
-                indices.localCommonEntIdx[3] = 10;
+                if(dim == 3)
+                {
+                    indices.normalLocalDofIdx[2] = 4;
+                    indices.normalLocalDofIdx[3] = 5;
+                    indices.localCommonEntIdx[2] = 6;
+                    indices.localCommonEntIdx[3] = 10;
+                }
                 break;
             case 3:
                 indices.normalLocalDofIdx[0] = 1;
                 indices.normalLocalDofIdx[1] = 0;
-                indices.normalLocalDofIdx[2] = 4;
-                indices.normalLocalDofIdx[3] = 5;
                 indices.localCommonEntIdx[0] = 3;
                 indices.localCommonEntIdx[1] = 2;
-                indices.localCommonEntIdx[2] = 7;
-                indices.localCommonEntIdx[3] = 11;
+                if(dim == 3)
+                {
+                    indices.normalLocalDofIdx[2] = 4;
+                    indices.normalLocalDofIdx[3] = 5;
+                    indices.localCommonEntIdx[2] = 7;
+                    indices.localCommonEntIdx[3] = 11;
+                }
                 break;
             case 4:
+                assert(dim == 3);
                 indices.normalLocalDofIdx[0] = 0;
                 indices.normalLocalDofIdx[1] = 1;
                 indices.normalLocalDofIdx[2] = 3;
@@ -516,6 +421,7 @@ private:
                 indices.localCommonEntIdx[3] = 6;
                 break;
             case 5:
+                assert(dim == 3);
                 indices.normalLocalDofIdx[0] = 0;
                 indices.normalLocalDofIdx[1] = 1;
                 indices.normalLocalDofIdx[2] = 2;
@@ -530,9 +436,15 @@ private:
         }
         return indices;
     }
+
+    // TODO: check whether to use references here or not
+    const Intersection intersection_; //! The intersection of interest
+    const Element element_; //! The respective element
+    const typename Element::Geometry elementGeometry_; //! Reference to the element geometry
+    const GridView gridView_;
+    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //! collection of pair information
+    std::vector<GlobalPosition> innerNormalFacePos_;
 };
-
-
 
 } // end namespace Dumux
 
