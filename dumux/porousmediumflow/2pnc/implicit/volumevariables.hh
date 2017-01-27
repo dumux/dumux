@@ -452,7 +452,7 @@ public:
     /*!
      * \brief Returns the permeability within the control volume.
      */
-    PermeabilityType permeability() const
+    const PermeabilityType& permeability() const
     { return permeability_; }
 
 
