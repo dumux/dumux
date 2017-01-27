@@ -310,7 +310,7 @@ private:
 
     bool isWall(const GlobalPosition& globalPos) const
     {
-        return globalPos[1] < eps_ || globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[0] > eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
     }
 
 
