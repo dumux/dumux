@@ -77,16 +77,6 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, false> : public FluxVa
 
 public:
 
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
-    }
-
     template<typename FunctionType>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm)
     {
@@ -124,18 +114,11 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, false> : public FluxVar
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
 public:
-
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const ElementFluxVariablesCache& elemFluxVarsCache)
+    //! The constructor
+    PorousMediumFluxVariablesImpl()
     {
         advFluxCached_.reset();
         advPreFlux_.fill(0.0);
-
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
     }
 
     template<typename FunctionType>
@@ -195,16 +178,11 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, false, true> : public FluxVar
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
 public:
-
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const ElementFluxVariablesCache& elemFluxVarsCache)
+    //! The constructor
+    PorousMediumFluxVariablesImpl()
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
+        advPreFlux_.fill(0.0);
     }
 
     template<typename FunctionType>
@@ -264,16 +242,11 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, true> : public FluxVari
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
 public:
-
-    void initAndComputeFluxes(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace &scvFace,
-                              const ElementFluxVariablesCache& elemFluxVarsCache)
+    //! The constructor
+    PorousMediumFluxVariablesImpl()
     {
         advFluxCached_.reset();
-        ParentType::init(problem, element, fvGeometry, elemVolVars, scvFace, elemFluxVarsCache);
+        advPreFlux_.fill(0.0);
     }
 
     template<typename FunctionType>

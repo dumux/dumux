@@ -172,12 +172,7 @@ public:
 
                 // insantiate the flux variables
                 FluxVariables fluxVars;
-                fluxVars.initAndComputeFluxes(problem_,
-                                              element,
-                                              fvGeometry,
-                                              elemVolVars,
-                                              scvf,
-                                              elemFluxVarsCache);
+                fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
                 // get the volume flux divided by the area of the
                 // subcontrolvolume face in the reference element
@@ -244,7 +239,7 @@ public:
                 if (!scvf.boundary())
                 {
                     FluxVariables fluxVars;
-                    fluxVars.initAndComputeFluxes(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                    fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
@@ -256,7 +251,7 @@ public:
                     if (bcTypes.hasOnlyDirichlet())
                     {
                         FluxVariables fluxVars;
-                        fluxVars.initAndComputeFluxes(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                        fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),

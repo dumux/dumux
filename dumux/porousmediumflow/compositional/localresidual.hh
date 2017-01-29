@@ -165,12 +165,7 @@ public:
                                  bool useMoles = true)
     {
         FluxVariables fluxVars;
-        fluxVars.initAndComputeFluxes(this->problem(),
-                                      element,
-                                      fvGeometry,
-                                      elemVolVars,
-                                      scvf,
-                                      elemFluxVarsCache);
+        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);
