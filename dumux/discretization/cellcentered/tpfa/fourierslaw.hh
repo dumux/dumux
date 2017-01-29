@@ -57,6 +57,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -66,9 +67,34 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
+    //! We don't store anything for this law
+    class TpfaFouriersLawCache
+    {};
+
+    //! The corresponding filler class
+    class TpfaFouriersLawCacheFiller
+    {
+    public:
+      //! Function to fill a TpfaFicksLawCache (empty cache) of a given scvf
+      //! We have to fulfill the interface of a heat conduction related cache filler class
+      template<class FluxVariablesCacheFiller>
+      static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf,
+                       const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+      {}
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+
+    // state the type for the corresponding cache and its filler
+    using Cache = TpfaFouriersLawCache;
+    using CacheFiller = TpfaFouriersLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

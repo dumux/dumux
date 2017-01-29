@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 
 namespace Dumux
 {
@@ -111,8 +112,7 @@ class CCTpfaElementFluxVariablesCache<TypeTag, false>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-
-    static const bool solDependentAdvection = GET_PROP_VALUE(TypeTag, SolutionDependentAdvection);
+    using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
     CCTpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
@@ -128,12 +128,15 @@ public:
         const auto numScvf = fvGeometry.numScvf();
         fluxVarsCache_.resize(numScvf);
         globalScvfIndices_.resize(numScvf);
-        IndexType localScvfIdx = 0;
 
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(globalFluxVarsCache().problem_());
+
+        IndexType localScvfIdx = 0;
         // fill the containers
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -150,6 +153,9 @@ public:
         const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
         const auto numNeighbors = assemblyMapI.size();
 
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(problem);
+
         // find the number of scv faces that need to be prepared
         auto numScvf = fvGeometry.numScvf();
         for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
@@ -161,7 +167,7 @@ public:
         unsigned int localScvfIdx = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(problem, element, fvGeometry, elemVolVars, scvf);
+            filler.fill(*this, fluxVarsCache_[localScvfIdx], element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -173,7 +179,7 @@ public:
             for (auto scvfIdx : assemblyMapI[localIdxJ].scvfsJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(scvfIdx);
-                fluxVarsCache_[localScvfIdx].update(problem, elementJ, fvGeometry, elemVolVars, scvfJ);
+                filler.fill(*this, fluxVarsCache_[localScvfIdx], elementJ, fvGeometry, elemVolVars, scvfJ);
                 globalScvfIndices_[localScvfIdx] = scvfJ.index();
                 localScvfIdx++;
             }
@@ -188,7 +194,10 @@ public:
         fluxVarsCache_.resize(1);
         globalScvfIndices_.resize(1);
 
-        fluxVarsCache_[0].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(globalFluxVarsCache().problem_());
+
+        filler.fill(*this, fluxVarsCache_[0], element, fvGeometry, elemVolVars, scvf);
         globalScvfIndices_[0] = scvf.index();
     }
 
@@ -211,8 +220,29 @@ private:
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
-        if (solDependentAdvection)
-            bind(element, fvGeometry, elemVolVars);
+        static const bool isSolIndependent = FluxVariablesCacheFiller::isSolutionIndependent();
+
+        if (!isSolIndependent)
+        {
+            const auto& problem = globalFluxVarsCache().problem_();
+            const auto globalI = problem.elementMapper().index(element);
+
+            // instantiate filler class
+            FluxVariablesCacheFiller filler(problem);
+
+            // let the filler class update the caches
+            for (unsigned int localScvfIdx = 0; localScvfIdx < fluxVarsCache_.size(); ++localScvfIdx)
+            {
+                const auto& scvf = fvGeometry.scvf(globalScvfIndices_[localScvfIdx]);
+
+                const auto scvfInsideScvIdx = scvf.insideScvIdx();
+                const auto& insideElement = scvfInsideScvIdx == globalI ?
+                                            element :
+                                            problem.model().globalFvGeometry().element(scvfInsideScvIdx);
+
+                filler.fill(*this, fluxVarsCache_[localScvfIdx], insideElement, fvGeometry, elemVolVars, scvf);
+            }
+        }
     }
 
     // get index of scvf in the local container

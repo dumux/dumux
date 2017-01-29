@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 
 namespace Dumux
 {
@@ -44,18 +45,26 @@ class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 {
     // the local class needs access to the problem
     friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    // the filler class needs access to the access operators
+    friend CCTpfaFluxVariablesCacheFiller<TypeTag>;
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     void update(Problem& problem)
     {
         problemPtr_ = &problem;
+
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(problem);
+
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
         fluxVarsCache_.resize(globalFvGeometry.numScvf());
         for (const auto& element : elements(problem.gridView()))
@@ -69,7 +78,7 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                fluxVarsCache_[scvf.index()].update(problem, element, fvGeometry, elemVolVars, scvf);
+                filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
             }
         }
     }
@@ -83,7 +92,13 @@ public:
     { return ElementFluxVariablesCache(global); }
 
 private:
-    // access operators in the case of caching
+    // // access operators in the case of caching
+    // const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    // { return fluxVarsCache_[scvf.index()]; }
+
+    // FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    // { return fluxVarsCache_[scvf.index()]; }
+
     const FluxVariablesCache& operator [](IndexType scvfIdx) const
     { return fluxVarsCache_[scvfIdx]; }
 

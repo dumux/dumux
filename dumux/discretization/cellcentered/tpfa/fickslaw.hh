@@ -61,6 +61,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -69,9 +70,35 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    //! We don't store anything for this law
+    class TpfaFicksLawCache
+    {};
+
+    //! The corresponding filler class
+    class TpfaFicksLawCacheFiller
+    {
+    public:
+      //! Function to fill a TpfaFicksLawCache (empty cache) of a given scvf
+      //! We have to fulfill the interface of a diffusion-related cache filler class
+      template<class FluxVariablesCacheFiller>
+      static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                       unsigned int phaseIdx, unsigned int compIdx,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf,
+                       const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+      {}
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+
+    // state the type for the corresponding cache and its filler
+    using Cache = TpfaFicksLawCache;
+    using CacheFiller = TpfaFicksLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

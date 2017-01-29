@@ -40,15 +40,24 @@ namespace Properties
 NEW_PROP_TAG(NumPhases);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//! The cache is dependent on the active physical processes (advection, diffusion, heat conduction)
+//! For each type of process there is a base cache storing the data required to compute the respective fluxes
+//! Specializations of the overall cache are provided for combinations of processes
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*!
  * \ingroup ImplicitModel
  * \brief The flux variables cache classes for porous media.
- *        Store flux stencils and data required for flux calculation
+ *        Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
+ *        there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall
+ *        cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
 using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-// specialization for the Box Method
+//! We only store discretization-related quantities for the box method.
+//! Thus, we need no physics-dependent specialization.
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Box>
 {
@@ -100,65 +109,44 @@ public:
     const JacobianInverseTransposed& jacInvT() const
     { return jacInvT_; }
 
-    // The stencil info is obsolete for the box method.
-    // It is here for compatibility with cc methods
-    const Stencil& stencil() const
-    {
-        return stencil_;
-    }
-
 private:
     std::vector<ShapeJacobian> shapeJacobian_;
     std::vector<ShapeValue> shapeValues_;
     JacobianInverseTransposed jacInvT_;
-
-    Stencil stencil_;
 };
+
+// forward declaration of the base class of the tpfa flux variables cache
+template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
+class CCTpfaPorousMediumFluxVariablesCache;
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCTpfa>
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
+      : public CCTpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
+                                                             GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
+                                                             GET_PROP_VALUE(TypeTag, EnableEnergyBalance)> {};
 
-public:
-    void update(const Problem& problem,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace &scvf)
-    {
-        stencil_ = FluxVariables::computeStencil(problem, element, fvGeometry, scvf);
-        tij_ = AdvectionType::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
-    }
+// specialization for the case of pure advection
+template<class TypeTag>
+class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
 
-    const Stencil& stencil() const
-    { return stencil_; }
+// specialization for the case of advection & diffusion
+template<class TypeTag>
+class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
 
-    const Scalar& tij() const
-    { return tij_; }
+// specialization for the case of advection & heat conduction
+template<class TypeTag>
+class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
-private:
-    Stencil stencil_;
-    Scalar tij_;
-};
+// specialization for the case of advection, diffusion & heat conduction
+template<class TypeTag>
+class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                        public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
+                                                                        public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//! Classes building up the porous medium flux variables cache for mpfa methods
-//! The cache is dependent on the active physical processes (advection, diffusion, heat conduction)
-//! For each type of process there is a base cache storing the data required to compute the respective fluxes
-//! Specializations of the overall cache are provided for combinations of processes
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO further specializations
 
 // forward declaration of the base class of the mpfa flux variables cache
 template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
