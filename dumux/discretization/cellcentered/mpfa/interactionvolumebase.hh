@@ -79,6 +79,9 @@ public:
         LocalIndexType localScvIndex;
         bool isOutside;
 
+        //! default constructor
+        LocalFaceData() = default;
+
         //! Constructor fully initializing the members
         LocalFaceData(const LocalIndexType faceIndex,
                       const LocalIndexType scvIndex,

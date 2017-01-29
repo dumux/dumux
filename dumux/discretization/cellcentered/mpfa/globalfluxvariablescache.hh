@@ -24,8 +24,7 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_GLOBAL_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
-
-#include "fluxvariablescachefiller.hh"
+#include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
 
 namespace Dumux
 {
@@ -45,8 +44,11 @@ class CCMpfaGlobalFluxVariablesCache;
 template<class TypeTag>
 class CCMpfaGlobalFluxVariablesCache<TypeTag, true>
 {
-    // the local class needs access to the problem
+    // the local class need access to the problem
     friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    // the filler needs access to the operators
+    friend CCMpfaFluxVariablesCacheFiller<TypeTag>;
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -66,6 +68,10 @@ public:
     void update(Problem& problem)
     {
         problemPtr_ = &problem;
+
+        // instantiate helper class to fill the caches
+        FluxVariablesCacheFiller filler(problem);
+
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
         fluxVarsCache_.resize(globalFvGeometry.numScvf());
         for (const auto& element : elements(problem.gridView()))
@@ -81,7 +87,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 if (!fluxVarsCache_[scvf.index()].isUpdated())
-                    FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCache_);
+                    filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
             }
         }
     }
@@ -97,6 +103,12 @@ public:
 private:
 
     // access operators in the case of caching
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return fluxVarsCache_[scvf.index()]; }
+
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    { return fluxVarsCache_[scvf.index()]; }
+
     const FluxVariablesCache& operator [](IndexType scvfIdx) const
     { return fluxVarsCache_[scvfIdx]; }
 
