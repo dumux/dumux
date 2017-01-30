@@ -51,7 +51,7 @@ public:
     /*!
      * \brief A human readable name for the \f$H_2\f$.
      */
-    static const char *name()
+    static std::string name()
     { return "H2"; }
 
     /*!

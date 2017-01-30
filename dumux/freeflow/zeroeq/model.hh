@@ -967,7 +967,7 @@ public:
     /*!
      * \brief Returns the name of the used eddy viscosity model.
      */
-    const char *eddyViscosityModelName() const
+    std::string eddyViscosityModelName() const
     {
         switch (GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel))
         {

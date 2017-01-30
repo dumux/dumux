@@ -238,7 +238,7 @@ private:
      */
     template <class MultiWriter>
     void commitTemperaturesBuffer_(MultiWriter & writer,
-                                   const char *pattern,
+                                   std::string pattern,
                                    EnergyEqVector & buffer,
                                    bool vertexCentered = true)
     {
@@ -466,13 +466,13 @@ private:
      */
     template <class MultiWriter>
     void commitTemperaturesBuffer_(MultiWriter & writer,
-                                   const char *pattern,
+                                   std::string pattern,
                                    EnergyEqVector & buffer,
                                    bool vertexCentered = true)
     {
-        static const char *name[] = {
-                    "fluid",
-                    "solid"
+        static std::string name[] = {
+                    std::string("fluid"),
+                    std::string("solid")
                 };
 
         for (int energyEqIdx = 0; energyEqIdx < numEnergyEqs; ++energyEqIdx) {
@@ -486,9 +486,9 @@ private:
         }
     }
 
-//    static const char *phaseName(int phaseIdx)
+//    static std::string phaseName(int phaseIdx)
 //    {
-//        static const char *name[] = {
+//        static std::string name[] = {
 //            "w",
 //            "n"
 //        };

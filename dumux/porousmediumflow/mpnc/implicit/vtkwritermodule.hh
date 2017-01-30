@@ -181,7 +181,7 @@ protected:
      */
     template <class MultiWriter>
     void commitScalarBuffer_(MultiWriter &writer,
-                             const char *name,
+                             std::string name,
                              ScalarVector &buffer,
                              bool vertexCentered = true)
     {
@@ -196,7 +196,7 @@ protected:
      */
     template <class MultiWriter>
     void commitPhaseBuffer_(MultiWriter &writer,
-                            const char *pattern,
+                            std::string pattern,
                             PhaseVector &buffer,
                             bool vertexCentered = true)
     {
@@ -216,7 +216,7 @@ protected:
      */
     template <class MultiWriter>
     void commitComponentBuffer_(MultiWriter &writer,
-                                const char *pattern,
+                                std::string pattern,
                                 ComponentVector &buffer,
                                 bool vertexCentered = true)
     {
@@ -236,7 +236,7 @@ protected:
      */
     template <class MultiWriter>
     void commitPhaseComponentBuffer_(MultiWriter &writer,
-                                     const char *pattern,
+                                     std::string pattern,
                                      PhaseComponentMatrix &buffer,
                                      bool vertexCentered = true)
     {

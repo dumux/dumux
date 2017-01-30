@@ -111,8 +111,8 @@ public:
     static const std::string& phaseName(int phaseIdx)
     {
         static const std::string name[] = {
-            "l",
-            "g"
+            std::string("l"),
+            std::string("g")
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);

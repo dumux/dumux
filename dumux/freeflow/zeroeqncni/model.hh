@@ -360,7 +360,7 @@ public:
     /*!
      * \brief Returns the name of used the eddy conductivity model.
      */
-    const char *eddyConductivityModelName() const
+    std::string eddyConductivityModelName() const
     {
         switch (GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyConductivityModel))
         {
