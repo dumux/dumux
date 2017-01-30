@@ -200,8 +200,9 @@ private:
         // First we upate the interior boundary data and set the update status.
         // We store pointers to the other flux var caches and the elements they are embedded in simultaneously.
         // This way we have to obtain this data only once and can use it again in the sub-cache fillers.
-        std::vector<FluxVariablesCache*> otherFluxVarCaches(iv.globalLocalScvfPairedData().size()-1);
-        std::vector<Element> otherElements(iv.globalLocalScvfPairedData().size()-1);
+        const auto numOtherScvfs = iv.globalLocalScvfPairedData().size()-1;
+        std::vector<FluxVariablesCache*> otherFluxVarCaches(numOtherScvfs);
+        std::vector<Element> otherElements(numOtherScvfs);
 
         scvfFluxVarsCache.updateInteriorBoundaryData(iv, scvFace());
         scvfFluxVarsCache.setUpdateStatus(true);
@@ -246,7 +247,7 @@ private:
     fillAdvection(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                   FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*> otherFluxVarCaches,
+                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
                   const std::vector<Element> otherElements)
     {
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
@@ -291,7 +292,7 @@ private:
     fillAdvection(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                   FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*> otherFluxVarCaches,
+                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
                   const std::vector<Element> otherElements)
     {}
 
@@ -301,7 +302,7 @@ private:
     fillDiffusion(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                   FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*> otherFluxVarCaches,
+                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
                   const std::vector<Element> otherElements)
     {
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
@@ -359,7 +360,7 @@ private:
     fillDiffusion(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                   FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*> otherFluxVarCaches,
+                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
                   const std::vector<Element> otherElements)
     {}
 
@@ -369,7 +370,7 @@ private:
     fillHeatConduction(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                        FluxVariablesCache& scvfFluxVarsCache,
                        InteractionVolumeType& iv,
-                       const std::vector<FluxVariablesCache*> otherFluxVarCaches,
+                       const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
                        const std::vector<Element> otherElements)
     {
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
@@ -421,7 +422,7 @@ private:
     fillHeatConduction(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                        FluxVariablesCache& scvfFluxVarsCache,
                        InteractionVolumeType& iv,
-                       const std::vector<FluxVariablesCache*> otherFluxVarCaches,
+                       const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
                        const std::vector<Element> otherElements)
     {}
 
