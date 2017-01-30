@@ -485,7 +485,7 @@ private:
             const auto& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
             const auto& posVolVars = elemVolVars_()[posGlobalScv];
             const auto& element = localElement_(posLocalScvIdx);
-            const auto tensor = getTensor(element, posVolVars, posGlobalScv);
+            const auto tensor = getTensor(problem_(), element, posVolVars, fvGeometry_(), posGlobalScv);
 
             // the omega factors of the "positive" sub volume
             auto posWijk = calculateOmegas_(posLocalScv, localScvf.unitOuterNormal(), localScvf.area(), tensor);
@@ -523,23 +523,28 @@ private:
                                 // get interior boundary data
                                 const auto& data = interiorBoundaryData_[this->findIndexInVector(interiorBoundaryScvfIndexSet_(), curLocalScvfIdx)];
 
-                                // get the volvars on the actual interior boundary face
-                                const auto facetVolVars = data.facetVolVars(fvGeometry_());
+                                // obtain the complete data on the facet element
+                                const auto completeFacetData = data.completeCoupledFacetData();
 
                                 // calculate "leakage factor"
                                 const auto n = curLocalScvf.unitOuterNormal();
                                 const auto v = [&] ()
                                         {
                                             auto res = n;
-                                            res *= -0.5*facetVolVars.extrusionFactor();
+                                            res *= -0.5*completeFacetData.volVars().extrusionFactor();
                                             res -= curLocalScvf.ip();
                                             res += curLocalScvf.globalScvf().facetCorner();
                                             res /= res.two_norm2();
                                             return res;
                                         } ();
 
-                                // substract from matrix entry
-                                A[idxInFluxFaces][curIdxInFluxFaces] -= MpfaHelper::nT_M_v(n, posVolVars.permeability(), v);
+                                // substract n*T*v from diagonal matrix entry
+                                const auto facetTensor = getTensor(completeFacetData.problem(),
+                                                                   completeFacetData.element(),
+                                                                   completeFacetData.volVars(),
+                                                                   completeFacetData.fvGeometry(),
+                                                                   completeFacetData.scv());
+                                A[idxInFluxFaces][curIdxInFluxFaces] -= MpfaHelper::nT_M_v(n, facetTensor, v);
                             }
                         }
                         // this means we are on an interior face
@@ -593,7 +598,7 @@ private:
                     const auto& negGlobalScv = fvGeometry_().scv(negLocalScv.globalIndex());
                     const auto& negVolVars = elemVolVars_()[negGlobalScv];
                     const auto& negElement = localElement_(negLocalScvIdx);
-                    const auto negTensor = getTensor(negElement, negVolVars, negGlobalScv);
+                    const auto negTensor = getTensor(problem_(), negElement, negVolVars, fvGeometry_(), negGlobalScv);
 
                     // the omega factors of the "negative" sub volume
                     DimVector negWijk;
@@ -681,7 +686,7 @@ private:
             const auto& posGlobalScv = fvGeometry_().scv(posLocalScv.globalIndex());
             const auto& posVolVars = elemVolVars_()[posGlobalScv];
             const auto element = localElement_(posLocalScvIdx);
-            const auto tensor = getTensor(element, posVolVars, posGlobalScv);
+            const auto tensor = getTensor(problem_(), element, posVolVars, fvGeometry_(), posGlobalScv);
 
             // the omega factors of the "positive" sub volume
             auto posWijk = calculateOmegas_(posLocalScv, localScvf.unitOuterNormal(), localScvf.area(), tensor);

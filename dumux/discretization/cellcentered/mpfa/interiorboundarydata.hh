@@ -55,6 +55,11 @@ class InteriorBoundaryData
     //! Note that the return types are also "wrong" (Here just to satisfy the compiler)
     struct CompleteCoupledFacetData
     {
+        const Problem& problem() const
+        {
+            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
+        }
+
         const SpatialParams& spatialParams() const
         {
             DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");

@@ -25,6 +25,7 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
 namespace Dumux
 {
@@ -253,15 +254,12 @@ private:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
         using AdvectionFiller = typename AdvectionType::CacheFiller;
 
-        static constexpr bool usesMpfa = AdvectionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa;
+        static constexpr auto AdvectionMethod = AdvectionType::myDiscretizationMethod;
+        using LambdaFactory = TensorLambdaFactory<TypeTag, AdvectionMethod>;
 
-        // maybe solve the local system subject to K
-        if (usesMpfa)
-        {
-            auto K = [] (const Element& element, const auto& volVars, const SubControlVolume& scv)
-                        { return volVars.permeability(); };
-            iv.solveLocalSystem(K);
-        }
+        // maybe solve the local system subject to K (if AdvectionType uses mpfa)
+        if (AdvectionMethod == DiscretizationMethods::CCMpfa)
+            iv.solveLocalSystem(LambdaFactory::getAdvectionLambda());
 
         // fill the caches of all scvfs within this interaction volume
         AdvectionFiller::fill(scvfFluxVarsCache, problem(), element(), fvGeometry(), elemVolVars(), scvFace(), *this);
@@ -308,9 +306,11 @@ private:
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
         using DiffusionFiller = typename DiffusionType::CacheFiller;
 
+        static constexpr auto DiffusionMethod = DiffusionType::myDiscretizationMethod;
+        using LambdaFactory = TensorLambdaFactory<TypeTag, DiffusionMethod>;
+
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
         static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-        static constexpr bool usesMpfa = DiffusionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa;
 
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -320,12 +320,8 @@ private:
                     continue;
 
                 // solve the local system subject to the diffusion tensor (if uses mpfa)
-                if (usesMpfa)
-                {
-                    auto D = [phaseIdx, compIdx](const Element& element, const auto& volVars, const SubControlVolume& scv)
-                                                { return volVars.diffusionCoefficient(phaseIdx, compIdx); };
-                    iv.solveLocalSystem(D);
-                }
+                if (DiffusionMethod == DiscretizationMethods::CCMpfa)
+                    iv.solveLocalSystem(LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
 
                 // fill the caches of all scvfs within this interaction volume
                 DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element(), fvGeometry(), elemVolVars(), scvFace(), *this);
@@ -375,23 +371,13 @@ private:
     {
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
         using HeatConductionFiller = typename HeatConductionType::CacheFiller;
-        using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
-        static constexpr bool usesMpfa = HeatConductionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa;
+        static constexpr auto HeatConductionMethod = HeatConductionType::myDiscretizationMethod;
+        using LambdaFactory = TensorLambdaFactory<TypeTag, HeatConductionMethod>;
 
-        // maybe solve the local system subject to K
-        if (usesMpfa)
-        {
-            const auto& prob = problem();
-            const auto& fvGeom = fvGeometry();
-            auto lambda = [&prob, &fvGeom](const Element& element, const auto& volVars, const SubControlVolume& scv)
-            { return ThermalConductivityModel::effectiveThermalConductivity(volVars,
-                                                                            prob.spatialParams(),
-                                                                            element,
-                                                                            fvGeom,
-                                                                            scv); };
-            iv.solveLocalSystem(lambda);
-        }
+        // maybe solve the local system subject to fourier coefficient
+        if (HeatConductionMethod == DiscretizationMethods::CCMpfa)
+            iv.solveLocalSystem(LambdaFactory::getHeatConductionLambda());
 
         // fill the caches of all scvfs within this interaction volume
         HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element(), fvGeometry(), elemVolVars(), scvFace(), *this);
