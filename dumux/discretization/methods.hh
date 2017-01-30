@@ -26,9 +26,13 @@
 
 namespace Dumux
 {
+    //! The discretization methods
+    //! \note Use none if specifying a discretization method is required but
+    //!       the class in question is not specific to a a discretization method
+    //!       or the classification is non-applicable
     enum class DiscretizationMethods : unsigned int
     {
-        Box, CCTpfa, CCMpfa
+        None, Box, CCTpfa, CCMpfa
     };
 
 } // end namespace Dumux
