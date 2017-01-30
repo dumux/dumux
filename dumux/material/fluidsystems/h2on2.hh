@@ -98,13 +98,8 @@ public:
      */
     static const std::string& phaseName(int phaseIdx)
     {
-        static const std::string name[] = {
-            "w",
-            "n"
-        };
-
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return name[phaseIdx];
+        return phaseIdx == wPhaseIdx ? "w" : "n";
     }
 
     /*!

@@ -44,7 +44,7 @@ public:
     /*!
      * \brief A human readable name for the dense NAPL TCE.
      */
-    static const char *name()
+    static std::string name()
     { return "DNAPL_TCE"; }
 
     /*!

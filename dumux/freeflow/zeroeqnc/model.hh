@@ -348,7 +348,7 @@ public:
     /*!
      * \brief Returns the name of used the eddy diffusivity model.
      */
-    const char *eddyDiffusivityModelName() const
+    std::string eddyDiffusivityModelName() const
     {
         switch (GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyDiffusivityModel))
         {

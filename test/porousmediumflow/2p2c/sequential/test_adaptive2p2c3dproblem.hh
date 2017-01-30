@@ -151,9 +151,9 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
  */
 // \{
 //! @copydoc TestDecTwoPTwoCProblem::name()
-const char *name() const
+std::string name() const
 {
-    return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name).c_str();
+    return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
 }
 
 //! @copydoc TestDecTwoPTwoCProblem::shouldWriteRestartFile()

@@ -95,11 +95,11 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static const char *phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
-        static const char *name[] = {
-            "l",
-            "g"
+        static std::string name[] = {
+            std::string("l"),
+            std::string("g")
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);
@@ -160,9 +160,9 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static const char *componentName(int compIdx)
+    static std::string componentName(int compIdx)
     {
-        static const char *name[] = {
+        static std::string name[] = {
             Brine::name(),
             CO2::name(),
         };

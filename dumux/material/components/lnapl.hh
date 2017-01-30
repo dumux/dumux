@@ -44,7 +44,7 @@ public:
     /*!
      * \brief A human readable name for the LNAPL.
      */
-    static const char *name()
+    static std::string name()
     { return "LNAPL"; }
 
     /*!
