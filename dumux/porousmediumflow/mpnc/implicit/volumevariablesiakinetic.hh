@@ -569,7 +569,8 @@ public:
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {
         // so far there is only a model for kinetic mass transfer between fluid phases
-        assert((phaseIIdx == nPhaseIdx and phaseJIdx == wPhaseIdx) or (phaseIIdx == wPhaseIdx and phaseJIdx == nPhaseIdx) );
+        assert((phaseIIdx == nPhaseIdx && phaseJIdx == wPhaseIdx)
+              || (phaseIIdx == wPhaseIdx && phaseJIdx == nPhaseIdx));
         return interfacialArea_;
     }
 

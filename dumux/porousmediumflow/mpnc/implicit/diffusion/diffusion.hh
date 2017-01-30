@@ -69,9 +69,8 @@ public:
                      const FluxVariables &fluxVars,
                      const Scalar molarDensity )
     {
-        if ( not FluidSystem::isLiquid(phaseIdx) )
-            gasFlux_(fluxes, fluxVars, molarDensity);
-        else if ( FluidSystem::isLiquid(phaseIdx) ){
+        if (FluidSystem::isLiquid(phaseIdx))
+        {
             #if MACROSCALE_DIFFUSION_ONLY_GAS
                     return ; // in the case that only the diffusion in the gas phase is considered,
                              // the liquidFlux should not be called
@@ -79,8 +78,9 @@ public:
             liquidFlux_(fluxes, fluxVars, molarDensity);
         }
         else
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Invalid phase index: " << phaseIdx);
+        {
+            gasFlux_(fluxes, fluxVars, molarDensity);
+        }
     }
 
 protected:

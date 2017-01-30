@@ -313,7 +313,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
 
     for(int passionfruit = 0; passionfruit <=1; passionfruit++) // loop at most twice
     {
-        if(mapI== 0 or mapJ == 0)
+        if(mapI== 0 || mapJ == 0)
         {
             if(mapI== 2)
                 return 3;
@@ -329,7 +329,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             }
         }
         // no "else if" because there is also 4 - 0 treated under I or J == 4
-        if(mapI== 1 or mapJ == 1)
+        if(mapI== 1 || mapJ == 1)
         {
             if (mapI== 3){
                 properFluxDirection = false;
@@ -344,7 +344,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapJ == 5)
                 return 9;
         }
-        else if(mapI== 2 or mapJ == 2)
+        else if(mapI== 2 || mapJ == 2)
         {
             if(mapI == 6){
                 properFluxDirection = false;
@@ -353,7 +353,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapJ ==6)
                 return 11;
         }
-        else if(mapI== 3 or mapJ == 3)
+        else if(mapI== 3 || mapJ == 3)
         {
             if (mapJ== 7){
                 properFluxDirection = false;
@@ -362,7 +362,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapI== 7)
                 return 10;
         }
-        else if(mapI== 4 or mapJ == 4)
+        else if(mapI== 4 || mapJ == 4)
         {
             // this has to be subVolFaceIdx 8 because 7 would mean
             // a case that should be modelled by tpfa
@@ -379,7 +379,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapJ == 6)
                 return 7;
         }
-        else if(mapI== 5 or mapJ == 5)
+        else if(mapI== 5 || mapJ == 5)
         {
             if (mapJ== 7){
                 properFluxDirection = false;
@@ -388,7 +388,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapI== 7)
                 return 5;
         }
-        else if(mapI== 6 or mapJ == 6)
+        else if(mapI== 6 || mapJ == 6)
         {
             if (mapI== 7){
                 properFluxDirection = false;
@@ -452,7 +452,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     for(int passionfruit = 0; passionfruit <=1; passionfruit++) // loop at most twice
     {
 
-        if(mapI== 0 or mapJ == 0)
+        if(mapI== 0 || mapJ == 0)
         {
             if (mapJ== 2){
                 properFluxDirection = false;
@@ -472,7 +472,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
 
             return 0;
         }
-        else if(mapI== 1 or mapJ == 1)
+        else if(mapI== 1 || mapJ == 1)
         {
             if (mapI== 3){
                 properFluxDirection = false;
@@ -487,7 +487,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapJ == 5)
                 return 9;
         }
-        else if(mapI== 2 or mapJ == 2)
+        else if(mapI== 2 || mapJ == 2)
         {
             if (mapJ== 3){
                 properFluxDirection = false;
@@ -502,7 +502,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapJ ==6)
                 return 11;
         }
-        else if(mapI== 3 or mapJ == 3)
+        else if(mapI== 3 || mapJ == 3)
         {
             if (mapJ== 7){
                 properFluxDirection = false;
@@ -511,7 +511,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapI== 7)
                 return 10;
         }
-        else if(mapI== 4 or mapJ == 4)
+        else if(mapI== 4 || mapJ == 4)
         {
             if (mapJ== 5){
                 properFluxDirection = false;
@@ -526,7 +526,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapJ == 6)
                 return 7;
         }
-        else if(mapI== 5 or mapJ == 5)
+        else if(mapI== 5 || mapJ == 5)
         {
             if (mapJ== 7){
                 properFluxDirection = false;
@@ -535,7 +535,7 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
             else if(mapI== 7)
                 return 5;
         }
-        else if(mapI== 6 or mapJ == 6)
+        else if(mapI== 6 || mapJ == 6)
         {
             if (mapI== 7){
                 properFluxDirection = false;

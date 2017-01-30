@@ -36,7 +36,7 @@ namespace Dumux
 template <int PVOffset, bool enableEnergy/*=false*/, int numEnergyEquations/*=0*/>
 struct MPNCEnergyIndices
 {
-    static_assert(((numEnergyEquations<1) and  not enableEnergy),
+    static_assert(((numEnergyEquations < 1) && !enableEnergy),
                   "No kinetic energy transfer may only be enabled "
                   "if energy is enabled in general.");
 
