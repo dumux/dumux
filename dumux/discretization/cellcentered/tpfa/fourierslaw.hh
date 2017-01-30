@@ -30,6 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux
 {
@@ -67,34 +68,14 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
-    //! We don't store anything for this law
-    class TpfaFouriersLawCache
-    {};
-
-    //! The corresponding filler class
-    class TpfaFouriersLawCacheFiller
-    {
-    public:
-      //! Function to fill a TpfaFicksLawCache (empty cache) of a given scvf
-      //! We have to fulfill the interface of a heat conduction related cache filler class
-      template<class FluxVariablesCacheFiller>
-      static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                       const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-      {}
-    };
-
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    // state the type for the corresponding cache and its filler
-    using Cache = TpfaFouriersLawCache;
-    using CacheFiller = TpfaFouriersLawCacheFiller;
+    //! state the type for the corresponding cache and its filler
+    //! We don't cache anything for this law
+    using Cache = FluxVariablesCaching::EmptyHeatConductionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

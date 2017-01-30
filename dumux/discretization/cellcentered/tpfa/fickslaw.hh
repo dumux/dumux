@@ -31,6 +31,7 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux
 {
@@ -70,35 +71,14 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    //! We don't store anything for this law
-    class TpfaFicksLawCache
-    {};
-
-    //! The corresponding filler class
-    class TpfaFicksLawCacheFiller
-    {
-    public:
-      //! Function to fill a TpfaFicksLawCache (empty cache) of a given scvf
-      //! We have to fulfill the interface of a diffusion-related cache filler class
-      template<class FluxVariablesCacheFiller>
-      static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                       unsigned int phaseIdx, unsigned int compIdx,
-                       const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-      {}
-    };
-
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    // state the type for the corresponding cache and its filler
-    using Cache = TpfaFicksLawCache;
-    using CacheFiller = TpfaFicksLawCacheFiller;
+    //! state the type for the corresponding cache and its filler
+    //! We don't cache anything for this law
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

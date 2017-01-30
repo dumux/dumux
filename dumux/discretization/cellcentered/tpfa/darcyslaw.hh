@@ -106,11 +106,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-            scvfFluxVarsCache.updateAdvection(problem,
-                                              element,
-                                              fvGeometry,
-                                              elemVolVars,
-                                              scvf);
+            scvfFluxVarsCache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf);
         }
     };
 
