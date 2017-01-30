@@ -268,7 +268,7 @@ public:
 
         // rho*v*X at inflow
         if (onLeftBoundary_(globalPos)
-                && globalPos[1] > bBoxMin_[1] && globalPos[1] < bBoxMax_[1])
+                && globalPos[1] > bBoxMin_[1] - eps_ && globalPos[1] < bBoxMax_[1] + eps_)
         {
             values[transportEqIdx] = -xVelocity_(globalPos) * density * refMassfrac();
         }

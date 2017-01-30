@@ -155,7 +155,6 @@ public:
     ObstacleProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        eps_ = 1e-6;
         temperature_ = 273.15 + 25; // -> 25°C
 
         // initialize the tables of the fluid system
@@ -429,18 +428,18 @@ private:
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
-        return x >= 60 - eps_ && y <= 10;
+        return x >= 60 - eps_ && y <= 10 + eps_;
     }
 
     bool onOutlet_(const GlobalPosition &globalPos) const
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
-        return x < eps_ && y <= 10;
+        return x < eps_ && y <= 10 + eps_;
     }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
 } //end namespace

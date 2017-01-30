@@ -204,9 +204,9 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
     {
         values = Scalar(0.0);
 
-            if(globalPos[0] < 6 && globalPos[0] > 4
-                    && globalPos[1] < 6 && globalPos[1] > 4
-                    && globalPos[2] < 6 && globalPos[2] > 4)
+            if(globalPos[0] < 6 + eps_ && globalPos[0] > 4 - eps_
+                    && globalPos[1] < 6 + eps_ && globalPos[1] > 4 - eps_
+                    && globalPos[2] < 6 + eps_ && globalPos[2] > 4 - eps_)
             {
                 values[0] = 1.e-3;
                 values[1] = 1.e-4;

@@ -244,7 +244,6 @@ public:
 
     void init()
     {
-            eps_                    = 1e-6;
             percentOfEquil_         = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.percentOfEquil);
             nTemperature_           = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nTemperature);
             nPressure_              = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nPressure);
@@ -745,7 +744,7 @@ private:
     {        return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;    }
 
 private:
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;;
     Scalar percentOfEquil_ ;
     int nTemperature_;
     int nPressure_;

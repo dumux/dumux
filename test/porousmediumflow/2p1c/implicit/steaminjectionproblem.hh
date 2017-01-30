@@ -133,7 +133,7 @@ public:
      */
 
     InjectionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView), eps_(1e-6)
+        : ParentType(timeManager, gridView)
     {
 
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
@@ -273,7 +273,7 @@ private:
         values[switch1Idx] = 283.13;
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
 } //end namespace

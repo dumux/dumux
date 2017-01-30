@@ -145,7 +145,6 @@ public:
         : ParentType(timeManager, gridView),
           useInterfaceCondition_(true)
     {
-        eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
     }
 
@@ -347,7 +346,7 @@ private:
     }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 3e-6;
 
     bool useInterfaceCondition_;
 };

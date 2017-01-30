@@ -115,8 +115,6 @@ public:
         , flowNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal))
         , wallNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal))
     {
-        eps_ = 1e-6;
-
         injectionVelocity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionVelocity);
         injectionConcentration_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionConcentration);
         wallTemperature_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.WallTemperature);
@@ -244,7 +242,7 @@ private:
 
     const unsigned int flowNormal_;
     const unsigned int wallNormal_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     Scalar injectionVelocity_;
     Scalar injectionConcentration_;
     Scalar wallTemperature_;

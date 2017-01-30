@@ -160,10 +160,10 @@ public:
         {
             GlobalPosition globalPos = element.geometry().center();
 
-            if (globalPos[1] > interfacePosY_)
+            if (globalPos[1] > interfacePosY_ - eps_)
                 mdGrid.addToSubDomain(zeroeq2c_,element);
             else
-                if(globalPos[0] > noDarcyX_)
+                if(globalPos[0] > noDarcyX_ - eps_)
                     mdGrid.addToSubDomain(twoPtwoC_,element);
         }
         mdGrid.preUpdateSubDomains();
@@ -212,6 +212,8 @@ private:
     Scalar episodeLength_;
     Scalar initializationTime_;
     Scalar dtInit_;
+
+    static constexpr Scalar eps_ = 1e-8;
 };
 
 } // namespace Dumux

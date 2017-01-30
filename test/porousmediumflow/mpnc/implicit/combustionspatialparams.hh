@@ -120,7 +120,6 @@ public:
     //! load parameters from input file and initialize parameter values
         void setInputInitialize()
         {
-                eps_                    = 1e-6;
                 // BEWARE! First the input values have to be set, then the material parameters can be set
 
                 // this is the parameter value from file part
@@ -335,8 +334,7 @@ public:
     }
 
 private:
-    Scalar eps_ ;
-
+    static constexpr Scalar eps_ = 1e-6;;
 
     // Porous Medium Domain
     Scalar intrinsicPermeability_ ;

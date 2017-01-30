@@ -182,8 +182,8 @@ private:
     static bool isFineMaterial_(const DimWorldVector &pos)
     {
         return
-            10 <= pos[0] && pos[0] <= 20 &&
-            0 <= pos[1] && pos[1] <= 35;
+            10 - eps_ <= pos[0] && pos[0] <= 20 + eps_ &&
+            0 - eps_ <= pos[1] && pos[1] <= 35 + eps_;
     }
 
     Scalar coarseK_;
@@ -191,6 +191,7 @@ private:
     Scalar porosity_;
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
+    static constexpr Scalar eps_ = 1e-6;
 };
 
 }

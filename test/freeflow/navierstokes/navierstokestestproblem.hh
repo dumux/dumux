@@ -111,9 +111,7 @@ namespace Dumux
   public:
       NavierStokesTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
-      {
-        eps_ = 1e-6;
-      }
+      {}
 
       /**
        * \name Problem parameters
@@ -280,7 +278,7 @@ namespace Dumux
         return globalPos[1] > this->bBoxMax()[1] - eps_;
       }
 
-      Scalar eps_;
+      static constexpr Scalar eps_ = 1e-6;
   };
 } //end namespace
 

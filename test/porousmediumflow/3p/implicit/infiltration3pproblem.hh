@@ -141,7 +141,6 @@ public:
      */
     InfiltrationThreePProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
-        , eps_(1e-6)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
         FluidSystem::init(282.15, 284.15, 3, 8e4, 3e5, 200);
@@ -232,7 +231,7 @@ public:
         Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
 
-        if(y >(-1.E-3*x+5) )
+        if(y > (-1.E-3*x+5) - eps_)
         {
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
@@ -281,7 +280,7 @@ public:
         // negative values for injection
         if (this->timeManager().time()<2592000.)
         {
-            if ((globalPos[0] <= 175.+eps_) && (globalPos[0] >= 150.+eps_) && (globalPos[1] >= 10.-eps_))
+            if ((globalPos[0] <= 175.+eps_) && (globalPos[0] >= 155.-eps_) && (globalPos[1] >= 10.-eps_))
             {
                 values[Indices::contiWEqIdx] = -0.0;
                 values[Indices::contiNEqIdx] = -0.001, // /*Molfluss, umr. über M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
@@ -334,7 +333,7 @@ private:
         Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
 
-        if(y >(-1.E-3*x+5) )
+        if(y > (-1.E-3*x+5) - eps_)
         {
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
@@ -382,7 +381,7 @@ private:
     }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
 } //end namespace

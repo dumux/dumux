@@ -150,7 +150,7 @@ public:
      * \param gridView The grid view
      */
     InfiltrationProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView), eps_(1e-6)
+        : ParentType(timeManager, gridView)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
         FluidSystem::init(/*tempMin=*/temperature_ - 1,
@@ -242,7 +242,7 @@ public:
         Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
 
-        if(y >(-1.E-3*x+5) )
+        if(y >(-1.E-3*x+5) - eps_)
         {
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
@@ -282,7 +282,7 @@ public:
         PrimaryVariables values(0.0);
 
         // negative values for injection
-        if ((globalPos[0] <= 75.0+eps_) && (globalPos[0] >= 50.0+eps_) && (globalPos[1] >= 10.0-eps_))
+        if ((globalPos[0] <= 75.0 + eps_) && (globalPos[0] >= 50.0 - eps_) && (globalPos[1] >= 10.0 - eps_))
         {
             values[contiWEqIdx] = -0.0;
             //mole flow conversion to mass flow with molar mass M(Mesit.)=0,120 kg/mol --> 1.2e-4 kg/(sm)
@@ -336,7 +336,7 @@ private:
         Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
 
-        if(y >(-1.E-3*x+5) )
+        if(y >(-1.E-3*x+5) - eps_)
         {
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
@@ -383,7 +383,7 @@ private:
     }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
 } //end namespace

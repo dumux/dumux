@@ -193,8 +193,8 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     { return
-            70. <= globalPos[0] && globalPos[0] <= 85. &&
-            7.0 <= globalPos[1] && globalPos[1] <= 7.50;
+            70. - eps_ <= globalPos[0] && globalPos[0] <= 85. + eps_ &&
+            7.0 - eps_ <= globalPos[1] && globalPos[1] <= 7.50 + eps_;
     }
 
     Scalar fineK_;
@@ -205,6 +205,8 @@ private:
     MaterialLawParams materialParams_;
 
     bool plotFluidMatrixInteractions_;
+
+    static constexpr Scalar eps_ = 1e-6;
 };
 
 }
