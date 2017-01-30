@@ -176,17 +176,11 @@ private:
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
         static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
+        // forward to the filler of the diffusive quantities
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                if (phaseIdx == compIdx)
-                    continue;
-
-                // forward to the filler of the diffusive quantities
-                DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
-            }
-        }
+                if (phaseIdx != compIdx)
+                    DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
 
     //! do nothing if diffusion is not enabled
