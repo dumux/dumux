@@ -122,8 +122,6 @@ public:
         //parameters for the vanGenuchten law
         materialParams_.setVgAlpha(6.66e-5); // alpha = 1/pcb
         materialParams_.setVgn(3.652);
-
-        eps_ = 1e-6;
     }
 
     ~FuelCellSpatialParams()
@@ -180,7 +178,7 @@ public:
 private:
     DimMatrix K_;
     Scalar porosity_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     MaterialLawParams materialParams_;
 };
 

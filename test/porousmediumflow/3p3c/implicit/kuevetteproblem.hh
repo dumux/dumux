@@ -150,7 +150,7 @@ public:
      * \param gridView The grid view
      */
     KuevetteProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView), eps_(1e-6)
+        : ParentType(timeManager, gridView)
     {
         FluidSystem::init();
 
@@ -357,7 +357,7 @@ private:
         }
     }
 
-    const Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     Scalar episodeLength_;
 };

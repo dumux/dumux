@@ -240,7 +240,6 @@ public:
 
     void init()
     {
-            eps_ = 1e-6;
             outputName_ = GET_RUNTIME_PARAM(TypeTag, std::string, Constants.outputName);
             nRestart_ = GET_RUNTIME_PARAM(TypeTag, int, Constants.nRestart);
             TInitial_ = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.TInitial);
@@ -727,7 +726,7 @@ private:
     {   return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;}
 
 private:
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;;
     int nTemperature_;
     int nPressure_;
     std::string outputName_;

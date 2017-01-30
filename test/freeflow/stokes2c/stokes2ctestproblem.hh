@@ -110,8 +110,6 @@ public:
     Stokes2cTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        eps_ = 1e-6;
-
         // initialize the tables of the fluid system
         FluidSystem::init();
     }
@@ -248,7 +246,7 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->bBoxMax()[1] - eps_; }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 

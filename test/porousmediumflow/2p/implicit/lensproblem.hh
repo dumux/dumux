@@ -211,7 +211,6 @@ public:
                 const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
-        eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
 
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
@@ -455,7 +454,7 @@ private:
     }
 
     Scalar temperature_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 3e-6;
     std::string name_;
 };
 } //end namespace

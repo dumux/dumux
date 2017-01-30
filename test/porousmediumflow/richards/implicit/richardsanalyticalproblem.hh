@@ -145,7 +145,6 @@ public:
                         const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        eps_ = 3e-6;
         pnRef_ = 1e5; // air pressure
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
     }
@@ -419,7 +418,7 @@ private:
         return globalPos[1] > this->bBoxMax()[1] - eps_;
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 3e-6;
     Scalar pnRef_;
     std::string name_;
 };

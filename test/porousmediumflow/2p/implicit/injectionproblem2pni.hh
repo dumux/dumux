@@ -164,7 +164,6 @@ public:
         : ParentType(timeManager, gridView)
     {
         maxDepth_ = 2700.0; // [m]
-        eps_ = 1e-6;
 
         // initialize the tables of the fluid system
         FluidSystem::init(/*tempMin=*/273.15,
@@ -291,7 +290,7 @@ public:
         else
             globalPos = intersection.geometry().center();
 
-        if (globalPos[1] < 15 && globalPos[1] > 7) {
+        if (globalPos[1] < 15 + eps_ && globalPos[1] > 7 - eps_) {
             // inject air. negative values mean injection
             values[contiNEqIdx] = -1e-3; // kg/(s*m^2)
         }
@@ -320,7 +319,7 @@ public:
 
 #if !ISOTHERMAL
         values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
-        if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] > 5 && globalPos[1] < 35)
+        if (globalPos[0] > 20 - eps_ && globalPos[0] < 30 + eps_ && globalPos[1] > 5 - eps_ && globalPos[1] < 35 + eps_)
             values[temperatureIdx] = 380;
 #endif // !ISOTHERMAL
     }
@@ -328,7 +327,7 @@ public:
 
 private:
     Scalar maxDepth_;
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
 };
 } //end namespace

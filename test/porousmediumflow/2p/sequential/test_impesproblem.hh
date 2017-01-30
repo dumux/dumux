@@ -163,7 +163,7 @@ typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
 
 public:
 IMPESTestProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView), eps_(1e-6)
+ParentType(timeManager, gridView)
 {
     name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
 }
@@ -283,7 +283,7 @@ void initial(PrimaryVariables &values,
 
 private:
 
-const Scalar eps_;
+static constexpr Scalar eps_ = 1e-6;
 std::string name_;
 };
 } //end namespace

@@ -591,9 +591,9 @@ public:
     {
         values = 0.0;
         if(initializationRun_ == false){
-        if(globalPos[0] > 490 && globalPos[0] < 510
-                        && globalPos[1] > 490 && globalPos[1] < 510
-                        && globalPos[dimWorld-1] > 490 && globalPos[dimWorld-1] < 510)
+        if(globalPos[0] > 490-eps_ && globalPos[0] < 510+eps_
+                        && globalPos[1] > 490-eps_ && globalPos[1] < 510+eps_
+                        && globalPos[dimWorld-1] > 490-eps_ && globalPos[dimWorld-1] < 510+eps_)
         values[saturationIdx] = 1.e-5; // injection
         }
     }

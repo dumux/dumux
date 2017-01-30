@@ -167,7 +167,6 @@ public:
     FractureProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
-        eps_ = 1.5e-7;
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
     }
 
@@ -246,7 +245,7 @@ public:
 
         if (onInlet_(globalPos))
             values.setAllNeumann();
-        if (globalPos[2] > 1.0-eps_ || globalPos[2] < eps_)
+        if (globalPos[2] > 1.0 - eps_ || globalPos[2] < eps_)
             values.setAllNeumann();
     }
 
@@ -312,10 +311,10 @@ public:
 private:
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < eps_ && globalPos[1] > -0.5;
+        return globalPos[0] < eps_ && globalPos[1] > -0.5 - eps_;
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
 };
 
