@@ -18,23 +18,33 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief The available discretization methods in Dumux
+ * \brief Defines the primary variable and equation indices used by tracer model
  */
-#ifndef DUMUX_DISCRETIZARION_METHODS_HH
-#define DUMUX_DISCRETIZARION_METHODS_HH
+
+#ifndef DUMUX_TRACER_INDICES_HH
+#define DUMUX_TRACER_INDICES_HH
+
+#include "properties.hh"
 
 namespace Dumux
 {
-    //! The discretization methods
-    //! \note Use none if specifying a discretization method is required but
-    //!       the class in question is not specific to a a discretization method
-    //!       or the classification is non-applicable
-    enum class DiscretizationMethods : unsigned int
-    {
-        None, Box, CCTpfa, CCMpfa
-    };
+// \{
 
-} // end namespace Dumux
+/*!
+ * \ingroup TracerModel
+ * \ingroup ImplicitIndices
+ * \brief The indices for the isothermal tracer model.
+ */
+template <class TypeTag, int PVOffset = 0>
+struct TracerIndices
+{
+    //! Component indices are just numbered by component index
+    //! primary variable indices are just numbered by component index
+    //! Equation indices
+    static const int transportEqIdx = PVOffset + 0; //!< transport equation index
+};
+
+// \}
+}
 
 #endif

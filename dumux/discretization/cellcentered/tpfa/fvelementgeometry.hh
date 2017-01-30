@@ -258,6 +258,7 @@ public:
         {
             neighborScvs_.reserve(element.subEntities(1));
             neighborScvfIndices_.reserve(element.subEntities(1));
+            neighborScvfs_.reserve(element.subEntities(1));
             if (intersection.neighbor())
                 makeNeighborGeometries(intersection.outside());
         }
@@ -320,6 +321,8 @@ public:
     {
         clear();
         elementPtr_ = &element;
+        scvfs_.reserve(element.subEntities(1));
+        scvfIndices_.reserve(element.subEntities(1));
         makeElementGeometries(element);
     }
 

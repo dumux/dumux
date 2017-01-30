@@ -19,22 +19,36 @@
 /*!
  * \file
  *
- * \brief The available discretization methods in Dumux
+ * \brief test for the tracer model
  */
-#ifndef DUMUX_DISCRETIZARION_METHODS_HH
-#define DUMUX_DISCRETIZARION_METHODS_HH
+#include <config.h>
+#include "tracertestproblem.hh"
+#include <dumux/common/start.hh>
 
-namespace Dumux
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
+void usage(const char *progName, const std::string &errorMsg)
 {
-    //! The discretization methods
-    //! \note Use none if specifying a discretization method is required but
-    //!       the class in question is not specific to a a discretization method
-    //!       or the classification is non-applicable
-    enum class DiscretizationMethods : unsigned int
-    {
-        None, Box, CCTpfa, CCMpfa
-    };
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n";
+        std::cout << errorMessageOut
+                  << "\n";
+    }
+}
 
-} // end namespace Dumux
-
-#endif
+int main(int argc, char** argv)
+{
+    return Dumux::start<TTAG(TracerTestBoxProblem)>(argc, argv, usage);
+}
