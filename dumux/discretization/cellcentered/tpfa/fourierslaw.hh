@@ -30,6 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux
 {
@@ -57,6 +58,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -69,6 +71,11 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+
+    //! state the type for the corresponding cache and its filler
+    //! We don't cache anything for this law
+    using Cache = FluxVariablesCaching::EmptyHeatConductionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

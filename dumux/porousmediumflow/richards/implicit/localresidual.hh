@@ -102,12 +102,7 @@ public:
                                  const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.initAndComputeFluxes(this->problem(),
-                                      element,
-                                      fvGeometry,
-                                      elemVolVars,
-                                      scvf,
-                                      elemFluxVarsCache);
+        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         PrimaryVariables flux;
         // the physical quantities for which we perform upwinding

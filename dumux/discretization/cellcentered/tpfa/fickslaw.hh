@@ -31,6 +31,7 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux
 {
@@ -61,6 +62,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -72,6 +74,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+
+    //! state the type for the corresponding cache and its filler
+    //! We don't cache anything for this law
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

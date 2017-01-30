@@ -54,10 +54,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using DynamicVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -67,9 +68,105 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     static constexpr bool facetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
+    //! The cache used in conjunction with the mpfa Fick's Law
+    class MpfaFicksLawCache
+    {
+        static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+
+        // We always use the dynamic types here to be compatible on the boundary
+        using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
+        using PositionVector = typename BoundaryInteractionVolume::PositionVector;
+
+    public:
+        //! The constructor. Initializes the Neumann flux to zero
+        MpfaFicksLawCache() { componentNeumannFluxes_.fill(0.0); }
+
+        // update cached objects for the diffusive fluxes
+        template<typename InteractionVolume>
+        void updateDiffusion(const InteractionVolume& iv, const SubControlVolumeFace &scvf,
+                             unsigned int phaseIdx, unsigned int compIdx)
+        {
+            const auto& localFaceData = iv.getLocalFaceData(scvf);
+            diffusionVolVarsStencils_[phaseIdx][compIdx] = iv.volVarsStencil();
+            diffusionTij_[phaseIdx][compIdx] = iv.getTransmissibilities(localFaceData);
+
+            if (enableInteriorBoundaries)
+                diffusionCij_[phaseIdx][compIdx] = iv.getNeumannFluxTransformationCoefficients(localFaceData);
+
+            //! For compositional models, we associate neumann fluxes with the phases (main components)
+            //! This is done in the AdvectionCache. However, in single-phasic models we solve the phase AND
+            //! the component mass balance equations. Thus, in this case we have diffusive neumann contributions.
+            //! we assume compIdx = eqIdx
+            if (numPhases == 1 && phaseIdx != compIdx)
+                componentNeumannFluxes_[compIdx] = iv.getNeumannFlux(localFaceData, compIdx);
+
+        }
+
+        //! Returns the volume variables indices necessary for diffusive flux
+        //! computation. This includes all participating boundary volume variables
+        //! and it can be different for the phases & components.
+        const Stencil& diffusionVolVarsStencil(unsigned int phaseIdx, unsigned int compIdx) const
+        { return diffusionVolVarsStencils_[phaseIdx][compIdx]; }
+
+        //! Returns the transmissibilities associated with the volume variables
+        //! This can be different for the phases & components.
+        const CoefficientVector& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return diffusionTij_[phaseIdx][compIdx]; }
+
+        //! Returns the vector of coefficients with which the vector of neumann boundary conditions
+        //! has to be multiplied in order to transform them on the scvf this cache belongs to
+        const CoefficientVector& diffusionCij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return diffusionCij_[phaseIdx][compIdx]; }
+
+        //! If the useTpfaBoundary property is set to false, the boundary conditions
+        //! are put into the local systems leading to possible contributions on all faces
+        Scalar componentNeumannFlux(unsigned int compIdx) const
+        {
+            assert(numPhases == 1);
+            return componentNeumannFluxes_[compIdx];
+        }
+
+    private:
+        // Quantities associated with molecular diffusion
+        std::array< std::array<Stencil, numComponents>, numPhases> diffusionVolVarsStencils_;
+        std::array< std::array<CoefficientVector, numComponents>, numPhases> diffusionTij_;
+        std::array< std::array<CoefficientVector, numComponents>, numPhases> diffusionCij_;
+
+        // diffusive neumann flux for single-phasic models
+        std::array<Scalar, numComponents> componentNeumannFluxes_;
+    };
+
+    //! Class that fills the cache corresponding to mpfa Darcy's Law
+    class MpfaFicksLawCacheFiller
+    {
+    public:
+        //! Function to fill an MpfaFicksLawCache of a given scvf
+        //! This interface has to be met by any diffusion-related cache filler class
+        template<class FluxVariablesCacheFiller>
+        static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                         unsigned int phaseIdx, unsigned int compIdx,
+                         const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace& scvf,
+                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+        {
+            // get interaction volume from the flux vars cache filler & upate the cache
+            if (problem.model().globalFvGeometry().touchesInteriorOrDomainBoundary(scvf))
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf, phaseIdx, compIdx);
+            else
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.interactionVolume(), scvf, phaseIdx, compIdx);
+        }
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
+
+    // state the type for the corresponding cache and its filler
+    using Cache = MpfaFicksLawCache;
+    using CacheFiller = MpfaFicksLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -180,7 +277,7 @@ public:
         const auto& cij = fluxVarsCache.diffusionCij(phaseIdx, compIdx);
 
         // The vector of interior neumann fluxes
-        DynamicVector facetCouplingFluxes(cij.size(), 0.0);
+        CoefficientVector facetCouplingFluxes(cij.size(), 0.0);
         for (auto&& data : fluxVarsCache.interiorBoundaryData())
         {
             // Add additional Dirichlet fluxes for interior Dirichlet faces

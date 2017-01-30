@@ -140,7 +140,6 @@ public:
         globalScvfIndices_.clear();
 
         const auto& problem = globalFluxVarsCache().problem_();
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
 
         const auto globalI = problem.elementMapper().index(element);
         const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
@@ -160,11 +159,17 @@ public:
             for (auto scvfIdx : dataJ.scvfsJ)
                 globalScvfIndices_.push_back(scvfIdx);
 
-        // prepare all the caches of the scvfs inside the corresponding interaction volumes using helper class
+        // helper class to fill flux variables caches
+        FluxVariablesCacheFiller filler(problem);
+
+        // prepare all the caches of the scvfs inside the corresponding interaction volumes
         fluxVarsCache_.resize(globalScvfIndices_.size());
         for (auto&& scvf : scvfs(fvGeometry))
-            if (!(*this)[scvf].isUpdated())
-                FluxVariablesCacheFiller::fillFluxVarCache(problem, element, fvGeometry, elemVolVars, scvf, *this);
+        {
+            auto& scvfCache = (*this)[scvf];
+            if (!scvfCache.isUpdated())
+                filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
+        }
 
         // prepare the caches in the remaining neighbors
         for (auto&& dataJ : assemblyMapI)
@@ -172,10 +177,11 @@ public:
             for (auto scvfIdx : dataJ.scvfsJ)
             {
                 const auto& scvf = fvGeometry.scvf(scvfIdx);
-                if (!(*this)[scvf].isUpdated())
+                auto& scvfCache = (*this)[scvf];
+                if (!scvfCache.isUpdated())
                 {
-                    auto elementJ = globalFvGeometry.element(dataJ.globalJ);
-                    FluxVariablesCacheFiller::fillFluxVarCache(problem, elementJ, fvGeometry, elemVolVars, scvf, *this);
+                    auto elementJ = problem.model().globalFvGeometry().element(dataJ.globalJ);
+                    filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, scvf);
                 }
             }
         }
@@ -215,12 +221,40 @@ private:
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
-        for (auto&& scvf : scvfs(fvGeometry))
-            (*this)[scvf].setUpdateStatus(false);
+        static const bool isSolIndependent = FluxVariablesCacheFiller::isSolutionIndependent();
 
-        for (auto&& scvf : scvfs(fvGeometry))
-            if (!(*this)[scvf].isUpdated())
-                FluxVariablesCacheFiller::updateFluxVarCache(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf, *this);
+        if (!isSolIndependent)
+        {
+            const auto& problem = globalFluxVarsCache().problem_();
+
+            // helper class to fill flux variables caches
+            FluxVariablesCacheFiller filler(problem);
+
+            // set all the caches to "outdated"
+            for (auto& cache : fluxVarsCache_)
+                cache.setUpdateStatus(false);
+
+            // the global index of the element at hand
+            const auto globalI = problem.elementMapper().index(element);
+
+            // Let the filler do the update of the cache
+            for (unsigned int localScvfIdx = 0; localScvfIdx < globalScvfIndices_.size(); ++localScvfIdx)
+            {
+                const auto& scvf = fvGeometry.scvf(globalScvfIndices_[localScvfIdx]);
+
+                auto& scvfCache = fluxVarsCache_[localScvfIdx];
+                if (!scvfCache.isUpdated())
+                {
+                    // obtain the corresponding element
+                    const auto scvfInsideScvIdx = scvf.insideScvIdx();
+                    const auto insideElement = scvfInsideScvIdx == globalI ?
+                                               element :
+                                               problem.model().globalFvGeometry().element(scvfInsideScvIdx);
+
+                    filler.update(*this, scvfCache, insideElement, fvGeometry, elemVolVars, scvf);
+                }
+            }
+        }
     }
 
     // get index of an scvf in the local container

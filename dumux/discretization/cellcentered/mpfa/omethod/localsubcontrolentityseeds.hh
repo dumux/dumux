@@ -165,7 +165,7 @@ public:
 
     // for grids with dim < dimWorld, some outside indices might be doubled
     // we want to make the outside indices unique, but, the i-th outside global scvf face
-    // should correspond to the j-th outside local scv.Therefore we apply the same operations on both containers
+    // should correspond to the i-th outside local scv.Therefore we apply the same operations on both containers
     void makeOutsideDataUnique()
     {
         auto scvIt = outsideLocalScvIndices_.begin();
