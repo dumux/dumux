@@ -201,7 +201,7 @@ public:
         Scalar Tpow = Troot;
         Scalar lam = 0;
 
-        for(int k = 0; k < thcond_a_count; ++k) {
+        for(unsigned int k = 0; k < thcond_a_count; ++k) {
             lam += thcond_a[k] * Tpow;
             Tpow *= Tbar;
         }
