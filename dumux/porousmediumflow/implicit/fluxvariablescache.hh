@@ -189,8 +189,7 @@ public:
 
     //! maybe update data on interior Dirichlet boundaries
     template<class InteractionVolume>
-    void updateInteriorBoundaryData(const InteractionVolume& iv,
-                                    const SubControlVolumeFace &scvf)
+    void updateInteriorBoundaryData(const InteractionVolume& iv, const SubControlVolumeFace &scvf)
     {
         if (enableInteriorBoundaries)
         {
