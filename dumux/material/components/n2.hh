@@ -103,15 +103,18 @@ public:
                       // account
 
         // note: this is the ancillary equation given on page 1368
+        using std::sqrt;
         Scalar sigma = Scalar(1.0) - T/criticalTemperature();
-        Scalar sqrtSigma = std::sqrt(sigma);
+        Scalar sqrtSigma = sqrt(sigma);
         const Scalar N1 = -6.12445284;
         const Scalar N2 = 1.26327220;
         const Scalar N3 = -0.765910082;
         const Scalar N4 = -1.77570564;
+
+        using std::exp;
         return
             criticalPressure() *
-            std::exp(criticalTemperature()/T*
+            exp(criticalTemperature()/T*
                      (sigma*(N1 +
                              sqrtSigma*N2 +
                              sigma*(sqrtSigma*N3 +
@@ -257,17 +260,20 @@ public:
         const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
         const Scalar dipole = 0.0; // dipole moment [debye]
 
-        Scalar mu_r4 = 131.3 * dipole / std::sqrt(Vc * Tc);
+        using std::sqrt;
+        Scalar mu_r4 = 131.3 * dipole / sqrt(Vc * Tc);
         mu_r4 *= mu_r4;
         mu_r4 *= mu_r4;
 
+        using std::pow;
+        using std::exp;
         Scalar Fc = 1 - 0.2756*omega + 0.059035*mu_r4;
         Scalar Tstar = 1.2593 * temperature/Tc;
         Scalar Omega_v =
-            1.16145*std::pow(Tstar, -0.14874) +
-            0.52487*std::exp(- 0.77320*Tstar) +
-            2.16178*std::exp(- 2.43787*Tstar);
-        Scalar mu = 40.785*Fc*std::sqrt(M*temperature)/(std::pow(Vc, 2./3)*Omega_v);
+            1.16145*pow(Tstar, -0.14874) +
+            0.52487*exp(- 0.77320*Tstar) +
+            2.16178*exp(- 2.43787*Tstar);
+        Scalar mu = 40.785*Fc*sqrt(M*temperature)/(pow(Vc, 2./3)*Omega_v);
 
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;

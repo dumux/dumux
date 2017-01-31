@@ -219,7 +219,9 @@ public:
     {
         const Scalar epsk = 103.3; // [K]
 
-        using namespace std;
+        using std::log;
+        using std::exp;
+        using std::sqrt;
         const Scalar logTstar = log(temperature/epsk);
         const Scalar Omega = exp(0.431
                                  - 0.4623*logTstar
@@ -230,6 +232,7 @@ public:
         const Scalar sigma = 0.36; // [nm]
         const Scalar eta0 = 0.0266958*sqrt(1000.0*molarMass()*temperature)/(sigma*sigma*Omega);
 
+        using std::pow;
         const Scalar tau = criticalTemperature()/temperature;
         const Scalar rhoc = 10.4477; // [mol/m^3]
         const Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;

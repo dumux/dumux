@@ -269,8 +269,9 @@ public:
      */
     static Scalar vaporPressure(Scalar T)
     {
+        using std::isnan;
         Scalar result = interpolateT_(vaporPressure_, T);
-        if (std::isnan(result)) {
+        if (isnan(result)) {
             return RawComponent::vaporPressure(T);
         }
         return result;
@@ -299,7 +300,8 @@ public:
         Scalar result = interpolateGasTP_(gasEnthalpy_,
                                           temperature,
                                           pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("gasEnthalpy", temperature, pressure);
             return RawComponent::gasEnthalpy(temperature, pressure);
         }
@@ -317,7 +319,8 @@ public:
         Scalar result = interpolateLiquidTP_(liquidEnthalpy_,
                                              temperature,
                                              pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("liquidEnthalpy", temperature, pressure);
             return RawComponent::liquidEnthalpy(temperature, pressure);
         }
@@ -335,7 +338,8 @@ public:
         Scalar result = interpolateGasTP_(gasHeatCapacity_,
                                           temperature,
                                           pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("gasHeatCapacity", temperature, pressure);
             return RawComponent::gasHeatCapacity(temperature, pressure);
         }
@@ -353,7 +357,8 @@ public:
         Scalar result = interpolateLiquidTP_(liquidHeatCapacity_,
                                              temperature,
                                              pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("liquidHeatCapacity", temperature, pressure);
             return RawComponent::liquidHeatCapacity(temperature, pressure);
         }
@@ -397,7 +402,8 @@ public:
         Scalar result = interpolateGasTRho_(gasPressure_,
                                             temperature,
                                             density);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("gasPressure", temperature, density);
             return RawComponent::gasPressure(temperature,
                                              density);
@@ -416,7 +422,8 @@ public:
         Scalar result = interpolateLiquidTRho_(liquidPressure_,
                                                temperature,
                                                density);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("liquidPressure", temperature, density);
             return RawComponent::liquidPressure(temperature,
                                                 density);
@@ -455,7 +462,8 @@ public:
         Scalar result = interpolateGasTP_(gasDensity_,
                                           temperature,
                                           pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("gasDensity", temperature, pressure);
             return RawComponent::gasDensity(temperature, pressure);
         }
@@ -474,7 +482,8 @@ public:
         Scalar result = interpolateLiquidTP_(liquidDensity_,
                                              temperature,
                                              pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("liquidDensity", temperature, pressure);
             return RawComponent::liquidDensity(temperature, pressure);
         }
@@ -492,7 +501,8 @@ public:
         Scalar result = interpolateGasTP_(gasViscosity_,
                                           temperature,
                                           pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("gasViscosity", temperature, pressure);
             return RawComponent::gasViscosity(temperature, pressure);
         }
@@ -510,7 +520,8 @@ public:
         Scalar result = interpolateLiquidTP_(liquidViscosity_,
                                              temperature,
                                              pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("liquidViscosity",temperature, pressure);
             return RawComponent::liquidViscosity(temperature, pressure);
         }
@@ -528,7 +539,8 @@ public:
         Scalar result = interpolateGasTP_(gasThermalConductivity_,
                                           temperature,
                                           pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("gasThermalConductivity", temperature, pressure);
             return RawComponent::gasThermalConductivity(temperature, pressure);
         }
@@ -546,7 +558,8 @@ public:
         Scalar result = interpolateLiquidTP_(liquidThermalConductivity_,
                                              temperature,
                                              pressure);
-        if (std::isnan(result)) {
+        using std::isnan;
+        if (isnan(result)) {
             printWarning_("liquidThermalConductivity", temperature, pressure);
             return RawComponent::liquidThermalConductivity(temperature, pressure);
         }
@@ -597,15 +610,16 @@ private:
         if (alphaT < 0 || alphaT >= nTemp_ - 1) {
             return std::numeric_limits<Scalar>::quiet_NaN();
         }
-
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        using std::min;
+        using std::max;
+        unsigned iT = max<int>(0, min<int>(nTemp_ - 2, (int) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = pressLiquidIdx_(p, iT);
         Scalar alphaP2 = pressLiquidIdx_(p, iT + 1);
 
-        unsigned iP1 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP2));
+        unsigned iP1 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP1));
+        unsigned iP2 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -638,13 +652,15 @@ private:
             return std::numeric_limits<Scalar>::quiet_NaN();
         }
 
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        using std::min;
+        using std::max;
+        unsigned iT = max<int>(0, min<int>(nTemp_ - 2, (int) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = pressGasIdx_(p, iT);
         Scalar alphaP2 = pressGasIdx_(p, iT + 1);
-        unsigned iP1 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP2));
+        unsigned iP1 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP1));
+        unsigned iP2 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -671,14 +687,16 @@ private:
     // temperature and density
     static Scalar interpolateGasTRho_(const Scalar *values, Scalar T, Scalar rho)
     {
+        using std::min;
+        using std::max;
         Scalar alphaT = tempIdx_(T);
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        unsigned iT = max<int>(0, min<int>(nTemp_ - 2, (int) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = densityGasIdx_(rho, iT);
         Scalar alphaP2 = densityGasIdx_(rho, iT + 1);
-        unsigned iP1 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP2));
+        unsigned iP1 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP1));
+        unsigned iP2 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -693,14 +711,16 @@ private:
     // temperature and density
     static Scalar interpolateLiquidTRho_(const Scalar *values, Scalar T, Scalar rho)
     {
+        using std::min;
+        using std::max;
         Scalar alphaT = tempIdx_(T);
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        unsigned iT = max<int>(0, min<int>(nTemp_ - 2, (int) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = densityLiquidIdx_(rho, iT);
         Scalar alphaP2 = densityLiquidIdx_(rho, iT + 1);
-        unsigned iP1 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP2));
+        unsigned iP1 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP1));
+        unsigned iP2 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -756,40 +776,44 @@ private:
     // temperature index
     static Scalar minLiquidPressure_(int tempIdx)
     {
+        using std::max;
         if (!useVaporPressure)
             return pressMin_;
         else
-            return std::max<Scalar>(pressMin_, vaporPressure_[tempIdx] / 1.1);
+            return max(pressMin_, vaporPressure_[tempIdx] / 1.1);
     }
 
     // returns the maximum tabulized liquid pressure at a given
     // temperature index
     static Scalar maxLiquidPressure_(int tempIdx)
     {
+        using std::max;
         if (!useVaporPressure)
             return pressMax_;
         else
-            return std::max<Scalar>(pressMax_, vaporPressure_[tempIdx] * 1.1);
+            return max(pressMax_, vaporPressure_[tempIdx] * 1.1);
     }
 
     // returns the minumum tabulized gas pressure at a given
     // temperature index
     static Scalar minGasPressure_(int tempIdx)
     {
+        using std::min;
         if (!useVaporPressure)
             return pressMin_;
         else
-            return std::min<Scalar>(pressMin_, vaporPressure_[tempIdx] / 1.1 );
+            return min(pressMin_, vaporPressure_[tempIdx] / 1.1 );
     }
 
     // returns the maximum tabulized gas pressure at a given
     // temperature index
     static Scalar maxGasPressure_(int tempIdx)
     {
+        using std::min;
         if (!useVaporPressure)
             return pressMax_;
         else
-            return std::min<Scalar>(pressMax_, vaporPressure_[tempIdx] * 1.1);
+            return min(pressMax_, vaporPressure_[tempIdx] * 1.1);
     }
 
 
