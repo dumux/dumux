@@ -96,59 +96,16 @@ public:
         // capillary pressure parameters
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        Scalar temp = ParentType::temperature(elemSol, problem, element, scv);
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
-        fluidState_.setTemperature(temp);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
-        sw_ = priVars[swIdx];
-        sn_ = priVars[snIdx];
-        sg_ = 1. - sw_ - sn_;
-
-        Valgrind::CheckDefined(sg_);
-
-        fluidState_.setSaturation(wPhaseIdx, sw_);
-        fluidState_.setSaturation(gPhaseIdx, sg_);
-        fluidState_.setSaturation(nPhaseIdx, sn_);
-
-        /* now the pressures */
-        pg_ = priVars[pressureIdx];
-
-        // calculate capillary pressures
-        Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
-        Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
-        Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
-
-        Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn_);
-        Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
-
-        pn_ = pg_- pcAlpha * pcgn - (1.-pcAlpha)*(pcgw - pcNW1);
-        pw_ = pn_ - pcAlpha * pcnw - (1.-pcAlpha)*pcNW1;
-
-        fluidState_.setPressure(wPhaseIdx, pw_);
-        fluidState_.setPressure(gPhaseIdx, pg_);
-        fluidState_.setPressure(nPhaseIdx, pn_);
-
-        Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
-        Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
-        Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
-
-        fluidState_.setDensity(wPhaseIdx, rhoW);
-        fluidState_.setDensity(gPhaseIdx, rhoG);
-        fluidState_.setDensity(nPhaseIdx, rhoN);
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // Mobilities
-            const Scalar mu =
-                FluidSystem::viscosity(fluidState_,
-                                       phaseIdx);
-            fluidState_.setViscosity(phaseIdx,mu);
-
-            Scalar kr;
-            kr = MaterialLaw::kr(materialParams, phaseIdx,
+         // mobilities
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            mobility_[phaseIdx] = MaterialLaw::kr(materialParams, phaseIdx,
                                  fluidState_.saturation(wPhaseIdx),
                                  fluidState_.saturation(nPhaseIdx),
-                                 fluidState_.saturation(gPhaseIdx));
-            mobility_[phaseIdx] = kr / mu;
+                                 fluidState_.saturation(gPhaseIdx))
+                                 / fluidState_.viscosity(phaseIdx);
             Valgrind::CheckDefined(mobility_[phaseIdx]);
         }
 
@@ -158,13 +115,67 @@ public:
 
         Valgrind::CheckDefined(porosity_);
         Valgrind::CheckDefined(permeability_);
+    }
 
-        // energy related quantities not contained in the fluid state
+    /*!
+     * \copydoc ImplicitModel::completeFluidState
+     */
+    static void completeFluidState(const ElementSolutionVector& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
+    {
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+        fluidState.setTemperature(t);
+
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+
+        const Scalar sw = priVars[swIdx];
+        const Scalar sn = priVars[snIdx];
+        const Scalar sg = 1.0 - sw - sn;
+
+        Valgrind::CheckDefined(sg);
+
+        fluidState.setSaturation(wPhaseIdx, sw);
+        fluidState.setSaturation(gPhaseIdx, sg);
+        fluidState.setSaturation(nPhaseIdx, sn);
+
+        /* now the pressures */
+        const Scalar pg = priVars[pressureIdx];
+
+        // calculate capillary pressures
+        const Scalar pcgw = MaterialLaw::pcgw(materialParams, sw);
+        const Scalar pcnw = MaterialLaw::pcnw(materialParams, sw);
+        const Scalar pcgn = MaterialLaw::pcgn(materialParams, sw + sn);
+
+        const Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn);
+        const Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
+
+        const Scalar pn = pg- pcAlpha * pcgn - (1.0 - pcAlpha)*(pcgw - pcNW1);
+        const Scalar pw = pn - pcAlpha * pcnw - (1.0 - pcAlpha)*pcNW1;
+
+        fluidState.setPressure(wPhaseIdx, pw);
+        fluidState.setPressure(gPhaseIdx, pg);
+        fluidState.setPressure(nPhaseIdx, pn);
+
         typename FluidSystem::ParameterCache paramCache;
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        paramCache.updateAll(fluidState);
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // compute and set the viscosity
+            const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            fluidState.setViscosity(phaseIdx,mu);
+
+            // compute and set the density
+            const Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            fluidState.setDensity(phaseIdx, rho);
+
             // compute and set the enthalpy
-            Scalar h = ParentType::enthalpy(fluidState_, paramCache, phaseIdx);
-            fluidState_.setEnthalpy(phaseIdx, h);
+            const Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+            fluidState.setEnthalpy(phaseIdx, h);
         }
     }
 
@@ -241,12 +252,10 @@ public:
     { return permeability_; }
 
 protected:
-    Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_;
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
-    Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     FluidState fluidState_;
 
 private:
