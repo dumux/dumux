@@ -2,11 +2,14 @@
 DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
+[Problem]
+Name = test_effectivediffusivity_const
+
 [Grid]
 UpperRight = 6 4
 Cells = 48 32
 
-[Diffusivity]
+[Output]
 File = constant_d_eff
 
 []

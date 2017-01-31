@@ -2,10 +2,13 @@
 DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
+[Problem]
+Name = test_effectivediffusivity_mq
+
 [Grid]
 LowerLeft = 0 0
 UpperRight = 6 4
 Cells = 48 32
 
-[Diffusivity]
+[Output]
 File = millingtonquirk_d_eff

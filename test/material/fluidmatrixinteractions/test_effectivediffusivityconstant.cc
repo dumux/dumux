@@ -22,8 +22,22 @@
  * \brief Test for the constant tau effective diffusivity model
  */
 #include <config.h>
-#include "effectivediffusivityconstantproblem.hh"
+
+#include "testproblem.hh"
+#include "diffusivityspatialparams.hh"
+
 #include <dumux/common/start.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstant.hh>
+
+namespace Dumux
+{
+namespace Properties
+{
+// Set thermal conductivity law
+SET_TYPE_PROP(FluidMatrixInteractionTestProblem, EffectiveDiffusivityModel, DiffusivityConstant<TypeTag>);
+SET_TYPE_PROP(FluidMatrixInteractionTestProblem, SpatialParams, DiffusivityTestSpatialParams<TypeTag>);
+}
+}
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -52,5 +66,5 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    return Dumux::start<TTAG(EffectiveDiffusivityConstantProblem)>(argc, argv, usage);
+    return Dumux::start<TTAG(FluidMatrixInteractionTestProblem)>(argc, argv, usage);
 }
