@@ -352,13 +352,13 @@ public:
                 moleFrac[compIdx] = priVars[compIdx];
             }
             moleFrac[nCompIdx] = priVars[switchIdx];
-            Scalar sumMoleFracNotWater = 0;
+            Scalar sumMoleFracOtherComponents = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-                    sumMoleFracNotWater+=moleFrac[compIdx];
+                    sumMoleFracOtherComponents+=moleFrac[compIdx];
             }
-            sumMoleFracNotWater += moleFrac[nCompIdx];
-            moleFrac[wCompIdx] = 1 -sumMoleFracNotWater;
+            sumMoleFracOtherComponents += moleFrac[nCompIdx];
+            moleFrac[wCompIdx] = 1 -sumMoleFracOtherComponents;
 
             // convert mass to mole fractions and set the fluid state
             for (int compIdx=0; compIdx<numComponents; ++compIdx)

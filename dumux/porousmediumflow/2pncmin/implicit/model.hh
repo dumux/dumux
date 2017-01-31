@@ -444,7 +444,7 @@ protected:
         else if (phasePresence == nPhaseOnly)
         {
             Scalar sumxw = 0;
-            //Calculate sum of mole fractions (water and air) in the hypothetical wetting phase
+            //Calculate sum of mole fractions in the hypothetical wetting phase
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
                 sumxw += volVars.moleFraction(wPhaseIdx, compIdx);
