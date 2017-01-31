@@ -75,7 +75,7 @@ public:
      * \param spatialParams spatial parameters
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scvIdx scvIdx (to be passed to spatialParams)
+     * \param scv the sub control volume (to be passed to spatialParams)
      *
      * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
      *
@@ -88,19 +88,19 @@ public:
      *                    of Sci. and Technol., Trondheim. (Draft Transl. 637. 1977. U.S. Army
      *                    Corps of Eng., Cold Regions Res. and Eng. Lab., Hanover, NH.) \cite johansen1977
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               int scvIdx)
+                                               const SubControlVolume& scv)
     {
-        Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
-        Scalar lambdaSolid = volVars.solidThermalConductivity();
-        Scalar porosity = volVars.porosity();
-        Scalar rhoSolid = spatialParams.solidDensity(element, fvGeometry, scvIdx);
+        const Scalar sw = volVars.saturation(Indices::wPhaseIdx);
+        const Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
+        const Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
+        const Scalar lambdaSolid = volVars.solidThermalConductivity();
+        const Scalar porosity = volVars.porosity();
+        const Scalar rhoSolid = volVars.solidDensity();
 
         return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity, rhoSolid);
     }

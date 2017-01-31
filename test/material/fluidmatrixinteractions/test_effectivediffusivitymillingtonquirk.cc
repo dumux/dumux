@@ -22,8 +22,21 @@
  * \brief Test for the Millington and Quirk effective diffusivity model
  */
 #include <config.h>
-#include "effectivediffusivitymillingtonquirkproblem.hh"
+#include "testproblem.hh"
+#include "diffusivityspatialparams.hh"
+
 #include <dumux/common/start.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+
+namespace Dumux
+{
+namespace Properties
+{
+// Set thermal conductivity law
+SET_TYPE_PROP(FluidMatrixInteractionTestProblem, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<double>);
+SET_TYPE_PROP(FluidMatrixInteractionTestProblem, SpatialParams, DiffusivityTestSpatialParams<TypeTag>);
+}
+}
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -53,6 +66,5 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(EffectiveDiffusivityMillingtonQuirkProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+    return Dumux::start<TTAG(FluidMatrixInteractionTestProblem)>(argc, argv, usage);
 }

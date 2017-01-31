@@ -22,8 +22,23 @@
  * \brief Test for the Johansen thermal conductivity law
  */
 #include <config.h>
-#include "thermalconductivityjohansenproblem.hh"
+
+#include "../testproblem.hh"
+#include "thermalconductivityspatialparams.hh"
+
 #include <dumux/common/start.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivityjohansen.hh>
+
+namespace Dumux
+{
+namespace Properties
+{
+// Set thermal conductivity law
+SET_TYPE_PROP(FluidMatrixInteractionTestProblem, ThermalConductivityModel,
+              ThermalConductivityJohansen<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_TYPE_PROP(FluidMatrixInteractionTestProblem, SpatialParams, ThermalConductivityTestSpatialParamsTwoP<TypeTag>);
+}
+}
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -53,6 +68,5 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(ThermalConductivityJohansenProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+    return Dumux::start<TTAG(FluidMatrixInteractionTestProblem)>(argc, argv, usage);
 }

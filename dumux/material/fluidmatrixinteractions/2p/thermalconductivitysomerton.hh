@@ -73,7 +73,7 @@ public:
      * \param spatialParams spatial parameters
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scvIdx scvIdx (to be passed to spatialParams)
+     * \param scv the sub control volume (to be passed to spatialParams)
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
@@ -90,11 +90,11 @@ public:
                                                const FVGeometry& fvGeometry,
                                                const SubControlVolume& scv)
     {
-        Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
-        Scalar lambdaSolid = volVars.solidThermalConductivity();
-        Scalar porosity = volVars.porosity();
+        const Scalar sw = volVars.saturation(Indices::wPhaseIdx);
+        const Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
+        const Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
+        const Scalar lambdaSolid = volVars.solidThermalConductivity();
+        const Scalar porosity = volVars.porosity();
 
         return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);
     }

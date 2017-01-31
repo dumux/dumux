@@ -21,19 +21,19 @@
  *
  * \brief Definition of the spatial parameters for the effective diffusivity tests.
  */
-#ifndef DUMUX_FLUIDMATRIXINTERACTION_TEST_SPATIAL_PARAMS_TWOP_HH
-#define DUMUX_FLUIDMATRIXINTERACTION_TEST_SPATIAL_PARAMS_TWOP_HH
+#ifndef DUMUX_DIFFUSIVITY_SPATIAL_PARAMS_HH
+#define DUMUX_DIFFUSIVITY_SPATIAL_PARAMS_HH
 
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/plotthermalconductivitymodel.hh>
+#include <dumux/io/ploteffectivediffusivitymodel.hh>
 
-#include "../fluidmatrixinteractionsspatialparams.hh"
+#include "fluidmatrixinteractionsspatialparams.hh"
 
 namespace Dumux
 {
 
 template<class TypeTag>
-class ThermalConductivityTestSpatialParamsTwoP
+class DiffusivityTestSpatialParams
  : public FluidMatrixInteractionTestSpatialParams<TypeTag>
 {
     using ParentType = FluidMatrixInteractionTestSpatialParams<TypeTag>;
@@ -41,8 +41,9 @@ class ThermalConductivityTestSpatialParamsTwoP
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    ThermalConductivityTestSpatialParamsTwoP(const Problem& problem, const GridView &gridView)
+    DiffusivityTestSpatialParams(const Problem& problem, const GridView &gridView)
     : ParentType(problem, gridView) {}
+
     /*!
      * \brief This is called from the problem and creates a gnuplot output
      *        of e.g the pc-Sw curve
@@ -51,11 +52,10 @@ public:
     {
         GnuplotInterface<Scalar> gnuplot;
         gnuplot.setOpenPlotWindow(GET_PARAM_FROM_GROUP(TypeTag, bool, Output, OpenPlotWindow));
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel_(293.15, 1e5);
+        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, File);
-        plotThermalConductivityModel_.addlambdaeffcurve(gnuplot, this->porosity_, this->rhoSolid_, this->lambdaSolid_,
-                                                        0.0, 1.0, fileName);
-        gnuplot.plot("lambda_eff");
+        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, this->porosity_, 0.0, 1.0, fileName);
+        gnuplot.plot("d_eff");
     }
 };
 
