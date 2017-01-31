@@ -32,10 +32,6 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/globalfvgeometry.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
-#include <dumux/discretization/cellcentered/tpfa/subcontrolvolume.hh>
-#include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
 namespace Dumux
 {
@@ -50,6 +46,13 @@ public:
 
     const ElementMapper& elementMapper() const
     { return mapper_; }
+
+    template<class Element, class Intersection>
+    bool isInteriorBoundary(const Element& e, const Intersection& i) const
+    { return false; }
+
+    std::vector<unsigned int> getAdditionalDofDependencies(unsigned int index) const
+    { return std::vector<unsigned int>(); }
 private:
     ElementMapper mapper_;
 };
