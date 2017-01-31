@@ -45,8 +45,8 @@ namespace Properties
 {
 NEW_TYPE_TAG(ThreePNIConductionProblem, INHERITS_FROM(ThreePNI, ThreePNISpatialParams));
 NEW_TYPE_TAG(ThreePNIConductionBoxProblem, INHERITS_FROM(BoxModel, ThreePNIConductionProblem));
-NEW_TYPE_TAG(ThreePNIConductionCCProblem, INHERITS_FROM(CCModel, ThreePNIConductionProblem));
-
+NEW_TYPE_TAG(ThreePNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, ThreePNIConductionProblem));
+NEW_TYPE_TAG(ThreePNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, ThreePNIConductionProblem));
 
 // Set the grid type
 SET_TYPE_PROP(ThreePNIConductionProblem, Grid, Dune::YaspGrid<2>);
@@ -124,7 +124,8 @@ class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
         swIdx = Indices::swIdx,
         snIdx = Indices::snIdx,
-        temperatureIdx = Indices::temperatureIdx
+        temperatureIdx = Indices::temperatureIdx,
+        wPhaseIdx = Indices::wPhaseIdx
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -159,67 +160,50 @@ public:
             this->timeManager().willBeFinished();
     }
 
-    /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+
+     /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    {
+        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
+
+        const auto someElement = *(elements(this->gridView()).begin());
+        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        const auto someInitSol = initialAtPos(someElement.geometry().center());
+
+        auto someFvGeometry = localView(this->model().globalFvGeometry());
+        someFvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(someFvGeometry).begin());
+
+        VolumeVariables volVars;
+        volVars.update(someElemSol, *this, someElement, someScv);
+
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
+        const auto densityW = volVars.density(wPhaseIdx);
+        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
+        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
+                                                                                                         someElement, someFvGeometry, someScv);
+        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+
+        for (const auto& element : elements(this->gridView()))
         {
-            //Here we calculate the analytical solution
-            typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-            unsigned numDofs = this->model().numDofs();
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            //create required scalar fields
-            ScalarField *temperatureExact = this->resultWriter().allocateManagedBuffer(numDofs);
-
-            FVElementGeometry fvGeometry;
-            VolumeVariables volVars;
-
-            const auto firstElement = *this->gridView().template begin<0>();
-            fvGeometry.update(this->gridView(), firstElement);
-            PrimaryVariables initialPriVars(0);
-            GlobalPosition globalPos(0);
-            initial_(initialPriVars, globalPos);
-
-            //update the constant volume variables
-            volVars.update(initialPriVars,
-                           *this,
-                           firstElement,
-                           fvGeometry,
-                           0,
-                           false);
-
-            Scalar porosity = this->spatialParams().porosity(firstElement, fvGeometry, 0);
-            Scalar densityW = volVars.density(swIdx);
-            Scalar heatCapacityW = IapwsH2O::liquidHeatCapacity(initialPriVars[temperatureIdx], initialPriVars[pressureIdx]);
-            Scalar densityS = this->spatialParams().solidDensity(firstElement, fvGeometry, 0);
-            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(firstElement, fvGeometry, 0);
-            Scalar storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
-            Scalar effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                                                                                                         firstElement, fvGeometry, 0);
-            Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-
-
-            for (const auto& element : elements(this->gridView()))
+            for (auto&& scv : scvs(fvGeometry))
             {
-                fvGeometry.update(this->gridView(), element);
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int globalIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+                auto globalIdx = scv.dofIndex();
+                const auto& globalPos = scv.dofPosition();
 
-                    if (isBox)
-                        globalPos = element.geometry().corner(scvIdx);
-                    else
-                        globalPos = element.geometry().center();
-
-                    (*temperatureExact)[globalIdx] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
-                                                     *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
-                }
+                temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
+                                              *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
-            this->resultWriter().attachDofData(*temperatureExact, "temperatureExact", isBox);
-
         }
+    }
     /*!
      * \name Problem parameters
      */
@@ -273,8 +257,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
-        initial_(values, globalPos);
+        PrimaryVariables values = initialAtPos(globalPos);
 
         if (globalPos[0] < eps_)
             values[temperatureIdx] = temperatureHigh_;
@@ -313,7 +296,6 @@ public:
     /*!
      * \brief Returns the source term at specific position in the domain.
      *
-     * \param values The source values for the primary variables
      * \param globalPos The position
      */
     PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
@@ -324,31 +306,22 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
-     * For this method, the \a values parameter stores primary
-     * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
-        initial_(values, globalPos);
+        PrimaryVariables values;
+        values[pressureIdx] = 1e5; // initial condition for the pressure
+        values[swIdx] = 1.;  // initial condition for the wetting phase saturation
+        values[snIdx] = 1e-5;  // initial condition for the non-wetting phase saturation
+        values[temperatureIdx] = 290.;
         return values;
     }
 
     // \}
 
 private:
-    // the internal method for the initial condition
-    void initial_(PrimaryVariables &priVars,
-                  const GlobalPosition &globalPos) const
-    {
-        priVars[pressureIdx] = 1e5; // initial condition for the pressure
-        priVars[swIdx] = 1.;  // initial condition for the wetting phase saturation
-        priVars[snIdx] = 1e-5;  // initial condition for the non-wetting phase saturation
-        priVars[temperatureIdx] = 290.;
-    }
 
     Scalar temperatureHigh_;
     static constexpr Scalar eps_ = 1e-6;

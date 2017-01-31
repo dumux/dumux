@@ -22,7 +22,7 @@ add_dumux_test(test_box3pniconvection test_box3pniconvection test_box3pniconvect
                  --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection"
-                 --zeroThreshold {"velocityW":1e-16})
+                 --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 add_dumux_test(test_cc3pniconvection test_cc3pniconvection test_cc3pniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -30,7 +30,7 @@ add_dumux_test(test_cc3pniconvection test_cc3pniconvection test_cc3pniconvection
                  --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectioncc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconvection-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconvection"
-                 --zeroThreshold {"velocityW":1e-16})
+                 --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 add_dumux_test(test_box3pniconduction test_box3pniconduction test_box3pniconduction.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -38,7 +38,7 @@ add_dumux_test(test_box3pniconduction test_box3pniconduction test_box3pniconduct
                  --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction"
-                 --zeroThreshold {"velocityW":1e-8})
+                 --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 add_dumux_test(test_cc3pniconduction test_cc3pniconduction test_cc3pniconduction.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -46,7 +46,7 @@ add_dumux_test(test_cc3pniconduction test_cc3pniconduction test_cc3pniconduction
                  --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductioncc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction"
-                 --zeroThreshold {"velocityW":1e-8})
+                 --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 #install sources
 install(FILES
