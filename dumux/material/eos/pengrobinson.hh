@@ -124,8 +124,8 @@ public:
 
             Scalar delta = f/df_dp;
             pVap = pVap - delta;
-
-            if (std::abs(delta/pVap) < 1e-10)
+            using std::abs;
+            if (abs(delta/pVap) < 1e-10)
                 break;
         }
 
@@ -197,14 +197,16 @@ public:
             else {
                 // find the extrema (if they are present)
                 Scalar Vmin, Vmax, pmin, pmax;
+                using std::min;
+                using std::max;
                 if (findExtrema_(Vmin, Vmax,
                                  pmin, pmax,
                                  a, b, T))
                 {
                     if (isGasPhase)
-                        Vm = std::max(Vmax, VmCubic);
+                        Vm = max(Vmax, VmCubic);
                     else
-                        Vm = std::min(Vmin, VmCubic);
+                        Vm = min(Vmin, VmCubic);
                 }
                 else
                     Vm = VmCubic;
@@ -212,7 +214,8 @@ public:
         }
 
         Valgrind::CheckDefined(Vm);
-        assert(std::isfinite(Vm) && Vm > 0);
+        using std::isfinite;
+        assert(isfinite(Vm) && Vm > 0);
         return Vm;
     }
 
@@ -236,14 +239,16 @@ public:
         Scalar RT = Constants<Scalar>::R*T;
         Scalar Z = p*Vm/RT;
         Scalar Bstar = p*params.b() / RT;
-
+        using std::sqrt;
         Scalar tmp =
-            (Vm + params.b()*(1 + std::sqrt(2))) /
-            (Vm + params.b()*(1 - std::sqrt(2)));
-        Scalar expo = - params.a()/(RT * 2 * params.b() * std::sqrt(2));
+            (Vm + params.b()*(1 + sqrt(2))) /
+            (Vm + params.b()*(1 - sqrt(2)));
+        Scalar expo = - params.a()/(RT * 2 * params.b() * sqrt(2));
+        using std::exp;
+        using std::pow;
         Scalar fugCoeff =
-            std::exp(Z - 1) / (Z - Bstar) *
-            std::pow(tmp, expo);
+            exp(Z - 1) / (Z - Bstar) *
+            pow(tmp, expo);
 
         return fugCoeff;
     }
@@ -272,10 +277,12 @@ protected:
     {
         Scalar Vcrit = criticalMolarVolume_(params.a(phaseIdx), params.b(phaseIdx));
 
+        using std::max;
+        using std::min;
         if (isGasPhase)
-            Vm = std::max(Vm, Vcrit);
+            Vm = max(Vm, Vcrit);
         else
-            Vm = std::min(Vm, Vcrit);
+            Vm = min(Vm, Vcrit);
     }
 
     static void findCriticalPoint_(Scalar &Tcrit,
@@ -385,11 +392,12 @@ protected:
         // above the covolume
         Scalar V = b*1.1;
         Scalar delta = 1.0;
-        for (int i = 0; std::abs(delta) > 1e-9; ++i) {
+        using std::abs;
+        for (int i = 0; abs(delta) > 1e-9; ++i) {
             Scalar f = a5 + V*(a4 + V*(a3 + V*(a2 + V*a1)));
             Scalar fPrime = a4 + V*(2*a3 + V*(3*a2 + V*4*a1));
 
-            if (std::abs(fPrime) < 1e-20) {
+            if (abs(fPrime) < 1e-20) {
                 // give up if the derivative is zero
                 Vmin = 0;
                 Vmax = 0;
@@ -454,12 +462,13 @@ protected:
         Scalar Tr = T / Component::criticalTemperature();
         Scalar tau = 1 - Tr;
         Scalar omega = Component::acentricFactor();
-
-        Scalar f0 = (tau*(-5.97616 + std::sqrt(tau)*(1.29874 - tau*0.60394)) - 1.06841*std::pow(tau, 5))/Tr;
-        Scalar f1 = (tau*(-5.03365 + std::sqrt(tau)*(1.11505 - tau*5.41217)) - 7.46628*std::pow(tau, 5))/Tr;
-        Scalar f2 = (tau*(-0.64771 + std::sqrt(tau)*(2.41539 - tau*4.26979)) + 3.25259*std::pow(tau, 5))/Tr;
-
-        return Component::criticalPressure()*std::exp(f0 + omega * (f1 + omega*f2));
+        using std::sqrt;
+        using std::pow;
+        Scalar f0 = (tau*(-5.97616 + sqrt(tau)*(1.29874 - tau*0.60394)) - 1.06841*pow(tau, 5))/Tr;
+        Scalar f1 = (tau*(-5.03365 + sqrt(tau)*(1.11505 - tau*5.41217)) - 7.46628*pow(tau, 5))/Tr;
+        Scalar f2 = (tau*(-0.64771 + sqrt(tau)*(2.41539 - tau*4.26979)) + 3.25259*pow(tau, 5))/Tr;
+        using std::exp;
+        return Component::criticalPressure()*exp(f0 + omega * (f1 + omega*f2));
     }
 
     /*!
