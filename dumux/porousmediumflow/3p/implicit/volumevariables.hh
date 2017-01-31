@@ -42,20 +42,22 @@ namespace Dumux
 template <class TypeTag>
 class ThreePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     enum {
         dim = GridView::dimension,
 
@@ -72,8 +74,6 @@ class ThreePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     static const Scalar R; // universal gas constant
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -85,18 +85,19 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
         // capillary pressure parameters
-        const MaterialLawParams &materialParams =
+        const auto& materialParams =
             problem.spatialParams().materialLawParams(element, scv);
 
-        Scalar temp = Implementation::temperature_(priVars, problem, element, scv);
+        Scalar temp = Implementation::temperature_(elemSol, problem, element, scv);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState_.setTemperature(temp);
 
         sw_ = priVars[swIdx];
@@ -157,7 +158,7 @@ public:
 
         // energy related quantities not contained in the fluid state
         typename FluidSystem::ParameterCache paramCache;
-        asImp_().updateEnergy_(priVars, problem, element, scv);
+        asImp_().updateEnergy_(elemSol, problem, element, scv);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // compute and set the enthalpy
             Scalar h = asImp_().enthalpy_(fluidState_, paramCache, phaseIdx);
@@ -231,9 +232,15 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
+    /*!
+     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     */
+    const PermeabilityType& permeability() const
+    { return permeability_; }
+
 protected:
 
-    static Scalar temperature_(const PrimaryVariables &priVars,
+    static Scalar temperature_(const ElementSolutionVector &elemSol,
                                const Problem &problem,
                                const Element &element,
                                const SubControlVolume& scv)
@@ -252,7 +259,7 @@ protected:
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    void updateEnergy_(const PrimaryVariables &priVars,
+    void updateEnergy_(const ElementSolutionVector &elemSol,
                        const Problem &problem,
                        const Element &element,
                        const SubControlVolume& scv)
@@ -261,6 +268,7 @@ protected:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar porosity_;        //!< Effective porosity within the control volume
+    PermeabilityType permeability_;
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     FluidState fluidState_;
