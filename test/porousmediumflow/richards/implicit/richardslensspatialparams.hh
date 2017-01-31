@@ -95,7 +95,7 @@ public:
     {
 
         lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.0, 3.0};
+        lensUpperRight_ = {4.1, 3.1};
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);

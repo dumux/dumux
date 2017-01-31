@@ -55,8 +55,8 @@ struct RichardsIndices
     //////////
     // phase indices
     //////////
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase;
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase;
+    static const int wPhaseIdx = 0; //!< Index of the wetting phase;
+    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase;
 };
 // \}
 

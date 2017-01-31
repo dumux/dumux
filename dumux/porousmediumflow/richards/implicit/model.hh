@@ -26,7 +26,7 @@
 #define DUMUX_RICHARDS_MODEL_HH
 
 #include <dumux/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -108,6 +108,9 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
+
     enum {
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx
@@ -132,15 +135,15 @@ public:
         vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("pc", [](const VolumeVariables& v){ return v.capillaryPressure(); });
-        vtkOutputModule.addSecondaryVariable("rhoW", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhoN", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+        vtkOutputModule.addSecondaryVariable("density", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("mobility", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("kr", [](const VolumeVariables& v){ return v.relativePermeability(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
         if(GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity));
             vtkOutputModule.addSecondaryVariable("pressure head", [](const VolumeVariables& v){ return v.pressureHead(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("water content", [](const VolumeVariables& v){ return v.waterContent(wPhaseIdx); });
+
+        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
 };
 

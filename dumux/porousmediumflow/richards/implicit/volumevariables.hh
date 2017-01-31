@@ -26,7 +26,6 @@
 
 #include "properties.hh"
 
-#include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/volumevariables.hh>
 
 namespace Dumux
@@ -79,8 +78,6 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        assert(!FluidSystem::isLiquid(nPhaseIdx));
-
         ParentType::update(elemSol, problem, element, scv);
 
         completeFluidState(elemSol, problem, element, scv, fluidState_);
@@ -93,9 +90,6 @@ public:
         pnRef_ = problem.nonWettingReferencePressure();
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
-
-        // energy related quantities not belonging to the fluid state
-        asImp_().updateEnergy_(elemSol, problem, element, scv);
     }
 
     /*!
@@ -107,7 +101,7 @@ public:
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(elemSol, problem, element, scv);
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
@@ -115,26 +109,23 @@ public:
 
         const Scalar minPc = MaterialLaw::pc(materialParams, 1.0);
         fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
-        fluidState.setPressure(nPhaseIdx, std::max(problem.nonWettingReferencePressure(), priVars[pressureIdx] + minPc));
+
+        using std::max;
+        pn_ = max(problem.nonWettingReferencePressure(), priVars[pressureIdx] + minPc);
 
         // saturations
-        const Scalar sw = MaterialLaw::sw(materialParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
+        const Scalar sw = MaterialLaw::sw(materialParams, pn_ - fluidState.pressure(wPhaseIdx));
         fluidState.setSaturation(wPhaseIdx, sw);
-        fluidState.setSaturation(nPhaseIdx, 1 - sw);
 
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
         fluidState.setDensity(wPhaseIdx, FluidSystem::density(fluidState, paramCache, wPhaseIdx));
-        fluidState.setDensity(nPhaseIdx, 1e-10);
 
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
-        fluidState.setViscosity(nPhaseIdx, 1e-10);
 
         // compute and set the enthalpy
-        fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, wPhaseIdx));
-        fluidState.setEnthalpy(nPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, nPhaseIdx));
-
+        fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy(fluidState, paramCache, wPhaseIdx));
     }
 
     /*!
@@ -143,6 +134,12 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Return the temperature
+     */
+    Scalar temperature() const
+    { return fluidState_.temperature(); }
 
     /*!
      * \brief Returns the average porosity [] within the control volume.
@@ -170,7 +167,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar saturation(const int phaseIdx) const
-    { return fluidState_.saturation(phaseIdx); }
+    { return phaseIdx == wPhaseIdx ? fluidState_.saturation(wPhaseIdx) : 1.0-fluidState_.saturation(wPhaseIdx); }
 
     /*!
      * \brief Returns the average mass density \f$\mathrm{[kg/m^3]}\f$ of a given
@@ -179,7 +176,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar density(const int phaseIdx) const
-    { return fluidState_.density(phaseIdx); }
+    { return phaseIdx == wPhaseIdx ? fluidState_.density(phaseIdx) : 0.0; }
 
     /*!
      * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
@@ -193,17 +190,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar pressure(const int phaseIdx) const
-    { return fluidState_.pressure(phaseIdx); }
-
-    /*!
-     * \brief Returns average temperature \f$\mathrm{[K]}\f$ inside the control volume.
-     *
-     * Note that we assume thermodynamic equilibrium, i.e. the
-     * temperature of the rock matrix and of all fluid phases are
-     * identical.
-     */
-    Scalar temperature() const
-    { return fluidState_.temperature(); }
+    { return phaseIdx == wPhaseIdx ? fluidState_.pressure(phaseIdx) : pn_; }
 
     /*!
      * \brief Returns the effective mobility \f$\mathrm{[1/(Pa*s)]}\f$ of a given phase within
@@ -220,17 +207,23 @@ public:
     { return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
 
     /*!
+     * \brief Returns the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase within
+     *        the control volume.
+     *
+     * \param phaseIdx The index of the fluid phase
+     * \note The non-wetting phase is infinitely mobile
+     */
+    Scalar viscosity(const int phaseIdx) const
+    { return phaseIdx == wPhaseIdx ? fluidState_.viscosity(wPhaseIdx) : 0.0; }
+
+    /*!
      * \brief Returns relative permeability [-] of a given phase within
      *        the control volume.
      *
      * \param phaseIdx The index of the fluid phase
      */
     Scalar relativePermeability(const int phaseIdx) const
-    {
-        if (phaseIdx == wPhaseIdx)
-            return relativePermeabilityWetting_;
-        return 1;
-    }
+    { return phaseIdx == wPhaseIdx ? relativePermeabilityWetting_ : 1.0; }
 
     /*!
      * \brief Returns the effective capillary pressure \f$\mathrm{[Pa]}\f$ within the
@@ -241,9 +234,7 @@ public:
      * \f[ p_c = p_n - p_w \f]
      */
     Scalar capillaryPressure() const
-    {
-        return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
-    }
+    { return pn_ - fluidState_.pressure(wPhaseIdx); }
 
     /*!
      * \brief Returns the pressureHead \f$\mathrm{[cm]}\f$ of a given phase within
@@ -260,9 +251,7 @@ public:
      *       or the gravity different
      */
     Scalar pressureHead(const int phaseIdx) const
-    {
-        return 100.0 *(fluidState_.pressure(phaseIdx) - pnRef_)/fluidState_.density(phaseIdx)/9.81;
-    }
+    { return 100.0 *(pressure(phaseIdx) - pnRef_)/density(phaseIdx)/9.81; }
 
     /*!
      * \brief Returns the water content
@@ -276,41 +265,15 @@ public:
      *       manually do a conversion.
      */
     Scalar waterContent(const int phaseIdx) const
-    {
-        return fluidState_.saturation(phaseIdx)* porosity_;
-    }
+    { return saturation(phaseIdx) * porosity_; }
 
 protected:
-    static Scalar temperature_(const ElementSolutionVector &elemSol,
-                               const Problem& problem,
-                               const Element &element,
-                               const SubControlVolume &scv)
-    {
-        return problem.temperatureAtPos(scv.dofPosition());
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities.
-     */
-    void updateEnergy_(const ElementSolutionVector &elemSol,
-                       const Problem &problem,
-                       const Element &element,
-                       const SubControlVolume& scv)
-    {}
-
     FluidState fluidState_;
     Scalar relativePermeabilityWetting_;
     Scalar porosity_;
     PermeabilityType permeability_;
     Scalar pnRef_;
+    static Scalar pn_;
 
 private:
     Implementation &asImp_()
@@ -319,6 +282,9 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
+
+template <class TypeTag>
+typename GET_PROP_TYPE(TypeTag, Scalar) RichardsVolumeVariables<TypeTag>::pn_;
 
 } // end namespace Dumux
 

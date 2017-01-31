@@ -5,7 +5,7 @@ if(MPI_FOUND)
                  python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                    --script fuzzy
                    --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
-                           ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-richardslensbox-00007.vtu
+                           ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-richardslensbox-00008.vtu
                    --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
 else()
 # isothermal tests
@@ -13,7 +13,7 @@ else()
                  python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                    --script fuzzy
                    --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
-                           ${CMAKE_CURRENT_BINARY_DIR}/richardslensbox-00007.vtu
+                           ${CMAKE_CURRENT_BINARY_DIR}/richardslensbox-00008.vtu
                    --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
 endif()
 
