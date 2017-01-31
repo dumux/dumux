@@ -123,12 +123,13 @@ public:
     VolumeVariables facetVolVars(const FVElementGeometry& fvGeometry) const
     {
         //! This cannot be called when FacetCoupling is active
-        assert(!GET_PROP_VALUE(TypeTag, MpfaFacetCoupling) && "For models with a coupled problem on the element facets you have to"
-                                                              "provide a suitable implementation of the InteriorBoundaryData class");
+        static const bool isFacetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
+        assert(!isFacetCoupling && "For models with a coupled problem on the element facets you have to"
+                                   "provide a suitable implementation of the InteriorBoundaryData class");
 
         //! This can only be called for interior Dirichlet boundaries
-        assert(faceType_ == MpfaFaceType::interiorDirichlet && "requesting Dirichlet vol vars for a face which is"
-                                                               "not marked as interior Dirichlet face.");
+        assert(faceType_ == MpfaFaceTypes::interiorDirichlet && "requesting Dirichlet vol vars for a face which is"
+                                                                "not marked as interior Dirichlet face.");
 
         auto element = problem_().model().globalFvGeometry().element(elementIndex());
         auto priVars = problem_().dirichlet(element, fvGeometry.scvf(scvfIndex()));
