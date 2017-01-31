@@ -94,21 +94,23 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
 template <class TypeTag>
 class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef H2O<Scalar> IapwsH2O;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -125,12 +127,9 @@ class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
         temperatureIdx = Indices::temperatureIdx
     };
 
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     ThreePNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
@@ -249,9 +248,9 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes values;
         if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
@@ -260,6 +259,7 @@ public:
         {
             values.setAllNeumann();
         }
+        return values;
     }
 
     /*!
@@ -271,37 +271,36 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
         initial_(values, globalPos);
 
-//        condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_)
-        {
             values[temperatureIdx] = temperatureHigh_;
-        }
-
-
+        return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
+     * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
+     * \param values The neumann values for the conservation equations
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param intersection The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &priVars,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
+    PrimaryVariables neumann(const Element &element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
     {
-        priVars = 0;
+        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -312,20 +311,14 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Returns the source term at specific position in the domain.
      *
-     * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
+     * \param values The source values for the primary variables
+     * \param globalPos The position
      */
-    void sourceAtPos(PrimaryVariables &priVars,
-                     const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        priVars = Scalar(0.0);
+        return PrimaryVariables(0.0);
     }
 
     /*!
@@ -337,9 +330,11 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
         initial_(values, globalPos);
+        return values;
     }
 
     // \}

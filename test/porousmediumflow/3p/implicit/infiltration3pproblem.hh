@@ -237,7 +237,7 @@ public:
             if (pc < 0.0) pc = 0.0;
 
             sw = invertPcgw_(pc,
-                             this->spatialParams().materialLawParams());
+                             this->spatialParams().materialLawParamsAtPos(globalPos));
             if (sw < swr) sw = swr;
             if (sw > 1.-sgr) sw = 1.-sgr;
 
@@ -339,7 +339,7 @@ private:
             if (pc < 0.0) pc = 0.0;
 
             sw = invertPcgw_(pc,
-                             this->spatialParams().materialLawParams());
+                             this->spatialParams().materialLawParamsAtPos(globalPos));
             if (sw < swr) sw = swr;
             if (sw > 1.-sgr) sw = 1.-sgr;
 
