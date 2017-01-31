@@ -124,12 +124,15 @@ public:
                                                const Scalar porosity,
                                                const Scalar rhoSolid)
     {
-        const Scalar satW = std::max<Scalar>(0.0, Sw);
+        using std::max;
+        const Scalar satW = max<Scalar>(0.0, Sw);
 
         const Scalar kappa = 15.6; // fitted to medium quartz sand
         const Scalar rhoBulk = rhoSolid*porosity;
         // lambdaSolid^(1-porosity) * lambdaW^porosity =
-        const Scalar lSat = lambdaSolid * std::pow(lambdaW / lambdaSolid, porosity);
+
+        using std::pow;
+        const Scalar lSat = lambdaSolid * pow(lambdaW / lambdaSolid, porosity);
         const Scalar lDry = (0.135*rhoBulk + 64.7)/(rhoSolid - 0.947*rhoBulk);
         const Scalar Ke = (kappa*satW)/(1+(kappa-1)*satW);// Kersten number, equation 13
 

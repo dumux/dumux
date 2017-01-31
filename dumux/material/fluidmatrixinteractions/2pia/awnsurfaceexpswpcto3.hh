@@ -66,7 +66,8 @@ public:
         const Scalar a2 = params.a2();
         const Scalar a3 = params.a3();
 
-        const Scalar aAlphaBeta = a1 * std::exp( a2 * Sw) + a3 * pc * pc * pc ;
+        using std::exp;
+        const Scalar aAlphaBeta = a1 * exp( a2 * Sw) + a3 * pc * pc * pc ;
         return aAlphaBeta;
     }
 

@@ -332,8 +332,10 @@ public:
      */
     static Scalar krn(const Params &params, Scalar swe, Scalar sn, Scalar ste)
     {
-        swe = std::max(std::min(swe, 1.0), 0.0);
-        ste = std::max(std::min(ste, 1.0), 0.0);
+        using std::max;
+        using std::min;
+        swe = max(min(swe, 1.0), 0.0);
+        ste = max(min(ste, 1.0), 0.0);
 
         if(ste - swe <= 0.0)
             return 0.0;
@@ -381,8 +383,9 @@ public:
         //get the absolute gas phase saturation
         const Scalar st = ste*(1 - params.swr()) + params.swr();
         const Scalar sg = 1.0 - st;
-        const Scalar scalFact = (sg > 0.1) ? 1.0 : std::max(0.0,
-                                                            (sg - params.sgr())/(0.1 - params.sgr()));
+        using std::max;
+        const Scalar scalFact = (sg > 0.1) ? 1.0 : max(0.0,
+                                                      (sg - params.sgr())/(0.1 - params.sgr()));
 
         //or use actual material law
         return scalFact * ParkerVanGen3P::krg(params, ste);

@@ -68,6 +68,7 @@ public:
         // we calculate the more efficient
         // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
 
+        using std::cbrt;
         return porosity * (saturation * saturation * saturation)
                * cbrt(porosity * saturation) * diffCoeff;
     }

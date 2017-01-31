@@ -68,7 +68,9 @@ public:
         const Scalar a11 = params.a11();
         const Scalar a01 = params.a01();
         const Scalar a02 = params.a02();
-        const Scalar aAlphaBeta = a00 + a10 * Sw + a20 * std::pow(Sw,2) + a11*Sw*pc +  a01*pc + a02*std::pow(pc,2);
+
+        using std::pow;
+        const Scalar aAlphaBeta = a00 + a10 * Sw + a20 * pow(Sw,2) + a11*Sw*pc +  a01*pc + a02*pow(pc,2);
         return aAlphaBeta;
     }
 
