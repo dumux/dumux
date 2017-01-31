@@ -28,6 +28,7 @@
 #include <dumux/implicit/model.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/discretization/volumevariables.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -93,10 +94,9 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         // capillary pressure parameters
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        Scalar temp = Implementation::temperature_(elemSol, problem, element, scv);
+        Scalar temp = ParentType::temperature(elemSol, problem, element, scv);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState_.setTemperature(temp);
 
@@ -153,15 +153,17 @@ public:
         }
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+
         Valgrind::CheckDefined(porosity_);
+        Valgrind::CheckDefined(permeability_);
 
         // energy related quantities not contained in the fluid state
         typename FluidSystem::ParameterCache paramCache;
-        asImp_().updateEnergy_(elemSol, problem, element, scv);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // compute and set the enthalpy
-            Scalar h = asImp_().enthalpy_(fluidState_, paramCache, phaseIdx);
+            Scalar h = ParentType::enthalpy(fluidState_, paramCache, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
         }
     }
@@ -239,32 +241,6 @@ public:
     { return permeability_; }
 
 protected:
-
-    static Scalar temperature_(const ElementSolutionVector &elemSol,
-                               const Problem &problem,
-                               const Element &element,
-                               const SubControlVolume& scv)
-    {
-        return problem.temperatureAtPos(scv.dofPosition());
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities
-     */
-    void updateEnergy_(const ElementSolutionVector &elemSol,
-                       const Problem &problem,
-                       const Element &element,
-                       const SubControlVolume& scv)
-    { }
-
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar porosity_;        //!< Effective porosity within the control volume

@@ -88,12 +88,12 @@ public:
      * These two effective conductivities are computed as geometric mean of the solid and the
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               int scvIdx)
+                                               const SubControlVolume& scv)
     {
         Scalar sw = volVars.saturation(Indices::wPhaseIdx);
         Scalar sn = volVars.saturation(Indices::nPhaseIdx);
