@@ -28,7 +28,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/implicit/model.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase2pncmin.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/volumevariables.hh>
 
@@ -103,7 +103,7 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using CoordScalar = typename Grid::ctype;
     using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
-    using ComputeFromReferencePhase2pNCMin = Dumux::ComputeFromReferencePhase2pNCMin<Scalar, FluidSystem>;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -301,11 +301,11 @@ public:
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
-            // of the "ComputeFromReferencePhase2pNc" constraint solver
-            ComputeFromReferencePhase2pNCMin::solve(fluidState,
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState,
                                                     paramCache,
                                                     nPhaseIdx,
-                                                    nPhaseOnly,
+//                                                     nPhaseOnly,
                                                     /*setViscosity=*/true,
                                                     /*setEnthalpy=*/false);
 
@@ -338,11 +338,11 @@ public:
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
-            // of the "ComputeFromReferencePhase2pNc" constraint solver
-            ComputeFromReferencePhase2pNCMin::solve(fluidState,
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState,
                                                     paramCache,
                                                     wPhaseIdx,
-                                                    wPhaseOnly,
+//                                                     wPhaseOnly,
                                                     /*setViscosity=*/true,
                                                     /*setEnthalpy=*/false);
         }
