@@ -276,11 +276,14 @@ protected:
         Dune::FieldVector<Scalar, numComponents> origComp;
         Scalar relError = 0;
         Scalar sumDelta = 0;
+        using std::max;
+        using std::abs;
+        using std::min;
         for (unsigned int i = 0; i < numComponents; ++i)
         {
             origComp[i] = fluidState.moleFraction(phaseIdx, i);
-            relError = std::max(relError, std::abs(x[i]));
-            sumDelta += std::abs(x[i]);
+            relError = max(relError, abs(x[i]));
+            sumDelta += abs(x[i]);
         }
 
         // chop update to at most 20% change in composition
@@ -295,16 +298,16 @@ protected:
 
             // only allow negative mole fractions if the target fugacity is negative
             if (targetFug[i] > 0)
-                newx = std::max(0.0, newx);
+                newx = max(0.0, newx);
             // only allow positive mole fractions if the target fugacity is positive
             else if (targetFug[i] < 0)
-                newx = std::min(0.0, newx);
+                newx = min(0.0, newx);
             // if the target fugacity is zero, the mole fraction must also be zero
             else
                 newx = 0;
 
             fluidState.setMoleFraction(phaseIdx, i, newx);
-            //sumMoleFrac += std::abs(newx);
+            //sumMoleFrac += abs(newx);
         }
 
         paramCache.updateComposition(fluidState, phaseIdx);
@@ -318,10 +321,11 @@ protected:
                                    const ComponentVector &targetFug)
     {
         Scalar result = 0.0;
+        using std::abs;
         for (int i = 0; i < numComponents; ++i) {
             // sum of the fugacity defect weighted by the inverse
             // fugacity coefficient
-            result += std::abs(
+            result += abs(
                 (targetFug[i] - params.fugacity(phaseIdx, i))
                 /
                 params.fugacityCoeff(phaseIdx, i) );

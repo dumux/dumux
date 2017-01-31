@@ -416,23 +416,25 @@ protected:
         for (int pvIdx = 0; pvIdx < numEq; ++ pvIdx) {
             Scalar tmp = getQuantity_(fluidState, pvIdx);
             Scalar delta = deltaX[pvIdx];
-
-            relError = std::max(relError, std::abs(delta)*quantityWeight_(fluidState, pvIdx));
+            using std::max;
+            using std::abs;
+            using std::min;
+            relError = max(relError, abs(delta)*quantityWeight_(fluidState, pvIdx));
 
             if (isSaturationIdx_(pvIdx)) {
                 // dampen to at most 20% change in saturation per
                 // iteration
-                delta = std::min(0.2, std::max(-0.2, delta));
+                delta = min(0.2, max(-0.2, delta));
             }
             else if (isMoleFracIdx_(pvIdx)) {
                 // dampen to at most 15% change in mole fraction per
                 // iteration
-                delta = std::min(0.15, std::max(-0.15, delta));
+                delta = min(0.15, max(-0.15, delta));
             }
             else if (isPressureIdx_(pvIdx)) {
                 // dampen to at most 15% change in pressure per
                 // iteration
-                delta = std::min(0.15*fluidState.pressure(0), std::max(-0.15*fluidState.pressure(0), delta));
+                delta = min(0.15*fluidState.pressure(0), max(-0.15*fluidState.pressure(0), delta));
             }
 
             setQuantityRaw_(fluidState, pvIdx, tmp - delta);
