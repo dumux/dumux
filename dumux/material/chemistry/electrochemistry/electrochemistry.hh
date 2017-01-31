@@ -155,7 +155,8 @@ public:
         int iterations = 0;
 
         //Newton Solver for current Density
-        while (std::abs(deltaVoltage) > 1e-6)
+        using std::abs;
+        while (abs(deltaVoltage) > 1e-6)
         {
 
             Scalar activationLosses        = calculateActivationLosses_(volVars, currentDensity);
@@ -222,19 +223,21 @@ private:
 
         Scalar losses = 0.0;
         //Calculate activation losses
+        using std::log;
+        using std::abs;
         if(electroChemistryModel == ElectroChemistryModel::Acosta)
         {
             losses = preFactor
-                            *(  std::log(std::abs(currentDensity)/std::abs(exchangeCurrentDensity_(volVars)))
-                            - std::log(pO2/refO2PartialPressure)
-                            - std::log(1 - sw)
+                            *(  log(abs(currentDensity)/abs(exchangeCurrentDensity_(volVars)))
+                            - log(pO2/refO2PartialPressure)
+                            - log(1 - sw)
                             );
         }
         else
         {
             losses = preFactor
-            *(  std::log(std::abs(currentDensity)/std::abs(exchangeCurrentDensity_(volVars)))
-                - std::log(pO2/refO2PartialPressure)
+            *(  log(abs(currentDensity)/abs(exchangeCurrentDensity_(volVars)))
+                - log(pO2/refO2PartialPressure)
                 );
         }
         return losses;
@@ -257,13 +260,14 @@ private:
 
         Scalar losses = 0.0;
         //Calculate concentration losses
+        using std::log;
         if(electroChemistryModel == ElectroChemistryModel::Acosta)
         {
-            losses = -1.0*preFactor*(transferCoefficient/2)*std::log(pO2/pO2Inlet);
+            losses = -1.0*preFactor*(transferCoefficient/2)*log(pO2/pO2Inlet);
         }else
         {
             // +1 is the Nernst part of the equation
-            losses = -1.0*preFactor*(transferCoefficient/2+1)*std::log(pO2/pO2Inlet);
+            losses = -1.0*preFactor*(transferCoefficient/2+1)*log(pO2/pO2Inlet);
         }
 
         return losses;
@@ -275,6 +279,7 @@ private:
     */
     static Scalar exchangeCurrentDensity_(const VolumeVariables &volVars)
     {
+        using std::exp;
         static Scalar activationBarrier = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ActivationBarrier);
         static Scalar surfaceIncreasingFactor = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.SurfaceIncreasingFactor);
         static Scalar refTemperature = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.RefTemperature);
@@ -284,7 +289,7 @@ private:
         Scalar refExchangeCurrentDensity = -1.0
                             * refCurrentDensity
                             * surfaceIncreasingFactor
-                            * std::exp(-1.0 * activationBarrier / Constant::R * (1/T-1/refTemperature));
+                            * exp(-1.0 * activationBarrier / Constant::R * (1/T-1/refTemperature));
 
         return refExchangeCurrentDensity;
     }
