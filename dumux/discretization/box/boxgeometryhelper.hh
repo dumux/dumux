@@ -72,7 +72,7 @@ public:
         static const std::uint8_t map[2][2] =
         {
             {1, 0},
-            {0, 2}
+            {2, 0}
         };
 
         return PointVector( {p[map[localScvIdx][0]],
