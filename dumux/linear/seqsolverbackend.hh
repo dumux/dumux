@@ -105,6 +105,9 @@ private:
 /*!
  * \ingroup Linear
  * \brief Sequential ILUn-preconditioned BiCSTAB solver.
+ *
+ * The BICGSTAB (stabilized biconjugate gradients method) solver has faster and smoother convergence than the original BiCG. \n
+ * see: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems". SIAM J. Sci. and Stat.           Comput. 13 (2): 631–644. doi:10.1137/0913035.
  */
 template <class TypeTag>
 class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -130,6 +133,9 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SOR-preconditioned BiCSTAB solver.
+ *
+ * The BICGSTAB (stabilized biconjugate gradients method) solver has faster and smoother convergence than the original BiCG. \n
+ * see: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems". SIAM J. Sci. and Stat.           Comput. 13 (2): 631–644. doi:10.1137/0913035.
  */
 template <class TypeTag>
 class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -154,7 +160,10 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential SSOR-preconditioned BiCSTAB solver.
+ * \brief Sequential SSOR-preconditioned BiCGSTAB solver.
+ *
+ * The BICGSTAB (stabilized biconjugate gradients method) solver has faster and smoother convergence than the original BiCG. \n
+ * see: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems". SIAM J. Sci. and Stat.           Comput. 13 (2): 631–644. doi:10.1137/0913035.
  */
 template <class TypeTag>
 class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -179,7 +188,13 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential GS-preconditioned BiCSTAB solver.
+ * \brief Sequential GS-preconditioned BiCGSTAB solver.
+ *
+ * GS-preconditioner is applicable for appropriate and positive matrix.\n
+ * see: Greif, C., Schötzau, D. (2006). "Preconditioners for saddle point linear systems with highly singular (1,1) blocks." ETNA, Volume 22, pp. 114-121. \n
+ * \n
+ * The BICGSTAB (stabilized biconjugate gradients method) solver has faster and smoother convergence than the original BiCG. \n
+ * see: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems". SIAM J. Sci. and Stat.           Comput. 13 (2): 631–644. doi:10.1137/0913035.
  */
 template <class TypeTag>
 class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -205,6 +220,9 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential Jacobi-preconditioned BiCSTAB solver.
+ *
+ * The BICGSTAB (stabilized biconjugate gradients method) solver has faster and smoother convergence than the original BiCG. \n
+ * see: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems". SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
  */
 template <class TypeTag>
 class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -230,6 +248,11 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential ILUn-preconditioned CG solver.
+ *
+ * CG (conjugate gradient) is an iterative method for solving linear systems with symmetric, positive definite matrix. It can handle
+ * complex domains and boundary conditions. \n
+ * see:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate gradient algorithm on GPU", Journal of Computational and
+ * Applied Mathematics, Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025
  */
 template <class TypeTag>
 class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -255,6 +278,11 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SOR-preconditioned CG solver.
+ *
+ * CG (conjugate gradient) is an iterative method for solving linear systems with symmetric, positive definite matrix. It can handle
+ * complex domains and boundary conditions.\n
+ * see:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate gradient algorithm on GPU", Journal of Computational and
+ * Applied Mathematics, Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025
  */
 template <class TypeTag>
 class SORCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -279,7 +307,10 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential SSOR-preconditioned CG solver.
+ * CG (conjugate gradient) is an iterative method for solving linear systems with symmetric, positive definite matrix. It can handle
+ * complex domains and boundary conditions. \n
+ * see:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate gradient algorithm on GPU", Journal of Computational and
+ * Applied Mathematics, Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025
  */
 template <class TypeTag>
 class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -305,6 +336,14 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential GS-preconditioned CG solver.
+ *
+ * GS-preconditioner is applicable for appropriate and positive matrix. \n
+ * see: Greif, C., Schötzau, D. (2006). "Preconditioners for saddle point linear systems with highly singular (1,1) blocks." ETNA, Volume 22, pp. 114-121. \n
+ * \n
+ * CG (conjugate gradient) is an iterative method for solving linear systems with symmetric, positive definite matrix. It can handle
+ * complex domains and boundary conditions. \n
+ * see:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate gradient algorithm on GPU", Journal of Computational and
+ * Applied Mathematics, Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025
  */
 template <class TypeTag>
 class GSCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -330,6 +369,11 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential Jacobi-preconditioned CG solver.
+ *
+ * CG (conjugate gradient) is an iterative method for solving linear systems with symmetric, positive definite matrix. It can handle
+ * complex domains and boundary conditions. \n
+ * see:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate gradient algorithm on GPU", Journal of Computational and
+ * Applied Mathematics, Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025
  */
 template <class TypeTag>
 class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -355,6 +399,9 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SSOR-preconditioned GMRes solver.
+ *
+ * The GMRes (generalized minimal residual) method is an iterative method for the numerical solution of a nonsymmetric system of linear equations. \n
+ * see: Saad, Y., Schultz, M. H. (1986) " GMRES: A generalized minimal residual algorithm for solving nonsymmetric linear systems. In: SIAM Journal on Scientific and Statistical "	Computing Bd. 7, ISSN 0196-5204, S. 856–869.
  */
 template <class TypeTag>
 class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -446,6 +493,9 @@ private:
 /*!
  * \ingroup Linear
  * \brief Sequential ILU0-preconditioned BiCGSTAB solver.
+ *
+ * The BICGSTAB (stabilized biconjugate gradients method) solver has faster and smoother convergence than the original BiCG. \n
+ * see: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems". SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
  */
 template <class TypeTag>
 class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
@@ -471,6 +521,11 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
 /*!
  * \ingroup Linear
  * \brief Sequential ILU0-preconditioned CG solver.
+ *
+ * CG (conjugate gradient) is an iterative method for solving linear systems with symmetric, positive definite matrix. It can handle
+ * complex domains and boundary conditions. \n
+ * see:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate gradient algorithm on GPU", Journal of Computational and
+ * Applied Mathematics, Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025
  */
 template <class TypeTag>
 class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
@@ -496,6 +551,9 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential ILU0-preconditioned GMRes solver.
+ *
+ * The GMRes (generalized minimal residual) method is an iterative method for the numerical solution of a nonsymmetric system of linear equations. \n
+ * See: Saad, Y., Schultz, M. H. (1986) " GMRES: A generalized minimal residual algorithm for solving nonsymmetric linear systems. In: SIAM Journal on Scientific and Statistical "	Computing Bd. 7, ISSN 0196-5204, S. 856–869.
  */
 template <class TypeTag>
 class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
@@ -522,6 +580,9 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential ILUn-preconditioned GMRes solver.
+ *
+ * The GMRes (generalized minimal residual) method is an iterative method for the numerical solution of a nonsymmetric system of linear equations. \n
+ * See: Saad, Y., Schultz, M. H. (1986) " GMRES: A generalized minimal residual algorithm for solving nonsymmetric linear systems. In: SIAM Journal on Scientific and Statistical "	Computing Bd. 7, ISSN 0196-5204, S. 856–869.
  */
 template <class TypeTag>
 class ILUnRestartedGMResBackend : public IterativePrecondSolverBackend<TypeTag>
