@@ -151,7 +151,9 @@ public:
         const Scalar salSat = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
 
         /*Regularization*/
-        salinity = std::min(std::max(salinity,0.0), salSat);
+        using std::min;
+        using std::max;
+        salinity = min(max(salinity,0.0), salSat);
 
         const Scalar hw = H2O::liquidEnthalpy(T, p)/1E3; /* kJ/kg */
 
@@ -161,6 +163,7 @@ public:
 
         const Scalar m = (1E3/58.44)*(salinity/(1-salinity));
 
+        using std::pow;
         Scalar d_h = 0;
         for (int i = 0; i<=3; i++) {
             for (int j=0; j<=2; j++) {
@@ -281,25 +284,26 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
     {
+        using std::max;
         const Scalar TempC = temperature - 273.15;
         const Scalar pMPa = pressure/1.0E6;
-        salinity = std::max(0.0, salinity);
+        salinity = max(0.0, salinity);
 
         const Scalar rhow = H2O::liquidDensity(temperature, pressure);
 
-            const Scalar  density =  rhow +
-            1000*salinity*(
-                0.668 +
-                0.44*salinity +
-                1.0E-6*(
-                    300*pMPa -
-                    2400*pMPa*salinity +
-                    TempC*(
-                        80.0 +
-                        3*TempC -
-                        3300*salinity -
-                        13*pMPa +
-                        47*pMPa*salinity)));
+        const Scalar  density = rhow +
+                                1000*salinity*(
+                                    0.668 +
+                                    0.44*salinity +
+                                    1.0E-6*(
+                                        300*pMPa -
+                                        2400*pMPa*salinity +
+                                        TempC*(
+                                            80.0 +
+                                            3*TempC -
+                                            3300*salinity -
+                                            13*pMPa +
+                                            47*pMPa*salinity)));
         assert(density > 0.0);
         return density;
     }
@@ -330,7 +334,9 @@ public:
        const Scalar eps = pressure*1e-7;
 
        Scalar deltaP = pressure*2;
-       for (int i = 0; i < 5 && std::abs(pressure*1e-9) < std::abs(deltaP); ++i) {
+
+       using std::abs;
+       for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i) {
            Scalar f = liquidDensity(temperature, pressure) - density;
 
            Scalar df_dp;
@@ -370,9 +376,12 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
     {
         // regularisation
-        temperature = std::max(temperature, 275.0);
-        salinity = std::max(0.0, salinity);
+        using std::max;
+        temperature = max(temperature, 275.0);
+        salinity = max(0.0, salinity);
 
+        using std::pow;
+        using std::exp;
         const Scalar T_C = temperature - 273.15;
         const Scalar A = (0.42*pow((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
         const Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
