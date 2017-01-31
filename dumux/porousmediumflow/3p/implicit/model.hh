@@ -85,20 +85,23 @@ public:
 
         // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("Sw", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("Sn", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("Sg", [](const VolumeVariables& v){ return v.saturation(gPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("sw", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("sn", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("sg", [](const VolumeVariables& v){ return v.saturation(gPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("pg", [](const VolumeVariables& v){ return v.pressure(gPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhoW", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhoN", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhoG", [](const VolumeVariables& v){ return v.density(gPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("mobG", [](const VolumeVariables& v){ return v.mobility(gPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+        vtkOutputModule.addSecondaryVariable("rhow", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhon", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("rhog", [](const VolumeVariables& v){ return v.density(gPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
+        vtkOutputModule.addSecondaryVariable("permeability", [](const VolumeVariables& v){ return v.permeability(); });
+        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+//         vtkOutputModule.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
+//         vtkOutputModule.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
+//         vtkOutputModule.addSecondaryVariable("mobG", [](const VolumeVariables& v){ return v.mobility(gPhaseIdx); });
+        // TODO: these lines are commented-out in order to comply with the "old" reference solution;
+        // can be changed some time, as well as the parameter names
     }
 };
 
