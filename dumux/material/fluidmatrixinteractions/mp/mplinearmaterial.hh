@@ -87,8 +87,10 @@ public:
                                        const Params &params,
                                        const FluidState &state)
     {
+        using std::max;
+        using std::min;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            values[phaseIdx] = std::max(std::min(state.saturation(phaseIdx),1.0),0.0);
+            values[phaseIdx] = max(min(state.saturation(phaseIdx),1.0),0.0);
     }
 };
 }

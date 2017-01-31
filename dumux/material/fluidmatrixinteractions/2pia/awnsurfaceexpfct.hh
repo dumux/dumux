@@ -65,7 +65,8 @@ public:
         const Scalar a2 = params.a2();
         const Scalar a3 = params.a3();
         const Scalar Swr = params.Swr();
-        const Scalar aAlphaBeta = a1 * (Swr-Sw) * (1-Sw) + a2 * (Swr-Sw) * (1-Sw) * std::exp( a3 * pc) ;
+        using std::exp;
+        const Scalar aAlphaBeta = a1 * (Swr-Sw) * (1-Sw) + a2 * (Swr-Sw) * (1-Sw) * exp( a3 * pc) ;
         return aAlphaBeta;
     }
 
@@ -80,7 +81,8 @@ public:
         const Scalar a2 = params.a2();
         const Scalar a3 = params.a3();
         const Scalar Swr = params.Swr();
-        const Scalar value = a2 * a3 * (Swr-Sw) * (1-Sw) * std::exp(a3*pc);
+        using std::exp;
+        const Scalar value = a2 * a3 * (Swr-Sw) * (1-Sw) * exp(a3*pc);
         return value;
     }
 
@@ -97,7 +99,8 @@ public:
         Scalar a2 = params.a2();
         Scalar a3 = params.a3();
         Scalar Swr = params.Swr();
-        value = - a1 *( 1+Swr-2*Sw ) - a2 * std::exp(a3*pc) * ( 1+Swr-2*Sw );
+        using std::exp;
+        value = - a1 *( 1+Swr-2*Sw ) - a2 * exp(a3*pc) * ( 1+Swr-2*Sw );
         return value;
     }
 

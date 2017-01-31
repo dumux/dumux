@@ -128,17 +128,20 @@ public:
                                                const Scalar lambdaSolid,
                                                const Scalar porosity)
     {
-        const Scalar satW = std::max<Scalar>(0.0, sw);
-        const Scalar satN = std::max<Scalar>(0.0, sn);
+        using std::max;
+        using std::pow;
+        using std::sqrt;
+        const Scalar satW = max<Scalar>(0.0, sw);
+        const Scalar satN = max<Scalar>(0.0, sn);
 
-//        const Scalar lSw = 1.8; //std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaW, porosity);
-//        const Scalar lSn = 0.65; //std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaN, porosity);
-//        const Scalar lSg = 0.35; //std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaG, porosity);
+//        const Scalar lSw = 1.8; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaW, porosity);
+//        const Scalar lSn = 0.65; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);
+//        const Scalar lSg = 0.35; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaG, porosity);
         // porosity weighted geometric mean
-        Scalar lSw = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaW, porosity);
-        Scalar lSn = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaN, porosity);
-        Scalar lSg = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaG, porosity);
-        Scalar lambdaEff = lSg + std::sqrt(satW) * (lSw - lSg) + std::sqrt(satN) * (lSn -lSg);
+        Scalar lSw = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaW, porosity);
+        Scalar lSn = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);
+        Scalar lSg = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaG, porosity);
+        Scalar lambdaEff = lSg + sqrt(satW) * (lSw - lSg) + sqrt(satN) * (lSn -lSg);
 
         return lambdaEff;
 
