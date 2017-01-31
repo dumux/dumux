@@ -64,10 +64,6 @@ int main(int argc, char** argv)
 
         //First read parameters from input file
         Dune::ParameterTreeParser::readINITree("test_gridcreator_cake.input", ParameterTree::tree());
-//        Dumux::Parameters::print<TypeTag>();
-        //Overwrite parameters from input file with command line specified parameters
-        std::string s = Dumux::readOptions_(argc, argv, ParameterTree::tree());
-//        Dumux::Parameters::print<TypeTag>();
 
 //      Make the grid
         GridCreator::makeGrid();

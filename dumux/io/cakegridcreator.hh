@@ -22,10 +22,6 @@
  * \brief Provides a grid creator which a regular grid made of
  *        quadrilaterals.
  */
-/*
- * author: Larissa de Vries
- * last update: 05.12.2016
- */
 
 #ifndef DUMUX_CAKE_GRID_CREATOR_HH
 #define DUMUX_CAKE_GRID_CREATOR_HH
@@ -46,54 +42,11 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Grid);
 }
 
-template <class TypeTag>
-class LinearSpacer
-{
-public:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    LinearSpacer(Scalar offSet, Scalar length, Scalar noOfPoints)
-    : offSet_(offSet), length_(length), noOfPoints_(noOfPoints)
-    {}
-
-    void createSpacing() const
-    {
-        DUNE_THROW(Dune::NotImplemented, "Linear spacer not implemented yet.");
-    }
-
-private:
-    Scalar offSet_;
-    Scalar length_;
-    Scalar noOfPoints_;
-};
-
-template <class TypeTag>
-class PowerLawSpacer
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    PowerLawSpacer(Scalar offSet, Scalar length, Scalar noOfPoints)
-    : offSet_(offSet), length_(length), noOfPoints_(noOfPoints)
-    {
-        power_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PowerLawSpacer, Power);
-    }
-
-    void createSpacing() const
-    {
-        DUNE_THROW(Dune::NotImplemented, "Power law spacer not implemented yet.");
-    }
-
-private:
-    Scalar power_;
-    Scalar offSet_;
-    Scalar length_;
-    Scalar noOfPoints_;
-};
-
 /*!
  * \brief Provides a grid creator which a regular grid made of
  *        quadrilaterals.
  *
- * A quadirlateral is a line segment in 1D, a rectangle in 2D and a
+ * A quadrilateral is a line segment in 1D, a rectangle in 2D and a
  * cube in 3D.
  */
 template <class TypeTag>
@@ -104,20 +57,12 @@ class CakeGridCreator
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef Dune::GridFactory<Grid> GridFactory;
     typedef std::shared_ptr<Grid> GridPointer;
-    typedef Dumux::LinearSpacer<TypeTag> SpacerDefault;
-    typedef typename Dumux::PowerLawSpacer<TypeTag> PowerLawSpacer;
 
     enum { dim = Grid::dimension,
            dimWorld = Grid::dimensionworld
          };
 
-    enum
-    {
-            radiusIdx = 0,
-            angleIdx = 1,
-            zIdx = 2
-    };
-    typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
+    typedef std::vector<Scalar> ScalarVector;
     typedef std::array<unsigned int, dim> CellArray;
     typedef Dune::FieldVector<typename Grid::ctype, dimWorld> GlobalPosition;
 
@@ -127,187 +72,432 @@ public:
      */
     static void makeGrid()
     {
-        if (dim != 3)
+        if (dim < 2)
         {
-            DUNE_THROW(Dune::NotImplemented, "The CakeGridCreator is not implemented for 1D and 2D.");
+            DUNE_THROW(Dune::NotImplemented, "The CakeGridCreator is not implemented for 1D.");
         }
         std::cout << "makeGrid() starts..." << std::endl;
-        vector dR;
-        vector dA;
-        vector dZ;
-        createVectors(dR, dA, dZ);
-        gridPtr() = CakeGridCreator<TypeTag>::createCakeGrid(dR, dA, dZ);
+
+        std::array<ScalarVector, dim> polarCoordinates;
+
+        // Indices specifing in which direction the piece of cake is oriented
+        Dune::FieldVector<int, dim> indices;
+        // Fill with -1 for later checks
+        indices = int(-1);
+
+        createVectors(polarCoordinates, indices);
+        gridPtr() = CakeGridCreator<TypeTag>::createCakeGrid(polarCoordinates, indices);
         std::cout << "makeGrid() ends..." << std::endl;
     }
 
-    static void createVectors(vector &dR, vector &dA, vector &dZ)
+    /*!
+    * \brief Create vectors containing polar coordinates of all points.
+    *
+    * All keys are expected to be in group GridParameterGroup.
+    * The following keys are recognized:
+    * - Radial : min/max value for radial coordinate
+    * - Angular : min/max value for angular coordinate
+    * - Axial : min/max value for axial coordinate
+    *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
+    *   the radial, angular and axial direction are oriented
+    * - Cells0 : number of cells array for x-coordinate
+    * - Cells1 : number of cells array for y-coordinate
+    * - Cells2 : number of cells array for z-coordinate
+    * - Grading0 : grading factor array for x-coordinate
+    * - Grading1 : grading factor array for y-coordinate
+    * - Grading2 : grading factor array for z-coordinate
+    * - Verbosity : whether the grid construction should output to standard out
+    *
+    * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
+    * \f$ g = \frac{h_{i+1}}{h_i} \f$.
+    * Negative grading factors are converted to
+    * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
+    * to avoid issues with imprecise fraction numbers.
+    */
+    static void createVectors(std::array<ScalarVector, dim> &polarCoordinates, Dune::FieldVector<int, dim> &indices)
     {
-        GlobalPosition polarCoorMin;
-        GlobalPosition polarCoorMax;
-        CellArray cells;
-
-       try{
-        polarCoorMin =
-                GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), PolarCoorMin);
-        polarCoorMax =
-                GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), PolarCoorMax);
-
-        std::fill(cells.begin(), cells.end(), 1);
-        cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells);
-        }
-        catch (Dumux::ParameterException &e) {
-            DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters: "
-                                          << "PolarCoorMin, PolarCoorMax or Cells");
-        }
-
-
-    //Check the input file whether UsePowerLawSpacerRadius is specified, if yes use type PowerLawSpacer else default type
+        // Only construction from the input file is possible
+        // Look for the necessary keys to construct from the input file
         try {
-            if(GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UsePowerLawSpacerRadius)){
-                PowerLawSpacer spacerR(polarCoorMin[radiusIdx], polarCoorMax[radiusIdx], cells[radiusIdx]);
+            typedef typename GET_PROP(TypeTag, ParameterTree) Params;
+            auto params = Params::tree();
+            typedef std::vector<int> IntVector;
+
+            // The positions
+            std::array<ScalarVector, dim> positions;
+
+            for (int i = 0; i < dim; ++i)
+            {
+                std::string paramNameRadial = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+                paramNameRadial += ".Radial";
+                paramNameRadial += std::to_string(i);
+                try
+                {
+                    positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramNameRadial.c_str());
+                    indices[0] = i; // Index specifing radial direction
+                }
+                catch (Dumux::ParameterException &e) { }
+
+                std::string paramNameAngular = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+                paramNameAngular += ".Angular";
+                paramNameAngular += std::to_string(i);
+                try
+                {
+                    positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramNameAngular.c_str());
+                    indices[1] = i; // Index specifing angular direction
+                }
+                catch (Dumux::ParameterException &e) { }
+
+                if (dim == 3)
+                {
+                    std::string paramNameAxial = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+                    paramNameAxial += ".Axial";
+                    paramNameAxial += std::to_string(i);
+                    try
+                    {
+                        positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramNameAxial.c_str());
+                        indices[2] = i; // Index specifing axial direction
+                    }
+                    catch (Dumux::ParameterException &e) { }
+                }
+            }
+
+            if (dim == 3)
+            {
+                if ( !( ((3 > indices[0]) && (indices[0] >= 0)
+                    &&   (3 > indices[1]) && (indices[1] >= 0)
+                    &&   (3 > indices[2]) && (indices[2] >= 0))
+                    && ((indices[2] != indices[1]) && (indices[2] != indices[0])
+                    && (indices[1] != indices[0]))
+                    && (indices[2] + indices[1] + indices[0] == 3) ) )
+                {
+                    std::cout << " indices[0] " << indices[0] << std::endl;
+                    std::cout << " indices[1] " << indices[1] << std::endl;
+                    std::cout << " indices[2] " << indices[2] << std::endl;
+                    DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial correctly and unambiguous!" << std::endl);
+                }
             }
             else
-                SpacerDefault spacerR(polarCoorMin[radiusIdx], polarCoorMax[radiusIdx], cells[radiusIdx]);
+            {
+                if ( !( ((2 > indices[0]) && (indices[0] >= 0)
+                    &&   (2 > indices[1]) && (indices[1] >= 0))
+                    &&   (indices[1] != indices[0])
+                    &&   (indices[1] + indices[0] == 1) ) )
+                {
+                    std::cout << " indices[0] " << indices[0] << std::endl;
+                    std::cout << " indices[1] " << indices[1] << std::endl;
+                    DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial correctly and unambiguous!" << std::endl);
+                }
+            }
+
+            // the number of cells (has a default)
+            std::array<IntVector, dim> cells;
+            for (int i = 0; i < dim; ++i)
+            {
+              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+              paramName += ".Cells";
+              paramName += std::to_string(i);
+              try { cells[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, IntVector, paramName.c_str()); }
+              catch (Dumux::ParameterException &e) { cells[i].resize(positions[i].size()-1, 1.0); }
+            }
+
+            // grading factor (has a default)
+            std::array<ScalarVector, dim> grading;
+            for (int i = 0; i < dim; ++i)
+            {
+              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
+              paramName += ".Grading";
+              paramName += std::to_string(i);
+              try { grading[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramName.c_str()); }
+              catch (Dumux::ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
+            }
+
+            //make the grid
+            // sanity check of the input parameters
+            bool verbose = false;
+            try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
+            catch (Dumux::ParameterException &e) {  }
+
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                if (cells[dimIdx].size() + 1 != positions[dimIdx].size())
+                {
+                    DUNE_THROW(Dune::RangeError, "Make sure to specify correct \"Cells\" and \"Positions\" arrays");
+                }
+                if (grading[dimIdx].size() + 1 != positions[dimIdx].size())
+                {
+                    DUNE_THROW(Dune::RangeError, "Make sure to specify correct \"Grading\" and \"Positions\" arrays");
+                }
+                Scalar temp = std::numeric_limits<Scalar>::lowest();
+                for (unsigned int posIdx = 0; posIdx < positions[dimIdx].size(); ++posIdx)
+                {
+                    if (temp > positions[dimIdx][posIdx])
+                    {
+                        DUNE_THROW(Dune::RangeError, "Make sure to specify a monotone increasing \"Positions\" array");
+                    }
+                    temp = positions[dimIdx][posIdx];
+                }
+            }
+
+            std::array<ScalarVector, dim> globalPositions;
+            for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+            {
+                for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
+                {
+                    Scalar lower = positions[dimIdx][zoneIdx];
+                    Scalar upper = positions[dimIdx][zoneIdx+1];
+                    int numCells = cells[dimIdx][zoneIdx];
+                    Scalar gradingFactor = grading[dimIdx][zoneIdx];
+                    Scalar length = upper - lower;
+                    Scalar height = 1.0;
+                    bool reverse = false;
+
+                    if (verbose)
+                    {
+                        std::cout << "dim " << dimIdx
+                                  << " lower "  << lower
+                                  << " upper "  << upper
+                                  << " numCells "  << numCells
+                                  << " grading "  << gradingFactor;
+                    }
+
+                    if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
+                    {
+                        height = 1.0 / numCells;
+                        if (verbose)
+                        {
+                            std::cout << " -> h "  << height * length << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        if (gradingFactor < -1.0)
+                        {
+                            gradingFactor = -gradingFactor;
+                        }
+                        else if (gradingFactor > 0.0 && gradingFactor < 1.0)
+                        {
+                            gradingFactor = 1.0 / gradingFactor;
+                        }
+                        else if (gradingFactor > 1.0)
+                        {
+                            reverse = true;
+                        }
+                        else
+                        {
+                            DUNE_THROW(Dune::NotImplemented, "This grading factor is not implemented.");
+                        }
+                        height = (1.0 - gradingFactor) / (1.0 - std::pow(gradingFactor, numCells));
+
+                        if (verbose)
+                        {
+                            std::cout << " -> grading_eff "  << gradingFactor
+                                      << " h_min "  << height * std::pow(gradingFactor, 0) * length
+                                      << " h_max "  << height * std::pow(gradingFactor, numCells-1) * length
+                                      << std::endl;
+                        }
+                    }
+
+                    std::vector<Scalar> localPositions;
+                    localPositions.push_back(0);
+                    for (int i = 0; i < numCells-1; i++)
+                    {
+                        Scalar hI = height;
+                        if (!(gradingFactor < 1.0 + 1e-7 && gradingFactor > 1.0 - 1e-7))
+                        {
+                            if (reverse)
+                            {
+                                hI *= std::pow(gradingFactor, i);
+                            }
+                            else
+                            {
+                                hI *= std::pow(gradingFactor, numCells-i-1);
+                            }
+                        }
+                        localPositions.push_back(localPositions[i] + hI);
+                    }
+
+                    for (int i = 0; i < localPositions.size(); i++)
+                    {
+                        localPositions[i] *= length;
+                        localPositions[i] += lower;
+                    }
+
+
+                    for (unsigned int i = 0; i < localPositions.size(); ++i)
+                    {
+                        globalPositions[dimIdx].push_back(localPositions[i]);
+                    }
+                }
+                globalPositions[dimIdx].push_back(positions[dimIdx].back());
+
+            }
+
+            polarCoordinates[0] = globalPositions[indices[0]];
+            polarCoordinates[1] = globalPositions[indices[1]];
+            if (dim == 3)
+                polarCoordinates[2] = globalPositions[dim - indices[0] - indices[1]];
+
+            // convert angular coordinates into radians
+            for (int i = 0; i< polarCoordinates[1].size(); ++i)
+            {
+                polarCoordinates[1][i] = polarCoordinates[1][i]/180*M_PI;
+                std::cout << "angular coordinate[" << i << "] " << polarCoordinates[1][i] << std::endl;
+            }
         }
-        catch (...)
-        {
-            SpacerDefault spacerR(polarCoorMin[radiusIdx], polarCoorMax[radiusIdx], cells[radiusIdx]);
+        catch (Dumux::ParameterException &e) {
+                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters:" << std::endl
+                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".Positions0, ..." << std::endl);
         }
-        SpacerDefault spacerAngle(polarCoorMin[angleIdx], polarCoorMax[angleIdx], cells[angleIdx]);
-        SpacerDefault spacerZ(polarCoorMin[zIdx], polarCoorMax[zIdx], cells[zIdx]);
-
-
-        if (polarCoorMin[0] > polarCoorMax[0]
-            || polarCoorMin[1] > polarCoorMax[1]
-            || polarCoorMin[2] > polarCoorMax[2]){
-            std::cout << "Error: Input vectors are not ascending." << std::endl;
-        }
-
-        std::cout << "createVectors() starts..." << std::endl;
-
-        // save array entries as doubles
-        double dr = polarCoorMax[0] - polarCoorMin[0];
-        double da = polarCoorMax[1] - polarCoorMin[1];
-        double dz = polarCoorMax[2] - polarCoorMin[2];
-        double cellR = cells[0];
-        double cellA = cells[1];
-        double cellZ = cells[2];
-
-        // calculate step size in r, a and z direction
-        double stepsizeR = (dr/cellR);
-        double stepsizeA = (da/cellA);
-        double stepsizeZ = (dz/cellZ);
-
-        dR.resize(cellR+1, 0.0);
-        dA.resize(cellA+1, 0.0);
-        dZ.resize(cellZ+1, 0.0);
-
-        dR[0] = polarCoorMin[0];
-        for (int i = 1; i <= cellR; ++i){
-            dR[i] = dR[0]+i*stepsizeR;
-        }
-
-        dA[0] = polarCoorMin[1];
-        for (int j = 1; j <= cellA; ++j){
-            dA[j] = (dA[0]+j*stepsizeA)/180*M_PI;
-        }
-
-        dZ[0] = polarCoorMin[2];
-        for (int k = 1; k <= cellZ; ++k){
-            dZ[k] = dZ[0]+k*stepsizeZ;
-        }
-
-        std::cout << "createVectors() ends..." << std::endl;
-
+        catch (...) { throw; }
     }
 
-    static std::shared_ptr<Grid> createCakeGrid(vector &dR, vector &dA, vector &dZ)
+     /*!
+     * \brief Creates cartesian grid from polar coordinates.
+     *
+     * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
+     * \param indices Indices specifing the radial, angular and axial direction (in this order)
+     *
+     */
+    static std::shared_ptr<Grid> createCakeGrid(std::array<ScalarVector, dim> &polarCoordinates, Dune::FieldVector<int, dim> &indices)
     {
-        /* std::cout << dR[0] << std::endl;
-        std::cout << dA[0] << std::endl;
-        std::cout << dZ[0] << std::endl;
 
-        std::cout << dR[1] << std::endl;
-        std::cout << dA[1] << std::endl;
-        std::cout << dZ[1] << std::endl; */
+        vector dR = polarCoordinates[0];
+        vector dA = polarCoordinates[1];
 
-        std::cout << "createCakeGrid() starts..." << std::endl;
         GridFactory gf;
         Dune::GeometryType type;
-        type.makeHexahedron();
-
-        std::cout << "create nodes starts..." << std::endl;
-
-        //create nodes
-        for (int j = 0; j <= dA.size() - 1; ++j){
-            for (int l = 0; l <= dZ.size() - 1; ++l){
-                for (int i = 0; i <= dR.size()- 1; ++i){
-                    // Get wellRadius
-                    Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
-                    // transformation
-                    double dX = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
-                    double dY = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
-                    Dune::FieldVector <double, 3> v = {dX, dY, dZ[l]};
-                    std::cout << "Coordinates of : " << dX << " " << dY << " " << dZ[l] << std::endl;
-                    gf.insertVertex(v);
-
-                }
-            }
-
+        if (dim == 3){
+            type.makeHexahedron();
+        }
+        else
+        {
+            type.makeCube(2);
         }
 
+        //create nodes
+        if (dim == 3){
 
+            vector dZ = polarCoordinates[2];
 
-        std::cout << "create nodes ends..." << std::endl;
+            for (int j = 0; j <= dA.size() - 1; ++j){
+                for (int l = 0; l <= dZ.size() - 1; ++l){
+                    for (int i = 0; i <= dR.size()- 1; ++i){
+                        // Get radius for the well (= a hole) in the center
 
+                        Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
 
+                        // transform into cartesian Coordinates
+                        Dune::FieldVector <double, dim> v(0.0);
+                        v[indices[2]] = dZ[l];
+                        v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
+                        v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
+                        std::cout << "Coordinates of : " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+                        gf.insertVertex(v);
 
-        // assign nodes
-        int z = 0;
-        int t = 0;
-        std::cout << "assign nodes starts..." << std::endl;
-        for (int j = 0; j < dA.size() - 1; ++j){
-            for (int l = 0; l < dZ.size() - 1; ++l){
-                if (j < dA.size() - 2){
-                    for (int i = 0; i < dR.size() - 1; ++i){
-                        std::cout << "assign nodes not 360 starts..." << std::endl;
-                        std::vector<unsigned int> vid({z, z+1, z+dR.size()*dZ.size(), z+dR.size()*dZ.size()+1, z+dR.size(), z+dR.size()+1, z+dR.size()*dZ.size()+dR.size(), z+dR.size()*dZ.size()+dR.size()+1});
-
-                        for (int i = 0; i < vid.size(); ++i)
-                        {
-                            std::cout << "vid = " << vid[i] << std::endl;
-                        }
-
-                        gf.insertElement(type, vid);
-                        std::cout << "assign nodes not 360 ends..." << std::endl;
-
-                        z = z+1;
                     }
-                    z = z+1;
-                    std::cout << "assign nodes ends..." << std::endl;
-
                 }
-                // TODO else wird immer im letzten Schritt betreten...
-                else {
-                    // assign nodes for 360°-cake
-                    std::cout << "assign nodes 360 starts..." << std::endl;
-                    for (int i = 0; i < dR.size() - 1; ++i){
-                        // z = z + 1;
-                        std::vector<unsigned int> vid({z, z+1, t, t+1, z+dR.size(), z+dR.size()+1, t+dR.size(), t+dR.size()+1});
-                        for (int i = 0; i < vid.size(); ++i)
-                        {
-                            std::cout << "vid = " << vid[i] << std::endl;
-                        }
-                        t = t + 1;
-                        gf.insertElement(type, vid);
-                        }
-                    t = t + 1;
-                    }
-                    std::cout << "assign nodes 360 ends..." << std::endl;
 
             }
 
-            z = z + dR.size();
+            std::cout << "Filled node vector" << std::endl;
+
+            // assign nodes
+            unsigned int z = 0;
+            unsigned int t = 0;
+            for (int j = 0; j < dA.size() - 1; ++j){
+                for (int l = 0; l < dZ.size() - 1; ++l){
+                    if (j < dA.size() - 2){
+                        for (int i = 0; i < dR.size() - 1; ++i){
+                            std::vector<unsigned int> vid({z, z+1, z+dR.size()*dZ.size(), z+dR.size()*dZ.size()+1, z+dR.size(), z+dR.size()+1, z+dR.size()*dZ.size()+dR.size(), z+dR.size()*dZ.size()+dR.size()+1});
+
+                            gf.insertElement(type, vid);
+
+                            z = z+1;
+                        }
+                        z = z+1;
+
+                    }
+                    else {
+                        // assign nodes for 360°-cake
+                        for (int i = 0; i < dR.size() - 1; ++i){
+                            // z = z + 1;
+                            std::vector<unsigned int> vid({z, z+1, t, t+1, z+dR.size(), z+dR.size()+1, t+dR.size(), t+dR.size()+1});
+                            for (int i = 0; i < vid.size(); ++i)
+                            {
+                                std::cout << "vid = " << vid[i] << std::endl;
+                            }
+                            gf.insertElement(type, vid);
+                            t = t + 1;
+                            z = z+1;
+                            }
+                        t = t + 1;
+                        z = z+1;
+                        }
+                        std::cout << "assign nodes 360 ends..." << std::endl;
+
+                }
+
+                z = z + dR.size();
+            }
+        }
+        else{
+            for (int j = 0; j <= dA.size() - 1; ++j){
+                for (int i = 0; i <= dR.size()- 1; ++i){
+                    // Get radius for the well (= a hole) in the center
+
+                    Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
+
+                    // transform into cartesian Coordinates
+
+                    Dune::FieldVector <double, dim> v(0.0);
+
+                    v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
+                    v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
+                    std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
+                    gf.insertVertex(v);
+                }
+            }
+            std::cout << "Filled node vector" << std::endl;
+
+            // assign nodes
+            unsigned int z = 0;
+            unsigned int t = 0;
+            for (int j = 0; j < dA.size() - 1; ++j){
+                    if (j < dA.size() - 2){
+                        for (int i = 0; i < dR.size() - 1; ++i){
+                            std::vector<unsigned int> vid({z, z+1, z+dR.size(), z+dR.size()+1});
+
+                            for (int i = 0; i < vid.size(); ++i)
+                            {
+                                std::cout << "vid = " << vid[i] << std::endl;
+                            }
+
+                            gf.insertElement(type, vid);
+
+                            z = z+1;
+                        }
+                        z = z+1;
+
+                    }
+                    else {
+                        // assign nodes for 360°-cake
+                        for (int i = 0; i < dR.size() - 1; ++i){
+                            // z = z + 1;
+                            std::vector<unsigned int> vid({z, z+1, t, t+1});
+                            for (int i = 0; i < vid.size(); ++i)
+                            {
+                                std::cout << "vid = " << vid[i] << std::endl;
+                            }
+                            gf.insertElement(type, vid);
+                            t = t + 1;
+                            z = z+1;
+                            }
+                        t = t + 1;
+                        z = z+1;
+                        }
+                        std::cout << "assign nodes 360 ends..." << std::endl;
+            }
         }
         // assign nodes ends...
         return std::shared_ptr<Grid>(gf.createGrid());
