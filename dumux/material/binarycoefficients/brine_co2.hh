@@ -150,6 +150,9 @@ public:
         static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
         Scalar lnPhiCO2, phiCO2;
 
+        using std::log;
+        using std::exp;
+        using std::pow;
         lnPhiCO2 = log(V / (V - b_CO2)) + b_CO2 / (V - b_CO2) - 2 * a_CO2 / (R
                 * pow(T, 1.5) * b_CO2) * log((V + b_CO2) / V) + a_CO2 * b_CO2
                 / (R * pow(T, 1.5) * b_CO2 * b_CO2) * (log((V + b_CO2) / V)
@@ -178,10 +181,14 @@ public:
         static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
         Scalar lnPhiH2O, phiH2O;
 
+    using std::log;
+    using std::pow;
+    using std::exp;
         lnPhiH2O = log(V / (V - b_CO2)) + b_H2O / (V - b_CO2) - 2 * a_CO2_H2O
                 / (R * pow(T, 1.5) * b_CO2) * log((V + b_CO2) / V) + a_CO2
                 * b_H2O / (R * pow(T, 1.5) * b_CO2 * b_CO2) * (log((V + b_CO2)
                 / V) - b_CO2 / (V + b_CO2)) - log(pg_bar * V / (R * T));
+
         phiH2O = exp(lnPhiH2O); // fugacity coefficient of H2O
         return phiH2O;
     }
@@ -247,6 +254,7 @@ private:
         Scalar xi = computeXi_(temperature, pg); // Xi_{CO2-Na+-Cl-}
         Scalar lnGammaStar = 2 * lambda * molalityNaCl + xi * molalityNaCl
                 * molalityNaCl;
+        using std::exp;
         Scalar gammaStar = exp(lnGammaStar);
         return gammaStar; // molal activity coefficient of CO2 in brine
     }
@@ -266,6 +274,7 @@ private:
         Scalar k0_H2O = equilibriumConstantH2O_(T); // equilibrium constant for H2O at 1 bar
         Scalar phi_H2O = fugacityCoefficientH2O(T, pg); // fugacity coefficient of H2O for the water-CO2 system
         Scalar pg_bar = pg / 1.e5;
+        using std::exp;
         Scalar A = k0_H2O / (phi_H2O * pg_bar) * exp(deltaP * v_av_H2O / (R * T));
         return A;
 
@@ -286,6 +295,7 @@ private:
         Scalar k0_CO2 = equilibriumConstantCO2_(T); // equilibrium constant for CO2 at 1 bar
         Scalar phi_CO2 = fugacityCoefficientCO2(T, pg); // fugacity coefficient of CO2 for the water-CO2 system
         Scalar pg_bar = pg / 1.e5;
+        using std::exp;
         Scalar B = phi_CO2 * pg_bar / (55.508 * k0_CO2) * exp(-(deltaP
                 * v_av_CO2) / (R * T));
         return B;
@@ -303,9 +313,10 @@ private:
         static const Scalar c[6] = { -0.411370585, 6.07632013E-4, 97.5347708,
                 -0.0237622469, 0.0170656236, 1.41335834E-5 };
 
+        using std::log;
         Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
         lambda = c[0] + c[1] * T + c[2] / T + c[3] * pg_bar / T + c[4] * pg_bar
-                / (630.0 - T) + c[5] * T * std::log(pg_bar);
+                / (630.0 - T) + c[5] * T * log(pg_bar);
 
         return lambda;
     }
@@ -338,6 +349,7 @@ private:
         Scalar TinC = T - 273.15; //temperature in °C
         static const Scalar c[3] = { 1.189, 1.304e-2, -5.446e-5 };
         Scalar logk0_CO2 = c[0] + c[1] * TinC + c[2] * TinC * TinC;
+        using std::pow;
         Scalar k0_CO2 = pow(10, logk0_CO2);
         return k0_CO2;
     }
@@ -353,6 +365,7 @@ private:
         static const Scalar c[4] = { -2.209, 3.097e-2, -1.098e-4, 2.048e-7 };
         Scalar logk0_H2O = c[0] + c[1] * TinC + c[2] * TinC * TinC + c[3]
                 * TinC * TinC * TinC;
+        using std::pow;
         Scalar k0_H2O = pow(10, logk0_H2O);
         return k0_H2O;
     }
@@ -414,8 +427,11 @@ public:
         const Scalar pgCO2 = partialPressureCO2_(temperature, pg);
         const Scalar phiCO2 = fugacityCoeffCO2_(temperature, pgCO2, rhoCO2);
 
+        using std::log;
+        using std::pow;
         const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*pow(mol_NaCl,2);
 
+        using std::exp;
         const Scalar mol_CO2w = pgCO2 / (1e5 * exp(exponent)); /* paper: equation (6) */
 
         const Scalar x_CO2w = mol_CO2w / (mol_CO2w + 55.56); /* conversion: molality to mole fraction */
@@ -448,6 +464,7 @@ private:
         const Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
         const Scalar Tr = 630.0 - T;
 
+        using std::log;
         return
             c[0] +
             c[1]*T +
@@ -478,13 +495,14 @@ private:
 
         const Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
 
+        using std::log;
         return
             c1 +
             c2*T +
             c3/T +
             c8*pg_bar/T +
             c9*pg_bar/(630.0-T) +
-            c11*T*std::log(pg_bar);
+            c11*T*log(pg_bar);
     }
     /*!
      * \brief computation of C
@@ -575,6 +593,8 @@ private:
         const Scalar C = a[6] + a[7] / (Tr * Tr) + a[8] / (Tr * Tr * Tr);
         const Scalar D = a[9] + a[10] / (Tr * Tr) + a[11] / (Tr * Tr * Tr);
 
+        using std::log;
+        using std::exp;
         const Scalar lnphiCO2 =
             Z - 1 -
             log(Z) +
@@ -588,9 +608,9 @@ private:
                 a[13] + 1 -
                 (  a[13] + 1 +
                    a[14]/(Vr*Vr)
-                    )*std::exp(-a[14]/(Vr*Vr)));
+                    )*exp(-a[14]/(Vr*Vr)));
 
-        return std::exp(lnphiCO2);
+        return exp(lnphiCO2);
     }
 
 };

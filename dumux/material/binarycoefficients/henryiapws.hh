@@ -77,6 +77,7 @@ inline Scalar henryIAPWS(Scalar E,
     static const Scalar q = -0.023767;
 
     Scalar f = 0;
+    using std::pow;
     for (int i = 0; i < 6; ++i) {
         f += c[i]*pow(tau, d[i]);
     }
@@ -89,6 +90,7 @@ inline Scalar henryIAPWS(Scalar E,
          H*tau)*
         exp((H2O::tripleTemperature() - temperature)/100);
 
+    using std::exp;
     return exp(exponent)*H2O::vaporPressure(temperature);
 }
 }

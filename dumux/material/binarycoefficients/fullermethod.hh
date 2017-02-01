@@ -55,6 +55,8 @@ inline Scalar fullerMethod(const Scalar *M, // molar masses [g/mol]
     Scalar Mab = harmonicMean(M[0], M[1]);
 
     // Fuller's method
+    using std::pow;
+    using std::sqrt;
     Scalar tmp = pow(SigmaNu[0], 1./3) + pow(SigmaNu[1], 1./3);
     return 1e-4 * (143.0*pow(temperature, 1.75))/(pressure*sqrt(Mab)*tmp*tmp);
 }
