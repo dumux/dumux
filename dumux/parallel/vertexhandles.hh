@@ -138,7 +138,8 @@ public:
 
         FieldType tmp;
         buff.read(tmp);
-        container_[vIdx] = std::max(container_[vIdx], tmp);
+        using std::max;
+        container_[vIdx] = max(container_[vIdx], tmp);
     }
 
 private:
@@ -196,7 +197,8 @@ public:
         int vIdx = mapper_.index(e);
         FieldType tmp;
         buff.read(tmp);
-        container_[vIdx] = std::min(container_[vIdx], tmp);
+        using std::min;
+        container_[vIdx] = min(container_[vIdx], tmp);
     }
 
 private:
