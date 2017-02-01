@@ -353,8 +353,9 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateTransmissibility(
     Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TL1(D);
 
     //selection criterion
-    Scalar sR = std::abs(TR1[1][2] - TR1[1][0]);
-    Scalar sL = std::abs(TL1[1][0] - TL1[1][2]);
+    using std::abs;
+    Scalar sR = abs(TR1[1][2] - TR1[1][0]);
+    Scalar sL = abs(TL1[1][0] - TL1[1][2]);
 
     // 3.decide which triangle (which transmissibility coefficients) to use
     if (sR <= sL)

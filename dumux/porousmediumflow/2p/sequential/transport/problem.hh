@@ -220,7 +220,8 @@ public:
         this->model().update(t, dt, updateVector);
 
         //make sure t_old + dt is not larger than tend
-        dt = std::min(dt*cFLFactor_, this->timeManager().episodeMaxTimeStepSize());
+        using std::min;
+        dt = min(dt*cFLFactor_, this->timeManager().episodeMaxTimeStepSize());
         this->timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)

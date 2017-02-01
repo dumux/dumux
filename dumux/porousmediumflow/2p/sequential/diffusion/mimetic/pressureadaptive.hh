@@ -132,6 +132,7 @@ template<class TypeTag> class MimeticPressure2PAdaptive
         for (int i = 0; i < size; i++)
         {
             Scalar sat = 0;
+            using std::max;
             switch (saturationType)
             {
             case Sw:
@@ -143,11 +144,11 @@ template<class TypeTag> class MimeticPressure2PAdaptive
             }
             if (sat > 1.0)
             {
-                maxError = std::max(maxError, (sat - 1.0) / timeStep);
+                maxError = max(maxError, (sat - 1.0) / timeStep);
             }
             if (sat < 0.0)
             {
-                maxError = std::max(maxError, (-sat) / timeStep);
+                maxError = max(maxError, (-sat) / timeStep);
             }
         }
 

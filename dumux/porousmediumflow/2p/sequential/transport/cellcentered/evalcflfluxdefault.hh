@@ -93,7 +93,8 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
+        using std::max;
+        Scalar porosity = max(problem_.spatialParams().porosity(element), porosityThreshold_);
 
         return (getCflFluxFunction(element) * porosity * element.geometry().volume());
     }
@@ -122,9 +123,10 @@ private:
 
     void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, int phaseIdx = -1)
     {
+        using std::abs;
         Scalar krSum = lambdaW * viscosityW + lambdaNw * viscosityNw;
-        Scalar viscosityRatio = 1 - fabs(0.5 - viscosityNw / (viscosityW + viscosityNw));
-        //1 - fabs(viscosityWI-viscosityNwI)/(viscosityWI+viscosityNwI);
+        Scalar viscosityRatio = 1 - abs(0.5 - viscosityNw / (viscosityW + viscosityNw));
+        //1 - abs(viscosityWI-viscosityNwI)/(viscosityWI+viscosityNwI);
 
         switch (phaseIdx)
          {
@@ -175,7 +177,9 @@ private:
 
     Scalar getCFLFluxIn(int phaseIdx = 0)
     {
-        if (std::isnan(fluxIn_) || std::isinf(fluxIn_))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(fluxIn_) || isinf(fluxIn_))
         {
             fluxIn_ = 1e-100;
         }
@@ -185,16 +189,18 @@ private:
 
     Scalar getCFLFluxOut(int phaseIdx = 0)
     {
-        if (std::isnan(fluxWettingOut_) || std::isinf(fluxWettingOut_))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(fluxWettingOut_) || isinf(fluxWettingOut_))
         {
             fluxWettingOut_ = 1e-100;
         }
 
-        if (std::isnan(fluxNonwettingOut_) || std::isinf(fluxNonwettingOut_))
+        if (isnan(fluxNonwettingOut_) || isinf(fluxNonwettingOut_))
         {
             fluxNonwettingOut_ = 1e-100;
         }
-        if (std::isnan(fluxOut_) || std::isinf(fluxOut_))
+        if (isnan(fluxOut_) || isinf(fluxOut_))
         {
             fluxOut_ = 1e-100;
         }
@@ -229,9 +235,10 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     Scalar volumeCorrectionFactorOutW = 0;
     Scalar volumeCorrectionFactorOutNw = 0;
 
-        Scalar satW = problem_.variables().cellData(problem_.variables().index(element)).saturation(wPhaseIdx);
-        volumeCorrectionFactorOutW = std::max((satW - residualSatW), 1e-2);
-        volumeCorrectionFactorOutNw = std::max((1 - satW - residualSatNw), 1e-2);
+    Scalar satW = problem_.variables().cellData(problem_.variables().index(element)).saturation(wPhaseIdx);
+    using std::max;
+    volumeCorrectionFactorOutW = max((satW - residualSatW), 1e-2);
+    volumeCorrectionFactorOutNw = max((1 - satW - residualSatNw), 1e-2);
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
     if (volumeCorrectionFactorOutW <= 0)
@@ -247,18 +254,19 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     Scalar cFLFluxIn = volumeCorrectionFactor / getCFLFluxIn();
     Scalar cFLFluxOut = 0;
 
+    using std::min;
     if (velocityType_ == vt)
     {
         cFLFluxOut = volumeCorrectionFactor / getCFLFluxOut(-1);
     }
     else
     {
-        cFLFluxOut = std::min(volumeCorrectionFactorOutW / getCFLFluxOut(wPhaseIdx),
+        cFLFluxOut = min(volumeCorrectionFactorOutW / getCFLFluxOut(wPhaseIdx),
                               volumeCorrectionFactorOutNw / getCFLFluxOut(nPhaseIdx));
     }
 
     //determine timestep
-    Scalar cFLFluxFunction = std::min(cFLFluxIn, cFLFluxOut);
+    Scalar cFLFluxFunction = min(cFLFluxIn, cFLFluxOut);
 
     return cFLFluxFunction;
 }

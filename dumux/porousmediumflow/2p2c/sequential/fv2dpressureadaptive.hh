@@ -1016,7 +1016,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     A.invert();
     D += B.leftmultiply(C.rightmultiply(A));
     T = D[1];
-    if(!enableSecondHalfEdge )//or fabs(intersection.centerUnitOuterNormal()[0])<0.5) // [0]<0.5 => switch off vertical 2hes
+    if(!enableSecondHalfEdge )//or abs(intersection.centerUnitOuterNormal()[0])<0.5) // [0]<0.5 => switch off vertical 2hes
     {
         T *= 2;
         // set your map entry

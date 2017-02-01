@@ -94,7 +94,8 @@ public:
             problem_.source(source, element);
             for (int i = 0; i < 2; i++)
             {
-                if (std::abs(source[i]) > 1e-10)
+                using std::abs;
+                if (abs(source[i]) > 1e-10)
                 {
                     indicatorVector_[globalIdxI] = 10;
                     break;
@@ -118,8 +119,10 @@ public:
                 break;
             }
 
-            globalMin = std::min(satI, globalMin);
-            globalMax = std::max(satI, globalMax);
+            using std::min;
+            globalMin = min(satI, globalMin);
+            using std::max;
+            globalMax = max(satI, globalMax);
 
             // calculate refinement indicator in all cells
             for (const auto& intersection : intersections(problem_.gridView(), element))
@@ -145,7 +148,8 @@ public:
                             bool fluxBound = false;
                             for (int j = 0; j < 2; j++)
                             {
-                            if (std::abs(flux[j]) > 1e-10)
+                            using std::abs;
+                            if (abs(flux[j]) > 1e-10)
                             {
                                 if (refineAtFluxBC_)
                                 {
@@ -189,11 +193,13 @@ public:
                             break;
                         }
 
-                        Scalar localdelta = std::abs(satI - satJ);
-                        indicatorVector_[globalIdxI][0] = std::max(indicatorVector_[globalIdxI][0], localdelta);
-                        indicatorVector_[globalIdxJ][0] = std::max(indicatorVector_[globalIdxJ][0], localdelta);
+                        using std::abs;
+                        Scalar localdelta = abs(satI - satJ);
+                        using std::max;
+                        indicatorVector_[globalIdxI][0] = max(indicatorVector_[globalIdxI][0], localdelta);
+                        indicatorVector_[globalIdxJ][0] = max(indicatorVector_[globalIdxJ][0], localdelta);
 
-                        maxLocalDelta = std::max(maxLocalDelta, localdelta);
+                        maxLocalDelta = max(maxLocalDelta, localdelta);
                     }
                 }
             }

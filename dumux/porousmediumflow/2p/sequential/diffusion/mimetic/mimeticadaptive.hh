@@ -391,7 +391,8 @@ private:
         }
         error /= timeStep_;
 
-        Scalar errorAbs = std::abs(error);
+        using std::abs;
+        Scalar errorAbs = abs(error);
 
         if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
                 && (!problem_.timeManager().willBeFinished()))
@@ -522,6 +523,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
     // Brezzi/Lipnikov/Simonicini M3AS 2005
     // (1) orthonormalize columns of the matrix R (Gram-Schmidt orthonormalization)
     Scalar norm = R[0][0] * R[0][0];
+    using std::sqrt;
     for (int i = 1; i < numFaces; i++)
         norm += R[i][0] * R[i][0];
     norm = sqrt(norm);
@@ -552,6 +554,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
         norm = R[0][2] * R[0][2];
         for (int i = 1; i < numFaces; i++)
             norm += R[i][2] * R[i][2];
+        using std::sqrt;
         norm = sqrt(norm);
         for (int i = 0; i < numFaces; i++)
             R[i][2] /= norm;
