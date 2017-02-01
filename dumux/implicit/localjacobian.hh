@@ -291,7 +291,8 @@ public:
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
         Scalar priVar = this->curVolVars_[scvIdx].priVar(pvIdx);
-        return baseEps*(std::abs(priVar) + 1.0);
+        using std::abs;
+        return baseEps*(abs(priVar) + 1.0);
     }
 
 protected:

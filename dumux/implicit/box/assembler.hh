@@ -82,13 +82,14 @@ private:
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
         for (unsigned int i = 0; i < this->vertexColor_.size(); ++i) {
+            using std::max;
             if (this->delta_[i] > relTol)
                 // mark vertex as red if discrepancy is larger than
                 // the relative tolerance
                 this->vertexColor_[i] = ParentType::Red;
             else
                 this->nextReassembleAccuracy_ =
-                    std::max(this->nextReassembleAccuracy_, this->delta_[i]);
+                    max(this->nextReassembleAccuracy_, this->delta_[i]);
         }
 
         // Mark all red elements
@@ -312,7 +313,8 @@ private:
             // update the right hand side
             this->residual_[globI] += this->model_().localJacobian().residual(i);
             for (int j = 0; j < this->residual_[globI].dimension; ++j) {
-                if (!std::isfinite(this->residual_[globI][j])) {
+                using std::isfinite;
+                if (!isfinite(this->residual_[globI][j])) {
                     DUNE_THROW(NumericalProblem,
                                "residual_[" << globI << "][" << j << "] is not finite");
                 }
