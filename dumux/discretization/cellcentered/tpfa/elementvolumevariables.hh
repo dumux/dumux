@@ -233,7 +233,7 @@ public:
 private:
     const GlobalVolumeVariables* globalVolVarsPtr_;
 
-    const int getLocalIdx_(const int volVarIdx) const
+    int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(volVarIndices_.begin(), volVarIndices_.end(), volVarIdx);
         assert(it != volVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
