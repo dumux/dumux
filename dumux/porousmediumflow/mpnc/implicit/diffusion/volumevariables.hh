@@ -114,8 +114,10 @@ public:
             // TODO: tensorial diffusion coefficients
             return diffCoeffG_[compIIdx][compJIdx];
 
-        const unsigned int i = std::min(compIIdx, compJIdx);
-        const unsigned int j = std::max(compIIdx, compJIdx);
+        using std::max;
+        using std::min;
+        const unsigned int i = min(compIIdx, compJIdx);
+        const unsigned int j = max(compIIdx, compJIdx);
         if (i != 0)
             return 0;
         return diffCoeffL_[j];

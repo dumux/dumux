@@ -226,8 +226,10 @@ private:
                         Scalar SJ = elemVolVars[this->face().j].saturation(phaseIdx);
                         Scalar rhoI = elemVolVars[this->face().i].density(phaseIdx);
                         Scalar rhoJ = elemVolVars[this->face().j].density(phaseIdx);
-                        Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
-                        Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                        using std::max;
+                        using std::min;
+                        Scalar fI = max(0.0, min(SI/1e-5, 0.5));
+                        Scalar fJ = max(0.0, min(SJ/1e-5, 0.5));
                         if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
                             // doesn't matter because no wetting phase is present in
                             // both cells!

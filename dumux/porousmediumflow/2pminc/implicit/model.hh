@@ -338,22 +338,23 @@ public:
                  * the ones which have the double bigger than the edge
                  * the ones which are bigger than the previous edge
                  */
-                if ((    (std::min<Scalar>(cellSize_[0],cellSize_[1])- 2* x1) < 0.0
+                using std::min;
+                if ((    (min<Scalar>(cellSize_[0],cellSize_[1])- 2* x1) < 0.0
                         || (x1 < 0.0)
                         || (x1_test[nC]<x1_test[nC-1])
                 )
-                        && ((std::min<Scalar>(cellSize_[0],cellSize_[1])- 2* x2) > 0.0
+                        && ((min<Scalar>(cellSize_[0],cellSize_[1])- 2* x2) > 0.0
                                 && x2 > 0.0
                                 && (x2_test[nC]>x2_test[nC-1])
                         ))
                 {
                     distNestedContinua_[nC] = x2;
                 }
-                else if (( (std::min<Scalar>(cellSize_[0],cellSize_[1])- 2* x2) < 0
+                else if (( (min<Scalar>(cellSize_[0],cellSize_[1])- 2* x2) < 0
                         || (x2 < 0)
                         || (x2_test[nC]<x2_test[nC-1])
                 )
-                        && ((std::min<Scalar>(cellSize_[0],cellSize_[1])- 2* x1) > 0
+                        && ((min<Scalar>(cellSize_[0],cellSize_[1])- 2* x1) > 0
                                 && (x1 > 0)
                                 && (x1_test[nC]>x1_test[nC-1])
                         ))
@@ -362,7 +363,7 @@ public:
                 }
                 else
                 {
-                    distNestedContinua_[nC] = std::min<Scalar>(x1, x2);
+                    distNestedContinua_[nC] = min<Scalar>(x1, x2);
                     DUNE_THROW(Dune::InvalidStateException, "Check the solution of the nested continua geometric parameters");
                 }
 

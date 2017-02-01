@@ -109,7 +109,8 @@ public:
             storage[conti0EqIdx + phaseIdx*numComponents + compIdx]
                     += phaseComponentValues[compIdx];
 
-            if (!std::isfinite(storage[conti0EqIdx + phaseIdx*numComponents + compIdx]))
+            using std::isfinite;
+            if (!isfinite(storage[conti0EqIdx + phaseIdx*numComponents + compIdx]))
                 DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
         }
 
@@ -144,7 +145,8 @@ public:
                         phaseComponentValuesDiffusion[compIdx];
                 Valgrind::CheckDefined(flux);
 
-                if (!std::isfinite(flux[conti0EqIdx + phaseIdx*numComponents + compIdx]))
+                using std::isfinite;
+                if (!isfinite(flux[conti0EqIdx + phaseIdx*numComponents + compIdx]))
                     DUNE_THROW(NumericalProblem, "Calculated non-finite flux");
             }
 
@@ -275,7 +277,8 @@ public:
                 const unsigned int eqIdx = conti0EqIdx + compIdx + phaseIdx*numComponents;
                         source[eqIdx] += componentIntoPhaseMassTransfer[phaseIdx][compIdx] ;
 
-                        if (!std::isfinite(source[eqIdx]))
+                        using std::isfinite;
+                        if (!isfinite(source[eqIdx]))
                             DUNE_THROW(NumericalProblem, "Calculated non-finite source");
             }
         }

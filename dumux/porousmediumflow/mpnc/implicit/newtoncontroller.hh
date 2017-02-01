@@ -73,15 +73,18 @@ private:
                             const Scalar minVal,
                             const Scalar maxVal)
     {
-        val = std::max(minVal, std::min(val, maxVal));
+        using std::max;
+        using std::min;
+        val = max(minVal, min(val, maxVal));
     };
 
     static void pressureChop_(Scalar &val,
                               const Scalar oldVal)
     {
-        const Scalar maxDelta = std::max(oldVal/4.0, 10e3);
+        using std::max;
+        const Scalar maxDelta = max(oldVal/4.0, 10e3);
         clampValue_(val, oldVal - maxDelta, oldVal + maxDelta);
-        val = std::max(0.0, val); // don't allow negative pressures
+        val = max(0.0, val); // don't allow negative pressures
     }
 
     static void saturationChop_(Scalar &val,
@@ -131,15 +134,18 @@ private:
                             const Scalar minVal,
                             const Scalar maxVal)
     {
-        val = std::max(minVal, std::min(val, maxVal));
+        using std::max;
+        using std::min;
+        val = max(minVal, min(val, maxVal));
     };
 
     static void pressureChop_(Scalar &val,
                               const Scalar oldVal)
     {
-        const Scalar maxDelta = std::max(oldVal/4.0, 10e3);
+        using std::max;
+        const Scalar maxDelta = max(oldVal/4.0, 10e3);
         clampValue_(val, oldVal - maxDelta, oldVal + maxDelta);
-        val = std::max(0.0, val); // don't allow negative pressures
+        val = max(0.0, val); // don't allow negative pressures
     }
 
     static void saturationChop_(Scalar &val,
@@ -203,10 +209,12 @@ public:
 
         // compute the vertex and element colors for partial
         // reassembly
+        using std::max;
+        using std::min;
         if (this->enablePartialReassemble_) {
             const Scalar minReasmTol = 1e-2*this->shiftTolerance_;
             const Scalar maxReasmTol = 1e1*this->shiftTolerance_;
-            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->shift_/1e4));
+            Scalar reassembleTol = max(minReasmTol, min(maxReasmTol, this->shift_/1e4));
 
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
