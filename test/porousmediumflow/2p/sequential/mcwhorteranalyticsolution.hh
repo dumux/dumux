@@ -116,7 +116,8 @@ private:
 
         if (globalVolume > 0.0 && errorNorm > 0.0)
         {
-            errorNorm = std::sqrt(errorNorm)/globalVolume;
+            using std::sqrt;
+            errorNorm = sqrt(errorNorm)/globalVolume;
             errorGlobal_ = errorNorm;
         }
         else
@@ -240,6 +241,9 @@ private:
 
         int k = 0;
 
+        using std::pow;
+        using std::abs;
+
         while (diff> tolAnalytic_)
         {
             k++;
@@ -273,7 +277,7 @@ private:
 
             // with f(sInit) = 0: relationship between A and sInit
             Ak = pow((0.5*porosity_/pow((1 - fInit_), 2)*I0), 0.5);
-            diff=fabs(Ak - Akm1);
+            diff=abs(Ak - Akm1);
             // std::cout<<"diff = "<<diff<<std::endl;
         }
 

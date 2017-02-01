@@ -227,7 +227,9 @@ void source(PrimaryVariables &values, const Element &element)
         father = father.father();
     }
     GlobalPosition globalPos = father.geometry().center();
-    if (fabs(globalPos[0] - 4.8) < 0.5 + eps_ && fabs(globalPos[1] - 4.8) < 0.5 + eps_)
+
+    using std::abs;
+    if (abs(globalPos[0] - 4.8) < 0.5 + eps_ && abs(globalPos[1] - 4.8) < 0.5 + eps_)
         values[Indices::contiNEqIdx] = 0.0001;
 }
 

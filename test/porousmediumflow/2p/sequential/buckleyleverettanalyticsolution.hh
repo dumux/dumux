@@ -217,7 +217,8 @@ private:
 
         if (globalVolume > 0.0 && errorNorm > 0.0)
         {
-            errorNorm = std::sqrt(errorNorm)/globalVolume;
+            using std::sqrt;
+            errorNorm = sqrt(errorNorm)/globalVolume;
             errorGlobal_ = errorNorm;
         }
         else

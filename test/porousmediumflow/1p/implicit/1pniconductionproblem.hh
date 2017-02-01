@@ -175,7 +175,8 @@ public:
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, someFvGeometry, someScv);
-        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        using std::max;
+        Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
 
         for (const auto& element : elements(this->gridView()))
         {
@@ -187,8 +188,9 @@ public:
                 auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
+                using std::erf; using std::sqrt;
                 temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
-                                              *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
+                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
         }
     }

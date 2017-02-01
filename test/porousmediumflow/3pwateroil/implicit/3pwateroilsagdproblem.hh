@@ -351,11 +351,12 @@ public:
             const Scalar gridHeight_ = 0.5;
             const Scalar effectiveRadius_ = 0.208 * gridHeight_;  //Peaceman's Well Model
 
+            using std::log;
             //divided by molarMass() of water to convert from kg/m s to mol/m s
-            const Scalar qW = (((2*3.1415*0.5*4e-14)/(std::log(effectiveRadius_/wellRadius))) *
+            const Scalar qW = (((2*3.1415*0.5*4e-14)/(log(effectiveRadius_/wellRadius))) *
                                 densityW * elemMobW * ( elemPressW-pOut_))/0.01801528;
             //divided by molarMass() of HeavyOil to convert from kg/m s to mol/m s
-            const Scalar qN = (((2*3.1415*0.5*4e-14)/(std::log(effectiveRadius_/wellRadius))) *
+            const Scalar qN = (((2*3.1415*0.5*4e-14)/(log(effectiveRadius_/wellRadius))) *
                                 densityN * elemMobN  * (elemPressN-pOut_))/0.35;
 
             Scalar qE;

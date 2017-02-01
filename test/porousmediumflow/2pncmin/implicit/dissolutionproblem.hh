@@ -356,6 +356,7 @@ public:
         Scalar saltPorosity = this->spatialParams().minPorosity(element, scv);
 
         // liquid phase
+        using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
                                                * volVars.saturation(wPhaseIdx)
                                                * (moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase);
