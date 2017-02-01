@@ -89,6 +89,9 @@ class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
 
 
 public:
+    // export permeability type
+    using PermeabilityType = Scalar;
+
     //get the material law from the property system
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
@@ -142,51 +145,33 @@ public:
     }
 
     /*!
-     * \brief Intrinsic permability
+     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
-     * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     * \return Intrinsic permeability
+     * \param globalPos The global position
      */
-    const Scalar intrinsicPermeability(const SubControlVolume& scv,
-                                       const VolumeVariables& volVars) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
 
     /*!
-     * \brief Porosity
+     * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     * \return Porosity
+     * \param globalPos The global position
      */
-    double porosity(const SubControlVolume& scv) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
     }
 
-
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Returns the parameter object for the Brooks-Corey material law
      *
-     * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     * \return the material parameters object
+     * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const SubControlVolume& scv) const
-    {
-        return materialParams_;
-    }
-
-    const MaterialLawParams& materialLawParams() const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         return materialParams_;
     }
