@@ -106,7 +106,8 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         // newton update
         Scalar delta = f/fPrime;
         alpha -= delta;
-        if (std::abs(delta) < std::abs(alpha)*1e-9) {
+        using std::abs;
+        if (abs(delta) < abs(alpha)*1e-9) {
             break;
         }
     }
