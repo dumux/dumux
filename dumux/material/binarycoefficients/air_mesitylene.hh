@@ -63,31 +63,36 @@ public:
         typedef Dumux::Air<Scalar> Air;
         typedef Dumux::Mesitylene<Scalar> Mesitylene;
 
-        temperature = std::max(temperature, 1e-9); // regularization
-        temperature = std::min(temperature, 500.0); // regularization
-        pressure = std::max(pressure, 0.0); // regularization
-        pressure = std::min(pressure, 1e8); // regularization
+        using std::min;
+        using std::max;
+        temperature = max(temperature, 1e-9); // regularization
+        temperature = min(temperature, 500.0); // regularization
+        pressure = max(pressure, 0.0); // regularization
+        pressure = min(pressure, 1e8); // regularization
 
+        using std::pow;
+        using std::sqrt;
+        using std::exp;
         const Scalar M_m = 1e3*Mesitylene::molarMass(); // [g/mol] molecular weight of mesitylene
         const Scalar M_a = 1e3*Air::molarMass(); // [g/mol] molecular weight of air
         const Scalar Tb_m = 437.9;        // [K] boiling temperature of mesitylene
         const Scalar sigma_a = 3.711;     // charact. length of air
         const Scalar T_scal_a = 78.6;     // [K] (molec. energy of attraction/Boltzmann constant)
         const Scalar V_B_m = 162.6;       // [cm^3/mol] LeBas molal volume of mesitylene
-        const Scalar sigma_m = 1.18*std::pow(V_B_m, 0.333);     // charact. length of mesitylene
+        const Scalar sigma_m = 1.18*pow(V_B_m, 0.333);     // charact. length of mesitylene
         const Scalar sigma_am = 0.5*(sigma_a + sigma_m);
         const Scalar T_scal_m = 1.15*Tb_m;
-        const Scalar T_scal_am = std::sqrt(T_scal_a*T_scal_m);
+        const Scalar T_scal_am = sqrt(T_scal_a*T_scal_m);
 
         Scalar T_star = temperature/T_scal_am;
-        T_star = std::max(T_star, 1e-5); // regularization
+        T_star = max(T_star, 1e-5); // regularization
 
-        const Scalar Omega = 1.06036/std::pow(T_star, 0.1561) + 0.193/std::exp(T_star*0.47635)
-            + 1.03587/std::exp(T_star*1.52996) + 1.76474/std::exp(T_star*3.89411);
-        const Scalar B_ = 0.00217 - 0.0005*std::sqrt(1.0/M_a + 1.0/M_m);
+        const Scalar Omega = 1.06036/pow(T_star, 0.1561) + 0.193/exp(T_star*0.47635)
+            + 1.03587/exp(T_star*1.52996) + 1.76474/exp(T_star*3.89411);
+        const Scalar B_ = 0.00217 - 0.0005*sqrt(1.0/M_a + 1.0/M_m);
         const Scalar Mr = (M_a + M_m)/(M_a*M_m);
-        const Scalar D_am = (B_*std::pow(temperature, 1.5) * std::sqrt(Mr))
-                           /(1e-5*pressure*std::pow(sigma_am, 2.0) * Omega); // [cm^2/s]
+        const Scalar D_am = (B_*pow(temperature, 1.5) * sqrt(Mr))
+                           /(1e-5*pressure*pow(sigma_am, 2.0) * Omega); // [cm^2/s]
 
         return 1e-4*D_am; // [m^2/s]
     }
