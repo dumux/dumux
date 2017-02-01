@@ -277,7 +277,9 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
         // the pressure Index used as a Primary Variable
         storageEntry[rhs] -= cellDataI.pressure(pressureType) * compress_term * volume;
 
-        if (std::isnan(compress_term) || std::isinf(compress_term))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(compress_term) || isinf(compress_term))
             DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << eIdxGlobalI);
 
         if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
@@ -1030,7 +1032,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     {
         cellData.volumeError()=(vol - problem().spatialParams().porosity(elementI));
 
-        if (std::isnan(cellData.volumeError()))
+        using std::isnan;
+        if (isnan(cellData.volumeError()))
         {
             DUNE_THROW(Dune::MathError, "Sequential2p2c::postProcessUpdate:\n"
                     << "volErr[" << eIdxGlobal << "] isnan: vol = " << vol

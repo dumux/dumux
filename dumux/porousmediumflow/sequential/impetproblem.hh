@@ -107,10 +107,12 @@ public:
           vtkOutputLevel_(-1)
     {
         // calculate the bounding box of the grid view
+        using std::min;
+        using std::max;
         for (const auto& vertex : vertices(gridView)) {
             for (int i=0; i<dim; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vertex.geometry().center()[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vertex.geometry().center()[i]);
+                bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().center()[i]);
+                bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().center()[i]);
             }
         }
 
@@ -359,16 +361,18 @@ public:
         // obtain the first update and the time step size
         model().update(t, dt, updateVector);
 
+        using std::max;
+        using std::min;
         if (t > 0 && timeManager().timeStepSize()> 0.)
         {
             Scalar oldDt = timeManager().timeStepSize();
-            Scalar minDt = std::max(oldDt - dtVariationRestrictionFactor_ * oldDt, 0.0);
+            Scalar minDt = max(oldDt - dtVariationRestrictionFactor_ * oldDt, 0.0);
             Scalar maxDt = oldDt + dtVariationRestrictionFactor_ * oldDt;
-            dt = std::max(std::min(dt, maxDt), minDt);
+            dt = max(min(dt, maxDt), minDt);
         }
 
         //make sure t_old + dt is not larger than tend
-        dt = std::min(dt, timeManager().episodeMaxTimeStepSize());
+        dt = min(dt, timeManager().episodeMaxTimeStepSize());
 
         // check if we are in first TS and an initialDt was assigned
         if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t, 0.0, 1.0e-30)
@@ -383,7 +387,7 @@ public:
                 Dune::dwarn << "Initial timestep of size " << timeManager().timeStepSize()
                             << " is larger then dt=" << dt <<" from transport" << std::endl;
             // internally assign next timestep size
-            dt = std::min(dt, timeManager().timeStepSize());
+            dt = min(dt, timeManager().timeStepSize());
         }
 
         //make sure the right time-step is used by all processes in the parallel case
@@ -483,7 +487,8 @@ public:
      */
     void setOutputInterval(const int interval)
     {
-        outputInterval_ = std::max(interval, 0);
+        using std::max;
+        outputInterval_ = max(interval, 0);
     }
 
     /*!

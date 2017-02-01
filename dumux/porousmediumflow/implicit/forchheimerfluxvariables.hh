@@ -180,8 +180,9 @@ protected:
         assert( isDiagonal_(K) );
 
         DimWorldMatrix sqrtK(0.0);
+        using std::sqrt;
         for (int i = 0; i < dim; ++i)
-            sqrtK[i][i] = std::sqrt(K[i][i]);
+            sqrtK[i][i] = sqrt(K[i][i]);
 
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
@@ -392,9 +393,10 @@ protected:
      */
      bool isDiagonal_(const DimWorldMatrix & K) const
      {
+         using std::abs;
          for (int i = 0; i < dim; i++) {
              for (int k = 0; k < dim; k++) {
-                 if ((i != k) && (std::abs(K[i][k]) >= 1e-25)) {
+                 if ((i != k) && (abs(K[i][k]) >= 1e-25)) {
                    return false;
                  }
              }

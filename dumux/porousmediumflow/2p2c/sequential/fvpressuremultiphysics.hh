@@ -444,7 +444,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         storageEntry[matrix] -= compress_term*volume;
         storageEntry[rhs] -= cellDataI.pressure(pressureType) * compress_term * volume;
 
-        if (std::isnan(compress_term) || std::isinf(compress_term))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(compress_term) ||isinf(compress_term))
             DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << eIdxGlobalI);
 
         if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
@@ -553,7 +555,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
 
         // due to "safety cell" around subdomain, both cells I and J
         // have single-phase conditions, although one is in 2p domain.
-        int phaseIdx = std::min(cellDataI.subdomain(), cellDataJ.subdomain());
+        using std::min;
+        int phaseIdx = min(cellDataI.subdomain(), cellDataJ.subdomain());
 
         Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + cellDataJ.density(phaseIdx));
 
@@ -870,7 +873,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
         // b) will be simple and was complex: complex FS available, so next TS
         //         will use comlex FS, next updateMaterialLaw will transform to simple
 
-        maxError = std::max(maxError, fabs(cellData.volumeError()));
+        using std::max;
+        maxError = max(maxError, fabs(cellData.volumeError()));
     }// end grid traversal
     this->maxError_ = maxError/problem().timeManager().timeStepSize();
 

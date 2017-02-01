@@ -194,6 +194,7 @@ public:
 //    void checkPlausibility() const
 //    {
 //        // Looping over all elements of the domain
+//        using std::isfinite;
 //        for (const auto& element : elements(this->gridView_()))
 //        {
 //            ElementVolumeVariables elemVolVars;
@@ -218,7 +219,7 @@ public:
 //                    const Scalar temperatureTest = elemVolVars[scvIdx].temperature(energyEqIdx);
 ////                    const Scalar temperatureTest = 42;
 //
-//                    if (not std::isfinite(temperatureTest) or temperatureTest < 0. ){
+//                    if (not isfinite(temperatureTest) or temperatureTest < 0. ){
 //                        message <<"\nUnphysical Value in Energy: \n";
 //                        message << "\tT" <<"_"<<FluidSystem::phaseName(energyEqIdx)<<"="<< temperatureTest <<"\n";
 //                    }
@@ -229,7 +230,7 @@ public:
 //                    const Scalar eps = 1e-6 ;
 //                    for (int compIdx=0; compIdx< numComponents; ++ compIdx){
 //                        const Scalar xTest = fluidState.moleFraction(phaseIdx, compIdx);
-//                        if (not std::isfinite(xTest) or xTest < 0.-eps or xTest > 1.+eps ){
+//                        if (not isfinite(xTest) or xTest < 0.-eps or xTest > 1.+eps ){
 //                            message <<"\nUnphysical Value in Mass: \n";
 //
 //                            message << "\tx" <<"_"<<FluidSystem::phaseName(phaseIdx)
@@ -247,7 +248,7 @@ public:
 //                          continue;
 //                      assert(numEnergyEqs == 3) ; // otherwise this ia call does not make sense
 //                      const Scalar ia = elemVolVars[scvIdx].interfacialArea(phaseIdxI, phaseIdxII);
-//                      if (not std::isfinite(ia) or ia < 0.-eps ) {
+//                      if (not isfinite(ia) or ia < 0.-eps ) {
 //                          message <<"\nUnphysical Value in interfacial area: \n";
 //                          message << "\tia" <<FluidSystem::phaseName(phaseIdxI)
 //                                           <<FluidSystem::phaseName(phaseIdxII)<<"="
@@ -264,7 +265,7 @@ public:
 //                for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
 //                    const Scalar eps = 1e-6 ;
 //                    const Scalar saturationTest = fluidState.saturation(phaseIdx);
-//                    if (not std::isfinite(saturationTest) or  saturationTest< 0.-eps or saturationTest > 1.+eps ){
+//                    if (not isfinite(saturationTest) or  saturationTest< 0.-eps or saturationTest > 1.+eps ){
 //                        message <<"\nUnphysical Value in Saturation: \n";
 //                        message << "\tS" <<"_"<<FluidSystem::phaseName(phaseIdx)<<"=" << std::scientific
 //                        << fluidState.saturation(phaseIdx) << std::fixed << "\n";
@@ -276,7 +277,7 @@ public:
 //              for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
 //                  const Scalar eps = 1e-6 ;
 //                  const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
-//                  if (not std::isfinite(velocityTest) ){
+//                  if (not isfinite(velocityTest) ){
 //                      message <<"\nUnphysical Value in Velocity: \n";
 //                      message << "\tv" <<"_"<<FluidSystem::phaseName(phaseIdx)<<"=" << std::scientific
 //                      << velocityTest << std::fixed << "\n";

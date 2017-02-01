@@ -1158,7 +1158,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
 
     // due to "safety cell" around subdomain, both cells I and J
     // have single-phase conditions, although one is in 2p domain.
-    int phaseIdx = std::min(cellDataI.subdomain(), cellDataJ.subdomain());
+    using std::min;
+    int phaseIdx = min(cellDataI.subdomain(), cellDataJ.subdomain());
 
     // get average density for gravity flux
     Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + cellDataJ.density(phaseIdx));
@@ -1309,8 +1310,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
                 problem().pressureModel().updateMaterialLawsInElement(element, fromPostTimestep);
             else
                 problem().pressureModel().update1pMaterialLawsInElement(element, cellData, fromPostTimestep);
-
-            maxError = std::max(maxError, fabs(cellData.volumeError()));
+            using std::max;
+            maxError = max(maxError, fabs(cellData.volumeError()));
         }
         this->maxError_ = maxError/problem().timeManager().timeStepSize();
     }

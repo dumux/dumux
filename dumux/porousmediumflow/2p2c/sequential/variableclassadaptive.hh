@@ -312,8 +312,9 @@ public:
         irregularInterfaceMap_[intersectionID].globalPos3_[offset+1] = globalPos4;
         irregularInterfaceMap_[intersectionID].globalIdx3_[offset+1] = globalIdx4;
 
+        using std::max;
         irregularInterfaceMap_[intersectionID].interactionRegionsStored
-            = std::max(irregularInterfaceMap_[intersectionID].interactionRegionsStored, subFaceIdx+1);
+            = max(irregularInterfaceMap_[intersectionID].interactionRegionsStored, subFaceIdx+1);
     }
 
     //! Weigths the transmissivity coefficient by the flux area (3D)
