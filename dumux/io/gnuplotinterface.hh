@@ -366,9 +366,11 @@ private:
     // Check validity of number
     void checkNumber(Scalar number, std::string text = "") const
     {
-        if (std::isnan(number))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(number))
             Dune::dwarn << "warning: " << text << " is not a number, adjust your data range" << std::endl;
-        if (std::isinf(number))
+        if (isinf(number))
             Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 
