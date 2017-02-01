@@ -146,7 +146,7 @@ public:
         outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                   int, Problem, OutputInterval);
 
-        temperatureHigh_ = 300.;
+        temperatureHigh_ = 300.0;
 
     }
 
@@ -187,7 +187,8 @@ public:
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, someFvGeometry, someScv);
-        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        using std::max;
+        Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
 
         for (const auto& element : elements(this->gridView()))
         {
@@ -198,9 +199,10 @@ public:
             {
                 auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
-
+                using std::erf;
+                using std::sqrt;
                 temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
-                                              *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
+                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
         }
     }
@@ -229,7 +231,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -250,10 +251,7 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -268,15 +266,11 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
+     * \param elemVolVars The element volume variables
+     * \param scvf The subcontrolvolume face
+     *  Negative values mean influx.
      */
     PrimaryVariables neumann(const Element &element,
                              const FVElementGeometry& fvGeometry,
@@ -294,9 +288,16 @@ public:
     // \{
 
     /*!
-     * \brief Returns the source term at specific position in the domain.
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
      *
-     * \param globalPos The position
+     * \param globalPos The position for which the source should be evaluated
+     *
+     * Returns the rate mass of a component is generated or annihilate
+     * per volume unit. Positive values mean that mass is created,
+     * negative ones mean that it vanishes.
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
     PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
