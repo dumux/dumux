@@ -240,8 +240,10 @@ public:
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
-            Scalar xlBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(wPhaseIdx, BrineIdx)));
-            Scalar xlCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(wPhaseIdx, CO2Idx)));
+            using std::min;
+            using std::max;
+            Scalar xlBrine = min(1.0, max(0.0, fluidState.moleFraction(wPhaseIdx, BrineIdx)));
+            Scalar xlCO2 = min(1.0, max(0.0, fluidState.moleFraction(wPhaseIdx, CO2Idx)));
             Scalar sumx = xlBrine + xlCO2;
             xlBrine /= sumx;
             xlCO2 /= sumx;
@@ -260,8 +262,10 @@ public:
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
-            Scalar xgBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(nPhaseIdx, BrineIdx)));
-            Scalar xgCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(nPhaseIdx, CO2Idx)));
+            using std::min;
+            using std::max;
+            Scalar xgBrine = min(1.0, max(0.0, fluidState.moleFraction(nPhaseIdx, BrineIdx)));
+            Scalar xgCO2 = min(1.0, max(0.0, fluidState.moleFraction(nPhaseIdx, CO2Idx)));
             Scalar sumx = xgBrine + xgCO2;
             xgBrine /= sumx;
             xgCO2 /= sumx;
@@ -363,8 +367,10 @@ public:
                                           xgH2O);
 
         // normalize the phase compositions
-        xlCO2 = std::max(0.0, std::min(1.0, xlCO2));
-        xgH2O = std::max(0.0, std::min(1.0, xgH2O));
+        using std::min;
+        using std::max;
+        xlCO2 = max(0.0, min(1.0, xlCO2));
+        xgH2O = max(0.0, min(1.0, xgH2O));
 
         xlH2O = 1.0 - xlCO2;
         xgCO2 = 1.0 - xgH2O;
