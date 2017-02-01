@@ -121,6 +121,8 @@ public:
         Scalar pcMax = -1e100;
 
         Scalar swTemp, pcTemp = 0.0;
+        using std::max;
+        using std::min;
         for (int i = 0; i <= numIntervals_; i++)
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
@@ -129,16 +131,16 @@ public:
             {
                 sw.push_back(swTemp);
                 pc.push_back(pcTemp);
-                pcMin = std::min(pcMin, pcTemp);
-                pcMax = std::max(pcMax, pcTemp);
+                pcMin = min(pcMin, pcTemp);
+                pcMax = max(pcMax, pcTemp);
             }
         }
 
         // use log scale for very high capillary pressures
-        if (pcMax / std::max(pcMin, 1.0) > 1e6)
+        if (pcMax / max(pcMin, 1.0) > 1e6)
         {
             gnuplotpcsw_.setOption("set log y");
-            pcMin = std::max(pcMin, 1.0);
+            pcMin = max(pcMin, 1.0);
         }
 
         gnuplotpcsw_.setXRange(lowerSat, upperSat);
@@ -212,12 +214,14 @@ public:
         {
             pcTemp = lowerpc + pcInterval * Scalar(i) / Scalar(numIntervals_);
             swTemp = MaterialLaw::sw(params, pcTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(pcTemp, swTemp))
             {
                 pc.push_back(pcTemp);
                 sw.push_back(swTemp);
-                swMin = std::min(swMin, swTemp);
-                swMax = std::max(swMax, swTemp);
+                swMin = min(swMin, swTemp);
+                swMax = max(swMax, swTemp);
             }
         }
 
@@ -292,12 +296,14 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             dpcdswTemp = MaterialLaw::dpc_dsw(params, swTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(swTemp, dpcdsw))
             {
                 sw.push_back(swTemp);
                 dpcdsw.push_back(dpcdswTemp);
-                dpcdswMin = std::min(dpcdswMin, dpcdswTemp);
-                dpcdswMax = std::max(dpcdswMax, dpcdswTemp);
+                dpcdswMin = min(dpcdswMin, dpcdswTemp);
+                dpcdswMax = max(dpcdswMax, dpcdswTemp);
             }
         }
 
@@ -372,12 +378,14 @@ public:
         {
             pcTemp = lowerpc + pcInterval * Scalar(i) / Scalar(numIntervals_);
             dswdpcTemp = MaterialLaw::dsw_dpc(params, pcTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(pcTemp, dswdpcTemp))
             {
                 pc.push_back(pcTemp);
                 dswdpc.push_back(dswdpcTemp);
-                dswdpcMin = std::min(dswdpcMin, dswdpcTemp);
-                dswdpcMax = std::max(dswdpcMax, dswdpcTemp);
+                dswdpcMin = min(dswdpcMin, dswdpcTemp);
+                dswdpcMax = max(dswdpcMax, dswdpcTemp);
             }
         }
 
@@ -458,13 +466,15 @@ public:
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             krwTemp = MaterialLaw::krw(params, swTemp);
             krnTemp = MaterialLaw::krn(params, swTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(swTemp, krwTemp) && checkValues_(swTemp, krnTemp))
             {
                 sw.push_back(swTemp);
                 krw.push_back(krwTemp);
                 krn.push_back(krnTemp);
-                krMin = std::min({krMin, krwTemp, krnTemp});
-                krMax = std::max({krMax, krwTemp, krnTemp});
+                krMin = min({krMin, krwTemp, krnTemp});
+                krMax = max({krMax, krwTemp, krnTemp});
             }
         }
 
@@ -546,13 +556,15 @@ public:
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             dkrwdswTemp = MaterialLaw::dkrw_dsw(params, swTemp);
             dkrndswTemp = MaterialLaw::dkrn_dsw(params, swTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(swTemp, dkrwdswTemp) && checkValues_(swTemp, dkrndswTemp))
             {
                 sw.push_back(swTemp);
                 dkrw_dsw.push_back(dkrwdswTemp);
                 dkrn_dsw.push_back(dkrndswTemp);
-                dkrdswMin = std::min({dkrdswMin, dkrwdswTemp, dkrndswTemp});
-                dkrdswMax = std::max({dkrdswMax, dkrwdswTemp, dkrndswTemp});
+                dkrdswMin = min({dkrdswMin, dkrwdswTemp, dkrndswTemp});
+                dkrdswMax = max({dkrdswMax, dkrwdswTemp, dkrndswTemp});
             }
         }
 
@@ -574,8 +586,10 @@ private:
      */
     bool checkValues_(Scalar value1, Scalar value2)
     {
-        return !std::isnan(value1) && !std::isinf(value1)
-               && !std::isnan(value2) && !std::isinf(value2);
+        using std::isnan;
+        using std::isinf;
+        return !isnan(value1) && !isinf(value1)
+               && !isnan(value2) && !isinf(value2);
     }
 
     int numIntervals_;

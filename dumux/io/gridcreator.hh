@@ -765,6 +765,7 @@ public:
             }
 
             std::array<ScalarVector, dim> globalPositions;
+            using std::pow;
             for (int dimIdx = 0; dimIdx < dim; dimIdx++)
             {
                 for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
@@ -812,13 +813,14 @@ public:
                         {
                             DUNE_THROW(Dune::NotImplemented, "This grading factor is not implemented.");
                         }
-                        height = (1.0 - gradingFactor) / (1.0 - std::pow(gradingFactor, numCells));
+
+                        height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
 
                         if (verbose)
                         {
                             std::cout << " -> grading_eff "  << gradingFactor
-                                      << " h_min "  << height * std::pow(gradingFactor, 0) * length
-                                      << " h_max "  << height * std::pow(gradingFactor, numCells-1) * length
+                                      << " h_min "  << height * pow(gradingFactor, 0) * length
+                                      << " h_max "  << height * pow(gradingFactor, numCells-1) * length
                                       << std::endl;
                         }
                     }
@@ -832,11 +834,11 @@ public:
                         {
                             if (reverse)
                             {
-                                hI *= std::pow(gradingFactor, i);
+                                hI *= pow(gradingFactor, i);
                             }
                             else
                             {
-                                hI *= std::pow(gradingFactor, numCells-i-1);
+                                hI *= pow(gradingFactor, numCells-i-1);
                             }
                         }
                         localPositions.push_back(localPositions[i] + hI);
