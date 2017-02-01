@@ -797,7 +797,9 @@ public:
     {
         for (int j = 0; j < blockSize; j++)
         {
-            if (std::isnan(x[i][j]) || std::isinf(x[i][j]))
+            using std::isnan;
+            using std::isinf;
+            if (isnan(x[i][j]) || isinf(x[i][j]))
             {
                 result_.converged = false;
                 break;
@@ -861,7 +863,9 @@ public:
     {
         for (int j = 0; j < blockSize; j++)
         {
-            if (std::isnan(x[i][j]) || std::isinf(x[i][j]))
+            using std::isnan;
+            using std::isinf;
+            if (isnan(x[i][j]) || isinf(x[i][j]))
             {
                 result_.converged = false;
                 break;
