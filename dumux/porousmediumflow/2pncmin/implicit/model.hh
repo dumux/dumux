@@ -186,15 +186,15 @@ public:
         auto numDofs = this->numDofs();
 
         // create the required scalar fields
-        ScalarField *Sg           = writer.allocateManagedBuffer(numDofs);
-        ScalarField *Sl           = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pg           = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pl           = writer.allocateManagedBuffer (numDofs);
+        ScalarField *sn           = writer.allocateManagedBuffer(numDofs);
+        ScalarField *sw           = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pn           = writer.allocateManagedBuffer (numDofs);
+        ScalarField *pw           = writer.allocateManagedBuffer (numDofs);
         ScalarField *pc           = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoL         = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoG         = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobL         = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobG         = writer.allocateManagedBuffer (numDofs);
+        ScalarField *rhoW         = writer.allocateManagedBuffer (numDofs);
+        ScalarField *rhoN         = writer.allocateManagedBuffer (numDofs);
+        ScalarField *mobW         = writer.allocateManagedBuffer (numDofs);
+        ScalarField *mobN         = writer.allocateManagedBuffer (numDofs);
         ScalarField *phasePresence = writer.allocateManagedBuffer (numDofs);
         ScalarField *temperature  = writer.allocateManagedBuffer (numDofs);
         ScalarField *poro         = writer.allocateManagedBuffer (numDofs);
@@ -251,15 +251,15 @@ public:
             {
                 auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                (*Sg)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                (*Sl)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*pg)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pl)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                 (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
-                (*rhoL)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
-                (*rhoG)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
-                (*mobL)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                (*mobG)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
+                (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
                 (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
 
                 for (int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -289,15 +289,15 @@ public:
             }
         }  // loop over element
 
-        writer.attachDofData(*Sg, "Sg", isBox);
-        writer.attachDofData(*Sl, "Sl", isBox);
-        writer.attachDofData(*pg, "pg", isBox);
-        writer.attachDofData(*pl, "pl", isBox);
+        writer.attachDofData(*sn, "Sn", isBox);
+        writer.attachDofData(*sw, "Sw", isBox);
+        writer.attachDofData(*pn, "pn", isBox);
+        writer.attachDofData(*pw, "pw", isBox);
         writer.attachDofData(*pc, "pc", isBox);
-        writer.attachDofData(*rhoL, "rhoL", isBox);
-        writer.attachDofData(*rhoG, "rhoG", isBox);
-        writer.attachDofData(*mobL, "mobL", isBox);
-        writer.attachDofData(*mobG, "mobG", isBox);
+        writer.attachDofData(*rhoW, "rhoW", isBox);
+        writer.attachDofData(*rhoN, "rhoN", isBox);
+        writer.attachDofData(*mobW, "mobW", isBox);
+        writer.attachDofData(*mobN, "mobN", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*permeabilityFactor, "permeabilityFactor", isBox);
         writer.attachDofData(*temperature, "temperature", isBox);
@@ -412,87 +412,86 @@ protected:
             if (this->staticDat_[dofIdxGlobal].wasSwitched)
                 Smin = -0.01;
 
-            //if saturation of liquid phase is smaller 0 switch
+            //if saturation of wetting phase is smaller 0 switch
             if (volVars.saturation(wPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
-                //liquid phase has to disappear
-                std::cout << "Liquid Phase disappears at vertex " << dofIdxGlobal
-                            << ", coordinated: " << globalPos << ", Sl: "
+                //wetting phase has to disappear
+                std::cout << "Wetting Phase disappears at vertex " << dofIdxGlobal
+                            << ", coordinated: " << globalPos << ", Sw: "
                             << volVars.saturation(wPhaseIdx) << std::endl;
                 newPhasePresence = nPhaseOnly;
 
-                //switch not depending on formulation
-                //switch "Sl" to "xgH20"
+                //switch saturation to xnH20 (not depending on formulation)
                 globalSol[dofIdxGlobal][switchIdx]
                         = volVars.moleFraction(nPhaseIdx, wCompIdx /*H2O*/);
-                //Here unlike 2pnc model we do not switch all components to to mole fraction in gas phase
+                //Here unlike 2pnc model we do not switch all components to to mole fraction in nonwetting phase
             }
-            //if saturation of gas phase is smaller than 0 switch
+            //if saturation of nonwetting phase is smaller than 0 switch
             else if (volVars.saturation(nPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
-                //gas phase has to disappear
-                std::cout << "Gas Phase disappears at vertex " << dofIdxGlobal
-                            << ", coordinated: " << globalPos << ", Sg: "
+                //nonwetting phase has to disappear
+                std::cout << "Nonwetting Phase disappears at vertex " << dofIdxGlobal
+                            << ", coordinated: " << globalPos << ", Sn: "
                             << volVars.saturation(nPhaseIdx) << std::endl;
                 newPhasePresence = wPhaseOnly;
 
-                //switch "Sl" to "xlN2"
+                //switch saturation to xwN2 (not depending on formulation)
                 globalSol[dofIdxGlobal][switchIdx] = volVars.moleFraction(wPhaseIdx, nCompIdx /*N2*/);
             }
         }
         else if (phasePresence == nPhaseOnly)
         {
-            Scalar sumxl = 0;
-            //Calculate sum of mole fractions (water and air) in the hypothetical liquid phase
+            Scalar sumxw = 0;
+            //Calculate sum of mole fractions in the hypothetical wetting phase
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
-                sumxl += volVars.moleFraction(wPhaseIdx, compIdx);
+                sumxw += volVars.moleFraction(wPhaseIdx, compIdx);
             }
-            Scalar xlmax = 1.0;
-            if (sumxl > xlmax)
+            Scalar xwmax = 1.0;
+            if (sumxw > xwmax)
                 wouldSwitch = true;
             if (this->staticDat_[dofIdxGlobal].wasSwitched)
-                xlmax *=1.02;
+                xwmax *=1.02;
 
             //if the sum of the mole fractions would be larger than
             //1, wetting phase appears
-            if (sumxl/*sum of mole fractions*/ > xlmax/*1*/)
+            if (sumxw/*sum of mole fractions*/ > xwmax/*1*/)
             {
-                // liquid phase appears
-                std::cout << "Liquid Phase appears at vertex " << dofIdxGlobal
-                          << ", coordinated: " << globalPos << ", sumxl: "
-                          << sumxl << std::endl;
+                // wetting phase appears
+                std::cout << "Wetting Phase appears at vertex " << dofIdxGlobal
+                          << ", coordinated: " << globalPos << ", sumxw: "
+                          << sumxw << std::endl;
                 newPhasePresence = bothPhases;
                 if (formulation == pnsw)
                     globalSol[dofIdxGlobal][switchIdx] = 0.0;
                 else if (formulation == pwsn)
                     globalSol[dofIdxGlobal][switchIdx] = 1.0;
-                //Here unlike 2pnc model we do not switch all components to to mole fraction in gas phase
+                //Here unlike 2pnc model we do not switch all components to to mole fraction in nonwetting phase
             }
         }
         else if (phasePresence == wPhaseOnly)
         {
-            Scalar xgmax = 1;
-            Scalar sumxg = 0;
-            //Calculate sum of mole fractions in the hypothetical gas phase
+            Scalar xnmax = 1;
+            Scalar sumxn = 0;
+            //Calculate sum of mole fractions in the hypothetical nonwetting phase
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
-                sumxg += volVars.moleFraction(nPhaseIdx, compIdx);
+                sumxn += volVars.moleFraction(nPhaseIdx, compIdx);
             }
-            if (sumxg > xgmax)
+            if (sumxn > xnmax)
                 wouldSwitch = true;
             if (this->staticDat_[dofIdxGlobal].wasSwitched)
-                xgmax *=1.02;
-            //liquid phase appears if sum is larger than one
-            if (sumxg > xgmax)
+                xnmax *=1.02;
+            //nonwetting phase appears if sum is larger than one
+            if (sumxn > xnmax)
             {
-                std::cout << "Gas Phase appears at vertex " << dofIdxGlobal
-                          << ", coordinated: " << globalPos << ", sumxg: "
-                          << sumxg << std::endl;
+                std::cout << "Nonwetting Phase appears at vertex " << dofIdxGlobal
+                          << ", coordinated: " << globalPos << ", sumxn: "
+                          << sumxn << std::endl;
                 newPhasePresence = bothPhases;
-                //saturation of the liquid phase set to 0.9999 (if formulation pnsw and vice versa)
+                //saturation of the wetting phase set to 0.9999 (if formulation pnsw and vice versa)
                 if (formulation == pnsw)
                     globalSol[dofIdxGlobal][switchIdx] = 0.999;
                 else if (formulation == pwsn)

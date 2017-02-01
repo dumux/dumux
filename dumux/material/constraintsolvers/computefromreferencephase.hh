@@ -149,7 +149,8 @@ public:
                                                            refPhaseIdx));
 
         // compute the fugacities of all components in the reference phase
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
             fluidState.setFugacityCoefficient(refPhaseIdx,
                                               compIdx,
                                               FluidSystem::fugacityCoefficient(fluidState,
@@ -160,7 +161,8 @@ public:
         }
 
         // compute all quantities for the non-reference phases
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             if (phaseIdx == refPhaseIdx)
                 continue; // reference phase is already calculated
 
