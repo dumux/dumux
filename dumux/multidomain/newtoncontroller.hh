@@ -108,12 +108,14 @@ public:
         SolutionVector uNewI = uLastIter;
         uNewI -= deltaU;
 
+        using std::abs;
+        using std::max;
         for (unsigned int i = 0; i < uLastIter.base().size(); ++i) {
             for (unsigned int j = 0; j < uLastIter.base()[i].size(); ++j) {
-                Scalar vertexError = std::abs(deltaU.base()[i][j]);
-                vertexError /= std::max<Scalar>(1.0, std::abs(uLastIter.base()[i][j] + uNewI.base()[i][j])/2);
+                Scalar vertexError = abs(deltaU.base()[i][j]);
+                vertexError /= max<Scalar>(1.0, abs(uLastIter.base()[i][j] + uNewI.base()[i][j])/2);
 
-                this->shift_ = std::max(this->shift_, vertexError);
+                this->shift_ = max(this->shift_, vertexError);
             }
         }
     }
