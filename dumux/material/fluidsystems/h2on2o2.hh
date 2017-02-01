@@ -328,6 +328,7 @@ public:
         Scalar vaporPressure = H2O::vaporPressure(T);
         Scalar exponent = molarMass(compIdx)/(density(fluidState, phaseIdx) * Constants::R * T);
         exponent *= (2 * surfaceTension(fluidState) / radius);
+        using std::exp;
         Scalar kelvinVaporPressure = vaporPressure * exp(exponent);
 
         return kelvinVaporPressure;
@@ -349,7 +350,8 @@ public:
         const Scalar mu  = 1.256;
         const Scalar b   = -0.625;
         //Equation to calculate surface Tension of Water According to IAPWS Release on Surface Tension from September 1994
-        const Scalar surfaceTension = B*std::pow((1.-(T/T_c)),mu)*(1.+b*(1.-(T/T_c)));
+        using std::pow;
+        const Scalar surfaceTension = B*pow((1.-(T/T_c)),mu)*(1.+b*(1.-(T/T_c)));
         return surfaceTension; //surface Tension [N/m]
     }
     /****************************************
@@ -452,19 +454,20 @@ public:
         }
 
         // gas phase
+        using std::max;
         if (!useComplexRelations)
             // for the gas phase assume an ideal gas
             return
                 IdealGas::molarDensity(T, p)
                 * fluidState.averageMolarMass(nPhaseIdx)
-                / std::max(1e-5, sumMoleFrac);
+                / max(1e-5, sumMoleFrac);
 
         // assume ideal mixture: steam, nitrogen and oxygen don't "see" each
         // other
         Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
         Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, N2Idx));
         Scalar rho_gO2 = O2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, O2Idx));
-        return (rho_gH2O + rho_gN2 + rho_gO2 ) / std::max(1e-5, sumMoleFrac);
+        return (rho_gH2O + rho_gN2 + rho_gO2 ) / max(1e-5, sumMoleFrac);
     }
 
     using Base::viscosity;
@@ -512,12 +515,15 @@ public:
             };
 
             Scalar sumx = 0.0;
+            using std::max;
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 sumx += fluidState.moleFraction(phaseIdx, compIdx);
-            sumx = std::max(1e-10, sumx);
+            sumx = max(1e-10, sumx);
 
             for (int i = 0; i < numComponents; ++i) {
                 Scalar divisor = 0;
+                using std::pow;
+                using std::sqrt;
                 for (int j = 0; j < numComponents; ++j) {
                     Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(molarMass(j)/molarMass(i), 1/4.0);
                     phiIJ *= phiIJ;

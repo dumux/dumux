@@ -336,8 +336,10 @@ public:
 
         Scalar phiCAW = 0.3; // simplification for this particular system
         /* actually like this
-         * Scalar phiCAW = std::pow(1.+std::sqrt(mu[NAPLIdx]/muAW)*std::pow(MAW/M[NAPLIdx],0.25),2)
-         *                 / std::sqrt(8.*(1.+M[NAPLIdx]/MAW));
+        * using std::sqrt;
+        * using std::pow;
+         * Scalar phiCAW = pow(1.+sqrt(mu[NAPLIdx]/muAW)*pow(MAW/M[NAPLIdx],0.25),2)
+         *                 / sqrt(8.*(1.+M[NAPLIdx]/MAW));
          */
         Scalar phiAWC = phiCAW * muAW*M[NAPLIdx]/(mu[NAPLIdx]*MAW);
 

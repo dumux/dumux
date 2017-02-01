@@ -296,8 +296,10 @@ public:
      */
     static Scalar interactionCoefficient(int comp1Idx, int comp2Idx)
     {
-        int i = std::min(comp1Idx, comp2Idx);
-        int j = std::max(comp1Idx, comp2Idx);
+        using std::min;
+        using std::max;
+        int i = min(comp1Idx, comp2Idx);
+        int j = max(comp1Idx, comp2Idx);
         if (i == C1Idx && (j == C15Idx || j == C20Idx))
             return 0.05;
         else if (i == C3Idx && (j == C15Idx || j == C20Idx))
@@ -328,35 +330,37 @@ public:
         Scalar minB = 1e100, maxB = -1e100;
 
         prParams.updatePure(minT, minP);
+        using std::min;
+        using std::max;
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            minA = std::min(prParams.pureParams(compIdx).a(), minA);
-            maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
-            minB = std::min(prParams.pureParams(compIdx).b(), minB);
-            maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
+            minA = min(prParams.pureParams(compIdx).a(), minA);
+            maxA = max(prParams.pureParams(compIdx).a(), maxA);
+            minB = min(prParams.pureParams(compIdx).b(), minB);
+            maxB = max(prParams.pureParams(compIdx).b(), maxB);
         }
 
         prParams.updatePure(maxT, minP);
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            minA = std::min(prParams.pureParams(compIdx).a(), minA);
-            maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
-            minB = std::min(prParams.pureParams(compIdx).b(), minB);
-            maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
+            minA = min(prParams.pureParams(compIdx).a(), minA);
+            maxA = max(prParams.pureParams(compIdx).a(), maxA);
+            minB = min(prParams.pureParams(compIdx).b(), minB);
+            maxB = max(prParams.pureParams(compIdx).b(), maxB);
         }
 
         prParams.updatePure(minT, maxP);
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            minA = std::min(prParams.pureParams(compIdx).a(), minA);
-            maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
-            minB = std::min(prParams.pureParams(compIdx).b(), minB);
-            maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
+            minA = min(prParams.pureParams(compIdx).a(), minA);
+            maxA = max(prParams.pureParams(compIdx).a(), maxA);
+            minB = min(prParams.pureParams(compIdx).b(), minB);
+            maxB = max(prParams.pureParams(compIdx).b(), maxB);
         }
 
         prParams.updatePure(maxT, maxP);
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            minA = std::min(prParams.pureParams(compIdx).a(), minA);
-            maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
-            minB = std::min(prParams.pureParams(compIdx).b(), minB);
-            maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
+            minA = min(prParams.pureParams(compIdx).a(), minA);
+            maxA = max(prParams.pureParams(compIdx).a(), maxA);
+            minB = min(prParams.pureParams(compIdx).b(), minB);
+            maxB = max(prParams.pureParams(compIdx).b(), maxB);
         }
 
         PengRobinson::init(/*aMin=*/minA, /*aMax=*/maxA, /*na=*/100,
