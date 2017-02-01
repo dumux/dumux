@@ -111,8 +111,10 @@ public:
         // calculate the bounding box of the local partition of the grid view
         for (const auto& vertex : vertices(gridView)) {
             for (int i=0; i<dimWorld; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
+                using std::min;
+                using std::max;
+                bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
+                bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
             }
         }
 

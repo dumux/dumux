@@ -104,8 +104,6 @@ public:
             DUNE_THROW(NumericalProblem,
                        "A process did not succeed in linearizing the system");
         }
-        // printmatrix(std::cout, matrix(), "", "");
-
     }
 
     /*!
