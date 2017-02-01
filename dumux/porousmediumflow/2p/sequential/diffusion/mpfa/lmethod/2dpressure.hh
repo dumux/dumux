@@ -297,6 +297,7 @@ public:
         for (int i = 0; i < size; i++)
         {
             Scalar sat = 0;
+            using std::max;
             switch (saturationType_)
             {
             case sw:
@@ -308,11 +309,11 @@ public:
             }
             if (sat > 1.0)
             {
-                maxError_ = std::max(maxError_, (sat - 1.0) / timeStep_);
+                maxError_ = max(maxError_, (sat - 1.0) / timeStep_);
             }
             if (sat < 0.0)
             {
-                maxError_ = std::max(maxError_, (-sat) / timeStep_);
+                maxError_ = max(maxError_, (-sat) / timeStep_);
             }
         }
 
@@ -509,7 +510,8 @@ private:
         }
         error /= timeStep_;
 
-        Scalar errorAbs = std::abs(error);
+        using std::abs;
+        Scalar errorAbs = abs(error);
 
         if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
                 && (!problem_.timeManager().willBeFinished()))

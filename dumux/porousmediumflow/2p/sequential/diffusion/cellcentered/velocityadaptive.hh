@@ -586,7 +586,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
         cellData.fluxData().setVelocityMarker(isIndexI);
 
-        Scalar weightingFactor = std::pow(0.5, (dim - 1)*(elementI.level() - elementJ.level()));
+        using std::pow;
+        Scalar weightingFactor = pow(0.5, (dim - 1)*(elementI.level() - elementJ.level()));
 
         velocityW *= weightingFactor;
         velocityNw *= weightingFactor;

@@ -542,7 +542,8 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
 
     // cell volume, assume linear map here
     Scalar volume = elementI.geometry().volume();
-    Scalar porosity = std::max(problem_.spatialParams().porosity(elementI), porosityThreshold_);
+    using std::max;
+    Scalar porosity = max(problem_.spatialParams().porosity(elementI), porosityThreshold_);
 
     if (compressibility_)
     {
@@ -732,7 +733,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
 
     // cell volume, assume linear map here
     Scalar volume = elementI.geometry().volume();
-    Scalar porosity = std::max(problem_.spatialParams().porosity(elementI), porosityThreshold_);
+    using std::max;
+    Scalar porosity = max(problem_.spatialParams().porosity(elementI), porosityThreshold_);
 
     if (compressibility_)
     {
@@ -1034,7 +1036,8 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
     // cell volume, assume linear map here
     Scalar volume = element.geometry().volume();
 
-    Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
+    using std::max;
+    Scalar porosity = max(problem_.spatialParams().porosity(element), porosityThreshold_);
 
     if (compressibility_)
     {

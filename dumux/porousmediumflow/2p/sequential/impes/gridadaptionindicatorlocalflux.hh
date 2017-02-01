@@ -178,7 +178,8 @@ public:
                 problem_.sourceAtPos(source, element.geometry().center());
                 for (int i = 0; i < 2; i++)
                 {
-                    if (std::abs(source[i]) > 1e-10)
+                    using std::abs;
+                    if (abs(source[i]) > 1e-10)
                     {
                         indicatorVector_[globalIdxI] = refineBound_ + 1.0;
                         isSpecialCell = true;
@@ -243,7 +244,8 @@ public:
                                       * cellDataI.fluxData().velocityTotal(idxInInside)) * intersection.geometry().volume();
 
                     //Scalar velNorm = cellDataI.fluxData().velocityTotal(idxInInside).two_norm();
-                    //indicatorVectorFlux_[globalIdxI] = std::max(velNorm, indicatorVectorFlux_[globalIdxI]);
+                    //using std::max;
+                    //indicatorVectorFlux_[globalIdxI] = max(velNorm, indicatorVectorFlux_[globalIdxI]);
                 }
 
                 // exit, if it is not a neighbor
@@ -262,7 +264,8 @@ public:
                             bool fluxBound = false;
                             for (int j = 0; j < 2; j++)
                             {
-                                if (std::abs(flux[j]) > 1e-10)
+                                using std::abs;
+                                if (abs(flux[j]) > 1e-10)
                                 {
                                     if (refineAtFluxBC_)
                                     {
@@ -295,8 +298,10 @@ public:
                             problem_.dirichlet(sat, intersection);
                             satJ = sat[eqIdxSat];
                         }
-                        Scalar localdelta = std::abs(satI - satJ);
-                        indicatorVectorSat_[globalIdxI] = std::max(indicatorVectorSat_[globalIdxI], localdelta);
+                        using std::abs;
+                        Scalar localdelta = abs(satI - satJ);
+                        using std::max;
+                        indicatorVectorSat_[globalIdxI] = max(indicatorVectorSat_[globalIdxI], localdelta);
                     }
                 }
                 else
@@ -317,8 +322,10 @@ public:
                             break;
                         }
 
-                        Scalar localdelta = std::abs(satI - satJ);
-                        indicatorVectorSat_[globalIdxI] = std::max(indicatorVectorSat_[globalIdxI], localdelta);
+                        using std::abs;
+                        Scalar localdelta = abs(satI - satJ);
+                        using std::max;
+                        indicatorVectorSat_[globalIdxI] = max(indicatorVectorSat_[globalIdxI], localdelta);
                     }
                 }
             }
@@ -365,7 +372,8 @@ public:
                 elementVelocity /= geometry.integrationElement(localPos);
 
                 Scalar velNorm = elementVelocity.two_norm();
-                indicatorVectorFlux_[globalIdxI] = std::max(velNorm, indicatorVectorFlux_[globalIdxI]);
+                using std::max;
+                indicatorVectorFlux_[globalIdxI] = max(velNorm, indicatorVectorFlux_[globalIdxI]);
             }
 
 
@@ -414,7 +422,8 @@ public:
 
                 if (usePercentileSat_)
                 {
-                    Scalar lowerBound = std::max(0.0,coarsenPercentileSat_ * totalVolumeSat);
+                    using std::max;
+                    Scalar lowerBound = max(0.0,coarsenPercentileSat_ * totalVolumeSat);
 
                     Scalar accumulatedVolume = 0;
                     while (accumulatedVolume <= lowerBound && it != satRange.end())
@@ -450,7 +459,8 @@ public:
 
                 if (usePercentileFlux_)
                 {
-                    Scalar lowerBound = std::max(0.0,coarsenPercentileFlux_ * totalVolume);
+                    using std::max;
+                    Scalar lowerBound = max(0.0,coarsenPercentileFlux_ * totalVolume);
                     Scalar accumulatedVolume = 0;
                     while (accumulatedVolume <= lowerBound && it != fluxRange.end())
                     {
@@ -471,7 +481,8 @@ public:
                 {
                     typename RangeSet::reverse_iterator rIt = satRange.rbegin();
 
-                    Scalar upperBound = std::max(0.0, refinePercentileSat_ * totalVolumeSat);
+                    using std::max;
+                    Scalar upperBound = max(0.0, refinePercentileSat_ * totalVolumeSat);
 
                     Scalar accumulatedVolume = 0;
                     while (accumulatedVolume <= upperBound && (*rIt).indicator > 1e-6 && rIt != satRange.rend())
@@ -495,7 +506,8 @@ public:
 
                 if (usePercentileFlux_)
                 {
-                    Scalar upperBound = std::min(totalVolume, refinePercentileFlux_ * totalVolume);
+                    using std::min;
+                    Scalar upperBound = min(totalVolume, refinePercentileFlux_ * totalVolume);
                     Scalar accumulatedVolume = 0;
                     while (accumulatedVolume <= upperBound && rIt != fluxRange.rend())
                     {

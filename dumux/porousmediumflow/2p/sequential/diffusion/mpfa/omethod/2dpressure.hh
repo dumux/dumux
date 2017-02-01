@@ -218,6 +218,7 @@ public:
         for (int i = 0; i < size; i++)
         {
             Scalar sat = 0;
+            using std::max;
             switch (saturationType_)
             {
             case sw:
@@ -229,11 +230,11 @@ public:
             }
             if (sat > 1.0)
             {
-                maxError_ = std::max(maxError_, (sat - 1.0) / timeStep_);
+                maxError_ = max(maxError_, (sat - 1.0) / timeStep_);
             }
             if (sat < 0.0)
             {
-                maxError_ = std::max(maxError_, (-sat) / timeStep_);
+                maxError_ = max(maxError_, (-sat) / timeStep_);
             }
         }
 
@@ -461,7 +462,8 @@ private:
         }
         error /= timeStep_;
 
-        Scalar errorAbs = std::abs(error);
+        using std::abs;
+        Scalar errorAbs = abs(error);
 
         if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
                 && (!problem_.timeManager().willBeFinished()))
@@ -808,7 +810,8 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             // compute dF1, the area of quadrilateral made by normal vectors 'nu'
             DimVector Rnu12(0);
             R.umv(nu12, Rnu12);
-            interactionVolumes_[globalVertIdx1234].setDF(fabs(nu14 * Rnu12), 0);
+            using std::abs;
+            interactionVolumes_[globalVertIdx1234].setDF(abs(nu14 * Rnu12), 0);
 
             // handle interior face
             if (intersection12.neighbor())
@@ -943,15 +946,15 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                     // compute dF2, dF3, dF4 i.e., the area of quadrilateral made by normal vectors 'nu'
                                     DimVector Rnu21(0);
                                     R.umv(nu21, Rnu21);
-                                    interactionVolumes_[globalVertIdx1234].setDF(fabs(nu23 * Rnu21), 1);
+                                    interactionVolumes_[globalVertIdx1234].setDF(abs(nu23 * Rnu21), 1);
 
                                     DimVector Rnu34(0);
                                     R.umv(nu34, Rnu34);
-                                    interactionVolumes_[globalVertIdx1234].setDF(fabs(nu32 * Rnu34), 2);
+                                    interactionVolumes_[globalVertIdx1234].setDF(abs(nu32 * Rnu34), 2);
 
                                     DimVector Rnu43(0);
                                     R.umv(nu43, Rnu43);
-                                    interactionVolumes_[globalVertIdx1234].setDF(fabs(nu41 * Rnu43), 3);
+                                    interactionVolumes_[globalVertIdx1234].setDF(abs(nu41 * Rnu43), 3);
 
                                     finished = true;
 
@@ -1059,7 +1062,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                     // compute dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                                     DimVector Rnu21(0);
                                     R.umv(nu21, Rnu21);
-                                    interactionVolumes_[globalVertIdx1234].setDF(fabs(nu23 * Rnu21), 1);
+                                    interactionVolumes_[globalVertIdx1234].setDF(abs(nu23 * Rnu21), 1);
 
                                     finished = true;
 
@@ -1209,7 +1212,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                     // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                                     DimVector Rnu43(0);
                                     R.umv(nu43, Rnu43);
-                                    interactionVolumes_[globalVertIdx1234].setDF(fabs(nu41 * Rnu43), 3);
+                                    interactionVolumes_[globalVertIdx1234].setDF(abs(nu41 * Rnu43), 3);
 
                                     finished = true;
 
@@ -1550,7 +1553,8 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
                 pcFluxReal[2] *= fracFlow34;
                 pcFluxReal[3] *= fracFlow14;
 
-//                if (std::isnan(pcFluxReal.two_norm()))
+//                using std::isnan;
+//                if (isnan(pcFluxReal.two_norm()))
 //                                std::cout<<"pcFlux = "<<pcFlux<<"\n";
 
                 switch (pressureType_)
