@@ -219,13 +219,14 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
+            using std::min;
             std::size_t x;
             std::size_t& data = ranks_[this->index(e)];
             buff.read(x);
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
                 data = x;
             else
-                data = std::min(data,x);
+                data = min(data,x);
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -372,9 +373,10 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
+            using std::min;
             DataType x;
             buff.read(x);
-            gindices_[this->index(e)] = std::min(gindices_[this->index(e)], x);
+            gindices_[this->index(e)] = min(gindices_[this->index(e)], x);
         }
     private:
         std::vector<GI>& gindices_;

@@ -86,8 +86,9 @@ public:
         Matrix ATemp(A);
 
         int numProcs = 1;
+        using std::max;
         if (ParameterTree::tree().hasKey("Pardiso.NumProcessors"))
-            numProcs = std::max(numProcs, GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Pardiso, NumProcessors));
+            numProcs = max(numProcs, GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Pardiso, NumProcessors));
 
         Pardiso<Matrix, Vector> precond(ATemp, verbosity > 0, numProcs);
 
