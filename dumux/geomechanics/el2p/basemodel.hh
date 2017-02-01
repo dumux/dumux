@@ -218,7 +218,8 @@ public:
                                     Dune::ForwardCommunication);
         }
 
-        return std::sqrt(result2);
+        using std::sqrt;
+        return sqrt(result2);
     }
 
     /*!
@@ -355,11 +356,13 @@ public:
                               const PrimaryVariables &priVars2)
     {
         Scalar result = 0.0;
+        using std::abs;
+        using std::max;
         for (int j = 0; j < numEq; ++j) {
-            Scalar eqErr = std::abs(priVars1[j] - priVars2[j]);
-            eqErr /= std::max<Scalar>(1.0, std::abs(priVars1[j] + priVars2[j])/2);
+            Scalar eqErr = abs(priVars1[j] - priVars2[j]);
+            eqErr /= max<Scalar>(1.0, abs(priVars1[j] + priVars2[j])/2);
 
-            result = std::max(result, eqErr);
+            result = max(result, eqErr);
         }
         return result;
     }

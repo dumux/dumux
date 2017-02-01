@@ -600,11 +600,12 @@ public:
         alphaMomentum(eg, lfsu, u, lfsv, downView);
 
         // loop over all columns (number of element vertices * number of equations)
+        using std::abs;
         for (int j = 0; j < n; j++)
         {
           // vary the solution vector entry (lfsu,j) by a small value delta (forward differencing)
           // this comprises presure, saturation, ux, uy and uz
-          Scalar delta = 1e-4*(1.0+std::abs(u(lfsu,j)));
+          Scalar delta = 1e-4*(1.0+abs(u(lfsu,j)));
           u(lfsu,j) += delta;
 
           // evaluate momentum balance residual for the varied solution vector
