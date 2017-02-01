@@ -46,8 +46,10 @@ int main()
     {
         x[i] = xMin + xRange * double(i) /double(numIntervals);
         y[i] = x[i]*x[i];
-        yMin = std::min(yMin, y[i]);
-        yMax = std::max(yMax, y[i]);
+        using std::max;
+        using std::min;
+        yMin = min(yMin, y[i]);
+        yMax = max(yMax, y[i]);
     }
 
     gnuplot.setXRange(0, 5);
