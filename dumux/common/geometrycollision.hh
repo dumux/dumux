@@ -125,7 +125,8 @@ public:
 
             // if denominator is zero the segment in parallel to
             // the plane. If the distance is positive there is no intersection
-            if (std::abs(denom) < eps)
+            using std::abs;
+            if (abs(denom) < eps)
             {
                 if (dist > eps)
                     return false;
@@ -134,7 +135,8 @@ public:
             {
                 const Scalar t = -dist / denom;
                 // if entering half space cut tfirst if t is larger
-                if (std::signbit(denom))
+                using std::signbit;
+                if (signbit(denom))
                 {
                     if (t > tfirst)
                         tfirst = t;
