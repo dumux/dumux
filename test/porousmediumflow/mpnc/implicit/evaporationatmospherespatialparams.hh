@@ -270,7 +270,8 @@ public:
 
                 //obtain pc according to saturation
                 MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
-                pcMax_ = std::abs(capPress[0]);
+                using std::abs;
+                pcMax_ = abs(capPress[0]);
 
                 // set pressures from capillary pressures
                 aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);

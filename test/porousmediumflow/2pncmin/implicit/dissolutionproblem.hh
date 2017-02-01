@@ -334,9 +334,10 @@ public:
         Scalar saltPorosity = this->spatialParams().porosityMin(element, fvGeometry, scvIdx);
 
         // liquid phase
+        using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
                                                * volVars.saturation(wPhaseIdx)
-                                               * std::abs(moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase);
+                                               * abs(moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase);
 
         if (moleFracNaCl_lPhase < moleFracNaCl_Max_lPhase)
             precipSalt *= -1;
@@ -345,7 +346,7 @@ public:
         if (moleFracNaCl_gPhase > moleFracNaCl_Max_gPhase)
             precipSalt += volVars.porosity() * volVars.molarDensity(nPhaseIdx)
                                              * volVars.saturation(nPhaseIdx)
-                                             * std::abs(moleFracNaCl_gPhase - moleFracNaCl_Max_gPhase);
+                                             * abs(moleFracNaCl_gPhase - moleFracNaCl_Max_gPhase);
 
         // make sure we don't disolve more salt than previously precipitated
         if (precipSalt*this->timeManager().timeStepSize() + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
