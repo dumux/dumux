@@ -95,13 +95,15 @@ public:
         fz_ = 0.0;
         posIdx_ = problem.model().getPosIdx(globalPos());
         wallIdx_ = problem.model().getWallIdx(globalPos(), posIdx_);
-        distanceToWallRough_ = std::abs(problem.model().distanceToWallRough(globalPos(), wallIdx_, posIdx_));
-        distanceToWallReal_ = std::abs(problem.model().distanceToWallReal(globalPos(), wallIdx_, posIdx_));
+        using std::abs;
+        distanceToWallRough_ = abs(problem.model().distanceToWallRough(globalPos(), wallIdx_, posIdx_));
+        distanceToWallReal_ = abs(problem.model().distanceToWallReal(globalPos(), wallIdx_, posIdx_));
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             maxVelocity_[dimIdx] = problem.model().wall[wallIdx_].maxVelocity[posIdx_][dimIdx];
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             minVelocity_[dimIdx] = problem.model().wall[wallIdx_].minVelocity[posIdx_][dimIdx];
         velGrad_ = this->velocityGrad_[flowNormal_][wallNormal_];
+        using std::sqrt;
         frictionVelocityWall_ = sqrt(problem.model().wall[wallIdx_].wallShearStress[posIdx_]
                                      / problem.model().wall[wallIdx_].wallDensity[posIdx_]);
         yPlusRough_ = distanceToWallRough_ * frictionVelocityWall_ / problem.model().wall[wallIdx_].wallKinematicViscosity[posIdx_];
@@ -130,6 +132,11 @@ protected:
                                  const Element &element,
                                  const ElementVolumeVariables &elemVolVars)
     {
+        using std::sqrt;
+        using std::abs;
+        using std::pow;
+        using std::exp;
+
         // no turbulence model
         if (eddyViscosityModel_ == EddyViscosityIndices::noEddyViscosityModel)
           return;
@@ -139,7 +146,7 @@ protected:
         else if (eddyViscosityModel_ == EddyViscosityIndices::prandtl)
         {
             mixingLength_ = distanceToWallRough_ * karmanConstant_;
-            dynamicEddyViscosity_ = this->density() * mixingLength() * mixingLength() * std::abs(velGrad_);
+            dynamicEddyViscosity_ = this->density() * mixingLength() * mixingLength() * abs(velGrad_);
         }
 
         // modified Van-Driest
@@ -152,10 +159,10 @@ protected:
             mixingLength_ = 0.0;
             if (distanceToWallRough_ > 0.0 && yPlusRough_ > 0.0)
                 mixingLength_= karmanConstant_ * distanceToWallRough_
-                               * (1.0 - std::exp(-yPlusRough_ / aPlus ))
-                               / std::sqrt(1.0 - std::exp(-bPlus * yPlusRough_));
+                               * (1.0 - exp(-yPlusRough_ / aPlus ))
+                               / sqrt(1.0 - exp(-bPlus * yPlusRough_));
 
-            dynamicEddyViscosity_ = this->density() * mixingLength() * mixingLength() * std::abs(velGrad_);
+            dynamicEddyViscosity_ = this->density() * mixingLength() * mixingLength() * abs(velGrad_);
         }
 
         // Baldwin and Lomax
@@ -174,7 +181,7 @@ protected:
             mixingLength_ = 0.0;
             if (distanceToWallRough_ > 0.0 && yPlusRough_ > 0.0)
                 mixingLength_ = karmanConstant_ * distanceToWallRough_
-                                * (1.0 - std::exp(-yPlusRough_ / aPlus ));
+                                * (1.0 - exp(-yPlusRough_ / aPlus ));
             Scalar omega1 = this->velocityGrad_[0][1] - this->velocityGrad_[1][0];
             Scalar omega2 = 0.0;
             Scalar omega3 = 0.0;
@@ -189,15 +196,16 @@ protected:
             // Calculate muOuter
             fz_ = 0.0;
             if (distanceToWallRough_ > 0.0 && yPlusRough_ > 0.0)
-                fz_ = distanceToWallRough_ * omega * (1.0 - std::exp(-yPlusRough_ / aPlus ));
+                fz_ = distanceToWallRough_ * omega * (1.0 - exp(-yPlusRough_ / aPlus ));
             Scalar fMax = problem.model().wall[wallIdx_].fMax[posIdx_];
-            Scalar yMax = std::abs(problem.model().wall[wallIdx_].yMax[posIdx_]);
+            Scalar yMax = abs(problem.model().wall[wallIdx_].yMax[posIdx_]);
             Scalar uDiff = maxVelocity_.two_norm() - minVelocity_.two_norm();
 
             Scalar f1 = yMax * fMax;
             Scalar f2 = cWK * yMax * uDiff * uDiff / fMax;
-            Scalar fWake = fmin(f1, f2);
-            Scalar fKleb = 1 / (1 + 5.5 * std::pow(cKleb * distanceToWallRough_ / yMax, 6.0));
+            using std::min;
+            Scalar fWake = min(f1, f2);
+            Scalar fKleb = 1 / (1 + 5.5 * pow(cKleb * distanceToWallRough_ / yMax, 6.0));
             dynamicEddyViscosityOuter_ = this->density() * kUpper * cCP * fWake * fKleb;
 
             bool inner = problem.model().useViscosityInner(this->face().ipGlobal, posIdx_);

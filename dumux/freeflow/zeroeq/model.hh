@@ -530,6 +530,9 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, Scalar, ZeroEq, BBoxMaxSandGrainRoughness) < eps_&& !wall[wallIdx].isBBoxMinWall)
             { return distanceToWallReal (globalPos, wallIdx, posIdx); }
 
+        using std::sqrt;
+        using std::exp;
+        using std::abs;
         Scalar ksPlus = wall[wallIdx].sandGrainRoughness[posIdx] * sqrt(wall[wallIdx].wallShearStress[posIdx] / wall[wallIdx].wallDensity[posIdx])
                        / wall[wallIdx].wallKinematicViscosity[posIdx];
 
@@ -554,7 +557,7 @@ public:
             delta = 0.9 * wall[wallIdx].wallKinematicViscosity[posIdx] / sqrt(wall[wallIdx].wallShearStress[posIdx] / wall[wallIdx].wallDensity[posIdx]) * (sqrt(ksPlus) - ksPlus * exp(- 1.0 * ksPlus / 6.0));
         }
 
-        int sign = std::abs(globalPos[wallNormal_] - wall[wallIdx].wallPos[posIdx]) / (globalPos[wallNormal_] - wall[wallIdx].wallPos[posIdx]);
+        int sign = abs(globalPos[wallNormal_] - wall[wallIdx].wallPos[posIdx]) / (globalPos[wallNormal_] - wall[wallIdx].wallPos[posIdx]);
         return globalPos[wallNormal_] - wall[wallIdx].wallPos[posIdx] + sign * delta;
     }
 
@@ -629,22 +632,23 @@ public:
     {
         int posIdx = getPosIdx(globalPos);
         int wallIdx = getWallIdx(globalPos, posIdx);
+        using std::abs;
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
         {
-            if (std::abs(wall[wallIdx].maxVelocity[posIdx][dimIdx]) < std::abs(fluxVars.velocity()[dimIdx]))
+            if (abs(wall[wallIdx].maxVelocity[posIdx][dimIdx]) < abs(fluxVars.velocity()[dimIdx]))
             {
                 wall[wallIdx].maxVelocity[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
 //                 // if the values in the middle should be set on both wall
 //                 for (int wIdx = 0; wIdx < wall.size(); ++wIdx)
-//                     if (std::abs(distanceToWallReal(globalPos, wallIdx, posIdx)) < std::abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-5))
+//                     if (abs(distanceToWallReal(globalPos, wallIdx, posIdx)) < abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-5))
 //                         wall[wIdx].maxVelocity[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
                 // set it as maxVelocityAbs
-                if (std::abs(wall[wallIdx].maxVelocityAbs[posIdx][dimIdx]) < std::abs(fluxVars.velocity()[dimIdx]))
+                if (abs(wall[wallIdx].maxVelocityAbs[posIdx][dimIdx]) < abs(fluxVars.velocity()[dimIdx]))
                     for (int wIdx = 0; wIdx < wall.size(); ++wIdx)
                         wall[wIdx].maxVelocityAbs[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
                 wall[wallIdx].fluxValuesCount[posIdx]++;
             }
-            if (std::abs(wall[wallIdx].minVelocity[posIdx][dimIdx]) > std::abs(fluxVars.velocity()[dimIdx]))
+            if (abs(wall[wallIdx].minVelocity[posIdx][dimIdx]) > abs(fluxVars.velocity()[dimIdx]))
                 wall[wallIdx].minVelocity[posIdx][dimIdx] = fluxVars.velocity()[dimIdx];
         }
 
@@ -655,7 +659,7 @@ public:
             wall[wallIdx].yMax[posIdx] = distanceToWallRough(globalPos, wallIdx, posIdx);
 //            // if the values in the middle should be set on both wall
 //            for (int wIdx = 0; wIdx < wall.size(); ++wIdx)
-//                if (std::abs(distanceToWall(globalPos, wIdx, posIdx)) < std::abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-4))
+//                if (abs(distanceToWall(globalPos, wIdx, posIdx)) < abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-4))
 //                    {
 //                        wall[wIdx].fMax[posIdx] = fluxVars.fz();
 //                        wall[wIdx].yMax[posIdx] = distanceToWall(globalPos, wallIdx, posIdx);
@@ -696,14 +700,15 @@ public:
                 int wallIdx = getWallIdx(globalPos, posIdx);
 
                 // muCross
+                using std::abs;
                 if (fluxVars.dynamicEddyViscosityOuter() < fluxVars.dynamicEddyViscosityInner()
                     && useViscosityInner(globalPos, posIdx))
                 {
                     wall[wallIdx].crossLength[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
                 }
 
-                if (std::abs(fluxVars.velocity()[flowNormal_]) >= 0.99 * std::abs(wall[wallIdx].maxVelocity[posIdx][flowNormal_])
-                    && std::abs(wall[wallIdx].boundaryLayerThicknessCalculated[posIdx]) > std::abs(distanceToWallReal(globalPos, wallIdx, posIdx)))
+                if (abs(fluxVars.velocity()[flowNormal_]) >= 0.99 * abs(wall[wallIdx].maxVelocity[posIdx][flowNormal_])
+                    && abs(wall[wallIdx].boundaryLayerThicknessCalculated[posIdx]) > abs(distanceToWallReal(globalPos, wallIdx, posIdx)))
                 {
                     wall[wallIdx].boundaryLayerThicknessCalculated[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
                 }
@@ -713,8 +718,8 @@ public:
                     wall[wallIdx].viscousSublayerThicknessCalculated[posIdx] = wall[wallIdx].boundaryLayerThicknessCalculated[posIdx];
                 }
                 else if ((fluxVars.velocity()[flowNormal_] / fluxVars.frictionVelocityWall() <= 5.0)
-                         && (std::abs(wall[wallIdx].viscousSublayerThicknessCalculated[posIdx])
-                             < std::abs(distanceToWallReal(globalPos, wallIdx, posIdx))))
+                         && (abs(wall[wallIdx].viscousSublayerThicknessCalculated[posIdx])
+                             < abs(distanceToWallReal(globalPos, wallIdx, posIdx))))
                 {
                     wall[wallIdx].viscousSublayerThicknessCalculated[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
                 }
@@ -790,6 +795,7 @@ public:
         if (globalPos[wallNormal_] > wall[wallIdx].wallPos[posIdx] - 1e-8
             && globalPos[wallNormal_] < wall[wallIdx].wallPos[posIdx] + 1e-8)
         {
+            using std::abs;
             wall[wallIdx].wallValuesCount[posIdx] += 1;
             wall[wallIdx].wallDensity[posIdx] =
                 (wall[wallIdx].wallDensity[posIdx] * (wall[wallIdx].wallValuesCount[posIdx] - 1) + boundaryVars.density())
@@ -802,7 +808,7 @@ public:
                 / wall[wallIdx].wallValuesCount[posIdx];
             wall[wallIdx].wallShearStress[posIdx] =
                 (wall[wallIdx].wallShearStress[posIdx] * (wall[wallIdx].wallValuesCount[posIdx] - 1)
-                    + std::abs(boundaryVars.velocityGrad()[flowNormal_][wallNormal_]) * boundaryVars.dynamicViscosity())
+                    + abs(boundaryVars.velocityGrad()[flowNormal_][wallNormal_]) * boundaryVars.dynamicViscosity())
                 / wall[wallIdx].wallValuesCount[posIdx];
         }
     }
