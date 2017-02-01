@@ -85,11 +85,13 @@ public:
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
+      using std::abs;
+      using std::max;
         return
-            std::abs(sumMoleFractions_[phaseIdx])
+            abs(sumMoleFractions_[phaseIdx])
             * moleFraction_[phaseIdx][compIdx]
             * FluidSystem::molarMass(compIdx)
-            / std::max(1e-40, std::abs(averageMolarMass_[phaseIdx]));
+            / max(1e-40, abs(averageMolarMass_[phaseIdx]));
     }
 
     /*!
@@ -206,7 +208,8 @@ public:
         Valgrind::SetDefined(averageMolarMass_[phaseIdx]);
         Valgrind::SetDefined(moleFraction_[phaseIdx][compIdx]);
 
-        if (std::isfinite(averageMolarMass_[phaseIdx])) {
+        using std::isfinite;
+        if (isfinite(averageMolarMass_[phaseIdx])) {
             Scalar delta = value - moleFraction_[phaseIdx][compIdx];
 
             moleFraction_[phaseIdx][compIdx] = value;
