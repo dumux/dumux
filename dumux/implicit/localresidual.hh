@@ -116,7 +116,7 @@ public:
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem(), element, fvGeometry);
 
-        asImp_().eval(element, fvGeometry, curElemVolVars, prevElemVolVars, bcTypes, elemFluxVarsCache);
+        asImp_().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes, elemFluxVarsCache);
     }
 
     /*!
