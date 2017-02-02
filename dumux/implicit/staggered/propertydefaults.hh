@@ -56,6 +56,7 @@
 #include "localjacobian.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
+#include "newtonconvergencewriter.hh"
 #include "model.hh"
 #include "primaryvariables.hh"
 
@@ -237,6 +238,9 @@ private:
 public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterPrimaryVariables, FacePrimaryVariables>;
 };
+
+//! use the plain newton convergence writer by default
+SET_TYPE_PROP(StaggeredModel, NewtonConvergenceWriter, StaggeredNewtonConvergenceWriter<TypeTag>);
 
 } // namespace Properties
 

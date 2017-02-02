@@ -32,6 +32,7 @@
 
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonconvergencewriter.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
 #include <dumux/linear/amgbackend.hh>
@@ -80,6 +81,8 @@ SET_TYPE_PROP(ImplicitBase, NewtonMethod, NewtonMethod<TypeTag>);
 //! use the plain newton controller by default
 SET_TYPE_PROP(ImplicitBase, NewtonController, NewtonController<TypeTag>);
 
+//! use the plain newton convergence writer by default
+SET_TYPE_PROP(ImplicitBase, NewtonConvergenceWriter, NewtonConvergenceWriter<TypeTag>);
 //! Mapper for the grid view's vertices.
 SET_TYPE_PROP(ImplicitBase,
               VertexMapper,

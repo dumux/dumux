@@ -30,6 +30,7 @@
 #include "properties.hh"
 
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include "newtonconvergencewriter.hh"
 
 namespace Dumux {
 /*!
@@ -44,6 +45,7 @@ template <class TypeTag>
 class StaggeredNewtonController : public NewtonController<TypeTag>
 {
     typedef NewtonController<TypeTag> ParentType;
+    typedef NewtonConvergenceWriter<TypeTag> StaggeredNewtonConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
