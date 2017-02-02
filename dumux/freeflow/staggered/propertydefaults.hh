@@ -36,6 +36,7 @@
 #include "localresidual.hh"
 #include "fluxvariables.hh"
 #include "fluxvariablescache.hh"
+#include "velocityoutput.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -177,6 +178,8 @@ public:
 };
 
 SET_TYPE_PROP(NavierStokes, VtkOutputModule, StaggeredVtkOutputModule<TypeTag>);
+
+SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)

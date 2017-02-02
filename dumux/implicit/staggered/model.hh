@@ -75,10 +75,12 @@ class StaggeredBaseModel : public ImplicitModel<TypeTag>
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
     using Element = typename GridView::template Codim<0>::Entity;
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
     using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     using GlobalFaceVariables = Dumux::StaggeredGlobalFaceVariables<TypeTag>;
     using ParentType = ImplicitModel<TypeTag>;
@@ -265,6 +267,13 @@ public:
                 this->uCur_[faceIdx][scvf.dofIndexSelf()] = initPriVars;
             }
         }
+    }
+
+    ElementSolution elementSolution(const Element& element, const SolutionVector& sol) const
+    {
+        PrimaryVariables priVars(0.0);
+        priVars[0] = sol[cellCenterIdx][this->elementMapper().index(element)];
+        return ElementSolution{std::move(priVars)};
     }
 
      /*!

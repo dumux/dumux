@@ -56,8 +56,10 @@ namespace Dumux
 template<class TypeTag >
 class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry) GlobalFVGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
@@ -79,7 +81,16 @@ class NavierStokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
 
+    void init(Problem& problem)
+    {
+        ParentType::init(problem);
 
+        // register standardized vtk output fields
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addPrimaryVariable("pressure", Indices::pressureIdx);
+
+//         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
+    }
 
     /*!
      * \brief \copybrief Dumux::ImplicitModel::addOutputVtkFields
