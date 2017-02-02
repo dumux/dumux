@@ -1,0 +1,21 @@
+[TimeManager]
+DtInitial = 10 # [s]
+TEnd = 1e6 # [s]
+
+[Grid]
+UpperRight = 3 1
+Cells = 50 20
+
+[Problem]
+Name = richardswelltracerbox
+EnableGravity = true
+ContaminantMoleFraction = 1e-6
+
+LensLowerLeft = 0.8 0.2
+LensUpperRight = 1.2 0.8
+
+[Component]
+LiquidDiffusionCoefficient = 5e-9
+
+[Vtk]
+AddVelocity = true
