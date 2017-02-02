@@ -57,6 +57,7 @@ class VtkOutputModuleBase
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
 
     enum {
@@ -151,8 +152,8 @@ public:
         //! (1) Register addtional (non-standardized) data fields with the vtk writer
         //!     Using the add scalar field or vector field methods
         //////////////////////////////////////////////////////////////
-        problem_.model().addVtkOutputFields(*this);
-        problem_.addVtkOutputFields(*this);
+        problem_.model().addVtkOutputFields(asImp_());
+        problem_.addVtkOutputFields(asImp_());
 
         //! Abort if no data was registered
         //! \todo This is not necessary anymore once the old style multiwriter is removed
@@ -167,21 +168,14 @@ public:
         //! (2) Assemble all variable fields with registered info
         //////////////////////////////////////////////////////////////
         auto numCells = problem_.gridView().size(0);
-        auto numDofs = problem_.model().numDofs();
+        auto numDofs = asImp_().numDofs_();
 
         // get fields for all primary variables
-        std::vector<std::vector<Scalar>> priVarScalarData(priVarScalarDataInfo_.size());
-        for (auto&& p : priVarScalarData)
-            p.resize(numDofs);
-
-        std::vector<std::vector<Scalar>> priVarVectorData(priVarVectorDataInfo_.size());
-        for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
-            priVarVectorData[i].resize(numDofs*priVarVectorDataInfo_[i].pvIdx.size());
+        auto priVarScalarData = makeScalarField_(priVarScalarDataInfo_.size(), numDofs);
+        auto priVarVectorData = makeVectorField_(priVarScalarDataInfo_.size(), numDofs, priVarVectorDataInfo_);
 
         // get fields for all secondary variables
-        std::vector<std::vector<Scalar>> secondVarScalarData(secondVarScalarDataInfo_.size());
-        for (auto&& s : secondVarScalarData)
-            s.resize(numDofs);
+        auto secondVarScalarData = makeScalarField_(secondVarScalarDataInfo_.size(), numDofs);
 
         // instatiate the velocity output
        VelocityOutput velocityOutput(problem_);
@@ -207,12 +201,12 @@ public:
             {
                 //! primary variable data
                 for (std::size_t i = 0; i < priVarScalarDataInfo_.size(); ++i)
-                    priVarScalarData[i][eIdxGlobal] = problem_.model().curSol()[eIdxGlobal][priVarScalarDataInfo_[i].pvIdx];
+                    priVarScalarData[i][eIdxGlobal] = asImp_().getPriVarData_(eIdxGlobal, priVarScalarDataInfo_[i].pvIdx);
 
                 for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
                     for (std::size_t j = 0; j < priVarVectorDataInfo_[i].pvIdx.size(); ++j)
                         priVarVectorData[i][eIdxGlobal*priVarVectorDataInfo_[i].pvIdx.size() + j]
-                            = problem_.model().curSol()[eIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
+                            = asImp_().getPriVarData_(eIdxGlobal, priVarVectorDataInfo_[i].pvIdx[j]);
             }
 
             auto fvGeometry = localView(problem_.model().globalFvGeometry());
@@ -241,12 +235,12 @@ public:
                 {
                     //! primary variable data
                     for (std::size_t i = 0; i < priVarScalarDataInfo_.size(); ++i)
-                        priVarScalarData[i][dofIdxGlobal] = problem_.model().curSol()[dofIdxGlobal][priVarScalarDataInfo_[i].pvIdx];
+                        priVarScalarData[i][dofIdxGlobal] = asImp_().getPriVarData_(dofIdxGlobal, priVarScalarDataInfo_[i].pvIdx);
 
                     for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
                         for (std::size_t j = 0; j < priVarVectorDataInfo_[i].pvIdx.size(); ++j)
                             priVarVectorData[i][dofIdxGlobal*priVarVectorDataInfo_[i].pvIdx.size() + j]
-                                = problem_.model().curSol()[dofIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
+                                = asImp_().getPriVarData_(dofIdxGlobal,priVarVectorDataInfo_[i].pvIdx[j]);
 
                 }
 
@@ -393,6 +387,9 @@ public:
         // TODO implement
     }
 
+    const Problem &problem() const
+    { return problem_; }
+
 private:
 
     template<typename Writer, typename... Args>
@@ -415,6 +412,63 @@ private:
 
     std::list<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
     std::list<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
+
+    //! return the number of dofs
+    unsigned int numDofs_() const
+    {
+        return problem_.model().numDofs();
+    }
+
+     /*!
+     * \brief Factory function to create an empty scalar field with correct size
+     *
+     *
+     * \param numParameters The number of different kinds of paramters to be stored
+     * \param numDofs The total number of dofs
+     */
+    auto makeScalarField_(const int numParameters, const int numDofs)
+    {
+        std::vector<std::vector<Scalar>> scalarData(numParameters, std::vector<Scalar>(numDofs));
+        return scalarData;
+    }
+
+     /*!
+     * \brief Factory function to create an empty vector field with correct size
+     *
+     *
+     * \param numParameters The number of different kinds of paramters to be stored
+     * \param numDofs The total number of dofs
+     * \param info Information about the vector data to be stored
+     */
+    auto makeVectorField_(const int numParameters, const int numDofs,
+                          const std::vector<PriVarVectorDataInfo>& info)
+    {
+        std::vector<std::vector<Scalar>> vectorData(numParameters);
+        for (std::size_t i = 0; i < info.size(); ++i)
+            vectorData[i].resize(numDofs*info[i].pvIdx.size());
+
+        return vectorData;
+    }
+
+     /*!
+     * \brief Helper function to retrieve privar data from the solution vector
+     *        May be specialized.
+     *
+     * \param dofIdxGlobal The global dof index
+     * \param pvIdx The index of the primary variable
+     */
+    auto getPriVarData_(const std::size_t dofIdxGlobal, const std::size_t pvIdx)
+    {
+        return problem_.model().curSol()[dofIdxGlobal][pvIdx];
+    }
+
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 };
 
 } // end namespace Dumux
