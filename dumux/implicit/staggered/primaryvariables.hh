@@ -46,8 +46,13 @@ class StaggeredPrimaryVariables : public Dune::MultiTypeBlockVector<CellCenterPr
 
     using ParentType = Dune::MultiTypeBlockVector<CellCenterPrimaryVariables, FacePrimaryVariables>;
 
+
 public:
     StaggeredPrimaryVariables() = default;
+
+    // introduce a blocklevel variable so that this class can be used in a Dune::BlockVector
+    static constexpr int blocklevel = 1;
+
 
      /*!
      * \brief Constructor to initialize all entries with the same value

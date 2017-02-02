@@ -48,6 +48,7 @@ class NavierStokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -60,30 +61,30 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(priVars, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
     };
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(priVars, problem, element, scv);
+        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
+        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the

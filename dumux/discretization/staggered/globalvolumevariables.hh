@@ -66,6 +66,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
 
@@ -87,7 +88,8 @@ public:
             {
                 PrimaryVariables priVars(0.0);
                 priVars[cellCenterIdx] = sol[cellCenterIdx][scv.dofIndex()];
-                volumeVariables_[scv.index()].update(priVars, problem, element, scv);
+                ElementSolutionVector elemSol{std::move(priVars)};
+                volumeVariables_[scv.index()].update(elemSol, problem, element, scv);
             }
 
             // handle the boundary volume variables
@@ -114,7 +116,8 @@ public:
                     else
                         DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
-                volumeVariables_[scvf.outsideScvIdx()].update(boundaryPriVars, problem, element, insideScv);
+                ElementSolutionVector elemSol{std::move(boundaryPriVars)};
+                volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem, element, insideScv);
             }
         }
     }

@@ -108,6 +108,8 @@ class StaggeredLocalJacobian
 
     using PriVarIndices = typename Dumux::PriVarIndices<TypeTag>;
 
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
     using AssemblyMap = Dumux::StaggeredAssemblyMap<TypeTag>;
 
 
@@ -270,7 +272,8 @@ private:
                                          FacePrimaryVariables(0.0));
 
                 priVars[pvIdx] += eps;
-                curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
+                ElementSolutionVector elemSol{std::move(priVars)};
+                curVolVars.update(elemSol, this->problem_(), elementJ, scvJ);
 
                 this->localResidual().evalCellCenter(element, fvGeometry, scvI,
                                         prevElemVolVars, curElemVolVars,
@@ -373,8 +376,8 @@ private:
                                              FacePrimaryVariables(0.0));
 
                     priVars[pvIdx] += eps;
-
-                    curVolVars.update(priVars, this->problem_(), elementJ, scvJ);
+                    ElementSolutionVector elemSol{std::move(priVars)};
+                    curVolVars.update(elemSol, this->problem_(), elementJ, scvJ);
 
                     this->localResidual().evalFace(element, fvGeometry, scvf,
                                             prevElemVolVars, curElemVolVars,
