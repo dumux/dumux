@@ -172,7 +172,7 @@ public:
      */
     static Scalar dkrw_dsw(const Params &params, Scalar sw)
     {
-        return EffLaw::dkrw_dswe(params, swToSwe(params, sw));
+        return EffLaw::dkrw_dswe(params, swToSwe(params, sw))*dswe_dsw_(params);
     }
 
     /*!
@@ -201,7 +201,7 @@ public:
      */
     static Scalar dkrn_dsw(const Params &params, Scalar sw)
     {
-        return EffLaw::dkrn_dswe(params, swToSwe(params, sw));
+        return EffLaw::dkrn_dswe(params, swToSwe(params, sw))*dswe_dsw_(params);
     }
 
     /*!
