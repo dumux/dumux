@@ -80,10 +80,6 @@ public:
     {
         // check, if velocity output can be used (works only for cubes so far)
         velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
-//         if (velocityOutput_)
-//         {
-//             DUNE_THROW(Dune::NotImplemented, "StaggeredFreeFlowVelocityOutput not implemented! Do it yourself!");
-//         }
     }
 
     bool enableOutput()
@@ -101,7 +97,17 @@ public:
                            const Element& element,
                            int phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "calculateVelocity not implemented! Do it yourself!");
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto dofIdxGlobal = scv.dofIndex();
+
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                auto& origFaceVars = problem_.model().curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
+                auto dirIdx = scvf.directionIndex();
+                velocity[dofIdxGlobal][dirIdx] += 0.5*origFaceVars.velocity();
+            }
+        }
     }
 
 
