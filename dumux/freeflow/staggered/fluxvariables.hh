@@ -59,7 +59,7 @@ using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(
 // specialization for immiscible, isothermal flow
 template<class TypeTag>
 class FreeFlowFluxVariablesImpl<TypeTag, false, false>
-: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, false, false>>
+: public FluxVariablesBase<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -365,7 +365,7 @@ private:
 // specialization for miscible, isothermal flow
 template<class TypeTag>
 class FreeFlowFluxVariablesImpl<TypeTag, true, false>
-: public FluxVariablesBase<TypeTag, FreeFlowFluxVariablesImpl<TypeTag, true, false>>, public FreeFlowFluxVariablesImpl<TypeTag, false, false>
+: public FluxVariablesBase<TypeTag>, public FreeFlowFluxVariablesImpl<TypeTag, false, false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
