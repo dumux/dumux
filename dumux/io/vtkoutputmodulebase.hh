@@ -27,7 +27,6 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include <dumux/io/vtknestedfunction.hh>
 
 namespace Properties
@@ -58,6 +57,7 @@ class VtkOutputModuleBase
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
 
     enum {
         dim = GridView::dimension,
@@ -184,7 +184,7 @@ public:
             s.resize(numDofs);
 
         // instatiate the velocity output
-        ImplicitVelocityOutput<TypeTag> velocityOutput(problem_);
+       VelocityOutput velocityOutput(problem_);
         std::array<std::vector<GlobalPosition>, numPhases> velocity;
 
         if (velocityOutput.enableOutput())

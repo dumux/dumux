@@ -48,6 +48,7 @@
 #include <dumux/discretization/fourierslaw.hh>
 
 #include <dumux/io/vtkoutputmodulebase.hh>
+#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 #include "properties.hh"
 #include "model.hh"
@@ -215,6 +216,7 @@ SET_SCALAR_PROP(ImplicitBase, ImplicitUpwindWeight, 1.0);
 SET_BOOL_PROP(ImplicitBase, VtkAddVelocity, false); //!< Don't reconstruct velocity per default
 SET_BOOL_PROP(ImplicitBase, VtkAddProcessRank, true); //!< Add process rank to output per default
 SET_TYPE_PROP(ImplicitBase, VtkOutputModule, VtkOutputModuleBase<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, VelocityOutput, ImplicitVelocityOutput<TypeTag>);
 
 } // namespace Properties
 
