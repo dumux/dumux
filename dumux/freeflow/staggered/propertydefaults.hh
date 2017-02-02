@@ -47,6 +47,8 @@
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
 
+#include <dumux/io/staggeredvtkoutputmodule.hh>
+
 
 namespace Dumux
 {
@@ -174,7 +176,7 @@ public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
 
-
+SET_TYPE_PROP(NavierStokes, VtkOutputModule, StaggeredVtkOutputModule<TypeTag>);
 
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)

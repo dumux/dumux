@@ -20,15 +20,12 @@
  * \file
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  */
-#ifndef VTK_OUTPUT_MODULE_HH
-#define VTK_OUTPUT_MODULE_HH
+#ifndef STAGGERED_VTK_OUTPUT_MODULE_HH
+#define STAGGGERED_VTK_OUTPUT_MODULE_HH
 
 #include <dune/common/fvector.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
-#include <dumux/io/vtknestedfunction.hh>
+#include <dumux/io/vtkoutputmodulebase.hh>
 
 namespace Properties
 {
@@ -49,8 +46,9 @@ namespace Dumux
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
 template<typename TypeTag>
-class VtkOutputModule
+class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
 {
+    using ParentType = VtkOutputModuleBase<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -76,68 +74,11 @@ class VtkOutputModule
 
 public:
 
-    VtkOutputModule(const Problem& problem,
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming)
-    : problem_(problem),
-      writer_(std::make_shared<Dune::VTKWriter<GridView>>(problem.gridView(), dm)),
-      sequenceWriter_(writer_, problem.name())
+    StaggeredVtkOutputModule(const Problem& problem,
+                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm)
+
     {}
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    //! Methods to conveniently add primary and secondary variables upon problem initialization
-    //! Do not call these methods after initialization
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    //! Output a scalar primary variable
-    //! \param name The name of the vtk field
-    //! \param pvIdx The index in the primary variables vector
-    void addPrimaryVariable(const std::string& name, unsigned int pvIdx)
-    {
-        priVarScalarDataInfo_.push_back(PriVarScalarDataInfo{pvIdx, name});
-    }
-
-    //! Output a vector primary variable
-    //! \param name The name of the vtk field
-    //! \param pvIndices A vector of indices in the primary variables vector to group for vector visualization
-    void addPrimaryVariable(const std::string& name, std::vector<unsigned int> pvIndices)
-    {
-        assert(pvIndices.size() < 4 && "Vtk doesn't support vector dimensions greater than 3!");
-        priVarVectorDataInfo_.push_back(PriVarVectorDataInfo{pvIndices, name});
-    }
-
-    //! Output a secondary scalar variable
-    //! \param name The name of the vtk field
-    //! \param f A function taking a VolumeVariables object and returning the desired scalar
-    void addSecondaryVariable(const std::string& name, std::function<Scalar(const VolumeVariables&)>&& f)
-    {
-        secondVarScalarDataInfo_.push_back(SecondVarScalarDataInfo{f, name});
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    //! Methods to add addtional (non-standardized) scalar or vector fields to the output queue
-    //! Call these methods on the output module obtained as argument of the addVtkOutputFields
-    //! method that can be overloaded in the problem implementation
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    //! Output a scalar field
-    //! \param name The name of the vtk field
-    //! \param codim The codimension of the entities the vtk field lives on (options: 0 := elements, dim := vertices)
-    //! \returns A reference to the resized scalar field to be filled with the actual data
-    std::vector<Scalar>& createScalarField(const std::string& name, int codim)
-    {
-        scalarFields_.emplace_back(std::make_pair(std::vector<Scalar>(problem_.gridView().size(codim)), name));
-        return scalarFields_.back().first;
-    }
-
-    //! Output a vector field
-    //! \param name The name of the vtk field
-    //! \param codim The codimension of the entities the vtk field lives on (options: 0 := elements, dim := vertices)
-    //! \returns A reference to the resized vector field to be filled with the actual data
-    std::vector<GlobalPosition>& createVectorField(const std::string& name, int codim)
-    {
-        vectorFields_.emplace_back(std::make_pair(std::vector<GlobalPosition>(problem_.gridView().size(codim)), name));
-        return vectorFields_.back().first;
-    }
 
     //! Write the data for this timestep to file in four steps
     //! (1) Allow user to register additional (non-standardized) fields
@@ -147,7 +88,7 @@ public:
     //! (5) Clear the writer for the next time step
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
-
+/*
         //////////////////////////////////////////////////////////////
         //! (1) Register addtional (non-standardized) data fields with the vtk writer
         //!     Using the add scalar field or vector field methods
@@ -349,74 +290,11 @@ public:
         //////////////////////////////////////////////////////////////
         //! (5) Clear all fields and writer for the next time step
         //////////////////////////////////////////////////////////////
-        clear();
+        clear();*/
     }
 
-    //! clear all data in the writer
-    void clear()
-    {
-        writer_->clear();
-        scalarFields_.clear();
-        vectorFields_.clear();
-    }
 
-    /*!
-     * \brief This method writes the complete state of the problem
-     *        to the harddisk.
-     *
-     * The file will start with the prefix returned by the name()
-     * method, has the current time of the simulation clock in it's
-     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Restart for details.
-     *
-     * \tparam Restarter The serializer type
-     *
-     * \param res The serializer object
-     */
-    template <class Restarter>
-    void serialize(Restarter &res)
-    {
-        // TODO implement
-    }
 
-    /*!
-     * \brief This method restores the complete state of the problem
-     *        from disk.
-     *
-     * It is the inverse of the serialize() method.
-     *
-     * \tparam Restarter The deserializer type
-     *
-     * \param res The deserializer object
-     */
-    template <class Restarter>
-    void deserialize(Restarter &res)
-    {
-        // TODO implement
-    }
-
-private:
-
-    template<typename Writer, typename... Args>
-    void addDofDataForWriter_(Writer& writer,
-                              Args&&... args)
-    {
-        if (isBox)
-            writer.addVertexData(std::forward<Args>(args)...);
-        else
-            writer.addCellData(std::forward<Args>(args)...);
-    }
-
-    const Problem& problem_;
-    std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
-    Dune::VTKSequenceWriter<GridView> sequenceWriter_;
-
-    std::vector<PriVarScalarDataInfo> priVarScalarDataInfo_;
-    std::vector<PriVarVectorDataInfo> priVarVectorDataInfo_;
-    std::vector<SecondVarScalarDataInfo> secondVarScalarDataInfo_;
-
-    std::list<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
-    std::list<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
 };
 
 } // end namespace Dumux

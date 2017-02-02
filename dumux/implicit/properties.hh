@@ -106,6 +106,7 @@ NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 // vtk output
 NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output
 NEW_PROP_TAG(VtkAddProcessRank); //!< specifies if the process rank should be added the output
+NEW_PROP_TAG(VtkOutputModule); //!< specifies the output module to be used
 
 // high level simulation control
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
