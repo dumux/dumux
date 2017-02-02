@@ -87,7 +87,10 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
-        pnRef_ = problem.nonWettingReferencePressure();
+
+        //! precompute the minimum capillary pressure (entry pressure)
+        minPc_ = MaterialLaw::pc(materialParams, /*Sw=*/ 1.0);
+        pn_ = problem.nonWettingReferencePressure();
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
@@ -107,21 +110,19 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
-        const Scalar minPc = MaterialLaw::pc(materialParams, 1.0);
+        // set the wetting pressure
         fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
 
-        using std::max;
-        pn_ = max(problem.nonWettingReferencePressure(), priVars[pressureIdx] + minPc);
-
-        // saturations
-        const Scalar sw = MaterialLaw::sw(materialParams, pn_ - fluidState.pressure(wPhaseIdx));
+        // compute the capillary pressure to compute the saturation
+        // the material law takes care of cases where pc gets negative
+        const Scalar pc = problem.nonWettingReferencePressure() - fluidState.pressure(wPhaseIdx);
+        const Scalar sw = MaterialLaw::sw(materialParams, pc);
         fluidState.setSaturation(wPhaseIdx, sw);
 
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
         fluidState.setDensity(wPhaseIdx, FluidSystem::density(fluidState, paramCache, wPhaseIdx));
-
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
 
         // compute and set the enthalpy
@@ -232,9 +233,15 @@ public:
      * The capillary pressure is defined as the difference in
      * pressures of the non-wetting and the wetting phase, i.e.
      * \f[ p_c = p_n - p_w \f]
+     *
+     * \note Capillary pressures are always larger than the entry pressure
+     *       This regularization doesn't affect the residual in which pc is not needed.
      */
     Scalar capillaryPressure() const
-    { return pn_ - fluidState_.pressure(wPhaseIdx); }
+    {
+        using std::max;
+        return max(minPc_, pn_ - fluidState_.pressure(wPhaseIdx));
+    }
 
     /*!
      * \brief Returns the pressureHead \f$\mathrm{[cm]}\f$ of a given phase within
@@ -251,7 +258,7 @@ public:
      *       or the gravity different
      */
     Scalar pressureHead(const int phaseIdx) const
-    { return 100.0 *(pressure(phaseIdx) - pnRef_)/density(phaseIdx)/9.81; }
+    { return 100.0 *(pressure(phaseIdx) - pn_)/density(phaseIdx)/9.81; }
 
     /*!
      * \brief Returns the water content
@@ -268,12 +275,12 @@ public:
     { return saturation(phaseIdx) * porosity_; }
 
 protected:
-    FluidState fluidState_;
-    Scalar relativePermeabilityWetting_;
-    Scalar porosity_;
-    PermeabilityType permeability_;
-    Scalar pnRef_;
-    static Scalar pn_;
+    FluidState fluidState_; //! the fluid state
+    Scalar relativePermeabilityWetting_; //! the relative permeability of the wetting phase
+    Scalar porosity_; //! the porosity
+    PermeabilityType permeability_; //! the instrinsic permeability
+    Scalar pn_; //! the reference non-wetting pressure
+    Scalar minPc_; //! the minimum capillary pressure (entry pressure)
 
 private:
     Implementation &asImp_()
@@ -282,9 +289,6 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
-
-template <class TypeTag>
-typename GET_PROP_TYPE(TypeTag, Scalar) RichardsVolumeVariables<TypeTag>::pn_;
 
 } // end namespace Dumux
 
