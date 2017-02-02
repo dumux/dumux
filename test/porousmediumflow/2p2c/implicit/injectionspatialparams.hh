@@ -30,6 +30,8 @@
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <opm/material/fluidmatrixinteractions/RegularizedBrooksCorey.hpp>
+#include <opm/material/fluidmatrixinteractions/EffToAbsLaw.hpp>
 
 #include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
 
@@ -39,6 +41,13 @@ namespace Dumux
 //forward declaration
 template<class TypeTag>
 class InjectionSpatialParams;
+
+struct BCTraits {
+    using Scalar = double;
+    static const int numPhases = 2;
+    static const int wettingPhaseIdx = 0;
+    static const int nonWettingPhaseIdx = 1;
+};
 
 namespace Properties
 {
@@ -51,7 +60,7 @@ SET_TYPE_PROP(InjectionSpatialParams, SpatialParams, InjectionSpatialParams<Type
 // Set the material law parameterized by absolute saturations
 SET_TYPE_PROP(InjectionSpatialParams,
               MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+              Opm::EffToAbsLaw<Opm::RegularizedBrooksCorey<BCTraits> >);
 }
 
 /*!
@@ -107,14 +116,14 @@ public:
         lambdaSolid_ = 2.8;
 
         // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
+        fineMaterialParams_.setResidualSaturation(0, 0.2);
+        fineMaterialParams_.setResidualSaturation(1, 0.0);
+        coarseMaterialParams_.setResidualSaturation(0, 0.2);
+        coarseMaterialParams_.setResidualSaturation(1, 0.0);
 
         // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
+        fineMaterialParams_.setEntryPressure(1e4);
+        coarseMaterialParams_.setEntryPressure(1e4);
         fineMaterialParams_.setLambda(2.0);
         coarseMaterialParams_.setLambda(2.0);
     }

@@ -29,6 +29,8 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <opm/material/constraintsolvers/MiscibleMultiPhaseComposition.hpp>
+#include <opm/material/constraintsolvers/ComputeFromReferencePhase.hpp>
 #include "properties.hh"
 #include "indices.hh"
 
@@ -93,10 +95,10 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, useKelvinEquation> MiscibleMultiPhaseComposition;
+    typedef Opm::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
     static_assert(useMoles || (!useMoles && useConstraintSolver),
                   "if UseMoles is set false, UseConstraintSolver has to be set to true");
-    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+    typedef Opm::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -136,27 +138,26 @@ public:
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
-        typename FluidSystem::ParameterCache paramCache;
+        typename FluidSystem::template ParameterCache<Scalar> paramCache;
         paramCache.updateAll(fluidState_);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // relative permeabilities
             Scalar kr;
             if (phaseIdx == wPhaseIdx)
-                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
+                kr = MaterialLaw::krw(materialParams, fluidState_);
             else // ATTENTION: krn requires the wetting phase saturation
                 // as parameter!
-                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
+                kr = MaterialLaw::krn(materialParams, fluidState_);
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
 
             // binary diffusion coefficients
             diffCoeff_[phaseIdx] =
-            FluidSystem::binaryDiffusionCoefficient(fluidState_,
+            FluidSystem::diffusionCoefficient(fluidState_,
                                                     paramCache,
                                                     phaseIdx,
-                                                    wCompIdx,
-                                                    nCompIdx);
+                                                    wCompIdx);
             Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
         }
 
@@ -215,7 +216,7 @@ public:
         // calculate capillary pressure
         const auto& materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
+        Scalar pc = MaterialLaw::pcnw(materialParams, fluidState);
 
         if (formulation == pwsn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
@@ -230,7 +231,7 @@ public:
         /////////////
         // calculate the phase compositions
         /////////////
-        typename FluidSystem::ParameterCache paramCache;
+        typename FluidSystem::template ParameterCache<Scalar> paramCache;
 
         //get the phase pressures and set the fugacity coefficients here if constraintsolver is not used
         Scalar pn = 0;
@@ -273,11 +274,12 @@ public:
                 //get the partial pressure of the main component of the the wetting phase ("H20") within the nonwetting (gas) phase == vapor pressure due to equilibrium
                 //note that in this case the fugacityCoefficient * pw is the vapor pressure (see implementation in respective fluidsystem)
                 Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState,
+                                                                       paramCache,
                                                                        wPhaseIdx,
                                                                        wCompIdx) * pw;
 
-                if (useKelvinEquation)
-                    partPressH2O = FluidSystem::kelvinVaporPressure(fluidState, wPhaseIdx, wCompIdx);
+                //if (useKelvinEquation)
+                //    partPressH2O = FluidSystem::kelvinVaporPressure(fluidState, wPhaseIdx, wCompIdx);
 
                 // get the partial pressure of the main component of the the nonwetting (gas) phase ("Air")
                 Scalar partPressAir = pn - partPressH2O;
@@ -289,7 +291,7 @@ public:
                 // calculate the mole fractions of the components within the wetting phase
                 //note that in this case the fugacityCoefficient * pw is the Henry Coefficient (see implementation in respective fluidsystem)
                 Scalar xwn = partPressAir
-                  / (FluidSystem::fugacityCoefficient(fluidState,
+                  / (FluidSystem::fugacityCoefficient(fluidState, paramCache,
                                                       wPhaseIdx,nCompIdx)
                   * pw);
 
@@ -323,7 +325,7 @@ public:
             else
             {
                 // setMassFraction() has only to be called 1-numComponents times
-                fluidState.setMassFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
+                //fluidState.setMassFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
             }
 
             // calculate the composition of the remaining phases (as
@@ -351,7 +353,7 @@ public:
                 // If xww > 1 : gas is over-saturated with water vapor,
                 // condensation takes place (see switch criterion in model)
                 Scalar xww = xnw * pn
-                  / (FluidSystem::fugacityCoefficient(fluidState,
+                / (FluidSystem::fugacityCoefficient(fluidState, paramCache,
                                                       wPhaseIdx,wCompIdx)
                      * pw);
 
@@ -360,7 +362,7 @@ public:
                 //partialPressure = xnn * pn
                 //xwn = xnn * pn / Henry
                 // Henry = fugacityCoefficient * pw
-                Scalar xwn = xnn * pn / (FluidSystem::fugacityCoefficient(fluidState,
+                Scalar xwn = xnn * pn / (FluidSystem::fugacityCoefficient(fluidState, paramCache,
                                                                           wPhaseIdx,nCompIdx)
                                          * pw);
 
@@ -388,7 +390,7 @@ public:
             else // mass-fraction formulation
             {
                 // setMassFraction() has only to be called 1-numComponents times
-                fluidState.setMassFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
+                //fluidState.setMassFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
             }
 
             // calculate the composition of the remaining phases (as
@@ -410,7 +412,7 @@ public:
                 //first, xnw:
                 //psteam = xnw * pn = partial pressure of water in gas phase
                 //psteam = fugacityCoefficient * pw
-                Scalar xnw = (FluidSystem::fugacityCoefficient(fluidState,
+                Scalar xnw = (FluidSystem::fugacityCoefficient(fluidState, paramCache,
                                                                wPhaseIdx,wCompIdx)
                               * pw) / pn ;
 
@@ -420,7 +422,7 @@ public:
                 // xwn = pn * xnn / Henry
                 // xnn = xwn * Henry / pn
                 // Henry = fugacityCoefficient * pw
-                Scalar xnn = xwn * (FluidSystem::fugacityCoefficient(fluidState,
+                Scalar xnn = xwn * (FluidSystem::fugacityCoefficient(fluidState, paramCache,
                                                                      wPhaseIdx,nCompIdx)
                                     * pw) / pn ;
 

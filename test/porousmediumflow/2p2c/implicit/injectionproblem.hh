@@ -27,6 +27,8 @@
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
+#include <opm/material/fluidsystems/H2ON2FluidSystem.hpp>
+#include <opm/material/fluidstates/CompositionalFluidState.hpp>
 
 #include "injectionspatialparams.hh"
 
@@ -51,7 +53,11 @@ SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
 // Set fluid configuration
 SET_TYPE_PROP(InjectionProblem,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
+              Opm::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+SET_TYPE_PROP(InjectionProblem,
+              FluidState,
+              Opm::CompositionalFluidState<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FluidSystem)>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(InjectionProblem, UseMoles, true);
