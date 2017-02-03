@@ -152,7 +152,6 @@ public:
     //! calculate integration point on an scvf
     static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
     {
-        // scvfs in 3d are always quadrilaterals
         // ordering -> first corner: facet center, last corner: vertex
         if (q == 0.0)
             return scvfCorners[0];
