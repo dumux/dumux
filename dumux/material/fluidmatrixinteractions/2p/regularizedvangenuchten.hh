@@ -156,6 +156,12 @@ public:
         // Genuchten's law
         Scalar sw;
         if (pc <= 0) {
+            // for swThHigh = 1.0 the slope would get infinity
+            // swThHigh > 1.0 are not sensible threshold values
+            // setting swThHigh = 1.0 is a way to disable regularization
+            if (swThHigh > 1.0 - std::numeric_limits<Scalar>::epsilon())
+                return 1.0;
+
             // invert straight line for swe > 1.0
             Scalar yTh = VanGenuchten::pc(params, swThHigh);
             Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
@@ -186,6 +192,16 @@ public:
 
         return sw;
     }
+
+    /*!
+     * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
+     *
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     */
+    static Scalar endPointPc(const Params &params)
+    { return 0.0; }
 
     /*!
     * \brief A regularized version of the partial derivative
@@ -277,7 +293,7 @@ public:
 
         if (swe < 0)
             return 0;
-        else if (swe > 1)
+        else if (swe > 1 - std::numeric_limits<Scalar>::epsilon())
             return 1;
         else if (swe > swThHigh) {
             typedef Dumux::Spline<Scalar> Spline;
@@ -356,6 +372,12 @@ private:
     static Scalar mHigh_(const Params &params)
     {
         const Scalar swThHigh = params.pcHighSw();
+
+        // for swThHigh = 1.0 the slope would get infinity
+        // swThHigh > 1.0 are not sensible threshold values
+        // setting swThHigh = 1.0 is a way to disable regularization
+        if (swThHigh > 1.0 - std::numeric_limits<Scalar>::epsilon())
+            return 0.0;
 
         Scalar pcswHigh = VanGenuchten::pc(params, swThHigh);
         return (0 - pcswHigh)/(1.0 - swThHigh);
