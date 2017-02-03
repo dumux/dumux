@@ -26,6 +26,7 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/io/vtkoutputmodulebase.hh>
+#include <dumux/io/staggeredvtkwriter.hh>
 
 namespace Properties
 {
@@ -51,6 +52,7 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     friend class VtkOutputModuleBase<TypeTag>;
     using ParentType = VtkOutputModuleBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -59,9 +61,15 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
 public:
 
     StaggeredVtkOutputModule(const Problem& problem,
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm)
+                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm), faceWriter_(problem)
 
     {}
+
+    void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
+    {
+        ParentType::write(time, type);
+        faceWriter_.write();
+    }
 
 
 protected:
@@ -75,6 +83,9 @@ protected:
         return this->problem().model().curSol()[cellCenterIdx][dofIdxGlobal][pvIdx];
     }
 
+
+private:
+    StaggeredVtkWriter<TypeTag> faceWriter_;
 };
 
 } // end namespace Dumux
