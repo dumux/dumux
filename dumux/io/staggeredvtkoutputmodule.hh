@@ -53,10 +53,13 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     using ParentType = VtkOutputModuleBase<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
+
+    struct PriVarScalarDataInfo { unsigned int pvIdx; std::string name; };
 
 public:
 
@@ -65,10 +68,23 @@ public:
 
     {}
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //! Methods to conveniently add primary and secondary variables upon problem initialization
+    //! Do not call these methods after initialization
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    //! Output a scalar primary variable
+    //! \param name The name of the vtk field
+    //! \param pvIdx The index in the primary variables vector
+    void addFacePrimaryVariable(const std::string& name, unsigned int pvIdx)
+    {
+        facePriVarScalarDataInfo_.push_back(PriVarScalarDataInfo{pvIdx, name});
+    }
+
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         ParentType::write(time, type);
-        faceWriter_.write();
+        faceWriter_.write(facePriVarScalarDataInfo_);
     }
 
 
@@ -86,6 +102,7 @@ protected:
 
 private:
     StaggeredVtkWriter<TypeTag> faceWriter_;
+    std::vector<PriVarScalarDataInfo> facePriVarScalarDataInfo_;
 };
 
 } // end namespace Dumux

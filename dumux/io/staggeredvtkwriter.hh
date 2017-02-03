@@ -49,12 +49,15 @@ template<typename TypeTag>
 class StaggeredVtkWriter
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
-    struct PriVarScalarDataInfo { unsigned int pvIdx; std::string name; };
-    struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
@@ -64,15 +67,15 @@ public:
     {}
 
 
-    void write()
+    template<class T>
+    void write(const T& info)
     {
         file_.open(fileName_());
-        writeHeader_(problem_.model().numFaceDofs());
-        writePositions_();
-        writeFacePriVars_(0, "velo");
+        write_(info);
         file_.close();
         ++curWriterNum_;
     }
+
 
 private:
 
@@ -85,22 +88,70 @@ private:
         file_ << header;
     }
 
-    void writePositions_()
+    template<class T>
+    void write_(const T& info)
     {
+        const int numPoints = problem_.model().numFaceDofs();
+        writeHeader_(numPoints);
+
+
+        // get fields for all primary variables
+        std::vector<Scalar> positions(numPoints*3);
+        std::vector<std::vector<Scalar>> priVarScalarData(info.size(), std::vector<Scalar>(numPoints));
+
+        for(auto&& facet : facets(problem_.gridView()))
+        {
+            const int dofIdxGlobal = problem_.gridView().indexSet().index(facet);
+
+            // first, get the coordinates
+            auto pos = facet.geometry().center();
+
+            if(dim == 1)
+            {
+                positions[dofIdxGlobal*3] = pos[0];
+                positions[dofIdxGlobal*3 + 1] = 0.0;
+                positions[dofIdxGlobal*3 + 2] = 0.0;
+            }
+            else if(dim == 2)
+            {
+                positions[dofIdxGlobal*3] = pos[0];
+                positions[dofIdxGlobal*3 + 1] = pos[1];
+                positions[dofIdxGlobal*3 + 2] = 0.0;
+            }
+            else
+            {
+                positions[dofIdxGlobal*3] = pos[0];
+                positions[dofIdxGlobal*3 + 1] = pos[1] ;
+                positions[dofIdxGlobal*3 + 2] = pos[2] ;
+            }
+
+            // now, get the actual values
+            for(int pvIdx = 0; pvIdx < info.size(); ++pvIdx)
+            {
+                priVarScalarData[pvIdx][dofIdxGlobal] = problem_.model().curSol()[faceIdx][dofIdxGlobal][pvIdx];
+            }
+        }
+
+        writeCoordinates_(positions);
+        writeFacePriVars_(priVarScalarData, info);
+
+        file_ << "</Piece>\n";
+        file_ << "</PolyData>\n";
+        file_ << "</VTKFile>";
+    }
+
+    void writeCoordinates_(const std::vector<Scalar>& positions)
+    {
+        // write the positions to the file
         file_ << "<Points>\n";
         file_ << "<DataArray type=\"Float32\" Name=\"Coordinates\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
         int counter = 0;
-        for(auto&& facet : facets(problem_.gridView()))
+        for(auto&& x : positions)
         {
-            auto pos = facet.geometry().center();
-            if(pos.size() == 2)
-                file_  << std::fixed << std::setprecision(5) << pos << " 0 ";
-            else
-                file_ << std::fixed << std::setprecision(5) << pos;
-
+            file_ << x << " ";
             // introduce a line break after a certain time
-            if((++counter * 3)  > numBeforeLineBreak)
+            if((++counter)  > numBeforeLineBreak)
             {
                 file_ << std::endl;
                 counter = 0;
@@ -111,31 +162,32 @@ private:
         file_ << "</Points>\n";
     }
 
-    void writeFacePriVars_(const int pvIdx, const std::string& name)
+    template<class T>
+    void writeFacePriVars_(const std::vector<std::vector<Scalar>>& priVarScalarData, const T& info)
     {
-        file_ << "<PointData Scalars=\"" + name +"\">\n";
-        file_ << "<DataArray type=\"Float32\" Name=\"velocity\" NumberOfComponents=\"1\" format=\"ascii\">\n";
+        // write the priVars to the file
+        file_ << "<PointData Scalars=\"" << info[0].name << "\">";
 
-        int counter = 0;
-        for(auto&& facet : facets(problem_.gridView()))
+        for(int pvIdx = 0; pvIdx < info.size(); ++pvIdx)
         {
-            const int dofIdxGlobal = problem_.gridView().indexSet().index(facet);
-            double priVar =  problem_.model().curSol()[faceIdx][dofIdxGlobal][pvIdx];
-            file_  << priVar << " ";
+            file_ << "<DataArray type=\"Float32\" Name=\"" << info[pvIdx].name << "\" NumberOfComponents=\"1\" format=\"ascii\">\n";
 
-            // introduce a line break after a certain time
-            if(++counter> numBeforeLineBreak)
+            int counter = 0;
+            for(auto&& x : priVarScalarData[pvIdx])
             {
-                file_ << std::endl;
-                counter = 0;
+                file_ << x << " " ;
+                // introduce a line break after a certain time
+                if((++counter)  > numBeforeLineBreak)
+                {
+                    file_ << std::endl;
+                    counter = 0;
+                }
             }
+
+            file_ << "\n</DataArray>\n";
         }
 
-        file_ << "\n</DataArray\n>";
         file_ << "</PointData>\n";
-        file_ << "</Piece>\n";
-        file_ << "</PolyData>\n";
-        file_ << "</VTKFile>";
     }
 
     std::string fileName_() const
