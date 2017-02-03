@@ -104,7 +104,7 @@ public:
 
         // prepare interaction volume and fill caches of all the scvfs connected to it
         const auto& globalFvGeometry = problem().model().globalFvGeometry();
-        if (globalFvGeometry.touchesInteriorOrDomainBoundary(scvf))
+        if (globalFvGeometry.isInBoundaryInteractionVolume(scvf))
         {
             bIv_ = std::make_unique<BoundaryInteractionVolume>(globalFvGeometry.boundaryInteractionVolumeSeed(scvf),
                                                                problem(),

@@ -121,7 +121,7 @@ public:
         const auto& globalFvGeometry = problem.model().globalFvGeometry();
 
         // return the scv (element) indices in the interaction region
-        if (globalFvGeometry.touchesInteriorOrDomainBoundary(scvf))
+        if (globalFvGeometry.isInBoundaryInteractionVolume(scvf))
             return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
         else
             return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();

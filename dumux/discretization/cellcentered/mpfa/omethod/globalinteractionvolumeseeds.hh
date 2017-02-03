@@ -90,7 +90,10 @@ public:
                 if (isFaceHandled[scvf.index()])
                     continue;
 
-                if (interiorOrDomainBoundaryVertices[scvf.vertexIndex()])
+                // on interior or domain boundaries and on branching points we have to set
+                // a boundary interaction volume (for compatibility with other mpfa methods)
+                if (interiorOrDomainBoundaryVertices[scvf.vertexIndex()]
+                    || this->problem().model().globalFvGeometry().touchesBranchingPoint(scvf))
                 {
                     // make the boundary interaction volume seed
                     boundarySeeds.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(this->problem(),

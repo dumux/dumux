@@ -128,7 +128,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().globalFvGeometry().touchesInteriorOrDomainBoundary(scvf))
+            if (problem.model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
                 scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf);
             else
                 scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.interactionVolume(), scvf);

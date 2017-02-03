@@ -153,7 +153,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().globalFvGeometry().touchesInteriorOrDomainBoundary(scvf))
+            if (problem.model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
                 scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf, phaseIdx, compIdx);
             else
                 scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.interactionVolume(), scvf, phaseIdx, compIdx);

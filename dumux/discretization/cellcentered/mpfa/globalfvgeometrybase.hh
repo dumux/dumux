@@ -140,9 +140,9 @@ public:
     bool touchesInteriorBoundary(const SubControlVolumeFace& scvf) const
     {  return enableInteriorBoundaries ? interiorBoundaryVertices_[scvf.vertexIndex()] : false; }
 
-    //! Returns whether or not an scvf touches an interior or a domain boundary (has to be called before getting an interaction volume)
-    bool touchesInteriorOrDomainBoundary(const SubControlVolumeFace& scvf) const
-    { return touchesDomainBoundary(scvf) || touchesInteriorBoundary(scvf); }
+    //! Returns whether or not an scvf belongs to a boundary interaction volume
+    bool isInBoundaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    { return touchesDomainBoundary(scvf) || touchesInteriorBoundary(scvf) || touchesBranchingPoint(scvf); }
 
     //! Returns whether or not an scvf touches a branching point (for dim < dimWorld)
     bool touchesBranchingPoint(const SubControlVolumeFace& scvf) const
@@ -539,9 +539,9 @@ public:
     bool touchesInteriorBoundary(const SubControlVolumeFace& scvf) const
     { return enableInteriorBoundaries ? interiorBoundaryVertices_[scvf.vertexIndex()] : false; }
 
-    //! Returns whether or not an scvf touches an interior or a domain boundary (has to be called before getting an interaction volume)
-    bool touchesInteriorOrDomainBoundary(const SubControlVolumeFace& scvf) const
-    { return touchesDomainBoundary(scvf) || touchesInteriorBoundary(scvf); }
+    //! Returns whether or not an scvf belongs to a boundary interaction volume
+    bool isInBoundaryInteractionVolume(const SubControlVolumeFace& scvf) const
+    { return touchesDomainBoundary(scvf) || touchesInteriorBoundary(scvf) || touchesBranchingPoint(scvf); }
 
     //! Returns whether or not a vertex is on a processor boundary
     bool isGhostVertex(const IndexType vIdxGlobal) const

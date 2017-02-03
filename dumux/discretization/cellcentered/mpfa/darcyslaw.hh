@@ -151,7 +151,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().globalFvGeometry().touchesInteriorOrDomainBoundary(scvf))
+            if (problem.model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
                 scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf);
             else
                 scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.interactionVolume(), scvf);
