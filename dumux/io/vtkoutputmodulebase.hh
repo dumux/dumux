@@ -171,11 +171,14 @@ public:
         auto numDofs = asImp_().numDofs_();
 
         // get fields for all primary variables
-        auto priVarScalarData = makeScalarField_(priVarScalarDataInfo_.size(), numDofs);
-        auto priVarVectorData = makeVectorField_(priVarScalarDataInfo_.size(), numDofs, priVarVectorDataInfo_);
+        std::vector<std::vector<Scalar>> priVarScalarData(priVarScalarDataInfo_.size(), std::vector<Scalar>(numDofs));
+
+        std::vector<std::vector<Scalar>> priVarVectorData(priVarVectorDataInfo_.size());
+        for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
+            priVarVectorData[i].resize(numDofs*priVarVectorDataInfo_[i].pvIdx.size());
 
         // get fields for all secondary variables
-        auto secondVarScalarData = makeScalarField_(secondVarScalarDataInfo_.size(), numDofs);
+        std::vector<std::vector<Scalar>> secondVarScalarData(secondVarScalarDataInfo_.size(), std::vector<Scalar>(numDofs));
 
         // instatiate the velocity output
        VelocityOutput velocityOutput(problem_);
@@ -417,37 +420,6 @@ private:
     unsigned int numDofs_() const
     {
         return problem_.model().numDofs();
-    }
-
-     /*!
-     * \brief Factory function to create an empty scalar field with correct size
-     *
-     *
-     * \param numParameters The number of different kinds of paramters to be stored
-     * \param numDofs The total number of dofs
-     */
-    auto makeScalarField_(const int numParameters, const int numDofs)
-    {
-        std::vector<std::vector<Scalar>> scalarData(numParameters, std::vector<Scalar>(numDofs));
-        return scalarData;
-    }
-
-     /*!
-     * \brief Factory function to create an empty vector field with correct size
-     *
-     *
-     * \param numParameters The number of different kinds of paramters to be stored
-     * \param numDofs The total number of dofs
-     * \param info Information about the vector data to be stored
-     */
-    auto makeVectorField_(const int numParameters, const int numDofs,
-                          const std::vector<PriVarVectorDataInfo>& info)
-    {
-        std::vector<std::vector<Scalar>> vectorData(numParameters);
-        for (std::size_t i = 0; i < info.size(); ++i)
-            vectorData[i].resize(numDofs*info[i].pvIdx.size());
-
-        return vectorData;
     }
 
      /*!
