@@ -239,13 +239,9 @@ class TimeDependentPointSource : public PointSource<TypeTag>
     typedef typename std::function<PrimaryVariables(const TimeManager&, const GlobalPosition&)> ValueFunction;
 
 public:
-    //! Constructor for constant point sources
-    TimeDependentPointSource(GlobalPosition pos, PrimaryVariables values,
-                             ValueFunction valueFunction)
-      : ParentType(pos, values), valueFunction_(valueFunction) {}
-
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
+    DUNE_DEPRECATED_MSG("Will be removed after release of Dumux 3.0. Use the more general SolDependentPointSource class.")
     TimeDependentPointSource(GlobalPosition pos,
                              ValueFunction valueFunction)
       : ParentType(pos, PrimaryVariables(0)), valueFunction_(valueFunction) {}
@@ -269,6 +265,69 @@ public:
 
     //! Convenience = operator overload modifying only the values
     TimeDependentPointSource& operator= (Scalar s)
+    {
+        ParentType::operator=(s);
+        return *this;
+    }
+
+private:
+    ValueFunction valueFunction_;
+};
+
+/*!
+ * \ingroup Common
+ * \brief A point source class for time dependent point sources
+ */
+template<class TypeTag>
+class SolDependentPointSource : public PointSource<TypeTag>
+{
+    using ParentType = PointSource<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const int dimworld = GridView::dimensionworld;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, dimworld>;
+    // a function that takes a TimeManager and a GlobalPosition
+    // and returns the PointSource values as PrimaryVariables
+    using ValueFunction = typename std::function<PrimaryVariables(const Problem &problem,
+                                                                  const Element &element,
+                                                                  const FVElementGeometry &fvGeometry,
+                                                                  const ElementVolumeVariables &elemVolVars,
+                                                                  const SubControlVolume &scv)>;
+
+public:
+    //! Constructor for sol dependent point sources, when there is no
+    // value known at the time of initialization
+    SolDependentPointSource(GlobalPosition pos,
+                            ValueFunction valueFunction)
+      : ParentType(pos, PrimaryVariables(0)), valueFunction_(valueFunction) {}
+
+    //! an update function called before adding the value
+    // to the local residual in the problem in scvPointSources
+    // to be overloaded by derived classes
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const ElementVolumeVariables &elemVolVars,
+                const SubControlVolume &scv)
+    { this->values_ = valueFunction_(problem, element, fvGeometry, elemVolVars, scv); }
+
+    //! Convenience = operator overload modifying only the values
+    SolDependentPointSource& operator= (const PrimaryVariables& values)
+    {
+        ParentType::operator=(values);
+        return *this;
+    }
+
+    //! Convenience = operator overload modifying only the values
+    SolDependentPointSource& operator= (Scalar s)
     {
         ParentType::operator=(s);
         return *this;
