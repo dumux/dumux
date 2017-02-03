@@ -46,7 +46,7 @@ NEW_TYPE_TAG(OnePSingularityProblemTimeDependent, INHERITS_FROM(OnePSingularityC
 SET_TYPE_PROP(OnePSingularityProblemTimeDependent, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
 
 // point source
-SET_TYPE_PROP(OnePSingularityProblemTimeDependent, PointSource, TimeDependentPointSource<TypeTag>);
+SET_TYPE_PROP(OnePSingularityProblemTimeDependent, PointSource, SolDependentPointSource<TypeTag>);
 }
 
 /*!
@@ -73,6 +73,12 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -102,10 +108,15 @@ public:
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
         // inject <time> kg/s water at position (0, 0), where <time> is the current simulation time
-        auto function = [](const TimeManager& timeManager, const GlobalPosition& pos)
-        { return PrimaryVariables(timeManager.time()); };
+        // we use t+1 because this is an implicit Euler scheme
+        auto function = [](const Problem& problem,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const SubControlVolume& scv)
+        { return PrimaryVariables(problem.timeManager().time() + problem.timeManager().timeStepSize()); };
 
-        pointSources.push_back(PointSource({0, 0}, function));
+        pointSources.push_back(PointSource({0.0, 0.0}, function));
     }
 };
 
