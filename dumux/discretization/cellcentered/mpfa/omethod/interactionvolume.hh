@@ -128,15 +128,13 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     using LocalScvfType = typename Traits::LocalScvfType;
 
 public:
+    using typename ParentType::GlobalLocalFaceDataPair;
     using typename ParentType::LocalIndexType;
     using typename ParentType::LocalIndexSet;
     using typename ParentType::LocalFaceData;
     using typename ParentType::GlobalIndexSet;
     using typename ParentType::PositionVector;
     using typename ParentType::Seed;
-
-    // structure to store global and local face data
-    using GlobalLocalFaceDataPair = std::pair<const SubControlVolumeFace*, LocalFaceData>;
 
     CCMpfaOInteractionVolume(const Seed& seed,
                              const Problem& problem,

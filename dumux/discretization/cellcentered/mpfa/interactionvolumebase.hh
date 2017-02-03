@@ -91,6 +91,8 @@ public:
           isOutside(isOut) {}
     };
 
+    using GlobalLocalFaceDataPair = std::pair<const SubControlVolumeFace*, LocalFaceData>;
+
     //! solves the local equation system for the computation of the transmissibilities
     template<typename GetTensorFunction>
     void solveLocalSystem(const GetTensorFunction& getTensor)
@@ -103,10 +105,6 @@ public:
     //! returns the positions corresponding to the volvars in the stencil of the interaction volume (cell centers or scvf.ipGlobal() on boundary)
     const PositionVector& volVarsPositions() const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsPositions() method."); }
-
-    //! returns a list of global scvf indices that are connected to this interaction volume
-    const GlobalIndexSet& globalScvfs() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a globalScvfs() method."); }
 
     //! returns the local index of an scvf in the IV and a boolean whether or not it is on the negative side of the local scvf (flux has to be inverted)
     LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
@@ -128,6 +126,10 @@ public:
         assert(it != vector.end() && "could not find local index in the vector for the given global index!");
         return std::distance(vector.begin(), it);
     }
+
+    //! returns GlobalLocalFaceDataPair objects for the scvfs involved in this interaction volume
+    const std::vector<GlobalLocalFaceDataPair>& globalLocalScvfPairedData() const
+    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a globalLocalScvfPairedData() method."); }
 };
 
 } // end namespace
