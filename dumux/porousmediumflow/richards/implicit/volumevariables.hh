@@ -87,8 +87,9 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
 
-        //! precompute the minimum capillary pressure (entry pressure)
-        minPc_ = MaterialLaw::pc(materialParams, /*Sw=*/ 1.0);
+        // precompute the minimum capillary pressure (entry pressure)
+        // needed to make sure we don't compute unphysical capillary pressures and thus saturations
+        minPc_ = MaterialLaw::endPointPc(materialParams);
         pn_ = problem.nonWettingReferencePressure();
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
@@ -113,8 +114,11 @@ public:
         fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
 
         // compute the capillary pressure to compute the saturation
-        // the material law takes care of cases where pc gets negative
-        const Scalar pc = problem.nonWettingReferencePressure() - fluidState.pressure(wPhaseIdx);
+        // make sure that we the capillary pressure is not smaller than the minimum pc
+        // this would possibly return unphysical values from regularized material laws
+        using std::max;
+        const Scalar pc = max(MaterialLaw::endPointPc(materialParams),
+                              problem.nonWettingReferencePressure() - fluidState.pressure(wPhaseIdx));
         const Scalar sw = MaterialLaw::sw(materialParams, pc);
         fluidState.setSaturation(wPhaseIdx, sw);
 
