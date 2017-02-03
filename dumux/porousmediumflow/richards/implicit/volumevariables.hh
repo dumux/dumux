@@ -80,12 +80,11 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
         //////////
         // specify the other parameters
         //////////
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
         relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
 
         //! precompute the minimum capillary pressure (entry pressure)
@@ -281,13 +280,6 @@ protected:
     PermeabilityType permeability_; //! the instrinsic permeability
     Scalar pn_; //! the reference non-wetting pressure
     Scalar minPc_; //! the minimum capillary pressure (entry pressure)
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
 } // end namespace Dumux
