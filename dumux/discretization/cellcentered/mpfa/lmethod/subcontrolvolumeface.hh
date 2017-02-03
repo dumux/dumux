@@ -61,8 +61,8 @@ public:
                                Scalar q,
                                bool boundary)
     : ParentType(helper,
-                 std::move(corners),
-                 std::move(unitOuterNormal),
+                 std::forward<std::vector<GlobalPosition>>(corners),
+                 std::forward<GlobalPosition>(unitOuterNormal),
                  vertexIndex,
                  localIndex,
                  scvfIndex,

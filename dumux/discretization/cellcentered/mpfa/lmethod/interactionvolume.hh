@@ -80,6 +80,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod> : pub
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -93,6 +94,7 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod> : pub
 
 public:
     using Matrix = typename Traits::Matrix;
+    using typename ParentType::GlobalLocalFaceDataPair;
     using typename ParentType::LocalIndexType;
     using typename ParentType::LocalIndexSet;
     using typename ParentType::LocalFaceData;
@@ -108,7 +110,8 @@ public:
                                           const Problem& problem,
                                           const FVElementGeometry& fvGeometry,
                                           const ElementVolumeVariables& elemVolVars)
-    : problemPtr_(&problem),
+    : seedPtr_(&seed),
+      problemPtr_(&problem),
       fvGeometryPtr_(&fvGeometry),
       elemVolVarsPtr_(&elemVolVars),
       regionUnique_(seed.isUnique()),
@@ -125,7 +128,9 @@ public:
         {
             const auto& ir = interactionRegions_[0];
             T_ = assembleMatrix_(getTensor, ir);
-            postSolve_(ir);
+            interactionRegionId_ = 0;
+            updateGlobalLocalFaceData();
+            systemSolved_ = true;
         }
         else
         {
@@ -133,22 +138,25 @@ public:
             M[0] = assembleMatrix_(getTensor, interactionRegions_[0]);
             M[1] = assembleMatrix_(getTensor, interactionRegions_[1]);
 
-            auto id = MpfaHelper::selectionCriterion(interactionRegions_[0], interactionRegions_[1], M[0], M[1]);
-            postSolve_(interactionRegions_[id]);
-            T_ = M[id];
+            interactionRegionId_ = MpfaHelper::selectionCriterion(interactionRegions_[0], interactionRegions_[1], M[0], M[1]);
+            updateGlobalLocalFaceData();
+            systemSolved_ = true;
+            T_ = M[interactionRegionId_];
         }
     }
 
     //! returns the local index pair. This holds the scvf's local index and a boolean whether or not the flux has to be inverted
-    LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
+    const LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
     {
         assert(systemSolved_ && "Scvf Indices not set yet. You have to call solveLocalSystem() beforehand.");
-        assert((scvf.index() == globalScvfIndices_[0] || scvf.index() == globalScvfIndices_[1]) && "The provided scvf is not the flux face of the interaction volume.");
+        assert((scvf.index() == globalLocalScvfPairedData_[0].first->index()
+                || scvf.index() == globalLocalScvfPairedData_[1].first->index())
+                   && "The provided scvf is not the flux face of the interaction volume.");
 
-        if (globalScvfIndices_[0] == scvf.index())
-            return LocalFaceData(contiFaceLocalIdx_, /*dummy*/0, false);
+        if (globalLocalScvfPairedData_[0].first->index() == scvf.index())
+            return globalLocalScvfPairedData_[0].second;
         else
-            return LocalFaceData(contiFaceLocalIdx_, /*dummy*/0, true);
+            return globalLocalScvfPairedData_[1].second;
     }
 
     //! returns the transmissibilities corresponding to the bound scvf
@@ -164,21 +172,18 @@ public:
 
     const GlobalIndexSet& volVarsStencil() const
     {
-        assert(systemSolved_ && "volVarsStencil not set yet. You have to call solveLocalSystem() beforehand.");
-        return volVarsStencil_;
+        assert(systemSolved_ && "stencil not set yet. You have to call solveLocalSystem() beforehand.");
+        return interactionRegion().scvIndices;
     }
 
     const PositionVector& volVarsPositions() const
     {
-        assert(systemSolved_ && "globalScvfs not set yet. You have to call solveLocalSystem() beforehand.");
-        return volVarsPositions_;
+        assert(systemSolved_ && "stencil not set yet. You have to call solveLocalSystem() beforehand.");
+        return interactionRegion().scvCenters;
     }
 
-    const GlobalIndexSet& globalScvfs() const
-    {
-        assert(systemSolved_ && "globalScvfs not set yet. You have to call solveLocalSystem() beforehand.");
-        return globalScvfIndices_;
-    }
+    const std::vector<GlobalLocalFaceDataPair>& globalLocalScvfPairedData() const
+    { return globalLocalScvfPairedData_; }
 
     //! Boundaries will be treated by a different mpfa method (e.g. o method). Thus, on
     //! faces in l-method interaction volumes there will never be a Neumann flux contribution.
@@ -191,6 +196,13 @@ public:
 
     const Matrix& matrix() const
     { return T_; }
+
+    const InteractionRegion& interactionRegion() const
+    { return interactionRegions_[interactionRegionId_]; }
+
+    // The l-method can't treat interior boundaries
+    const std::vector<InteriorBoundaryData> interiorBoundaryData() const
+    { return std::vector<InteriorBoundaryData>(); }
 
 private:
     //! Assembles and solves the local equation system
@@ -210,9 +222,9 @@ private:
         const auto scv3 = fvGeometry_().scv(ir.scvIndices[2]);
 
         // Get diffusion tensors in the three scvs
-        const auto T1 = getTensor(e1, elemVolVars_()[scv1], scv1);
-        const auto T2 = getTensor(e2, elemVolVars_()[scv2], scv2);
-        const auto T3 = getTensor(e3, elemVolVars_()[scv3], scv3);
+        const auto T1 = getTensor(problem_(), e1, elemVolVars_()[scv1], fvGeometry_(), scv1);
+        const auto T2 = getTensor(problem_(), e2, elemVolVars_()[scv2], fvGeometry_(), scv2);
+        const auto T3 = getTensor(problem_(), e3, elemVolVars_()[scv3], fvGeometry_(), scv3);
 
         // required omega factors
         Scalar w111 = calculateOmega_(ir.normal[0], ir.nu[0], ir.detX[0], T1);
@@ -248,7 +260,7 @@ private:
         B[1][1] = 0.0;
         B[1][2] = -w235 - w236;
 
-        // T = CA^-1B + D
+        // T = C*A^-1*B + D
         A.invert();
         auto T = (A.leftmultiply(C)).rightmultiplyany(B);
         T[0][0] += w111 + w112;
@@ -274,8 +286,10 @@ private:
             auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
             auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
             auto e3 = globalFvGeometry.element(scvSeed3.globalIndex());
-            interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, scvSeed2, scvSeed3, e1, e2, e3);
-
+            if (scvSeed1.contiFaceLocalIdx() == 0)
+                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, scvSeed2, scvSeed3, e1, e2, e3);
+            else
+                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, scvSeed3, scvSeed2, e1, e3, e2);
         }
         else
         {
@@ -301,17 +315,36 @@ private:
                 interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed2, OuterScvSeedType(scvSeed1), outerScvSeed2, e2, e1, e4);
             }
         }
+
+        // as an initial guess we set the first interaction region as the one used
+        // this is updated after solution of the local system
+        interactionRegionId_ = 0;
+        updateGlobalLocalFaceData();
     }
 
-    void postSolve_(const InteractionRegion& ir)
+    //! set the global&local face data according to the current choice for the interaction region
+    void updateGlobalLocalFaceData()
     {
-        globalScvfIndices_.resize(2);
-        globalScvfIndices_[0] = ir.globalScvfs[0];
-        globalScvfIndices_[1] = ir.globalScvfs[1];
-        volVarsStencil_ = ir.scvIndices;
-        volVarsPositions_ = ir.scvCenters;
-        contiFaceLocalIdx_ = ir.contiFaceLocalIdx;
-        systemSolved_ = true;
+        const auto numPairs = globalLocalScvfPairedData_.size();
+
+        // if no data has been stored yet, initialize
+        if (numPairs == 0)
+        {
+            globalLocalScvfPairedData_.clear();
+            globalLocalScvfPairedData_.reserve(2);
+            globalLocalScvfPairedData_.emplace_back(&fvGeometry_().scvf(seed_().globalScvfIndices()[0]),
+                                                    LocalFaceData(interactionRegion().contiFaceLocalIdx, /*dummy*/0, false));
+            globalLocalScvfPairedData_.emplace_back(&fvGeometry_().scvf(seed_().globalScvfIndices()[1]),
+                                                    LocalFaceData(interactionRegion().contiFaceLocalIdx, /*dummy*/0, true));
+        }
+        // if order was swapped, change bools indicating which face is the "outside" version of the local face
+        else if (globalLocalScvfPairedData_[1].first->index() == interactionRegion().globalScvfIndices[0])
+        {
+            globalLocalScvfPairedData_[0].second.localScvfIndex = interactionRegion().contiFaceLocalIdx;
+            globalLocalScvfPairedData_[1].second.localScvfIndex = interactionRegion().contiFaceLocalIdx;
+            globalLocalScvfPairedData_[0].second.isOutside = true;
+            globalLocalScvfPairedData_[1].second.isOutside = false;
+        }
     }
 
     Scalar calculateOmega_(const GlobalPosition& normal,
@@ -347,7 +380,7 @@ private:
     }
 
     const Seed& seed_() const
-    { return seedPtr_; }
+    { return *seedPtr_; }
 
     const Problem& problem_() const
     { return *problemPtr_; }
@@ -366,12 +399,9 @@ private:
     bool regionUnique_;
     bool systemSolved_;
 
-    LocalIndexType contiFaceLocalIdx_;
-    GlobalIndexSet globalScvfIndices_;
-    GlobalIndexSet volVarsStencil_;
-    PositionVector volVarsPositions_;
-
+    LocalIndexType interactionRegionId_;
     std::vector<InteractionRegion> interactionRegions_;
+    std::vector<GlobalLocalFaceDataPair> globalLocalScvfPairedData_;
 
     Matrix T_;
 };

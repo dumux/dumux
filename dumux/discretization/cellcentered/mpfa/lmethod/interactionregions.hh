@@ -58,22 +58,22 @@ public:
     std::vector<Scalar> detX;
     std::vector<Element> elements;
 
-    std::array<GlobalIndexType, 2> globalScvfs;
+    std::array<GlobalIndexType, 2> globalScvfIndices;
 
     // Constructor signature for dim == 2
-    template<class ScvSeedType, class OuterScvSeedType>
+    template<class ScvSeed, class OuterScvSeed>
     InteractionRegion(const Problem& problem,
                       const FVElementGeometry& fvGeometry,
-                      const ScvSeedType& scvSeed,
-                      const OuterScvSeedType& outerSeed1,
-                      const OuterScvSeedType& outerSeed2,
+                      const ScvSeed& scvSeed,
+                      const OuterScvSeed& outerSeed1,
+                      const OuterScvSeed& outerSeed2,
                       const Element& element1,
                       const Element& element2,
                       const Element& element3)
     {
         contiFaceLocalIdx = scvSeed.contiFaceLocalIdx();
-        globalScvfs[0] = scvSeed.globalScvfIndices()[contiFaceLocalIdx];
-        globalScvfs[1] = contiFaceLocalIdx == 0 ? outerSeed1.globalScvfIndex() : outerSeed2.globalScvfIndex();
+        globalScvfIndices[0] = scvSeed.globalScvfIndices()[contiFaceLocalIdx];
+        globalScvfIndices[1] = contiFaceLocalIdx == 0 ? outerSeed1.globalScvfIndex() : outerSeed2.globalScvfIndex();
 
         elements.resize(3);
         elements[0] = element1;
@@ -81,11 +81,11 @@ public:
         elements[2] = element3;
 
         // The participating sub control entities
-        auto&& scv1 = fvGeometry.scv(scvSeed.globalIndex());
-        auto&& scv2 = fvGeometry.scv(outerSeed1.globalIndex());
-        auto&& scv3 = fvGeometry.scv(outerSeed2.globalIndex());
-        auto&& scvf1 = fvGeometry.scvf(scvSeed.globalScvfIndices()[0]);
-        auto&& scvf2 = fvGeometry.scvf(scvSeed.globalScvfIndices()[1]);
+        const auto& scv1 = fvGeometry.scv(scvSeed.globalIndex());
+        const auto& scv2 = fvGeometry.scv(outerSeed1.globalIndex());
+        const auto& scv3 = fvGeometry.scv(outerSeed2.globalIndex());
+        const auto& scvf1 = fvGeometry.scvf(scvSeed.globalScvfIndices()[0]);
+        const auto& scvf2 = fvGeometry.scvf(scvSeed.globalScvfIndices()[1]);
 
         // The necessary coordinates and normals
         GlobalPosition v = scvf1.vertexCorner();
