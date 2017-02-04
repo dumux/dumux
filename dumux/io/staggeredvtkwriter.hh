@@ -46,7 +46,7 @@ namespace Dumux
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<typename TypeTag>
+template<class TypeTag, class ScalarInfo, class VectorInfo>
 class StaggeredVtkWriter
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -67,13 +67,14 @@ public:
     StaggeredVtkWriter(const Problem& problem) : problem_(problem)
     {}
 
-    template<class ScalarInfo, class VectorInfo>
-    void write(const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
+    template<class ScalarData, class VectorData, class Positions>
+    void write(const ScalarData& priVarScalarData, const VectorData& priVarVectorData, const Positions& positions,
+               const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
     {
         if(scalarInfo.empty() && vectorInfo.empty())
             return;
         file_.open(fileName_());
-        write_(scalarInfo, vectorInfo);
+        write_(priVarScalarData, priVarVectorData, positions, scalarInfo, vectorInfo);
         file_.close();
         ++curWriterNum_;
     }
@@ -88,38 +89,12 @@ private:
         file_ << header;
     }
 
-    template<class ScalarInfo, class VectorInfo>
-    void write_(ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
+    template<class ScalarData, class VectorData, class Positions>
+    void write_(const ScalarData& priVarScalarData, const VectorData& priVarVectorData, const Positions& positions,
+               const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
     {
         const int numPoints = problem_.model().numFaceDofs();
         writeHeader_(numPoints);
-
-
-        // get fields for all primary coordinates and variables
-        std::vector<bool> dofVisited(numPoints, false);
-        std::vector<Scalar> positions(numPoints*3);
-        std::vector<std::vector<Scalar>> priVarScalarData(scalarInfo.size(), std::vector<Scalar>(numPoints));
-
-        std::vector<std::vector<Scalar>> priVarVectorData(vectorInfo.size());
-        for (std::size_t i = 0; i < vectorInfo.size(); ++i)
-            priVarVectorData[i].resize(numPoints*vectorInfo[i].pvIdx.size());
-
-        for(auto&& element : elements(problem_.gridView()))
-        {
-            auto fvGeometry = localView(problem_.model().globalFvGeometry());
-            fvGeometry.bindElement(element);
-            for(auto && scvf : scvfs(fvGeometry))
-            {
-                if(dofVisited[scvf.dofIndexSelf()])
-                    continue;
-
-                getPositions_(positions, scvf);
-                getScalarData_(priVarScalarData, scalarInfo, scvf);
-                getVectorData_(priVarVectorData, vectorInfo, scvf);
-                dofVisited[scvf.dofIndexSelf()] = true;
-            }
-        }
-
         writeCoordinates_(positions);
 
         if(!scalarInfo.empty())
@@ -149,59 +124,6 @@ private:
         file_ << "</VTKFile>";
     }
 
-    template<class Facet>
-    void getPositions_(std::vector<Scalar>& positions, const Facet& facet)
-    {
-        const int dofIdxGlobal = facet.dofIndexSelf();
-        auto pos = facet.center();
-        if(dim == 1)
-        {
-            positions[dofIdxGlobal*3] = pos[0];
-            positions[dofIdxGlobal*3 + 1] = 0.0;
-            positions[dofIdxGlobal*3 + 2] = 0.0;
-        }
-        else if(dim == 2)
-        {
-            positions[dofIdxGlobal*3] = pos[0];
-            positions[dofIdxGlobal*3 + 1] = pos[1];
-            positions[dofIdxGlobal*3 + 2] = 0.0;
-        }
-        else
-        {
-            positions[dofIdxGlobal*3] = pos[0];
-            positions[dofIdxGlobal*3 + 1] = pos[1] ;
-            positions[dofIdxGlobal*3 + 2] = pos[2] ;
-        }
-    }
-
-    template<class ScalarInfo, class Facet>
-    void getScalarData_(std::vector<std::vector<Scalar>>& priVarScalarData, const ScalarInfo& scalarInfo, const Facet& facet)
-    {
-        const int dofIdxGlobal = facet.dofIndexSelf();
-        for(int pvIdx = 0; pvIdx < scalarInfo.size(); ++pvIdx)
-        {
-            priVarScalarData[pvIdx][dofIdxGlobal] = problem_.model().curSol()[faceIdx][dofIdxGlobal][pvIdx];
-        }
-    }
-
-    template<class VectorInfo, class Facet>
-    void getVectorData_(std::vector<std::vector<Scalar>>& priVarVectorData, const VectorInfo& vectorInfo, const Facet& facet)
-    {
-
-        // const int dofIdxGlobal = problem_.gridView().indexSet().index(facet);
-        // for (int i = 0; i < vectorInfo.size(); ++i)
-        //     for (int j = 0; j < vectorInfo[i].pvIdx.size(); ++j)
-        //         priVarVectorData[i][dofIdxGlobal*vectorInfo[i].pvIdx.size() + j]
-        //             = problem_.model().curSol()[faceIdx][dofIdxGlobal][vectorInfo[i].pvIdx[j]];
-
-        // TODO: put this into separate class, where the function is overloaded, this is a special case for staggered free flow
-        const int dofIdxGlobal = facet.dofIndexSelf();
-        const int dirIdx = directionIndex(facet.unitOuterNormal());
-        const Scalar velocity = problem_.model().curSol()[faceIdx][dofIdxGlobal][0];
-        for (int i = 0; i < vectorInfo.size(); ++i)
-            priVarVectorData[i][dofIdxGlobal*vectorInfo[i].pvIdx.size() + dirIdx] = velocity;
-    }
-
     void writeCoordinates_(const std::vector<Scalar>& positions)
     {
         // write the positions to the file
@@ -222,8 +144,7 @@ private:
         file_ << "</Points>\n";
     }
 
-    template<class T>
-    void writeScalarFacePriVars_(const std::vector<std::vector<Scalar>>& priVarScalarData, const T& info)
+    void writeScalarFacePriVars_(const std::vector<std::vector<Scalar>>& priVarScalarData, const ScalarInfo& info)
     {
         // write the priVars to the file
         for(int pvIdx = 0; pvIdx < info.size(); ++pvIdx)
@@ -244,8 +165,7 @@ private:
         }
     }
 
-    template<class T>
-    void writeVectorFacePriVars_(const std::vector<std::vector<Scalar>>& priVarVectorData, const T& info)
+    void writeVectorFacePriVars_(const std::vector<std::vector<Scalar>>& priVarVectorData, const VectorInfo& info)
     {
         // write the priVars to the file
         for(int i = 0; i < info.size(); ++i)

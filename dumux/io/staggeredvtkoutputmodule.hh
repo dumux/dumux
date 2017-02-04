@@ -55,6 +55,9 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
+
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
@@ -94,7 +97,8 @@ public:
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         ParentType::write(time, type);
-        faceWriter_.write(facePriVarScalarDataInfo_, facePriVarVectorDataInfo_);
+        // faceWriter_.write(facePriVarScalarDataInfo_, facePriVarVectorDataInfo_);
+        getData_();
     }
 
 
@@ -111,7 +115,93 @@ protected:
 
 
 private:
-    StaggeredVtkWriter<TypeTag> faceWriter_;
+
+    void getData_()
+    {
+        const int numPoints = this->problem().model().numFaceDofs();
+
+        // get fields for all primary coordinates and variables
+        std::vector<bool> dofVisited(numPoints, false);
+        std::vector<Scalar> positions(numPoints*3);
+        std::vector<std::vector<Scalar>> priVarScalarData(facePriVarScalarDataInfo_.size(), std::vector<Scalar>(numPoints));
+
+        std::vector<std::vector<Scalar>> priVarVectorData(facePriVarVectorDataInfo_.size());
+        for (std::size_t i = 0; i < facePriVarVectorDataInfo_.size(); ++i)
+            priVarVectorData[i].resize(numPoints*facePriVarVectorDataInfo_[i].pvIdx.size());
+
+        for(auto&& element : elements(this->problem().gridView()))
+        {
+            auto fvGeometry = localView(this->problem().model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+            for(auto && scvf : scvfs(fvGeometry))
+            {
+                if(dofVisited[scvf.dofIndexSelf()])
+                    continue;
+
+                getPositions_(positions, scvf);
+                getScalarData_(priVarScalarData, scvf);
+                getVectorData_(priVarVectorData, scvf);
+                dofVisited[scvf.dofIndexSelf()] = true;
+            }
+        }
+        faceWriter_.write(priVarScalarData, priVarVectorData, positions, facePriVarScalarDataInfo_, facePriVarVectorDataInfo_);
+    }
+
+    template<class Facet>
+    void getPositions_(std::vector<Scalar>& positions, const Facet& facet)
+    {
+        const int dofIdxGlobal = facet.dofIndexSelf();
+        auto pos = facet.center();
+        if(dim == 1)
+        {
+            positions[dofIdxGlobal*3] = pos[0];
+            positions[dofIdxGlobal*3 + 1] = 0.0;
+            positions[dofIdxGlobal*3 + 2] = 0.0;
+        }
+        else if(dim == 2)
+        {
+            positions[dofIdxGlobal*3] = pos[0];
+            positions[dofIdxGlobal*3 + 1] = pos[1];
+            positions[dofIdxGlobal*3 + 2] = 0.0;
+        }
+        else
+        {
+            positions[dofIdxGlobal*3] = pos[0];
+            positions[dofIdxGlobal*3 + 1] = pos[1] ;
+            positions[dofIdxGlobal*3 + 2] = pos[2] ;
+        }
+    }
+
+    template<class Facet>
+    void getScalarData_(std::vector<std::vector<Scalar>>& priVarScalarData, const Facet& facet)
+    {
+        const int dofIdxGlobal = facet.dofIndexSelf();
+        for(int pvIdx = 0; pvIdx < facePriVarScalarDataInfo_.size(); ++pvIdx)
+        {
+            priVarScalarData[pvIdx][dofIdxGlobal] = this->problem().model().curSol()[faceIdx][dofIdxGlobal][pvIdx];
+        }
+    }
+
+    template<class Facet>
+    void getVectorData_(std::vector<std::vector<Scalar>>& priVarVectorData, const Facet& facet)
+    {
+
+        // const int dofIdxGlobal = this->problem().gridView().indexSet().index(facet);
+        // for (int i = 0; i < facePriVarVectorDataInfo_.size(); ++i)
+        //     for (int j = 0; j < facePriVarVectorDataInfo_[i].pvIdx.size(); ++j)
+        //         priVarVectorData[i][dofIdxGlobal*facePriVarVectorDataInfo_[i].pvIdx.size() + j]
+        //             = this->problem().model().curSol()[faceIdx][dofIdxGlobal][facePriVarVectorDataInfo_[i].pvIdx[j]];
+
+        // TODO: put this into separate class, where the function is overloaded, this is a special case for staggered free flow
+        const int dofIdxGlobal = facet.dofIndexSelf();
+        const int dirIdx = directionIndex(facet.unitOuterNormal());
+        const Scalar velocity = this->problem().model().curSol()[faceIdx][dofIdxGlobal][0];
+        for (int i = 0; i < facePriVarVectorDataInfo_.size(); ++i)
+            priVarVectorData[i][dofIdxGlobal*facePriVarVectorDataInfo_[i].pvIdx.size() + dirIdx] = velocity;
+    }
+
+
+    StaggeredVtkWriter<TypeTag, std::vector<PriVarScalarDataInfo>, std::vector<PriVarVectorDataInfo>> faceWriter_;
     std::vector<PriVarScalarDataInfo> facePriVarScalarDataInfo_;
     std::vector<PriVarVectorDataInfo> facePriVarVectorDataInfo_;
 };
