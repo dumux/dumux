@@ -46,7 +46,7 @@ namespace Dumux
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<class TypeTag, class ScalarInfo, class VectorInfo>
+template<class TypeTag, class BundleOfTypes>
 class StaggeredVtkWriter
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -63,12 +63,16 @@ class StaggeredVtkWriter
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
 
+    using ScalarInfo = std::vector<typename BundleOfTypes::PriVarScalarDataInfo>;
+    using VectorInfo = std::vector<typename BundleOfTypes::PriVarVectorDataInfo>;
+    using Positions = typename BundleOfTypes::Positions;
+    using Data = typename BundleOfTypes::Data;
+
 public:
     StaggeredVtkWriter(const Problem& problem) : problem_(problem)
     {}
 
-    template<class ScalarData, class VectorData, class Positions>
-    void write(const ScalarData& priVarScalarData, const VectorData& priVarVectorData, const Positions& positions,
+    void write(const Data& priVarScalarData, const Data& priVarVectorData, const Positions& positions,
                const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
     {
         if(scalarInfo.empty() && vectorInfo.empty())
@@ -89,8 +93,7 @@ private:
         file_ << header;
     }
 
-    template<class ScalarData, class VectorData, class Positions>
-    void write_(const ScalarData& priVarScalarData, const VectorData& priVarVectorData, const Positions& positions,
+    void write_(const Data& priVarScalarData, const Data& priVarVectorData, const Positions& positions,
                const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
     {
         const int numPoints = problem_.model().numFaceDofs();
@@ -124,7 +127,7 @@ private:
         file_ << "</VTKFile>";
     }
 
-    void writeCoordinates_(const std::vector<Scalar>& positions)
+    void writeCoordinates_(const Positions& positions)
     {
         // write the positions to the file
         file_ << "<Points>\n";
@@ -144,7 +147,7 @@ private:
         file_ << "</Points>\n";
     }
 
-    void writeScalarFacePriVars_(const std::vector<std::vector<Scalar>>& priVarScalarData, const ScalarInfo& info)
+    void writeScalarFacePriVars_(const Data& priVarScalarData, const ScalarInfo& info)
     {
         // write the priVars to the file
         for(int pvIdx = 0; pvIdx < info.size(); ++pvIdx)
@@ -165,7 +168,7 @@ private:
         }
     }
 
-    void writeVectorFacePriVars_(const std::vector<std::vector<Scalar>>& priVarVectorData, const VectorInfo& info)
+    void writeVectorFacePriVars_(const Data& priVarVectorData, const VectorInfo& info)
     {
         // write the priVars to the file
         for(int i = 0; i < info.size(); ++i)

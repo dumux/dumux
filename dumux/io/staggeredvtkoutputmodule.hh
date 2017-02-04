@@ -65,6 +65,17 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     struct PriVarScalarDataInfo { unsigned int pvIdx; std::string name; };
     struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
 
+    using Positions = std::vector<Scalar>;
+    using Data = std::vector<std::vector<Scalar>>;
+
+    struct BundleOfTypes
+    {
+        using Positions = StaggeredVtkOutputModule::Positions;
+        using PriVarScalarDataInfo = StaggeredVtkOutputModule::PriVarScalarDataInfo;
+        using PriVarVectorDataInfo = StaggeredVtkOutputModule::PriVarVectorDataInfo;
+        using Data = StaggeredVtkOutputModule::Data;
+    };
+
 public:
 
     StaggeredVtkOutputModule(const Problem& problem,
@@ -97,10 +108,8 @@ public:
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         ParentType::write(time, type);
-        // faceWriter_.write(facePriVarScalarDataInfo_, facePriVarVectorDataInfo_);
-        getData_();
+        getFaceDataAndWrite_();
     }
-
 
 protected:
     unsigned int numDofs_() const
@@ -116,16 +125,16 @@ protected:
 
 private:
 
-    void getData_()
+    void getFaceDataAndWrite_()
     {
         const int numPoints = this->problem().model().numFaceDofs();
 
         // get fields for all primary coordinates and variables
         std::vector<bool> dofVisited(numPoints, false);
-        std::vector<Scalar> positions(numPoints*3);
-        std::vector<std::vector<Scalar>> priVarScalarData(facePriVarScalarDataInfo_.size(), std::vector<Scalar>(numPoints));
+        Positions positions(numPoints*3);
+        Data priVarScalarData(facePriVarScalarDataInfo_.size(), std::vector<Scalar>(numPoints));
 
-        std::vector<std::vector<Scalar>> priVarVectorData(facePriVarVectorDataInfo_.size());
+        Data priVarVectorData(facePriVarVectorDataInfo_.size());
         for (std::size_t i = 0; i < facePriVarVectorDataInfo_.size(); ++i)
             priVarVectorData[i].resize(numPoints*facePriVarVectorDataInfo_[i].pvIdx.size());
 
@@ -148,7 +157,7 @@ private:
     }
 
     template<class Facet>
-    void getPositions_(std::vector<Scalar>& positions, const Facet& facet)
+    void getPositions_(Positions& positions, const Facet& facet)
     {
         const int dofIdxGlobal = facet.dofIndexSelf();
         auto pos = facet.center();
@@ -173,7 +182,7 @@ private:
     }
 
     template<class Facet>
-    void getScalarData_(std::vector<std::vector<Scalar>>& priVarScalarData, const Facet& facet)
+    void getScalarData_(Data& priVarScalarData, const Facet& facet)
     {
         const int dofIdxGlobal = facet.dofIndexSelf();
         for(int pvIdx = 0; pvIdx < facePriVarScalarDataInfo_.size(); ++pvIdx)
@@ -183,7 +192,7 @@ private:
     }
 
     template<class Facet>
-    void getVectorData_(std::vector<std::vector<Scalar>>& priVarVectorData, const Facet& facet)
+    void getVectorData_(Data& priVarVectorData, const Facet& facet)
     {
 
         // const int dofIdxGlobal = this->problem().gridView().indexSet().index(facet);
@@ -201,7 +210,7 @@ private:
     }
 
 
-    StaggeredVtkWriter<TypeTag, std::vector<PriVarScalarDataInfo>, std::vector<PriVarVectorDataInfo>> faceWriter_;
+    StaggeredVtkWriter<TypeTag, BundleOfTypes> faceWriter_;
     std::vector<PriVarScalarDataInfo> facePriVarScalarDataInfo_;
     std::vector<PriVarVectorDataInfo> facePriVarVectorDataInfo_;
 };
