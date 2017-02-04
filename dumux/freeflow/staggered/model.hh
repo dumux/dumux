@@ -88,7 +88,8 @@ public:
         // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
         vtkOutputModule.addPrimaryVariable("pressure", Indices::pressureIdx);
-        vtkOutputModule.addFacePrimaryVariable("faceVelocity", 0);
+        vtkOutputModule.addFacePrimaryVariable("scalarFaceVelocity", 0);
+        vtkOutputModule.addFacePrimaryVariable("faceVelocity", std::vector<unsigned int>{0,1, 2});
 
 //         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }

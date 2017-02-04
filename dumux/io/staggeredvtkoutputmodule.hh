@@ -21,7 +21,7 @@
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  */
 #ifndef STAGGERED_VTK_OUTPUT_MODULE_HH
-#define STAGGGERED_VTK_OUTPUT_MODULE_HH
+#define STAGGERED_VTK_OUTPUT_MODULE_HH
 
 #include <dune/common/fvector.hh>
 
@@ -60,6 +60,7 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     typename DofTypeIndices::FaceIdx faceIdx;
 
     struct PriVarScalarDataInfo { unsigned int pvIdx; std::string name; };
+    struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
 
 public:
 
@@ -81,10 +82,19 @@ public:
         facePriVarScalarDataInfo_.push_back(PriVarScalarDataInfo{pvIdx, name});
     }
 
+    //! Output a vector primary variable
+    //! \param name The name of the vtk field
+    //! \param pvIndices A vector of indices in the primary variables vector to group for vector visualization
+    void addFacePrimaryVariable(const std::string& name, std::vector<unsigned int> pvIndices)
+    {
+        assert(pvIndices.size() < 4 && "Vtk doesn't support vector dimensions greater than 3!");
+        facePriVarVectorDataInfo_.push_back(PriVarVectorDataInfo{pvIndices, name});
+    }
+
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         ParentType::write(time, type);
-        faceWriter_.write(facePriVarScalarDataInfo_);
+        faceWriter_.write(facePriVarScalarDataInfo_, facePriVarVectorDataInfo_);
     }
 
 
@@ -103,6 +113,7 @@ protected:
 private:
     StaggeredVtkWriter<TypeTag> faceWriter_;
     std::vector<PriVarScalarDataInfo> facePriVarScalarDataInfo_;
+    std::vector<PriVarVectorDataInfo> facePriVarVectorDataInfo_;
 };
 
 } // end namespace Dumux
