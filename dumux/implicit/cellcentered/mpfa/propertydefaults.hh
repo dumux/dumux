@@ -43,6 +43,7 @@
 #include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseeds.hh>
 #include <dumux/discretization/cellcentered/mpfa/interiorboundarydata.hh>
 #include <dumux/implicit/cellcentered/mpfa/localresidual.hh>
+#include <dumux/implicit/cellcentered/mpfa/assemblymap.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 
 namespace Dumux {
@@ -65,6 +66,9 @@ SET_PROP(CCMpfaModel, MpfaMethod)
 
 //! The mpfa helper class
 SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
+
+//! The assembly map for mpfa schemes
+SET_TYPE_PROP(CCMpfaModel, AssemblyMap, CCMpfaAssemblyMap<TypeTag>);
 
 //! The interaction volume class
 SET_TYPE_PROP(CCMpfaModel, InteractionVolume, CCMpfaInteractionVolume<TypeTag>);

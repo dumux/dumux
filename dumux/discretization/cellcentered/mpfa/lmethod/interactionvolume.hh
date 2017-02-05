@@ -277,43 +277,26 @@ private:
     {
         const auto& globalFvGeometry = problem_().model().globalFvGeometry();
 
-        if (regionUnique_)
+        interactionRegions_.reserve(2);
+        auto&& scvSeed1 = seed.scvSeed(0);
+        auto&& scvSeed2 = seed.scvSeed(1);
+        auto&& outerScvSeed1 = seed.outerScvSeed(0);
+        auto&& outerScvSeed2 = seed.outerScvSeed(1);
+        auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
+        auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
+        auto e3 = globalFvGeometry.element(outerScvSeed1.globalIndex());
+        auto e4 = globalFvGeometry.element(outerScvSeed2.globalIndex());
+
+        // scvSeed1 is the one the seed construction began at
+        if (scvSeed1.contiFaceLocalIdx() == 0)
         {
-            interactionRegions_.reserve(1);
-            auto&& scvSeed1 = seed.scvSeed(0);
-            auto&& scvSeed2 = seed.outerScvSeed(0);
-            auto&& scvSeed3 = seed.outerScvSeed(1);
-            auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
-            auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
-            auto e3 = globalFvGeometry.element(scvSeed3.globalIndex());
-            if (scvSeed1.contiFaceLocalIdx() == 0)
-                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, scvSeed2, scvSeed3, e1, e2, e3);
-            else
-                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, scvSeed3, scvSeed2, e1, e3, e2);
+            interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, OuterScvSeedType(scvSeed2), outerScvSeed1, e1, e2, e3);
+            interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed2, outerScvSeed2, OuterScvSeedType(scvSeed1), e2, e4, e1);
         }
         else
         {
-            interactionRegions_.reserve(2);
-            auto&& scvSeed1 = seed.scvSeed(0);
-            auto&& scvSeed2 = seed.scvSeed(1);
-            auto&& outerScvSeed1 = seed.outerScvSeed(0);
-            auto&& outerScvSeed2 = seed.outerScvSeed(1);
-            auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
-            auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
-            auto e3 = globalFvGeometry.element(outerScvSeed1.globalIndex());
-            auto e4 = globalFvGeometry.element(outerScvSeed2.globalIndex());
-
-            // scvSeed1 is the one the seed construction began at
-            if (scvSeed1.contiFaceLocalIdx() == 0)
-            {
-                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, OuterScvSeedType(scvSeed2), outerScvSeed1, e1, e2, e3);
-                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed2, outerScvSeed2, OuterScvSeedType(scvSeed1), e2, e4, e1);
-            }
-            else
-            {
-                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, outerScvSeed1, OuterScvSeedType(scvSeed2), e1, e3, e2);
-                interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed2, OuterScvSeedType(scvSeed1), outerScvSeed2, e2, e1, e4);
-            }
+            interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, outerScvSeed1, OuterScvSeedType(scvSeed2), e1, e3, e2);
+            interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed2, OuterScvSeedType(scvSeed1), outerScvSeed2, e2, e1, e4);
         }
 
         // as an initial guess we set the first interaction region as the one used

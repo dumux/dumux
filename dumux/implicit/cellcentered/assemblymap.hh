@@ -22,8 +22,8 @@
  *        that contribute to the derivative calculation. This is used for
  *        finite-volume schemes with symmetric sparsity pattern in the global matrix.
  */
-#ifndef DUMUX_CC_SYMMETRIC_ASSEMBLY_MAP_HH
-#define DUMUX_CC_SYMMETRIC_ASSEMBLY_MAP_HH
+#ifndef DUMUX_CC_ASSEMBLY_MAP_HH
+#define DUMUX_CC_ASSEMBLY_MAP_HH
 
 #include <dune/istl/bcrsmatrix.hh>
 
@@ -32,8 +32,18 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup CellCentered
+ * \brief A simple version of the assembly map for cellcentered schemes.
+ *        This implementation works for schemes in which for a given cell I only
+ *        those cells J have to be prepared in whose stencil the cell I appears.
+ *        This means that for the flux calculations in the cells J (in order to compute
+ *        the derivatives with respect to cell I), we do not need data on any additional cells J
+ *        to compute these fluxes. The same holds for scvfs in the cells J, i.e. we need only those
+ *        scvfs in the cells J in which the cell I is in the stencil.
+ */
 template<class TypeTag>
-class CCSymmetricAssemblyMap
+class CCSimpleAssemblyMap
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -45,6 +55,9 @@ class CCSymmetricAssemblyMap
     {
         IndexType globalJ;
         std::vector<IndexType> scvfsJ;
+        // A list of additional scvfs is needed for compatibility
+        // reasons with more complex assembly maps (see mpfa)
+        std::vector<IndexType> additionalScvfs;
     };
 
     using Map = std::vector<std::vector<DataJ>>;

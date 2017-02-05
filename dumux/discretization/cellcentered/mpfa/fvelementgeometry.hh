@@ -261,18 +261,19 @@ public:
 
         // reserve memory
         const auto numNeighbors = assemblyMapI.size();
-        const auto estimate = neighborScvfEstimate_(element, numNeighbors);
+        const auto numNeighborScvfs = numNeighborScvfs_(assemblyMapI);
         neighborScvs_.reserve(numNeighbors);
         neighborScvIndices_.reserve(numNeighbors);
-        neighborScvfIndices_.reserve(estimate);
-        neighborScvfs_.reserve(estimate);
+        neighborScvfIndices_.reserve(numNeighborScvfs);
+        neighborScvfs_.reserve(numNeighborScvfs);
 
         // make neighbor geometries
         // use the assembly map to determine which faces are necessary
         for (auto&& dataJ : assemblyMapI)
             makeNeighborGeometries(globalFvGeometry().element(dataJ.globalJ),
                                    dataJ.globalJ,
-                                   dataJ.scvfsJ);
+                                   dataJ.scvfsJ,
+                                   dataJ.additionalScvfs);
 
         // set up the scvf flip indices for network grids
         if (dim < dimWorld)
@@ -309,31 +310,13 @@ private:
 
     //! Estimates the number of neighboring scvfs that have to be prepared
     //! The estimate holds for inner elements, overestimats on the boundary
-    int neighborScvfEstimate_(const Element& element, int numNeighbors)
+    template<class DataJ>
+    unsigned int numNeighborScvfs_(const std::vector<DataJ>& dataJVector)
     {
-        auto type = element.geometry().type();
-
-        if (type == Dune::GeometryType(Dune::GeometryType::simplex, dim))
-        {
-            if (dim == 2)
-                return 6 + ( (numNeighbors-3 > 0) ? (numNeighbors-3)*2 : 0 );
-            if (dim == 3)
-                return 12 + ( (numNeighbors-4 > 0) ? (numNeighbors-4)*3 : 0 );
-        }
-        else if (type == Dune::GeometryType(Dune::GeometryType::cube, dim))
-        {
-            if (dim == 2)
-                return 16;
-            if (dim == 3)
-                return 120;
-        }
-        else if (type == Dune::GeometryType(Dune::GeometryType::pyramid, dim))
-            return 16 + ( (numNeighbors-4 > 0) ? (numNeighbors-4)*3 : 0 );
-        else if (type == Dune::GeometryType(Dune::GeometryType::prism, dim))
-            return 18 + ( (numNeighbors-4 > 0) ? (numNeighbors-4)*3 : 0 );
-        else
-            DUNE_THROW(Dune::NotImplemented, "Mpfa for given geometry type.");
-
+        unsigned int numNeighborScvfs = 0;
+        for (const auto& dataJ : dataJVector)
+            numNeighborScvfs += dataJ.scvfsJ.size() + dataJ.additionalScvfs.size();
+        return numNeighborScvfs;
     }
 
     //! create scvs and scvfs of the bound element
@@ -424,7 +407,10 @@ private:
 
     //! create the scv and necessary scvfs of a neighboring element
     template<typename IndexVector>
-    void makeNeighborGeometries(const Element& element, IndexType eIdxGlobal, const IndexVector& scvfIndices)
+    void makeNeighborGeometries(const Element& element,
+                                IndexType eIdxGlobal,
+                                const IndexVector& scvfIndices,
+                                const IndexVector& additionalScvfs)
     {
         // create the neighbor scv if it doesn't exist yet
         neighborScvs_.emplace_back(element.geometry(), eIdxGlobal);
@@ -483,7 +469,8 @@ private:
                     continue;
 
                 // only build the scvf if it is in the list of necessary indices
-                if (MpfaHelper::contains(scvfIndices, scvFaceIndices[scvfCounter]))
+                if (MpfaHelper::contains(scvfIndices, scvFaceIndices[scvfCounter])
+                    || MpfaHelper::contains(additionalScvfs, scvFaceIndices[scvfCounter]))
                 {
                     neighborScvfs_.emplace_back(MpfaHelper(),
                                                 MpfaHelper::getScvfCorners(isCorners, c),

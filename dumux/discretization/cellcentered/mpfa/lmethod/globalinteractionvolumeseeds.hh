@@ -57,10 +57,6 @@ public:
                          SeedVector& seeds,
                          BoundarySeedVector& boundarySeeds)
     {
-        // print warning
-        std::cout << "\nWARNING: Note that the mpfa-l method currently only works for unstructured grids"
-                  << "  when the global volume variables and global fv geometry caches are enabled!\n" << std::endl;
-
         seeds.clear();
         boundarySeeds.clear();
         scvfIndexMap.clear();

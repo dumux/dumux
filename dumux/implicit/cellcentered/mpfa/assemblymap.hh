@@ -25,6 +25,7 @@
 #define DUMUX_CC_MPFA_ASSEMBLY_MAP_HH
 
 #include <dumux/implicit/cellcentered/assemblymap.hh>
+#include <dumux/implicit/cellcentered/mpfa/generalassemblymap.hh>
 
 namespace Dumux
 {
@@ -36,9 +37,13 @@ class CCMpfaAssemblyMapImplementation;
 template<class TypeTag>
 using CCMpfaAssemblyMap = CCMpfaAssemblyMapImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
 
-//! The default is simply the CCAssemblyMap
+//! The default is the general assembly map for mpfa schemes
 template<class TypeTag, MpfaMethods method>
-class CCMpfaAssemblyMapImplementation : public CCAssemblyMap<TypeTag> {};
+class CCMpfaAssemblyMapImplementation : public CCMpfaGeneralAssemblyMap<TypeTag> {};
+
+//! The o-method can use the simple assembly map
+template<class TypeTag>
+class CCMpfaAssemblyMapImplementation<TypeTag, MpfaMethods::oMethod> : public CCSimpleAssemblyMap<TypeTag> {};
 }
 
 #endif
