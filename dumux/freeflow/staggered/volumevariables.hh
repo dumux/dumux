@@ -143,18 +143,6 @@ public:
     { return fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Returns the mobility \f$\mathrm{[1/(Pa s)]}\f$.
-     *
-     * This function enables the use of ImplicitDarcyFluxVariables
-     * with the 1p fully implicit model, ALTHOUGH the term mobility is
-     * usually not employed in the one phase context.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar mobility(int phaseIdx = 0) const
-    { return 1.0/fluidState_.viscosity(phaseIdx); }
-
-    /*!
      * \brief Return the fluid state of the control volume.
      */
     const FluidState &fluidState() const
