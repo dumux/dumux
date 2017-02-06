@@ -37,6 +37,7 @@
 #include "fluxvariables.hh"
 #include "fluxvariablescache.hh"
 #include "velocityoutput.hh"
+#include "vtkoutputmodule.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -48,7 +49,6 @@
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
 
-#include <dumux/io/staggeredvtkoutputmodule.hh>
 
 
 namespace Dumux
@@ -177,7 +177,7 @@ public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
 
-SET_TYPE_PROP(NavierStokes, VtkOutputModule, StaggeredVtkOutputModule<TypeTag>);
+SET_TYPE_PROP(NavierStokes, VtkOutputModule, FreeFlowStaggeredVtkOutputModule<TypeTag>);
 
 SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 

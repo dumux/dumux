@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A VTK output module to simplify writing dumux simulation data to VTK format
+ * \brief A VTK writer specialized for staggered grid implementations with dofs on the faces
  */
 #ifndef STAGGERED_VTK_WRITER_HH
 #define STAGGERED_VTK_WRITER_HH
@@ -46,7 +46,7 @@ namespace Dumux
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<class TypeTag, class BundleOfTypes>
+template<class TypeTag, class WriterData>
 class StaggeredVtkWriter
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -63,22 +63,25 @@ class StaggeredVtkWriter
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
 
-    using ScalarInfo = std::vector<typename BundleOfTypes::PriVarScalarDataInfo>;
-    using VectorInfo = std::vector<typename BundleOfTypes::PriVarVectorDataInfo>;
-    using Positions = typename BundleOfTypes::Positions;
-    using Data = typename BundleOfTypes::Data;
+    using ScalarInfo = std::vector<typename WriterData::PriVarScalarDataInfo>;
+    using VectorInfo = std::vector<typename WriterData::PriVarVectorDataInfo>;
+    using Positions = typename WriterData::Positions;
+    using Data = typename WriterData::Data;
 
 public:
     StaggeredVtkWriter(const Problem& problem) : problem_(problem)
     {}
 
-    void write(const Data& priVarScalarData, const Data& priVarVectorData, const Positions& positions,
-               const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
+    void write(const WriterData& data)
     {
-        if(scalarInfo.empty() && vectorInfo.empty())
+        if(data.priVarScalarDataInfo.empty() &&
+           data.priVarVectorDataInfo.empty() &&
+           data.secondVarScalarDataInfo.empty() &&
+           data.secondVarVectorDataInfo.empty())
             return;
+
         file_.open(fileName_());
-        write_(priVarScalarData, priVarVectorData, positions, scalarInfo, vectorInfo);
+        write_(data);
         file_.close();
         ++curWriterNum_;
     }
@@ -93,33 +96,53 @@ private:
         file_ << header;
     }
 
-    void write_(const Data& priVarScalarData, const Data& priVarVectorData, const Positions& positions,
-               const ScalarInfo& scalarInfo, const VectorInfo& vectorInfo)
+     /*!
+     * \brief Writes the coordinates and the simulation data to the file
+     *
+     * \param priVarScalarData Container to store the scalar-valued data
+     * \param priVarVectorData Container to store the vector-valued data
+     * \param scalarInfo Information concerning the data (e.g. names)
+     * \param vectorInfo Information concerning the data (e.g. names)
+     * \param positions Container to store the positions
+     */
+    void write_(const WriterData& data)
     {
         const int numPoints = problem_.model().numFaceDofs();
         writeHeader_(numPoints);
-        writeCoordinates_(positions);
+        writeCoordinates_(data.positions);
 
-        if(!scalarInfo.empty())
+        std::string scalarName;
+        std::string vectorName;
+
+        bool scalarValuesPresent = false;
+        bool vectorValuesPresent = false;
+
+
+        if(!(data.priVarScalarDataInfo.empty() && data.secondVarScalarDataInfo.empty()))
         {
-            if(!vectorInfo.empty())
-                file_ << "<PointData Scalars=\"" << scalarInfo[0].name << "\" Vectors=\"" << vectorInfo[0].name <<"\">";
-            else
-                file_ << "<PointData Scalars=\"" << scalarInfo[0].name <<"\">";
+            scalarValuesPresent = true;
+            scalarName = data.priVarScalarDataInfo.empty() ? data.secondVarScalarDataInfo[0].name :
+                                                                                  data.priVarScalarDataInfo[0].name;
         }
+        if(!(data.priVarVectorDataInfo.empty() && data.secondVarVectorDataInfo.empty()))
+        {
+            vectorValuesPresent = true;
+            vectorName = data.priVarVectorDataInfo.empty() ? data.secondVarVectorDataInfo[0].name :
+                                                                                  data.priVarVectorDataInfo[0].name;
+        }
+
+        if(scalarValuesPresent)
+            if(vectorValuesPresent)
+                file_ << "<PointData Scalars=\"" << scalarName << "\" Vectors=\"" << vectorName <<"\">";
+            else
+                file_ << "<PointData Scalars=\"" << scalarName << "\">";
+        else if(vectorValuesPresent)
+            file_ << "<PointData Vectors=\"" << vectorName << "\">";
         else
-        {
-            if(!vectorInfo.empty())
-                file_ << "<PointData Vectors=\"" << vectorInfo[0].name  <<"\">";
-            else
-                return;
-        }
-        file_ << std::endl;
+            return;
 
-        if(!scalarInfo.empty())
-            writeScalarFacePriVars_(priVarScalarData, scalarInfo);
-        if(!vectorInfo.empty())
-            writeVectorFacePriVars_(priVarVectorData,vectorInfo);
+        file_ << std::endl;
+        writeAllData_(data);
 
         file_ << "</PointData>\n";
         file_ << "</Piece>\n";
@@ -127,6 +150,11 @@ private:
         file_ << "</VTKFile>";
     }
 
+     /*!
+     * \brief Writes the coordinates to the file
+     *
+     * \param positions Container to store the positions
+     */
     void writeCoordinates_(const Positions& positions)
     {
         // write the positions to the file
@@ -147,7 +175,32 @@ private:
         file_ << "</Points>\n";
     }
 
-    void writeScalarFacePriVars_(const Data& priVarScalarData, const ScalarInfo& info)
+    void writeAllData_(const WriterData& data)
+    {
+        // write scalar-valued primary variable data
+        if(!data.priVarScalarDataInfo.empty())
+            writeScalarData_(data.priVarScalarData, data.priVarScalarDataInfo);
+
+        // write vector-valued primary variable data
+        if(!data.priVarVectorDataInfo.empty())
+            writeVectorData_(data.priVarVectorData, data.priVarVectorDataInfo);
+
+        // write scalar-valued secondary variable data
+        if(!data.secondVarScalarDataInfo.empty())
+            writeScalarData_(data.secondVarScalarData, data.secondVarScalarDataInfo);
+
+        // write vector-valued primary variable data
+        if(!data.secondVarVectorDataInfo.empty())
+            writeVectorData_(data.secondVarVectorData, data.secondVarVectorDataInfo);
+    }
+
+     /*!
+     * \brief Writes scalar-valued data to the file
+     *
+     * \param priVarScalarData Container to store the data
+     * \param info Information concerning the data (e.g. names)
+     */
+    void writeScalarData_(const Data& priVarScalarData, const ScalarInfo& info)
     {
         // write the priVars to the file
         for(int pvIdx = 0; pvIdx < info.size(); ++pvIdx)
@@ -168,7 +221,13 @@ private:
         }
     }
 
-    void writeVectorFacePriVars_(const Data& priVarVectorData, const VectorInfo& info)
+     /*!
+     * \brief Writes vector-valued data to the file
+     *
+     * \param priVarVectorData Container to store the data
+     * \param info Information concerning the data (e.g. names)
+     */
+    void writeVectorData_(const Data& priVarVectorData, const VectorInfo& info)
     {
         // write the priVars to the file
         for(int i = 0; i < info.size(); ++i)
@@ -189,6 +248,9 @@ private:
         }
     }
 
+     /*!
+     * \brief Returns the file name for each timestep
+     */
     std::string fileName_() const
     {
         std::ostringstream oss;
