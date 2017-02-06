@@ -118,22 +118,6 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Evaluate the intrinsic permeability
-     *        at the corner of a given element
-     *
-     * \return (Scalar) permeability
-     */
-    DUNE_DEPRECATED_MSG("permeability() is deprecated.")
-    Scalar permeability(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const Intersection &intersection,
-                        const int scvIdx,
-                        const int boundaryFaceIdx) const
-    { DUNE_THROW(Dune::NotImplemented, "permeability()"); }
-
-
-
-    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The initial values for the primary variables
