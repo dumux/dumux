@@ -118,49 +118,39 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial value for a subcontrolvolume face.
+     *        This set the initial velocity on the face.
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param scvf The subcontrolvolume face
      */
     using ParentType::initial;
     PrimaryVariables initial(const SubControlVolumeFace &scvf) const
     {
-        // forward to generic interface
+        // forward to specialized method
         return initialAtPos(scvf.center(), scvf.directionIndex());
     }
 
      /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial value for a subcontrolvolume.
+     *        This sets e.g. the initital pressure
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param scvIdx The subcontrolvolume
      */
     PrimaryVariables initial(const SubControlVolume &scv) const
     {
-        // forward to generic interface
+        // forward to specialized method
         return initialAtPos(scv.dofPosition(), 0);
     }
 
      /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial conditions on a face
      *
-     * For this method, the \a priVars parameter stores primary
-     * variables.
+     * \param globalPos The center of the finite volume which ought to be set.
+     * \param directionIdx The direction index of the face
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos, const int directionIdx) const
     {
-        auto initialValues = asImp_().initialAtPos(globalPos);
+        const auto initialValues = asImp_().initialAtPos(globalPos);
 
         PrimaryVariables priVars(0.0);
         priVars[pressureIdx] = initialValues[cellCenterIdx][pressureIdx];
@@ -170,17 +160,34 @@ public:
     }
 
      /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluate the dirichlet boundary conditions on a face
      *
-     * \param values The dirichlet values for the primary variables
+     * \param scvf the subcontrolvolume face
+     */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        return dirichletAtPos(scvf.center(), scvf.directionIndex());
+    }
+
+     /*!
+     * \brief Evaluate the dirichlet boundary conditions on a face
+     *
+     * \param scvf the subcontrolvolume face
+     */
+    PrimaryVariables dirichlet(const SubControlVolumeFace &scvf) const
+    {
+        return dirichletAtPos(scvf.center(), scvf.directionIndex());
+    }
+
+     /*!
+     * \brief Evaluate the dirichlet boundary conditions on a face
+     *
      * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param directionIdx The direction index of the face
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos, const int directionIdx) const
     {
-        auto boundaryValues = asImp_().dirichletAtPos(globalPos);
+        const auto boundaryValues = asImp_().dirichletAtPos(globalPos);
 
         PrimaryVariables priVars(0.0);
         priVars[pressureIdx] = boundaryValues[cellCenterIdx][pressureIdx];
@@ -190,31 +197,14 @@ public:
     }
 
      /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluate the source term at a given position on a face
      *
-     * \param values The dirichlet values for the primary variables
-     * \param scvFace the sub control volume face
-     *
-     * The method returns the boundary types information.
-     */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
-    {
-        return dirichletAtPos(scvf.center(), scvf.directionIndex());
-    }
-
-     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The center of face where the source is positioned
+     * \param directionIdx The direction index of the face
      */
     PrimaryVariables sourceAtPos(const GlobalPosition &globalPos, const int directionIdx) const
     {
-        auto sourceValues = asImp_().sourceAtPos(globalPos);
+        const auto sourceValues = asImp_().sourceAtPos(globalPos);
 
         PrimaryVariables priVars(0.0);
         priVars[pressureIdx] = sourceValues[cellCenterIdx][pressureIdx];
@@ -226,6 +216,9 @@ public:
     // \}
 
 private:
+
+
+
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

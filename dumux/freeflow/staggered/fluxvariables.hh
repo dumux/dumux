@@ -292,10 +292,7 @@ private:
           if(outerDofIdx >= 0)
               transportedVelocity = velocity(outerDofIdx);
           else // this is the case when the outer parallal dof would lie outside the domain
-          {
-              const auto& pos = subFaceData.virtualOuterParallelFaceDofPos;
-              transportedVelocity = problem.dirichletAtPos(pos,scvf.directionIndex())[velocityIdx];
-          }
+              transportedVelocity = problem.dirichlet(scvf)[velocityIdx];
       }
 
       const Scalar momentum = upVolVars.density() * transportedVelocity;
