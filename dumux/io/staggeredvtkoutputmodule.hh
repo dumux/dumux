@@ -88,7 +88,9 @@ public:
     StaggeredVtkOutputModule(const Problem& problem,
                     Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm), faceWriter_(problem)
 
-    {}
+    {
+        writeFaceVars_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, WriteFaceData);
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     //! Methods to conveniently add primary and secondary variables upon problem initialization
@@ -115,7 +117,8 @@ public:
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         ParentType::write(time, type);
-        getFaceDataAndWrite_();
+        if(writeFaceVars_)
+            getFaceDataAndWrite_();
     }
 
 protected:
@@ -259,6 +262,7 @@ private:
 
     StaggeredVtkWriter<TypeTag, WriterData> faceWriter_;
     WriterData faceData_;
+    bool writeFaceVars_;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()

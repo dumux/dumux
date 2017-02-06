@@ -242,6 +242,8 @@ public:
 //! use the plain newton convergence writer by default
 SET_TYPE_PROP(StaggeredModel, NewtonConvergenceWriter, StaggeredNewtonConvergenceWriter<TypeTag>);
 
+//! Write separate vtp files for face variables by default
+SET_BOOL_PROP(StaggeredModel, VtkWriteFaceData, true);
 } // namespace Properties
 
 } // namespace Dumux
