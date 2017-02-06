@@ -66,10 +66,17 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
                         and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Capillary pressure calculated by Brooks & Corey constitutive relation.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar pc(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return params.pe()*pow(swe, -1.0/params.lambda());
     }
@@ -86,13 +93,18 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return Effective wetting phase saturation calculated as inverse of BrooksCorey constitutive relation.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
-        assert(pc >= 0);
+        using std::pow;
+        using std::max;
 
-        Scalar tmp = pow(pc/params.pe(), -params.lambda());
-        return std::min(std::max(tmp, Scalar(0.0)), Scalar(1.0));
+        pc = max(pc, 0.0); // the equation below is undefined for negative pcs
+
+        return pow(pc/params.pe(), -params.lambda());
     }
 
     /*!
@@ -110,10 +122,17 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to Brooks & Corey.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return - params.pe()/params.lambda() * pow(swe, -1/params.lambda() - 1);
     }
@@ -127,10 +146,16 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return Partial derivative of effective saturation w.r.t. \f$\mathrm{[p_c]}\f$ according to Brooks & Corey.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
-        assert(pc >= 0);
+        using std::pow;
+        using std::max;
+
+        pc = max(pc, 0.0); // the equation below is undefined for negative pcs
 
         return -params.lambda()/params.pe() * pow(pc/params.pe(), - params.lambda() - 1);
     }
@@ -145,10 +170,17 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Relative permeability of the wetting phase calculated as implied by Brooks & Corey.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar krw(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return pow(swe, 2.0/params.lambda() + 3);
     }
@@ -164,10 +196,17 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Derivative of the relative permeability of the wetting phase w.r.t. effective wetting phase
      *                  saturation calculated as implied by Brooks & Corey.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return (2.0/params.lambda() + 3)*pow(swe, 2.0/params.lambda() + 2);
     }
@@ -182,14 +221,21 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return Relative permeability of the non-wetting phase calculated as implied by Brooks & Corey.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar krn(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
 
-        Scalar exponent = 2.0/params.lambda() + 1;
-        Scalar tmp = 1. - swe;
-        return tmp*tmp*(1. - pow(swe, exponent));
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar exponent = 2.0/params.lambda() + 1;
+        const Scalar tmp = 1.0 - swe;
+        return tmp*tmp*(1.0 - pow(swe, exponent));
     }
 
     /*!
@@ -204,22 +250,26 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Derivative of the relative permeability of the non-wetting phase w.r.t. effective wetting phase
      *                  saturation calculated as implied by Brooks & Corey.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
 
-        return
-            2.0*(swe - 1)*(
-                1 +
-                pow(swe, 2.0/params.lambda())*(
-                    1.0/params.lambda() + 1.0/2 -
-                    swe*(1.0/params.lambda() + 1.0/2)
-                    )
-                );
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        return 2.0*(swe - 1)*(1 + pow(swe, 2.0/params.lambda())*(1.0/params.lambda() + 1.0/2
+                                                                 - swe*(1.0/params.lambda() + 1.0/2)
+                                                                )
+                             );
     }
 
 };
-}
+
+} // end namespace Dumux
 
 #endif // BROOKS_COREY_HH

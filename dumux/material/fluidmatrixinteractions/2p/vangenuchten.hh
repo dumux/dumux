@@ -64,11 +64,19 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
+     * \note Instead of undefined behaviour if swe is not in the valid range, we return a valid number,
+     *       by clamping the input. Note that for pc(swe = 0.0) = inf, have a look at RegularizedVanGenuchten if this is a problem.
      */
     static Scalar pc(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
-        return pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar pc = pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
+        return pc;
     }
 
     /*!
@@ -84,12 +92,18 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          The effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       i.e. sw(pc < 0.0) = 0.0, by clamping the input to the physical bounds.
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
-        assert(pc >= 0);
+        using std::pow;
+        using std::max;
 
-        return pow(pow(params.vgAlpha()*pc, params.vgn()) + 1, -params.vgm());
+        pc = max(pc, 0.0); // the equation below is undefined for negative pcs
+
+        const Scalar sw = pow(pow(params.vgAlpha()*pc, params.vgn()) + 1, -params.vgm());
+        return sw;
     }
 
     /*!
@@ -107,14 +121,21 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
-    */
+     *
+     * \note Instead of undefined behaviour if swe is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
 
-        Scalar powSwe = pow(swe, -1/params.vgm());
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar powSwe = pow(swe, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSwe - 1, 1.0/params.vgn() - 1)/params.vgn()
-            * powSwe/swe/params.vgm();
+                                      * powSwe/swe/params.vgm();
     }
 
     /*!
@@ -125,14 +146,19 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
-        assert(pc >= 0);
+        using std::pow;
+        using std::max;
 
-        Scalar powAlphaPc = pow(params.vgAlpha()*pc, params.vgn());
-        return -pow(powAlphaPc + 1, -params.vgm()-1)*
-            params.vgm()*powAlphaPc/pc*params.vgn();
+        pc = max(pc, 0.0); // the equation below is undefined for negative pcs
+
+        const Scalar powAlphaPc = pow(params.vgAlpha()*pc, params.vgn());
+        return -pow(powAlphaPc + 1, -params.vgm()-1)*params.vgm()*powAlphaPc/pc*params.vgn();
     }
 
     /*!
@@ -143,12 +169,21 @@ public:
      * \param swe The mobile saturation of the wetting phase.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.     */
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
     static Scalar krw(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::sqrt;
+        using std::min;
+        using std::max;
 
-        Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
         return sqrt(swe)*r*r;
     }
 
@@ -161,14 +196,22 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::sqrt;
+        using std::min;
+        using std::max;
 
-        const Scalar x = 1.0 - std::pow(swe, 1.0/params.vgm());
-        const Scalar xToM = std::pow(x, params.vgm());
-        return (1.0 - xToM)/std::sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar x = 1.0 - pow(swe, 1.0/params.vgm());
+        const Scalar xToM = pow(x, params.vgm());
+        return (1.0 - xToM)/sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
     }
 
     /*!
@@ -180,14 +223,19 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar krn(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
 
-        return
-            pow(1 - swe, 1.0/3) *
-            pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        return pow(1 - swe, 1.0/3) * pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
     }
 
     /*!
@@ -200,19 +248,24 @@ public:
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
+     *
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
      */
     static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
-        assert(0 <= swe && swe <= 1);
+        using std::pow;
+        using std::min;
+        using std::max;
 
-        const Scalar x = std::pow(swe, 1.0/params.vgm());
-        return
-            -std::pow(1.0 - x, 2*params.vgm())
-            *std::pow(1.0 - swe, -2.0/3)
-            *(1.0/3 + 2*x/swe);
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar x = pow(swe, 1.0/params.vgm());
+        return -pow(1.0 - x, 2*params.vgm()) * pow(1.0 - swe, -2.0/3) * (1.0/3 + 2*x/swe);
     }
 
 };
-}
+
+} // end namespace Dumux
 
 #endif
