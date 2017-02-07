@@ -103,7 +103,7 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                auto& origFaceVars = problem_.model().curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
+                auto& origFaceVars = problem_.model().curGlobalFaceVars().faceVars(scvf.dofIndex());
                 auto dirIdx = scvf.directionIndex();
                 velocity[dofIdxGlobal][dirIdx] += 0.5*origFaceVars.velocity();
             }

@@ -153,7 +153,7 @@ private:
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                const auto globalI = scvf.dofIndexSelf();
+                const auto globalI = scvf.dofIndex();
                 for (auto&& globalJ : assemblyMap(faceIdx, cellCenterIdx, scvf.index()))
                     occupationPatternA21.add(globalI, globalJ);
                 for (auto&& globalJ : assemblyMap(faceIdx, faceIdx, scvf.index()))

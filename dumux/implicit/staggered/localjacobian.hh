@@ -186,7 +186,7 @@ public:
         faceResidualCache = 0.0;
         for(auto&& scvf : scvfs(fvGeometry))
         {
-            residual[faceIdx][scvf.dofIndexSelf()] += this->localResidual().faceResidual(scvf.localFaceIdx());
+            residual[faceIdx][scvf.dofIndex()] += this->localResidual().faceResidual(scvf.localFaceIdx());
             faceResidualCache[scvf.localFaceIdx()] = this->localResidual().faceResidual(scvf.localFaceIdx());
         }
 
@@ -357,7 +357,7 @@ private:
         for(auto&& scvf : scvfs(fvGeometry))
         {
             // set the actual dof index
-            const auto faceGlobalI = scvf.dofIndexSelf();
+            const auto faceGlobalI = scvf.dofIndex();
 
             // build derivatives with for face dofs w.r.t. cell center dofs
             for(const auto& globalJ : assemblyMap_(faceIdx, cellCenterIdx, scvf.index()))
@@ -413,7 +413,7 @@ private:
         for(auto&& scvf : scvfs(fvGeometry))
         {
             // set the actual dof index
-            const auto faceGlobalI = scvf.dofIndexSelf();
+            const auto faceGlobalI = scvf.dofIndex();
 
             // build derivatives with for face dofs w.r.t. cell center dofs
             for(const auto& globalJ : assemblyMap_(faceIdx, faceIdx, scvf.index()))

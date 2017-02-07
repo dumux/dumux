@@ -102,7 +102,7 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
@@ -135,7 +135,7 @@ public:
                                         const FVElementGeometry& fvGeometry,
                                         const SubControlVolumeFace& scvf)
     {
-        stencil.push_back(scvf.dofIndexSelf());
+        stencil.push_back(scvf.dofIndex());
     }
 
     void computeFaceToCellCenterStencil(Stencil& stencil,
@@ -163,8 +163,8 @@ public:
         // the first entries are always the face dofIdx itself and the one of the opposing face
         if(stencil.empty())
         {
-            stencil.push_back(scvf.dofIndexSelf());
-            stencil.push_back(scvf.dofIndexOpposite());
+            stencil.push_back(scvf.dofIndex());
+            stencil.push_back(scvf.dofIndexOpposingFace());
         }
 
         for(const auto& data : scvf.pairData())
@@ -193,8 +193,8 @@ public:
    {
        const auto insideScvIdx = scvf.insideScvIdx();
        const auto& insideVolVars = elemVolVars[insideScvIdx];
-       const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity() ;
-       const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.dofIndexOpposite()).velocity();
+       const Scalar velocitySelf = globalFaceVars.faceVars(scvf.dofIndex()).velocity() ;
+       const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.dofIndexOpposingFace()).velocity();
        FacePrimaryVariables normalFlux(0.0);
 
        if(navierStokes)
@@ -285,7 +285,7 @@ private:
       Scalar transportedVelocity(0.0);
 
       if(innerElementIsUpstream)
-          transportedVelocity = velocity(scvf.dofIndexSelf());
+          transportedVelocity = velocity(scvf.dofIndex());
       else
       {
           const int outerDofIdx = subFaceData.outerParallelFaceDofIdx;
@@ -339,7 +339,7 @@ private:
       tangentialDiffusiveFlux -= muAvg * normalDerivative;
 
       // the parallel derivative
-      const Scalar innerParallelVelocity = velocity(scvf.dofIndexSelf());
+      const Scalar innerParallelVelocity = velocity(scvf.dofIndex());
 
       const int outerParallelFaceDofIdx = subFaceData.outerParallelFaceDofIdx;
       const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?

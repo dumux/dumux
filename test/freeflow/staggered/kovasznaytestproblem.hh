@@ -383,7 +383,7 @@ public:
                 // treat face dofs
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
-                    const int dofIdxFace = scvf.dofIndexSelf();
+                    const int dofIdxFace = scvf.dofIndex();
                     const int dirIdx = scvf.directionIndex();
                     const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[faceIdx][dirIdx];
                     const auto numericalSolutionFace = this->model().curSol()[faceIdx][dofIdxFace][momentumBalanceIdx];

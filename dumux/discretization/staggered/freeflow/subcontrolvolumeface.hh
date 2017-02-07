@@ -98,8 +98,8 @@ public:
           for (int i = 0; i < isGeometry.corners(); ++i)
               corners_[i] = isGeometry.corner(i);
 
-          selfIdx_ = geometryHelper.dofIdxSelf();
-          oppositeIdx_ = geometryHelper.dofIdxOpposite();
+          dofIdx_ = geometryHelper.dofIndex();
+          oppositeIdx_ = geometryHelper.dofIndexOpposingFace();
           selfToOppositeDistance_ = geometryHelper.selfToOppositeDistance();
 
           pairData_ = geometryHelper.pairData();
@@ -194,14 +194,14 @@ public:
         return Geometry(geomType_, corners_);
     }
 
-    //! The global index of this sub control volume face
-    IndexType dofIndexSelf() const
+    //! The global index of the dof living on this face
+    IndexType dofIndex() const
     {
-        return selfIdx_;
+        return dofIdx_;
     }
 
-    //! The global index of this sub control volume face
-    IndexType dofIndexOpposite() const
+    //! The global index of the dof living on the opposing face
+    IndexType dofIndexOpposingFace() const
     {
         return oppositeIdx_;
     }
@@ -256,7 +256,7 @@ private:
     std::vector<IndexType> scvIndices_;
     bool boundary_;
 
-    int selfIdx_;
+    int dofIdx_;
     int oppositeIdx_;
     Scalar selfToOppositeDistance_;
     std::vector<StaggeredSubFace> subfaces_;

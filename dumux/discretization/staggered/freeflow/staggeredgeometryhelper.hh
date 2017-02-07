@@ -93,7 +93,7 @@ public:
      /*!
      * \brief Returns the global dofIdx of the intersection itself
      */
-    int dofIdxSelf() const
+    int dofIndex() const
     {
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();
@@ -103,7 +103,7 @@ public:
      /*!
      * \brief Returns the global dofIdx of the opposing intersection
      */
-    int dofIdxOpposite() const
+    int dofIndexOpposingFace() const
     {
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();

@@ -150,7 +150,7 @@ public:
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
-                    auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
+                    auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndex());
                     auto dirIdx = scvf.directionIndex();
 
                     velocityVector[dirIdx] += 0.5*origFaceVars.velocity();
@@ -194,7 +194,7 @@ public:
         {
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndexSelf());
+                auto& origFaceVars = this->curGlobalFaceVars().faceVars(scvf.dofIndex());
                 auto dirIdx = scvf.directionIndex();
                 velocityVector[dirIdx] += 0.5*origFaceVars.velocity();
             }

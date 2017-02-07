@@ -176,7 +176,7 @@ public:
                                                const GlobalFaceVars& globalFaceVars)
     {
         FacePrimaryVariables storage(0.0);
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndexSelf()).velocity();
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
         storage[0] = volVars.density(0) * velocity;
         return storage;
     }
@@ -285,7 +285,7 @@ protected:
             // set a fixed value for the velocity
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
-                const Scalar velocity = faceVars.faceVars(scvf.dofIndexSelf()).velocity();
+                const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
                 const Scalar dirichletValue = this->problem().dirichlet(scvf)[velocityIdx];
                 this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
             }

@@ -35,7 +35,7 @@
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/staggered/globalfvgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
-#include <dumux/discretization/staggered/subcontrolvolume.hh>
+// #include <dumux/discretization/staggered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 
 #include <dumux/freeflow/staggered/propertydefaults.hh>
@@ -146,12 +146,12 @@ int main (int argc, char *argv[]) try
             std::cout <<  std::fixed << std::left << std::setprecision(2)
             << "ip "<< scvf.ipGlobal()
             << "; face "  << std::setw(3)  << scvf.index()
-            << "; self/oppo " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) <<scvf.dofIndexOpposite()
+            << "; self/oppo " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) <<scvf.dofIndexOpposingFace()
             << "; dist self/oppo " << std::setw(3) << scvf.selfToOppositeDistance()
             << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
             << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
-            << ", par1 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(0).outerParallelFaceDofIdx
-            << ", par2 in/out " << std::setw(3) << scvf.dofIndexSelf() << "/" << std::setw(3) << scvf.pairData(1).outerParallelFaceDofIdx
+            << ", par1 in/out " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) << scvf.pairData(0).outerParallelFaceDofIdx
+            << ", par2 in/out " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) << scvf.pairData(1).outerParallelFaceDofIdx
             << ", normDist1 " << std::setw(3) << scvf.pairData(0).normalDistance
             << ", normDist2 " << std::setw(3) << scvf.pairData(1).normalDistance
             << ", parDist1 " << std::setw(3) << scvf.pairData(0).parallelDistance
