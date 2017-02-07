@@ -177,13 +177,13 @@ private:
             fvGeometry.bindElement(element);
             for(auto && scvf : scvfs(fvGeometry))
             {
-                if(dofVisited[scvf.dofIndexSelf()])
+                if(dofVisited[scvf.dofIndex()])
                     continue;
 
                 asImp_().getPositions_(positions, scvf);
                 asImp_().getScalarData_(priVarScalarData, scvf);
                 asImp_().getVectorData_(priVarVectorData, scvf);
-                dofVisited[scvf.dofIndexSelf()] = true;
+                dofVisited[scvf.dofIndex()] = true;
             }
         }
 
@@ -206,7 +206,7 @@ private:
     template<class Face>
     void getPositions_(Positions& positions, const Face& face)
     {
-        const int dofIdxGlobal = face.dofIndexSelf();
+        const int dofIdxGlobal = face.dofIndex();
         auto pos = face.center();
         if(dim == 1)
         {
@@ -237,7 +237,7 @@ private:
     template<class Face>
     void getScalarData_(Data& priVarScalarData, const Face& face)
     {
-        const int dofIdxGlobal = face.dofIndexSelf();
+        const int dofIdxGlobal = face.dofIndex();
         for(int pvIdx = 0; pvIdx < faceData_.priVarScalarDataInfo.size(); ++pvIdx)
         {
             priVarScalarData[pvIdx][dofIdxGlobal] = this->problem().model().curSol()[faceIdx][dofIdxGlobal][pvIdx];
@@ -253,7 +253,7 @@ private:
     template<class Face>
     void getVectorData_(Data& priVarVectorData, const Face& face)
     {
-        const int dofIdxGlobal = face.dofIndexSelf();
+        const int dofIdxGlobal = face.dofIndex();
         for (int i = 0; i < faceData_.priVarVectorDataInfo.size(); ++i)
             for (int j = 0; j < faceData_.priVarVectorDataInfo[i].pvIdx.size(); ++j)
                 priVarVectorData[i][dofIdxGlobal*faceData_.priVarVectorDataInfo[i].pvIdx.size() + j]

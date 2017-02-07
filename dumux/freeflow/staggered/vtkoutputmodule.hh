@@ -73,7 +73,7 @@ private:
     template<class Face>
     void getVectorData_(Data& priVarVectorData, const Face& face)
     {
-        const int dofIdxGlobal = face.dofIndexSelf();
+        const int dofIdxGlobal = face.dofIndex();
         const int dirIdx = directionIndex(face.unitOuterNormal());
         const Scalar velocity = this->problem().model().curSol()[faceIdx][dofIdxGlobal][0];
         for (int i = 0; i < this->faceData().priVarVectorDataInfo.size(); ++i)
