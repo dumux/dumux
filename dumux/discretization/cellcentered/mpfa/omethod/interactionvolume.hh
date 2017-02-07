@@ -111,7 +111,6 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
 
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static constexpr bool facetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     static const int dim = GridView::dimension;
@@ -149,7 +148,7 @@ public:
         bind(seed);
 
         // initialize the vector containing the neumann fluxes
-        assembleNeumannFluxVector_();
+        asImp_().assembleNeumannFluxVector();
     }
 
     template<typename GetTensorFunction>
@@ -278,6 +277,44 @@ public:
             return -1.0*flux;
 
         return flux;
+    }
+
+    // Per default we do not add additional terms for interior Neumann boundaries
+    // Overload this function to realize interior membranes etc...
+    template<typename GetTensorFunction>
+    Scalar interiorNeumannTerm(const GetTensorFunction& getTensor,
+                               const LocalScvfType& localScvf,
+                               const InteriorBoundaryData& data) const
+    { return 0.0; }
+
+    void assembleNeumannFluxVector()
+    {
+        // initialize the neumann fluxes vector to zero
+        neumannFluxes_.resize(fluxFaceIndexSet_.size(), PrimaryVariables(0.0));
+
+        if (!onDomainOrInteriorBoundary() || useTpfaBoundary)
+            return;
+
+        LocalIndexType fluxFaceIdx = 0;
+        for (auto localFluxFaceIdx : fluxFaceIndexSet_)
+        {
+            const auto& localScvf = localScvf_(localFluxFaceIdx);
+            const auto faceType = localScvf.faceType();
+
+            if (faceType == MpfaFaceTypes::neumann || faceType == MpfaFaceTypes::interiorNeumann)
+            {
+                const auto& element = localElement_(localScvf.insideLocalScvIndex());
+                const auto& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
+                auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf);
+                neumannFlux *= globalScvf.area();
+                neumannFlux *= elemVolVars_()[globalScvf.insideScvIdx()].extrusionFactor();
+
+                // The flux is assumed to be prescribed in the form of -D*gradU
+                neumannFluxes_[fluxFaceIdx] = neumannFlux;
+            }
+
+            fluxFaceIdx++;
+        }
     }
 
     const LocalFaceData& getLocalFaceData(const SubControlVolumeFace& scvf) const
@@ -425,36 +462,6 @@ private:
         }
     }
 
-    void assembleNeumannFluxVector_()
-    {
-        // initialize the neumann fluxes vector to zero
-        neumannFluxes_.resize(fluxFaceIndexSet_.size(), PrimaryVariables(0.0));
-
-        if (!onDomainOrInteriorBoundary() || useTpfaBoundary)
-            return;
-
-        LocalIndexType fluxFaceIdx = 0;
-        for (auto localFluxFaceIdx : fluxFaceIndexSet_)
-        {
-            const auto& localScvf = localScvf_(localFluxFaceIdx);
-            const auto faceType = localScvf.faceType();
-
-            if (faceType == MpfaFaceTypes::neumann || (faceType == MpfaFaceTypes::interiorNeumann && !facetCoupling))
-            {
-                const auto& element = localElement_(localScvf.insideLocalScvIndex());
-                const auto& globalScvf = fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
-                auto neumannFlux = problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf);
-                neumannFlux *= globalScvf.area();
-                neumannFlux *= elemVolVars_()[globalScvf.insideScvIdx()].extrusionFactor();
-
-                // The flux is assumed to be prescribed in the form of -D*gradU
-                neumannFluxes_[fluxFaceIdx] = neumannFlux;
-            }
-
-            fluxFaceIdx++;
-        }
-    }
-
     template<typename GetTensorFunction>
     void assembleLocalMatrices_(const GetTensorFunction& getTensor,
                                 DynamicMatrix& A,
@@ -512,37 +519,13 @@ private:
                         {
                             // on interior neumann faces, apply xi factor
                             // However, if this is a boundary face at the same time, don't!
-                            A[idxInFluxFaces][curIdxInFluxFaces] += localScvf.globalScvf().boundary() ?
-                                                                    posWijk[localDir] : xi*posWijk[localDir];
+                            A[idxInFluxFaces][curIdxInFluxFaces] += localScvf.globalScvf().boundary() ? posWijk[localDir] : xi*posWijk[localDir];
 
-                            // add values from other domain in case of facet coupling
-                            if (facetCoupling && curIdxInFluxFaces == idxInFluxFaces)
+                            // maybe add terms stemming from the interior boundary (in case of facet coupling or membrane modelling)
+                            if (curIdxInFluxFaces == idxInFluxFaces)
                             {
-                                // get interior boundary data
                                 const auto& data = interiorBoundaryData_[this->findIndexInVector(interiorBoundaryScvfIndexSet_(), curLocalScvfIdx)];
-
-                                // obtain the complete data on the facet element
-                                const auto completeFacetData = data.completeCoupledFacetData();
-
-                                // calculate "leakage factor"
-                                const auto n = curLocalScvf.unitOuterNormal();
-                                const auto v = [&] ()
-                                        {
-                                            auto res = n;
-                                            res *= -0.5*completeFacetData.volVars().extrusionFactor();
-                                            res -= curLocalScvf.ip();
-                                            res += curLocalScvf.globalScvf().facetCorner();
-                                            res /= res.two_norm2();
-                                            return res;
-                                        } ();
-
-                                // substract n*T*v from diagonal matrix entry
-                                const auto facetTensor = getTensor(completeFacetData.problem(),
-                                                                   completeFacetData.element(),
-                                                                   completeFacetData.volVars(),
-                                                                   completeFacetData.fvGeometry(),
-                                                                   completeFacetData.scv());
-                                A[idxInFluxFaces][curIdxInFluxFaces] -= MpfaHelper::nT_M_v(n, facetTensor, v);
+                                A[idxInFluxFaces][curIdxInFluxFaces] += asImp_().interiorNeumannTerm(getTensor, curLocalScvf, data);
                             }
                         }
                         // this means we are on an interior face
@@ -764,6 +747,12 @@ private:
 
         return wijk;
     }
+
+    Implementation& asImp_()
+    { return static_cast<Implementation&> (*this); }
+
+    const Implementation& asImp_() const
+    { return static_cast<const Implementation&> (*this); }
 
     const Problem& problem_() const
     { return *problemPtr_; }

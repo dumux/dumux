@@ -27,21 +27,16 @@
 
 namespace Dumux
 {
-
-//! forward declaration of property tags
-namespace Properties
-{
-    NEW_PROP_TAG(SpatialParams);
-    NEW_PROP_TAG(FacetCoupling);
-}
-
+/*!
+ * \ingroup CCMpfa
+ * \brief Class to store additional data related to interior boundary facets.
+ */
 template<class TypeTag>
 class InteriorBoundaryData
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -49,42 +44,6 @@ class InteriorBoundaryData
 
     using IndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename BoundaryInteractionVolume::LocalIndexType;
-
-    //! Dummy type for the CompleteCoupledFacetData struct.
-    //! Implementations need to have at least the provided interfaces.
-    //! Note that the return types are also "wrong" (Here just to satisfy the compiler)
-    struct CompleteCoupledFacetData
-    {
-        const Problem& problem() const
-        {
-            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
-        }
-
-        const SpatialParams& spatialParams() const
-        {
-            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
-        }
-
-        const VolumeVariables volVars() const
-        {
-            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
-        }
-
-        const Element element() const
-        {
-            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
-        }
-
-        const FVElementGeometry fvGeometry() const
-        {
-            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
-        }
-
-        const FVElementGeometry scv() const
-        {
-            DUNE_THROW(Dune::NotImplemented, "No implementation of the CompleteCoupledFacetData class provided");
-        }
-    };
 
 public:
     //! the constructor
@@ -122,11 +81,6 @@ public:
     //! returns the volume variables for interior dirichlet boundaries
     VolumeVariables facetVolVars(const FVElementGeometry& fvGeometry) const
     {
-        //! This cannot be called when FacetCoupling is active
-        static const bool isFacetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
-        assert(!isFacetCoupling && "For models with a coupled problem on the element facets you have to"
-                                   "provide a suitable implementation of the InteriorBoundaryData class");
-
         //! This can only be called for interior Dirichlet boundaries
         assert(faceType_ == MpfaFaceTypes::interiorDirichlet && "requesting Dirichlet vol vars for a face which is"
                                                                 "not marked as interior Dirichlet face.");
@@ -141,19 +95,6 @@ public:
                        fvGeometry.scv(elementIndex()));
 
         return volVars;
-    }
-
-    //! The following interface is to be overloaded for problems using facet coupling.
-    //! prepares all the necessary variables of the other domain.
-    //! Note that also an implementation of the CompleteFacetData structure has to be provided.
-    CompleteCoupledFacetData completeCoupledFacetData() const
-    {
-        if (GET_PROP_VALUE(TypeTag, MpfaFacetCoupling))
-            DUNE_THROW(Dune::InvalidStateException, "You have to use an InteriorBoundaryData class designed "
-                                                    "for handling a coupled problem on the element facets.");
-        else
-            DUNE_THROW(Dune::InvalidStateException, "FacetCoupling is not active. "
-                                                    "Calling completeCoupledFacetData() for uncoupled problems is invalid.");
     }
 
 private:
