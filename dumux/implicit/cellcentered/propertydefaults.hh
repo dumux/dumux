@@ -76,8 +76,8 @@ SET_TYPE_PROP(CCModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, G
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 
-//! Set the AssemblyMap to the CCAssemblyMap (default: symmetric occupation pattern)
-SET_TYPE_PROP(CCModel, AssemblyMap, Dumux::CCSymmetricAssemblyMap<TypeTag>);
+//! Set the AssemblyMap to the CCAssemblyMap per default
+SET_TYPE_PROP(CCModel, AssemblyMap, Dumux::CCSimpleAssemblyMap<TypeTag>);
 
 // By default, we disable interior boundaries
 SET_BOOL_PROP(CCModel, EnableInteriorBoundaries, false);

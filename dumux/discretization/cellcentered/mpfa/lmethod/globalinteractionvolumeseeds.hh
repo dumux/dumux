@@ -141,12 +141,7 @@ public:
     }
 
     bool isLocalMaxLevel_(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        auto inLevel = element.level();
-        if (this->problem().model().globalFvGeometry().element(scvf.outsideScvIdx()).level() > inLevel)
-            return false;
-        return true;
-    }
+    { return this->problem().model().globalFvGeometry().element(scvf.outsideScvIdx()).level() <= element.level(); }
 };
 
 } // end namespace
