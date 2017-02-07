@@ -120,7 +120,7 @@ public:
     //! we should never call this method for box models
     template <class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
-    problemBoundaryTypes(const Element& element, const SubControlVolume& scv) const
+    problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return BoundaryTypes(); }
 
     //! Calculate the velocities for the scvs in the element
@@ -247,7 +247,7 @@ public:
                 }
                 else
                 {
-                    auto bcTypes = problem_.boundaryTypes(element, scvf);
+                    auto bcTypes = problemBoundaryTypes(element, scvf);
                     if (bcTypes.hasOnlyDirichlet())
                     {
                         FluxVariables fluxVars;
@@ -274,7 +274,7 @@ public:
             {
                 if (scvf.boundary())
                 {
-                    auto bcTypes = problem_.boundaryTypes(element, scvf);
+                    auto bcTypes = problemBoundaryTypes(element, scvf);
                     if (bcTypes.hasNeumann())
                     {
                         // cubes
