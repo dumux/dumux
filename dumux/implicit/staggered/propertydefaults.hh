@@ -90,7 +90,7 @@ private:
     using ScvGeometry = typename Grid::template Codim<0>::Geometry;
     using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
 public:
-    typedef Dumux::StaggeredSubControlVolume<ScvGeometry, IndexType> type;
+    typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
 };
 
 SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag>);

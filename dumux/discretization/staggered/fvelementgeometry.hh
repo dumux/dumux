@@ -29,7 +29,6 @@
 
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/discretization/staggered/subcontrolvolume.hh>
 
 namespace Dumux
 {
