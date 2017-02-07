@@ -89,8 +89,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              unsigned int phaseIdx, unsigned int compIdx)
         {
             const auto& localFaceData = iv.getLocalFaceData(scvf);
-            diffusionVolVarsStencils_[phaseIdx][compIdx] = iv.volVarsStencil();
             diffusionTij_[phaseIdx][compIdx] = iv.getTransmissibilities(localFaceData);
+            // get the stencil only for the first call
+            if (phaseIdx == 0 && compIdx == 0)
+                diffusionVolVarsStencil_ = iv.volVarsStencil();
 
             //! For compositional models, we associate neumann fluxes with the phases (main components)
             //! This is done in the AdvectionCache. However, in single-phasic models we solve the phase AND
@@ -105,7 +107,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! computation. This includes all participating boundary volume variables
         //! and it can be different for the phases & components.
         const Stencil& diffusionVolVarsStencil(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionVolVarsStencils_[phaseIdx][compIdx]; }
+        { return diffusionVolVarsStencil_; }
 
         //! Returns the transmissibilities associated with the volume variables
         //! This can be different for the phases & components.
@@ -122,7 +124,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     private:
         // Quantities associated with molecular diffusion
-        std::array< std::array<Stencil, numComponents>, numPhases> diffusionVolVarsStencils_;
+        Stencil diffusionVolVarsStencil_;
         std::array< std::array<CoefficientVector, numComponents>, numPhases> diffusionTij_;
 
         // diffusive neumann flux for single-phasic models
