@@ -25,12 +25,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 
-#include <memory>
-
-#include <dune/common/float_cmp.hh>
-
-#include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 
