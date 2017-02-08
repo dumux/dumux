@@ -147,17 +147,13 @@ public:
         const auto& tij = fluxVarsCache.heatConductionTij();
 
         const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
-        // For interior Neumann boundaries when using Tpfa for Neumann boundary conditions, we simply
-        // return the user-specified flux
+        // For interior Neumann boundaries when using Tpfa on boundaries, return the user-specified flux
         if (isInteriorBoundary
             && useTpfaBoundary
             && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
             return scvf.area()*
                    elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
-                   problem.neumann(element,
-                                   fvGeometry,
-                                   elemVolVars,
-                                   scvf)[energyEqIdx];
+                   problem.neumann(element, fvGeometry, elemVolVars, scvf)[energyEqIdx];
 
         // calculate Tij*tj
         Scalar flux(0.0);
@@ -170,13 +166,14 @@ public:
             return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, fluxVarsCache);
+        flux += Implementation::computeInteriorBoundaryContribution(element, fvGeometry, fluxVarsCache);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
     }
 
-    static Scalar computeInteriorBoundaryContribution(const FVElementGeometry& fvGeometry,
+    static Scalar computeInteriorBoundaryContribution(const Element& element,
+                                                      const FVElementGeometry& fvGeometry,
                                                       const FluxVariablesCache& fluxVarsCache)
     {
         // obtain the transmissibilites associated with all pressures
@@ -190,7 +187,7 @@ public:
         Scalar flux = 0.0;
         for (auto&& data : fluxVarsCache.interiorBoundaryData())
             if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
-                flux += tij[startIdx + data.localIndexInInteractionVolume()]*data.facetVolVars(fvGeometry).temperature();
+                flux += tij[startIdx + data.localIndexInInteractionVolume()]*data.facetVolVars(element, fvGeometry).temperature();
 
         return flux;
     }

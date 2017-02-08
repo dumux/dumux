@@ -79,13 +79,12 @@ public:
     { return faceType_; }
 
     //! returns the volume variables for interior dirichlet boundaries
-    VolumeVariables facetVolVars(const FVElementGeometry& fvGeometry) const
+    VolumeVariables facetVolVars(const Element& element, const FVElementGeometry& fvGeometry) const
     {
         //! This can only be called for interior Dirichlet boundaries
         assert(faceType_ == MpfaFaceTypes::interiorDirichlet && "requesting Dirichlet vol vars for a face which is"
                                                                 "not marked as interior Dirichlet face.");
 
-        auto element = problem_().model().globalFvGeometry().element(elementIndex());
         auto priVars = problem_().dirichlet(element, fvGeometry.scvf(scvfIndex()));
 
         VolumeVariables volVars;

@@ -173,20 +173,17 @@ public:
         const auto& tij = fluxVarsCache.advectionTij();
 
         const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
-        // For interior Neumann boundaries when using Tpfa for Neumann boundary conditions, we simply
-        // return the user-specified flux. We assume phaseIdx = eqIdx here.
+        // For interior Neumann boundaries when using Tpfa on boundaries, return the user-specified flux
+        // We assume phaseIdx = eqIdx here.
         if (isInteriorBoundary
             && useTpfaBoundary
             && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
             return scvf.area()*
                    elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
-                   problem.neumann(element,
-                                   fvGeometry,
-                                   elemVolVars,
-                                   scvf)[phaseIdx];
+                   problem.neumann(element, fvGeometry, elemVolVars, scvf)[phaseIdx];
 
         // Calculate the interface density for gravity evaluation
-        const auto rho = Implementation::interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+        const auto rho = Implementation::interpolateDensity(element, fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
 
         // calculate Tij*pj
         Scalar flux(0.0);
@@ -214,13 +211,14 @@ public:
             return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(problem, fvGeometry, fluxVarsCache, phaseIdx, rho);
+        flux += Implementation::computeInteriorBoundaryContribution(problem, element, fvGeometry, fluxVarsCache, phaseIdx, rho);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
     }
 
-    static Scalar interpolateDensity(const FVElementGeometry& fvGeometry,
+    static Scalar interpolateDensity(const Element& element,
+                                     const FVElementGeometry& fvGeometry,
                                      const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
                                      const FluxVariablesCache& fluxVarsCache,
@@ -238,7 +236,7 @@ public:
             {
                 const auto& data = fluxVarsCache.interiorBoundaryDataSelf();
                 if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
-                    return data.facetVolVars(fvGeometry).density(phaseIdx);
+                    return data.facetVolVars(element, fvGeometry).density(phaseIdx);
             }
 
             // use arithmetic mean of the densities around the scvf
@@ -255,6 +253,7 @@ public:
     }
 
     static Scalar computeInteriorBoundaryContribution(const Problem& problem,
+                                                      const Element& element,
                                                       const FVElementGeometry& fvGeometry,
                                                       const FluxVariablesCache& fluxVarsCache,
                                                       unsigned int phaseIdx, Scalar rho)
@@ -274,7 +273,7 @@ public:
         {
             if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
             {
-                Scalar h = data.facetVolVars(fvGeometry).pressure(phaseIdx);
+                Scalar h = data.facetVolVars(element, fvGeometry).pressure(phaseIdx);
 
                 if (gravity)
                 {
