@@ -71,13 +71,13 @@ private:
      * \param face The face
      */
     template<class Face>
-    void getVectorData_(Data& priVarVectorData, const Face& face)
+    void getPrivarVectorData_(Data& priVarVectorData, const Face& face)
     {
         const int dofIdxGlobal = face.dofIndex();
         const int dirIdx = directionIndex(face.unitOuterNormal());
         const Scalar velocity = this->problem().model().curSol()[faceIdx][dofIdxGlobal][0];
-        for (int i = 0; i < this->faceData().priVarVectorDataInfo.size(); ++i)
-            priVarVectorData[i][dofIdxGlobal * this->faceData().priVarVectorDataInfo[i].pvIdx.size() + dirIdx] = velocity;
+        for (int i = 0; i < this->priVarVectorDataInfo_.size(); ++i)
+            priVarVectorData[i][dofIdxGlobal * this->priVarVectorDataInfo_[i].pvIdx.size() + dirIdx] = velocity;
     }
 };
 

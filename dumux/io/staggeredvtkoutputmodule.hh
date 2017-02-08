@@ -55,6 +55,8 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
 
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
@@ -65,31 +67,14 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
     using Positions = std::vector<Scalar>;
     using Data = std::vector<std::vector<Scalar>>;
 
-    // a collection of types and variables to be passed to the staggered vtk writer
-    struct WriterData
-    {
-        using Positions = StaggeredVtkOutputModule::Positions;
-        using PriVarScalarDataInfo = StaggeredVtkOutputModule::PriVarScalarDataInfo;
-        using PriVarVectorDataInfo = StaggeredVtkOutputModule::PriVarVectorDataInfo;
-        using Data = StaggeredVtkOutputModule::Data;
-        Data priVarScalarData;
-        Data priVarVectorData;
-        Data secondVarScalarData;
-        Data secondVarVectorData;
-        Positions positions;
-        std::vector<PriVarScalarDataInfo> priVarScalarDataInfo;
-        std::vector<PriVarVectorDataInfo> priVarVectorDataInfo;
-        std::vector<PriVarScalarDataInfo> secondVarScalarDataInfo;
-        std::vector<PriVarVectorDataInfo> secondVarVectorDataInfo;
-    };
-
 public:
 
     StaggeredVtkOutputModule(const Problem& problem,
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm), faceWriter_(problem)
+                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm), faceWriter_(coordinates_)
 
     {
         writeFaceVars_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, WriteFaceData);
+        coordinatesInitialized_ = false;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,12 +82,31 @@ public:
     //! Do not call these methods after initialization
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    //! Output a scalar field
+    //! \param name The name of the vtk field
+    //! \returns A reference to the resized scalar field to be filled with the actual data
+    std::vector<Scalar>& createFaceScalarField(const std::string& name)
+    {
+        faceScalarFields_.emplace_back(std::make_pair(std::vector<Scalar>(this->problem().model().numFaceDofs()), name));
+        return faceScalarFields_.back().first;
+    }
+
+    //! Output a vector field
+    //! \param name The name of the vtk field
+    //! \returns A reference to the resized vector field to be filled with the actual data
+    std::vector<GlobalPosition>& createFaceVectorField(const std::string& name)
+    {
+        faceVectorFields_.emplace_back(std::make_pair(std::vector<GlobalPosition>(this->problem().model().numFaceDofs()), name));
+        return faceVectorFields_.back().first;
+    }
+
     //! Output a scalar primary variable
     //! \param name The name of the vtk field
     //! \param pvIdx The index in the primary variables vector
     void addFacePrimaryVariable(const std::string& name, unsigned int pvIdx)
     {
-        faceData_.priVarScalarDataInfo.push_back(PriVarScalarDataInfo{pvIdx, name});
+        priVarScalarDataInfo_.push_back(PriVarScalarDataInfo{pvIdx, name});
     }
 
     //! Output a vector primary variable
@@ -111,7 +115,7 @@ public:
     void addFacePrimaryVariable(const std::string& name, std::vector<unsigned int> pvIndices)
     {
         assert(pvIndices.size() < 4 && "Vtk doesn't support vector dimensions greater than 3!");
-        faceData_.priVarVectorDataInfo.push_back(PriVarVectorDataInfo{pvIndices, name});
+        priVarVectorDataInfo_.push_back(PriVarVectorDataInfo{pvIndices, name});
     }
 
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
@@ -142,15 +146,24 @@ protected:
         return this->problem().model().curSol()[cellCenterIdx][dofIdxGlobal][pvIdx];
     }
 
-     /*!
-     * \brief Returns a reference to the face data
-     */
-    const WriterData& faceData() const
-    {
-        return faceData_;
-    }
+    std::vector<PriVarScalarDataInfo> priVarScalarDataInfo_;
+    std::vector<PriVarVectorDataInfo> priVarVectorDataInfo_;
+    std::vector<PriVarScalarDataInfo> secondVarScalarDataInfo_;
+    std::vector<PriVarVectorDataInfo> secondVarVectorDataInfo_;
 
 private:
+
+    void updateCoordinates_()
+    {
+        std::cout << "updating coordinates" << std::endl;
+        coordinates_.resize(this->problem().model().numFaceDofs());
+        for(auto&& facet : facets(this->problem().gridView()))
+        {
+            const int dofIdxGlobal = this->problem().gridView().indexSet().index(facet);
+            coordinates_[dofIdxGlobal] = facet.geometry().center();
+        }
+        coordinatesInitialized_ = true;
+    }
 
      /*!
      * \brief Gathers all face-related data and invokes the face vtk-writer using these data.
@@ -163,13 +176,14 @@ private:
         std::vector<bool> dofVisited(numPoints, false);
 
         // get fields for all primary coordinates and variables
-        Positions positions(numPoints*3);
+        if(!coordinatesInitialized_)
+            updateCoordinates_();
 
-        Data priVarScalarData(faceData_.priVarScalarDataInfo.size(), std::vector<Scalar>(numPoints));
+        Data priVarScalarData(priVarScalarDataInfo_.size(), std::vector<Scalar>(numPoints));
 
-        Data priVarVectorData(faceData_.priVarVectorDataInfo.size());
-        for (std::size_t i = 0; i < faceData_.priVarVectorDataInfo.size(); ++i)
-            priVarVectorData[i].resize(numPoints*faceData_.priVarVectorDataInfo[i].pvIdx.size());
+        Data priVarVectorData(priVarVectorDataInfo_.size());
+        for (std::size_t i = 0; i < priVarVectorDataInfo_.size(); ++i)
+            priVarVectorData[i].resize(numPoints*priVarVectorDataInfo_[i].pvIdx.size());
 
         for(auto&& element : elements(this->problem().gridView()))
         {
@@ -180,53 +194,34 @@ private:
                 if(dofVisited[scvf.dofIndex()])
                     continue;
 
-                asImp_().getPositions_(positions, scvf);
-                asImp_().getScalarData_(priVarScalarData, scvf);
-                asImp_().getVectorData_(priVarVectorData, scvf);
+                asImp_().getPrivarScalarData_(priVarScalarData, scvf);
+                asImp_().getPrivarVectorData_(priVarVectorData, scvf);
+
                 dofVisited[scvf.dofIndex()] = true;
             }
         }
 
-        faceData_.priVarScalarData = std::move(priVarScalarData);
-        faceData_.priVarVectorData = std::move(priVarVectorData);
-        faceData_.positions = std::move(positions);
-//         results.secondVarScalarData = xxx; //TODO: implemented secondVarData
-//         results.secondVarScalarData = xxx;
+        // transfer priVar scalar data to writer
+        for(int i = 0; i < priVarScalarDataInfo_.size(); ++i)
+            faceWriter_.addPointData(priVarScalarData[i], priVarScalarDataInfo_[i].name);
 
-        faceWriter_.write(faceData_);
+        // transfer priVar vector data to writer
+        for(int i = 0; i < priVarVectorDataInfo_.size(); ++i)
+            faceWriter_.addPointData(priVarVectorData[i], priVarVectorDataInfo_[i].name, priVarVectorDataInfo_[i].pvIdx.size());
+
+        // transfer custom scalar data to writer
+        for(auto&& scalarField : faceScalarFields_)
+            faceWriter_.addPointData(scalarField.first, scalarField.second);
+
+        // transfer custom vector data to writer
+        for(auto&& vectorField : faceVectorFields_)
+            faceWriter_.addPointData(vectorField.first, vectorField.second, 3);
+
+        faceWriter_.write();
+        faceScalarFields_.clear();
+        faceVectorFields_.clear();
     }
 
-     /*!
-     * \brief Retrives the position (center) of the face.
-     *        ParaView expects three-dimensional coordinates, therefore we fill empty entries with zero for dim < 3.
-     *
-     * \param positions Container to store the positions
-     * \param face The face
-     */
-    template<class Face>
-    void getPositions_(Positions& positions, const Face& face)
-    {
-        const int dofIdxGlobal = face.dofIndex();
-        auto pos = face.center();
-        if(dim == 1)
-        {
-            positions[dofIdxGlobal*3] = pos[0];
-            positions[dofIdxGlobal*3 + 1] = 0.0;
-            positions[dofIdxGlobal*3 + 2] = 0.0;
-        }
-        else if(dim == 2)
-        {
-            positions[dofIdxGlobal*3] = pos[0];
-            positions[dofIdxGlobal*3 + 1] = pos[1];
-            positions[dofIdxGlobal*3 + 2] = 0.0;
-        }
-        else
-        {
-            positions[dofIdxGlobal*3] = pos[0];
-            positions[dofIdxGlobal*3 + 1] = pos[1] ;
-            positions[dofIdxGlobal*3 + 2] = pos[2] ;
-        }
-    }
 
      /*!
      * \brief Retrives scalar-valued data from the face.
@@ -235,13 +230,11 @@ private:
      * \param face The face
      */
     template<class Face>
-    void getScalarData_(Data& priVarScalarData, const Face& face)
+    void getPrivarScalarData_(Data& priVarScalarData, const Face& face)
     {
         const int dofIdxGlobal = face.dofIndex();
-        for(int pvIdx = 0; pvIdx < faceData_.priVarScalarDataInfo.size(); ++pvIdx)
-        {
+        for(int pvIdx = 0; pvIdx < priVarScalarDataInfo_.size(); ++pvIdx)
             priVarScalarData[pvIdx][dofIdxGlobal] = this->problem().model().curSol()[faceIdx][dofIdxGlobal][pvIdx];
-        }
     }
 
      /*!
@@ -251,18 +244,23 @@ private:
      * \param face The face
      */
     template<class Face>
-    void getVectorData_(Data& priVarVectorData, const Face& face)
+    void getPrivarVectorData_(Data& priVarVectorData, const Face& face)
     {
         const int dofIdxGlobal = face.dofIndex();
-        for (int i = 0; i < faceData_.priVarVectorDataInfo.size(); ++i)
-            for (int j = 0; j < faceData_.priVarVectorDataInfo[i].pvIdx.size(); ++j)
-                priVarVectorData[i][dofIdxGlobal*faceData_.priVarVectorDataInfo[i].pvIdx.size() + j]
-                    = this->problem().model().curSol()[faceIdx][dofIdxGlobal][faceData_.priVarVectorDataInfo[i].pvIdx[j]];
+        for (int i = 0; i < priVarVectorDataInfo_.size(); ++i)
+            for (int j = 0; j < priVarVectorDataInfo_[i].pvIdx.size(); ++j)
+                priVarVectorData[i][dofIdxGlobal*priVarVectorDataInfo_[i].pvIdx.size() + j]
+                    = this->problem().model().curSol()[faceIdx][dofIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
     }
 
-    StaggeredVtkWriter<TypeTag, WriterData> faceWriter_;
-    WriterData faceData_;
+    StaggeredVtkWriter<dimWorld> faceWriter_;
     bool writeFaceVars_;
+
+    std::vector<GlobalPosition> coordinates_;
+    bool coordinatesInitialized_;
+
+    std::list<std::pair<std::vector<Scalar>, std::string>> faceScalarFields_;
+    std::list<std::pair<std::vector<GlobalPosition>, std::string>> faceVectorFields_;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
