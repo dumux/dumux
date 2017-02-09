@@ -260,7 +260,7 @@ protected:
                 {
                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& insideVolVars = elemVolVars[insideScv];
-                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.dofPosition(), 0)[pressureIdx];
+                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.dofPosition())[cellCenterIdx][pressureIdx];
                 }
             }
         }
@@ -286,7 +286,7 @@ protected:
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
                 const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
-                const Scalar dirichletValue = this->problem().dirichlet(scvf)[velocityIdx];
+                const Scalar dirichletValue = this->problem().dirichletAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
                 this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
             }
 
@@ -325,7 +325,7 @@ private:
         // treat outflow BCs
         if(scvf.boundary())
         {
-            const Scalar pressure = this->problem().dirichlet(element, scvf)[pressureIdx];
+            const Scalar pressure = this->problem().dirichletAtPos(scvf.center())[cellCenterIdx][pressureIdx];
             result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
         return result;

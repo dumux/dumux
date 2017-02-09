@@ -254,7 +254,7 @@ public:
             {
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
-                auto initPriVars = this->problem_().initial(scv)[cellCenterIdx];
+                auto initPriVars = this->problem_().initialAtPos(scv.center())[cellCenterIdx];
 
                 auto dofIdxGlobal = scv.dofIndex();
                 this->uCur_[cellCenterIdx][dofIdxGlobal] += initPriVars;
@@ -263,7 +263,7 @@ public:
             // loop over faces
             for(auto&& scvf : scvfs(fvGeometry))
             {
-                auto initPriVars = this->problem_().initial(scvf)[faceIdx];
+                auto initPriVars = this->problem_().initialAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
                 this->uCur_[faceIdx][scvf.dofIndex()] = initPriVars;
             }
         }

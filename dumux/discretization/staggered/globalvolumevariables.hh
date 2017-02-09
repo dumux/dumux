@@ -108,7 +108,7 @@ public:
                 for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx))
-                        boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichlet(element, scvf)[eqIdx];
+                        boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichletAtPos(scvf.center())[cellCenterIdx][eqIdx];
                     else if(bcTypes.isNeumann(eqIdx))
                         boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary

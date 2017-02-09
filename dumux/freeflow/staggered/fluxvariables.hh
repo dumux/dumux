@@ -90,6 +90,10 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, false>
         momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
 public:
 
     CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
@@ -292,7 +296,7 @@ private:
           if(outerDofIdx >= 0)
               transportedVelocity = velocity(outerDofIdx);
           else // this is the case when the outer parallal dof would lie outside the domain
-              transportedVelocity = problem.dirichlet(scvf)[velocityIdx];
+              transportedVelocity = problem.dirichletAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
       }
 
       const Scalar momentum = upVolVars.density() * transportedVelocity;
@@ -329,7 +333,7 @@ private:
 
       const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
                                   velocity(outerNormalVelocityIdx) :
-                                  problem.dirichletAtPos(subFaceData.virtualOuterNormalFaceDofPos, normalDirIdx)[velocityIdx];
+                                  problem.dirichletAtPos(subFaceData.virtualOuterNormalFaceDofPos)[faceIdx][normalDirIdx];
 
       const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
                                     (outerNormalVelocity - innerNormalVelocity) :
@@ -344,7 +348,7 @@ private:
       const int outerParallelFaceDofIdx = subFaceData.outerParallelFaceDofIdx;
       const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?
                                            velocity(outerParallelFaceDofIdx) :
-                                           problem.dirichletAtPos(subFaceData.virtualOuterParallelFaceDofPos, scvf.directionIndex())[velocityIdx];
+                                           problem.dirichletAtPos(subFaceData.virtualOuterParallelFaceDofPos)[faceIdx][scvf.directionIndex()];
 
       const Scalar parallelDeltaV = normalFace.normalInPosCoordDir() ?
                                    (outerParallelVelocity - innerParallelVelocity) :
