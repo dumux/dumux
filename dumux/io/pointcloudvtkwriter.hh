@@ -55,7 +55,7 @@ class PointCloudVtkWriter
      * \brief A class holding a data container and additional information
      */
     template<class ContainerType>
-    class VTKLocalFunction
+    class VTKFunction
     {
     public:
         /*!
@@ -65,7 +65,7 @@ class PointCloudVtkWriter
         * \param name The name of the data set
         * \param numComponents The number of components of the data set
         */
-        VTKLocalFunction(const ContainerType& data, const std::string& name, const int numComponents) : data_(data), name_(name), numComponents_(numComponents)
+        VTKFunction(const ContainerType& data, const std::string& name, const int numComponents) : data_(data), name_(name), numComponents_(numComponents)
         {}
 
         /*!
@@ -117,8 +117,8 @@ class PointCloudVtkWriter
 
 
 public:
-    using ScalarLocalFunction = VTKLocalFunction<std::vector<Scalar>>;
-    using VectorLocalFunction = VTKLocalFunction<std::vector<GlobalPosition>>;
+    using ScalarFunction = VTKFunction<std::vector<Scalar>>;
+    using VectorFunction = VTKFunction<std::vector<GlobalPosition>>;
 
 
     PointCloudVtkWriter(const std::vector<GlobalPosition>& coordinates) : coordinates_(coordinates)
@@ -134,28 +134,29 @@ public:
     {
         auto filename = getSerialPieceName(name, "");
 
-        file_.open(filename);
-        writeHeader_();
-        writeCoordinates_(coordinates_);
-        writeDataInfo_();
+        std::ofstream file;
+        file.open(filename);
+        writeHeader_(file);
+        writeCoordinates_(file, coordinates_);
+        writeDataInfo_(file);
 
         for(auto&& data : scalarPointData_)
         {
-            writeData_(data);
+            writeData_(file, data);
         }
         for(auto&& data :vectorPointData_)
         {
-            writeData_(data);
+            writeData_(file, data);
         }
 
-        file_ << "</PointData>\n";
-        file_ << "</Piece>\n";
-        file_ << "</PolyData>\n";
-        file_ << "</VTKFile>";
+        file << "</PointData>\n";
+        file << "</Piece>\n";
+        file << "</PolyData>\n";
+        file << "</VTKFile>";
 
         clear();
 
-        file_.close();
+        file.close();
     }
 
      /*!
@@ -180,7 +181,7 @@ public:
     void addPointData(const std::vector<Scalar>& v, const std::string &name, int ncomps = 1)
     {
         assert(v.size() == ncomps * coordinates_.size());
-        scalarPointData_.push_back(ScalarLocalFunction(v, name, ncomps));
+        scalarPointData_.push_back(ScalarFunction(v, name, ncomps));
     }
 
      /*!
@@ -193,7 +194,7 @@ public:
     void addPointData(const std::vector<GlobalPosition>& v, const std::string &name, int ncomps = 1)
     {
         assert(v.size() == coordinates_.size());
-        vectorPointData_.push_back(VectorLocalFunction(v, name, ncomps));
+        vectorPointData_.push_back(VectorFunction(v, name, ncomps));
     }
 
      /*!
@@ -257,19 +258,19 @@ private:
      /*!
      * \brief Writes the header to the file
      */
-    void writeHeader_()
+    void writeHeader_(std::ostream& file)
     {
         std::string header = "<?xml version=\"1.0\"?>\n";
                     header += "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
                     header += "<PolyData>\n";
                     header += "<Piece NumberOfLines=\"0\" NumberOfPoints=\"" + std::to_string(coordinates_.size()) + "\">\n";
-        file_ << header;
+        file << header;
     }
 
      /*!
      * \brief Writes information about the data to the file
      */
-    void writeDataInfo_()
+    void writeDataInfo_(std::ostream& file)
     {
         std::string scalarName;
         std::string vectorName;
@@ -303,11 +304,11 @@ private:
 
         if(foundScalar)
             if(foundVector)
-                file_ << "<PointData Scalars=\"" << scalarName << "\" Vectors=\"" << vectorName <<"\">\n";
+                file << "<PointData Scalars=\"" << scalarName << "\" Vectors=\"" << vectorName <<"\">\n";
             else
-                file_ << "<PointData Scalars=\"" << scalarName << "\">\n";
+                file << "<PointData Scalars=\"" << scalarName << "\">\n";
         else if(foundVector)
-            file_ << "<PointData Vectors=\"" << vectorName << "\">\n";
+            file << "<PointData Vectors=\"" << vectorName << "\">\n";
         else
             return;
     }
@@ -317,30 +318,30 @@ private:
      *
      * \param positions Container to store the positions
      */
-    void writeCoordinates_(const std::vector<GlobalPosition>& positions)
+    void writeCoordinates_(std::ostream& file, const std::vector<GlobalPosition>& positions)
     {
         // write the positions to the file
-        file_ << "<Points>\n";
-        file_ << "<DataArray type=\"Float32\" Name=\"Coordinates\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+        file << "<Points>\n";
+        file << "<DataArray type=\"Float32\" Name=\"Coordinates\" NumberOfComponents=\"3\" format=\"ascii\">\n";
         int counter = 0;
         for(auto&& x : positions)
         {
-            file_ << x ;
+            file << x ;
 
             if(x.size() == 1)
-                file_ << " 0 0 ";
+                file << " 0 0 ";
             if(x.size() == 2)
-                file_ << " 0 ";
+                file << " 0 ";
 
             // introduce a line break after a certain time
             if((++counter)  > numBeforeLineBreak)
             {
-                file_ << std::endl;
+                file << std::endl;
                 counter = 0;
             }
         }
-        file_ << "\n</DataArray>\n";
-        file_ << "</Points>\n";
+        file << "\n</DataArray>\n";
+        file << "</Points>\n";
     }
 
      /*!
@@ -349,23 +350,23 @@ private:
      * \param data The data container which hold the data itself, as well as the name of the data set and the number of its components
      */
     template<class T>
-    void writeData_(const T& data)
+    void writeData_(std::ostream& file, const T& data)
     {
-        file_ << "<DataArray type=\"Float32\" Name=\"" << data.name() << "\" NumberOfComponents=\"" << data.numComponents() << "\" format=\"ascii\">\n";
+        file << "<DataArray type=\"Float32\" Name=\"" << data.name() << "\" NumberOfComponents=\"" << data.numComponents() << "\" format=\"ascii\">\n";
         int counter = 0;
         for(auto&& value : data)
         {
             // forward to specialized function
-            writeToFile_(value);
+            writeToFile_(file, value);
 
             // introduce a line break after a certain time
             if((++counter)  > numBeforeLineBreak)
             {
-                file_ << std::endl;
+                file << std::endl;
                 counter = 0;
             }
         }
-        file_ << "\n</DataArray>\n";
+        file << "\n</DataArray>\n";
     }
 
      /*!
@@ -373,9 +374,9 @@ private:
      *
      * \param s The scalar
      */
-    void writeToFile_(const Scalar& s)
+    void writeToFile_(std::ostream& file, const Scalar& s)
     {
-        file_ << s << " ";
+        file << s << " ";
     }
 
      /*!
@@ -383,19 +384,18 @@ private:
      *
      * \param g The vector
      */
-    void writeToFile_(const GlobalPosition& g)
+    void writeToFile_(std::ostream& file, const GlobalPosition& g)
     {
         assert(g.size() > 1 && g.size() < 4);
         if(g.size() < 3)
-            file_ << g << " 0 ";
+            file << g << " 0 ";
         else
-            file_ << g;
+            file << g;
     }
 
     const std::vector<GlobalPosition>& coordinates_;
-    std::list<ScalarLocalFunction> scalarPointData_;
-    std::list<VectorLocalFunction> vectorPointData_;
-    std::ofstream file_;
+    std::list<ScalarFunction> scalarPointData_;
+    std::list<VectorFunction> vectorPointData_;
 };
 } // end namespace Dumux
 
