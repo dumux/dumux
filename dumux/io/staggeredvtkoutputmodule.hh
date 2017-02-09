@@ -222,7 +222,7 @@ private:
         for(auto&& vectorField : faceVectorFields_)
             faceWriter_->addPointData(vectorField.first, vectorField.second, 3);
 
-        sequenceWriter_.write(this->problem().timeManager().time());
+        sequenceWriter_.write(this->problem().timeManager().time() + 1.0);
         faceScalarFields_.clear();
         faceVectorFields_.clear();
     }
