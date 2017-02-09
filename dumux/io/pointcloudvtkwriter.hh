@@ -28,12 +28,8 @@
 #include <dumux/io/vtkoutputmodulebase.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dune/grid/io/file/vtk/common.hh>
+#include <dune/common/path.hh>
 
-namespace Properties
-{
-NEW_PROP_TAG(VtkAddVelocity);
-NEW_PROP_TAG(VtkAddProcessRank);
-}
 
 namespace Dumux
 {
@@ -47,33 +43,53 @@ namespace Dumux
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<int dim>
-class StaggeredVtkWriter
+template<class Scalar, int dim>
+class PointCloudVtkWriter
 {
-    using Scalar = double;
     using GlobalPosition = Dune::FieldVector<Scalar, dim>;
 
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
 
+     /*!
+     * \brief A class holding a data container and additional information
+     */
     template<class ContainerType>
     class VTKLocalFunction
     {
     public:
+        /*!
+        * \brief A class holding a data container and additional information
+        *
+        * \param data The data container
+        * \param name The name of the data set
+        * \param numComponents The number of components of the data set
+        */
         VTKLocalFunction(const ContainerType& data, const std::string& name, const int numComponents) : data_(data), name_(name), numComponents_(numComponents)
         {}
 
+        /*!
+        * \brief Returns the name of the data set
+        */
         const std::string& name() const
         {
             return name_;
         }
 
+        /*!
+        * \brief Returns the number of components of the data set
+        */
         int numComponents() const
         {
             return numComponents_;
         }
 
-        auto& operator() (const int dofIdx) const  { return data_[dofIdx]; }
+        /*!
+        * \brief Allows random acces to data
+        *
+        * \param dofIdx The index
+        */
+        auto& operator() (const int idx) const  { return data_[idx]; }
 
         decltype(auto) begin() const
         {
@@ -85,6 +101,9 @@ class StaggeredVtkWriter
             return data_.end();
         }
 
+        /*!
+        * \brief Returns the size of the data container
+        */
         int size() const
         {
             return data_.size();
@@ -102,13 +121,20 @@ public:
     using VectorLocalFunction = VTKLocalFunction<std::vector<GlobalPosition>>;
 
 
-    StaggeredVtkWriter(const std::vector<GlobalPosition>& coordinates) : coordinates_(coordinates)
+    PointCloudVtkWriter(const std::vector<GlobalPosition>& coordinates) : coordinates_(coordinates)
     {}
 
-    void write(/*const WriterData& data*/)
+     /*!
+     * \brief Create an output file
+     *
+     * \param name The base name
+     * \param type The output type
+     */
+    void write(const std::string& name, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
+        auto filename = getSerialPieceName(name, "");
 
-        file_.open(fileName_());
+        file_.open(filename);
         writeHeader_();
         writeCoordinates_(coordinates_);
         writeDataInfo_();
@@ -130,38 +156,107 @@ public:
         clear();
 
         file_.close();
-        ++curWriterNum_;
     }
 
-
-    std::string write ( const std::string &name,
-                        Dune::VTK::OutputType type = Dune::VTK::ascii )
+     /*!
+     * \brief Create an output file in parallel
+     *
+     * \param name The base name
+     * \param type The output type
+     */
+    void pwrite(const std::string & name,  const std::string & path, const std::string & extendpath,
+                Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
-        return "dummy";
+        DUNE_THROW(Dune::NotImplemented, "parallel point cloud vtk output not supported yet");
     }
 
-
+     /*!
+     * \brief Add a vector of scalar data that live on arbitrary points to the visualization.
+     *
+     * \param v The vector containing the data
+     * \param name The name of the data set
+     * \param ncomps The number of components of the data set
+     */
     void addPointData(const std::vector<Scalar>& v, const std::string &name, int ncomps = 1)
     {
         assert(v.size() == ncomps * coordinates_.size());
         scalarPointData_.push_back(ScalarLocalFunction(v, name, ncomps));
     }
 
+     /*!
+     * \brief Add a vector of vector data that live on arbitrary points to the visualization.
+     *
+     * \param v The vector containing the data
+     * \param name The name of the data set
+     * \param ncomps The number of components of the data set
+     */
     void addPointData(const std::vector<GlobalPosition>& v, const std::string &name, int ncomps = 1)
     {
         assert(v.size() == coordinates_.size());
         vectorPointData_.push_back(VectorLocalFunction(v, name, ncomps));
     }
 
-
+     /*!
+     * \brief Clears the data lists
+     */
     void clear()
     {
         scalarPointData_.clear();
         vectorPointData_.clear();
     }
 
+     /*!
+     * \brief Return name of a serial header file
+     *
+     * \param name     Base name of the VTK output.  This should be without
+     *                 any directory parts and without a filename extension.
+     * \param path     Directory part of the resulting header name.  May be
+     *                 empty, in which case the resulting name will not have a
+     *                 directory part.  If non-empty, may or may not have a
+     *                 trailing '/'.  If a trailing slash is missing, one is
+     *                 appended implicitly.
+     */
+    std::string getSerialPieceName(const std::string& name,
+                                   const std::string& path) const
+    {
+      static const std::string extension = ".vtp";
+
+      return Dune::concatPaths(path, name+extension);
+    }
+
+     /*!
+     * \brief Return name of a parallel header file
+     *
+     * \param name     Base name of the VTK output.  This should be without
+     *                 any directory parts and without a filename extension.
+     * \param path     Directory part of the resulting header name.  May be
+     *                 empty, in which case the resulting name will not have a
+     *                 directory part.  If non-empty, may or may not have a
+     *                 trailing '/'.  If a trailing slash is missing, one is
+     *                 appended implicitly.
+     * \param commSize Number of processes writing a parallel vtk output.
+     */
+    std::string getParallelHeaderName(const std::string& name,
+                                      const std::string& path,
+                                      int commSize) const
+    {
+      std::ostringstream s;
+      if(path.size() > 0) {
+        s << path;
+        if(path[path.size()-1] != '/')
+          s << '/';
+      }
+      s << 's' << std::setw(4) << std::setfill('0') << commSize << '-';
+      s << name;
+      s << ".pvtp";
+      return s.str();
+    }
+
 
 private:
+     /*!
+     * \brief Writes the header to the file
+     */
     void writeHeader_()
     {
         std::string header = "<?xml version=\"1.0\"?>\n";
@@ -297,23 +392,10 @@ private:
             file_ << g;
     }
 
-
-     /*!
-     * \brief Returns the file name for each timestep
-     */
-    std::string fileName_() const
-    {
-        std::ostringstream oss;
-        oss << /*problem_.name() <<*/ "face-" << std::setw(5) << std::setfill('0') << curWriterNum_ << ".vtp";
-        return oss.str();
-    }
-
     const std::vector<GlobalPosition>& coordinates_;
-    std::ofstream file_;
-    int curWriterNum_{0};
-
     std::list<ScalarLocalFunction> scalarPointData_;
     std::list<VectorLocalFunction> vectorPointData_;
+    std::ofstream file_;
 };
 } // end namespace Dumux
 
