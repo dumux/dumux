@@ -34,9 +34,6 @@
 #include <dumux/material/components/constant.hh>
 
 
-#include <dumux/linear/amgbackend.hh>
-
-
 namespace Dumux
 {
 template <class TypeTag>
@@ -291,51 +288,44 @@ public:
     }
 
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
-        //Here we calculate the analytical solution
-        const auto numElements = this->gridView().size(0);
-        auto& pExact = *(this->resultWriter().allocateManagedBuffer(numElements));
-        auto& velocityExact = *(this->resultWriter()).template allocateManagedBuffer<double, dimWorld>(numElements);
+        auto& pressureExact = outputModule.createScalarField("pressureExact", 0);
+        auto& velocityExact = outputModule.createVectorField("velocityExact", 0);
 
-        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-        typename DofTypeIndices::FaceIdx faceIdx;
-
-        const auto someElement = *(elements(this->gridView()).begin());
-
-        auto someFvGeometry = localView(this->model().globalFvGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
-
-        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        auto& scalarFaceVelocityExact = outputModule.createFaceScalarField("scalarFaceVelocityExact");
+        auto& vectorFaceVelocityExact = outputModule.createFaceVectorField("vectorFaceVelocityExact");
 
         for (const auto& element : elements(this->gridView()))
         {
             auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
-
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto dofIdxGlobal = scv.dofIndex();
-                const auto& globalPos = scv.dofPosition();
-
-                pExact[dofIdxGlobal] = dirichletAtPos(globalPos)[pressureIdx];
+                auto ccDofIdx = scv.dofIndex();
+                auto ccDofPosition = scv.dofPosition();
+                auto analyticalSolutionAtCc = dirichletAtPos(ccDofPosition);
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
+                    auto faceDofIdx = scvf.dofIndex();
+                    auto faceDofPosition = scvf.center();
                     auto dirIdx = scvf.directionIndex();
-                    velocityVector[dirIdx] += 0.5*dirichletAtPos(globalPos)[faceIdx][dirIdx];
+                    auto analyticalSolutionAtFace = dirichletAtPos(faceDofPosition);
+                    scalarFaceVelocityExact[faceDofIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+
+                    GlobalPosition tmp(0.0);
+                    tmp[dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+                    vectorFaceVelocityExact[faceDofIdx] = std::move(tmp);
                 }
-                velocityExact[dofIdxGlobal] = velocityVector;
+                pressureExact[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
+                velocityExact[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
             }
         }
-        this->resultWriter().attachDofData(pExact, "p_exact", false);
-        this->resultWriter().attachDofData(velocityExact,  "velocity_exact", false, dim);
     }
 
     /*!
