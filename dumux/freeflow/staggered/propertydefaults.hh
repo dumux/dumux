@@ -155,7 +155,7 @@ SET_PROP(NavierStokes, FluidState){
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(NavierStokes, VtkAddVelocity, false);
+SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
 
 // enable gravity by default
 SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);

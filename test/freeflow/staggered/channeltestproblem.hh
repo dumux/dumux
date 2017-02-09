@@ -31,10 +31,6 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
 
-
-#include <dumux/linear/amgbackend.hh>
-
-
 namespace Dumux
 {
 template <class TypeTag>
@@ -81,26 +77,8 @@ SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
 }
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
  * \brief  Test problem for the one-phase model:
- * water is flowing from bottom to top through and around a low permeable lens.
- *
- * The domain is box shaped. All sides are closed (Neumann 0 boundary)
- * except the top and bottom boundaries (Dirichlet), where water is
- * flowing from bottom to top.
- *
- * In the middle of the domain, a lens with low permeability (\f$K=10e-12\f$)
- * compared to the surrounding material (\f$ K=10e-10\f$) is defined.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box1p -parameterFile test_box1p.input</tt> or
- * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
- *
- * The same parameter file can be also used for 3d simulation but you need to change line
- * <tt>typedef Dune::YaspGrid<2> type;</tt> to
- * <tt>typedef Dune::YaspGrid<3> type;</tt> in the problem file
- * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
+   \todo doc me!
  */
 template <class TypeTag>
 class ChannelTestProblem : public NavierStokesProblem<TypeTag>
@@ -191,7 +169,6 @@ public:
     /*!
      * \brief Return the sources within the domain.
      *
-     * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
     SourceValues sourceAtPos(const GlobalPosition &globalPos) const
@@ -208,7 +185,6 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position of the center of the finite volume
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -234,12 +210,8 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
-    using ParentType::dirichletAtPos;
     BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryValues values;
@@ -264,19 +236,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    CellCenterPrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return CellCenterPrimaryVariables(0);
-    }
-
     // \}
 
     /*!
@@ -287,10 +246,8 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * For this method, the \a priVars parameter stores primary
-     * variables.
+     * \param globalPos The global position
      */
-    using ParentType::initial;
     InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         InitialValues values;
@@ -319,7 +276,6 @@ private:
     {
         return globalPos[0] > eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
     }
-
 
     Scalar eps_;
     Scalar inletVelocity_;

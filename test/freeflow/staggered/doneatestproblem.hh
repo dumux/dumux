@@ -82,6 +82,7 @@ SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, false);
 /*!
  * \ingroup ImplicitTestProblems
  * \brief  Test problem for the staggered grid (Donea et al., 2003)
+ * \todo doc me!
  */
 template <class TypeTag>
 class DoneaTestProblem : public NavierStokesProblem<TypeTag>
@@ -193,7 +194,6 @@ public:
     /*!
      * \brief Return the sources within the domain.
      *
-     * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
     SourceValues sourceAtPos(const GlobalPosition &globalPos) const
@@ -221,10 +221,9 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
@@ -235,9 +234,23 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Return dirichlet boundary values at a given position
+     *
+     * \param globalPos The global position
+     */
+    BoundaryValues dirichletAtPos(const GlobalPosition& globalPos) const
+    {
+        // use the values of the analytical solution
+        return analyticalSolution(globalPos);
+    }
 
-    using ParentType::dirichletAtPos;
-    BoundaryValues dirichletAtPos(const GlobalPosition & globalPos) const
+     /*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    BoundaryValues analyticalSolution(const GlobalPosition& globalPos) const
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
@@ -250,19 +263,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    CellCenterPrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return CellCenterPrimaryVariables(0);
-    }
-
     // \}
 
     /*!
@@ -273,11 +273,9 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * For this method, the \a priVars parameter stores primary
-     * variables.
+     * \param globalPos The global position
      */
-    using ParentType::initial;
-    InitialValues initialAtPos(const GlobalPosition &globalPos) const
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
         InitialValues values;
         values[pressureIdx] = 0.0;
@@ -307,7 +305,7 @@ public:
             {
                 auto ccDofIdx = scv.dofIndex();
                 auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = dirichletAtPos(ccDofPosition);
+                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -315,7 +313,7 @@ public:
                     auto faceDofIdx = scvf.dofIndex();
                     auto faceDofPosition = scvf.center();
                     auto dirIdx = scvf.directionIndex();
-                    auto analyticalSolutionAtFace = dirichletAtPos(faceDofPosition);
+                    auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
                     scalarFaceVelocityExact[faceDofIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
 
                     GlobalPosition tmp(0.0);
@@ -357,7 +355,7 @@ public:
                 const auto& posCellCenter = scv.dofPosition();
                 const auto analyticalSolutionCellCenter = dirichletAtPos(posCellCenter)[cellCenterIdx];
                 const auto numericalSolutionCellCenter = this->model().curSol()[cellCenterIdx][dofIdxCellCenter];
-                sumError[cellCenterIdx] += squaredDiff(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
+                sumError[cellCenterIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
                 sumReference[cellCenterIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
                 totalVolume += scv.volume();
 
@@ -369,8 +367,8 @@ public:
                     const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[faceIdx][dirIdx];
                     const auto numericalSolutionFace = this->model().curSol()[faceIdx][dofIdxFace][momentumBalanceIdx];
                     directionIndex[dofIdxFace] = dirIdx;
-                    errorVelocity[dofIdxFace] = squaredDiff(analyticalSolutionFace, numericalSolutionFace);
-                    velocityReference[dofIdxFace] = squaredDiff(analyticalSolutionFace, 0.0);
+                    errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
+                    velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);
                     const Scalar staggeredHalfVolume = 0.5 * scv.volume();
                     staggeredVolume[dofIdxFace] = staggeredVolume[dofIdxFace] + staggeredHalfVolume;
                 }
@@ -403,7 +401,7 @@ public:
 
 private:
     template<class T>
-    T squaredDiff(const T& a, const T& b) const
+    T squaredDiff_(const T& a, const T& b) const
     {
         return (a-b)*(a-b);
     }
