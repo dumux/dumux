@@ -207,7 +207,7 @@ public:
             return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(problem, element, fvGeometry, fluxVarsCache, phaseIdx, rho);
+        flux += Implementation::computeInteriorBoundaryContribution(problem, element, fvGeometry, elemVolVars, fluxVarsCache, phaseIdx, rho);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
@@ -251,6 +251,7 @@ public:
     static Scalar computeInteriorBoundaryContribution(const Problem& problem,
                                                       const Element& element,
                                                       const FVElementGeometry& fvGeometry,
+                                                      const ElementVolumeVariables& elemVolVars,
                                                       const FluxVariablesCache& fluxVarsCache,
                                                       unsigned int phaseIdx, Scalar rho)
     {
