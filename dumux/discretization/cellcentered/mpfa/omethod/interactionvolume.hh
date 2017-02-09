@@ -286,6 +286,7 @@ public:
     // Overload this function to realize interior membranes etc...
     template<typename GetTensorFunction>
     Scalar interiorNeumannTerm(const GetTensorFunction& getTensor,
+                               const Element& element,
                                const LocalScvfType& localScvf,
                                const InteriorBoundaryData& data) const
     { return 0.0; }
@@ -528,7 +529,7 @@ private:
                             if (curIdxInFluxFaces == idxInFluxFaces)
                             {
                                 const auto& data = interiorBoundaryData_[this->findIndexInVector(interiorBoundaryScvfIndexSet_(), curLocalScvfIdx)];
-                                A[idxInFluxFaces][curIdxInFluxFaces] += asImp_().interiorNeumannTerm(getTensor, curLocalScvf, data);
+                                A[idxInFluxFaces][curIdxInFluxFaces] += asImp_().interiorNeumannTerm(getTensor, element, curLocalScvf, data);
                             }
                         }
                         // this means we are on an interior face
