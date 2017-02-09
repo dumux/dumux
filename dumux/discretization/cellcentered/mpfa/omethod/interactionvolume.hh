@@ -73,15 +73,18 @@ template<class TypeTag, class Traits> class CCMpfaOInteractionVolume;
 template<class TypeTag>
 class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaOInteractionVolume<TypeTag, CCMpfaOInteractionVolumeTraits<TypeTag>>
 {
-    using Traits = CCMpfaOInteractionVolumeTraits<TypeTag>;
-    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits>;
+    using TraitsType = CCMpfaOInteractionVolumeTraits<TypeTag>;
+    using ParentType = CCMpfaOInteractionVolume<TypeTag, TraitsType>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    using IVSeed = typename Traits::Seed;
+    using IVSeed = typename TraitsType::Seed;
 public:
+    // state the traits class type
+    using Traits = TraitsType;
+
     CCMpfaInteractionVolumeImplementation(const IVSeed& seed,
                                           const Problem& problem,
                                           const FVElementGeometry& fvGeometry,
