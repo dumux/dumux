@@ -148,6 +148,7 @@ public:
     */
     static Scalar dpcgw_dswe(const Params &params, const Scalar seRegu)
     {
+        using std::pow;
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSeRegu/seRegu/params.vgm()/params.betaGw();
@@ -161,6 +162,7 @@ public:
     */
     static Scalar dpcnw_dswe(const Params &params, const Scalar seRegu)
     {
+        using std::pow;
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSeRegu/seRegu/params.vgm()/params.betaNw();
@@ -174,6 +176,7 @@ public:
     */
     static Scalar dpcgn_dste(const Params &params, const Scalar seRegu)
     {
+        using std::pow;
         const Scalar powSeRegu = pow(seRegu, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSeRegu - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSeRegu/seRegu/params.vgm()/params.betaGn();
@@ -204,8 +207,10 @@ public:
      */
     static Scalar krw(const Params &params,  const Scalar swe)
     {
-        const Scalar r = 1.0 - std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
-        return std::sqrt(swe)*r*r;
+        using std::pow;
+        using std::sqrt;
+        const Scalar r = 1.0 - pow(1 - pow(swe, 1/params.vgm()), params.vgm());
+        return sqrt(swe)*r*r;
     }
 
     /*!
@@ -228,18 +233,22 @@ public:
     static Scalar krn(const Params &params, const Scalar swe, const Scalar sn, const Scalar ste)
     {
         Scalar krn;
-        krn = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
-        krn -= std::pow(1 - std::pow(ste, 1/params.vgm()), params.vgm());
+        using std::pow;
+        krn = pow(1 - pow(swe, 1/params.vgm()), params.vgm());
+        krn -= pow(1 - pow(ste, 1/params.vgm()), params.vgm());
         krn *= krn;
 
+        using std::max;
+        using std::min;
+        using std::sqrt;
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((sn - params.snr()/ (1-params.swr())), 1.0), 0.0);
-            krn *= std::sqrt(resIncluded );
+            Scalar resIncluded = max(min((sn - params.snr()/ (1-params.swr())), 1.0), 0.0);
+            krn *= sqrt(resIncluded );
         }
         else
-            krn *= std::sqrt(sn / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
+            krn *= sqrt(sn / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
         return krn;
     }
@@ -259,7 +268,9 @@ public:
     static Scalar krg(const Params &params, const Scalar ste)
     {
         assert(0 <= ste && ste <= 1);
-        return std::cbrt(1 - ste) * std::pow(1 - std::pow(ste, 1/params.vgm()), 2*params.vgm());
+        using std::cbrt;
+        using std::pow;
+        return cbrt(1 - ste) * pow(1 - pow(ste, 1/params.vgm()), 2*params.vgm());
     }
 
     /*!
@@ -277,10 +288,11 @@ public:
     {
         assert(0 < ste && ste <= 1);
 
-        const Scalar x = std::pow(ste, 1.0/params.vgm());
+        using std::pow;
+        const Scalar x = pow(ste, 1.0/params.vgm());
         return
-            -std::pow(1.0 - x, 2*params.vgm())
-            *std::pow(1.0 - ste, -2.0/3)
+            -pow(1.0 - x, 2*params.vgm())
+            *pow(1.0 - ste, -2.0/3)
             *(1.0/3 + 2*x/ste);
     }
 
@@ -326,7 +338,8 @@ private:
      */
     const static Scalar pc_(const Params &params, const Scalar se)
     {
-        return std::pow(std::pow(se, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha();
+        using std::pow;
+        return pow(pow(se, -1/params.vgm()) - 1, 1/params.vgn())/params.vgAlpha();
     }
 
 };

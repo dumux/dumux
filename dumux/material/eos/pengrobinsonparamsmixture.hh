@@ -113,13 +113,15 @@ public:
 
             Valgrind::CheckDefined(f_omega);
 
-            Scalar tmp = 1 + f_omega*(1 - std::sqrt(Tr));
+            using std::sqrt;
+            Scalar tmp = 1 + f_omega*(1 - sqrt(Tr));
             tmp = tmp*tmp;
 
             Scalar a = 0.4572355*RTc*RTc/pc * tmp;
             Scalar b = 0.0777961 * RTc / pc;
-            assert(std::isfinite(a));
-            assert(std::isfinite(b));
+            using std::isfinite;
+            assert(isfinite(a));
+            assert(isfinite(b));
 
             this->pureParams_[i].setA(a);
             this->pureParams_[i].setB(b);
@@ -143,7 +145,8 @@ public:
         Scalar sumx = 0.0;
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             sumx += fs.moleFraction(phaseIdx, compIdx);
-        sumx = std::max(1e-10, sumx);
+        using std::max;
+        sumx = max(1e-10, sumx);
 
         // Calculate the Peng-Robinson parameters of the mixture
         //
@@ -154,7 +157,7 @@ public:
         for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
             Scalar xi = fs.moleFraction(phaseIdx, compIIdx) / sumx;
             Valgrind::CheckDefined(xi);
-
+            using::std::isfinite;
             for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
                 Scalar xj = fs.moleFraction(phaseIdx, compJIdx) / sumx;
                 Valgrind::CheckDefined(xj);
@@ -162,12 +165,12 @@ public:
                 // mixing rule from Reid, page 82
                 a +=  xi * xj * aCache_[compIIdx][compJIdx];
 
-                assert(std::isfinite(a));
+                assert(isfinite(a));
             }
 
             // mixing rule from Reid, page 82
             b += xi * this->pureParams_[compIIdx].b();
-            assert(std::isfinite(b));
+            assert(isfinite(b));
         }
 
         this->setA(a);
@@ -232,9 +235,9 @@ private:
             for (int compJIdx = 0; compJIdx < numComponents; ++ compJIdx) {
                 // interaction coefficient as given in SPE5
                 Scalar Psi = FluidSystem::interactionCoefficient(compIIdx, compJIdx);
-
+                using std::sqrt;
                 aCache_[compIIdx][compJIdx] =
-                    std::sqrt(this->pureParams_[compIIdx].a()
+                    sqrt(this->pureParams_[compIIdx].a()
                               * this->pureParams_[compJIdx].a())
                     * (1 - Psi);
             }

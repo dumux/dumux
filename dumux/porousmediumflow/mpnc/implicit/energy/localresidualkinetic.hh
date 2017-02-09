@@ -129,7 +129,8 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                     "wrong index");
 
-        if (!std::isfinite(storage[energyEq0Idx+phaseIdx]))
+        using std::isfinite;
+        if (!isfinite(storage[energyEq0Idx+phaseIdx]))
             DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
 
     }
@@ -165,7 +166,8 @@ public:
                                   fluxVars,
                                   elemVolVars,
                                   energyEqIdx);
-            if (!std::isfinite(flux[energyEq0Idx + energyEqIdx]))
+            using std::isfinite;
+            if (!isfinite(flux[energyEq0Idx + energyEqIdx]))
                 DUNE_THROW(NumericalProblem, "Calculated non-finite flux in phase " << energyEqIdx);
         }
     }
@@ -346,8 +348,8 @@ public:
             } // end switch
 
 
-
-            if (!std::isfinite(source[energyEq0Idx + phaseIdx]))
+            using std::isfinite;
+            if (!isfinite(source[energyEq0Idx + phaseIdx]))
                 DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "Tw="<< Tw << " Tn="<< Tn<< " Ts="<< Ts);
         }// end phases
 
@@ -465,7 +467,8 @@ public:
             * (1.0 - volVars.porosity())
             * volVars.solidHeatCapacity();
 
-        if (!std::isfinite(storage[energyEqSolidIdx]))
+        using std::isfinite;
+        if (!isfinite(storage[energyEqSolidIdx]))
             DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
     }
 
@@ -494,7 +497,8 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                     "wrong index");
 
-        if (!std::isfinite(storage[energyEq0Idx]))
+        using std::isfinite;
+        if (!isfinite(storage[energyEq0Idx]))
             DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
     }
 
@@ -530,7 +534,8 @@ public:
                                   elemVolVars,
                                   energyEqIdx);
 
-            if (!std::isfinite(flux[energyEq0Idx + energyEqIdx]))
+            using std::isfinite;
+            if (!isfinite(flux[energyEq0Idx + energyEqIdx]))
                 DUNE_THROW(NumericalProblem, "Calculated non-finite flux in phase " << energyEqIdx);
         }
     }
@@ -725,7 +730,8 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                        "wrong range");
 
-        if (!std::isfinite(solidToFluidEnergyExchange))
+        using std::isfinite;
+        if (!isfinite(solidToFluidEnergyExchange))
                         DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "TFluid="<< TFluid << " TSolid="<< TSolid  );
 
         return solidToFluidEnergyExchange ;
@@ -747,19 +753,20 @@ public:
         const Scalar TSolid     = volVars.temperature(temperatureSolidIdx);
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
 
+    using std::pow;
     const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
     const Scalar mul = fs.viscosity(wPhaseIdx) ;
         const Scalar deltahv = fs.enthalpy(nPhaseIdx) - fs.enthalpy(wPhaseIdx);
         const Scalar deltaRho = fs.density(wPhaseIdx) - fs.density(nPhaseIdx) ;
-    const Scalar firstBracket = std::pow(g * deltaRho / gamma, 0.5);
+    const Scalar firstBracket = pow(g * deltaRho / gamma, 0.5);
     const Scalar cp = FluidSystem::heatCapacity(fs, wPhaseIdx) ;
     // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
     // If a different state is to be simulated, please use the actual fluid temperature instead.
     const Scalar Tsat = FluidSystem::vaporTemperature(fs, nPhaseIdx ) ;
     const Scalar deltaT = TSolid - Tsat ;
-    const Scalar secondBracket = std::pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
+    const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
     const Scalar Prl = volVars.prandtlNumber(wPhaseIdx) ;
-    const Scalar thirdBracket = std::pow( 1/Prl , (1.7/0.33) );
+    const Scalar thirdBracket = pow( 1/Prl , (1.7/0.33) );
     const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket ;
         return QBoil;
     }

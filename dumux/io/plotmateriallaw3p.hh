@@ -102,12 +102,14 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pcgw(params, swTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(swTemp, pcTemp))
             {
                 sw.push_back(swTemp);
                 pc.push_back(pcTemp);
-                pcMin = std::min(pcMin, pcTemp);
-                pcMax = std::max(pcMax, pcTemp);
+                pcMin = min(pcMin, pcTemp);
+                pcMax = max(pcMax, pcTemp);
             }
         }
 
@@ -143,12 +145,14 @@ public:
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pcnw(params, swTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(swTemp, pcTemp))
             {
                 sw.push_back(swTemp);
                 pc.push_back(pcTemp);
-                pcMin = std::min(pcMin, pcTemp);
-                pcMax = std::max(pcMax, pcTemp);
+                pcMin = min(pcMin, pcTemp);
+                pcMax = max(pcMax, pcTemp);
             }
         }
 
@@ -184,12 +188,14 @@ public:
         {
             stTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             pcTemp = MaterialLaw::pcgn(params, stTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(stTemp, pcTemp))
             {
                 st.push_back(stTemp);
                 pc.push_back(pcTemp);
-                pcMin = std::min(pcMin, pcTemp);
-                pcMax = std::max(pcMax, pcTemp);
+                pcMin = min(pcMin, pcTemp);
+                pcMax = max(pcMax, pcTemp);
             }
         }
 
@@ -230,6 +236,8 @@ public:
             krwTemp = MaterialLaw::krw(params, swTemp, 0.0);
             krnTemp = MaterialLaw::krn(params, swTemp, 1.0 - swTemp);
             krgTemp = MaterialLaw::krg(params, swTemp, 0.0);
+            using std::max;
+            using std::min;
             if (checkValues_(swTemp, krwTemp)
                 && checkValues_(swTemp, krnTemp)
                 && checkValues_(swTemp, krgTemp))
@@ -238,8 +246,8 @@ public:
                 krw.push_back(krwTemp);
                 krn.push_back(krnTemp);
                 krg.push_back(krgTemp);
-                krMin = std::min({krMin, krwTemp, krnTemp, krgTemp});
-                krMax = std::max({krMax, krwTemp, krnTemp, krgTemp});
+                krMin = min({krMin, krwTemp, krnTemp, krgTemp});
+                krMax = max({krMax, krwTemp, krnTemp, krgTemp});
             }
         }
 
@@ -277,12 +285,14 @@ public:
         {
             snTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             alphaTemp = MaterialLaw::pcAlpha(params, snTemp);
+            using std::max;
+            using std::min;
             if (checkValues_(snTemp, alphaTemp))
             {
                 sn.push_back(snTemp);
                 alpha.push_back(alphaTemp);
-                alphaMin = std::min(alphaMin, alphaTemp);
-                alphaMax = std::max(alphaMax, alphaTemp);
+                alphaMin = min(alphaMin, alphaTemp);
+                alphaMax = max(alphaMax, alphaTemp);
             }
         }
 
@@ -303,8 +313,10 @@ private:
      */
     bool checkValues_(Scalar value1, Scalar value2)
     {
-        return !std::isnan(value1) && !std::isinf(value1)
-               && !std::isnan(value2) && !std::isinf(value2);
+        using std::isnan;
+        using std::isinf;
+        return !isnan(value1) && !isinf(value1)
+               && !isnan(value2) && !isinf(value2);
     }
 
     int numIntervals_;

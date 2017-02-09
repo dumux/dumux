@@ -298,8 +298,10 @@ public:
      */
     void setXRange(Scalar lowerEnd, Scalar upperEnd)
     {
-        xRangeMin_ = std::min(xRangeMin_, lowerEnd);
-        xRangeMax_ = std::max(xRangeMax_, upperEnd);
+        using std::max;
+        using std::min;
+        xRangeMin_ = min(xRangeMin_, lowerEnd);
+        xRangeMax_ = max(xRangeMax_, upperEnd);
     }
 
     /*!
@@ -310,8 +312,10 @@ public:
      */
     void setYRange(Scalar lowerEnd, Scalar upperEnd)
     {
-        yRangeMin_ = std::min(yRangeMin_, lowerEnd);
-        yRangeMax_ = std::max(yRangeMax_, upperEnd);
+        using std::max;
+        using std::min;
+        yRangeMin_ = min(yRangeMin_, lowerEnd);
+        yRangeMax_ = max(yRangeMax_, upperEnd);
     }
 
     /*!
@@ -355,9 +359,11 @@ private:
     // Check validity of number
     void checkNumber(Scalar number, std::string text = "") const
     {
-        if (std::isnan(number))
+        using std::isnan;
+        using std::isinf;
+        if (isnan(number))
             Dune::dwarn << "warning: " << text << " is not a number, adjust your data range" << std::endl;
-        if (std::isinf(number))
+        if (isinf(number))
             Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 

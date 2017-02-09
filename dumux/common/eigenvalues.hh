@@ -72,6 +72,7 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix, double relat
         double b = -(matrix[0][0] + matrix[1][1]);
         double c = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
 
+        using std::sqrt;
         eigVel[0] = (-b + sqrt(b * b - 4.0 * c)) / 2.0;
         eigVel[1] = (-b - sqrt(b * b - 4.0 * c)) / 2.0;
 

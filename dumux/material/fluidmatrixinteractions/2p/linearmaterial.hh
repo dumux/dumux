@@ -135,7 +135,9 @@ public:
      */
     static Scalar krw(const Params &params, Scalar swe)
     {
-        return std::max(std::min(swe,1.0),0.0);
+        using std::max;
+        using std::min;
+        return max(min(swe,1.0),0.0);
     }
 
     /*!
@@ -150,7 +152,9 @@ public:
     static Scalar krn(const Params &params, Scalar swe)
     {
         Scalar sne = 1 - swe;
-        return std::max(std::min(sne,1.0),0.0);
+        using std::max;
+        using std::min;
+        return max(min(sne,1.0),0.0);
     }
 };
 }

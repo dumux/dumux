@@ -391,6 +391,7 @@ public:
                 exponent = 22.2    * (elemVolVars[scvIdx].effPorosity
                             / elemVolVars[scvIdx].porosity() - 1);
                 Keff =    this->problem_().spatialParams().intrinsicPermeability(    element, fvGeometry, scvIdx)[0][0];
+                using std::exp;
                 Keff *= exp(exponent);
                 effKx[eIdx] += Keff/ numScv;
                 effectivePressure[eIdx] += (pn[vIdxGlobal] * sn[vIdxGlobal]
@@ -547,8 +548,9 @@ public:
 
             for (int i = 0; i < dim; i++)
                 {
-                    if (std::isnan(eigenValues[i]))
-                        eigenValues[i] = 0.0;
+                using std::isnan;
+                if (isnan(eigenValues[i]))
+                    eigenValues[i] = 0.0;
                 }
 
             // sort principal stresses: principalStress1 >= principalStress2 >= principalStress3
@@ -619,7 +621,11 @@ public:
             Scalar S0 = 0.0;
             taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;
             sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
-            Scalar Psc = -fabs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
+
+            using std::abs;
+            using std::sin;
+            using std::cos;
+            Scalar Psc = -abs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
                     + sigmam;
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
             Pcrtens[eIdx] = Peff - principalStress3[eIdx];

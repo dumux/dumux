@@ -621,8 +621,9 @@ private:
 
         Scalar p[numPhases];
 
-        p[wPhaseIdx] = pnInitial_ - std::abs(capPress[wPhaseIdx]);
-        p[nPhaseIdx] = p[wPhaseIdx] + std::abs(capPress[wPhaseIdx]);
+        using std::abs;
+        p[wPhaseIdx] = pnInitial_ - abs(capPress[wPhaseIdx]);
+        p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
 
         for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
         fluidState.setPressure(phaseIdx, p[phaseIdx]);
@@ -703,7 +704,10 @@ private:
      *  \todo this needs to be more sophisticated in order to allow for meshes with nodes not directly on the boundary
      */
     bool onRightBoundaryPorousMedium_(const GlobalPosition & globalPos) const
-    {   return ( std::fabs(globalPos[0] - (this->spatialParams().lengthPM())) < eps_ );}
+    {
+        using std::abs;
+        return ( abs(globalPos[0] - (this->spatialParams().lengthPM())) < eps_ );
+    }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (right) in the domain

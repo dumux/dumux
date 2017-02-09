@@ -183,11 +183,12 @@ protected:
             {
                 // calculate tortuosity at the nodes i and j needed
                 // for porous media diffusion coefficient
+                using std::pow;
                 Scalar tauI =  1.0/(volVarsI.porosity() * volVarsI.porosity()) *
-                                std::pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
+                                pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
 
                 Scalar tauJ =   1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
-                                std::pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
+                                pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
                 // Diffusion coefficient in the porous medium
 
                 // -> harmonic mean

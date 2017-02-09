@@ -183,7 +183,8 @@ public:
         Scalar storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         Scalar effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                 firstElement, fvGeometry, 0);
-        Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        using std::max;
+        Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
 
         for (const auto& element : elements(this->gridView()))
         {
@@ -197,8 +198,10 @@ public:
                 else
                     globalPos = element.geometry().center();
 
+                using std::sqrt;
+                using std::erf;
                 (*temperatureExact)[globalIdx] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
-                                                             *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
+                                                             *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
         }
         this->resultWriter().attachDofData(*temperatureExact, "temperatureExact", isBox);

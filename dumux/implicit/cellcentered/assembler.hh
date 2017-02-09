@@ -85,8 +85,9 @@ private:
             else
             {
                 this->elementColor_[eIdx] = ParentType::Green;
+                using std::max;
                 this->nextReassembleAccuracy_ =
-                    std::max(this->nextReassembleAccuracy_, this->delta_[eIdx]);
+                      max(this->nextReassembleAccuracy_, this->delta_[eIdx]);
             }
         }
 
@@ -192,8 +193,9 @@ private:
 
         // update the right hand side
         this->residual_[globalI] = this->model_().localJacobian().residual(0);
+        using std::isfinite;
         for (int j = 0; j < this->residual_[globalI].dimension; ++j)
-            assert(std::isfinite(this->residual_[globalI][j]));
+            assert(isfinite(this->residual_[globalI][j]));
         if (this->enableJacobianRecycling_()) {
             this->storageTerm_[globalI] +=
                 this->model_().localJacobian().storageTerm(0);

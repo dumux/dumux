@@ -119,8 +119,10 @@ public:
             sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             deff[i] = EffectiveDiffusivityModel::effectiveDiffusivity(porosity, sw[i],
                                                                       1.0 /*Diffusion Coefficient*/);
-            deffMin = std::min(deffMin, deff[i]);
-            deffMax = std::max(deffMax, deff[i]);
+            using std::max;
+            using std::min;
+            deffMin = min(deffMin, deff[i]);
+            deffMax = max(deffMax, deff[i]);
         }
 
         gnuplot_.setXRange(lowerSat, upperSat);

@@ -137,14 +137,17 @@ public:
         const Scalar omega = 0.078; // accentric factor
         const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
 
+        using std::pow;
+        using std::exp;
+        using std::cbrt;
         Scalar Fc = 1 - 0.2756*omega;
         Scalar Tstar = 1.2593 * temperature/Tc;
         Scalar Omega_v =
-            1.16145*std::pow(Tstar, -0.14874) +
-            0.52487*std::exp(- 0.77320*Tstar) +
-            2.16178*std::exp(- 2.43787*Tstar);
-        Scalar mu = 40.785 * Fc * std::sqrt(M * temperature)
-                    / (std::cbrt(Vc * Vc) * Omega_v);
+            1.16145*pow(Tstar, -0.14874) +
+            0.52487*exp(- 0.77320*Tstar) +
+            2.16178*exp(- 2.43787*Tstar);
+        Scalar mu = 40.785 * Fc * sqrt(M * temperature)
+                    / (cbrt(Vc * Vc) * Omega_v);
 
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
@@ -158,8 +161,9 @@ public:
             DUNE_THROW(NumericalProblem,
                 "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
         }
-        return 1.496e-6 * std::sqrt(temperature * temperature * temperature) / (temperature + 120.);
 
+        using std::sqrt;
+        return 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.);
     }
 
     /*!
@@ -216,22 +220,21 @@ public:
         // scale temperature with reference temp of 100K
         Scalar phi = temperature/100;
 
+        using std::pow;
         Scalar c_p = 0.661738E+01
                 -0.105885E+01 * phi
-                +0.201650E+00 * std::pow(phi,2)
-                -0.196930E-01 * std::pow(phi,3)
-                +0.106460E-02 * std::pow(phi,4)
-                -0.303284E-04 * std::pow(phi,5)
-                +0.355861E-06 * std::pow(phi,6);
-        c_p +=   -0.549169E+01 * std::pow(phi,-1)
-                +0.585171E+01* std::pow(phi,-2)
-                -0.372865E+01* std::pow(phi,-3)
-                +0.133981E+01* std::pow(phi,-4)
-                -0.233758E+00* std::pow(phi,-5)
-                +0.125718E-01* std::pow(phi,-6);
+                +0.201650E+00 * pow(phi,2)
+                -0.196930E-01 * pow(phi,3)
+                +0.106460E-02 * pow(phi,4)
+                -0.303284E-04 * pow(phi,5)
+                +0.355861E-06 * pow(phi,6);
+        c_p +=  -0.549169E+01 * pow(phi,-1)
+                +0.585171E+01 * pow(phi,-2)
+                -0.372865E+01 * pow(phi,-3)
+                +0.133981E+01 * pow(phi,-4)
+                -0.233758E+00 * pow(phi,-5)
+                +0.125718E-01 * pow(phi,-6);
         c_p *= IdealGas::R / (molarMass() * 1000); // in J/mol/K * mol / kg / 1000 = kJ/kg/K
-
-
         return  c_p;
     }
 

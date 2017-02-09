@@ -206,7 +206,8 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
             // account for porosity in fluxes for time-step
-            sumfactorin = std::max(sumfactorin,sumfactorout)
+            using std::max;
+            sumfactorin = max(sumfactorin,sumfactorout)
                             / problem().spatialParams().porosity(element);
 
             //calculate time step

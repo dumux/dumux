@@ -212,7 +212,8 @@ public:
             Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(firstElement, fvGeometry, 0);
             Scalar storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
             std::cout<<"storage: "<<storageTotal<<std::endl;
-            Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+            using std::max;
+            Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
             Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
             std::cout<<"retarded velocity: "<<retardedFrontVelocity<<std::endl;
 

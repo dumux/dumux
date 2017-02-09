@@ -183,12 +183,14 @@ public:
             double approximateValue = problem.variables().cellData(indexi).globalPressure();
 
             // update uMinExact and uMaxExact
-            uMinExact = std::min(uMinExact, exactValue);
-            uMaxExact = std::max(uMaxExact, exactValue);
+            using std::min;
+            using std::max;
+            uMinExact = min(uMinExact, exactValue);
+            uMaxExact = max(uMaxExact, exactValue);
 
             // update uMin and uMax
-            uMin = std::min(uMin, approximateValue);
-            uMax = std::max(uMax, approximateValue);
+            uMin = min(uMin, approximateValue);
+            uMax = max(uMax, approximateValue);
 
             // cell volume, assume linear map here
             double volume = geometry.volume();
@@ -239,7 +241,8 @@ public:
                 double fluxDiff = exactFlux + approximateFlux;
 
                 // update mean value error
-                erflm = std::max(erflm, fabs(fluxDiff));
+                using std::abs;
+                erflm = max(erflm, abs(fluxDiff));
 
                 numeratorFlux += volume*fluxDiff*fluxDiff;
                 denominatorFlux += volume*exactFlux*exactFlux;
@@ -251,22 +254,22 @@ public:
 
                 //if (is.boundary()) {
                 if (!intersection.neighbor()) {
-                    if (fabs(faceGlobal[2]) < 1e-6) {
+                    if (abs(faceGlobal[2]) < 1e-6) {
                         fluz0 += approximateFlux;
                         exactfluz0 += exactFlux;
                         ener2 += -approximateFlux*approximateFace;
                     }
-                    else if (fabs(faceGlobal[2] - 1.0) < 1e-6) {
+                    else if (abs(faceGlobal[2] - 1.0) < 1e-6) {
                         fluz1 += approximateFlux;
                         exactfluz1 += exactFlux;
                         ener2 += -approximateFlux*approximateFace;
                     }
-                    if (fabs(faceGlobal[1]) < 1e-6) {
+                    if (abs(faceGlobal[1]) < 1e-6) {
                         fluy0 += approximateFlux;
                         exactfluy0 += exactFlux;
                         ener2 += -approximateFlux*approximateFace;
                     }
-                    else if (fabs(faceGlobal[1] - 1.0) < 1e-6) {
+                    else if (abs(faceGlobal[1] - 1.0) < 1e-6) {
                         fluy1 += approximateFlux;
                         exactfluy1 += exactFlux;
                         ener2 += -approximateFlux*approximateFace;
@@ -276,7 +279,7 @@ public:
                         exactflux0 += exactFlux;
                         ener2 += -approximateFlux*approximateFace;
                     }
-                    else if (fabs(faceGlobal[0] - 1.0) < 1e-6) {
+                    else if (abs(faceGlobal[0] - 1.0) < 1e-6) {
                         flux1 += approximateFlux;
                         exactflux1 += exactFlux;
                         ener2 += -approximateFlux*approximateFace;
@@ -336,15 +339,18 @@ public:
             denominatorGrad += volume*(exactGradient*exactGradient);
         }
 
+        using std::sqrt;
+        using std::abs;
+        using std::max;
         relativeL2Error = sqrt(numerator/denominator);
         ergrad = sqrt(numeratorGrad/denominatorGrad);
         ervell2 = sqrt(numeratorFlux/denominatorFlux);
         sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf;
-        errflx0 = fabs((flux0 + exactflux0)/exactflux0);
-        errflx1 = fabs((flux1 + exactflux1)/exactflux1);
-        errfly0 = fabs((fluy0 + exactfluy0)/exactfluy0);
-        errfly1 = fabs((fluy1 + exactfluy1)/exactfluy1);
-        eren = fabs(ener1 - ener2)/std::max(ener1, ener2);
+        errflx0 = abs((flux0 + exactflux0)/exactflux0);
+        errflx1 = abs((flux1 + exactflux1)/exactflux1);
+        errfly0 = abs((fluy0 + exactfluy0)/exactfluy0);
+        errfly1 = abs((fluy1 + exactfluy1)/exactfluy1);
+        eren = abs(ener1 - ener2)/max(ener1, ener2);
 
         // generate a VTK file of exact solution on the maximal grid level
         if (exactOutput)
@@ -510,12 +516,14 @@ public:
             }
 
             // update uMinExact and uMaxExact
-            uMinExact = std::min(uMinExact, exactPressure);
-            uMaxExact = std::max(uMaxExact, exactPressure);
+            using std::min;
+            using std::max;
+            uMinExact = min(uMinExact, exactPressure);
+            uMaxExact = max(uMaxExact, exactPressure);
 
             // update uMin and uMax
-            uMin = std::min(uMin, approxPressure);
-            uMax = std::max(uMax, approxPressure);
+            uMin = min(uMin, approxPressure);
+            uMax = max(uMax, approxPressure);
 
             typename Problem::PrimaryVariables sourceVec;
             problem.source(sourceVec, element);
@@ -560,7 +568,9 @@ public:
                 double fluxDiff = exactFlux + approximateFlux;
 
                 // update mean value error
-                erflm = std::max(erflm, fabs(fluxDiff));
+                using std::abs;
+                using std::max;
+                erflm = max(erflm, abs(fluxDiff));
 
                 numeratorFlux += volume*fluxDiff*fluxDiff;
                 denominatorFlux += volume*exactFlux*exactFlux;
@@ -577,19 +587,19 @@ public:
                 fluxVector[fIdx] = approximateFlux;
 
                 if (!intersection.neighbor()) {
-                    if (fabs(faceGlobal[2]) < 1e-6) {
+                    if (abs(faceGlobal[2]) < 1e-6) {
                         fluz0 += approximateFlux;
                         exactfluz0 += exactFlux;
                     }
-                    else if (fabs(faceGlobal[2] - 1.0) < 1e-6) {
+                    else if (abs(faceGlobal[2] - 1.0) < 1e-6) {
                         fluz1 += approximateFlux;
                         exactfluz1 += exactFlux;
                     }
-                    if (fabs(faceGlobal[1]) < 1e-6) {
+                    if (abs(faceGlobal[1]) < 1e-6) {
                         fluy0 += approximateFlux;
                         exactfluy0 += exactFlux;
                     }
-                    else if (fabs(faceGlobal[1] - 1.0) < 1e-6) {
+                    else if (abs(faceGlobal[1] - 1.0) < 1e-6) {
                         fluy1 += approximateFlux;
                         exactfluy1 += exactFlux;
                     }
@@ -597,7 +607,7 @@ public:
                         flux0 += approximateFlux;
                         exactflux0 += exactFlux;
                     }
-                    else if (fabs(faceGlobal[0] - 1.0) < 1e-6) {
+                    else if (abs(faceGlobal[0] - 1.0) < 1e-6) {
                         flux1 += approximateFlux;
                         exactflux1 += exactFlux;
                     }
@@ -662,6 +672,8 @@ public:
             }
         }
 
+        using std::sqrt;
+        using std::abs;
         relativeL2Error = sqrt(numerator/denominator);
         relativeL2ErrorIn = sqrt(numeratorIn/denominatorIn);
         relativeL2ErrorOut = sqrt(numeratorOut/denominatorOut);
@@ -669,10 +681,10 @@ public:
         ervell2 = sqrt(numeratorFlux/denominatorFlux);
         ervell2In = sqrt(numeratorFluxIn/denominatorFluxIn);
         sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf;
-        errflx0 = fabs((flux0 + exactflux0)/exactflux0);
-        errflx1 = fabs((flux1 + exactflux1)/exactflux1);
-        errfly0 = fabs((fluy0 + exactfluy0)/exactfluy0);
-        errfly1 = fabs((fluy1 + exactfluy1)/exactfluy1);
+        errflx0 = abs((flux0 + exactflux0)/exactflux0);
+        errflx1 = abs((flux1 + exactflux1)/exactflux1);
+        errfly0 = abs((fluy0 + exactfluy0)/exactfluy0);
+        errfly1 = abs((fluy1 + exactfluy1)/exactfluy1);
 
         // generate a VTK file of exact solution
         if (exactOutput)
@@ -734,12 +746,14 @@ public:
             denominator += volume*exactPressure*exactPressure;
 
             // update uMinExact and uMaxExact
-            uMinExact = std::min(uMinExact, exactPressure);
-            uMaxExact = std::max(uMaxExact, exactPressure);
+            using std::min;
+            using std::max;
+            uMinExact = min(uMinExact, exactPressure);
+            uMaxExact = max(uMaxExact, exactPressure);
 
             // update uMin and uMax
-            uMin = std::min(uMin, approxPressure);
-            uMax = std::max(uMax, approxPressure);
+            uMin = min(uMin, approxPressure);
+            uMax = max(uMax, approxPressure);
 
             sumf += volume*problem.source(globalPos, element, local)[0];
 
@@ -785,24 +799,27 @@ public:
                 // calculate the difference in the normal velocity
                 Scalar fluxDiff = exactFlux + approximateFlux;
 
-                //                if (std::abs(fluxDiff) > 1e-16)
+                using std::abs;
+                //                if (abs(fluxDiff) > 1e-16)
                 //                {
                 //                    std::cout << "faceGlobal " << faceGlobal << ": exact "
                 //                              << exactFlux << ", approximate " << approximateFlux << std::endl;
                 //                }
 
                 // update mean value error
-                erflm = std::max(erflm, fabs(fluxDiff));
+                erflm = max(erflm, abs(fluxDiff));
 
-                maxFlux = std::max(maxFlux, std::abs(exactFlux));
+                maxFlux = max(maxFlux, abs(exactFlux));
 
                 sumflux += approximateFlux;
             }
         }
 
+        using std::sqrt;
+        using std::max;
         relativeL2Error = sqrt(numerator/denominator);
         sumflux -= sumf;
-        erflm /= std::max(1e-6, maxFlux);
+        erflm /= max(1e-6, maxFlux);
 
         return;
     }

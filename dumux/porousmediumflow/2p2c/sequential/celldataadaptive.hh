@@ -167,7 +167,8 @@ public:
         adaptedValuesFather.pressure_[wPhaseIdx] += adaptedValues.pressure_[wPhaseIdx] / adaptedValues.count;
         adaptedValuesFather.pressure_[nPhaseIdx] += adaptedValues.pressure_[nPhaseIdx] / adaptedValues.count;
         // apply maximum complexity for new cell
-        adaptedValuesFather.subdomain = std::max(adaptedValuesFather.subdomain, adaptedValues.subdomain);
+        using std::max;
+        adaptedValuesFather.subdomain = max(adaptedValuesFather.subdomain, adaptedValues.subdomain);
     }
     //! Set adapted values in CellData
     /**

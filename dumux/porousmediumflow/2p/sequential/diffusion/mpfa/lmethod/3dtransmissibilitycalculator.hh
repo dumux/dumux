@@ -186,8 +186,9 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(Transmi
 {
     if (transCriterion_ == sDiff)
     {
-        Scalar sOne = std::abs(transmissibilityOne[0][0] - transmissibilityOne[0][1]);
-        Scalar sTwo = std::abs(transmissibilityTwo[0][0] - transmissibilityTwo[0][1]);
+        using std::abs;
+        Scalar sOne = abs(transmissibilityOne[0][0] - transmissibilityOne[0][1]);
+        Scalar sTwo = abs(transmissibilityTwo[0][0] - transmissibilityTwo[0][1]);
 
         //Decide whether to take case1 or case2
         if (sOne < sTwo - transChoiceThreshold_)
@@ -204,26 +205,27 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(Transmi
 
         Scalar tSumOne = 0;
         Scalar tSumTwo = 0;
+        using std::abs;
 
         if (lTypeOne == 1)
-            tSumOne = std::abs(transmissibilityOne[0][0] + transmissibilityOne[0][2] + transmissibilityOne[0][3]);
+            tSumOne = abs(transmissibilityOne[0][0] + transmissibilityOne[0][2] + transmissibilityOne[0][3]);
         else if (lTypeOne == 2)
-            tSumOne = std::abs(transmissibilityOne[0][1] + transmissibilityOne[0][2] + transmissibilityOne[0][3]);
+            tSumOne = abs(transmissibilityOne[0][1] + transmissibilityOne[0][2] + transmissibilityOne[0][3]);
         else if (lTypeOne == 3)
-            tSumOne = std::abs(transmissibilityOne[0][0] + transmissibilityOne[0][3]);
+            tSumOne = abs(transmissibilityOne[0][0] + transmissibilityOne[0][3]);
         else if (lTypeOne == 4)
-            tSumOne = std::abs(transmissibilityOne[0][0] + transmissibilityOne[0][2]);
+            tSumOne = abs(transmissibilityOne[0][0] + transmissibilityOne[0][2]);
         else
             DUNE_THROW(Dune::NotImplemented,"Transmissibility type not implemented");
 
         if (lTypeTwo == 1)
-            tSumTwo = std::abs(transmissibilityTwo[0][0] + transmissibilityTwo[0][2] + transmissibilityTwo[0][3]);
+            tSumTwo = abs(transmissibilityTwo[0][0] + transmissibilityTwo[0][2] + transmissibilityTwo[0][3]);
         else if (lTypeTwo == 2)
-            tSumTwo = std::abs(transmissibilityTwo[0][1] + transmissibilityTwo[0][2] + transmissibilityTwo[0][3]);
+            tSumTwo = abs(transmissibilityTwo[0][1] + transmissibilityTwo[0][2] + transmissibilityTwo[0][3]);
         else if (lTypeTwo == 3)
-            tSumTwo = std::abs(transmissibilityTwo[0][0] + transmissibilityTwo[0][3]);
+            tSumTwo = abs(transmissibilityTwo[0][0] + transmissibilityTwo[0][3]);
         else if (lTypeTwo == 4)
-            tSumTwo = std::abs(transmissibilityTwo[0][0] + transmissibilityTwo[0][2]);
+            tSumTwo = abs(transmissibilityTwo[0][0] + transmissibilityTwo[0][2]);
         else
             DUNE_THROW(Dune::NotImplemented,"Transmissibility type not implemented");
 
@@ -957,7 +959,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
 
     transmissibility = D;
 
-    if (std::isnan(transmissibility.frobenius_norm()))
+    using std::isnan;
+    if (isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"idx: "<<idx1<<idx2<<idx3<<idx5<<"\n";
 
@@ -1352,7 +1355,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
 
     transmissibility = D;
 
-    if (std::isnan(transmissibility.frobenius_norm()))
+    using std::isnan;
+    if (isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"idx: "<<idx1<<idx2<<idx4<<idx6<<"\n";
 

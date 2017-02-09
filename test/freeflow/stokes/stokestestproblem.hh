@@ -174,7 +174,8 @@ public:
         initial_(values, globalPos);
 
         // sinusoidal variation of the maximum velocity in time
-        const Scalar v0 = 1.0 + std::sin(2*M_PI*time/3000) * velocityVariation;
+        using std::sin;
+        const Scalar v0 = 1.0 + sin(2*M_PI*time/3000) * velocityVariation;
 
         // parabolic velocity profile
         values[velocityXIdx] =  v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])

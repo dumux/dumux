@@ -214,11 +214,13 @@ public:
 
             int globalIdxI = problem_.elementMapper().index(element);
             int level = element.level();
-            maxLevel_ = std::max(level, maxLevel_);
+            using std::max;
+            using std::min;
+            maxLevel_ = max(level, maxLevel_);
 
             if (level < minAllowedLevel_)
             {
-                nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                 indicatorVector_[globalIdxI] = refineCell;
                 continue;
             }
@@ -237,7 +239,7 @@ public:
             {
                 if(hasSource_(element, fvGeometry, elemVolVars))
                 {
-                    nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                    nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                     indicatorVector_[globalIdxI] = refineCell;
                     continue;
                 }
@@ -257,7 +259,7 @@ public:
                     {
                         if(hasRefineBC_(bcTypes, element, intersection, fvGeometry, elemVolVars))
                         {
-                            nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                            nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                             indicatorVector_[globalIdxI] = refineCell;
                             break;
                         }

@@ -82,6 +82,7 @@ public:
 
         auto Keff
             = spatialParams.intrinsicPermeability(element, fvGeometry, scvIdx);
+        using std::exp;
         Keff *= exp(exponent);
 
         return Keff;

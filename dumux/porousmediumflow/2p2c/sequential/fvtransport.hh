@@ -279,7 +279,8 @@ public:
             minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
 
         Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
-        subCFLFactor_ = std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
+        using std::min;
+        subCFLFactor_ = min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
         verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
 
         localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
@@ -447,7 +448,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         updateVec[nCompIdx][eIdxGlobalI] += q[contiNEqIdx];
 
         // account for porosity in fluxes for time-step
-        sumfactorin = std::max(sumfactorin,sumfactorout)
+        using std::max;
+        sumfactorin = max(sumfactorin,sumfactorout)
                         / problem().spatialParams().porosity(element);
 
         //calculate time step
@@ -588,10 +590,11 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
     PhaseVector SmobI(0.);
-    SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
+    using std::max;
+    SmobI[wPhaseIdx] = max((cellDataI.saturation(wPhaseIdx)
                             - problem().spatialParams().materialLawParams(elementI).swr())
                             , 1e-2);
-    SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
+    SmobI[nPhaseIdx] = max((cellDataI.saturation(nPhaseIdx)
                                 - problem().spatialParams().materialLawParams(elementI).snr())
                             , 1e-2);
 
@@ -750,11 +753,12 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
                             cellDataJ.massFraction(phaseIdx, nCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));
             // c) timestep control
             // for timestep control : influx
-            timestepFlux[0] += std::max(0.,
+            using std::max;
+            timestepFlux[0] += max(0.,
                     - potential[phaseIdx] * faceArea / volume
                       * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx)));
             // outflux
-            timestepFlux[1] += std::max(0.,
+            timestepFlux[1] += max(0.,
                     potential[phaseIdx] * faceArea / volume
                     * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx))/SmobI[phaseIdx]);
 
@@ -778,18 +782,21 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     }
 
     // calculate and standardized velocity
-    double velocityJIw = std::max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-    double velocityIJw = std::max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-    double velocityJIn = std::max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
-    double velocityIJn = std::max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
+    using std::max;
+    double velocityJIw = max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
+    double velocityIJw = max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
+    double velocityJIn = max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
+    double velocityIJn = max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
 
     // for timestep control : influx
     timestepFlux[0] += velocityJIw + velocityJIn;
 
     double foutw = velocityIJw/SmobI[wPhaseIdx];
     double foutn = velocityIJn/SmobI[nPhaseIdx];
-    if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
-    if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
+    using std::isnan;
+    using std::isinf;
+    if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
+    if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
     timestepFlux[1] += foutw + foutn;
 
     fluxEntries[wCompIdx] +=
@@ -867,6 +874,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
                                                     const Intersection& intersection,
                                                     const CellData& cellDataI)
 {
+    using std::max;
     // cell information
     auto elementI = intersection.inside();
     int eIdxGlobalI = problem().variables().index(elementI);
@@ -889,10 +897,10 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             K_I[axis][axis] = minimalBoundaryPermeability;
     }
 
-    Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
+    Scalar SwmobI = max((cellDataI.saturation(wPhaseIdx)
                             - problem().spatialParams().materialLawParams(elementI).swr())
                             , 1e-2);
-    Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
+    Scalar SnmobI = max((cellDataI.saturation(nPhaseIdx)
                                 - problem().spatialParams().materialLawParams(elementI).snr())
                             , 1e-2);
 
@@ -1006,18 +1014,21 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
                         / viscosityNWBound;
             }
         // calculate and standardized velocity
-        double velocityJIw = std::max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-        double velocityIJw = std::max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-        double velocityJIn = std::max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
-        double velocityIJn = std::max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
+
+        double velocityJIw = max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
+        double velocityIJw = max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
+        double velocityJIn = max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
+        double velocityIJn = max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
 
         // for timestep control
         timestepFlux[0] = velocityJIw + velocityJIn;
 
         double foutw = velocityIJw/SwmobI;
         double foutn = velocityIJn/SnmobI;
-        if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
-        if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
+        using std::isnan;
+        using std::isinf;
+        if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
+        if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
         timestepFlux[1] = foutw + foutn;
 
         fluxEntries[wCompIdx] =
@@ -1168,7 +1179,8 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
                 //converge criterion
-                if (std::abs(oldPc - pcBound) < 10.0)
+                using std::abs;
+                if (abs(oldPc - pcBound) < 10.0)
                     iter = maxiter;
             }
         }
@@ -1205,7 +1217,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
         for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
-
+            using std::min;
             if (intersection.neighbor())
             {
                 auto neighbor = intersection.outside();
@@ -1213,6 +1225,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 
                 int levelI = element.level();
                 int levelJ = neighbor.level();
+
 
                 if (eIdxGlobalI < eIdxGlobalJ && levelI <= levelJ)
                 {
@@ -1223,14 +1236,14 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                     if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_
                         || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
                     {
-                        Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
+                        Scalar timeStep  = min(localDataI.dt, localDataJ.dt);
 
                         if (levelI < levelJ)
                         {
                             typename FaceDt::iterator it = faceDt.find(indexInInside);
                             if (it != faceDt.end())
                             {
-                                it->second = std::min(it->second, timeStep);
+                                it->second = min(it->second, timeStep);
                             }
                             else
                             {
@@ -1243,7 +1256,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                             localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * timeStep;
                         }
 
-                        dt = std::min(dt, timeStep);
+                        dt = min(dt, timeStep);
                     }
                 }
             }
@@ -1252,7 +1265,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                 if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
                 {
                     localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * localDataI.dt;
-                    dt = std::min(dt, subCFLFactor_ * localDataI.dt);
+                    dt = min(dt, subCFLFactor_ * localDataI.dt);
                 }
             }
         }
@@ -1320,9 +1333,10 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
 
         if (accumulatedDt_ < realDt)
         {
+            using std::min;
             while(true)
             {
-                Scalar dtCorrection = std::min(0.0, realDt - accumulatedDt_);
+                Scalar dtCorrection = min(0.0, realDt - accumulatedDt_);
                 subDt += dtCorrection;
 
                 if (verbosity_ > 0)

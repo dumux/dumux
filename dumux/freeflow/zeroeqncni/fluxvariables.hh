@@ -118,6 +118,9 @@ protected:
                                     const Element &element,
                                     const ElementVolumeVariables &elemVolVars)
     {
+        using std::abs;
+        using std::sqrt;
+        using std::exp;
         // IMPORTANT:
         // the temperatureEddyConductivity_ a_t [m^2/s] is converted to
         // thermalEddyConductivity \lambda_t [W/(m K)] by the convenience function
@@ -144,11 +147,11 @@ protected:
             mixingLengthConductivity_ = 0.0;
             if (this->distanceToWallReal() > 0.0 && yPlusReal_ > 0.0)
                 mixingLengthConductivity_ = this->karmanConstant() * this->distanceToWallReal()
-                                            * (1.0 - std::exp(-yPlusReal_ / aPlus))
-                                            / std::sqrt(1.0 - std::exp(-bPlus * yPlusReal_));
+                                            * (1.0 - exp(-yPlusReal_ / aPlus))
+                                            / sqrt(1.0 - exp(-bPlus * yPlusReal_));
 
             temperatureEddyConductivity_ = mixingLengthConductivity_ * mixingLengthConductivity_
-                                           * std::abs(velGrad_);
+                                           * abs(velGrad_);
         }
 
         // Deissler near wall law
@@ -158,9 +161,9 @@ protected:
         {
             const Scalar deisslerConstant = 0.124;
             const Scalar beta = this->density() * deisslerConstant * deisslerConstant
-                                * std::abs(this->velocity()[flowNormal_])
+                                * abs(this->velocity()[flowNormal_])
                                 * this->distanceToWallReal();
-            temperatureEddyConductivity_ = beta * (1.0 - std::exp(-beta / this->dynamicViscosity()));
+            temperatureEddyConductivity_ = beta * (1.0 - exp(-beta / this->dynamicViscosity()));
             temperatureEddyConductivity_ /= this->density();
         }
 
@@ -170,13 +173,13 @@ protected:
         {
             // Pr_t at flow = 0.86
             // Pr_t in wall = 1.34
-            Scalar kappaMeier = this->karmanConstant() / std::sqrt(0.86);
-            Scalar aPlusMeier = std::sqrt(1.34) / std::sqrt(0.86) * 26.0;
+            Scalar kappaMeier = this->karmanConstant() / sqrt(0.86);
+            Scalar aPlusMeier = sqrt(1.34) / sqrt(0.86) * 26.0;
             mixingLengthConductivity_ = 0.0;
             if (this->distanceToWallReal() > 0.0 && yPlusReal_ > 0.0)
                 mixingLengthConductivity_ = kappaMeier * this->distanceToWallReal()
-                                            * (1.0 - std::exp(- yPlusReal_ / aPlusMeier));
-            temperatureEddyConductivity_  = mixingLengthConductivity_ * mixingLengthConductivity_ * std::abs(velGrad_);
+                                            * (1.0 - exp(- yPlusReal_ / aPlusMeier));
+            temperatureEddyConductivity_  = mixingLengthConductivity_ * mixingLengthConductivity_ * abs(velGrad_);
         }
 
         else

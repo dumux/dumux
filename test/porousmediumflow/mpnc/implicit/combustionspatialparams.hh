@@ -139,7 +139,8 @@ public:
                 Snr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Snr);
 
                 characteristicLength_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
-                intrinsicPermeability_  =  (std::pow(characteristicLength_,2.0)  * std::pow(porosity_,3.0)) / (150.0 * std::pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
+                using std::pow;
+                intrinsicPermeability_  =  (pow(characteristicLength_,2.0)  * pow(porosity_,3.0)) / (150.0 * pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
 
                 factorEnergyTransfer_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorEnergyTransfer);
                 factorMassTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);
@@ -150,7 +151,8 @@ public:
             materialParams_.setSwr(Swr_) ;
             materialParams_.setSnr(Snr_) ;
 
-            materialParams_.setP0(std::sqrt(porosity_/intrinsicPermeability_));
+            using std::sqrt;
+            materialParams_.setP0(sqrt(porosity_/intrinsicPermeability_));
             materialParams_.setGamma(interfacialTension_); // interfacial tension of water-air at 100°C
         }
 

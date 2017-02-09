@@ -219,8 +219,10 @@ protected:
                 Scalar rhoI = elemVolVars[face().i].fluidState().density(phaseIdx);
                 Scalar rhoJ = elemVolVars[face().j].fluidState().density(phaseIdx);
                 // reduce influence if saturation is very small
-                Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
-                Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                using std::max;
+                using std::min;
+                Scalar fI = max(0.0, min(SI/1e-5, 0.5));
+                Scalar fJ = max(0.0, min(SJ/1e-5, 0.5));
                 // check whether the phase is not present in both phase
                 if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
                     fI = fJ = 0.5;

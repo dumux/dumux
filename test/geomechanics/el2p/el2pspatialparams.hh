@@ -121,6 +121,7 @@ public:
         // given Van Genuchten m
         m_ = 0.457;
         // Brooks Corey lambda
+        using std::pow;
         BrooksCoreyLambda_ = m_ / (1 - m_) * (1 - pow(0.5,1/m_));
 
         // residual saturations

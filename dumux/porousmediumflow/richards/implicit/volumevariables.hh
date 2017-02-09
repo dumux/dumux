@@ -142,7 +142,8 @@ public:
 
             Scalar minPc = MaterialLaw::pc(matParams, 1.0);
             fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
-            fluidState.setPressure(nPhaseIdx, std::max(pnRef_, priVars[pwIdx] + minPc));
+            using std::max;
+            fluidState.setPressure(nPhaseIdx, max(pnRef_, priVars[pwIdx] + minPc));
 
             // saturations
             Scalar sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));

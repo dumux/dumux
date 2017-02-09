@@ -344,7 +344,8 @@ public:
 
             Scalar shiftAtDof = model_().relativeShiftAtDof(uLastIter[i],
                                                             uNewI);
-            shift_ = std::max(shift_, shiftAtDof);
+            using std::max;
+            shift_ = max(shift_, shiftAtDof);
         }
 
         if (gridView_().comm().size() > 1)
@@ -372,7 +373,8 @@ public:
                 if (gridView_().comm().size() > 1)
                     norm2 = gridView_().comm().sum(norm2);
 
-                initialResidual_ = std::sqrt(norm2);
+                using std::sqrt;
+                initialResidual_ = sqrt(norm2);
             }
 
             int converged = linearSolver_.solve(A, x, b);
@@ -441,10 +443,12 @@ public:
             newtonUpdateShift(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial reassembly
+        using std::max;
+        using std::min;
         if (enablePartialReassemble_) {
             const Scalar minReasmTol = 1e-2*shiftTolerance_;
             const Scalar maxReasmTol = 1e1*shiftTolerance_;
-            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->shift_/1e4));
+            Scalar reassembleTol = max(minReasmTol, min(maxReasmTol, this->shift_/1e4));
             //Scalar reassembleTol = minReasmTol;
 
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);

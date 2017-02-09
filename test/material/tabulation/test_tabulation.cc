@@ -35,7 +35,8 @@ bool success;
 template <class Scalar>
 void isSame(const char *str, Scalar v, Scalar vRef, Scalar tol=1e-3)
 {
-    if (std::abs( (v - vRef)/vRef ) > tol) {
+    using std::abs;
+    if (abs( (v - vRef)/vRef ) > tol) {
         std::cout << "error for \"" << str << "\": "  << (v - vRef)/vRef*100 << "% difference (tolerance: "  << tol*100 << "%)\n";
         success = false;
         //exit(1);
@@ -66,8 +67,8 @@ int main()
     int n = nPress*3;
     for (int i = 0; i < m; ++i) {
         Scalar T = tempMin + (tempMax - tempMin)*Scalar(i)/m;
-
-        if (i % std::max(1, m/1000) == 0) {
+        using std::max;
+        if (i % max(1, m/1000) == 0) {
             std::cout << Scalar(i)/m*100 << "% done        \r";
             std::cout.flush();
         }

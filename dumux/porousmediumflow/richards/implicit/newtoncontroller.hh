@@ -93,6 +93,8 @@ public:
             const GridView &gridView = this->problem_().gridView();
             for (const auto& element : elements(gridView)) {
                 fvGeometry.update(gridView, element);
+                using std::max;
+                using std::min;
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
                     int dofIdxGlobal = this->model_().dofMapper().subIndex(element, scvIdx, dofCodim);
@@ -102,10 +104,10 @@ public:
                     const MaterialLawParams &mp = spatialParams.materialLawParams(element, fvGeometry, scvIdx);
                     Scalar pcMin = MaterialLaw::pc(mp, 1.0);
                     Scalar pw = uLastIter[dofIdxGlobal][pwIdx];
-                    Scalar pn = std::max(this->problem_().referencePressure(element, fvGeometry, scvIdx),
+                    Scalar pn = max(this->problem_().referencePressure(element, fvGeometry, scvIdx),
                                          pw + pcMin);
                     Scalar pcOld = pn - pw;
-                    Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(mp, pcOld));
+                    Scalar SwOld = max<Scalar>(0.0, MaterialLaw::sw(mp, pcOld));
 
                     // convert into minimum and maximum wetting phase
                     // pressures
@@ -114,7 +116,7 @@ public:
 
                     // clamp the result
                     pw = uCurrentIter[dofIdxGlobal][pwIdx];
-                    pw = std::max(pwMin, std::min(pw, pwMax));
+                    pw = max(pwMin, min(pw, pwMax));
                     uCurrentIter[dofIdxGlobal][pwIdx] = pw;
 
                 }

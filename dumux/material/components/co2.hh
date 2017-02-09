@@ -133,12 +133,14 @@ public:
         // this is on page 1524 of the reference
         Scalar exponent = 0;
         Scalar Tred = T/criticalTemperature();
-        for (int i = 0; i < 5; ++i) {
-            exponent += a[i]*std::pow(1 - Tred, t[i]);
-        }
+
+        using std::pow;
+        for (int i = 0; i < 5; ++i)
+            exponent += a[i]*pow(1 - Tred, t[i]);
         exponent *= 1.0/Tred;
 
-        return std::exp(exponent)*criticalPressure();
+        using std::exp;
+        return exp(exponent)*criticalPressure();
     }
 
     /*!
@@ -310,16 +312,19 @@ public:
         TStar = temperature/ESP;
 
         /* mu0: viscosity in zero-density limit */
+        using std::exp;
+        using std::log;
+        using std::sqrt;
         SigmaStar = exp(a0 + a1*log(TStar)
                         + a2*log(TStar)*log(TStar)
                         + a3*log(TStar)*log(TStar)*log(TStar)
                         + a4*log(TStar)*log(TStar)*log(TStar)*log(TStar) );
-
         mu0 = 1.00697*sqrt(temperature) / SigmaStar;
 
         /* dmu : excess viscosity at elevated density */
         rho = gasDensity(temperature, pressure); /* CO2 mass density [kg/m^3] */
 
+        using std::pow;
         dmu = d11*rho + d21*rho*rho + d64*pow(rho,6)/(TStar*TStar*TStar)
             + d81*pow(rho,8) + d82*pow(rho,8)/TStar;
 

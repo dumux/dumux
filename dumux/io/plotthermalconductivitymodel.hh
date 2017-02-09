@@ -164,15 +164,16 @@ public:
         Scalar satInterval = upperSat - lowerSat;
         Scalar lambdaMin = 0.0;
         Scalar lambdaMax = -1e100;
-
+        using std::max;
+        using std::min;
         for (int i = 0; i <= numIntervals_; i++)
         {
             sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
             lambda[i] = ThermalConductivityModel::effectiveThermalConductivity(sw[i], lambdaW_,
                                                                                lambdaN_, lambdaSolid,
                                                                                porosity, rhoSolid);
-            lambdaMin = std::min(lambdaMin, lambda[i]);
-            lambdaMax = std::max(lambdaMax, lambda[i]);
+            lambdaMin = min(lambdaMin, lambda[i]);
+            lambdaMax = max(lambdaMax, lambda[i]);
         }
 
         gnuplot_.setXRange(lowerSat, upperSat);

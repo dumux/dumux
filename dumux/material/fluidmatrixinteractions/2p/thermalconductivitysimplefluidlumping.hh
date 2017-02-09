@@ -92,7 +92,8 @@ public:
         assert(numEnergyEquations != 3) ;
 
         // Franz Lindner / Shi & Wang 2011
-        const Scalar satW = std::max<Scalar>(0.0, sw);
+        using std::max;
+        const Scalar satW = max<Scalar>(0.0, sw);
 
         const Scalar kfeff = porosity *((1.-satW)*lambdaN + satW*lambdaW) ; // arithmetic
 

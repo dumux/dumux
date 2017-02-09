@@ -432,7 +432,8 @@ public:
         const Scalar normalMassFlux1 = boundaryVars1.normalVelocity()
                                        * cParams.elemVolVarsCur1[vertInElem1].density();
 
-        if (std::abs(bfNormal1[1]) < 1e-10)
+        using std::abs;
+        if (abs(bfNormal1[1]) < 1e-10)
         {
             DUNE_THROW(Dune::NotImplemented, "The coupling conditions are not implemented for vertical interfaces.");
         }
@@ -477,7 +478,8 @@ public:
         SpatialParams spatialParams = globalProblem_.sdProblem2().spatialParams();
         Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos1);
         assert(beaversJosephCoeff > 0);
-        beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
+        using std::sqrt;
+        beaversJosephCoeff /= sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
 
         // Neumann-like conditions
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))

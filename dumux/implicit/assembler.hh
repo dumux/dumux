@@ -283,7 +283,8 @@ public:
             // this vertex
             Scalar dist = model_().relativeShiftAtDof(currentPriVars,
                                                       nextPriVars);
-            delta_[i] += std::abs(dist);
+            using std::abs;
+            delta_[i] += abs(dist);
         }
 
     }

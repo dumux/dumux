@@ -231,7 +231,8 @@ public:
                  Scalar defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                      - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
-                 while(std::abs(defect) > 0.01) // simply a small number chosen ...
+                 using std::abs;
+                 while(abs(defect) > 0.01) // simply a small number chosen ...
                  {
                      Scalar deltaT = 1.e-8 * temp;
                      fluidState_.setTemperature(temp+deltaT);
@@ -545,7 +546,8 @@ public:
 
                      Scalar temp = tempOnlyWater; // initial guess
                      int counter = 0;
-                     while(std::abs(defect) > 0.01) // simply a small number chosen ...
+                     using std::abs;
+                     while(abs(defect) > 0.01) // simply a small number chosen ...
                      {
                          Scalar deltaT = 1.e-6; // fixed number, but T should always be in the order of a few hundred Kelvin
                          fluidState_.setTemperature(temp+deltaT);

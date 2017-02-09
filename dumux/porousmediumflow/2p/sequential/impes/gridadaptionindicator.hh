@@ -96,8 +96,10 @@ public:
                 break;
             }
 
-            globalMin = std::min(satI, globalMin);
-            globalMax = std::max(satI, globalMax);
+            using std::min;
+            globalMin = min(satI, globalMin);
+            using std::max;
+            globalMax = max(satI, globalMax);
 
             // calculate refinement indicator in all cells
             for (const auto& intersection : intersections(problem_.gridView(), element))
@@ -123,9 +125,10 @@ public:
                             break;
                         }
 
-                        Scalar localdelta = std::abs(satI - satJ);
-                        indicatorVector_[globalIdxI][0] = std::max(indicatorVector_[globalIdxI][0], localdelta);
-                        indicatorVector_[globalIdxJ][0] = std::max(indicatorVector_[globalIdxJ][0], localdelta);
+                        using std::abs;
+                        Scalar localdelta = abs(satI - satJ);
+                        indicatorVector_[globalIdxI][0] = max(indicatorVector_[globalIdxI][0], localdelta);
+                        indicatorVector_[globalIdxJ][0] = max(indicatorVector_[globalIdxJ][0], localdelta);
                     }
                 }
             }
@@ -144,6 +147,7 @@ public:
                                                          Dune::InteriorBorder_All_Interface,
                                                          Dune::ForwardCommunication);
 
+    using std::max;
     refineBound_ = problem_.gridView().comm().max(refineBound_);
     coarsenBound_ = problem_.gridView().comm().max(coarsenBound_);
 

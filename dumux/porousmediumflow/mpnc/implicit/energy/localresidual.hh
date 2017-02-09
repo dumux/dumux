@@ -188,7 +188,8 @@ public:
             * volVars.porosity();
 
 #ifndef NDEBUG
-if (!std::isfinite(storage[energyEqIdx]))
+using std::isfinite;
+if (!isfinite(storage[energyEqIdx]))
     DUNE_THROW(NumericalProblem, "Calculated non-finite energy storage");
 #endif
     }
@@ -250,7 +251,8 @@ if (!std::isfinite(storage[energyEqIdx]))
         const VolumeVariables &up = elemVolVars[upIdx];
         flux[energyEqIdx] += up.enthalpy(phaseIdx) * massFlux;
 #ifndef NDEBUG
-if (!std::isfinite(flux[energyEqIdx]) )
+using std::isfinite;
+if (!isfinite(flux[energyEqIdx]) )
     DUNE_THROW(NumericalProblem, "Calculated non-finite energy flux");
 #endif
     }
@@ -271,7 +273,8 @@ if (!std::isfinite(flux[energyEqIdx]) )
         Scalar lumpedHeatConduction = - lumpedConductivity * temperatureGradientNormal ;
         flux[energyEqIdx] += lumpedHeatConduction;
 #ifndef NDEBUG
-if (!std::isfinite(flux[energyEqIdx]) )
+using std::isfinite
+if (!isfinite(flux[energyEqIdx]) )
     DUNE_THROW(NumericalProblem, "Calculated non-finite energy flux");
 #endif
     }

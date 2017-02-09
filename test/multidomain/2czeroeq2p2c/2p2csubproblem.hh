@@ -142,7 +142,8 @@ public:
         std::vector<Scalar> positions0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions0);
         std::vector<Scalar> positions1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions1);
 
-        bBoxMin_[0] = std::max(positions0.front(),noDarcyX);
+        using std::max;
+        bBoxMin_[0] = max(positions0.front(),noDarcyX);
         bBoxMax_[0] = positions0.back();
         bBoxMin_[1] = positions1.front();
         bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);

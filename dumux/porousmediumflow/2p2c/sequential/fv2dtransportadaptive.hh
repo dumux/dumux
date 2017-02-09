@@ -276,7 +276,8 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
         updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
 
         // account for porosity
-        sumfactorin = std::max(sumfactorin,sumfactorout)
+        using std::max;
+        sumfactorin = max(sumfactorin,sumfactorout)
                         / problem().spatialParams().porosity(element);
 
         //calculate time step
@@ -364,10 +365,11 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
     PhaseVector SmobI(0.);
-    SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
+    using std::max;
+    SmobI[wPhaseIdx] = max((cellDataI.saturation(wPhaseIdx)
                             - problem().spatialParams().materialLawParams(elementI).swr())
                             , 1e-2);
-    SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
+    SmobI[nPhaseIdx] = max((cellDataI.saturation(nPhaseIdx)
                                 - problem().spatialParams().materialLawParams(elementI).snr())
                             , 1e-2);
 
@@ -564,11 +566,12 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
                                 cellDataJ.massFraction(phaseIdx, nCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));
                 // c) timestep control
                 // for timestep control : influx
-                timestepFlux[0] += std::max(0.,
+                using std::max;
+                timestepFlux[0] += max(0.,
                         - potential[phaseIdx] / volume
                           * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx)));
                 // outflux
-                timestepFlux[1] += std::max(0.,
+                timestepFlux[1] += max(0.,
                         potential[phaseIdx]  / volume
                         * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx))/SmobI[phaseIdx]);
 
@@ -589,18 +592,21 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     }
 
     // calculate and standardized velocity
-    double velocityJIw = std::max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) / volume, 0.0);
-    double velocityIJw = std::max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) / volume, 0.0);
-    double velocityJIn = std::max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) / volume, 0.0);
-    double velocityIJn = std::max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) / volume, 0.0);
+    using std::max;
+    double velocityJIw = max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) / volume, 0.0);
+    double velocityIJw = max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) / volume, 0.0);
+    double velocityJIn = max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) / volume, 0.0);
+    double velocityIJn = max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) / volume, 0.0);
 
     // for timestep control
     timestepFlux[0] += velocityJIw + velocityJIn;
 
     double foutw = velocityIJw/SmobI[wPhaseIdx];
     double foutn = velocityIJn/SmobI[nPhaseIdx];
-    if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
-    if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
+    using std::isnan;
+    using std::isinf;
+    if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
+    if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
     timestepFlux[1] += foutw + foutn;
 
     fluxEntries[wCompIdx] +=

@@ -214,7 +214,8 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
     this->setZero(sourceValues);
-    if (fabs(globalPos[0] - 4.8) < 0.5 + eps_ && fabs(globalPos[1] - 4.8) < 0.5 + eps_)
+    using std::abs;
+    if (abs(globalPos[0] - 4.8) < 0.5 + eps_ && abs(globalPos[1] - 4.8) < 0.5 + eps_)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 /*!

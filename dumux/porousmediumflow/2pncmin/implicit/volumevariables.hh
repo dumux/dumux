@@ -153,7 +153,8 @@ public:
 
         // this->porosity_ = initialPorosity_ - sumPrecipitates_;
 
-        this->porosity_ = std::max(minimumPorosity_, std::max(0.0, initialPorosity_ - sumPrecipitates_));
+        using std::max;
+        this->porosity_ = max(minimumPorosity_, max(0.0, initialPorosity_ - sumPrecipitates_));
 
         salinity_= 0.0;
         moleFractionSalinity_ = 0.0;
@@ -170,31 +171,32 @@ public:
         // so that one can select the relation form the input file.
 
         // kozeny-Carman relation
-        permeabilityFactor_  =  std::pow(((1-initialPorosity_)/(1-this->porosity_)), 2)
-                                * std::pow((this->porosity_/initialPorosity_), 3);
+        using std::pow;
+        permeabilityFactor_  =  pow(((1-initialPorosity_)/(1-this->porosity_)), 2)
+                                * pow((this->porosity_/initialPorosity_), 3);
 
         // Verma-Pruess relation
-        // permeabilityFactor_  =  100 * std::pow(((this->porosity_/initialPorosity_)-0.9),2);
+        // permeabilityFactor_  =  100 * pow(((this->porosity_/initialPorosity_)-0.9),2);
 
         // Modified Fair-Hatch relation with final porosity set to 0.2 and E1=1
-        // permeabilityFactor_  =  std::pow((this->porosity_/initialPorosity_),3)
-        //                         * std::pow((std::pow((1 - initialPorosity_),2/3))+(std::pow((0.2 - initialPorosity_),2/3)),2)
-        //                         / std::pow((std::pow((1 -this->porosity_),2/3))+(std::pow((0.2 -this->porosity_),2/3)),2);
+        // permeabilityFactor_  =  pow((this->porosity_/initialPorosity_),3)
+        //                         * pow((pow((1 - initialPorosity_),2/3))+(pow((0.2 - initialPorosity_),2/3)),2)
+        //                         / pow((pow((1 -this->porosity_),2/3))+(((0.2 -this->porosity_),2/3)),2);
 
         //Timur relation with residual water saturation set to 0.001
-        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (2000 * (std::pow(0.001,2)));
+        // permeabilityFactor_ =  0.136 * (pow(this->porosity_,4.4)) / (2000 * (pow(0.001,2)));
 
         //Timur relation1 with residual water saturation set to 0.001
-        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (200000 * (std::pow(0.001,2)));
+        // permeabilityFactor_ =  0.136 * (pow(this->porosity_,4.4)) / (200000 * (pow(0.001,2)));
 
         // Bern. relation
-        // permeabilityFactor_ = std::pow((this->porosity_/initialPorosity_),8);
+        // permeabilityFactor_ = pow((this->porosity_/initialPorosity_),8);
 
         //Tixier relation with residual water saturation set to 0.001
-        // permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
+        // permeabilityFactor_ = (pow((250 * (pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
 
         //Coates relation with residual water saturation set to 0.001
-        // permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
+        // permeabilityFactor_ = (pow((100 * (pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
 
         // energy related quantities not contained in the fluid state
         //asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);

@@ -49,10 +49,11 @@ public:
                           const int pvIdx) const
     {
         Scalar pv = this->curVolVars_[scvIdx].priVars()[pvIdx];
+        using std::abs;
         if (pvIdx < GridView::dimension){
-            return 1e-7*(std::abs(pv) + 1);
+            return 1e-7*(abs(pv) + 1);
         }
-        return 1e-9*(std::abs(pv) + 1);
+        return 1e-9*(abs(pv) + 1);
     }
 };
 }

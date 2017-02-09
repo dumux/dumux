@@ -182,7 +182,8 @@ protected:
         kin /= face().area;
         auto di = face().ipGlobal;
         di -= elementI.geometry().center();
-        auto ti = std::abs(di*kin*face().area/(2*di.two_norm2()));
+        using std::abs;
+        auto ti = abs(di*kin*face().area/(2*di.two_norm2()));
 
         auto tij = 2*ti;
         if (!onBoundary_)
@@ -196,7 +197,8 @@ protected:
             kjn /= face().area;
             auto dj = face().ipGlobal;
             dj -= elementJ.geometry().center();
-            auto tj = std::abs(dj*kjn*face().area/(2*dj.two_norm2()));
+            using std::abs;
+            auto tj = abs(dj*kjn*face().area/(2*dj.two_norm2()));
             tij = harmonicMean(ti, tj);
         }
 
@@ -217,8 +219,10 @@ protected:
                 Scalar SJ = volVarsJ.fluidState().saturation(phaseIdx);
                 Scalar rhoI = volVarsI.fluidState().density(phaseIdx);
                 Scalar rhoJ = volVarsJ.fluidState().density(phaseIdx);
-                Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
-                Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                using std::max;
+                using std::min;
+                Scalar fI = max(0.0, min(SI/1e-5, 0.5));
+                Scalar fJ = max(0.0, min(SJ/1e-5, 0.5));
                 if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
                     // doesn't matter because no wetting phase is present in
                     // both cells!

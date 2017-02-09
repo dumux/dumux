@@ -113,7 +113,8 @@ private:
     template<class Intersection>
     bool intersectionsEqual(const Intersection& is1, const Intersection& is2)
     {
-        auto eps = 1e-7*std::max((is1[0] - is1[1]).two_norm(), (is2[0] - is2[1]).two_norm());
+        using std::max;
+        auto eps = 1e-7*max((is1[0] - is1[1]).two_norm(), (is2[0] - is2[1]).two_norm());
         return (is1[0] - is2[0]).two_norm() < eps && (is1[1] - is2[1]).two_norm() < eps;
     }
     std::shared_ptr<Dumux::BoundingBoxTree<GridView>> tree_;

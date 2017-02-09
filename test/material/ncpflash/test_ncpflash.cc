@@ -53,8 +53,9 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
         Scalar error;
 
         // check the pressures
+        using std::abs;
         error = 1 - fsRef.pressure(phaseIdx)/fsFlash.pressure(phaseIdx);
-        if (std::abs(error) > 1e-6) {
+        if (abs(error) > 1e-6) {
             std::cout << "pressure error phase " << phaseIdx << ": "
                       << fsFlash.pressure(phaseIdx)  << " flash vs "
                       << fsRef.pressure(phaseIdx) << " reference"
@@ -63,7 +64,7 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
 
         // check the saturations
         error = fsRef.saturation(phaseIdx) - fsFlash.saturation(phaseIdx);
-        if (std::abs(error) > 1e-6)
+        if (abs(error) > 1e-6)
             std::cout << "saturation error phase " << phaseIdx << ": "
                       << fsFlash.saturation(phaseIdx) << " flash vs "
                       << fsRef.saturation(phaseIdx) << " reference"
@@ -72,7 +73,7 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
         // check the compositions
         for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
             error = fsRef.moleFraction(phaseIdx, compIdx) - fsFlash.moleFraction(phaseIdx, compIdx);
-            if (std::abs(error) > 1e-6)
+            if (abs(error) > 1e-6)
                 std::cout << "composition error phase " << phaseIdx << ", component " << compIdx << ": "
                           << fsFlash.moleFraction(phaseIdx, compIdx) << " flash vs "
                           << fsRef.moleFraction(phaseIdx, compIdx) << " reference"

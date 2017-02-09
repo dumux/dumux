@@ -106,7 +106,9 @@ public:
         const Scalar C = 215.110;
 
         Scalar T = temperature - 273.15;
-        Scalar psat = 1.334*std::pow(10.0, (A - (B/(T + C))));  // in [mbar]
+
+        using std::pow;
+        Scalar psat = 1.334*pow(10.0, (A - (B/(T + C))));  // in [mbar]
         psat *= 100.0;  // in [Pa] (0.001*1.E5)
 
         return psat;
@@ -173,8 +175,8 @@ public:
         // Enthalpy may have arbitrary reference state, but the empirical/fitted heatCapacity function needs Kelvin as input and is
         // fit over a certain temperature range. This suggests choosing an interval of integration being in the actual fit range.
         // I.e. choosing T=273.15K  as reference point for liquid enthalpy.
-
-        const Scalar sqrt1over3 = std::sqrt(1./3.);
+        using std::sqrt;
+        const Scalar sqrt1over3 = sqrt(1./3.);
         // evaluation points according to Gauss-Legendre integration
         const Scalar TEval1 = 0.5*(temperature-273.15)*        sqrt1over3 + 0.5*(273.15+temperature);
         // evaluation points according to Gauss-Legendre integration
@@ -196,22 +198,26 @@ public:
     static Scalar heatVap(Scalar temperature,
                           const Scalar pressure)
     {
-        temperature = std::min(temperature, criticalTemperature()); // regularization
-        temperature = std::max(temperature, 0.0); // regularization
+        using std::min;
+        using std::max;
+        temperature = min(temperature, criticalTemperature()); // regularization
+        temperature = max(temperature, 0.0); // regularization
 
         constexpr Scalar T_crit = criticalTemperature();
         constexpr Scalar Tr1 = boilingTemperature()/criticalTemperature();
         constexpr Scalar p_crit = criticalPressure();
 
-        //        Chen method, eq. 7-11.4 (at boiling)
-                const Scalar DH_v_boil = Consts::R * T_crit * Tr1
-                                          * (3.978 * Tr1 - 3.958 + 1.555*std::log(p_crit * 1e-5 /*Pa->bar*/ ) )
-                                          / (1.07 - Tr1); /* [J/mol] */
+        // Chen method, eq. 7-11.4 (at boiling)
+        using std::log;
+        const Scalar DH_v_boil = Consts::R * T_crit * Tr1
+                                  * (3.978 * Tr1 - 3.958 + 1.555*log(p_crit * 1e-5 /*Pa->bar*/ ) )
+                                  / (1.07 - Tr1); /* [J/mol] */
 
         /* Variation with temp according to Watson relation eq 7-12.1*/
+        using std::pow;
         const Scalar Tr2 = temperature/criticalTemperature();
         const Scalar n = 0.375;
-        const Scalar DH_vap = DH_v_boil * std::pow(((1.0 - Tr2)/(1.0 - Tr1)), n);
+        const Scalar DH_vap = DH_v_boil * pow(((1.0 - Tr2)/(1.0 - Tr1)), n);
 
         return (DH_vap/molarMass());          // we need [J/kg]
     }
@@ -268,13 +274,16 @@ public:
         // saturated molar volume according to Lide, CRC Handbook of
         // Thermophysical and Thermochemical Data, CRC Press, 1994
         // valid for 245 < Temp < 600
-        temp = std::min(temp, 500.0); // regularization
-        temp = std::max(temp, 250.0); // regularization
+        using std::min;
+        using std::max;
+        temp = min(temp, 500.0); // regularization
+        temp = max(temp, 250.0); // regularization
 
+        using std::pow;
         const Scalar A1 = 0.25919;           // from table
         const Scalar A2 = 0.0014569;         // from table
-        const Scalar expo = 1.0 + std::pow((1.0 - temp/criticalTemperature()), (2.0/7.0));
-        const Scalar V = A2*std::pow(A1, expo);    // liquid molar volume [m^3/mol]
+        const Scalar expo = 1.0 + pow((1.0 - temp/criticalTemperature()), (2.0/7.0));
+        const Scalar V = A2*pow(A1, expo);   // liquid molar volume [m^3/mol]
 
         return 1.0/V;             // molar density [mol/m^3]
     }
@@ -317,15 +326,19 @@ public:
      */
     static Scalar gasViscosity(Scalar temp, Scalar pressure, bool regularize=true)
     {
-        temp = std::min(temp, 500.0); // regularization
-        temp = std::max(temp, 250.0); // regularization
+        using std::min;
+        using std::max;
+        temp = min(temp, 500.0); // regularization
+        temp = max(temp, 250.0); // regularization
 
-        const Scalar Tr = std::max(temp/criticalTemperature(), 1e-10);
+        using std::pow;
+        using std::exp;
+        const Scalar Tr = max(temp/criticalTemperature(), 1e-10);
         const Scalar Fp0 = 1.0;
         const Scalar xi = 0.004623;
-        const Scalar eta_xi = Fp0*(0.807*std::pow(Tr, 0.618)
-                                   - 0.357*std::exp(-0.449*Tr)
-                                   + 0.34*std::exp(-4.058*Tr)
+        const Scalar eta_xi = Fp0*(0.807*pow(Tr, 0.618)
+                                   - 0.357*exp(-0.449*Tr)
+                                   + 0.34*exp(-4.058*Tr)
                                    + 0.018);
         Scalar r = eta_xi/xi; // [1e-6 P]
         r /= 1.0e7; // [Pa s]
@@ -341,15 +354,18 @@ public:
      */
     static Scalar liquidViscosity(Scalar temp, Scalar pressure)
     {
-        temp = std::min(temp, 500.0); // regularization
-        temp = std::max(temp, 250.0); // regularization
+        using std::min;
+        using std::max;
+        temp = min(temp, 500.0); // regularization
+        temp = max(temp, 250.0); // regularization
 
         const Scalar A = -3.82;
         const Scalar B = 1027.0;
         const Scalar C = -6.38e-4;
         const Scalar D = 4.52e-7;
 
-        Scalar r = std::exp(A + B/temp + C*temp + D*temp*temp); // in [cP]
+        using std::exp;
+        Scalar r = exp(A + B/temp + C*temp + D*temp*temp); // in [cP]
         r *= 1.0e-3; // in [Pa s]
 
         return r; // [Pa s]

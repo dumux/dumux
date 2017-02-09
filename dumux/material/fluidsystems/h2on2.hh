@@ -274,9 +274,10 @@ public:
     {
         assert(compIdx == wCompIdx && phaseIdx == wPhaseIdx);
 
+        using std::exp;
         return fugacityCoefficient(fluidState, phaseIdx, compIdx)
                * fluidState.pressure(phaseIdx)
-               * std::exp(-(fluidState.pressure(nPhaseIdx)-fluidState.pressure(wPhaseIdx))
+               * exp(-(fluidState.pressure(nPhaseIdx)-fluidState.pressure(wPhaseIdx))
                           / density(fluidState, phaseIdx)
                           / (Dumux::Constants<Scalar>::R / molarMass(compIdx))
                           / fluidState.temperature());
@@ -407,17 +408,18 @@ public:
         }
 
         // gas phase
+        using std::max;
         if (!useComplexRelations)
             // for the gas phase assume an ideal gas
             return
                 IdealGas::molarDensity(T, p)
                 * fluidState.averageMolarMass(nPhaseIdx)
-                / std::max(1e-5, sumMoleFrac);
+                / max(1e-5, sumMoleFrac);
 
         // assume ideal mixture: steam and nitrogen don't "see" each other
         Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
         Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, N2Idx));
-        return (rho_gH2O + rho_gN2) / std::max(1e-5, sumMoleFrac);
+        return (rho_gH2O + rho_gN2) / max(1e-5, sumMoleFrac);
     }
 
     using Base::viscosity;
@@ -464,12 +466,15 @@ public:
             };
 
             Scalar sumx = 0.0;
+            using std::max;
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 sumx += fluidState.moleFraction(phaseIdx, compIdx);
-            sumx = std::max(1e-10, sumx);
+            sumx = max(1e-10, sumx);
 
             for (int i = 0; i < numComponents; ++i) {
                 Scalar divisor = 0;
+//		using std::sqrt;
+//		using std::pow;
                 for (int j = 0; j < numComponents; ++j) {
                     Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(molarMass(j)/molarMass(i), 1/4.0);
                     phiIJ *= phiIJ;
