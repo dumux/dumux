@@ -31,9 +31,6 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
 
-
-#include <dumux/linear/amgbackend.hh>
-
 // solve Navier-Stokes equations
 #define ENABLE_NAVIERSTOKES 1
 
@@ -299,7 +296,6 @@ public:
         return values;
     }
 
-
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
@@ -307,7 +303,7 @@ public:
     void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& pressureExact = outputModule.createScalarField("pressureExact", 0);
-        auto& velocityExact = outputModule.createVectorField("velocityExact", dim);
+        auto& velocityExact = outputModule.createVectorField("velocityExact", 0);
 
         auto& scalarFaceVelocityExact = outputModule.createFaceScalarField("scalarFaceVelocityExact");
         auto& vectorFaceVelocityExact = outputModule.createFaceVectorField("vectorFaceVelocityExact");
@@ -318,23 +314,25 @@ public:
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto dofIdxGlobal = scv.dofIndex();
-                auto dofPosition = scv.dofPosition();
-                pressureExact[dofIdxGlobal] = dirichletAtPos(dofPosition)[pressureIdx];
+                auto ccDofIdx = scv.dofIndex();
+                auto ccDofPosition = scv.dofPosition();
+                auto analyticalSolutionAtCc = dirichletAtPos(ccDofPosition);
 
                 GlobalPosition velocityVector(0.0);
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
+                    auto faceDofIdx = scvf.dofIndex();
+                    auto faceDofPosition = scvf.center();
                     auto dirIdx = scvf.directionIndex();
-                    auto analyticalSolution = dirichletAtPos(dofPosition)[faceIdx][dirIdx];
-                    velocityVector[dirIdx] += 0.5*analyticalSolution;
-                    scalarFaceVelocityExact[dofIdxGlobal] = analyticalSolution;
+                    auto analyticalSolutionAtFace = dirichletAtPos(faceDofPosition);
+                    scalarFaceVelocityExact[faceDofIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
 
                     GlobalPosition tmp(0.0);
-                    tmp[dirIdx] = analyticalSolution;
-                    vectorFaceVelocityExact[dofIdxGlobal] = std::move(tmp);
+                    tmp[dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+                    vectorFaceVelocityExact[faceDofIdx] = std::move(tmp);
                 }
-                velocityExact[dofIdxGlobal] = velocityVector;
+                pressureExact[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
+                velocityExact[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
             }
         }
     }
