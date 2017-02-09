@@ -543,11 +543,11 @@ Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
  * \param M The matrix to be transposed
  */
 template <class Scalar, int m, int n>
-Dune::FieldMatrix<Scalar, m, n> getTransposed(const Dune::FieldMatrix<Scalar, m, n>& M)
+Dune::FieldMatrix<Scalar, n, m> getTransposed(const Dune::FieldMatrix<Scalar, m, n>& M)
 {
-    Dune::FieldMatrix<Scalar, m, n> T;
-    for (std::size_t i = 0; i < n; ++i)
-        for (std::size_t j = 0; j < m; ++j)
+    Dune::FieldMatrix<Scalar, n, m> T;
+    for (std::size_t i = 0; i < m; ++i)
+        for (std::size_t j = 0; j < n; ++j)
             T[j][i] = M[i][j];
 
     return T;
