@@ -26,7 +26,8 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/io/vtkoutputmodulebase.hh>
-#include <dumux/io/staggeredvtkwriter.hh>
+#include <dumux/io/pointcloudvtkwriter.hh>
+#include <dumux/io/vtksequencewriter.hh>
 
 namespace Properties
 {
@@ -70,7 +71,11 @@ class StaggeredVtkOutputModule : public VtkOutputModuleBase<TypeTag>
 public:
 
     StaggeredVtkOutputModule(const Problem& problem,
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm), faceWriter_(coordinates_)
+                    Dune::VTK::DataMode dm = Dune::VTK::conforming) : ParentType(problem, dm),
+                                                                       faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, dim>>(coordinates_)),
+                                                                       sequenceWriter_(faceWriter_, problem.name() + "-face", "","",
+                                                                                                    problem.gridView().comm().rank(),
+                                                                                                    problem.gridView().comm().size() )
 
     {
         writeFaceVars_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, WriteFaceData);
@@ -203,21 +208,21 @@ private:
 
         // transfer priVar scalar data to writer
         for(int i = 0; i < priVarScalarDataInfo_.size(); ++i)
-            faceWriter_.addPointData(priVarScalarData[i], priVarScalarDataInfo_[i].name);
+            faceWriter_->addPointData(priVarScalarData[i], priVarScalarDataInfo_[i].name);
 
         // transfer priVar vector data to writer
         for(int i = 0; i < priVarVectorDataInfo_.size(); ++i)
-            faceWriter_.addPointData(priVarVectorData[i], priVarVectorDataInfo_[i].name, priVarVectorDataInfo_[i].pvIdx.size());
+            faceWriter_->addPointData(priVarVectorData[i], priVarVectorDataInfo_[i].name, priVarVectorDataInfo_[i].pvIdx.size());
 
         // transfer custom scalar data to writer
         for(auto&& scalarField : faceScalarFields_)
-            faceWriter_.addPointData(scalarField.first, scalarField.second);
+            faceWriter_->addPointData(scalarField.first, scalarField.second);
 
         // transfer custom vector data to writer
         for(auto&& vectorField : faceVectorFields_)
-            faceWriter_.addPointData(vectorField.first, vectorField.second, 3);
+            faceWriter_->addPointData(vectorField.first, vectorField.second, 3);
 
-        faceWriter_.write();
+        sequenceWriter_.write(this->problem().timeManager().time());
         faceScalarFields_.clear();
         faceVectorFields_.clear();
     }
@@ -253,7 +258,10 @@ private:
                     = this->problem().model().curSol()[faceIdx][dofIdxGlobal][priVarVectorDataInfo_[i].pvIdx[j]];
     }
 
-    StaggeredVtkWriter<dimWorld> faceWriter_;
+    std::shared_ptr<PointCloudVtkWriter<Scalar, dim>> faceWriter_;
+
+    VTKSequenceWriter<PointCloudVtkWriter<Scalar, dim>> sequenceWriter_;
+
     bool writeFaceVars_;
 
     std::vector<GlobalPosition> coordinates_;
