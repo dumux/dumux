@@ -35,6 +35,8 @@ namespace Properties
 {
 // forward declaration of properties
 NEW_PROP_TAG(ProblemEnableGravity);
+NEW_PROP_TAG(MpfaHelper);
+NEW_PROP_TAG(BoundaryInteractionVolume);
 }
 
 /*!

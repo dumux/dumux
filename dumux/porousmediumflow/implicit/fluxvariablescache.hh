@@ -24,7 +24,6 @@
 #define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -38,6 +37,7 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(InteriorBoundaryData);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
