@@ -1355,6 +1355,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
 
     transmissibility = D;
 
+    using std::isnan;
     if (isnan(transmissibility.frobenius_norm()))
     {
         std::cout<<"idx: "<<idx1<<idx2<<idx4<<idx6<<"\n";
