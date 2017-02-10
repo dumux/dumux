@@ -179,7 +179,7 @@ public:
                    problem.neumann(element, fvGeometry, elemVolVars, scvf)[phaseIdx];
 
         // Calculate the interface density for gravity evaluation
-        const auto rho = Implementation::interpolateDensity(element, fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+        const auto rho = Implementation::interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
 
         // calculate Tij*pj
         Scalar flux(0.0);
@@ -207,14 +207,13 @@ public:
             return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(problem, element, fvGeometry, elemVolVars, fluxVarsCache, phaseIdx, rho);
+        flux += Implementation::computeInteriorBoundaryContribution(problem, fvGeometry, elemVolVars, fluxVarsCache, phaseIdx, rho);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
     }
 
-    static Scalar interpolateDensity(const Element& element,
-                                     const FVElementGeometry& fvGeometry,
+    static Scalar interpolateDensity(const FVElementGeometry& fvGeometry,
                                      const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
                                      const FluxVariablesCache& fluxVarsCache,
@@ -232,7 +231,7 @@ public:
             {
                 const auto& data = fluxVarsCache.interiorBoundaryDataSelf();
                 if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
-                    return data.facetVolVars(element, fvGeometry).density(phaseIdx);
+                    return data.facetVolVars(fvGeometry).density(phaseIdx);
             }
 
             // use arithmetic mean of the densities around the scvf
@@ -249,7 +248,6 @@ public:
     }
 
     static Scalar computeInteriorBoundaryContribution(const Problem& problem,
-                                                      const Element& element,
                                                       const FVElementGeometry& fvGeometry,
                                                       const ElementVolumeVariables& elemVolVars,
                                                       const FluxVariablesCache& fluxVarsCache,
@@ -270,7 +268,7 @@ public:
         {
             if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
             {
-                Scalar h = data.facetVolVars(element, fvGeometry).pressure(phaseIdx);
+                Scalar h = data.facetVolVars(fvGeometry).pressure(phaseIdx);
 
                 if (gravity)
                 {

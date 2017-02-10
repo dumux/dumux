@@ -292,7 +292,7 @@ public:
             if (facetCoupling || scvfFluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorDirichlet)
             {
                 const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
-                const auto& outsideVolVars = scvfFluxVarsCache.interiorBoundaryDataSelf().facetVolVars(fluxVars.element(), fluxVars.fvGeometry());
+                const auto& outsideVolVars = scvfFluxVarsCache.interiorBoundaryDataSelf().facetVolVars(fluxVars.fvGeometry());
                 if (std::signbit(flux))
                     return flux*(upwindWeight*upwindTerm(outsideVolVars)
                                  + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
@@ -361,7 +361,7 @@ public:
                 if (facetCoupling || scvfFluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorDirichlet)
                 {
                     const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
-                    const auto& outsideVolVars = scvfFluxVarsCache.interiorBoundaryDataSelf().facetVolVars(fluxVars.element(), fluxVars.fvGeometry());
+                    const auto& outsideVolVars = scvfFluxVarsCache.interiorBoundaryDataSelf().facetVolVars(fluxVars.fvGeometry());
                     if (std::signbit(flux))
                         return flux*(upwindWeight*upwindTerm(outsideVolVars)
                                      + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
