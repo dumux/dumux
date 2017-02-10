@@ -1,5 +1,5 @@
 [TimeManager]
-DtInitial = 1e-1 # [s]
+DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
@@ -15,3 +15,6 @@ EnableGravity = false
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
