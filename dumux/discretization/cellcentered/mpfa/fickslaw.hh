@@ -289,8 +289,8 @@ public:
         // use the harmonic mean between inside and outside
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto factor = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                         insideVolVars.saturation(phaseIdx),
-                                                         /*Diffusion coefficient*/ 1.0);
+                                                               insideVolVars.saturation(phaseIdx),
+                                                               /*Diffusion coefficient*/ 1.0);
 
         if (!scvf.boundary())
         {
