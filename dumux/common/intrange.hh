@@ -18,23 +18,41 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief The available discretization methods in Dumux
+ * \brief A class to create an iterable integer range
  */
-#ifndef DUMUX_DISCRETIZARION_METHODS_HH
-#define DUMUX_DISCRETIZARION_METHODS_HH
+#ifndef DUMUX_INTEGER_RANGE_HH
+#define DUMUX_INTEGER_RANGE_HH
 
 namespace Dumux
 {
-    //! The discretization methods
-    //! \note Use none if specifying a discretization method is required but
-    //!       the class in question is not specific to a a discretization method
-    //!       or the classification is non-applicable
-    enum class DiscretizationMethods : unsigned int
-    {
-        None, Box, CCTpfa, CCMpfa, Staggered
-    };
 
-} // end namespace Dumux
+/*!
+ * \brief This class generates a IntRange [a,b) which can be used in a for loop, e.g.
+ *        for(auto i : IntRange(3) { ... i = 0, 1, 2 }   or
+ *        for(auto i : IntRange(5, 8) { ... i = 5, 6, 7 }
+ *        see: https://en.wikipedia.org/wiki/Generator_(computer_programming)
+ */
+class IntRange
+{
+public:
+    // constructors
+    IntRange(int end): last_(end), iter_(0) { assert(end > 0); }
+    IntRange(int begin, int end): last_(end), iter_(begin) { assert(end > begin); }
+    IntRange() = delete;
+
+    // Iterable functions
+     const IntRange& begin() const { return *this; }
+     const IntRange& end() const { return *this; }
+
+    // Iterator functions
+    bool operator!=(const IntRange&) const { return iter_ < last_; }
+    void operator++() { ++iter_; }
+    int operator*() const { return iter_; }
+private:
+    int last_;
+    int iter_;
+};
+
+} // namespace Dumux
 
 #endif

@@ -1,0 +1,17 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 40 40
+
+[Problem]
+Name = test_donea # name passed to the output routines
+LiquidDensity = 1
+EnableGravity = false
+PrintL2Error = false
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5

@@ -27,7 +27,6 @@
 #include "model.hh"
 
 #include <dumux/io/restart.hh>
-#include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/implicit/adaptive/gridadapt.hh>
 #include <dumux/common/boundingboxtree.hh>
@@ -87,6 +86,8 @@ class ImplicitProblem
     using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
     using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
 
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
+
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
 
@@ -140,7 +141,7 @@ public:
      */
     void init()
     {
-        vtkOutputModule_ = std::make_shared<VtkOutputModule<TypeTag>>(asImp_());
+        vtkOutputModule_ = std::make_shared<VtkOutputModule>(asImp_());
 
         // set the initial condition of the model
         model().init(asImp_());
@@ -893,7 +894,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {}
 
     /*!
@@ -1053,7 +1054,7 @@ public:
     void postAdapt()
     {}
 
-    VtkOutputModule<TypeTag>& vtkOutputModule() const
+    VtkOutputModule& vtkOutputModule() const
     {
         return *vtkOutputModule_;
     }
@@ -1108,7 +1109,7 @@ private:
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
-    std::shared_ptr<VtkOutputModule<TypeTag>> vtkOutputModule_;
+    std::shared_ptr<VtkOutputModule> vtkOutputModule_;
 
     std::shared_ptr<GridAdaptModel> gridAdapt_;
 

@@ -156,7 +156,7 @@ class NewtonController
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef NewtonConvergenceWriter<TypeTag> ConvergenceWriter;
+    typedef typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter) ConvergenceWriter;
 
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
