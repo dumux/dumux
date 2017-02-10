@@ -21,8 +21,8 @@
  *
  * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
  */
-#ifndef DUMUX_1P_VOLUME_VARIABLES_HH
-#define DUMUX_1P_VOLUME_VARIABLES_HH
+#ifndef DUMUX_NAVIERSTOKES_VOLUME_VARIABLES_HH
+#define DUMUX_NAVIERSTOKES_VOLUME_VARIABLES_HH
 
 #include "properties.hh"
 #include <dumux/discretization/volumevariables.hh>

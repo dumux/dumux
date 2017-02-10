@@ -20,8 +20,8 @@
  * \file
  * \brief  Defines the indices for the one-phase fully implicit model.
  */
-#ifndef DUMUX_1P_INDICES_HH
-#define DUMUX_1P_INDICES_HH
+#ifndef DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
+#define DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
 
 namespace Dumux
 {

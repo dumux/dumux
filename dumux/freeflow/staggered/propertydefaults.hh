@@ -19,13 +19,13 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup OnePModel
+ * \ingroup NavierStokesModel
  * \file
  *
  * \brief Defines the properties required for the one-phase fully implicit model.
  */
-#ifndef DUMUX_1P_PROPERTY_DEFAULTS_HH
-#define DUMUX_1P_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_NAVIERSTOKES_PROPERTY_DEFAULTS_HH
+#define DUMUX_NAVIERSTOKES_PROPERTY_DEFAULTS_HH
 
 #include "properties.hh"
 
