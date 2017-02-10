@@ -219,7 +219,7 @@ public:
             return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, fluxVarsCache, getX, phaseIdx, compIdx);
+        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
@@ -314,6 +314,7 @@ public:
 
     template<typename GetXFunction>
     static Scalar computeInteriorBoundaryContribution(const FVElementGeometry& fvGeometry,
+                                                      const ElementVolumeVariables& elemVolVars,
                                                       const FluxVariablesCache& fluxVarsCache,
                                                       const GetXFunction& getX,
                                                       unsigned int phaseIdx, unsigned int compIdx)
