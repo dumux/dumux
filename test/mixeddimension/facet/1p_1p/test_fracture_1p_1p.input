@@ -1,0 +1,33 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+MaxTimeStepSize = 1
+DtInitialBulkProblem = 1 # [s]
+DtInitialLowDimProblem = 1 # [s]
+EpisodeTime = 1 # [s]
+
+[Grid]
+File = ./grids/simplefracture_long.msh
+
+[Problem]
+Name = test_1dfracture
+
+[MixedDimension]
+UseIterativeSolver = False
+
+[IterativeAlgorithm]
+MaxIterations = 100
+Tolerance = 1.0e-8
+Verbose = 1
+
+[SpatialParams]
+FractureAperture = 1e-1 # [m]
+FracturePermeability = 1e-15 # [m^2]
+MatrixPermeability = 1e-14 # [m^2]
+
+[Vtk]
+AddVelocity = False
+
+[Newton]
+MaxRelativeShift = 1e-5
+MaxSteps = 20
