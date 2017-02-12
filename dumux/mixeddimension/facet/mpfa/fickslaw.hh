@@ -285,7 +285,7 @@ public:
         const auto startIdx = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx).size();
 
         // The vector of interior neumann fluxes
-        const auto& cij = fluxVarsCache.advectionCij();
+        const auto& cij = fluxVarsCache.diffusionCij(phaseIdx, compIdx);
         CoefficientVector facetCouplingFluxes(cij.size(), 0.0);
 
         // add interior Dirichlet boundary contributions
