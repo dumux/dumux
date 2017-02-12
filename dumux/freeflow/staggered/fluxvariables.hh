@@ -106,17 +106,21 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         CellCenterPrimaryVariables flux(0.0);
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
-        if(sign(scvf.outerNormalScalar()) == sign(velocity))
-            flux[0] = insideVolVars.density() * velocity;
-        else
-            flux[0] = outsideVolVars.density() * velocity;
+        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
+        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+
+        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+
+        flux = (upWindWeight * upstreamVolVars.density() +
+               (1.0 - upWindWeight) * downstreamVolVars.density()) * velocity;
+
         return flux * scvf.area() * sign(scvf.outerNormalScalar());
     }
 
@@ -365,8 +369,7 @@ private:
 
 // specialization for miscible, isothermal flow
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, false>
-: public FluxVariablesBase<TypeTag>, public FreeFlowFluxVariablesImpl<TypeTag, false, false>
+class FreeFlowFluxVariablesImpl<TypeTag, true, false> : public FreeFlowFluxVariablesImpl<TypeTag, false, false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -385,6 +388,11 @@ class FreeFlowFluxVariablesImpl<TypeTag, true, false>
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+
+    static constexpr bool useMoles = true;
+
+    //! The index of the component balance equation that gets replaced with the total mass balance
+    static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 
     using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
 
@@ -409,10 +417,101 @@ public:
                                   const SubControlVolumeFace &scvf,
                                   const FluxVariablesCache& fluxVarsCache)
     {
-        CellCenterPrimaryVariables priVars(0.0);
-        priVars[0] = ParentType::computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
-//         priVars[1] = ParentType::computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
-        return priVars;
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+
+        // if we are on an inflow/outflow boundary, use the volVars of the element itself
+        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+
+        CellCenterPrimaryVariables flux(0.0);
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+
+        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
+        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+
+        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            // get equation index
+            auto eqIdx = conti0EqIdx + compIdx;
+
+            const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
+            const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
+            const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(0, compIdx) : upstreamVolVars.massFraction(0, compIdx);
+            const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(0, compIdx) : downstreamVolVars.massFraction(0, compIdx);
+
+            Scalar advFlux = 0.0;
+
+            if(scvf.boundary() && eqIdx > conti0EqIdx)
+            {
+                const auto bcTypes = this->problem().boundaryTypesAtPos(scvf.center());
+                if(bcTypes.isDirichlet(eqIdx))
+                    advFlux = upstreamDensity * this->problem().dirichletAtPos(scvf.center())[eqIdx] * velocity;
+                if(bcTypes.isOutflow(eqIdx))
+                    advFlux = upstreamDensity * upstreamFraction * velocity;
+            }
+            else
+                advFlux = (upWindWeight * upstreamDensity * upstreamFraction +
+                          (1.0 - upWindWeight) * downstreamDensity * downstreamFraction) * velocity;
+
+            if (eqIdx != replaceCompEqIdx)
+                flux[eqIdx] += advFlux;
+
+            // in case one balance is substituted by the total mass balance
+            if (replaceCompEqIdx < numComponents)
+                flux[replaceCompEqIdx] += advFlux;
+        }
+
+        //TODO: implement diffusive fluxes
+
+        flux *= scvf.area() * sign(scvf.outerNormalScalar());
+
+        return flux;
+    }
+
+
+    CellCenterPrimaryVariables diffusiveFlux(const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const SubControlVolumeFace &scvf)
+    {
+        CellCenterPrimaryVariables flux(0.0);
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+
+        Scalar distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm2();
+
+        Scalar xout = 0.1;
+        Scalar xin = insideVolVars.moleFraction(0,1);
+
+        Scalar Din = insideVolVars.diffusionCoefficient(0, 1);
+        Scalar mean = Din;
+
+
+
+        if(scvf.boundary())
+            return flux;
+
+        // const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        // const auto& insideVolVars = elemVolVars[insideScv];
+        // const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        //
+        // auto distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
+        // Scalar xout = outsideVolVars.moleFraction(0,1);
+        // Scalar xin = insideVolVars.moleFraction(0,1);
+        //
+        // Scalar Dout = outsideVolVars.diffusionCoefficient(0, 1);
+        // Scalar Din = insideVolVars.diffusionCoefficient(0, 1);
+        //
+        // Scalar mean = 0.5*(Dout + Din);
+        //
+        // flux[1] = -(xout - xin)/distance *mean;
+
+        return flux;
     }
 };
 

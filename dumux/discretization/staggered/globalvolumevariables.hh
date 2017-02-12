@@ -114,7 +114,8 @@ public:
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else
-                        DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
+                        if(eqIdx == Indices::pressureIdx)
+                            DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
                 ElementSolutionVector elemSol{std::move(boundaryPriVars)};
                 volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem, element, insideScv);

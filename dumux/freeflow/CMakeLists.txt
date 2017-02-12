@@ -1,4 +1,5 @@
 add_subdirectory("staggered")
+add_subdirectory("staggerednc")
 add_subdirectory("stokes")
 add_subdirectory("stokesnc")
 add_subdirectory("stokesncni")

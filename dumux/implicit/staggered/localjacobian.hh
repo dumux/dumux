@@ -295,6 +295,7 @@ private:
                 // update the global jacobian matrix with the current partial derivatives
                 this->updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], ccGlobalI_, globalJ, pvIdx, partialDeriv);
 
+//                 printmatrix(std::cout,matrix[cellCenterIdx][cellCenterIdx], "part", "");
                 // restore the original volVars
                 curVolVars = origVolVars;
             }
