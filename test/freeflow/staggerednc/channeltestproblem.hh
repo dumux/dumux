@@ -278,20 +278,20 @@ private:
 
     bool isInlet(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] < 1e-6;
+        return globalPos[0] < eps_;
     }
 
     bool isOutlet(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > 10 - 1e-6;//this->bBoxMax()[0] - 1e-6;
+        return globalPos[0] > this->bBoxMax()[0] - eps_;
     }
 
     bool isWall(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > 1e-6 || globalPos[0] < 10 - 1e-6;//this->bBoxMax()[0] - 1e-6;
+        return globalPos[0] > eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
     }
 
-    static constexpr Scalar eps_{1e-6}; // TODO: what is wrong with bBoxMax and eps_ ???
+    const Scalar eps_{1e-6};
     Scalar inletVelocity_;
     std::string name_;
 };

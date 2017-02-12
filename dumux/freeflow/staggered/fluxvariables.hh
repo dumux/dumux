@@ -96,12 +96,13 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, false>
 
 public:
 
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& globalFaceVars,
-                                  const SubControlVolumeFace &scvf,
-                                  const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
+                                                        const Element &element,
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const SubControlVolumeFace &scvf,
+                                                        const FluxVariablesCache& fluxVarsCache)
     {
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
@@ -410,12 +411,13 @@ class FreeFlowFluxVariablesImpl<TypeTag, true, false> : public FreeFlowFluxVaria
     };
 
 public:
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& globalFaceVars,
-                                  const SubControlVolumeFace &scvf,
-                                  const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
+                                                        const Element &element,
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const SubControlVolumeFace &scvf,
+                                                        const FluxVariablesCache& fluxVarsCache)
     {
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
@@ -446,9 +448,9 @@ public:
 
             if(scvf.boundary() && eqIdx > conti0EqIdx)
             {
-                const auto bcTypes = this->problem().boundaryTypesAtPos(scvf.center());
+                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
                 if(bcTypes.isDirichlet(eqIdx))
-                    advFlux = upstreamDensity * this->problem().dirichletAtPos(scvf.center())[eqIdx] * velocity;
+                    advFlux = upstreamDensity * problem.dirichletAtPos(scvf.center())[eqIdx] * velocity;
                 if(bcTypes.isOutflow(eqIdx))
                     advFlux = upstreamDensity * upstreamFraction * velocity;
             }

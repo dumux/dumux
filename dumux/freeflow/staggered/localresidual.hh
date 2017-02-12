@@ -125,21 +125,22 @@ public:
 
 
     CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& globalFaceVars,
-                                  const SubControlVolumeFace &scvf,
-                                  const ElementFluxVariablesCache& elemFluxVarsCache)
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const SubControlVolumeFace &scvf,
+                                                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
-        return fluxVars.computeFluxForCellCenter(element,  fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache[scvf]);
+        return fluxVars.computeFluxForCellCenter(this->problem(), element, fvGeometry, elemVolVars,
+                                                 globalFaceVars, scvf, elemFluxVarsCache[scvf]);
     }
 
     CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& elemVolVars,
-                                     const GlobalFaceVars& globalFaceVars,
-                                     const SubControlVolume &scv)
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const ElementVolumeVariables& elemVolVars,
+                                                          const GlobalFaceVars& globalFaceVars,
+                                                          const SubControlVolume &scv)
     {
         return CellCenterPrimaryVariables(0.0);
     }
