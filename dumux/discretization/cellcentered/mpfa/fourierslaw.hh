@@ -166,13 +166,14 @@ public:
             return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, fluxVarsCache);
+        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
     }
 
     static Scalar computeInteriorBoundaryContribution(const FVElementGeometry& fvGeometry,
+                                                      const ElementVolumeVariables& elemVolVars,
                                                       const FluxVariablesCache& fluxVarsCache)
     {
         // obtain the transmissibilites associated with all pressures
