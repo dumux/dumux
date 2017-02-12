@@ -139,13 +139,12 @@ private:
         for (const auto& element : elements(this->gridView_()))
         {
             // the global index of the element at hand
-            const auto globalI = this->elementMapper_().index(element);
+            const auto ccGlobalI = this->elementMapper_().index(element);
 
-            for (auto&& globalJ : assemblyMap(cellCenterIdx, cellCenterIdx, globalI))
-                occupationPatternA11.add(globalI, globalJ);
-            for (auto&& globalJ : assemblyMap(cellCenterIdx, faceIdx, globalI))
-                occupationPatternA12.add(globalI, globalJ);
-
+            for (auto&& ccGlobalJ : assemblyMap(cellCenterIdx, cellCenterIdx, ccGlobalI))
+                occupationPatternA11.add(ccGlobalI, ccGlobalJ);
+            for (auto&& faceGlobalJ : assemblyMap(cellCenterIdx, faceIdx, ccGlobalI))
+                occupationPatternA12.add(ccGlobalI, faceGlobalJ);
 
             auto fvGeometry = localView(this->problem_().model().globalFvGeometry());
             fvGeometry.bindElement(element);
@@ -153,11 +152,11 @@ private:
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                const auto globalI = scvf.dofIndex();
-                for (auto&& globalJ : assemblyMap(faceIdx, cellCenterIdx, scvf.index()))
-                    occupationPatternA21.add(globalI, globalJ);
-                for (auto&& globalJ : assemblyMap(faceIdx, faceIdx, scvf.index()))
-                    occupationPatternA22.add(globalI, globalJ);
+                const auto faceGlobalI = scvf.dofIndex();
+                for (auto&& ccGlobalJ : assemblyMap(faceIdx, cellCenterIdx, scvf.index()))
+                    occupationPatternA21.add(faceGlobalI, ccGlobalJ);
+                for (auto&& faceGlobalJ : assemblyMap(faceIdx, faceIdx, scvf.index()))
+                    occupationPatternA22.add(faceGlobalI, faceGlobalJ);
             }
         }
         // export patterns to matrices

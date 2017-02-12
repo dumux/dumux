@@ -278,8 +278,8 @@ public:
     const auto& faceResiduals() const
     { return faceResiduals_; }
 
-    const auto& faceResidual(const int faceIdx) const
-    { return faceResiduals_[faceIdx]; }
+    const auto& faceResidual(const int fIdx) const
+    { return faceResiduals_[fIdx]; }
 
 
 protected:
