@@ -42,32 +42,41 @@ class OnePTwoCFractureProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCFractureProblem, INHERITS_FROM(OnePTwoC));
-NEW_TYPE_TAG(OnePCCFractureProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCFractureProblem));
+NEW_TYPE_TAG(OnePTwoCIFractureProblem, INHERITS_FROM(OnePTwoC));
+NEW_TYPE_TAG(OnePTwoCNIFractureProblem, INHERITS_FROM(OnePTwoCNI));
+NEW_TYPE_TAG(OnePTwoCICCFractureProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCIFractureProblem));
+NEW_TYPE_TAG(OnePTwoCNICCFractureProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIFractureProblem));
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCFractureProblem,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(OnePTwoCIFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(OnePTwoCNIFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCFractureProblem, Problem, OnePTwoCFractureProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCIFractureProblem, Problem, OnePTwoCFractureProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIFractureProblem, Problem, OnePTwoCFractureProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCFractureProblem, SpatialParams, OnePFractureSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCIFractureProblem, SpatialParams, OnePFractureSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIFractureProblem, SpatialParams, OnePFractureSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCFractureProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCIFractureProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIFractureProblem, UseMoles, true);
 
 // Linear solver settings
-SET_TYPE_PROP(OnePTwoCFractureProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(OnePTwoCIFractureProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIFractureProblem, LinearSolver, SuperLUBackend<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(OnePTwoCFractureProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePTwoCIFractureProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePTwoCNIFractureProblem, ProblemEnableGravity, false);
 
 // Solution-independent tensor
-SET_BOOL_PROP(OnePTwoCFractureProblem, SolutionDependentAdvection, false);
-SET_BOOL_PROP(OnePTwoCFractureProblem, SolutionDependentMolecularDiffusion, false);
+// SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
+// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentMolecularDiffusion, false);
+// SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
+// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentMolecularDiffusion, false);
+// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentHeatConduction, false);
 }
 
 /*!
@@ -147,7 +156,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 10; } // 10C
+    { return 273.15 + 50; } // 50C
 
     /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
@@ -178,7 +187,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
+        if (globalPos[0] < eps_ /*|| globalPos[0] > this->bBoxMax()[0] - eps_*/)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -191,8 +200,8 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values(0.0);
-        values[pressureIdx] = 2.0e5 - 1.0e5*globalPos[0]/this->bBoxMax()[0];
+        auto values = initialAtPos(globalPos);
+        // values[pressureIdx] = 2.0e5 - 1.0e5*globalPos[0]/this->bBoxMax()[0];
         if (globalPos[0] < eps_)
             values[massOrMoleFracIdx] = 2.0e-5;
         return values;
@@ -202,17 +211,29 @@ public:
     { return PrimaryVariables(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * For this method, the \a priVars parameter stores primary
-     * variables.
+     * \brief Evaluate the initial value for a control volume (isothermal case)
      */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    template<class T = TypeTag>
+    typename std::enable_if<std::is_same<T, TTAG(OnePTwoCICCFractureProblem)>::value, PrimaryVariables>::type
+    initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables priVars(0.0);
-        priVars[pressureIdx] = 2.0e5 - 1.0e5*globalPos[0]/this->bBoxMax()[0];
-        return priVars;
-    };
+        PrimaryVariables values(0.0);
+        values[pressureIdx] = 1.0e5;
+        return values;
+    }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume (non-isothermal case)
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<std::is_same<T, TTAG(OnePTwoCNICCFractureProblem)>::value, PrimaryVariables>::type
+    initialAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values(0.0);
+        values[pressureIdx] = 1.0e5;
+        values[Indices::temperatureIdx] = temperature();
+        return values;
+    }
 
     //! Set the coupling manager
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)

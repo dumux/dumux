@@ -41,32 +41,41 @@ class OnePTwoCMpfaMatrixProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCMatrixProblem, INHERITS_FROM(OnePTwoC));
-NEW_TYPE_TAG(OnePCCMpfaMatrixProblem, INHERITS_FROM(FacetCouplingBulkMpfaModel, OnePTwoCMatrixProblem));
+NEW_TYPE_TAG(OnePTwoCIMatrixProblem, INHERITS_FROM(OnePTwoC));
+NEW_TYPE_TAG(OnePTwoCNIMatrixProblem, INHERITS_FROM(OnePTwoCNI));
+NEW_TYPE_TAG(OnePTwoCICCMpfaMatrixProblem, INHERITS_FROM(FacetCouplingBulkMpfaModel, OnePTwoCIMatrixProblem));
+NEW_TYPE_TAG(OnePTwoCNICCMpfaMatrixProblem, INHERITS_FROM(FacetCouplingBulkMpfaModel, OnePTwoCNIMatrixProblem));
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCMatrixProblem,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(OnePTwoCIMatrixProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(OnePTwoCNIMatrixProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCMatrixProblem, Problem, OnePTwoCMpfaMatrixProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCIMatrixProblem, Problem, OnePTwoCMpfaMatrixProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIMatrixProblem, Problem, OnePTwoCMpfaMatrixProblem<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCMatrixProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCIMatrixProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIMatrixProblem, UseMoles, true);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCMatrixProblem, SpatialParams, OnePMatrixSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCIMatrixProblem, SpatialParams, OnePMatrixSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIMatrixProblem, SpatialParams, OnePMatrixSpatialParams<TypeTag>);
 
 // Linear solver settings
-SET_TYPE_PROP(OnePTwoCMatrixProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(OnePTwoCIMatrixProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIMatrixProblem, LinearSolver, SuperLUBackend<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(OnePTwoCMatrixProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePTwoCIMatrixProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePTwoCNIMatrixProblem, ProblemEnableGravity, false);
 
 // Solution-independent tensor
-SET_BOOL_PROP(OnePTwoCMatrixProblem, SolutionDependentAdvection, false);
-SET_BOOL_PROP(OnePTwoCMatrixProblem, SolutionDependentMolecularDiffusion, false);
+// SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
+// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentMolecularDiffusion, false);
+// SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
+// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentMolecularDiffusion, false);
+// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentHeatConduction, false);
 
 // change mpfa method
 //SET_PROP(OnePMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
@@ -153,7 +162,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 10; }
+    { return 273.15 + 40; }
 
     /*!
      * \brief Return the sources within the domain.
@@ -171,7 +180,7 @@ public:
         const auto globalPos = scvf.ipGlobal();
 
         values.setAllNeumann();
-        if (globalPos[1] > this->bBoxMax()[1] - eps_)
+        if (globalPos[1] < eps_ && globalPos[1] > this->bBoxMax()[1] - eps_)
             values.setAllDirichlet();
 
         if (couplingManager().isInteriorBoundary(element, scvf))
@@ -192,8 +201,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0 + 0.5*globalPos[1];
+        PrimaryVariables values = initialAtPos(globalPos);
         return values;
     }
 
@@ -205,12 +213,27 @@ public:
     { return PrimaryVariables(0.0); }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial value for a control volume (isothermal case)
      */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    template<class T = TypeTag>
+    typename std::enable_if<std::is_same<T, TTAG(OnePTwoCICCMpfaMatrixProblem)>::value, PrimaryVariables>::type
+    initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5 + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        values[pressureIdx] = 1.0e5; // + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        return values;
+    }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume (non-isothermal case)
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<std::is_same<T, TTAG(OnePTwoCNICCMpfaMatrixProblem)>::value, PrimaryVariables>::type
+    initialAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values(0.0);
+        values[pressureIdx] = 1.0e5; // + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        values[Indices::temperatureIdx] = temperature();
         return values;
     }
 

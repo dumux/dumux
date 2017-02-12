@@ -35,45 +35,55 @@
 namespace Dumux
 {
 template <class TypeTag>
-class OnePFacetCouplingProblem;
+class OnePTwoCFacetCouplingProblem;
 
 namespace Properties
 {
-// Type tag of the global Problem and the two sub problems
-NEW_TYPE_TAG(OnePFacetCoupling, INHERITS_FROM(MixedDimension));
+// Type tag of the isothermal and non-isotherman global Problem
+NEW_TYPE_TAG(OnePTwoCFacetCoupling, INHERITS_FROM(MixedDimension));
+NEW_TYPE_TAG(OnePTwoCIFacetCoupling, INHERITS_FROM(OnePTwoCFacetCoupling));
+NEW_TYPE_TAG(OnePTwoCNIFacetCoupling, INHERITS_FROM(OnePTwoCFacetCoupling));
 
 // Set the problem property
-SET_TYPE_PROP(OnePFacetCoupling, Problem, Dumux::OnePFacetCouplingProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCFacetCoupling, Problem, Dumux::OnePTwoCFacetCouplingProblem<TypeTag>);
 
 // Set the grid creator
-SET_TYPE_PROP(OnePFacetCoupling, GridCreator, Dumux::GmshDualFacetGridCreator<TypeTag>);
+SET_TYPE_PROP(OnePTwoCFacetCoupling, GridCreator, Dumux::GmshDualFacetGridCreator<TypeTag>);
 
 // Set the two sub-problems of the global problem
-SET_TYPE_PROP(OnePFacetCoupling, BulkProblemTypeTag, TTAG(OnePCCMpfaMatrixProblem));
-SET_TYPE_PROP(OnePFacetCoupling, LowDimProblemTypeTag, TTAG(OnePCCFractureProblem));
+SET_TYPE_PROP(OnePTwoCIFacetCoupling, BulkProblemTypeTag, TTAG(OnePTwoCICCMpfaMatrixProblem));
+SET_TYPE_PROP(OnePTwoCIFacetCoupling, LowDimProblemTypeTag, TTAG(OnePTwoCICCFractureProblem));
+SET_TYPE_PROP(OnePTwoCNIFacetCoupling, BulkProblemTypeTag, TTAG(OnePTwoCNICCMpfaMatrixProblem));
+SET_TYPE_PROP(OnePTwoCNIFacetCoupling, LowDimProblemTypeTag, TTAG(OnePTwoCNICCFractureProblem));
 
 // The coupling manager
-SET_TYPE_PROP(OnePFacetCoupling, CouplingManager, CCMpfaFacetCouplingManager<TypeTag>);
+SET_TYPE_PROP(OnePTwoCFacetCoupling, CouplingManager, CCMpfaFacetCouplingManager<TypeTag>);
 
 // The linear solver to be used
-SET_TYPE_PROP(OnePFacetCoupling, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(OnePTwoCFacetCoupling, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 
 // The sub-problems need to know the global problem's type tag
-SET_TYPE_PROP(OnePCCMpfaMatrixProblem, GlobalProblemTypeTag, TTAG(OnePFacetCoupling));
-SET_TYPE_PROP(OnePCCFractureProblem, GlobalProblemTypeTag, TTAG(OnePFacetCoupling));
+SET_TYPE_PROP(OnePTwoCICCMpfaMatrixProblem, GlobalProblemTypeTag, TTAG(OnePTwoCIFacetCoupling));
+SET_TYPE_PROP(OnePTwoCICCFractureProblem, GlobalProblemTypeTag, TTAG(OnePTwoCIFacetCoupling));
+SET_TYPE_PROP(OnePTwoCNICCMpfaMatrixProblem, GlobalProblemTypeTag, TTAG(OnePTwoCNIFacetCoupling));
+SET_TYPE_PROP(OnePTwoCNICCFractureProblem, GlobalProblemTypeTag, TTAG(OnePTwoCNIFacetCoupling));
 
 // The subproblems inherit the parameter tree from this problem
-SET_PROP(OnePCCMpfaMatrixProblem, ParameterTree) : GET_PROP(TTAG(OnePFacetCoupling), ParameterTree) {};
-SET_PROP(OnePCCFractureProblem, ParameterTree) : GET_PROP(TTAG(OnePFacetCoupling), ParameterTree) {};
+SET_PROP(OnePTwoCICCMpfaMatrixProblem, ParameterTree) : GET_PROP(TTAG(OnePTwoCIFacetCoupling), ParameterTree) {};
+SET_PROP(OnePTwoCICCFractureProblem, ParameterTree) : GET_PROP(TTAG(OnePTwoCIFacetCoupling), ParameterTree) {};
+SET_PROP(OnePTwoCNICCMpfaMatrixProblem, ParameterTree) : GET_PROP(TTAG(OnePTwoCNIFacetCoupling), ParameterTree) {};
+SET_PROP(OnePTwoCNICCFractureProblem, ParameterTree) : GET_PROP(TTAG(OnePTwoCNIFacetCoupling), ParameterTree) {};
 
 // Set the grids for the two sub-problems
-SET_TYPE_PROP(OnePCCMpfaMatrixProblem, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>);
-SET_TYPE_PROP(OnePCCFractureProblem, Grid, Dune::FoamGrid<1,2>);
+SET_TYPE_PROP(OnePTwoCICCMpfaMatrixProblem, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>);
+SET_TYPE_PROP(OnePTwoCICCFractureProblem, Grid, Dune::FoamGrid<1,2>);
+SET_TYPE_PROP(OnePTwoCNICCMpfaMatrixProblem, Grid, Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>);
+SET_TYPE_PROP(OnePTwoCNICCFractureProblem, Grid, Dune::FoamGrid<1,2>);
 
 }
 
 template <class TypeTag>
-class OnePFacetCouplingProblem : public MixedDimensionProblem<TypeTag>
+class OnePTwoCFacetCouplingProblem : public MixedDimensionProblem<TypeTag>
 {
     using ParentType = MixedDimensionProblem<TypeTag>;
 
@@ -87,7 +97,7 @@ class OnePFacetCouplingProblem : public MixedDimensionProblem<TypeTag>
 
 public:
 
-    OnePFacetCouplingProblem(TimeManager &timeManager, const BulkGridView &bulkGridView, const LowDimGridView &lowDimGridView)
+    OnePTwoCFacetCouplingProblem(TimeManager &timeManager, const BulkGridView &bulkGridView, const LowDimGridView &lowDimGridView)
     : ParentType(timeManager, bulkGridView, lowDimGridView)
     {}
 };
