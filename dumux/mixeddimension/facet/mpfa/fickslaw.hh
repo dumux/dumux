@@ -65,7 +65,7 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     //! The cache used in conjunction with the mpfa Fick's Law
-    class MpfaFicksLawCache
+    class MpfaFacetCouplingFicksLawCache
     {
         static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
@@ -75,7 +75,7 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
 
     public:
         //! The constructor. Initializes the Neumann flux to zero
-        MpfaFicksLawCache() { componentNeumannFluxes_.fill(0.0); }
+        MpfaFacetCouplingFicksLawCache() { componentNeumannFluxes_.fill(0.0); }
 
         // update cached objects for the diffusive fluxes
         template<typename InteractionVolume>
@@ -139,7 +139,7 @@ public:
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
     // state the new type for the corresponding cache
-    using Cache = MpfaFicksLawCache;
+    using Cache = MpfaFacetCouplingFicksLawCache;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
