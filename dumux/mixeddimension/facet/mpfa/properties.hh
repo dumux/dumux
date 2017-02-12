@@ -33,6 +33,7 @@
 #include <dumux/mixeddimension/facet/mpfa/interiorboundarydata.hh>
 #include <dumux/mixeddimension/facet/mpfa/darcyslaw.hh>
 #include <dumux/mixeddimension/facet/mpfa/fickslaw.hh>
+#include <dumux/mixeddimension/facet/mpfa/fourierslaw.hh>
 
 namespace Dumux
 {
@@ -62,8 +63,8 @@ SET_TYPE_PROP(FacetCouplingBulkMpfaModel, AdvectionType, CCMpfaFacetCouplingDarc
 //! Ficks's Law
 SET_TYPE_PROP(FacetCouplingBulkMpfaModel, MolecularDiffusionType, CCMpfaFacetCouplingFicksLaw<TypeTag>);
 
-//! Darcy's Law
-// SET_TYPE_PROP(FacetCouplingBulkMpfaModel, AdvectionType, CCMpfaFacetCouplingFouriersLaw<TypeTag>);
+//! Fourier's Law
+SET_TYPE_PROP(FacetCouplingBulkMpfaModel, HeatConductionType, CCMpfaFacetCouplingFouriersLaw<TypeTag>);
 
 }//end namespace Properties
 
