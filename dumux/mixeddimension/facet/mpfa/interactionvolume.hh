@@ -42,15 +42,41 @@ using CCMpfaFacetCouplingInteractionVolume = CCMpfaFacetCouplingInteractionVolum
 
 // Per default, we inherit from the standard interaction volumes
 template<class TypeTag, MpfaMethods Method>
-class CCMpfaFacetCouplingInteractionVolumeImplementation : public CCMpfaInteractionVolumeImplementation<TypeTag, Method> {};
+class CCMpfaFacetCouplingInteractionVolumeImplementation : public CCMpfaInteractionVolumeImplementation<TypeTag, Method>
+{
+    using ParentType = CCMpfaInteractionVolumeImplementation<TypeTag, Method>;
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+public:
+    using typename ParentType::Seed;
+
+    CCMpfaFacetCouplingInteractionVolumeImplementation(const Seed& seed,
+                                                       const Problem& problem,
+                                                       const FVElementGeometry& fvGeometry,
+                                                       const ElementVolumeVariables& elemVolVars)
+    : ParentType(seed, problem, fvGeometry, elemVolVars)
+    {}
+};
+
+//! Specialization of the interaction volume traits class for the coupled models
+template<class TypeTag>
+class CCMpfaFacetCouplingOInteractionVolumeTraits : public CCMpfaOInteractionVolumeTraits<TypeTag>
+{
+public:
+    using BoundaryInteractionVolume = CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+};
 
 // the o-method interaction volume is substituted by the one including data on the facet element's
 // tensorial quantities into the local system to be solved. This has to be used as boundary interaction volume
 template<class TypeTag>
 class CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>
-          : public CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>
+          : public CCMpfaOInteractionVolume<TypeTag, CCMpfaFacetCouplingOInteractionVolumeTraits<TypeTag>>
 {
-    using ParentType = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+    using Traits = CCMpfaFacetCouplingOInteractionVolumeTraits<TypeTag>;
+    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -63,7 +89,7 @@ class CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, MpfaMethods::o
     using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    using LocalScvfType = typename ParentType::Traits::LocalScvfType;
+    using LocalScvfType = typename Traits::LocalScvfType;
 
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
 
@@ -113,7 +139,7 @@ public:
                MpfaHelper::nT_M_v(n, facetTensor, v);
     }
 
-    void assembleNeumannFluxVector_()
+    void assembleNeumannFluxVector()
     {
         // initialize the neumann fluxes vector to zero
         this->neumannFluxes_.resize(this->fluxFaceIndexSet_.size(), PrimaryVariables(0.0));
