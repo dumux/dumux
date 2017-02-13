@@ -188,6 +188,12 @@ public:
 
             switch (elemType)
             {
+                case 15: // points
+                {
+                    // do nothing for points
+                    break;
+                }
+
                 case 1: // 2-node line
                 {
                     // the geometry type for lines
