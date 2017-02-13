@@ -1,21 +1,20 @@
 add_input_file_links()
 
 if(MPI_FOUND)
-  add_dumux_test(test_boxrichards test_boxrichards test_boxrichards.cc
+  add_dumux_test(test_boxrichards_parallel test_boxrichards test_boxrichards.cc
                  python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                    --script fuzzy
                    --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-richardslensbox-00008.vtu
                    --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
-else()
+endif()
 # isothermal tests
-  add_dumux_test(test_boxrichards test_boxrichards test_boxrichards.cc
+add_dumux_test(test_boxrichards test_boxrichards test_boxrichards.cc
                  python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                    --script fuzzy
                    --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/richardslensbox-00008.vtu
                    --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
-endif()
 
 add_dumux_test(test_ccrichards test_ccrichards test_ccrichards.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
