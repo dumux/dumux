@@ -18,7 +18,7 @@ Cells = 20 20 20
 
 [Problem]
 Name = rosi2c
-ContaminantMoleFraction = 1e-9
+ContaminantMassFraction = 1e-6
 
 [Component]
 LiquidDiffusionCoefficient = 1e-9

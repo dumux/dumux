@@ -88,6 +88,16 @@ class RosiTestProblem : public MixedDimensionProblem<TypeTag>
     using BulkGridView = typename GET_PROP_TYPE(BulkProblemTypeTag, GridView);
     using LowDimGridView = typename GET_PROP_TYPE(LowDimProblemTypeTag, GridView);
 
+    using BulkIndices = typename GET_PROP_TYPE(BulkProblemTypeTag, Indices);
+    using LowDimIndices = typename GET_PROP_TYPE(LowDimProblemTypeTag, Indices);
+
+    enum {
+        // indices of the primary variables
+        wPhaseIdx = BulkIndices::wPhaseIdx,
+        transportCompIdx = BulkIndices::compMainIdx + 1,
+        transportEqIdx = BulkIndices::conti0EqIdx + 1
+    };
+
 public:
     RosiTestProblem(TimeManager &timeManager, const BulkGridView &bulkGridView, const LowDimGridView &lowDimgridView)
     : ParentType(timeManager, bulkGridView, lowDimgridView)
@@ -96,7 +106,105 @@ public:
     void preTimeStep()
     {
         ParentType::preTimeStep();
-        std::cout << '\n' << "Simulation time in hours: " << this->timeManager().time()/3600 << '\n';
+        std::cout << '\n' << "\033[1m" << "Simulation time in hours: " << this->timeManager().time()/3600 << "\033[0m" << '\n';
+    }
+
+    void init()
+    {
+        ParentType::init();
+
+        // compute the mass in the entire domain to make sure the tracer is conserved
+        Scalar mass = 0.0;
+
+        // low dim elements
+        for (const auto& element : elements(this->lowDimProblem().gridView()))
+        {
+            auto fvGeometry = localView(this->lowDimProblem().model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(this->lowDimProblem().model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->lowDimProblem().model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         *scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+            }
+        }
+
+        // bulk elements
+        for (const auto& element : elements(this->bulkProblem().gridView()))
+        {
+            auto fvGeometry = localView(this->bulkProblem().model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(this->bulkProblem().model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->bulkProblem().model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         * scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+            }
+        }
+
+        std::cout << "\033[1;36m" << "The domain initially contains " << mass*1e9 << " ug tracer.\033[0m" << '\n';
+    }
+
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+
+        // compute the mass in the entire domain to make sure the tracer is conserved
+        Scalar mass = 0.0;
+        Scalar boundaryMass = 0.0;
+
+        // low dim elements
+        for (const auto& element : elements(this->lowDimProblem().gridView()))
+        {
+            auto fvGeometry = localView(this->lowDimProblem().model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(this->lowDimProblem().model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->lowDimProblem().model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         *scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+            }
+
+            for (auto&& scvf : scvfs(fvGeometry))
+                if (scvf.boundary())
+                    boundaryMass += this->lowDimProblem().neumann(element, fvGeometry, elemVolVars, scvf)[transportEqIdx]
+                                     * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor()
+                                     * this->timeManager().timeStepSize();
+
+        }
+
+        // bulk elements
+        for (const auto& element : elements(this->bulkProblem().gridView()))
+        {
+            auto fvGeometry = localView(this->bulkProblem().model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(this->bulkProblem().model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->bulkProblem().model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         *scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+            }
+        }
+
+        std::cout << "\033[1;36m" << "The domain contains " << mass*1e9 << " ug, "
+                  << -boundaryMass*1e9 << " (over the boundary, ug) =  "
+                  << (mass - boundaryMass)*1e9 << " ug balanced.\033[0m" << '\n';
     }
 };
 

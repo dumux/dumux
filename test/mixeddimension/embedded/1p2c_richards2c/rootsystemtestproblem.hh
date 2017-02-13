@@ -76,6 +76,9 @@ SET_BOOL_PROP(RootsystemTestProblem, ProblemEnableGravity, true);
 
 // Enable velocity output
 SET_BOOL_PROP(RootsystemTestProblem, VtkAddVelocity, true);
+
+// Use mass fractions
+SET_BOOL_PROP(RootsystemTestProblem, UseMoles, false);
 }
 
 /*!
@@ -107,7 +110,7 @@ class RootsystemTestProblem : public ImplicitPorousMediaProblem<TypeTag>
         transportCompIdx = Indices::transportCompIdx
     };
 
-    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static const int wPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -226,13 +229,12 @@ public:
         PrimaryVariables values(0.0);
         if (scvf.center()[2] + eps_ > this->bBoxMax()[2])
         {
-            const auto r = this->spatialParams().radius(this->gridView().indexSet().index(element));
-            values[conti0EqIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, BoundaryConditions.TranspirationRate)
-                                  /(M_PI*r*r)/scvf.area();
             const auto& volVars = elemVolvars[scvf.insideScvIdx()];
+            values[conti0EqIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, BoundaryConditions.TranspirationRate)
+                                  /volVars.extrusionFactor()/scvf.area();
+
             values[transportEqIdx] = values[conti0EqIdx]
-                                      * volVars.moleFraction(phaseIdx, transportCompIdx)
-                                      * volVars.molarDensity(phaseIdx);
+                                      * volVars.massFraction(wPhaseIdx, transportCompIdx);
         }
         return values;
 
@@ -308,18 +310,20 @@ public:
 
         // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
         PrimaryVariables sourceValues(0.0);
-        sourceValues[conti0EqIdx] = 2* M_PI *rootRadius * Kr *(bulkVolVars.pressure(phaseIdx) - lowDimVolVars.pressure(phaseIdx))
-                                    *bulkVolVars.density(phaseIdx);
+        sourceValues[conti0EqIdx] = 2* M_PI *rootRadius * Kr *(bulkVolVars.pressure(wPhaseIdx) - lowDimVolVars.pressure(wPhaseIdx))
+                                    *bulkVolVars.density(wPhaseIdx);
 
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] < 0)
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * lowDimVolVars.moleFraction(phaseIdx, transportCompIdx)
-                                            * lowDimVolVars.molarDensity(phaseIdx);
+                                            * lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx);
         else
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * bulkVolVars.moleFraction(phaseIdx, transportCompIdx)
-                                            * bulkVolVars.molarDensity(phaseIdx);
+                                            * bulkVolVars.massFraction(wPhaseIdx, transportCompIdx);
+
+        sourceValues[transportEqIdx] += 2* M_PI *rootRadius * 1.0e-8
+                                        *(bulkVolVars.massFraction(wPhaseIdx, transportCompIdx) - lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx))
+                                        *0.5*bulkVolVars.density(wPhaseIdx)*lowDimVolVars.density(wPhaseIdx);
 
         sourceValues *= source.quadratureWeight()*source.integrationElement();
         source = sourceValues;

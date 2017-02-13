@@ -29,6 +29,9 @@
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/porousmediumflow/richardsnc/implicit/model.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/liquidphase2c.hh>
 
 //! get the properties needed for subproblems
 #include <dumux/mixeddimension/subproblemproperties.hh>
@@ -59,6 +62,13 @@ SET_BOOL_PROP(RichardsTestProblem, SolutionDependentHeatConduction, false);
 // Set the problem property
 SET_TYPE_PROP(RichardsTestProblem, Problem, RichardsTestProblem<TypeTag>);
 
+// Set the fluid system
+SET_PROP(RichardsTestProblem, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::LiquidPhaseTwoC<TypeTag, SimpleH2O<Scalar>, Constant<TypeTag,Scalar>>;
+};
+
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsTestProblem, SpatialParams, RichardsTestSpatialParams<TypeTag>);
 
@@ -70,6 +80,9 @@ SET_BOOL_PROP(RichardsTestProblem, VtkAddVelocity, true);
 
 // Set the grid parameter group
 SET_STRING_PROP(RichardsTestProblem, GridParameterGroup, "SoilGrid");
+
+// Use mass fractions
+SET_BOOL_PROP(RichardsTestProblem, UseMoles, false);
 }
 
 /*!
@@ -132,7 +145,7 @@ public:
     : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "-soil";
-        contaminantMoleFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMoleFraction);
+        contaminantMassFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMassFraction);
 
         // for initial conditions
         const Scalar sw = 0.2; // start with 20% saturation on top
@@ -225,12 +238,14 @@ public:
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] > 0)
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * lowDimVolVars.moleFraction(wPhaseIdx, transportCompIdx)
-                                            * lowDimVolVars.molarDensity(wPhaseIdx);
+                                            * lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx);
         else
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx)
-                                            * bulkVolVars.molarDensity(wPhaseIdx);
+                                            * bulkVolVars.massFraction(wPhaseIdx, transportCompIdx);
+
+        sourceValues[transportEqIdx] += 2* M_PI *rootRadius * 1.0e-8
+                                        *(lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx) - bulkVolVars.massFraction(wPhaseIdx, transportCompIdx))
+                                        *0.5*bulkVolVars.density(wPhaseIdx)*lowDimVolVars.density(wPhaseIdx);
 
         sourceValues *= source.quadratureWeight()*source.integrationElement();
         source = sourceValues;
@@ -282,11 +297,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-
-        // if (globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_)
-        //     bcTypes.setAllDirichlet();
-        // else
-            bcTypes.setAllNeumann();
+        bcTypes.setAllNeumann();
         return bcTypes;
     }
 
@@ -327,7 +338,7 @@ public:
             contaminationPos += this->bBoxMin();
 
             if ((globalPos - contaminationPos).two_norm() < 0.1*(this->bBoxMax()-this->bBoxMin()).two_norm() + eps_)
-                return contaminantMoleFraction_;
+                return contaminantMassFraction_;
             else
                 return 0.0;
         }();
@@ -357,7 +368,7 @@ public:
 private:
     std::string name_;
     std::shared_ptr<CouplingManager> couplingManager_;
-    Scalar contaminantMoleFraction_;
+    Scalar contaminantMassFraction_;
     Scalar pcTop_;
     static constexpr Scalar eps_ = 1e-7;
 };
