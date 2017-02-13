@@ -100,6 +100,10 @@ NEW_PROP_TAG(NewtonResidualReduction);
 //! indicate whether both of the criteria should be satisfied to declare convergence
 NEW_PROP_TAG(NewtonSatisfyResidualAndShiftCriterion);
 
+//! indicate whether after each newton step the solution is chopped, e.g. to
+//! physically sensible values (if a chopper is implemented for this model)
+NEW_PROP_TAG(NewtonEnableChop);
+
 /*!
  * \brief The number of iterations at which the Newton method
  *        should aim at.
@@ -123,6 +127,7 @@ SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion, false);
+SET_BOOL_PROP(NewtonMethod, NewtonEnableChop, false);
 SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift, 1e-8);
 SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction, 1e-5);
 SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
