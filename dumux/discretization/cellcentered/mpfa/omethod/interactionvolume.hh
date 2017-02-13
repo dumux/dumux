@@ -97,10 +97,13 @@ public:
 template<class TypeTag, class Traits>
 class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Traits>
 {
-    // The interaction volume implementation has to be friend,
+    // The interaction volume implementations have to be friend,
     // because some methods use the mpfa-o interaction volume as base
     friend typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    friend typename Traits::BoundaryInteractionVolume;
+
+    // We assume the actual implementation always to be the boundary-specific implementation
+    using Implementation = typename Traits::BoundaryInteractionVolume;
     using ParentType = CCMpfaInteractionVolumeBase<TypeTag, Traits>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

@@ -43,12 +43,8 @@ class CCMpfaOFpsInteractionVolumeTraits : public CCMpfaOInteractionVolumeTraits<
 public:
     // Interior boundaries can not yet be handled by the currend o-method fps implementation
     // In that case we use the o-interactionvolume, otherwise we use its own interaction volumes at the boundary
-    // TODO Fix the std::conditional
-    using BoundaryInteractionVolume = typename CCMpfaOInteractionVolumeTraits<TypeTag>::BoundaryInteractionVolume;
-    // using BoundaryInteractionVolume = typename std::conditional<GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries),
-    //                                                             typename CCMpfaOInteractionVolumeTraits<TypeTag>::BoundaryInteractionVolume,
-    //                                                             typename CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>
-    //                                                             >::type;
+    // TODO Implement this using std::conditional
+    using BoundaryInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>;
 
     // The local sub-control volume type differs from the standard mpfa-o method
     using LocalScvType = CCMpfaOFpsLocalScv<TypeTag>;
@@ -202,8 +198,7 @@ private:
         auto&& localScv = this->localScv_(localScvIdx);
         auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
         auto&& element = this->localElement_(localScvIdx);
-        auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
-
+        auto D = makeTensor_(getTensor(this->problem_(), element, this->elemVolVars_()[globalScv], this->fvGeometry_(), globalScv));
         // the local finite element basis
         const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
 
@@ -248,7 +243,7 @@ private:
             auto&& localScv = this->localScv_(localScvIdx);
             auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
             auto&& element = this->localElement_(localScvIdx);;
-            auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
+            auto D = makeTensor_(getTensor(this->problem_(), element, this->elemVolVars_()[globalScv], this->fvGeometry_(), globalScv));
 
             // the local finite element bases of the scvs
             const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
