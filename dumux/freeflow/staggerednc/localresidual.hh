@@ -127,7 +127,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
      */
     CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
                                     const VolumeVariables& volVars,
-                                    bool useMoles = false) const
+                                    bool useMoles = true) const
     {
         CellCenterPrimaryVariables storage(0.0);
 

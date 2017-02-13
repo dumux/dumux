@@ -419,13 +419,29 @@ public:
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
+        CellCenterPrimaryVariables flux(0.0);
+
+        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
+        flux += diffusiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, scvf);
+        return flux;
+    }
+
+private:
+
+    CellCenterPrimaryVariables advectiveFluxForCellCenter_(const Problem& problem,
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const ElementVolumeVariables& elemVolVars,
+                                                          const GlobalFaceVars& globalFaceVars,
+                                                          const SubControlVolumeFace &scvf)
+    {
+        CellCenterPrimaryVariables flux(0.0);
+
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
-        CellCenterPrimaryVariables flux(0.0);
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
@@ -466,54 +482,99 @@ public:
                 flux[replaceCompEqIdx] += advFlux;
         }
 
-        //TODO: implement diffusive fluxes
-
         flux *= scvf.area() * sign(scvf.outerNormalScalar());
-
         return flux;
     }
 
 
-    CellCenterPrimaryVariables diffusiveFlux(const FVElementGeometry& fvGeometry,
-                                             const ElementVolumeVariables& elemVolVars,
-                                             const SubControlVolumeFace &scvf)
+    CellCenterPrimaryVariables diffusiveFluxForCellCenter_(const Problem& problem,
+                                                           const FVElementGeometry& fvGeometry,
+                                                           const ElementVolumeVariables& elemVolVars,
+                                                           const SubControlVolumeFace &scvf)
     {
         CellCenterPrimaryVariables flux(0.0);
 
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+
+        const Scalar insideDensity = useMoles ? insideVolVars.molarDensity() : insideVolVars.density();
+
+        for(int compIdx = 1; compIdx < numComponents; ++compIdx)
+        {
+            auto eqIdx = conti0EqIdx + compIdx;
+
+            const Scalar tij = transmissibility_(problem, fvGeometry, elemVolVars, scvf, compIdx);
+            const Scalar insideFraction = useMoles ? insideVolVars.moleFraction(0, compIdx) : insideVolVars.massFraction(0, compIdx);
+
+            if(scvf.boundary())
+            {
+                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                if(bcTypes.isOutflow(eqIdx))
+                    return flux;
+                else if(bcTypes.isNeumann(eqIdx))
+                    return flux; // TODO: implement neumann
+                else
+                {
+                    const Scalar dirichletFraction = problem.dirichletAtPos(scvf.center())[eqIdx];
+                    flux[eqIdx] = insideDensity * tij * (insideFraction - dirichletFraction);
+                }
+            }
+            else
+            {
+                const Scalar outsideDensity = useMoles ? outsideVolVars.molarDensity() : outsideVolVars.density();
+                const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
+                const Scalar outsideFraction = useMoles ? outsideVolVars.moleFraction(0, compIdx) : outsideVolVars.massFraction(0, compIdx);
+                flux[eqIdx] = avgDensity * tij * (insideFraction - outsideFraction);
+            }
+        }
+
+        if (replaceCompEqIdx >= numComponents)
+        {
+            const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
+            flux[0] = - cumulativeFlux;
+        }
+
+        return flux;
+    }
+
+    static Scalar transmissibility_(const Problem& problem,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const SubControlVolumeFace& scvf,
+                                    const int compIdx)
+    {
+        Scalar tij = 0.0;
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
-        Scalar distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm2();
-
-        Scalar xout = 0.1;
-        Scalar xin = insideVolVars.moleFraction(0,1);
-
-        Scalar Din = insideVolVars.diffusionCoefficient(0, 1);
-        Scalar mean = Din;
-
-
+        const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+        const Scalar insideD = insideVolVars.diffusionCoefficient(0, compIdx);
+        const Scalar ti = calculateOmega_(insideDistance, insideD, 1.0);
 
         if(scvf.boundary())
-            return flux;
+            tij = scvf.area() * ti;
+        else
+        {
+            const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const Scalar outsideD = outsideVolVars.diffusionCoefficient(0, compIdx);
+            const Scalar tj = calculateOmega_(outsideDistance, outsideD, 1.0);
 
-        // const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-        // const auto& insideVolVars = elemVolVars[insideScv];
-        // const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
-        //
-        // auto distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
-        // Scalar xout = outsideVolVars.moleFraction(0,1);
-        // Scalar xin = insideVolVars.moleFraction(0,1);
-        //
-        // Scalar Dout = outsideVolVars.diffusionCoefficient(0, 1);
-        // Scalar Din = insideVolVars.diffusionCoefficient(0, 1);
-        //
-        // Scalar mean = 0.5*(Dout + Din);
-        //
-        // flux[1] = -(xout - xin)/distance *mean;
+            tij = scvf.area()*(ti * tj)/(ti + tj);
+        }
+        return tij;
+    }
 
-        return flux;
+    static Scalar calculateOmega_(const Scalar distance,
+                                  const Scalar D,
+                                  const Scalar extrusionFactor)
+    {
+        Scalar omega = D / distance;
+        omega *= extrusionFactor;
+
+        return omega;
     }
 };
 
