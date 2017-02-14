@@ -33,6 +33,7 @@
 #include "volumevariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
+#include "fluxvariables.hh"
 #include "../staggered/problem.hh"
 // #include "../staggered/model.hh"
 #include "../staggered/propertydefaults.hh"
@@ -45,8 +46,6 @@
 #include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
-
-
 
 
 namespace Dumux
@@ -165,6 +164,8 @@ SET_PROP(NavierStokesNC, FluidState)
 // SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
 //
 SET_BOOL_PROP(NavierStokesNC, EnableComponentTransport, true);
+
+SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
 
 
 //! average is used as default model to compute the effective thermal heat conductivity

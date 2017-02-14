@@ -45,5 +45,6 @@ using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, Discret
 #include <dumux/discretization/cellcentered/tpfa/fickslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/fickslaw.hh>
 #include <dumux/discretization/box/fickslaw.hh>
+#include <dumux/discretization/staggered/freeflow/fickslaw.hh>
 
 #endif

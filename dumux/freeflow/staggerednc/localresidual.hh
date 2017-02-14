@@ -111,6 +111,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
     //! The index of the component balance equation that gets replaced with the total mass balance
@@ -126,8 +128,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
      *       the implicit euler time derivative here
      */
     CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars,
-                                    bool useMoles = true) const
+                                                           const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage(0.0);
 

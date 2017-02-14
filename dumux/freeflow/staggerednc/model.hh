@@ -93,6 +93,7 @@ public:
 
         // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addSecondaryVariable("rho",[](const VolumeVariables& v){ return v.molarDensity(); });
         for (int j = 0; j < numComponents; ++j)
             vtkOutputModule.addSecondaryVariable("x" + FluidSystem::componentName(j) + FluidSystem::phaseName(0),
                                                  [j](const VolumeVariables& v){ return v.massFraction(0,j); });
