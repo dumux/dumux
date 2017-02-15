@@ -748,10 +748,11 @@ public:
     {
         // Thermal conductivity of water is empirically fit.
         // Evaluating that fitting-function outside the area of validity does not make sense.
-        if( not ( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
-                    or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
-                    or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
-                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
+        if ( !(   (pressure <= 400e6 && (273.15 <= temperature) && (temperature <= 398.15))
+               || (pressure <= 200e6 && (398.15 <  temperature) && (temperature <=  523.15))
+               || (pressure <= 150e6 && (523.15 <  temperature) && (temperature <=  673.15))
+               || (pressure <= 100e6 && (673.15 <  temperature) && (temperature <=  1073.15)) ))
+        {
             DUNE_THROW(NumericalProblem,
                        "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability."
                        "(T=" << temperature << ", p=" << pressure << ")");
@@ -778,10 +779,11 @@ public:
     {
         // Thermal conductivity of water is empirically fit.
         // Evaluating that fitting-function outside the area of validity does not make sense.
-        if( not ( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
-                    or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
-                    or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
-                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
+        if ( !(   (pressure <= 400e6 && (273.15 <= temperature) && (temperature <= 398.15))
+               || (pressure <= 200e6 && (398.15 <  temperature) && (temperature <= 523.15))
+               || (pressure <= 150e6 && (523.15 <  temperature) && (temperature <= 673.15))
+               || (pressure <= 100e6 && (673.15 <  temperature) && (temperature <= 1073.15)) ))
+        {
             DUNE_THROW(NumericalProblem,
                        "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability."
                        "(T=" << temperature << ", p=" << pressure << ")");

@@ -685,7 +685,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
         else
             contiEqIdx = contiNEqIdx;
 
-        if(!impet_ or restrictFluxInTransport_==0) // perform a strict uwpind scheme
+        if(!impet_ || restrictFluxInTransport_==0) // perform a strict uwpind scheme
         {
             if (potential[phaseIdx] > 0.)
             {
@@ -720,10 +720,10 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
             {
                //check if harmonic weighting is necessary
                 if (potential[phaseIdx] > 0. && (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataJ.mobility(phaseIdx), 0.0, 1.0e-30)   // check if outflow induce neglected (i.e. mob=0) phase flux
-                       or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())))
+                       || (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())))
                     lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
                 else if (potential[phaseIdx] < 0. && (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataI.mobility(phaseIdx), 0.0, 1.0e-30) // check if inflow induce neglected phase flux
-                        or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())))
+                        || (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())))
                     lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
                 else
                     doUpwinding[phaseIdx] = false;

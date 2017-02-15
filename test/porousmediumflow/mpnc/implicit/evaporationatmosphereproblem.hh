@@ -384,7 +384,7 @@ public:
      */
     bool shouldWriteRestartFile() const
     {
-        return this->timeManager().timeStepIndex() > 0 and
+        return this->timeManager().timeStepIndex() > 0 &&
             (this->timeManager().timeStepIndex() % nRestart_  == 0);
     }
 
@@ -415,7 +415,7 @@ public:
         bTypes.setAllNeumann();
 
         // To the right: let out what wants out
-        if(onRightBoundary_(globalPos) and this->spatialParams().inFF_(globalPos) )
+        if(onRightBoundary_(globalPos) && this->spatialParams().inFF_(globalPos) )
         {
             bTypes.setAllOutflow();
         }
@@ -428,9 +428,8 @@ public:
 
         // In the porous part the *temperature* is fixed on the boundary.
         // Mass however, is not allowed to pass (default neumann=0)
-        if(( onLeftBoundary_(globalPos) and this->spatialParams().inPM_(globalPos) )
-            or ( onRightBoundary_(globalPos) and this->spatialParams().inPM_(globalPos) )
-            or ( onLowerBoundary_(globalPos) and this->spatialParams().inPM_(globalPos) ) )
+        if (this->spatialParams().inPM_(globalPos)
+            && (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos) || onLowerBoundary_(globalPos)))
         {
             for (int energyEqIdx=0; energyEqIdx< numEnergyEqs; ++energyEqIdx)
                 bTypes.setDirichlet(energyEq0Idx+energyEqIdx);
@@ -530,7 +529,8 @@ public:
         const Scalar molarFlux = massFluxInjectedPhase / fluidState.averageMolarMass(nPhaseIdx);
 
         // actually setting the fluxes
-        if(onLeftBoundary_(globalPos) and this->spatialParams().inFF_(globalPos)){
+        if (onLeftBoundary_(globalPos) && this->spatialParams().inFF_(globalPos))
+        {
             priVars[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx]
              = -molarFlux * fluidState.moleFraction(nPhaseIdx, wCompIdx);
             priVars[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
@@ -660,7 +660,7 @@ private:
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
 
         // temperature
-        if(enableEnergy or numEnergyEquations)
+        if (enableEnergy || numEnergyEquations)
             for (int energyEqIdx=0; energyEqIdx< numEnergyEqs; ++energyEqIdx)
                 priVars[energyEq0Idx + energyEqIdx] = T;
 

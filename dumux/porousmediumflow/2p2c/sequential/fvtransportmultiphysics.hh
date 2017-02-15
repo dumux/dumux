@@ -148,7 +148,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
         int globalIdxI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
-        if(impet or cellDataI.subdomain()==2)   // estimate only necessary in subdomain
+        if (impet || cellDataI.subdomain() == 2)   // estimate only necessary in subdomain
         {
             // some variables for time step calculation
             double sumfactorin = 0;

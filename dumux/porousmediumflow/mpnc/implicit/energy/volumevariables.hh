@@ -40,7 +40,7 @@ namespace Dumux
 template <class TypeTag, bool enableEnergy/*=false*/, int numEnergyEquations /*=don't care*/>
 class MPNCVolumeVariablesEnergy
 {
-    static_assert(not (numEnergyEquations and not enableEnergy),
+    static_assert(((numEnergyEquations < 1) && !enableEnergy),
                   "No kinetic energy transfer may only be enabled "
                   "if energy is enabled in general.");
     static_assert(numEnergyEquations < 1,

@@ -107,7 +107,8 @@ public:
         this->resizePhaseBuffer_(nusseltNumber_);
 
         /*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/
-        if (velocityAveragingInModel and not velocityOutput) {
+        if (velocityAveragingInModel && !velocityOutput)
+        {
             Scalar numVertices = this->problem_.gridView().size(dim);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 velocity_[phaseIdx].resize(numVertices);
@@ -161,7 +162,8 @@ public:
             ans_[vIdxGlobal]          = volVars.interfacialArea(nPhaseIdx, sPhaseIdx);
 
             /*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/
-            if (velocityAveragingInModel and not velocityOutput){
+            if (velocityAveragingInModel && !velocityOutput)
+            {
                 // numVertices for vertexCentereed, numVolumes for volume centered
                 int numVertices = this->problem_.gridView().size(dim);
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -201,7 +203,8 @@ public:
         if (nusseltOutput)
             this->commitPhaseBuffer_(writer, "nusseltNumber_%s", nusseltNumber_);
         /*only one of the two output options, otherwise paraview segfaults due to two timies the same field name*/
-        if (velocityAveragingInModel and not velocityOutput){
+        if (velocityAveragingInModel && !velocityOutput)
+        {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 // commit the phase velocity
                 std::ostringstream oss;
@@ -349,7 +352,8 @@ public:
         this->resizeScalarBuffer_(qsf_);
 
 
-        if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/) {
+        if (velocityAveragingInModel && !velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/)
+        {
             Scalar numVertices = this->problem_.gridView().size(dim);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 velocity_[phaseIdx].resize(numVertices);
@@ -394,7 +398,8 @@ public:
                 Valgrind::CheckDefined(temperature_[phaseIdx][vIdxGlobal]);
             }
 
-            if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/){
+            if (velocityAveragingInModel && !velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/)
+            {
                 int numVertices = this->problem_.gridView().size(dim); // numVertices for vertexCentereed, numVolumes for volume centered
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -429,7 +434,8 @@ public:
             this->commitPhaseBuffer_(writer, "prandtlNumber_%s", prandtlNumber_);
         if (nusseltOutput)
             this->commitPhaseBuffer_(writer, "nusseltNumber_%s", nusseltNumber_);
-        if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two timies the same field name*/){
+        if (velocityAveragingInModel && !velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two timies the same field name*/)
+        {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 // commit the phase velocity
                 std::ostringstream oss;
