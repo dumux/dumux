@@ -42,11 +42,8 @@ namespace Properties
 {
 NEW_TYPE_TAG(FacetCouplingBulkMpfaModel, INHERITS_FROM(CCMpfaModel));
 
-//! The interaction volume class
-SET_TYPE_PROP(FacetCouplingBulkMpfaModel, InteractionVolume, CCMpfaFacetCouplingInteractionVolume<TypeTag>);
-
-//! The boundary interaction volume class (for methods other than the omethod)
-SET_TYPE_PROP(FacetCouplingBulkMpfaModel, BoundaryInteractionVolume, CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>);
+//! The boundary interaction volume class (we use the facet coupling specialized o-method interaction volume)
+SET_TYPE_PROP(FacetCouplingBulkMpfaModel, BoundaryInteractionVolume, CCMpfaOFacetCouplingInteractionVolume<TypeTag>);
 
 //! The interior boundary data class
 SET_TYPE_PROP(FacetCouplingBulkMpfaModel, InteriorBoundaryData, CCMpfaFacetCouplingInteriorBoundaryData<TypeTag>);

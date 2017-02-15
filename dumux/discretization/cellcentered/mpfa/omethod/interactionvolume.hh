@@ -61,7 +61,8 @@ public:
 };
 
 //! Forward declaration of the mpfa-o interaction volume
-template<class TypeTag, class Traits> class CCMpfaOInteractionVolume;
+template<class TypeTag, class Traits, class Implementation>
+class CCMpfaOInteractionVolume;
 
 /*!
  * \ingroup Mpfa
@@ -71,10 +72,14 @@ template<class TypeTag, class Traits> class CCMpfaOInteractionVolume;
  *        traits class.
  */
 template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> : public CCMpfaOInteractionVolume<TypeTag, CCMpfaOInteractionVolumeTraits<TypeTag>>
+class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>
+          : public CCMpfaOInteractionVolume<TypeTag,
+                                            CCMpfaOInteractionVolumeTraits<TypeTag>,
+                                            CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>>
 {
+    using ThisType = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
     using TraitsType = CCMpfaOInteractionVolumeTraits<TypeTag>;
-    using ParentType = CCMpfaOInteractionVolume<TypeTag, TraitsType>;
+    using ParentType = CCMpfaOInteractionVolume<TypeTag, TraitsType, ThisType>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -94,18 +99,13 @@ public:
 
 };
 
-template<class TypeTag, class Traits>
+template<class TypeTag, class Traits, class Implementation>
 class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Traits>
 {
-    // The interaction volume implementations have to be friend,
-    // because some methods use the mpfa-o interaction volume as base
-    friend typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    friend typename Traits::BoundaryInteractionVolume;
+    // The actual implementation has to be friend
+    friend Implementation;
 
-    // We assume the actual implementation always to be the boundary-specific implementation
-    using Implementation = typename Traits::BoundaryInteractionVolume;
     using ParentType = CCMpfaInteractionVolumeBase<TypeTag, Traits>;
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

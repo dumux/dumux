@@ -20,8 +20,8 @@
  * \file
  * \brief Base classes for interaction volumes of mpfa models with active coupling over the element facets.
  */
-#ifndef DUMUX_MIXEDDIMENSION_FACET_INTERACTIONVOLUME_HH
-#define DUMUX_MIXEDDIMENSION_FACET_INTERACTIONVOLUME_HH
+#ifndef DUMUX_MIXEDDIMENSION_FACET_MPFA_O_INTERACTIONVOLUME_HH
+#define DUMUX_MIXEDDIMENSION_FACET_MPFA_O_INTERACTIONVOLUME_HH
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
@@ -29,54 +29,27 @@
 
 namespace Dumux
 {
-// forward declaration of the implementation
-template<class TypeTag, MpfaMethods Method>
-class CCMpfaFacetCouplingInteractionVolumeImplementation;
+//! Forward declaration
+template<class TypeTag> class CCMpfaOFacetCouplingInteractionVolume;
 
-/*!
- * \ingroup MixedDimension
- * \brief Base class for the interaction volumes of the mpfa method with active coupling over the element facets.
- */
+//! Specialization of the interaction volume traits class for the o-method in coupled models
 template<class TypeTag>
-using CCMpfaFacetCouplingInteractionVolume = CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
-
-// Per default, we inherit from the standard interaction volumes
-template<class TypeTag, MpfaMethods Method>
-class CCMpfaFacetCouplingInteractionVolumeImplementation : public CCMpfaInteractionVolumeImplementation<TypeTag, Method>
-{
-    using ParentType = CCMpfaInteractionVolumeImplementation<TypeTag, Method>;
-
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-public:
-    using typename ParentType::Seed;
-
-    CCMpfaFacetCouplingInteractionVolumeImplementation(const Seed& seed,
-                                                       const Problem& problem,
-                                                       const FVElementGeometry& fvGeometry,
-                                                       const ElementVolumeVariables& elemVolVars)
-    : ParentType(seed, problem, fvGeometry, elemVolVars)
-    {}
-};
-
-//! Specialization of the interaction volume traits class for the coupled models
-template<class TypeTag>
-class CCMpfaFacetCouplingOInteractionVolumeTraits : public CCMpfaOInteractionVolumeTraits<TypeTag>
+class CCMpfaOFacetCouplingInteractionVolumeTraits : public CCMpfaOInteractionVolumeTraits<TypeTag>
 {
 public:
-    using BoundaryInteractionVolume = CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+    using BoundaryInteractionVolume = CCMpfaOFacetCouplingInteractionVolume<TypeTag>;
 };
 
 // the o-method interaction volume is substituted by the one including data on the facet element's
-// tensorial quantities into the local system to be solved. This has to be used as boundary interaction volume
+// tensorial quantities into the local system to be solved.
 template<class TypeTag>
-class CCMpfaFacetCouplingInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>
-          : public CCMpfaOInteractionVolume<TypeTag, CCMpfaFacetCouplingOInteractionVolumeTraits<TypeTag>>
+class CCMpfaOFacetCouplingInteractionVolume : public CCMpfaOInteractionVolume<TypeTag,
+                                                                              CCMpfaOFacetCouplingInteractionVolumeTraits<TypeTag>,
+                                                                              CCMpfaOFacetCouplingInteractionVolume<TypeTag>>
 {
-    using Traits = CCMpfaFacetCouplingOInteractionVolumeTraits<TypeTag>;
-    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits>;
+    using Traits = CCMpfaOFacetCouplingInteractionVolumeTraits<TypeTag>;
+    using ThisType = CCMpfaOFacetCouplingInteractionVolume<TypeTag>;
+    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits, ThisType>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -97,10 +70,10 @@ public:
     using typename ParentType::LocalIndexType;
     using typename ParentType::Seed;
 
-    CCMpfaFacetCouplingInteractionVolumeImplementation(const Seed& seed,
-                                                       const Problem& problem,
-                                                       const FVElementGeometry& fvGeometry,
-                                                       const ElementVolumeVariables& elemVolVars)
+    CCMpfaOFacetCouplingInteractionVolume(const Seed& seed,
+                                          const Problem& problem,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars)
     : ParentType(seed, problem, fvGeometry, elemVolVars)
     {}
 
