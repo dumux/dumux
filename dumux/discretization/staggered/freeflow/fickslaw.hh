@@ -53,32 +53,21 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    //! The index of the component balance equation that gets replaced with the total mass balance
-    static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static_assert(GET_PROP_VALUE(TypeTag, NumPhases) == 1, "Only one phase allowed supported!");
 
     enum {
 
@@ -87,7 +76,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered >
 
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
-        conti0EqIdx = Indices::conti0EqIdx
+        conti0EqIdx = Indices::conti0EqIdx,
+        mainCompIdx = Indices::mainCompIdx,
+        replaceCompEqIdx = Indices::replaceCompEqIdx,
+        phaseIdx = Indices::phaseIdx
     };
 
 public:
@@ -110,14 +102,17 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
-        const Scalar insideDensity = useMoles ? insideVolVars.molarDensity() : insideVolVars.density();
+        const Scalar insideMolarDensity = insideVolVars.molarDensity();
 
-        for(int compIdx = 1; compIdx < numComponents; ++compIdx)
+        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            auto eqIdx = conti0EqIdx + compIdx;
+            if(compIdx == mainCompIdx)
+                continue;
+
+            auto eqIdx = 1;
 
             const Scalar tij = transmissibility_(problem, fvGeometry, elemVolVars, scvf, compIdx);
-            const Scalar insideFraction = useMoles ? insideVolVars.moleFraction(0, compIdx) : insideVolVars.massFraction(0, compIdx);
+            const Scalar insideMoleFraction = insideVolVars.moleFraction(phaseIdx, compIdx);
 
             if(scvf.boundary())
             {
@@ -128,23 +123,49 @@ public:
                     return flux; // TODO: implement neumann
                 else
                 {
-                    const Scalar dirichletFraction = problem.dirichletAtPos(scvf.center())[eqIdx];
-                    flux[eqIdx] = insideDensity * tij * (insideFraction - dirichletFraction);
+                    // get the Dirichlet value for the mole fraction on the boundary
+                    Scalar dirichletMoleFraction = problem.dirichletAtPos(scvf.center())[eqIdx];
+                    // convert value to a mole fraction if user specifies a mass fraction
+                    if(!useMoles)
+                        dirichletMoleFraction /= FluidSystem::molarMass(compIdx) / insideVolVars.fluidState().averageMolarMass(phaseIdx);
+                    flux[compIdx] = insideMolarDensity * tij * (insideMoleFraction - dirichletMoleFraction);
                 }
             }
             else
             {
-                const Scalar outsideDensity = useMoles ? outsideVolVars.molarDensity() : outsideVolVars.density();
-                const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
-                const Scalar outsideFraction = useMoles ? outsideVolVars.moleFraction(0, compIdx) : outsideVolVars.massFraction(0, compIdx);
-                flux[eqIdx] = avgDensity * tij * (insideFraction - outsideFraction);
+                const Scalar outsideMolarDensity = outsideVolVars.molarDensity();
+                const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
+                const Scalar outsideMoleFraction = outsideVolVars.moleFraction(phaseIdx, compIdx);
+                flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
             }
+            ++eqIdx;
         }
 
-        if (replaceCompEqIdx >= numComponents)
+        if(!(useMoles && replaceCompEqIdx == mainCompIdx))
         {
             const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
-            flux[0] = - cumulativeFlux;
+            flux[mainCompIdx] = - cumulativeFlux;
+        }
+
+        if(useMoles && replaceCompEqIdx <= numComponents)
+            flux[replaceCompEqIdx] = 0.0;
+
+        // Fick's law (for binary systems) states that the net flux of moles within the bulk phase has to be zero:
+        // If a given amount of molecules A travel into one direction, the same amount of molecules B have to
+        // go into the opposite direction. This, however, means that the net mass flux whithin the bulk phase
+        // (given different molecular weigths of A and B) does not have to be zero. We account for this:
+        if(!useMoles)
+        {
+            //convert everything to a mass flux
+            for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                flux[compIdx] *= FluidSystem::molarMass(compIdx);
+
+
+            if(replaceCompEqIdx < numComponents)
+            {
+                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    flux[replaceCompEqIdx] += (compIdx != replaceCompEqIdx) ? flux[compIdx] : 0.0;
+            }
         }
 
         return flux;
@@ -163,7 +184,7 @@ public:
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideD = insideVolVars.diffusionCoefficient(0, compIdx);
+        const Scalar insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
         const Scalar ti = calculateOmega_(insideDistance, insideD, 1.0);
 
         if(scvf.boundary())
@@ -171,7 +192,7 @@ public:
         else
         {
             const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-            const Scalar outsideD = outsideVolVars.diffusionCoefficient(0, compIdx);
+            const Scalar outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
             const Scalar tj = calculateOmega_(outsideDistance, outsideD, 1.0);
 
             tij = scvf.area()*(ti * tj)/(ti + tj);
