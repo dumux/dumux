@@ -58,7 +58,6 @@ class CCMpfaFacetCouplingDarcysLaw : public DarcysLawImplementation<TypeTag, Dis
     using CoefficientVector = typename BoundaryInteractionVolume::Vector;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr bool facetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
