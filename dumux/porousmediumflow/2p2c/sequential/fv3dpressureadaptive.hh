@@ -162,17 +162,15 @@ protected:
 public:
     void update()
     {
-        // update of interaction Volumes if grid was changed
-        if (true or problem().gridAdapt().wasAdapted())
+        //! update of interaction volumes
+        //! \todo maybe only do this if the grid changed
+        if(enableMPFA && maxInteractionVolumes>1)
         {
-            if(enableMPFA && maxInteractionVolumes>1)
-            {
-                if(!interactionVolumesContainer_)
-                    interactionVolumesContainer_ =
-                            new InteractionVolumeContainer(problem());
+            if(!interactionVolumesContainer_)
+                interactionVolumesContainer_ =
+                        new InteractionVolumeContainer(problem());
 
-                interactionVolumesContainer_->update();
-            }
+            interactionVolumesContainer_->update();
         }
         asImp_().initializeMatrix();
         ParentType::update();
