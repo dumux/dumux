@@ -162,17 +162,15 @@ protected:
 public:
     void update()
     {
-        // update of interaction Volumes if grid was changed
-        if (true or problem().gridAdapt().wasAdapted())
+        //! update of interaction volumes
+        //! \todo maybe only do this if the grid changed
+        if(enableMPFA && maxInteractionVolumes>1)
         {
-            if(enableMPFA && maxInteractionVolumes>1)
-            {
-                if(!interactionVolumesContainer_)
-                    interactionVolumesContainer_ =
-                            new InteractionVolumeContainer(problem());
+            if(!interactionVolumesContainer_)
+                interactionVolumesContainer_ =
+                        new InteractionVolumeContainer(problem());
 
-                interactionVolumesContainer_->update();
-            }
+            interactionVolumesContainer_->update();
         }
         asImp_().initializeMatrix();
         ParentType::update();
@@ -461,7 +459,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
-                                                            and rangeIt!=range.second; ++rangeIt)
+                                                          && rangeIt!=range.second; ++rangeIt)
                                     if((*rangeIt).second == intPair.second)
                                         addIndex = false;
                                 if(addIndex)
@@ -487,7 +485,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
-                                                            and rangeIt!=range.second; ++rangeIt)
+                                                          && rangeIt!=range.second; ++rangeIt)
                                     if((*rangeIt).second == intPair.second)
                                         addIndex = false;
                                 if(addIndex)
@@ -528,7 +526,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
-                                                            and rangeIt!=range.second; ++rangeIt)
+                                                          && rangeIt!=range.second; ++rangeIt)
                                     if((*rangeIt).second == intPair.second)
                                         addIndex = false;
                                 if(addIndex)
@@ -554,7 +552,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                 }
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
-                                                            and rangeIt!=range.second; ++rangeIt)
+                                                          && rangeIt!=range.second; ++rangeIt)
                                     if((*rangeIt).second == intPair.second)
                                         addIndex = false;
                                 if(addIndex)
@@ -706,20 +704,27 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     if(!haveSameLevel && enableMPFA)
                     {
                         if (cellDataI.subdomain() != 2
-                                or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
+                            || problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
+                        {
                             asImp_().get1pMpfaFlux(isIt, cellDataI);
+                        }
                         else
+                        {
                             asImp_().getMpfaFlux(isIt, cellDataI);
+                        }
                     }
                     else
                     {
                         CellData cellDataJ = problem().variables().cellData(eIdxGlobalJ);
                         if (cellDataI.subdomain() != 2
-                                or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
+                            || problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
+                        {
                             asImp_().get1pFlux(entries, intersection, cellDataI);
+                        }
                         else
+                        {
                             asImp_().getFlux(entries, intersection, cellDataI, first);
-
+                        }
 
                         //set right hand side
                         this->f_[eIdxGlobalI] -= entries[rhs];
@@ -2217,9 +2222,11 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         case 8:
         {
             if(hangingNodeType == InteractionVolume::noHangingNode
-                                or hangingNodeType == InteractionVolume::sixSmallCells)
+               || hangingNodeType == InteractionVolume::sixSmallCells)
+            {
                 caseL = mpfal3DTransmissibilityCalculator_.transmissibility(T, interactionVolume,
                                         lambda, 4, 0, 6, 2, 5, 1);
+            }
             else if (hangingNodeType == InteractionVolume::twoSmallCells
                             || hangingNodeType == InteractionVolume::fourSmallCellsFace)
             {
@@ -2282,9 +2289,11 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         case 9:
         {
             if(hangingNodeType == InteractionVolume::noHangingNode
-                                or hangingNodeType == InteractionVolume::sixSmallCells)
-            caseL = mpfal3DTransmissibilityCalculator_.transmissibility(T, interactionVolume,
+               || hangingNodeType == InteractionVolume::sixSmallCells)
+            {
+                caseL = mpfal3DTransmissibilityCalculator_.transmissibility(T, interactionVolume,
                                         lambda, 1, 5, 3, 7, 0, 4);
+            }
             else if (hangingNodeType == InteractionVolume::twoSmallCells || hangingNodeType == InteractionVolume::fourSmallCellsFace)
             {
                 caseL = mpfal3DTransmissibilityCalculator_.transmissibilityCaseOne(T, interactionVolume,

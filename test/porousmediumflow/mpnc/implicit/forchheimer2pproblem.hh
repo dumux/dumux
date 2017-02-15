@@ -249,7 +249,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
-        if (onLeftBoundary_(globalPos) or onRightBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
