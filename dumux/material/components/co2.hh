@@ -149,7 +149,7 @@ public:
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
     {
-        if ((temperature < criticalTemperature() or pressure < criticalPressure()) and !warningThrown)
+        if ((temperature < criticalTemperature() || pressure < criticalPressure()) && !warningThrown)
         {
             Dune::dwarn << "Subcritical values: Be aware to use "
                         <<"Tables with sufficient resolution!"<< std::endl;
@@ -165,7 +165,7 @@ public:
     static Scalar liquidEnthalpy(Scalar temperature,
                                  Scalar pressure)
     {
-        if ((temperature < criticalTemperature() or pressure < criticalPressure()) and !warningThrown)
+        if ((temperature < criticalTemperature() || pressure < criticalPressure()) && !warningThrown)
         {
             Dune::dwarn << "Subcritical values: Be aware to use "
                         <<"Tables with sufficient resolution!"<< std::endl;
@@ -204,7 +204,7 @@ public:
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        if ((temperature < criticalTemperature() or pressure < criticalPressure()) and !warningThrown)
+        if ((temperature < criticalTemperature() || pressure < criticalPressure()) && !warningThrown)
         {
             Dune::dwarn << "Subcritical values: Be aware to use "
                         <<"Tables with sufficient resolution!"<< std::endl;
@@ -219,7 +219,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        if ((temperature < criticalTemperature() or pressure < criticalPressure()) and !warningThrown)
+        if ((temperature < criticalTemperature() || pressure < criticalPressure()) && !warningThrown)
         {
             Dune::dwarn << "Subcritical values: Be aware to use "
                         <<"Tables with sufficient resolution!"<< std::endl;

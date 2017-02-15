@@ -140,12 +140,12 @@ public:
         const unsigned int nCompIdx    = ParentType::nCompIdx;
         const unsigned int wCompIdx    = ParentType::wCompIdx;
 
-        assert(0 <= referencePhaseIdx and referencePhaseIdx < ParentType::numPhases);
-        assert(0 <= calcCompIdx and calcCompIdx < ParentType::numComponents);
+        assert(0 <= referencePhaseIdx && referencePhaseIdx < ParentType::numPhases);
+        assert(0 <= calcCompIdx && calcCompIdx < ParentType::numComponents);
 
         const unsigned int numPhases    = ParentType::numPhases;
         const unsigned int numComponents= ParentType::numComponents;
-        static_assert(( (numComponents==numPhases)  and (numPhases==2) ),
+        static_assert(( (numComponents==numPhases)  && (numPhases==2) ),
                       "This function requires that the number of fluid phases is equal "
                       "to the number of components");
 
@@ -269,7 +269,7 @@ public:
         const unsigned int numPhases    = ParentType::numPhases;
         const unsigned int numComponents= ParentType::numComponents;
 
-        static_assert(( (numComponents==numPhases)  and (numPhases==2) ),
+        static_assert(((numComponents == numPhases) && (numPhases== 2)),
                       "This function requires that the number fluid phases is equal "
                       "to the number of components");
 

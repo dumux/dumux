@@ -42,7 +42,7 @@ namespace Dumux
 template <class TypeTag, bool enableKinetic, int numEnergyEquations>
 class MPNCVolumeVariablesIA
 {
-    static_assert(not enableKinetic and not numEnergyEquations,
+    static_assert(((numEnergyEquations < 1) && !enableKinetic),
                   "The kinetic energy modules need specific interfacial area "
                   "but no suitable specialization of the IA volume variables module "
                   "has been included.");
