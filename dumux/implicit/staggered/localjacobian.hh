@@ -295,7 +295,6 @@ private:
                 // update the global jacobian matrix with the current partial derivatives
                 this->updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], ccGlobalI_, globalJ, pvIdx, partialDeriv);
 
-//                 printmatrix(std::cout,matrix[cellCenterIdx][cellCenterIdx], "part", "");
                 // restore the original volVars
                 curVolVars = origVolVars;
             }
@@ -328,6 +327,7 @@ private:
             for(auto pvIdx : PriVarIndices(faceIdx))
             {
                 PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
+
                 const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, faceIdx);
                 priVars[pvIdx] += eps;
                 curFaceVars.update(priVars[faceIdx]);
