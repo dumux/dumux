@@ -63,12 +63,16 @@ NEW_PROP_TAG(FluxVariablesCache);
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
-// SET_INT_PROP(NavierStokes, NumEqCellCenter, 1); //!< set the number of equations to 1
-// SET_INT_PROP(NavierStokes, NumEqFace, 1); //!< set the number of equations to 1
-// SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
-//
-//
-SET_INT_PROP(NavierStokesNC, NumEqCellCenter, 2);
+
+SET_PROP(NavierStokesNC, NumEqCellCenter)
+{
+private:
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+public:
+    static constexpr int value = numComponents;
+};
+
+
 SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0);
 
 
@@ -92,6 +96,7 @@ public:
 //! the VolumeVariables property
 SET_TYPE_PROP(NavierStokesNC, VolumeVariables, NavierStokesNCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokesNC, Model, NavierStokesNCModel<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, Indices, NavierStokesNCIndices<TypeTag>);
 
 
 /*!
@@ -109,72 +114,13 @@ SET_PROP(NavierStokesNC, FluidState)
         typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
-// //! Enable advection
-// SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
-//
-// //! The one-phase model has no molecular diffusion
-// SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
-//
-// //! Isothermal model by default
-// SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
-//
-// //! The indices required by the isothermal single-phase model
-// SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
-//
-// //! The weight of the upwind control volume when calculating
-// //! fluxes. Use central differences by default.
-// SET_SCALAR_PROP(NavierStokes, ImplicitMassUpwindWeight, 0.5);
-//
-// //! weight for the upwind mobility in the velocity calculation
-// //! fluxes. Use central differences by default.
-// SET_SCALAR_PROP(NavierStokes, ImplicitMobilityUpwindWeight, 0.5);
-//
-// //! The fluid system to use by default
-// SET_TYPE_PROP(NavierStokes, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
-//
-// SET_PROP(NavierStokes, Fluid)
-// { private:
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-// public:
-//     typedef FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
-// };
-//
-// /*!
-//  * \brief The fluid state which is used by the volume variables to
-//  *        store the thermodynamic state. This should be chosen
-//  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
-//  *        This can be done in the problem.
-//  */
-// SET_PROP(NavierStokes, FluidState){
-//     private:
-//         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//     public:
-//         typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
-// };
-//
-// // disable velocity output by default
-// SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
-//
-// // enable gravity by default
-// SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);
-//
-// SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
-//
-// SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
 //
 SET_BOOL_PROP(NavierStokesNC, EnableComponentTransport, true);
 
 SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
 
+SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 
-//! average is used as default model to compute the effective thermal heat conductivity
-// SET_PROP(NavierStokesNI, ThermalConductivityModel)
-// { private :
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//   public:
-//     typedef ThermalConductivityAverage<Scalar> type;
-// };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

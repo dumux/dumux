@@ -111,36 +111,55 @@ public:
                     this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-        if (useMoles)
+        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
+        // mass balance and transport equations
+        for (int compIdx=0; compIdx<numComponents; compIdx++)
         {
-            // mass balance and transport equations
-            for (int compIdx=0; compIdx<numComponents; compIdx++)
-            {
-                if (conti0EqIdx+compIdx != massBalanceIdx)
+            const Scalar moleOrMassFraction = useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(transportCompIdx);
+
+            if (conti0EqIdx+compIdx != massBalanceIdx)
                 //else // transport equations
                 {
-                    storage[conti0EqIdx+compIdx] = volVars.molarDensity()
-                        * volVars.moleFraction(compIdx);
+                    storage[conti0EqIdx+compIdx] = density * moleOrMassFraction;
 
-                    Valgrind::CheckDefined(volVars.molarDensity());
-                    Valgrind::CheckDefined(volVars.moleFraction(compIdx));
+                    Valgrind::CheckDefined(density);
+                    Valgrind::CheckDefined(moleOrMassFraction);
                 }
             }
-        }
-        else
-        {
-            /* works for a maximum of two components, for more components
-            mole fractions must be used (set property UseMoles to true) */
-
-            //storage of transported component
-            storage[transportEqIdx] = volVars.density()
-                * volVars.massFraction(transportCompIdx);
-
-            Valgrind::CheckDefined(volVars.density());
-            Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
 
         }
-    }
+
+
+//         if (useMoles)
+//         {
+//             // mass balance and transport equations
+//             for (int compIdx=0; compIdx<numComponents; compIdx++)
+//             {
+//                 if (conti0EqIdx+compIdx != massBalanceIdx)
+//                 //else // transport equations
+//                 {
+//                     storage[conti0EqIdx+compIdx] = volVars.molarDensity()
+//                         * volVars.moleFraction(compIdx);
+//
+//                     Valgrind::CheckDefined(volVars.molarDensity());
+//                     Valgrind::CheckDefined(volVars.moleFraction(compIdx));
+//                 }
+//             }
+//         }
+//         else
+//         {
+//             /* works for a maximum of two components, for more components
+//             mole fractions must be used (set property UseMoles to true) */
+//
+//             //storage of transported component
+//             storage[transportEqIdx] = volVars.density()
+//                 * volVars.massFraction(transportCompIdx);
+//
+//             Valgrind::CheckDefined(volVars.density());
+//             Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
+//
+//         }
+//     }
 
     /*!
      * \brief Evaluates the advective component (mass) flux

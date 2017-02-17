@@ -54,7 +54,14 @@ class NavierStokesNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+           numPhases = FluidSystem::numPhases,
+           phaseIdx = Indices::phaseIdx,
+           mainCompIdx = Indices::mainCompIdx,
+           pressureIdx = Indices::pressureIdx
+    };
+
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
 
@@ -75,25 +82,20 @@ public:
 
                 typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
-            int compIIdx = 0;
+            int compIIdx = phaseIdx;
             for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
             {
                 // binary diffusion coefficents
                 if(compIIdx!= compJIdx)
                 {
-                    setDiffusionCoefficient_(0, compJIdx,
+                    setDiffusionCoefficient_(phaseIdx, compJIdx,
                                              FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                                                      paramCache,
-                                                                                     0,
+                                                                                     phaseIdx,
                                                                                      compIIdx,
                                                                                      compJIdx));
                 }
             }
-
-//         std::cout << "mole frac 0 is : " << moleFraction(0,0) << std::endl;
-//         std::cout << "mole frac 1 is : " << moleFraction(0,1) << std::endl;
-        if(moleFraction(0,0) + moleFraction(0,1) > 1.000001)
-            std::cout << "sum: " << moleFraction(0,0) + moleFraction(0,1) << std::endl;
     };
 
     /*!
@@ -107,32 +109,46 @@ public:
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
+        Scalar fracMinor = 0.0;
+        int transportEqIdx = 1;
 
-        fluidState.setMassFraction(0, 1, elemSol[0][1]);
-        fluidState.setMassFraction(0, 0, 1.0 - elemSol[0][1]);
+        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            if(compIdx == mainCompIdx)
+                continue;
 
+            const Scalar moleOrMassFraction = elemSol[0][transportEqIdx++] + 1.0;
+            if(useMoles)
+                fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
+            else
+                fluidState.setMassFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
+            fracMinor += moleOrMassFraction - 1.0;
+        }
+        if(useMoles)
+            fluidState.setMoleFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
+        else
+            fluidState.setMassFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
 
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+        fluidState.setSaturation(phaseIdx, 1.0);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setDensity(/*phaseIdx=*/0, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setViscosity(/*phaseIdx=*/0, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
 
         // compute and set the enthalpy
-        value = ParentType::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setEnthalpy(/*phaseIdx=*/0, value);
+        value = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, value);
     }
 
     /*!
@@ -149,27 +165,27 @@ public:
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
-    Scalar pressure(int phaseIdx = 0) const
+    Scalar pressure() const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Return the saturation
      */
-    Scalar saturation(int phaseIdx = 0) const
+    Scalar saturation() const
     { return 1.0; }
 
     /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
-    Scalar density(int phaseIdx = 0) const
+    Scalar density() const
     { return fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar viscosity(int phaseIdx = 0) const
+    Scalar viscosity() const
     { return fluidState_.viscosity(phaseIdx); }
 
      /*!
@@ -196,13 +212,9 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar molarDensity(int phaseIdx = 0) const
+    Scalar molarDensity() const
     {
-        if (phaseIdx < 1/*numPhases*/)
-            return fluidState_.molarDensity(phaseIdx);
-
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        return fluidState_.molarDensity(phaseIdx);
     }
 
      /*!
@@ -244,7 +256,7 @@ protected:
     }
 
 
-    std::array<std::array<Scalar, numComponents-1>, 1> diffCoefficient_;
+    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
 };
 
 }

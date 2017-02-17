@@ -93,7 +93,8 @@ class FreeFlowFluxVariablesImpl<TypeTag, true, false> : public FreeFlowFluxVaria
 
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
-        conti0EqIdx = Indices::conti0EqIdx
+        conti0EqIdx = Indices::conti0EqIdx,
+        phaseIdx = Indices::phaseIdx
     };
 
 public:
@@ -130,11 +131,13 @@ private:
 
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
-        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
+        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
         const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
 
         const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+        const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
+        const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -143,8 +146,8 @@ private:
 
             const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
             const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
-            const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(0, compIdx) : upstreamVolVars.massFraction(0, compIdx);
-            const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(0, compIdx) : downstreamVolVars.massFraction(0, compIdx);
+            const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(phaseIdx, compIdx) : upstreamVolVars.massFraction(phaseIdx, compIdx);
+            const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(phaseIdx, compIdx) : downstreamVolVars.massFraction(phaseIdx, compIdx);
 
             Scalar advFlux = 0.0;
 

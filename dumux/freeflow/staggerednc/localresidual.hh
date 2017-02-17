@@ -60,29 +60,11 @@ class StaggeredNavierStokesResidualImpl;
 template<class TypeTag>
 class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
 {
-    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false, false>;
     friend class StaggeredLocalResidual<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
@@ -92,31 +74,21 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
     typename DofTypeIndices::FaceIdx faceIdx;
 
     enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        conti0EqIdx = Indices::conti0EqIdx,
+        phaseIdx = Indices::phaseIdx,
 
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-
-        conti0EqIdx = Indices::conti0EqIdx
+        // The index of the component balance equation
+        // that gets replaced with the total mass balance
+        replaceCompEqIdx = Indices::replaceCompEqIdx
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
-    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
-    //! The index of the component balance equation that gets replaced with the total mass balance
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
      /*!
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
@@ -132,54 +104,24 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
     {
         CellCenterPrimaryVariables storage(0.0);
 
-        // formulation with mole balances
-        if (useMoles)
+        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
+
+        // compute storage term of all components
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            // compute storage term of all components
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                auto eqIdx = conti0EqIdx + compIdx;
-                auto s = volVars.molarDensity(0)
-                         * volVars.moleFraction(0, compIdx);
+            const int eqIdx = conti0EqIdx + compIdx;
 
-                if (eqIdx != replaceCompEqIdx)
-                    storage[eqIdx] += s;
+            const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx);
+            const Scalar s =  density * massOrMoleFraction;
 
-                // in case one balance is substituted by the total mass balance
-                if (replaceCompEqIdx < numComponents)
-                    storage[replaceCompEqIdx] += s;
-            }
-
-                //! The energy storage in the fluid phase with index phaseIdx
-//                 EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
-
-            //! The energy storage in the solid matrix
-//             EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+            if (eqIdx != replaceCompEqIdx)
+                storage[eqIdx] += s;
         }
-        // formulation with mass balances
-        else
-        {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                auto eqIdx = conti0EqIdx + compIdx;
-                auto s = volVars.density(0)
-                         * volVars.massFraction(0, compIdx);
+            // in case one balance is substituted by the total mass balance
+            if(replaceCompEqIdx < numComponents)
+                storage[replaceCompEqIdx] += density;
 
-                if (eqIdx != replaceCompEqIdx)
-                    storage[eqIdx] += s;
-
-                // in case one balance is substituted by the total mass balance
-                if (replaceCompEqIdx < numComponents)
-                    storage[replaceCompEqIdx] += s;
-            }
-
-                //! The energy storage in the fluid phase with index phaseIdx
-//                 EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
-
-            //! The energy storage in the solid matrix
-//             EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
-        }
-
+        //TODO: energy balance
         return storage;
     }
 };

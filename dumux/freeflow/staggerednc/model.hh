@@ -85,6 +85,8 @@ class NavierStokesNCModel : public NavierStokesModel<TypeTag>
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
+    enum { phaseIdx = Indices::phaseIdx };
+
 public:
 
     void init(Problem& problem)
@@ -93,10 +95,16 @@ public:
 
         // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("rho",[](const VolumeVariables& v){ return v.molarDensity(); });
+        vtkOutputModule.addSecondaryVariable("rhoMolar",[](const VolumeVariables& v){ return v.molarDensity(); });
+        vtkOutputModule.addSecondaryVariable("rho",[](const VolumeVariables& v){ return v.density(); });
         for (int j = 0; j < numComponents; ++j)
-            vtkOutputModule.addSecondaryVariable("x" + FluidSystem::componentName(j) + FluidSystem::phaseName(0),
-                                                 [j](const VolumeVariables& v){ return v.massFraction(0,j); });
+        {
+            vtkOutputModule.addSecondaryVariable("X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx),
+                                                 [j](const VolumeVariables& v){ return v.massFraction(phaseIdx,j); });
+
+            vtkOutputModule.addSecondaryVariable("x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx),
+                                                 [j](const VolumeVariables& v){ return v.moleFraction(phaseIdx,j); });
+        }
 
 //         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }

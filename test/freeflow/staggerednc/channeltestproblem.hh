@@ -49,17 +49,21 @@ namespace Properties
 {
 NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
 
-// SET_PROP(ChannelTestProblem, Fluid)
-// {
-// private:
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-// public:
-//     typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
-// };
+NEW_PROP_TAG(FluidSystem);
+
 // Select the fluid system
 SET_TYPE_PROP(ChannelTestProblem, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
 
+SET_PROP(ChannelTestProblem, PhaseIdx)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    static constexpr int value = 0;//FluidSystem::wPhaseIdx;
+};
+
+SET_INT_PROP(ChannelTestProblem, ReplaceCompEqIdx, 0);
 
 // Set the grid type
 SET_TYPE_PROP(ChannelTestProblem, Grid, Dune::YaspGrid<2>);
@@ -74,6 +78,7 @@ SET_BOOL_PROP(ChannelTestProblem, EnableGlobalVolumeVariablesCache, true);
 
 // Enable gravity
 SET_BOOL_PROP(ChannelTestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(ChannelTestProblem, UseMoles, true);
 
 #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, true);
@@ -93,6 +98,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -103,12 +109,14 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
+        transportEqIdx = 1,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
         momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
+        velocityYIdx = Indices::velocityYIdx,
+        transportCompIdx = 1/*FluidSystem::wCompIdx*/
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -121,6 +129,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -142,6 +151,13 @@ public:
                                              Scalar,
                                              Problem,
                                              InletVelocity);
+
+        std::cout << "Indices: " << std::endl;
+        std::cout << "massBalanceIdx: " << massBalanceIdx << std::endl;
+        std::cout << "pressureIdx: " << pressureIdx << std::endl;
+        std::cout << "transportCompIdx: " << transportCompIdx << std::endl;
+
+        FluidSystem::init();
     }
 
     /*!
@@ -199,21 +215,22 @@ public:
 
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
-        values.setNeumann(1);
+        values.setNeumann(transportEqIdx);
+        values.setNeumann(massBalanceIdx);
         // values.setDirichlet(1);
 
-        // set a fixed pressure in one cell
+//         set a fixed pressure in one cell
         if (isOutlet(globalPos))
         {
             values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
-            values.setOutflow(1);
+//             values.setOutflow(momentumBalanceIdx);
+//             values.setOutflow(transportEqIdx);
         }
-        else
-            values.setNeumann(massBalanceIdx);
+// //         else
+//             values.setNeumann(massBalanceIdx);
 
         if(isInlet(globalPos))
-            values.setDirichlet(1);
+            values.setDirichlet(transportEqIdx);
 
         return values;
     }
@@ -234,7 +251,7 @@ public:
         {
             values[velocityXIdx] = inletVelocity_;
             values[velocityYIdx] = 0.0;
-            values[pressureIdx+1] =1e-6;
+            values[transportCompIdx] =1e-3;
         }
         else if(isWall(globalPos))
         {

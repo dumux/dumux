@@ -68,6 +68,7 @@ NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy tr
 NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
 NEW_PROP_TAG(ReplaceCompEqIdx); //!<  Returns whether to consider energy transport or not
 NEW_PROP_TAG(UseMoles); //!< Defines whether molar (true) or mass (false) density is used
+NEW_PROP_TAG(PhaseIdx); //!< Defines the phaseIdx
 // \}
 }
 
