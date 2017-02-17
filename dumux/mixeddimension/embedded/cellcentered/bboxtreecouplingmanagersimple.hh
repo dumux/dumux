@@ -86,7 +86,8 @@ class CCBBoxTreeEmbeddedCouplingManagerSimple
     using LowDimProblem = typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem);
     using LowDimPointSource = typename GET_PROP_TYPE(LowDimProblemTypeTag, PointSource);
     using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables);
-    using LowDimVolumeVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, VolumeVariables);
+    using LowDimElementSolutionVector = typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementSolutionVector);
+    using LowDimVolumeVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, VolumeVariables);
     using LowDimElementVolumeVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementVolumeVariables);
     using LowDimFVElementGeometry = typename GET_PROP_TYPE(LowDimProblemTypeTag, FVElementGeometry);
     using LowDimElementBoundaryTypes = typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementBoundaryTypes);
@@ -410,14 +411,15 @@ public:
     //! Compute lowDim volume variables for the identifier id
     LowDimVolumeVariables lowDimVolVars(unsigned int id) const
     {
-        const auto& data = pointSourceData_[id];
+        auto& data = pointSourceData_[id];
+        auto lowDimPriVars = data.interpolateLowDim(lowDimProblem().model().curSol());
+
         const auto element = lowDimProblem().model().globalFvGeometry().element(data.lowDimElementIdx());
         auto fvGeometry = localView(lowDimProblem().model().globalFvGeometry());
         fvGeometry.bindElement(element);
 
-        const auto& curSol = lowDimProblem().model().curSol();
         LowDimVolumeVariables volVars;
-        volVars.update(lowDimProblem().model().elementSolution(element, curSol),
+        volVars.update(LowDimElementSolutionVector({lowDimPriVars}),
                        lowDimProblem(),
                        element,
                        fvGeometry.scv(data.lowDimElementIdx()));

@@ -304,7 +304,7 @@ public:
 
 #if !ISOTHERMAL
         if (globalPos[0] > 20 - eps_ && globalPos[0] < 30 + eps_ && globalPos[1] < 30 + eps_)
-            values[temperatureIdx] = 380;
+            priVars[temperatureIdx] = 380;
 #endif
         return priVars;
     }
