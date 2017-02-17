@@ -82,7 +82,7 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static std::string componentName(int compIdx = 0)
+    static std::string componentName(int compIdx)
     { return compIdx ? SecondComponent::name() : MainComponent::name(); }
 
     /*!
@@ -129,7 +129,7 @@ public:
     /*!
      * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
      */
-    static Scalar molarMass(int compIdx = 0)
+    static Scalar molarMass(int compIdx)
     {  return compIdx ? SecondComponent::molarMass() : MainComponent::molarMass(); }
 
     /*!
@@ -164,18 +164,18 @@ public:
     {  return MainComponent::vaporPressure(T); }
 
     /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the phase at a given pressure and temperature.
      */
     static Scalar density(Scalar temperature, Scalar pressure)
     {  return MainComponent::liquidDensity(temperature, pressure); }
 
     using Base::density;
     /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the phase at a given pressure and temperature.
      */
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
-                          const int phaseIdx)
+                          const int phaseIdx = 0)
     {
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
@@ -190,6 +190,14 @@ public:
         return molarDensity * (MainComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, mainCompIdx)
                                + SecondComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, secondCompIdx));
     }
+
+    /*!
+     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of the phase at a given pressure and temperature.
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState,
+                               const int phaseIdx = 0)
+    { return fluidState.molarDensity(phaseIdx); }
 
     /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
