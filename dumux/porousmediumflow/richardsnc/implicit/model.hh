@@ -16,21 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
-* \file
-*
-* \brief Adaption of the fully implicit scheme to the Richards model.
-*/
-#ifndef DUMUX_RICHARDS_MODEL_HH
-#define DUMUX_RICHARDS_MODEL_HH
+ * \file
+ *
+ * \brief Base class for all models which use the Richards,
+ *        n-component fully implicit model.
+ */
 
-#include <dumux/implicit/model.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
+#ifndef DUMUX_RICHARDSNC_MODEL_HH
+#define DUMUX_RICHARDSNC_MODEL_HH
+
 #include "properties.hh"
 
 namespace Dumux
 {
+
 /*!
  * \ingroup RichardsModel
  *
@@ -101,20 +101,19 @@ namespace Dumux
  * possible to set the capillary pressure to zero when using the
  * Richards model!
  */
+
 template<class TypeTag >
-class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
+class RichardsNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
-
-    enum {
-        nPhaseIdx = Indices::nPhaseIdx,
-        wPhaseIdx = Indices::wPhaseIdx
-    };
+    static const int wPhaseIdx = Indices::wPhaseIdx;
+    static const int nPhaseIdx = Indices::nPhaseIdx;
+    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
 public:
 
@@ -138,12 +137,15 @@ public:
         vtkOutputModule.addSecondaryVariable("density", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("mobility", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("kr", [](const VolumeVariables& v){ return v.relativePermeability(wPhaseIdx); });
+        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
         if(GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity));
             vtkOutputModule.addSecondaryVariable("pressure head", [](const VolumeVariables& v){ return v.pressureHead(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("water content", [](const VolumeVariables& v){ return v.waterContent(wPhaseIdx); });
 
-        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
+        for (int k = 0; k < numComponents; ++k)
+            vtkOutputModule.addSecondaryVariable("x^" + FluidSystem::phaseName(wPhaseIdx) + "_" + FluidSystem::componentName(k),
+                                                 [k](const VolumeVariables& v){ return v.moleFraction(wPhaseIdx, k); });
     }
 };
 

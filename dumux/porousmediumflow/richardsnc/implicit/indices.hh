@@ -18,10 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Index names for the Richards model.
+ * \brief Defines the primary variable and equation indices used by
+ *        the richardsnc model
  */
-#ifndef DUMUX_RICHARDS_INDICES_HH
-#define DUMUX_RICHARDS_INDICES_HH
+
+#ifndef DUMUX_RICHARDSNC_INDICES_HH
+#define DUMUX_RICHARDSNC_INDICES_HH
 
 #include "properties.hh"
 
@@ -30,36 +32,32 @@ namespace Dumux
 // \{
 
 /*!
- * \ingroup RichardsModel
+ * \ingroup RichardsNCModel
  * \ingroup ImplicitIndices
- * \brief Index names for the Richards model.
+ * \brief The indices for the isothermal Richards, n-component model.
  */
-
-template <class TypeTag>
-struct RichardsIndices
+template <class TypeTag, int PVOffset = 0>
+struct RichardsNCIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    //////////
-    // primary variable indices
-    //////////
+    //! Set the index of the phases for accessing the volvars
+    static const int wPhaseIdx = 0;
+    static const int nPhaseIdx = 1;
 
-    //! Primary variable index for the wetting phase pressure
-    static const int pressureIdx = 0;
-    //////////
-    // equation indices
-    //////////
-    //! Equation index for the mass conservation of the wetting phase
-    static const int conti0EqIdx = 0;
+    //! Component indices
+    static const int compMainIdx = PVOffset + 0; //!< main component index
 
-    //////////
-    // phase indices
-    //////////
-    static const int wPhaseIdx = 0; //!< Index of the wetting phase;
-    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase;
+    //! primary variable indices
+    static const int pressureIdx = PVOffset + 0; //!< pressure
+
+    //! \note These indices make sense if the first balance is replaced by the
+    //!       total mass balance.
+
+    //! Equation indices
+    static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index
 };
-// \}
 
-} // end namespace Dumux
+// \}
+}
 
 #endif

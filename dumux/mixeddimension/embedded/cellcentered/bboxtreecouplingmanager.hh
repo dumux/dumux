@@ -86,7 +86,7 @@ class CCBBoxTreeEmbeddedCouplingManager
     using LowDimProblem = typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem);
     using LowDimPointSource = typename GET_PROP_TYPE(LowDimProblemTypeTag, PointSource);
     using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables);
-    using LowDimVolumeVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, VolumeVariables);
+    using LowDimVolumeVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, VolumeVariables);
     using LowDimElementVolumeVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementVolumeVariables);
     using LowDimFVElementGeometry = typename GET_PROP_TYPE(LowDimProblemTypeTag, FVElementGeometry);
     using LowDimElementBoundaryTypes = typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementBoundaryTypes);

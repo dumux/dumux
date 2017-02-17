@@ -19,34 +19,30 @@
 /*!
  * \file
  *
- * \brief spatial parameters for the RichardsLensProblem
+ * \brief spatial parameters for the RichardsTestProblem
  */
-#ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
-#define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_RICHARDS_TEST_SPATIAL_PARAMETERS_HH
+#define DUMUX_RICHARDS_TEST_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/porousmediumflow/richards/implicit/model.hh>
 
 namespace Dumux
 {
-
-// forward declaration
 template<class TypeTag>
-class RichardsLensSpatialParams;
+class RichardsTestSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsLensSpatialParams);
+NEW_TYPE_TAG(RichardsTestSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLensSpatialParams, SpatialParams, RichardsLensSpatialParams<TypeTag>);
+SET_TYPE_PROP(RichardsTestSpatialParams, SpatialParams, RichardsTestSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(RichardsLensSpatialParams, MaterialLaw)
+SET_PROP(RichardsTestSpatialParams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
@@ -54,17 +50,17 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
     // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
+    using type = EffToAbsLaw<VanGenuchten<Scalar>>;
 };
-}
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
- * \brief The spatial parameters for the RichardsLensProblem
+ * \brief The spatial parameters for the RichardsTestProblem
  */
 template<class TypeTag>
-class RichardsLensSpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsTestSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -90,28 +86,19 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsLensSpatialParams(const Problem& problem, const GridView& gridView)
+    RichardsTestSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
-
-        lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.1, 3.1};
-
         // residual saturations
-        lensMaterialParams_.setSwr(0.18);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
+        materialParams_.setSwr(0.05);
+        materialParams_.setSnr(0.0);
 
         // parameters for the Van Genuchten law
         // alpha and n
-        lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
+        materialParams_.setVgAlpha(2.956e-4);
+        materialParams_.setVgn(1.5);
 
-        lensK_ = 1e-12;
-        outerK_ = 5e-12;
+        permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
     }
 
     /*!
@@ -120,11 +107,7 @@ public:
      * \param globalPos The global position where we evaluate
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
-        if (isInLens_(globalPos))
-            return lensK_;
-        return outerK_;
-    }
+    { return permeability_; }
 
     /*!
      * \brief Returns the porosity [] at a given location
@@ -143,34 +126,13 @@ public:
      * \param globalPos A global coordinate vector
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
-    {
-        if (isInLens_(globalPos))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
-    }
+    { return materialParams_; }
 
 private:
-    bool isInLens_(const GlobalPosition &globalPos) const
-    {
-        for (int i = 0; i < dimWorld; ++i)
-            if (globalPos[i] < lensLowerLeft_[i] - eps_ || globalPos[i] > lensUpperRight_[i] + eps_)
-                return false;
-
-        return true;
-    }
-
-    static constexpr Scalar eps_ = 1.5e-7;
-
-    GlobalPosition lensLowerLeft_;
-    GlobalPosition lensUpperRight_;
-
-    Scalar lensK_;
-    Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
+    MaterialLawParams materialParams_;
+    Scalar permeability_;
 };
 
 } // end namespace Dumux
 
 #endif
-

@@ -18,48 +18,28 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Index names for the Richards model.
+ *
+ * \brief test for the rootsystem coupled model
  */
-#ifndef DUMUX_RICHARDS_INDICES_HH
-#define DUMUX_RICHARDS_INDICES_HH
-
-#include "properties.hh"
-
-namespace Dumux
-{
-// \{
+#include "config.h"
+#include "rositestproblem.hh"
+#include <dumux/mixeddimension/embedded/start.hh>
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitIndices
- * \brief Index names for the Richards model.
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
  */
-
-template <class TypeTag>
-struct RichardsIndices
+void usage(const char *progName, const std::string &errorMsg)
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    // TODO
+}
 
-    //////////
-    // primary variable indices
-    //////////
-
-    //! Primary variable index for the wetting phase pressure
-    static const int pressureIdx = 0;
-    //////////
-    // equation indices
-    //////////
-    //! Equation index for the mass conservation of the wetting phase
-    static const int conti0EqIdx = 0;
-
-    //////////
-    // phase indices
-    //////////
-    static const int wPhaseIdx = 0; //!< Index of the wetting phase;
-    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase;
-};
-// \}
-
-} // end namespace Dumux
-
-#endif
+int main(int argc, char** argv)
+{
+    typedef TTAG(RosiTestProblem) ProblemTypeTag;
+    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+}

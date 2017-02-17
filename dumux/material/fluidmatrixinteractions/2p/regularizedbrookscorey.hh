@@ -152,6 +152,16 @@ public:
     }
 
     /*!
+     * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
+     *
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     */
+    static Scalar endPointPc(const Params &params)
+    { return params.pe(); }
+
+    /*!
      * \brief A regularized version of the partial derivative
      *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
      *        according to Brooks & Corey.

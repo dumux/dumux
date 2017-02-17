@@ -32,14 +32,15 @@
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
-#include "localresidual.hh"
 #include "newtoncontroller.hh"
 
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
-#include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux
 {
@@ -51,11 +52,15 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 //! Number of equations required by the model
 SET_INT_PROP(Richards, NumEq, 1);
+
 //! Number of fluid phases considered
-SET_INT_PROP(Richards, NumPhases, 2);
+//! Although the number of phases is two for the Richards model the
+//! non-wetting phase is not balanced and thus we only have one
+//! phase with a balance equation
+SET_INT_PROP(Richards, NumPhases, 1);
 
 //! The local residual operator
-SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
+SET_TYPE_PROP(Richards, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //! The global model used
 SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
@@ -90,58 +95,14 @@ SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
 SET_TYPE_PROP(Richards, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 /*!
- * \brief The wetting phase used.
- *
- * By default we use the null-phase, i.e. this has to be defined by
- * the problem for the program to work. Please be aware that you
- * should be careful to use the Richards model in conjunction with
- * liquid non-wetting phases. This is only meaningful if the viscosity
- * of the liquid phase is _much_ lower than the viscosity of the
- * wetting phase.
- */
-
-SET_PROP(Richards, WettingPhase)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar>>;
-};
-
-/*!
- * \brief The wetting phase used.
- *
- * By default we use the null-phase, i.e. this has to be defined by
- * the problem for the program to work. This doed not need to be
- * specified by the problem for the Richards model to work because the
- * Richards model does not conserve the non-wetting phase.
- */
-SET_PROP(Richards, NonwettingPhase)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::GasPhase<Scalar, NullComponent<Scalar>>;
-};
-
-/*!
  *\brief The fluid system used by the model.
  *
- * By default this uses the immiscible twophase fluid system. The
- * actual fluids used are specified using in the problem definition by
- * the WettingPhase and NonwettingPhase properties. Be aware that
- * using different fluid systems in conjunction with the Richards
- * model only makes very limited sense.
+ * By default this uses the liquid phase fluid system with simple H2O.
  */
 SET_PROP(Richards, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = typename GET_PROP_TYPE(TypeTag, WettingPhase);
-    using NonwettingPhase = typename GET_PROP_TYPE(TypeTag, NonwettingPhase);
-
-public:
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
 };
 
 /*!
@@ -190,7 +151,7 @@ SET_TYPE_PROP(RichardsNI, IsothermalModel, RichardsModel<TypeTag>);
 SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices<TypeTag>);

@@ -19,52 +19,51 @@
 /*!
  * \file
  *
- * \brief spatial parameters for the RichardsLensProblem
+ * \brief spatial parameters for the RichardsWellTracerProblem
  */
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
+
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/plotmateriallaw.hh>
 
 namespace Dumux
 {
 
 // forward declaration
 template<class TypeTag>
-class RichardsLensSpatialParams;
+class RichardsWellTracerSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsLensSpatialParams);
+NEW_TYPE_TAG(RichardsWellTracerSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLensSpatialParams, SpatialParams, RichardsLensSpatialParams<TypeTag>);
+SET_TYPE_PROP(RichardsWellTracerSpatialParams, SpatialParams, RichardsWellTracerSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(RichardsLensSpatialParams, MaterialLaw)
+SET_PROP(RichardsWellTracerSpatialParams, MaterialLaw)
 {
-private:
-    // define the material law which is parameterized by effective
-    // saturations
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
+    // define the material law parameterized by effective saturations
+    using type = EffToAbsLaw<VanGenuchten<Scalar>>;
 };
 }
 
 /*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
- * \brief The spatial parameters for the RichardsLensProblem
+ * \brief The spatial parameters for the RichardsWellTracerProblem
  */
 template<class TypeTag>
-class RichardsLensSpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsWellTracerSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -90,12 +89,12 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsLensSpatialParams(const Problem& problem, const GridView& gridView)
+    RichardsWellTracerSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
 
-        lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.1, 3.1};
+        lensLowerLeft_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, LensLowerLeft);
+        lensUpperRight_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, LensUpperRight);
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -110,7 +109,10 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
-        lensK_ = 1e-12;
+        lensMaterialParams_.setVgn(7.3);
+        outerMaterialParams_.setVgAlpha(0.0037);
+
+        lensK_ = 1e-14;
         outerK_ = 5e-12;
     }
 
@@ -132,13 +134,14 @@ public:
      * \param globalPos The global position where we evaluate
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    {
+        if (isInLens_(globalPos))
+            return 0.2;
+        return 0.4;
+    }
 
     /*!
      * \brief Returns the parameters for the material law at a given location
-     *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
      *
      * \param globalPos A global coordinate vector
      */
@@ -173,4 +176,3 @@ private:
 } // end namespace Dumux
 
 #endif
-
