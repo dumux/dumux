@@ -40,6 +40,7 @@ NEW_PROP_TAG(ProblemLiquidDensity);
 NEW_PROP_TAG(ProblemLiquidKinematicViscosity);
 NEW_PROP_TAG(ProblemGasDensity);
 NEW_PROP_TAG(ProblemGasKinematicViscosity);
+NEW_PROP_TAG(ComponentName);
 
 // set default values
 SET_SCALAR_PROP(NumericModel, ProblemMolarMass, 1.0);
@@ -47,6 +48,7 @@ SET_SCALAR_PROP(NumericModel, ProblemLiquidDensity, 1.0);
 SET_SCALAR_PROP(NumericModel, ProblemLiquidKinematicViscosity, 1.0);
 SET_SCALAR_PROP(NumericModel, ProblemGasDensity, 1.0);
 SET_SCALAR_PROP(NumericModel, ProblemGasKinematicViscosity, 1.0);
+SET_STRING_PROP(NumericModel, ComponentName, "c");
 } // end namespace Properties
 
 /*!
@@ -65,8 +67,12 @@ public:
     /*!
      * \brief A human readable name for the component.
      */
-    static std::string name()
-    { return "Constant"; }
+    static const std::string& name()
+    {
+        static const std::string name
+            = GET_PARAM_FROM_GROUP(TypeTag, std::string, Component, Name);
+        return name;
+    }
 
     /*!
      * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
