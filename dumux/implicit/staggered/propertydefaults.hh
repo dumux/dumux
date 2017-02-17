@@ -47,9 +47,7 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-#include <dumux/linear/directsolverbackend.hh>
-
-
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include "assembler.hh"
 #include "localresidual.hh"
@@ -213,7 +211,7 @@ SET_PROP(StaggeredModel, DofTypeIndices)
 
 //! set default solver
 // SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::GSBiCGSTABBackend<TypeTag>);
-SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::StaggeredGridUMFPackBackend<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::UMFPackBackend<TypeTag>);
 
 //! set the block level to 2, suitable for e.g. the Dune::MultiTypeBlockMatrix
 SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
