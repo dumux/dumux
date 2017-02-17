@@ -91,6 +91,8 @@ class RosiTestProblem : public MixedDimensionProblem<TypeTag>
     using BulkIndices = typename GET_PROP_TYPE(BulkProblemTypeTag, Indices);
     using LowDimIndices = typename GET_PROP_TYPE(LowDimProblemTypeTag, Indices);
 
+    using LowDimFluidSystem = typename GET_PROP_TYPE(LowDimProblemTypeTag, FluidSystem);
+
     enum {
         // indices of the primary variables
         wPhaseIdx = BulkIndices::wPhaseIdx,
@@ -101,7 +103,9 @@ class RosiTestProblem : public MixedDimensionProblem<TypeTag>
 public:
     RosiTestProblem(TimeManager &timeManager, const BulkGridView &bulkGridView, const LowDimGridView &lowDimgridView)
     : ParentType(timeManager, bulkGridView, lowDimgridView)
-    {}
+    {
+        accumulatedBoundaryFlux_ = 0.0;
+    }
 
     void preTimeStep()
     {
@@ -114,7 +118,8 @@ public:
         ParentType::init();
 
         // compute the mass in the entire domain to make sure the tracer is conserved
-        Scalar mass = 0.0;
+        Scalar bulkmass = 0.0;
+        Scalar lowdimmass = 0.0;
 
         // low dim elements
         for (const auto& element : elements(this->lowDimProblem().gridView()))
@@ -128,8 +133,8 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
-                         *scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+                lowdimmass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         *scv.volume() * volVars.porosity() * volVars.saturation(wPhaseIdx) * volVars.extrusionFactor();
             }
         }
 
@@ -145,12 +150,13 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
-                         * scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+                bulkmass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         * scv.volume() * volVars.porosity() * volVars.saturation(wPhaseIdx) * volVars.extrusionFactor();
             }
         }
 
-        std::cout << "\033[1;36m" << "The domain initially contains " << mass*1e9 << " ug tracer.\033[0m" << '\n';
+        std::cout << "\033[1;33m" << "The domain initially contains " << (lowdimmass + bulkmass)*1e9 << " µg tracer"
+                  << " (root: " << lowdimmass*1e9 << ", soil: " << bulkmass*1e9 << ")\033[0m" << '\n';
     }
 
     void postTimeStep()
@@ -158,8 +164,8 @@ public:
         ParentType::postTimeStep();
 
         // compute the mass in the entire domain to make sure the tracer is conserved
-        Scalar mass = 0.0;
-        Scalar boundaryMass = 0.0;
+        Scalar bulkmass = 0.0;
+        Scalar lowdimmass = 0.0;
 
         // low dim elements
         for (const auto& element : elements(this->lowDimProblem().gridView()))
@@ -173,15 +179,16 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
-                         *scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+                lowdimmass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                         *scv.volume() * volVars.porosity() * volVars.saturation(wPhaseIdx) * volVars.extrusionFactor();
             }
 
             for (auto&& scvf : scvfs(fvGeometry))
                 if (scvf.boundary())
-                    boundaryMass += this->lowDimProblem().neumann(element, fvGeometry, elemVolVars, scvf)[transportEqIdx]
-                                     * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor()
-                                     * this->timeManager().timeStepSize();
+                    accumulatedBoundaryFlux_ += this->lowDimProblem().neumann(element, fvGeometry, elemVolVars, scvf)[transportEqIdx]
+                                                * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor()
+                                                * LowDimFluidSystem::molarMass(transportCompIdx)
+                                                * this->timeManager().timeStepSize();
 
         }
 
@@ -197,15 +204,20 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
-                         *scv.volume() * volVars.porosity() * volVars.extrusionFactor();
+                bulkmass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
+                            * scv.volume() * volVars.porosity() * volVars.saturation(wPhaseIdx) * volVars.extrusionFactor();
             }
         }
 
-        std::cout << "\033[1;36m" << "The domain contains " << mass*1e9 << " ug, "
-                  << -boundaryMass*1e9 << " (over the boundary, ug) =  "
-                  << (mass - boundaryMass)*1e9 << " ug balanced.\033[0m" << '\n';
+        std::cout << "\033[1;33m" << "The domain contains " << (lowdimmass + bulkmass)*1e9 << " µg tracer"
+                  << " (root: " << lowdimmass*1e9 << ", soil: " << bulkmass*1e9 << ")\033[0m" << '\n';
+
+        std::cout << "\033[1;33m" << accumulatedBoundaryFlux_*1e9 << " µg left domain over the root collar -> "
+                  << ((lowdimmass + bulkmass) + accumulatedBoundaryFlux_)*1e9 << " µg balanced.\033[0m" << '\n';
     }
+
+private:
+    Scalar accumulatedBoundaryFlux_;
 };
 
 } // end namespace Dumux

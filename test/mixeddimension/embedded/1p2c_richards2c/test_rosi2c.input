@@ -1,6 +1,5 @@
 [MixedDimension]
 UseIterativeSolver = false
-NumCircleSegments = 10
 
 [TimeManager]
 DtInitial = 8640 # [s]
@@ -18,10 +17,12 @@ Cells = 20 20 20
 
 [Problem]
 Name = rosi2c
-ContaminantMassFraction = 1e-6
+ContaminantMoleFraction = 1e-6
+MolarMass = 20e-3 # in kg/mol, molar mass heavy water D2O
 
 [Component]
 LiquidDiffusionCoefficient = 1e-9
+Name = D2O
 
 [SpatialParams]
 Permeability = 2.57e-12 # [m^2]
@@ -33,11 +34,3 @@ Kr = 2.04e-13
 InitialRootPressure = -1.2e6 # [Pa]
 TranspirationRate = 2.15e-8 # [kg / s]
 CriticalCollarPressure = -1.5e6 # [Pa]
-
-[IterativeAlgorithm]
-MaxIterations = 100
-Tolerance = 1.0e-5
-Verbose = 1
-IntegrationOrder = 1
-
-

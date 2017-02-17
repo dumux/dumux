@@ -82,7 +82,7 @@ SET_BOOL_PROP(RichardsTestProblem, VtkAddVelocity, true);
 SET_STRING_PROP(RichardsTestProblem, GridParameterGroup, "SoilGrid");
 
 // Use mass fractions
-SET_BOOL_PROP(RichardsTestProblem, UseMoles, false);
+SET_BOOL_PROP(RichardsTestProblem, UseMoles, true);
 }
 
 /*!
@@ -145,7 +145,7 @@ public:
     : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "-soil";
-        contaminantMassFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMassFraction);
+        contaminantMoleFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMoleFraction);
 
         // for initial conditions
         const Scalar sw = 0.2; // start with 20% saturation on top
@@ -233,19 +233,19 @@ public:
         // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
         PrimaryVariables sourceValues(0.0);
         sourceValues[conti0EqIdx] = 2* M_PI *rootRadius * Kr *(lowDimVolVars.pressure(wPhaseIdx) - bulkVolVars.pressure(wPhaseIdx))
-                                    *bulkVolVars.density(wPhaseIdx);
+                                    *bulkVolVars.molarDensity(wPhaseIdx);
 
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] > 0)
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx);
+                                            * lowDimVolVars.moleFraction(wPhaseIdx, transportCompIdx);
         else
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * bulkVolVars.massFraction(wPhaseIdx, transportCompIdx);
+                                            * bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx);
 
         sourceValues[transportEqIdx] += 2* M_PI *rootRadius * 1.0e-8
-                                        *(lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx) - bulkVolVars.massFraction(wPhaseIdx, transportCompIdx))
-                                        *0.5*bulkVolVars.density(wPhaseIdx)*lowDimVolVars.density(wPhaseIdx);
+                                        *(lowDimVolVars.moleFraction(wPhaseIdx, transportCompIdx) - bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx))
+                                        *0.5*(bulkVolVars.molarDensity(wPhaseIdx) + lowDimVolVars.molarDensity(wPhaseIdx));
 
         sourceValues *= source.quadratureWeight()*source.integrationElement();
         source = sourceValues;
@@ -271,8 +271,11 @@ public:
 
                 for (auto&& scv : scvs(fvGeometry))
                 {
+                    const auto& volVars = elemVolVars[scv];
                     auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
-                    pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
+                    // conversion to kg/s
+                    pointSources *= scv.volume()*volVars.extrusionFactor()
+                                    * volVars.density(wPhaseIdx) / volVars.molarDensity(wPhaseIdx);
                     source += pointSources;
                 }
             }
@@ -338,7 +341,7 @@ public:
             contaminationPos += this->bBoxMin();
 
             if ((globalPos - contaminationPos).two_norm() < 0.1*(this->bBoxMax()-this->bBoxMin()).two_norm() + eps_)
-                return contaminantMassFraction_;
+                return contaminantMoleFraction_;
             else
                 return 0.0;
         }();
@@ -368,7 +371,7 @@ public:
 private:
     std::string name_;
     std::shared_ptr<CouplingManager> couplingManager_;
-    Scalar contaminantMassFraction_;
+    Scalar contaminantMoleFraction_;
     Scalar pcTop_;
     static constexpr Scalar eps_ = 1e-7;
 };

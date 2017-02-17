@@ -78,7 +78,7 @@ SET_BOOL_PROP(RootsystemTestProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(RootsystemTestProblem, VtkAddVelocity, true);
 
 // Use mass fractions
-SET_BOOL_PROP(RootsystemTestProblem, UseMoles, false);
+SET_BOOL_PROP(RootsystemTestProblem, UseMoles, true);
 }
 
 /*!
@@ -230,11 +230,13 @@ public:
         if (scvf.center()[2] + eps_ > this->bBoxMax()[2])
         {
             const auto& volVars = elemVolvars[scvf.insideScvIdx()];
-            values[conti0EqIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, BoundaryConditions.TranspirationRate)
-                                  /volVars.extrusionFactor()/scvf.area();
-
+            // conversion of transpiration rate from kg/s to mol/s
+            static const Scalar tr = GET_RUNTIME_PARAM(TypeTag, Scalar, BoundaryConditions.TranspirationRate);
+            const Scalar value = tr * volVars.molarDensity(wPhaseIdx)/volVars.density(wPhaseIdx);
+            values[conti0EqIdx] = value / volVars.extrusionFactor() / scvf.area();
+            // use upwind mole fraction to get outflow condition for the tracer
             values[transportEqIdx] = values[conti0EqIdx]
-                                      * volVars.massFraction(wPhaseIdx, transportCompIdx);
+                                     * volVars.moleFraction(wPhaseIdx, transportCompIdx);
         }
         return values;
 
@@ -311,19 +313,19 @@ public:
         // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
         PrimaryVariables sourceValues(0.0);
         sourceValues[conti0EqIdx] = 2* M_PI *rootRadius * Kr *(bulkVolVars.pressure(wPhaseIdx) - lowDimVolVars.pressure(wPhaseIdx))
-                                    *bulkVolVars.density(wPhaseIdx);
+                                    *bulkVolVars.molarDensity(wPhaseIdx);
 
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] < 0)
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx);
+                                            * lowDimVolVars.moleFraction(wPhaseIdx, transportCompIdx);
         else
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
-                                            * bulkVolVars.massFraction(wPhaseIdx, transportCompIdx);
+                                            * bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx);
 
         sourceValues[transportEqIdx] += 2* M_PI *rootRadius * 1.0e-8
-                                        *(bulkVolVars.massFraction(wPhaseIdx, transportCompIdx) - lowDimVolVars.massFraction(wPhaseIdx, transportCompIdx))
-                                        *0.5*bulkVolVars.density(wPhaseIdx)*lowDimVolVars.density(wPhaseIdx);
+                                        *(bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx) - lowDimVolVars.moleFraction(wPhaseIdx, transportCompIdx))
+                                        *0.5*(bulkVolVars.molarDensity(wPhaseIdx) + lowDimVolVars.molarDensity(wPhaseIdx));
 
         sourceValues *= source.quadratureWeight()*source.integrationElement();
         source = sourceValues;
@@ -349,8 +351,11 @@ public:
 
                 for (auto&& scv : scvs(fvGeometry))
                 {
+                    const auto& volVars = elemVolVars[scv];
                     auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
-                    pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
+                    // conversion to kg/s
+                    pointSources *= scv.volume()*volVars.extrusionFactor()
+                                    * volVars.density(wPhaseIdx) / volVars.molarDensity(wPhaseIdx);
                     source += pointSources;
                 }
             }
