@@ -57,6 +57,8 @@ public:
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
+    static constexpr int mainCompIdx = 0;
+    static constexpr int secondCompIdx = 1;
     static constexpr int wPhaseIdx = 0;
     static constexpr int numPhases = 1;
     static constexpr int numComponents = 2;
@@ -175,8 +177,18 @@ public:
     static Scalar density(const FluidState &fluidState,
                           const int phaseIdx)
     {
-        return density(fluidState.temperature(phaseIdx),
-                       fluidState.pressure(phaseIdx));
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        // See: Eq. (7) in Class et al. (2002a)
+        // We assume each tracer molecule replaces on main component molecule
+        // this is consistent with the assumption in Fick's law and the computation
+        // of the composition molar mass in the compositional fluid state
+        const Scalar densityMain = MainComponent::liquidDensity(T, p);
+        const Scalar molarDensity = densityMain/MainComponent::molarMass();
+
+        return molarDensity * (MainComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, mainCompIdx)
+                               + SecondComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, secondCompIdx));
     }
 
     /*!
@@ -322,6 +334,7 @@ public:
 };
 
 } // namespace FluidSystems
-} // namespace
+
+} // namespace Dumux
 
 #endif
