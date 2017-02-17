@@ -81,7 +81,7 @@ SET_BOOL_PROP(RichardsTestProblem, VtkAddVelocity, true);
 // Set the grid parameter group
 SET_STRING_PROP(RichardsTestProblem, GridParameterGroup, "SoilGrid");
 
-// Use mass fractions
+// Use mole fractions
 SET_BOOL_PROP(RichardsTestProblem, UseMoles, true);
 }
 
@@ -235,6 +235,7 @@ public:
         sourceValues[conti0EqIdx] = 2* M_PI *rootRadius * Kr *(lowDimVolVars.pressure(wPhaseIdx) - bulkVolVars.pressure(wPhaseIdx))
                                     *bulkVolVars.molarDensity(wPhaseIdx);
 
+        //! advective transport over root wall
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] > 0)
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
@@ -243,6 +244,7 @@ public:
             sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]
                                             * bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx);
 
+        //! diffusive transport over root wall
         sourceValues[transportEqIdx] += 2* M_PI *rootRadius * 1.0e-8
                                         *(lowDimVolVars.moleFraction(wPhaseIdx, transportCompIdx) - bulkVolVars.moleFraction(wPhaseIdx, transportCompIdx))
                                         *0.5*(bulkVolVars.molarDensity(wPhaseIdx) + lowDimVolVars.molarDensity(wPhaseIdx));
