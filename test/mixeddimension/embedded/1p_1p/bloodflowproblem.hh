@@ -106,6 +106,7 @@ class BloodFlowProblem : public ImplicitPorousMediaProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
@@ -324,7 +325,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& p = outputModule.createScalarField("exact pressure", dofCodim);
         p = exactPressure_;
