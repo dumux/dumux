@@ -105,6 +105,7 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // phase indices
     enum
@@ -213,7 +214,8 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
-                        this->nonConstCurGlobalVolVars().volVars(scv.index()).update(this->curSol()[dofIdxGlobal],
+                        const auto elemSol = this->elementSolution(element, this->curSol());
+                        this->nonConstCurGlobalVolVars().volVars(scv.index()).update(elemSol,
                                                                                      this->problem_(),
                                                                                      element,
                                                                                      scv);
@@ -234,9 +236,9 @@ public:
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = this->problem_().dirichlet(element, scvf);
+                    const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
 
-                    this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx()).update(dirichletPriVars, this->problem_(), element, insideScv);
+                    this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx()).update(elemSol, this->problem_(), element, insideScv);
                 }
             }
         }
