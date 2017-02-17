@@ -19,30 +19,27 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        heat conduction fluxes with Fourier's law for cell-centered MPFA models.
+ *        heat conduction fluxes with Fourier's law for cell-centered MPFA models
+ *        in the presence of lower dimensional (coupled) elements living on this
+ *        domain's element facets.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FACET_FOURIERS_LAW_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_FACET_FOURIERS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
-#include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/implicit/properties.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
+#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup FouriersLaw
- * \brief Specialization of Fourier's Law for the CCMpfa method.
+ * \brief Specialization of Fourier's Law for the CCMpfa method with lower dimensional
+ *        elements living on the bulk elements' facets.
  */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
+class CCMpfaFacetCouplingFouriersLaw : public FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -67,7 +64,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     static constexpr int energyEqIdx = GET_PROP_TYPE(TypeTag, Indices)::energyEqIdx;
 
     //! The cache used in conjunction with the mpfa Fourier's Law
-    class MpfaFouriersLawCache
+    class MpfaFacetCouplingFouriersLawCache
     {
         using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
     public:
@@ -79,6 +76,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             heatConductionVolVarsStencil_ = iv.volVarsStencil();
             heatConductionTij_ = iv.getTransmissibilities(localFaceData);
             heatNeumannFlux_ = iv.getNeumannFlux(localFaceData, energyEqIdx);
+            heatConductionCij_ = iv.getNeumannFluxTransformationCoefficients(localFaceData);
         }
 
         //! Returns the volume variables indices necessary for heat conduction flux
@@ -92,6 +90,11 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const CoefficientVector& heatConductionTij() const
         { return heatConductionTij_; }
 
+        //! Returns the vector of coefficients with which the vector of neumann boundary conditions
+        //! has to be multiplied in order to transform them on the scvf this cache belongs to
+        const CoefficientVector& heatConductionCij() const
+        { return heatConductionCij_; }
+
         //! If the useTpfaBoundary property is set to false, the boundary conditions
         //! are put into the local systems leading to possible contributions on all faces
         Scalar heatNeumannFlux() const
@@ -101,39 +104,16 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         // Quantities associated with heat conduction
         Stencil heatConductionVolVarsStencil_;
         CoefficientVector heatConductionTij_;
+        CoefficientVector heatConductionCij_;
         Scalar heatNeumannFlux_;
-    };
-
-    //! Class that fills the cache corresponding to mpfa Darcy's Law
-    class MpfaFouriersLawCacheFiller
-    {
-    public:
-        //! Function to fill an MpfaDarcysLawCache of a given scvf
-        //! This interface has to be met by any cache filler class for heat conduction quantities
-        template<class FluxVariablesCacheFiller>
-        static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
-                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-        {
-            // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
-                scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf);
-            else
-                scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.interactionVolume(), scvf);
-        }
     };
 
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
-    // state the type for the corresponding cache and its filler
-    using Cache = MpfaFouriersLawCache;
-    using CacheFiller = MpfaFouriersLawCacheFiller;
+    // state the new type for the corresponding cache
+    using Cache = MpfaFacetCouplingFouriersLawCache;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -146,15 +126,6 @@ public:
         const auto& volVarsStencil = fluxVarsCache.heatConductionVolVarsStencil();
         const auto& tij = fluxVarsCache.heatConductionTij();
 
-        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
-        // For interior Neumann boundaries when using Tpfa on boundaries, return the user-specified flux
-        if (isInteriorBoundary
-            && useTpfaBoundary
-            && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
-            return scvf.area()*
-                   elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
-                   problem.neumann(element, fvGeometry, elemVolVars, scvf)[energyEqIdx];
-
         // calculate Tij*tj
         Scalar flux(0.0);
         unsigned int localIdx = 0;
@@ -166,7 +137,7 @@ public:
             return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache);
+        flux += computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache);
 
         // return overall resulting flux
         return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
@@ -183,13 +154,54 @@ public:
         // the cell and the domain Dirichlet boundary pressures
         const auto startIdx = fluxVarsCache.heatConductionVolVarsStencil().size();
 
+        // The vector of interior neumann fluxes
+        const auto& cij = fluxVarsCache.heatConductionCij();
+        CoefficientVector facetCouplingFluxes(cij.size(), 0.0);
+
         // add interior Dirichlet boundary contributions
         Scalar flux = 0.0;
         for (auto&& data : fluxVarsCache.interiorBoundaryData())
+        {
+            // Add additional Dirichlet fluxes for interior Dirichlet faces
             if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
                 flux += tij[startIdx + data.localIndexInInteractionVolume()]*data.facetVolVars(fvGeometry).temperature();
 
-        return flux;
+            // add neumann contributions
+            if (data.faceType() == MpfaFaceTypes::interiorNeumann)
+            {
+                // get the scvf corresponding to actual interior neumann face
+                const auto& curScvf = fvGeometry.scvf(data.scvfIndex());
+
+                // get the volvars of the actual interior neumann face
+                const auto completeFacetData = data.completeCoupledFacetData(fvGeometry);
+
+                // calculate "leakage factor"
+                const auto n = curScvf.unitOuterNormal();
+                const auto v = [&] ()
+                                {
+                                    auto res = n;
+                                    res *= -0.5*completeFacetData.volVars().extrusionFactor();
+                                    res += curScvf.ipGlobal();
+                                    res -= curScvf.facetCorner();
+                                    res /= res.two_norm2();
+                                    return res;
+                                } ();
+
+                // get the thermal conductivity in the facet element
+                const auto facetLambda = ThermalConductivityModel::effectiveThermalConductivity(completeFacetData.volVars(),
+                                                                                                completeFacetData.spatialParams(),
+                                                                                                completeFacetData.element(),
+                                                                                                completeFacetData.fvGeometry(),
+                                                                                                completeFacetData.scv());
+                // add value to vector of interior neumann fluxes
+                facetCouplingFluxes[data.localIndexInInteractionVolume()] += completeFacetData.volVars().temperature()*
+                                                                             curScvf.area()*
+                                                                             elemVolVars[curScvf.insideScvIdx()].extrusionFactor()*
+                                                                             MpfaHelper::nT_M_v(n, facetLambda, v);
+            }
+        }
+
+        return flux + cij*facetCouplingFluxes;
     }
 };
 

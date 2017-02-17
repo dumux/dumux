@@ -147,7 +147,7 @@ public:
         elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
         // the upwind term to be used for the volume flux evaluation
-        auto upwindTerm = [phaseIdx](const VolumeVariables& volVars) { return volVars.mobility(phaseIdx); };
+        auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
 
         if (isBox)
         {

@@ -104,6 +104,7 @@ class TissueProblem : public ImplicitPorousMediaProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     // copy some indices for convenience
     enum {
@@ -328,7 +329,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& p = outputModule.createScalarField("exact pressure", dofCodim);
         p = exactPressure_;

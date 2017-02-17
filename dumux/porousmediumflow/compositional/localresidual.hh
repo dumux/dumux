@@ -182,7 +182,7 @@ public:
                     auto eqIdx = conti0EqIdx + compIdx;
 
                     // the physical quantities for which we perform upwinding
-                    auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
+                    auto upwindTerm = [phaseIdx, compIdx](const auto& volVars)
                     { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
                     const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
@@ -224,7 +224,7 @@ public:
                     auto eqIdx = conti0EqIdx + compIdx;
 
                     // the physical quantities for which we perform upwinding
-                    auto upwindTerm = [phaseIdx, compIdx](const VolumeVariables& volVars)
+                    auto upwindTerm = [phaseIdx, compIdx](const auto& volVars)
                     { return volVars.density(phaseIdx)*volVars.massFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
                     const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindTerm);

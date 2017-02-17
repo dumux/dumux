@@ -43,12 +43,9 @@ class CCMpfaOFpsInteractionVolumeTraits : public CCMpfaOInteractionVolumeTraits<
 public:
     // Interior boundaries can not yet be handled by the currend o-method fps implementation
     // In that case we use the o-interactionvolume, otherwise we use its own interaction volumes at the boundary
-    // TODO Fix the std::conditional
-    using BoundaryInteractionVolume = typename CCMpfaOInteractionVolumeTraits<TypeTag>::BoundaryInteractionVolume;
-    // using BoundaryInteractionVolume = typename std::conditional<GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries),
-    //                                                             typename CCMpfaOInteractionVolumeTraits<TypeTag>::BoundaryInteractionVolume,
-    //                                                             typename CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>
-    //                                                             >::type;
+    using BoundaryInteractionVolume = typename std::conditional<GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries),
+                                                                CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>,
+                                                                CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>>::type;
 
     // The local sub-control volume type differs from the standard mpfa-o method
     using LocalScvType = CCMpfaOFpsLocalScv<TypeTag>;
@@ -58,10 +55,14 @@ public:
  * \brief Base class for the interaction volumes of the mpfa-o method with full pressure support.
  */
 template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps> : public CCMpfaOInteractionVolume<TypeTag, CCMpfaOFpsInteractionVolumeTraits<TypeTag>>
+class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>
+          : public CCMpfaOInteractionVolume<TypeTag,
+                                            CCMpfaOFpsInteractionVolumeTraits<TypeTag>,
+                                            CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>>
 {
     using Traits = CCMpfaOFpsInteractionVolumeTraits<TypeTag>;
-    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits>;
+    using ThisType = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>;
+    using ParentType = CCMpfaOInteractionVolume<TypeTag, Traits, ThisType>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -202,8 +203,7 @@ private:
         auto&& localScv = this->localScv_(localScvIdx);
         auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
         auto&& element = this->localElement_(localScvIdx);
-        auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
-
+        auto D = makeTensor_(getTensor(this->problem_(), element, this->elemVolVars_()[globalScv], this->fvGeometry_(), globalScv));
         // the local finite element basis
         const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
 
@@ -248,7 +248,7 @@ private:
             auto&& localScv = this->localScv_(localScvIdx);
             auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
             auto&& element = this->localElement_(localScvIdx);;
-            auto D = makeTensor_(getTensor(element, this->elemVolVars_()[globalScv], globalScv));
+            auto D = makeTensor_(getTensor(this->problem_(), element, this->elemVolVars_()[globalScv], this->fvGeometry_(), globalScv));
 
             // the local finite element bases of the scvs
             const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();

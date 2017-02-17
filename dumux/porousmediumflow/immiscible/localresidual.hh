@@ -109,7 +109,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // the physical quantities for which we perform upwinding
-            auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+            auto upwindTerm = [phaseIdx](const auto& volVars)
                               { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
             auto eqIdx = conti0EqIdx + phaseIdx;

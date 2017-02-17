@@ -35,7 +35,6 @@ namespace Properties
 {
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(NumComponents);
-NEW_PROP_TAG(ThermalConductivityModel);
 };
 
 /*!

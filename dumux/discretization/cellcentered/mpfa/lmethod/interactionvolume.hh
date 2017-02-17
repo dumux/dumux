@@ -66,7 +66,8 @@ public:
  * \brief Base class for the interaction volumes of the mpfa-l method.
  */
 template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod> : public CCMpfaInteractionVolumeBase<TypeTag, CCMpfaLInteractionVolumeTraits<TypeTag>>
+class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod>
+       : public CCMpfaInteractionVolumeBase<TypeTag, CCMpfaLInteractionVolumeTraits<TypeTag>>
 {
     // The interaction volume implementation has to be friend
     friend typename GET_PROP_TYPE(TypeTag, InteractionVolume);

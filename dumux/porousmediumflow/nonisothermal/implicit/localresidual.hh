@@ -125,7 +125,7 @@ public:
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {
-        auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+        auto upwindTerm = [phaseIdx](const auto& volVars)
         { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
