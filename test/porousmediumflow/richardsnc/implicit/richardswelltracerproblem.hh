@@ -99,6 +99,7 @@ class RichardsWellTracerProblem : public ImplicitPorousMediaProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
@@ -126,10 +127,50 @@ public:
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         contaminantMoleFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMoleFraction);
+        pumpRate_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, PumpRate); // in kg/s
 
         // for initial conditions
         const Scalar sw = 0.4; // start with 80% saturation on top
         pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->bBoxMax()), sw);
+
+        // for post time step mass balance
+        accumulatedSource_ = 0.0;
+    }
+
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+
+        // compute the mass in the entire domain to make sure the tracer is conserved
+        Scalar tracerMass = 0.0;
+
+        // bulk elements
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(this->model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                tracerMass += volVars.massFraction(wPhaseIdx, compIdx)*volVars.density(wPhaseIdx)
+                              * scv.volume() * volVars.saturation(wPhaseIdx) * volVars.porosity() * volVars.extrusionFactor();
+
+                accumulatedSource_ += this->scvPointSources(element, fvGeometry, elemVolVars, scv)[compIdx]
+                                       * scv.volume() * volVars.extrusionFactor()
+                                       * FluidSystem::molarMass(compIdx)
+                                       * this->timeManager().timeStepSize();
+            }
+        }
+
+        std::cout << "\033[1;33m" << "The domain contains " << tracerMass*1e9 << " µg tracer, "
+                  <<  accumulatedSource_*1e9 << " µg ("<< int(std::round(-accumulatedSource_/(tracerMass - accumulatedSource_)*100))
+                  <<"%) was already extracted (balanced: "
+                  <<  (tracerMass - accumulatedSource_)*1e9 << " µg)\033[0m" << '\n';
+
     }
 
     /*!
@@ -230,18 +271,20 @@ public:
     {
         auto globalPos = this->bBoxMax()-this->bBoxMin();
         globalPos *= 0.5;
+        //! Add point source in middle of domain
         pointSources.emplace_back(globalPos,
-             [](const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const ElementVolumeVariables &elemVolVars,
-                const SubControlVolume &scv)
-                {
-                    const auto& volVars = elemVolVars[scv];
-                    //! Add point source with 0.7 kg/s and upwind tracer component
-                    return PrimaryVariables({-0.7, -0.7*volVars.moleFraction(wPhaseIdx, compIdx)
-                                                       *volVars.molarDensity(wPhaseIdx)});
-                });
+             [this](const Problem &problem,
+                    const Element &element,
+                    const FVElementGeometry &fvGeometry,
+                    const ElementVolumeVariables &elemVolVars,
+                    const SubControlVolume &scv)
+                    {
+                        const auto& volVars = elemVolVars[scv];
+                        //! convert pump rate from kg/s to mol/s
+                        //! We assume we can't keep up the pump rate if the saturation sinks
+                        const Scalar value = pumpRate_*volVars.molarDensity(wPhaseIdx)/volVars.density(wPhaseIdx)*volVars.saturation(wPhaseIdx);
+                        return PrimaryVariables({-value, -value*volVars.moleFraction(wPhaseIdx, compIdx)});
+                    });
     }
 
     /*!
@@ -300,7 +343,9 @@ private:
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
     Scalar contaminantMoleFraction_;
+    Scalar pumpRate_;
     Scalar pcTop_;
+    Scalar accumulatedSource_;
 };
 
 } //end namespace Dumux

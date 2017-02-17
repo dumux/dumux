@@ -5,14 +5,14 @@ add_dumux_test(test_boxrichardsnc test_boxrichardsnc test_boxrichardsnc.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardswelltracerbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/richardswelltracerbox-00032.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/richardswelltracerbox-00035.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsnc")
 
 add_dumux_test(test_ccrichardsnc test_ccrichardsnc test_ccrichardsnc.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardswelltracercc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/richardswelltracercc-00031.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/richardswelltracercc-00033.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsnc")
 
 #install sources
