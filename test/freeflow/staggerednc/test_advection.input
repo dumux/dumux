@@ -1,6 +1,6 @@
 [TimeManager]
 DtInitial = 1e-1 # [s]
-TEnd = 5 # [s]
+TEnd = 15 # [s]
 
 [Grid]
 UpperRight = 5 1
