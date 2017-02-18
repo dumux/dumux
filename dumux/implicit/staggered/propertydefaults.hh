@@ -242,6 +242,11 @@ SET_TYPE_PROP(StaggeredModel, NewtonConvergenceWriter, StaggeredNewtonConvergenc
 
 //! Write separate vtp files for face variables by default
 SET_BOOL_PROP(StaggeredModel, VtkWriteFaceData, true);
+
+//! For compatibility
+SET_BOOL_PROP(StaggeredModel, EnableInteriorBoundaries, false);
+
+
 } // namespace Properties
 
 } // namespace Dumux
