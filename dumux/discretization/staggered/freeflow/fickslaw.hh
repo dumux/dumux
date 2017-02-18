@@ -100,7 +100,7 @@ public:
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideMolarDensity = insideVolVars.molarDensity();
 
@@ -117,27 +117,14 @@ public:
             if(scvf.boundary())
             {
                 const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(eqIdx))
+                if(bcTypes.isOutflow(momentumBalanceIdx) || bcTypes.isNeumann(eqIdx)) // TODO: catch neumann and outflow in localResidual's evalBoundary_()
                     return flux;
-                else if(bcTypes.isNeumann(eqIdx))
-                    return flux; // TODO: implement neumann
-                else
-                {
-                    // get the Dirichlet value for the mole fraction on the boundary
-                    Scalar dirichletMoleFraction = problem.dirichletAtPos(scvf.center())[eqIdx];
-                    // convert value to a mole fraction if user specifies a mass fraction
-                    if(!useMoles)
-                        dirichletMoleFraction /= FluidSystem::molarMass(compIdx) / insideVolVars.fluidState().averageMolarMass(phaseIdx);
-                    flux[compIdx] = insideMolarDensity * tij * (insideMoleFraction - dirichletMoleFraction);
-                }
             }
-            else
-            {
-                const Scalar outsideMolarDensity = outsideVolVars.molarDensity();
-                const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
-                const Scalar outsideMoleFraction = outsideVolVars.moleFraction(phaseIdx, compIdx);
-                flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
-            }
+
+            const Scalar outsideMolarDensity = scvf.boundary() ? insideVolVars.molarDensity() : outsideVolVars.molarDensity();
+            const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
+            const Scalar outsideMoleFraction = outsideVolVars.moleFraction(phaseIdx, compIdx);
+            flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
             ++eqIdx;
         }
 
@@ -179,9 +166,7 @@ public:
     {
         Scalar tij = 0.0;
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         const Scalar insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
@@ -191,6 +176,8 @@ public:
             tij = scvf.area() * ti;
         else
         {
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             const Scalar outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
             const Scalar tj = calculateOmega_(outsideDistance, outsideD, 1.0);

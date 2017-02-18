@@ -127,7 +127,16 @@ private:
         const auto& insideVolVars = elemVolVars[insideScv];
 
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
-        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
+        bool isOutflow = false;
+        if(scvf.boundary())
+        {
+            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                if(bcTypes.isOutflow(momentumBalanceIdx))
+                    isOutflow = true;
+        }
+
+        const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
@@ -142,34 +151,20 @@ private:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // get equation index
-            auto eqIdx = conti0EqIdx + compIdx;
+            const auto eqIdx = conti0EqIdx + compIdx;
+            if (eqIdx == replaceCompEqIdx)
+                continue;
 
-            const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
-            const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
             const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(phaseIdx, compIdx) : upstreamVolVars.massFraction(phaseIdx, compIdx);
             const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(phaseIdx, compIdx) : downstreamVolVars.massFraction(phaseIdx, compIdx);
 
-            Scalar advFlux = 0.0;
-
-            if(scvf.boundary() && eqIdx > conti0EqIdx)
-            {
-                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isDirichlet(eqIdx))
-                    advFlux = upstreamDensity * problem.dirichletAtPos(scvf.center())[eqIdx] * velocity;
-                if(bcTypes.isOutflow(eqIdx))
-                    advFlux = upstreamDensity * upstreamFraction * velocity;
-            }
-            else
-                advFlux = (upWindWeight * upstreamDensity * upstreamFraction +
-                          (1.0 - upWindWeight) * downstreamDensity * downstreamFraction) * velocity;
-
-            if (eqIdx != replaceCompEqIdx)
-                flux[eqIdx] += advFlux;
-
-            // in case one balance is substituted by the total mass balance
-            if (replaceCompEqIdx < numComponents)
-                flux[replaceCompEqIdx] += advFlux;
+            flux[eqIdx] = (upWindWeight * upstreamDensity * upstreamFraction +
+                          (1.0 - upWindWeight) * downstreamDensity * downstreamFraction)
+                          * velocity;
         }
+        // in case one balance is substituted by the total mass balance
+        if (replaceCompEqIdx < numComponents)
+            flux[replaceCompEqIdx] = (upWindWeight * upstreamDensity + (1.0 - upWindWeight) * downstreamDensity) * velocity;
 
         flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;

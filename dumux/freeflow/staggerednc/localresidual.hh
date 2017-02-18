@@ -119,7 +119,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
         }
             // in case one balance is substituted by the total mass balance
             if(replaceCompEqIdx < numComponents)
-                storage[replaceCompEqIdx] += density;
+                storage[replaceCompEqIdx] = density;
 
         //TODO: energy balance
         return storage;
