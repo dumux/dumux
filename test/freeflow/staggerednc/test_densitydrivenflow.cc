@@ -22,7 +22,7 @@
  * \brief Test for the staggered grid multi-component (Navier-)Stokes model
  */
 #include <config.h>
-#include "channeltestproblem.hh"
+#include "densityflowproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -59,6 +59,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(ChannelNCTestProblem) ProblemTypeTag;
+    typedef TTAG(DensityDrivenFlowProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

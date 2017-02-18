@@ -1,0 +1,19 @@
+[TimeManager]
+DtInitial = 1e2 # [s]
+TEnd = 1e4 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 20 20
+
+[Problem]
+Name = test_densitydrivenflow # name passed to the output routines
+InletVelocity = 1
+EnableGravity = true
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false

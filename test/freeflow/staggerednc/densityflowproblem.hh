@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model
+ * \brief Channel flow test for the staggered grid (Navier-)Stokes model
  */
-#ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
-#define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
+#ifndef DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
+#define DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/freeflow/staggerednc/model.hh>
@@ -34,26 +34,26 @@
 namespace Dumux
 {
 template <class TypeTag>
-class ChannelNCTestProblem;
+class DensityDrivenFlowProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<ChannelNCTestProblem<TypeTag>>
+    struct isStationary<DensityDrivenFlowProblem<TypeTag>>
     { static const bool value = false; };
 }
 
 namespace Properties
 {
-NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
+NEW_TYPE_TAG(DensityDrivenFlowProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
 
 NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
-SET_TYPE_PROP(ChannelNCTestProblem, FluidSystem,
+SET_TYPE_PROP(DensityDrivenFlowProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
 
-SET_PROP(ChannelNCTestProblem, PhaseIdx)
+SET_PROP(DensityDrivenFlowProblem, PhaseIdx)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -61,27 +61,27 @@ public:
     static constexpr int value = FluidSystem::wPhaseIdx;
 };
 
-SET_INT_PROP(ChannelNCTestProblem, ReplaceCompEqIdx, 0);
+SET_INT_PROP(DensityDrivenFlowProblem, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DensityDrivenFlowProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelNCTestProblem, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
+SET_TYPE_PROP(DensityDrivenFlowProblem, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFVGeometryCache, true);
 
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(ChannelNCTestProblem, ProblemEnableGravity, true);
-SET_BOOL_PROP(ChannelNCTestProblem, UseMoles, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, UseMoles, true);
 
 #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableInertiaTerms, true);
 #else
-SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, false);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableInertiaTerms, false);
 #endif
 }
 
@@ -90,7 +90,7 @@ SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, false);
    \todo doc me!
  */
 template <class TypeTag>
-class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
+class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
 {
     typedef NavierStokesProblem<TypeTag> ParentType;
 
@@ -137,7 +137,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
-    ChannelNCTestProblem(TimeManager &timeManager, const GridView &gridView)
+    DensityDrivenFlowProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
@@ -145,10 +145,6 @@ public:
                                              Problem,
                                              Name);
 
-        inletVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             Scalar,
-                                             Problem,
-                                             InletVelocity);
         FluidSystem::init();
     }
 
@@ -210,14 +206,12 @@ public:
         values.setNeumann(transportEqIdx);
         values.setNeumann(massBalanceIdx);
 
-        if(isInlet(globalPos))
-            values.setDirichlet(transportEqIdx);
-
-        if (isOutlet(globalPos))
-        {
+        if(globalPos[1] <  eps_)
             values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
-            values.setOutflow(transportEqIdx);
+
+        if(globalPos[1] > this->bBoxMax()[1] - eps_ && globalPos[0] > 0.4 && globalPos[0] < 0.6)
+        {
+            values.setDirichlet(transportEqIdx);
         }
 
         return values;
@@ -235,12 +229,7 @@ public:
 
         values[pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 1e-3;
-
-        if(isInlet(globalPos))
-            values[velocityXIdx] = inletVelocity_;
-        else
-            values[velocityXIdx] = 0.0;
-
+        values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
         return values;
@@ -272,24 +261,7 @@ public:
     // \}
 
 private:
-
-    bool isInlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
-
-    bool isOutlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
-    }
-
-    bool isWall(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
-    }
-
     const Scalar eps_{1e-6};
-    Scalar inletVelocity_;
     std::string name_;
 };
 } //end namespace

@@ -1,17 +1,31 @@
 add_input_file_links()
 
-add_dumux_test(test_channel_stokes_nc test_channel_stokes_nc test_channel.cc
+add_dumux_test(test_densitydrivenflow test_densitydrivenflow test_densitydrivenflow.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/channel-stokes.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes-00002.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes")
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-densitydriven-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00013.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow")
+
+add_dumux_test(test_purediffusion test_channel test_channel.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-purediffusion.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_purediffusion-00013.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_purediffusion.input")
+
+add_dumux_test(test_advection test_channel test_channel.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-advection.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00011.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_advection.input")
 
 
 #install sources
 install(FILES
-channeltestproblem.hh
+test_densitydrivenflow.cc
+densityflowproblem.hh
 test_channel.cc
-closedsystemtestproblem.hh
-test_closedsystem.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/staggered)
+channeltestproblem.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/staggerednc)
