@@ -256,6 +256,7 @@ protected:
                 // For the mass-balance residual, do the same as if the face was not on a boundary.This might need to be changed sometime...
                 this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
 
+                //TODO: correct treatment of neuman / outflow boundaries
                 // handle the actual boundary conditions:
                 const auto bcTypes = this->problem().boundaryTypes(element, scvf);
 
@@ -265,6 +266,7 @@ protected:
                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& insideVolVars = elemVolVars[insideScv];
                     this->ccResidual_[0] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.dofPosition())[cellCenterIdx][0];
+                    // TODO: take correct indices!
                 }
 
 //                 if(scvf.center()[0] < 1e-5)

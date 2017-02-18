@@ -199,6 +199,8 @@ public:
                 for (std::size_t j = 0; j < numEqFace; ++j)
                     bTmp[i*numEqFace + j + b[cellCenterIdx].N()*numEqCellCenter] = b[faceIdx][i][j];
 
+            // printmatrix(std::cout, M, "", "");
+
             // solve
             bool converged = this->linearSolver_.solve(M, y, bTmp);
 
