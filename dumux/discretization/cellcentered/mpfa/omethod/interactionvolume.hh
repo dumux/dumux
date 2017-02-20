@@ -259,10 +259,16 @@ public:
     //! has to be multiplied in order to transform them on the scvf this cache belongs to
     DynamicVector getNeumannFluxTransformationCoefficients(const LocalFaceData& localFaceData) const
     {
-        auto cij = CAinv_[localFaceData.localScvfIndex];
-        if (localFaceData.isOutside)
-            cij *= -1.0;
-        return cij;
+        // when no flux face is present return empty vector (should not be used)
+        if (CAinv_.size() != 0)
+        {
+            auto cij = CAinv_[localFaceData.localScvfIndex];
+            if (localFaceData.isOutside)
+                cij *= -1.0;
+            return cij;
+        }
+        else
+            return DynamicVector();
     }
 
     Scalar getNeumannFlux(const LocalFaceData& localFaceData, unsigned int eqIdx) const
