@@ -204,7 +204,7 @@ public:
                 // in case one balance is substituted by the total mole balance
                 if (replaceCompEqIdx < numComponents)
                 {
-                    auto upwindTermTotalBalance = [phaseIdx](const VolumeVariables& volVars)
+                    auto upwindTermTotalBalance = [phaseIdx](const auto& volVars)
                     { return volVars.molarDensity(phaseIdx)*volVars.mobility(phaseIdx); };
 
                     flux[replaceCompEqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTermTotalBalance);
@@ -251,7 +251,7 @@ public:
                 // in case one balance is substituted by the total mass balance
                 if (replaceCompEqIdx < numComponents)
                 {
-                    auto upwindTermTotalBalance = [phaseIdx](const VolumeVariables& volVars)
+                    auto upwindTermTotalBalance = [phaseIdx](const auto& volVars)
                     { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
                     flux[replaceCompEqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTermTotalBalance);
