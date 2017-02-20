@@ -1,12 +1,12 @@
 [TimeManager]
-DtInitial = 1 # [s]
-TEnd = 10000000 # [s]
+DtInitial = 1e-2 # [s]
+TEnd = 1 # [s]
 DtInitialBulkProblem = 1 # [s]
 DtInitialLowDimProblem = 1 # [s]
-EpisodeTime = 1000 # [s]
+EpisodeTime = 1 # [s]
 
 [Grid]
-File = ./grids/simplefracture_long.msh
+File = ./grids/durlovsk.msh
 
 [Problem]
 Name = test_1dfracture_ni
@@ -20,9 +20,9 @@ Tolerance = 1.0e-8
 Verbose = 1
 
 [SpatialParams]
-FractureAperture = 1e-1 # [m]
-FracturePermeability = 1e-12 # [m^2]
-MatrixPermeability = 1e-14 # [m^2]
+FractureAperture = 1e-5 # [m]
+FracturePermeability = 1e-7 # [m^2]
+MatrixPermeability = 1e-12 # [m^2]
 
 [Vtk]
 AddVelocity = False

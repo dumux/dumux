@@ -70,15 +70,13 @@ SET_TYPE_PROP(OnePTwoCNIMatrixProblem, LinearSolver, SuperLUBackend<TypeTag>);
 SET_BOOL_PROP(OnePTwoCIMatrixProblem, ProblemEnableGravity, false);
 SET_BOOL_PROP(OnePTwoCNIMatrixProblem, ProblemEnableGravity, false);
 
-// Solution-independent tensor
-// SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentHeatConduction, false);
+// Solution-independent tensors
+SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
+SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentAdvection, false);
 
 // change mpfa method
-//SET_PROP(OnePMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
+SET_PROP(OnePTwoCICCMpfaMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
+SET_PROP(OnePTwoCNICCMpfaMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
 }
 
 /*!
@@ -162,7 +160,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 40; }
+    { return 273.15 + 10; }
 
     /*!
      * \brief Return the sources within the domain.
@@ -180,7 +178,7 @@ public:
         const auto globalPos = scvf.ipGlobal();
 
         values.setAllNeumann();
-        if (globalPos[1] < eps_ && globalPos[1] > this->bBoxMax()[1] - eps_)
+        if (globalPos[0] > this->bBoxMax()[0] - eps_)
             values.setAllDirichlet();
 
         if (couplingManager().isInteriorBoundary(element, scvf))
@@ -220,7 +218,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5; // + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        values[pressureIdx] = 1.0e5;
         return values;
     }
 
@@ -232,7 +230,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5; // + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        values[pressureIdx] = 1.0e5;
         values[Indices::temperatureIdx] = temperature();
         return values;
     }

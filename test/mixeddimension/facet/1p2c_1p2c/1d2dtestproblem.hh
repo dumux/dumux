@@ -100,6 +100,9 @@ public:
     OnePTwoCFacetCouplingProblem(TimeManager &timeManager, const BulkGridView &bulkGridView, const LowDimGridView &lowDimGridView)
     : ParentType(timeManager, bulkGridView, lowDimGridView)
     {}
+
+    bool shouldWriteOutput() const
+    { return true; }
 };
 
 } //end namespace

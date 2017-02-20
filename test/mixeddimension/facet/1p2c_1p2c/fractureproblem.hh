@@ -71,12 +71,9 @@ SET_TYPE_PROP(OnePTwoCNIFractureProblem, LinearSolver, SuperLUBackend<TypeTag>);
 SET_BOOL_PROP(OnePTwoCIFractureProblem, ProblemEnableGravity, false);
 SET_BOOL_PROP(OnePTwoCNIFractureProblem, ProblemEnableGravity, false);
 
-// Solution-independent tensor
-// SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentHeatConduction, false);
+// Solution-independent tensors
+SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
+SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentAdvection, false);
 }
 
 /*!
@@ -156,7 +153,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 50; } // 50C
+    { return 273.15 + 10; } // 50C
 
     /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
@@ -187,7 +184,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[0] < eps_ /*|| globalPos[0] > this->bBoxMax()[0] - eps_*/)
+        if (globalPos[0] < eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -196,14 +193,36 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     *        control volume (isothermal case).
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    template<class T = TypeTag>
+    typename std::enable_if<std::is_same<T, TTAG(OnePTwoCICCFractureProblem)>::value, PrimaryVariables>::type
+    dirichletAtPos(const GlobalPosition& globalPos) const
     {
         auto values = initialAtPos(globalPos);
-        // values[pressureIdx] = 2.0e5 - 1.0e5*globalPos[0]/this->bBoxMax()[0];
         if (globalPos[0] < eps_)
+        {
+            values[pressureIdx] = 1.2e5;
             values[massOrMoleFracIdx] = 2.0e-5;
+        }
+        return values;
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume (non-isothermal case).
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<std::is_same<T, TTAG(OnePTwoCNICCFractureProblem)>::value, PrimaryVariables>::type
+    dirichletAtPos(const GlobalPosition& globalPos) const
+    {
+        auto values = initialAtPos(globalPos);
+        if (globalPos[0] < eps_)
+        {
+            values[pressureIdx] = 1.2e5;
+            values[massOrMoleFracIdx] = 2.0e-5;
+            values[Indices::temperatureIdx] += 30; // 30 K warmer
+        }
         return values;
     }
 
