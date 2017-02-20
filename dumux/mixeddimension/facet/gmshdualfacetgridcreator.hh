@@ -243,7 +243,7 @@ public:
                 case 2: // 3-node triangle
                 {
                     // the geometry type for triangles
-                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::simplex,2);
+                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::simplex, 2);
 
                     // we know that the low dim elements have been read already
                     if (lowDimCouplingMap.empty())
@@ -266,6 +266,44 @@ public:
                     elemVertexIndices[0] -= 1;
                     elemVertexIndices[1] -= 1;
                     elemVertexIndices[2] -= 1;
+
+                    // insert bulk element into the factory
+                    bulkFactory.insertElement(gt, elemVertexIndices);
+
+                    // increase bulk element counter
+                    bulkElementCounter++;
+                    break;
+                }
+
+                case 3: // 4-node quadrilateral
+                {
+                    // the geometry type for triangles
+                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::cube, 2);
+
+                    // we know that the low dim elements have been read already
+                    if (lowDimCouplingMap.empty())
+                        lowDimCouplingMap.resize(lowDimElementCounter);
+
+                    // get the vertex indices of this bulk element
+                    // we rearrange the order here to be dune compatible
+                    std::vector<BulkIndexType> elemVertexIndices(4);
+                    elemVertexIndices[0] = elemData[3 + noOfTags];
+                    elemVertexIndices[1] = elemData[3 + noOfTags + 1];
+                    elemVertexIndices[2] = elemData[3 + noOfTags + 3];
+                    elemVertexIndices[3] = elemData[3 + noOfTags + 2];
+
+                    // get the insertion indices of the low dim elements connected to this element
+                    const auto lowDimElemIndices = obtainLowDimConnections_(lowDimElemVertices, elemVertexIndices);
+
+                    // if we found some, insert the connections in the map
+                    for (auto lowDimElemIdx : lowDimElemIndices)
+                        lowDimCouplingMap[lowDimElemIdx].push_back(bulkElementCounter);
+
+                    // subtract 1 from the element indices (gmsh starts at index 1)
+                    elemVertexIndices[0] -= 1;
+                    elemVertexIndices[1] -= 1;
+                    elemVertexIndices[2] -= 1;
+                    elemVertexIndices[3] -= 1;
 
                     // insert bulk element into the factory
                     bulkFactory.insertElement(gt, elemVertexIndices);
