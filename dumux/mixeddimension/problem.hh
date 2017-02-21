@@ -178,8 +178,10 @@ public:
         }
         else
         {
-            bulkProblem().preTimeStep();
+            // call low dim problem first because it might grow and the
+            // coupling maps might need to be updated before the bulkproblem
             lowDimProblem().preTimeStep();
+            bulkProblem().preTimeStep();
         }
     }
 
@@ -316,8 +318,10 @@ public:
     {
         if (!useIterativeSolver_)
         {
-            bulkProblem().postTimeStep();
+            // call low dim problem first because it might grow and the
+            // coupling maps might need to be updated before the bulkproblem
             lowDimProblem().postTimeStep();
+            bulkProblem().postTimeStep();
         }
     }
 
