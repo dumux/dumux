@@ -438,7 +438,7 @@ protected:
         const auto& curVolVars = curElemVolVars[scv];
         const auto& prevVolVars = prevElemVolVars[scv];
         auto prevFaceStorage = asImp_().computeStorageForFace(scvf, prevVolVars, prevFaceVars);
-        auto curFaceStorage = asImp_().computeStorageForFace(scvf, curVolVars, prevFaceVars);
+        auto curFaceStorage = asImp_().computeStorageForFace(scvf, curVolVars, curFaceVars);
 
         // the storage term
         faceStorageTerms_[scvf.localFaceIdx()] = std::move(curFaceStorage);
