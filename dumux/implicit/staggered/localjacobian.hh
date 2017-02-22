@@ -266,11 +266,10 @@ private:
 
             for(auto pvIdx : PriVarIndices(cellCenterIdx))
             {
-                const Scalar eps = 1e-4; // TODO: do properly
-
                 PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
                                          FacePrimaryVariables(0.0));
 
+                const Scalar eps = numericEpsilon(priVars[pvIdx]);
                 priVars[pvIdx] += eps;
                 ElementSolutionVector elemSol{std::move(priVars)};
                 curVolVars.update(elemSol, this->problem_(), elementJ, scvJ);
@@ -318,9 +317,8 @@ private:
             for(auto pvIdx : PriVarIndices(faceIdx))
             {
                 PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
-                const Scalar eps = 1e-4; // TODO: do properly
+                const Scalar eps = numericEpsilon(priVars[pvIdx]);
                 priVars[pvIdx] += eps;
-
                 curFaceVars.update(priVars[faceIdx]);
 
                 this->localResidual().evalCellCenter(element, fvGeometry, scvI,
@@ -332,7 +330,7 @@ private:
                 partialDeriv /= eps;
 
                 // update the global jacobian matrix with the current partial derivatives
-                this->updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], ccGlobalI_, globalJ, pvIdx, partialDeriv);
+                this->updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], ccGlobalI_, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
 
                 // restore the original faceVars
                 curFaceVars = origFaceVars;
@@ -370,11 +368,10 @@ private:
 
                 for(auto pvIdx : PriVarIndices(cellCenterIdx))
                 {
-                    const Scalar eps = 1e-4; // TODO: do properly
-
                     PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
                                              FacePrimaryVariables(0.0));
 
+                    const Scalar eps = numericEpsilon(priVars[pvIdx]);
                     priVars[pvIdx] += eps;
                     ElementSolutionVector elemSol{std::move(priVars)};
                     curVolVars.update(elemSol, this->problem_(), elementJ, scvJ);
@@ -424,11 +421,10 @@ private:
 
                 for(auto pvIdx : PriVarIndices(faceIdx))
                 {
-                    const Scalar eps = 1e-10; // TODO: do properly
-
                     PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
-                    priVars[pvIdx] += eps;
 
+                    const Scalar eps = numericEpsilon(priVars[pvIdx]);
+                    priVars[pvIdx] += eps;
                     curFaceVars.update(priVars[faceIdx]);
 
                     this->localResidual().evalFace(element, fvGeometry, scvf,
@@ -440,7 +436,7 @@ private:
                     partialDeriv /= eps;
 
                     // update the global jacobian matrix with the current partial derivatives
-                    this->updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
+                    this->updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
 
                     // restore the original faceVars
                     curFaceVars = origFaceVars;
@@ -491,6 +487,22 @@ private:
     const JacobianAssembler &jacAsm_() const
     { return model_().jacobianAssembler(); }
 
+    Scalar numericEpsilon(const Scalar priVar) const
+    {
+        // define the base epsilon as the geometric mean of 1 and the
+        // resolution of the scalar type. E.g. for standard 64 bit
+        // floating point values, the resolution is about 10^-16 and
+        // the base epsilon is thus approximately 10^-8.
+        /*
+        static const Scalar baseEps
+            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
+        */
+        static const Scalar baseEps = 1e-10;
+        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
+        // the epsilon value used for the numeric differentiation is
+        // now scaled by the absolute value of the primary variable...
+        return baseEps*(std::abs(priVar) + 1.0);
+    }
     /*!
      * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
@@ -509,6 +521,10 @@ private:
             // the residual of equation 'eqIdx' at dof 'i'
             // depending on the primary variable 'pvIdx' at dof
             // 'col'.
+
+            assert(pvIdx >= 0);
+            assert(eqIdx < matrix[globalI][globalJ].size());
+            assert(pvIdx < matrix[globalI][globalJ][eqIdx].size());
             matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
             Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
         }

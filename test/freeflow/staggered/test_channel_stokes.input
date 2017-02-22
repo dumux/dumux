@@ -14,7 +14,7 @@ EnableGravity = false
 
 [ Newton ]
 MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-8
 
 [Vtk]
 WriteFaceData = false

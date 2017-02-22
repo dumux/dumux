@@ -30,9 +30,21 @@
 #include "properties.hh"
 
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include "newtonconvergencewriter.hh"
 
 namespace Dumux {
+
+namespace Properties
+{
+    SET_PROP(StaggeredModel, LinearSolverBlockSize)
+    {
+        // LinearSolverAcceptsMultiTypeMatrix<T>::value
+        // TODO: make somehow dependend? or only relevant for direct solvers?
+    public:
+        static constexpr auto value = 1;
+    };
+}
 /*!
  * \ingroup PNMModel
  * \brief A PNM specific controller for the newton solver.
@@ -55,12 +67,161 @@ class StaggeredNewtonController : public NewtonController<TypeTag>
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
+    enum {
+        numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter),
+        numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace)
+    };
+
 public:
     StaggeredNewtonController(const Problem &problem)
         : ParentType(problem)
     {}
 
-        /*!
+    /*!
+     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
+     *
+     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * converge.
+     *
+     * If the linear solver doesn't accept multitype matrices we copy the matrix
+     * into a 1x1 block BCRS matrix for solving.
+     *
+     * \param A The matrix of the linear system of equations
+     * \param x The vector which solves the linear system
+     * \param b The right hand side of the linear system
+     */
+    template<typename T = TypeTag>
+    typename std::enable_if<!LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
+    newtonSolveLinear(JacobianMatrix &A,
+                      SolutionVector &x,
+                      SolutionVector &b)
+    {
+        try
+        {
+            if (this->numSteps_ == 0)
+                this->initialResidual_ = b.two_norm();
+
+            // copy the matrix and the vector to types the IterativeSolverBackend can handle
+            using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
+            using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
+
+            // get the new matrix sizes
+            std::size_t numRows = numEqCellCenter*A[cellCenterIdx][cellCenterIdx].N() + numEqFace*A[faceIdx][cellCenterIdx].N();
+            std::size_t numCols = numEqCellCenter*A[cellCenterIdx][cellCenterIdx].M() + numEqFace*A[cellCenterIdx][faceIdx].M();
+
+            // check matrix sizes
+            assert(A[cellCenterIdx][cellCenterIdx].N() == A[cellCenterIdx][faceIdx].N());
+            assert(A[faceIdx][cellCenterIdx].N() == A[faceIdx][faceIdx].N());
+            assert(numRows == numCols);
+
+            // create the bcrs matrix the IterativeSolver backend can handle
+            auto M = SparseMatrix(numRows, numCols, SparseMatrix::random);
+
+            // set the rowsizes
+            // A11 and A12
+            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
+                for (std::size_t i = 0; i < numEqCellCenter; ++i)
+                    M.setrowsize(numEqCellCenter*row.index() + i, row->size()*numEqCellCenter);
+            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
+                for (std::size_t i = 0; i < numEqCellCenter; ++i)
+                    M.setrowsize(numEqCellCenter*row.index() + i, M.getrowsize(numEqCellCenter*row.index() + i) + row->size()*numEqFace);
+            // A21 and A22
+            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
+                for (std::size_t i = 0; i < numEqFace; ++i)
+                    M.setrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, row->size()*numEqCellCenter);
+            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
+                for (std::size_t i = 0; i < numEqFace; ++i)
+                    M.setrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, M.getrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter) + row->size()*numEqFace);
+            M.endrowsizes();
+
+            // set the indices
+            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
+                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
+                            M.addindex(row.index()*numEqCellCenter + i, col.index()*numEqCellCenter + j);
+
+            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
+                        for (std::size_t j = 0; j < numEqFace; ++j)
+                            M.addindex(row.index()*numEqCellCenter + i, col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter);
+
+            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqFace; ++i)
+                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
+                            M.addindex(row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, col.index()*numEqCellCenter + j);
+
+            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqFace; ++i)
+                        for (std::size_t j = 0; j < numEqFace; ++j)
+                            M.addindex(row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter);
+            M.endindices();
+
+            // copy values
+            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
+                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
+                            M[row.index()*numEqCellCenter + i][col.index()*numEqCellCenter + j] = A[cellCenterIdx][cellCenterIdx][row.index()][col.index()][i][j];
+
+            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
+                        for (std::size_t j = 0; j < numEqFace; ++j)
+                            M[row.index()*numEqCellCenter + i][col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter] = A[cellCenterIdx][faceIdx][row.index()][col.index()][i][j];
+
+            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqFace; ++i)
+                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
+                            M[row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter][col.index()*numEqCellCenter + j] = A[faceIdx][cellCenterIdx][row.index()][col.index()][i][j];
+
+            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
+                for (auto col = row->begin(); col != row->end(); ++col)
+                    for (std::size_t i = 0; i < numEqFace; ++i)
+                        for (std::size_t j = 0; j < numEqFace; ++j)
+                            M[row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter][col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter] = A[faceIdx][faceIdx][row.index()][col.index()][i][j];
+
+            // create the vector the IterativeSolver backend can handle
+            using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
+            using BlockVector = typename Dune::BlockVector<VectorBlock>;
+
+            BlockVector y, bTmp;
+            y.resize(numRows);
+            bTmp.resize(numCols);
+            for (std::size_t i = 0; i < b[cellCenterIdx].N(); ++i)
+                for (std::size_t j = 0; j < numEqCellCenter; ++j)
+                    bTmp[i*numEqCellCenter + j] = b[cellCenterIdx][i][j];
+            for (std::size_t i = 0; i < b[faceIdx].N(); ++i)
+                for (std::size_t j = 0; j < numEqFace; ++j)
+                    bTmp[i*numEqFace + j + b[cellCenterIdx].N()*numEqCellCenter] = b[faceIdx][i][j];
+
+            // solve
+            bool converged = this->linearSolver_.solve(M, y, bTmp);
+
+            // copy back the result y into x
+            for (std::size_t i = 0; i < x[cellCenterIdx].N(); ++i)
+                for (std::size_t j = 0; j < numEqCellCenter; ++j)
+                    x[cellCenterIdx][i][j] = y[i*numEqCellCenter + j];
+            for (std::size_t i = 0; i < x[faceIdx].N(); ++i)
+                for (std::size_t j = 0; j < numEqFace; ++j)
+                    x[faceIdx][i][j] = y[i*numEqFace + j + x[cellCenterIdx].N()*numEqCellCenter];
+
+            if (!converged)
+                DUNE_THROW(NumericalProblem, "Linear solver did not converge");
+        }
+        catch (const Dune::Exception &e)
+        {
+            Dumux::NumericalProblem p;
+            p.message(e.what());
+            throw p;
+        }
+    }
+
+    /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
      * Throws Dumux::NumericalProblem if the linear solver didn't
@@ -70,62 +231,31 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    void newtonSolveLinear(JacobianMatrix &A,
-                           SolutionVector &x,
-                           SolutionVector &b)
+    template<typename T = TypeTag>
+    typename std::enable_if<LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
+    newtonSolveLinear(JacobianMatrix &A,
+                      SolutionVector &x,
+                      SolutionVector &b)
     {
-        try {
+        try
+        {
             if (this->numSteps_ == 0)
-            {
-                Scalar norm2 = b.two_norm2();
-                if (this->gridView_().comm().size() > 1)
-                    norm2 = this->gridView_().comm().sum(norm2);
+                this->initialResidual_ = b.two_norm();
 
-                this->initialResidual_ = std::sqrt(norm2);
-            }
+            bool converged = this->linearSolver_.solve(A, x, b);
 
-            int converged = this->linearSolver_.solve(A, x, b);
-
-            // make sure all processes converged
-            int convergedRemote = converged;
-            if (this->gridView_().comm().size() > 1)
-                convergedRemote = this->gridView_().comm().min(converged);
-
-            if (!converged) {
-                DUNE_THROW(NumericalProblem,
-                           "Linear solver did not converge");
-            }
-            else if (!convergedRemote) {
-                DUNE_THROW(NumericalProblem,
-                           "Linear solver did not converge on a remote process");
-            }
+            if (!converged)
+                DUNE_THROW(NumericalProblem, "Linear solver did not converge");
         }
-        catch (Dune::MatrixBlockError e) {
-            // make sure all processes converged
-            int converged = 0;
-            if (this->gridView_().comm().size() > 1)
-                converged = this->gridView_().comm().min(converged);
-
-            Dumux::NumericalProblem p;
-            std::string msg;
-            std::ostringstream ms(msg);
-//             ms << e.what() << "M=" << A[e.r][e.c];
-//             p.message(ms.str());
-//             throw p;
-        }
-        catch (const Dune::Exception &e) {
-            // make sure all processes converged
-            int converged = 0;
-            if (this->gridView_().comm().size() > 1)
-                converged = this->gridView_().comm().min(converged);
-
+        catch (const Dune::Exception &e)
+        {
             Dumux::NumericalProblem p;
             p.message(e.what());
             throw p;
         }
     }
 
-        /*!
+     /*!
      * \brief Update the current solution with a delta vector.
      *
      * The error estimates required for the newtonConverged() and

@@ -50,6 +50,7 @@ NEW_PROP_TAG(FacePrimaryVariables); //!< A vector of primary variables for face 
 NEW_PROP_TAG(CellCenterSolutionVector); //!< Vector containing all cell centered primary variables
 NEW_PROP_TAG(FaceSolutionVector); //!< Vector containing all face primary variables
 
+NEW_PROP_TAG(EnableInteriorBoundaries); //!< For compatibility
 
 NEW_PROP_TAG(NumEqCellCenter); //!< Number of equations per cell center dof
 NEW_PROP_TAG(NumEqFace); //!< Number of equations per face dof

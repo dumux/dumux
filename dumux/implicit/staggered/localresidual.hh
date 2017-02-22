@@ -278,8 +278,8 @@ public:
     const auto& faceResiduals() const
     { return faceResiduals_; }
 
-    const auto& faceResidual(const int faceIdx) const
-    { return faceResiduals_[faceIdx]; }
+    const auto& faceResidual(const int fIdx) const
+    { return faceResiduals_[fIdx]; }
 
 
 protected:
@@ -438,7 +438,7 @@ protected:
         const auto& curVolVars = curElemVolVars[scv];
         const auto& prevVolVars = prevElemVolVars[scv];
         auto prevFaceStorage = asImp_().computeStorageForFace(scvf, prevVolVars, prevFaceVars);
-        auto curFaceStorage = asImp_().computeStorageForFace(scvf, curVolVars, prevFaceVars);
+        auto curFaceStorage = asImp_().computeStorageForFace(scvf, curVolVars, curFaceVars);
 
         // the storage term
         faceStorageTerms_[scvf.localFaceIdx()] = std::move(curFaceStorage);
