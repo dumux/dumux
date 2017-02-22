@@ -330,7 +330,7 @@ private:
                 partialDeriv /= eps;
 
                 // update the global jacobian matrix with the current partial derivatives
-                this->updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], ccGlobalI_, globalJ, pvIdx, partialDeriv);
+                this->updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], ccGlobalI_, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
 
                 // restore the original faceVars
                 curFaceVars = origFaceVars;
@@ -436,7 +436,7 @@ private:
                     partialDeriv /= eps;
 
                     // update the global jacobian matrix with the current partial derivatives
-                    this->updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
+                    this->updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
 
                     // restore the original faceVars
                     curFaceVars = origFaceVars;
@@ -521,6 +521,10 @@ private:
             // the residual of equation 'eqIdx' at dof 'i'
             // depending on the primary variable 'pvIdx' at dof
             // 'col'.
+
+            assert(pvIdx >= 0);
+            assert(eqIdx < matrix[globalI][globalJ].size());
+            assert(pvIdx < matrix[globalI][globalJ][eqIdx].size());
             matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
             Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
         }
