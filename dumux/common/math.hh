@@ -554,6 +554,26 @@ Dune::FieldMatrix<Scalar, n, m> getTransposed(const Dune::FieldMatrix<Scalar, m,
 }
 
 /*!
+ * \brief Transpose a DynamicMatrix
+ *
+ * \param M The matrix to be transposed
+ */
+template <class Scalar>
+Dune::DynamicMatrix<Scalar> getTransposed(const Dune::DynamicMatrix<Scalar>& M)
+{
+    std::size_t rows_T = M.M();
+    std::size_t cols_T = M.N();
+
+    Dune::DynamicMatrix<Scalar> M_T(rows_T, cols_T, 0.0);
+
+    for (std::size_t i = 0; i < rows_T; ++i)
+        for (std::size_t j = 0; j < cols_T; ++j)
+            M_T[i][j] = M[j][i];
+
+    return M_T;
+}
+
+/*!
  * \brief Multiply two dynamic matrices
  *
  * \param M1 The first dynamic matrix
@@ -575,6 +595,27 @@ Dune::DynamicMatrix<Scalar> multiplyMatrices(const Dune::DynamicMatrix<Scalar> &
                 result[i][j] += M1[i][k]*M2[k][j];
 
     return result;
+}
+
+/*!
+ * \brief Trace of dynamic matrix
+ *
+ * \param M The dynamic matrix
+ */
+template <class Scalar>
+Scalar trace(const Dune::DynamicMatrix<Scalar>& M)
+{
+    std::size_t rows_T = M.M();
+    std::size_t cols_T = M.N();
+
+    DUNE_ASSERT_BOUNDS(rows_T == cols_T);
+
+    Scalar trace = 0.0;
+
+    for (std::size_t i = 0; i < rows_T; ++i)
+        trace += M[i][i];
+
+    return trace;
 }
 
 } // end namespace Dumux

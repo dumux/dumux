@@ -49,6 +49,8 @@
 
 #include <dumux/linear/seqsolverbackend.hh>
 
+#include <dumux/io/staggeredvtkoutputmodule.hh>
+
 #include "assembler.hh"
 #include "localresidual.hh"
 #include "localjacobian.hh"
@@ -246,6 +248,7 @@ SET_BOOL_PROP(StaggeredModel, VtkWriteFaceData, true);
 //! For compatibility
 SET_BOOL_PROP(StaggeredModel, EnableInteriorBoundaries, false);
 
+SET_TYPE_PROP(StaggeredModel, VtkOutputModule, StaggeredVtkOutputModule<TypeTag>);
 
 } // namespace Properties
 
