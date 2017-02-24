@@ -166,6 +166,9 @@ SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
 
 SET_BOOL_PROP(NavierStokes, EnableComponentTransport, false);
 
+//! Normalize the pressure term in the momentum balance or not
+SET_BOOL_PROP(NavierStokes, NormalizePressure, true);
+
 SET_PROP(NavierStokes, BoundaryValues)
 {
 private:

@@ -114,6 +114,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false, false> : public Dumux::S
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+    static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
 public:
     // copying the local residual class is not a good idea
@@ -321,12 +322,14 @@ private:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        Scalar result = insideVolVars.pressure() * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
+        const Scalar deltaP = normalizePressure ? this->problem().initialAtPos(scvf.center())[cellCenterIdx][pressureIdx] : 0.0;
+
+        Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
 
         // treat outflow BCs
         if(scvf.boundary())
         {
-            const Scalar pressure = this->problem().dirichletAtPos(scvf.center())[cellCenterIdx][pressureIdx];
+            const Scalar pressure = this->problem().dirichletAtPos(scvf.center())[cellCenterIdx][pressureIdx] - deltaP;
             result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
         return result;

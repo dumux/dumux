@@ -65,6 +65,7 @@ NEW_PROP_TAG(BoundaryValues); //!< Type to set values on the boundary
 NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
 NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
 NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
+NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 // \}
 }
 
