@@ -127,10 +127,10 @@ public:
                                   const ElementVolumeVariables& elemVolVars,
                                   const GlobalFaceVars& globalFaceVars,
                                   const SubControlVolumeFace &scvf,
-                                  const FluxVariablesCache& fluxVarsCache)
+                                  const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
-        return fluxVars.computeFluxForCellCenter(element,  fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
+        return fluxVars.computeFluxForCellCenter(element,  fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache[scvf]);
     }
 
     CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,
@@ -206,7 +206,8 @@ public:
                                             const SubControlVolumeFace& scvf,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
-                                            const GlobalFaceVars& globalFaceVars)
+                                            const GlobalFaceVars& globalFaceVars,
+                                            const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FacePrimaryVariables flux(0.0);
         FluxVariables fluxVars;
@@ -250,7 +251,7 @@ protected:
             if (scvf.boundary())
             {
                 // For the mass-balance residual, do the same as if the face was not on a boundary.This might need to be changed sometime...
-                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
+                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
 
                 // handle the actual boundary conditions:
                 const auto bcTypes = this->problem().boundaryTypes(element, scvf);
@@ -294,7 +295,7 @@ protected:
             if(bcTypes.isOutflow(momentumBalanceIdx))
             {
                 if(bcTypes.isDirichlet(massBalanceIdx))
-                    this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(element, scvf, fvGeometry, elemVolVars, faceVars);
+                    this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(element, scvf, fvGeometry, elemVolVars, faceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }

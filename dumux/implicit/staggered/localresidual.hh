@@ -57,7 +57,6 @@ class StaggeredLocalResidual
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -297,7 +296,7 @@ protected:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if(!scvf.boundary())
-                ccResidual_ += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache[scvf]);
+                ccResidual_ += asImp_().computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
         }
     }
 
@@ -313,7 +312,7 @@ protected:
                             const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if(!scvf.boundary())
-            faceResiduals_[scvf.localFaceIdx()] += asImp_().computeFluxForFace(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+            faceResiduals_[scvf.localFaceIdx()] += asImp_().computeFluxForFace(element, scvf, fvGeometry, elemVolVars, globalFaceVars, elemFluxVarsCache);
     }
 
      /*!

@@ -193,7 +193,17 @@ public:
         this->model_().updatePVWeights(fvGeometry);
 
         // calculate derivatives of all dofs in stencil with respect to the dofs in the element
-        evalPartialDerivatives_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, residual[cellCenterIdx][ccGlobalI_], faceResidualCache);
+        evalPartialDerivatives_(element,
+                                fvGeometry,
+                                prevElemVolVars,
+                                curElemVolVars,
+                                prevGlobalFaceVars,
+                                curGlobalFaceVars,
+                                elemFluxVarsCache,
+                                elemBcTypes,
+                                matrix,
+                                residual[cellCenterIdx][ccGlobalI_],
+                                faceResidualCache);
     }
 
      /*!
