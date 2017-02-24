@@ -248,7 +248,23 @@ SET_BOOL_PROP(StaggeredModel, VtkWriteFaceData, true);
 //! For compatibility
 SET_BOOL_PROP(StaggeredModel, EnableInteriorBoundaries, false);
 
+//! Set staggered vtk output module
 SET_TYPE_PROP(StaggeredModel, VtkOutputModule, StaggeredVtkOutputModule<TypeTag>);
+
+//! Set one or different base epsilons for the calculations of the localJacobian's derivatives
+SET_PROP(StaggeredModel, BaseEpsilon)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    static constexpr Scalar dCCdCC = 1e-8;
+    static constexpr Scalar dCCdFace = 1e-8;
+    static constexpr Scalar dFacedCC = 1e-8;
+    static constexpr Scalar dFacedFace = 1e-8;
+
+public:
+    static constexpr std::array<std::array<Scalar, 2>, 2> value{{{dCCdCC,   dCCdFace},
+                                                                 {dFacedCC, dFacedFace}}};
+};
 
 } // namespace Properties
 
