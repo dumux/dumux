@@ -107,6 +107,7 @@ public:
         scvs_.clear();
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
+        flipScvfIndices_.clear();
         elementMap_.clear();
 
         // determine size of containers
@@ -351,7 +352,11 @@ public:
     void update(const Problem& problem)
     {
         problemPtr_ = &problem;
+
+        // clear local data
         elementMap_.clear();
+        scvfIndicesOfScv_.clear();
+        neighborVolVarIndices_.clear();
 
         // reserve memory or resize the containers
         numScvs_ = gridView_.size(0);

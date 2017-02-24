@@ -47,7 +47,7 @@ public:
     // the contructor in the cc case
     CCSubControlVolume(Geometry&& geometry,
                        IndexType elementIndex)
-    : ParentType(), geometry_(std::move(geometry)), elementIndex_(elementIndex) {}
+    : ParentType(), geometry_(std::forward<Geometry>(geometry)), elementIndex_(elementIndex) {}
 
     //! The copy constrcutor
     CCSubControlVolume(const CCSubControlVolume& other) = default;
@@ -95,6 +95,7 @@ public:
     // e.g. for integration
     const Geometry& geometry() const
     {
+        assert((geometry_));
         return geometry_.value();
     }
 
