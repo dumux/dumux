@@ -64,7 +64,7 @@ SET_BOOL_PROP(SagdProblem, NewtonWriteConvergence, false);
 
 SET_BOOL_PROP(SagdProblem, UseSimpleModel, true);
 
-SET_BOOL_PROP(SagdProblem, UseMoles, false);
+SET_BOOL_PROP(SagdProblem, UseMassOutput, true);
 }
 
 

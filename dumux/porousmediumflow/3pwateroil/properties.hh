@@ -61,6 +61,7 @@ NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extrac
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
+NEW_PROP_TAG(UseMassOutput); //!Defines whether mole or mass are used for phaseStorage output
 
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter for the mobility
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation

@@ -63,6 +63,7 @@ public:
     static const int value = FluidSystem::numComponents;
 
 };
+
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_PROP(TwoPNC, ReplaceCompEqIdx)
 {
@@ -72,6 +73,7 @@ private:
 public:
     static const int value = FluidSystem::numComponents;
 };
+
 //! The major components belonging to the existing phases, e.g. 2 for water and air being the major components in a liquid-gas-phase system
 SET_PROP(TwoPNC, NumMajorComponents)
 {
@@ -100,6 +102,7 @@ public:
     static_assert(value == 2,
                   "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
 };
+
 /*!
  * \brief Set the property for the number of equations: For each existing component one equation has to be solved.
  */
