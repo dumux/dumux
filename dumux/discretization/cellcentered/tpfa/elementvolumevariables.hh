@@ -117,6 +117,8 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
+        clear();
+
         const auto& problem = globalVolVars().problem_();
         const auto globalI = problem.elementMapper().index(element);
         const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
@@ -201,6 +203,8 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
+        clear();
+
         auto eIdx = globalVolVars().problem_().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
@@ -230,6 +234,12 @@ public:
     const GlobalVolumeVariables& globalVolVars() const
     { return *globalVolVarsPtr_; }
 
+    //! Clear all local storage
+    void clear()
+    {
+        volVarIndices_.clear();
+        volumeVariables_.clear();
+    }
 private:
     const GlobalVolumeVariables* globalVolVarsPtr_;
 

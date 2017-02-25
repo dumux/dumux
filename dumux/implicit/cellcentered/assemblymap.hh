@@ -71,6 +71,7 @@ public:
      */
     void init(const Problem& problem)
     {
+        map_.clear();
         map_.resize(problem.gridView().size(0));
         for (const auto& element : elements(problem.gridView()))
         {
@@ -102,7 +103,9 @@ public:
                     if (it != dataJForI.end())
                         it->second.scvfsJ.push_back(scvf.index());
                     else
-                        dataJForI.emplace_back(std::make_pair(globalI, DataJ({globalJ, std::vector<IndexType>({scvf.index()})})));
+                        dataJForI.emplace_back(std::make_pair(globalI, DataJ({globalJ,
+                                                                              std::vector<IndexType>({scvf.index()}),
+                                                                              std::vector<IndexType>()})));
                 }
             }
 

@@ -499,17 +499,20 @@ private:
 
     }
 
+    //! Clear all local data
     void clear()
     {
         scvIndices_.clear();
         scvfIndices_.clear();
         scvs_.clear();
         scvfs_.clear();
+        flippedScvfIndices_.clear();
 
         neighborScvIndices_.clear();
         neighborScvfIndices_.clear();
         neighborScvs_.clear();
         neighborScvfs_.clear();
+        flippedNeighborScvfIndices_.clear();
     }
 
     // the bound element
