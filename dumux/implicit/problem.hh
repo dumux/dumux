@@ -187,7 +187,7 @@ public:
                        "boundaryTypes(..., scvf) called for box method.");
 
         // forward it to the method which only takes the global coordinate
-        return asImp_().boundaryTypesAtPos(scvf.center());
+        return asImp_().boundaryTypesAtPos(scvf.ipGlobal());
     }
 
     /*!
@@ -223,7 +223,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for box method.");
         }
         else
-            return asImp_().dirichletAtPos(scvf.center());
+            return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
 
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
@@ -284,7 +284,7 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
-        return asImp_().neumannAtPos(scvf.center());
+        return asImp_().neumannAtPos(scvf.ipGlobal());
     }
 
     /*!
@@ -332,7 +332,7 @@ public:
                             const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
-        return asImp_().sourceAtPos(scv.dofPosition());
+        return asImp_().sourceAtPos(scv.center());
     }
 
     /*!
