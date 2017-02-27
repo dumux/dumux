@@ -253,28 +253,32 @@ protected:
         {
             if (scvf.boundary())
             {
-                // For the mass-balance residual, do the same as if the face was not on a boundary.This might need to be changed sometime...
-                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
+                auto boundaryFlux = computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
 
-                //TODO: correct treatment of neuman / outflow boundaries
                 // handle the actual boundary conditions:
                 const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+
+                if(bcTypes.hasNeumann())
+                {
+                    // handle Neumann BCs, i.e. overwrite certain fluxes by user-specified values
+                    for(int eqIdx = 0; eqIdx < GET_PROP_VALUE(TypeTag, NumEqCellCenter); ++eqIdx)
+                        if(bcTypes.isNeumann(eqIdx))
+                        {
+                            const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
+                            boundaryFlux[eqIdx] = this->problem().neumannAtPos(scvf.center())[cellCenterIdx][eqIdx]
+                                                   * extrusionFactor * scvf.area();
+                        }
+                }
+
+                this->ccResidual_ += boundaryFlux;
 
                 // set a fixed pressure for cells adjacent to a wall
                 if(bcTypes.isDirichlet(massBalanceIdx) && bcTypes.isDirichlet(momentumBalanceIdx))
                 {
                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& insideVolVars = elemVolVars[insideScv];
-                    this->ccResidual_[0] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.dofPosition())[cellCenterIdx][0];
-                    // TODO: take correct indices!
+                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
                 }
-
-//                 if(scvf.center()[0] < 1e-5)
-//                 {
-//                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-//                     const auto& insideVolVars = elemVolVars[insideScv];
-//                     this->ccResidual_[1] = insideVolVars.moleFraction(0,1) - 0.1;
-//                 }
             }
         }
     }
