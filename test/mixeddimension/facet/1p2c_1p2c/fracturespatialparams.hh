@@ -60,11 +60,41 @@ public:
         permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FracturePermeability);
     }
 
+    void init()
+    {
+        ParentType::init();
+
+        // initialize which elements are open fractures/barriers
+        const auto numElements = this->problem().gridView().size(0);
+        isOpenFracture_.resize(numElements, false);
+        isBarrier_.resize(numElements, false);
+        for (const auto& element : elements(this->problem().gridView()))
+        {
+            const auto globalPos = element.geometry().center();
+            if (this->problem().couplingManager().bulkProblem().isOpenFracture(globalPos))
+                isOpenFracture_[this->problem().elementMapper().index(element)] = true;
+            else if (this->problem().couplingManager().bulkProblem().isBarrier(globalPos))
+                isBarrier_[this->problem().elementMapper().index(element)] = true;
+        }
+    }
+
     /*!
      * \brief Return the intrinsic permeability for a given position in [m^2].
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    { return permeability_; }
+    Scalar permeability(const Element &element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
+    {
+        using std::pow;
+        static const Scalar openK = pow(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FractureAperture), 2)/12;
+        static const Scalar barrierK = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability)/50;
+
+        if (isOpenFracture(element))
+            return openK;
+        else if (isBarrier(element))
+            return barrierK;
+        return permeability_;
+    }
 
     /*!
      * \brief Define the dispersivity.
@@ -81,8 +111,16 @@ public:
     /*!
      * \brief Define the porosity in [-].
      */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.8; }
+    Scalar porosity(const Element &element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
+    {
+        if (isOpenFracture(element))
+            return 1.0;
+        else if (isBarrier(element))
+            return 0.1;
+        return 0.5;
+    }
 
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
@@ -96,7 +134,12 @@ public:
     Scalar solidHeatCapacity(const Element &element,
                              const SubControlVolume& scv,
                              const ElementSolutionVector& elemSol) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
+    {
+        // the barrier stores less heat (is more conductive)
+        if (isBarrier(element))
+            return 79;
+        return 790; /*specific heat capacity of granite [J / (kg K)]*/
+    }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
@@ -110,7 +153,12 @@ public:
     Scalar solidDensity(const Element &element,
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
+    {
+        // the barrier is denser
+        if (isBarrier(element))
+            return 3500;
+        return 2700; /*density of granite [kg/m^3]*/
+    }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
@@ -122,10 +170,24 @@ public:
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume& scv,
                                     const ElementSolutionVector& elemSol) const
-    { return 2.8; }
+    {
+        // the barrier is more conductive
+        if (isBarrier(element))
+            return 4.5;
+        return 2.8;
+    }
+
+    bool isOpenFracture(const Element& element) const
+    { return isOpenFracture_[this->problem().elementMapper().index(element)]; }
+
+    bool isBarrier(const Element& element) const
+    { return isBarrier_[this->problem().elementMapper().index(element)]; }
 
 private:
+
     Scalar permeability_;
+    std::vector<bool> isOpenFracture_;
+    std::vector<bool> isBarrier_;
 };
 } //end namespace
 
