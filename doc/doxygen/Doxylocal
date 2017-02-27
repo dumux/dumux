@@ -10,6 +10,7 @@ INPUT                 += @srcdir@/mainpage.txt \
                          @top_srcdir@/dumux \
                          @top_srcdir@/test \
                          @top_srcdir@/tutorial \
+                         @srcdir@/extradoc/binaries.txt \
                          @srcdir@/extradoc/parameterlist.txt \
                          @srcdir@/extradoc/featurelist.txt
 
