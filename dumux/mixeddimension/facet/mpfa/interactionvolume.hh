@@ -27,6 +27,8 @@
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
+#include "localsubcontrolentities.hh"
+
 namespace Dumux
 {
 //! Forward declaration
@@ -38,6 +40,8 @@ class CCMpfaOFacetCouplingInteractionVolumeTraits : public CCMpfaOInteractionVol
 {
 public:
     using BoundaryInteractionVolume = CCMpfaOFacetCouplingInteractionVolume<TypeTag>;
+    using LocalScvType = CCMpfaFacetCouplingLocalScv<TypeTag>;
+    using LocalScvfType = CCMpfaFacetCouplingLocalScvf<TypeTag>;
 };
 
 // the o-method interaction volume is substituted by the one including data on the facet element's
@@ -91,14 +95,12 @@ public:
         // calculate "leakage factor"
         const auto n = localScvf.unitOuterNormal();
         const auto v = [&] ()
-                {
-                    auto res = n;
-                    res *= -0.5*completeFacetData.volVars().extrusionFactor();
-                    res += localScvf.ip();
-                    res -= localScvf.globalScvf().facetCorner();
-                    res /= res.two_norm2();
-                    return res;
-                } ();
+                        {
+                            auto res = localScvf.ip();
+                            res -= localScvf.globalScvf().facetCorner();
+                            res /= res.two_norm2();
+                            return res;
+                        } ();
 
         // substract (n*T*v)*Area from diagonal matrix entry
         const auto facetTensor = getTensor(completeFacetData.problem(),

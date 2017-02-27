@@ -412,7 +412,7 @@ private:
 
             // we have to use the "inside" scv face here
             const auto& scvf = fvGeometry_().scvf(scvfSeed.insideGlobalScvfIndex());
-            localScvfs_.emplace_back(scvfSeed, scvf);
+            localScvfs_.emplace_back(problem_(), localElements_[scvfSeed.insideLocalScvIndex()], scvfSeed, scvf);
 
             // create global/local face data for this face
             // we simultaneously store the corresponding global scvf indices (allows global to local mapping later)

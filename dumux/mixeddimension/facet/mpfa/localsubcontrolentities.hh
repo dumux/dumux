@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for sub control entities of the mpfa-o method.
+ * \brief Base class for sub control entities of the CCMpfa method with lower dimensional
+ *        elements living on the bulk elements' facets.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FACET_LOCALSUBCONTROLENTITIES_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_FACET_LOCALSUBCONTROLENTITIES_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
@@ -29,7 +30,7 @@
 namespace Dumux
 {
 template<class TypeTag>
-class CCMpfaOLocalScv
+class CCMpfaFacetCouplingLocalScv
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -53,10 +54,10 @@ class CCMpfaOLocalScv
 
 public:
     // constructor has the same signature as the LocalScv entity
-    CCMpfaOLocalScv(const Problem& problem,
-                    const Element& element,
-                    const FVElementGeometry& fvGeometry,
-                    const LocalScvSeed& scvSeed)
+    CCMpfaFacetCouplingLocalScv(const Problem& problem,
+                                const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const LocalScvSeed& scvSeed)
     : seed_(scvSeed)
     {
         // set up local basis
@@ -67,7 +68,21 @@ public:
         for (auto globalScvfIdx : scvSeed.globalScvfIndices())
         {
             const auto& scvf = fvGeometry.scvf(globalScvfIdx);
-            localBasis[coordIdx] = scvf.ipGlobal();
+
+            localBasis[coordIdx] = [&] ()
+                                    {
+                                        // if the scvf is on an interior boundary
+                                        // move ip by half the extrusion factor of the lowdim element
+                                        if (problem.couplingManager().isInteriorBoundary(element, scvf))
+                                        {
+                                            GlobalPosition ip = scvf.unitOuterNormal();
+                                            ip *= -0.5*problem.couplingManager().lowDimExtrusionFactor(element, scvf);
+                                            ip += scvf.ipGlobal();
+                                            return ip;
+                                        }
+                                        else
+                                            return scvf.ipGlobal();
+                                    } ();
             localBasis[coordIdx] -= center_;
             coordIdx++;
         }
@@ -109,7 +124,7 @@ private:
 
 
 template<class TypeTag>
-struct CCMpfaOLocalScvf
+struct CCMpfaFacetCouplingLocalScvf
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -134,13 +149,28 @@ struct CCMpfaOLocalScvf
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    CCMpfaOLocalScvf(const Problem& problem,
-                     const Element& element,
-                     const LocalScvfSeed& scvfSeed,
-                     const SubControlVolumeFace& scvf)
+    CCMpfaFacetCouplingLocalScvf(const Problem& problem,
+                                 const Element& element,
+                                 const LocalScvfSeed& scvfSeed,
+                                 const SubControlVolumeFace& scvf)
     : seedPtr_(&scvfSeed),
       scvfPtr_(&scvf)
-    {}
+    {
+        ipGlobal_ = [&] ()
+                    {
+                        // if the scvf is on an interior boundary
+                        // move ip by half the extrusion factor of the lowdim element
+                        if (problem.couplingManager().isInteriorBoundary(element, scvf))
+                        {
+                            GlobalPosition ip = scvf.unitOuterNormal();
+                            ip *= -0.5*problem.couplingManager().lowDimExtrusionFactor(element, scvf);
+                            ip += scvf.ipGlobal();
+                            return ip;
+                        }
+                        else
+                            return scvf.ipGlobal();
+                    } ();
+    }
 
     GlobalIndexType insideGlobalScvfIndex() const
     { return scvfSeed_().insideGlobalScvfIndex(); }
@@ -173,7 +203,7 @@ public:
     { return scvfSeed_().faceType(); }
 
     GlobalPosition ip() const
-    { return globalScvf().ipGlobal(); }
+    { return ipGlobal_; }
 
     GlobalPosition unitOuterNormal() const
     { return globalScvf().unitOuterNormal(); }
@@ -193,6 +223,7 @@ private:
 
     const LocalScvfSeed* seedPtr_;
     const SubControlVolumeFace* scvfPtr_;
+    GlobalPosition ipGlobal_;
 };
 } // end namespace
 
