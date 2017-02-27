@@ -108,6 +108,7 @@ public:
      *
      * \param problem The object representing the problem which needs to
      *             be simulated.
+     * \note at this point the sub problems are already initialized
      */
     void init(Problem &problem)
     {
@@ -122,6 +123,8 @@ public:
         uPrev_[lowDimIdx].resize(lowDimNumDofs);
 
         // initialize local jocabian and jacobian assembler
+        // \note these local jacobians are not the localjacobian objects of the submodels
+        // \todo generalize so that there is only one unique local jac object
         bulkLocalJacobian_.init(problem_());
         lowDimLocalJacobian_.init(problem_());
         jacAsm_ = std::make_shared<JacobianAssembler>();
@@ -363,17 +366,17 @@ public:
      */
     void updateBegin()
     {
-        if((GET_PROP_VALUE(BulkProblemTypeTag, AdaptiveGrid) && problem_().bulkProblem().gridAdapt().wasAdapted()) ||
-           (GET_PROP_VALUE(LowDimProblemTypeTag, AdaptiveGrid) && problem_().lowDimProblem().gridAdapt().wasAdapted()))
+        problem_().bulkProblem().model().updateBegin();
+        problem_().lowDimProblem().model().updateBegin();
+
+        if (problem_().bulkProblem().gridChanged() || problem_().lowDimProblem().gridChanged())
         {
+            // resize matrix adjust prev sol
             uPrev_ = uCur_;
+            //! Recompute the assembly map in the localjacobian
+            bulkLocalJacobian_.init(problem_());
+            lowDimLocalJacobian_.init(problem_());
             jacAsm_->init(problem_());
-
-            if (GET_PROP_VALUE(BulkProblemTypeTag, AdaptiveGrid) && problem_().bulkProblem().gridAdapt().wasAdapted())
-                problem_().bulkProblem().model().updateBegin();
-
-            if (GET_PROP_VALUE(LowDimProblemTypeTag, AdaptiveGrid) && problem_().lowDimProblem().gridAdapt().wasAdapted())
-                problem_().lowDimProblem().model().updateBegin();
         }
     }
 
@@ -473,7 +476,6 @@ public:
      */
     void resetJacobianAssembler ()
     {
-        jacAsm_.template reset<JacobianAssembler>(0);
         jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
     }

@@ -534,7 +534,7 @@ public:
             this->gridAdapt().adaptGrid();
 
             // if the grid changed recompute the source map and the bounding box tree
-            if (this->gridAdapt().wasAdapted())
+            if (asImp_().gridChanged())
             {
                 // update bounding box tree if it exists
                 if (boundingBoxTree_)
@@ -916,6 +916,17 @@ public:
     Grid &grid()
     {
         return GridCreator::grid();
+    }
+
+    /*!
+     * \brief Returns whether the grid has changed
+     */
+    bool gridChanged() const
+    {
+        if (adaptiveGrid)
+            return asImp_().gridAdapt().wasAdapted();
+        else
+            return false;
     }
 
     /*!
