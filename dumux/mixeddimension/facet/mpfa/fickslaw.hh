@@ -61,7 +61,6 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFacetCouplingFicksLawCache
@@ -153,7 +152,7 @@ public:
         const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
         const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
 
-        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
+        const bool isInteriorBoundary = fluxVarsCache.isInteriorBoundary();
 
         // get the scaling factor for the effective diffusive fluxes
         const auto effFactor = computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
@@ -177,10 +176,6 @@ public:
         unsigned int localIdx = 0;
         for (const auto volVarIdx : volVarsStencil)
             flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
-
-        // if no interior boundaries are present, return effective mass flux
-        if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
 
         // Handle interior boundaries
         flux += computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
@@ -249,24 +244,19 @@ public:
                                                                insideVolVars.saturation(phaseIdx),
                                                                /*Diffusion coefficient*/ 1.0);
 
-        if (!scvf.boundary())
+        // interpret outside factor as arithmetic mean
+        Scalar outsideFactor = 0.0;
+        for (auto outsideIdx : scvf.outsideScvIndices())
         {
-            // interpret outside factor as arithmetic mean
-            Scalar outsideFactor = 0.0;
-            for (auto outsideIdx : scvf.outsideScvIndices())
-            {
-                const auto& outsideVolVars = elemVolVars[outsideIdx];
-                outsideFactor += EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                                    outsideVolVars.saturation(phaseIdx),
-                                                                    /*Diffusion coefficient*/ 1.0);
-            }
-            outsideFactor /= scvf.outsideScvIndices().size();
-
-            // use the harmonic mean of the two
-            return harmonicMean(factor, outsideFactor);
+            const auto& outsideVolVars = elemVolVars[outsideIdx];
+            outsideFactor += EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
+                                                                outsideVolVars.saturation(phaseIdx),
+                                                                /*Diffusion coefficient*/ 1.0);
         }
+        outsideFactor /= scvf.outsideScvIndices().size();
 
-        return factor;
+        // use the harmonic mean of the two
+        return harmonicMean(factor, outsideFactor);
     }
 
     template<typename GetXFunction>

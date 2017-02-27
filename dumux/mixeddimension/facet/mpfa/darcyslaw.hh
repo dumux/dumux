@@ -59,7 +59,6 @@ class CCMpfaFacetCouplingDarcysLaw : public DarcysLawImplementation<TypeTag, Dis
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     //! The cache used in conjunction with the mpfa Darcy's Law
     class MpfaFacetCouplingDarcysLawCache
@@ -144,7 +143,7 @@ public:
         const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions();
         const auto& tij = fluxVarsCache.advectionTij();
 
-        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
+        const bool isInteriorBoundary = fluxVarsCache.isInteriorBoundary();
 
         // Calculate the interface density for gravity evaluation
         const auto rho = interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
@@ -169,10 +168,6 @@ public:
 
             flux += tij[localIdx++]*h;
         }
-
-        // if no interior boundaries are present, return the flux
-        if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
 
         // Handle interior boundaries
         flux += computeInteriorBoundaryContribution(problem, fvGeometry, elemVolVars, fluxVarsCache, phaseIdx, rho);
