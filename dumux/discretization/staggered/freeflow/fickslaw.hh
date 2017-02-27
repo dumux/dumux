@@ -42,6 +42,7 @@ namespace Properties
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(ReplaceCompEqIdx);
 NEW_PROP_TAG(UseMoles);
+NEW_PROP_TAG(CellCenterPrimaryVariables);
 }
 
 /*!
