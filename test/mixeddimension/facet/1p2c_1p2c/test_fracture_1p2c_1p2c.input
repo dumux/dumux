@@ -1,15 +1,16 @@
 [TimeManager]
-DtInitial = 1 # [s]
-TEnd = 10000000 # [s]
+DtInitial = 1e-2 # [s]
+TEnd = 315360000 # [s]
 DtInitialBulkProblem = 1 # [s]
 DtInitialLowDimProblem = 1 # [s]
-EpisodeTime = 1000 # [s]
+EpisodeTime = 315360000 # [s]
 
 [Grid]
-File = ./grids/simplefracture_long.msh
+File = ./grids/real.msh
 
 [Problem]
-Name = test_1dfracture
+Name = test_real
+InjectionRate = 5
 
 [MixedDimension]
 UseIterativeSolver = False
@@ -20,9 +21,12 @@ Tolerance = 1.0e-8
 Verbose = 1
 
 [SpatialParams]
-FractureAperture = 1e-1 # [m]
-FracturePermeability = 1e-15 # [m^2]
-MatrixPermeability = 1e-14 # [m^2]
+FractureAperture = 1e-2 # [m]
+FracturePermeability = 5e-11 # [m^2]
+MatrixPermeability = 1e-13 # [m^2]
+
+[Mpfa]
+Q = 0.33
 
 [Vtk]
 AddVelocity = False

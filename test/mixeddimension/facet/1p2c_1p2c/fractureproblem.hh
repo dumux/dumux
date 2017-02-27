@@ -48,8 +48,8 @@ NEW_TYPE_TAG(OnePTwoCICCFractureProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCIFra
 NEW_TYPE_TAG(OnePTwoCNICCFractureProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIFractureProblem));
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCIFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
-SET_TYPE_PROP(OnePTwoCNIFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(OnePTwoCIFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+SET_TYPE_PROP(OnePTwoCNIFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePTwoCIFractureProblem, Problem, OnePTwoCFractureProblem<TypeTag>);
@@ -184,7 +184,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[0] < eps_)
+        if (globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -201,10 +201,7 @@ public:
     {
         auto values = initialAtPos(globalPos);
         if (globalPos[0] < eps_)
-        {
-            values[pressureIdx] = 1.2e5;
-            values[massOrMoleFracIdx] = 2.0e-5;
-        }
+            values[massOrMoleFracIdx] = 2e-5;
         return values;
     }
 
@@ -219,14 +216,20 @@ public:
         auto values = initialAtPos(globalPos);
         if (globalPos[0] < eps_)
         {
-            values[pressureIdx] = 1.2e5;
-            values[massOrMoleFracIdx] = 2.0e-5;
-            values[Indices::temperatureIdx] += 30; // 30 K warmer
+            values[massOrMoleFracIdx] = 2e-5;
+            values[Indices::temperatureIdx] += 30;
         }
         return values;
     }
 
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     */
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
     { return PrimaryVariables(0.0); }
 
     /*!
@@ -237,7 +240,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5;
+        values[pressureIdx] = 10e5 - 8e5*globalPos[0]/this->bBoxMax()[0];
         return values;
     }
 
@@ -249,7 +252,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5;
+        values[pressureIdx] = 10e5 - 8e5*globalPos[0]/this->bBoxMax()[0];
         values[Indices::temperatureIdx] = temperature();
         return values;
     }
@@ -261,6 +264,24 @@ public:
     //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class OutputModule>
+    void addVtkOutputFields(OutputModule& outputModule) const
+    {
+        // create the required scalar fields
+        auto& isOpenFracture = outputModule.createScalarField("isOpenFracture", 0);
+        auto& isBarrier = outputModule.createScalarField("isBarrier", 0);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            const auto eIdxGlobal = this->elementMapper().index(element);
+            isOpenFracture[eIdxGlobal] = this->spatialParams().isOpenFracture(element);
+            isBarrier[eIdxGlobal] = this->spatialParams().isBarrier(element);
+        }
+    }
 
 private:
     std::string name_;
