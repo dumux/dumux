@@ -59,8 +59,6 @@ class CCMpfaFacetCouplingFouriersLaw : public FouriersLawImplementation<TypeTag,
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
-
     static constexpr int energyEqIdx = GET_PROP_TYPE(TypeTag, Indices)::energyEqIdx;
 
     //! The cache used in conjunction with the mpfa Fourier's Law
@@ -131,10 +129,6 @@ public:
         unsigned int localIdx = 0;
         for (const auto volVarIdx : volVarsStencil)
             flux += tij[localIdx++]*elemVolVars[volVarIdx].temperature();
-
-        // if no interior boundaries are present, return heat conduction flux
-        if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux : flux + fluxVarsCache.heatNeumannFlux();
 
         // Handle interior boundaries
         flux += computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache);
