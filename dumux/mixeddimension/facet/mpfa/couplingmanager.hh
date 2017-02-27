@@ -249,6 +249,23 @@ public:
         return lowDimVolVars;
     }
 
+    //! Returns the lowDim element's extrusion factor for given bulk element and scvf
+    Scalar lowDimExtrusionFactor(const BulkElement& element,
+                                 const BulkSubControlVolumeFace& scvf) const
+    {
+        const auto& scvfCouplingData = couplingMapper_.getBulkCouplingData(element).getScvfCouplingData(scvf);
+
+        assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
+        const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(scvfCouplingData.second);
+        auto lowDimFvGeometry = localView(lowDimProblem().model().globalFvGeometry());
+        lowDimFvGeometry.bindElement(lowDimElement);
+
+        const auto& lowDimCurSol = lowDimProblem().model().curSol();
+        return lowDimProblem().extrusionFactor(lowDimElement,
+                                               lowDimFvGeometry.scv(scvfCouplingData.second),
+                                               lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol));
+    }
+
     const BulkProblem& bulkProblem() const
     { return *bulkProblemPtr_; }
 
