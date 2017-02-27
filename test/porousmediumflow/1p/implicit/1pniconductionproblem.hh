@@ -33,8 +33,6 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
-#include <dumux/io/vtkoutputmodule.hh>
-
 #include "1pnispatialparams.hh"
 
 namespace Dumux
@@ -103,6 +101,7 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -153,7 +152,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 

@@ -29,7 +29,6 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
-#include <dumux/io/vtkoutputmodule.hh>
 
 #include "fuelcellspatialparams.hh"
 
@@ -90,6 +89,7 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -266,7 +266,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         // create the required scalar fields
         auto& currentDensity = outputModule.createScalarField("currentDensity [A/cm^2]", dofCodim);
