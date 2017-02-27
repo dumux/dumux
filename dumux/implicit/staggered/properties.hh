@@ -52,6 +52,8 @@ NEW_PROP_TAG(FaceSolutionVector); //!< Vector containing all face primary variab
 
 NEW_PROP_TAG(EnableInteriorBoundaries); //!< For compatibility
 
+NEW_PROP_TAG(BaseEpsilon); //!< Set one or different base epsilons for the calculations of the localJacobian's derivatives
+
 NEW_PROP_TAG(NumEqCellCenter); //!< Number of equations per cell center dof
 NEW_PROP_TAG(NumEqFace); //!< Number of equations per face dof
 NEW_PROP_TAG(DofTypeIndices); //!< Indices to choose between cell center and face dofs

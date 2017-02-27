@@ -279,7 +279,7 @@ private:
                 PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
                                          FacePrimaryVariables(0.0));
 
-                const Scalar eps = numericEpsilon(priVars[pvIdx]);
+                const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
                 priVars[pvIdx] += eps;
                 ElementSolutionVector elemSol{std::move(priVars)};
                 curVolVars.update(elemSol, this->problem_(), elementJ, scvJ);
@@ -327,7 +327,7 @@ private:
             for(auto pvIdx : PriVarIndices(faceIdx))
             {
                 PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
-                const Scalar eps = numericEpsilon(priVars[pvIdx]);
+                const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, faceIdx);
                 priVars[pvIdx] += eps;
                 curFaceVars.update(priVars[faceIdx]);
 
@@ -381,7 +381,7 @@ private:
                     PrimaryVariables priVars(CellCenterPrimaryVariables(this->model_().curSol()[cellCenterIdx][globalJ]),
                                              FacePrimaryVariables(0.0));
 
-                    const Scalar eps = numericEpsilon(priVars[pvIdx]);
+                    const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
                     priVars[pvIdx] += eps;
                     ElementSolutionVector elemSol{std::move(priVars)};
                     curVolVars.update(elemSol, this->problem_(), elementJ, scvJ);
@@ -433,7 +433,7 @@ private:
                 {
                     PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
 
-                    const Scalar eps = numericEpsilon(priVars[pvIdx]);
+                    const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, faceIdx);
                     priVars[pvIdx] += eps;
                     curFaceVars.update(priVars[faceIdx]);
 
@@ -497,7 +497,14 @@ private:
     const JacobianAssembler &jacAsm_() const
     { return model_().jacobianAssembler(); }
 
-    Scalar numericEpsilon(const Scalar priVar) const
+     /*!
+     * \brief Return the epsilon used to calculate the numeric derivative of a localResidual w.r.t a certain priVar
+     *
+     * \param priVar The the value of primary varible w.r.t which to derivative of the localResidual is calculated
+     * \param idx1 Indicates whether the the derivative is build for a cellCenter or face localResidual
+     * \param idx2 Indicates whether the the derivative is build w.r.t a priVar living on a cellCenter or face
+     */
+    Scalar numericEpsilon(const Scalar priVar, const int idx1, const int idx2) const
     {
         // define the base epsilon as the geometric mean of 1 and the
         // resolution of the scalar type. E.g. for standard 64 bit
@@ -507,12 +514,14 @@ private:
         static const Scalar baseEps
             = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
         */
-        static const Scalar baseEps = 1e-10;
+
+        static const Scalar baseEps = baseEps_[idx1][idx2];
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
         return baseEps*(std::abs(priVar) + 1.0);
     }
+
     /*!
      * \brief Updates the current global Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
@@ -561,6 +570,8 @@ private:
     LocalResidual localResidual_;
 
     AssemblyMap assemblyMap_;
+
+    static constexpr auto baseEps_{GET_PROP_VALUE(TypeTag, BaseEpsilon)};
 };
 
 }
