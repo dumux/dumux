@@ -306,10 +306,8 @@ public:
         return forchCoeff;
     }
 
-    const Problem& problem()
-    {
-        return *problemPtr_;
-    }
+    const Problem& problem() const
+    { return *problemPtr_; }
 
 private:
     Implementation &asImp_()
