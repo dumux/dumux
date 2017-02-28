@@ -4,7 +4,7 @@ add_dumux_test(test_densitydrivenflow test_densitydrivenflow test_densitydrivenf
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-densitydriven-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00024.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00025.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow")
 
 add_dumux_test(test_purediffusion test_channel test_channel.cc

@@ -5,7 +5,7 @@ TEnd = 1.5e3 # [s]
 
 [Grid]
 UpperRight = 1 1
-Cells = 20 20
+Cells = 40 40
 
 [Problem]
 Name = test_densitydrivenflow # name passed to the output routines
