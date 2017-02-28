@@ -145,6 +145,11 @@ public:
                                              Problem,
                                              Name);
 
+        useWholeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             bool,
+                                             Problem,
+                                             UseWholeLength);
+
         FluidSystem::init();
     }
 
@@ -203,15 +208,19 @@ public:
 
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
-        values.setNeumann(transportEqIdx);
-        values.setNeumann(massBalanceIdx);
+        values.setOutflow(transportEqIdx);
+        values.setOutflow(massBalanceIdx);
 
         if(globalPos[1] <  eps_)
             values.setDirichlet(massBalanceIdx);
 
-        if(globalPos[1] > this->bBoxMax()[1] - eps_ && globalPos[0] > 0.4 && globalPos[0] < 0.6)
+        if(globalPos[1] > this->bBoxMax()[1] - eps_)
         {
-            values.setDirichlet(transportEqIdx);
+            if(useWholeLength_)
+                values.setDirichlet(transportEqIdx);
+            else
+                if(globalPos[0] > 0.4 && globalPos[0] < 0.6)
+                    values.setDirichlet(transportEqIdx);
         }
 
         return values;
@@ -258,11 +267,36 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& delRho = outputModule.createScalarField("delRho", 0);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto ccDofIdx = scv.dofIndex();
+
+                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                elemVolVars.bind(element, fvGeometry, this->model().curSol());
+
+                delRho[ccDofIdx] = elemVolVars[scv].density() - 999.694;
+            }
+        }
+    }
+
     // \}
 
 private:
     const Scalar eps_{1e-6};
     std::string name_;
+    bool useWholeLength_;
 };
 } //end namespace
 
