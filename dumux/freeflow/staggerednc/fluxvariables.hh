@@ -126,34 +126,32 @@ private:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        // if we are on an inflow/outflow boundary, use the volVars of the element itself
-        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
-        bool isOutflow = false;
-        if(scvf.boundary())
-        {
-            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(momentumBalanceIdx))
-                    isOutflow = true;
-        }
-
-        const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
-
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
-        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-
         const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
-        const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
-        const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // get equation index
             const auto eqIdx = conti0EqIdx + compIdx;
-            if (eqIdx == replaceCompEqIdx)
-                continue;
+
+            bool isOutflow = false;
+            if(scvf.boundary())
+            {
+                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                    if(bcTypes.isOutflow(eqIdx))
+                        isOutflow = true;
+            }
+
+            const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+            const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+            const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+
+            const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
+            const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
+
+
 
             const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(phaseIdx, compIdx) : upstreamVolVars.massFraction(phaseIdx, compIdx);
             const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(phaseIdx, compIdx) : downstreamVolVars.massFraction(phaseIdx, compIdx);
@@ -162,9 +160,12 @@ private:
                           (1.0 - upWindWeight) * downstreamDensity * downstreamFraction)
                           * velocity;
         }
+
         // in case one balance is substituted by the total mass balance
         if (replaceCompEqIdx < numComponents)
-            flux[replaceCompEqIdx] = (upWindWeight * upstreamDensity + (1.0 - upWindWeight) * downstreamDensity) * velocity;
+        {
+            flux[replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
+        }
 
         flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;
