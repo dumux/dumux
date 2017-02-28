@@ -175,8 +175,6 @@ public:
                                 {
                                     auto res = n;
                                     res *= -0.5*completeFacetData.volVars().extrusionFactor();
-                                    res += curScvf.ipGlobal();
-                                    res -= curScvf.facetCorner();
                                     res /= res.two_norm2();
                                     return res;
                                 } ();
