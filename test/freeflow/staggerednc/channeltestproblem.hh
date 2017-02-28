@@ -51,7 +51,7 @@ NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
 SET_TYPE_PROP(ChannelNCTestProblem, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
 
 SET_PROP(ChannelNCTestProblem, PhaseIdx)
 {
@@ -205,18 +205,24 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
-        values.setNeumann(transportEqIdx);
-        values.setNeumann(massBalanceIdx);
-
         if(isInlet(globalPos))
-            values.setDirichlet(transportEqIdx);
-
-        if (isOutlet(globalPos))
         {
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(momentumBalanceIdx);
+            values.setOutflow(massBalanceIdx);
+            values.setDirichlet(transportEqIdx);
+        }
+        else if(isOutlet(globalPos))
+        {
             values.setOutflow(momentumBalanceIdx);
+            values.setDirichlet(massBalanceIdx);
+            values.setOutflow(transportEqIdx);
+        }
+
+        else
+        {
+            // set Dirichlet values for the velocity everywhere
+            values.setDirichlet(momentumBalanceIdx);
+            values.setOutflow(massBalanceIdx);
             values.setOutflow(transportEqIdx);
         }
 
@@ -234,10 +240,13 @@ public:
         BoundaryValues values;
 
         values[pressureIdx] = 1.1e+5;
-        values[transportCompIdx] = 1e-3;
+        values[transportCompIdx] = 0.0;
 
         if(isInlet(globalPos))
+        {
+            values[transportCompIdx] = 1e-3;
             values[velocityXIdx] = inletVelocity_;
+        }
         else
             values[velocityXIdx] = 0.0;
 
