@@ -201,7 +201,7 @@ public:
             values.setOutflow(momentumBalanceIdx);
         }
         else
-            values.setNeumann(massBalanceIdx);
+            values.setOutflow(massBalanceIdx);
 
         return values;
     }
