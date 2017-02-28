@@ -132,6 +132,10 @@ public:
     bool isOnInteriorBoundary(const SubControlVolumeFace& scvf) const
     { return enableInteriorBoundaries ? interiorBoundaryScvfs_[scvf.index()] : false; }
 
+    //! Returns whether or not an scvf is on an interior boundary
+    bool isOnInteriorBoundary(IndexType scvfIdx) const
+    { return enableInteriorBoundaries ? interiorBoundaryScvfs_[scvfIdx] : false; }
+
     //! Returns whether or not an scvf touches the domain boundary
     bool touchesDomainBoundary(const SubControlVolumeFace& scvf) const
     { return domainBoundaryVertices_[scvf.vertexIndex()]; }
@@ -284,7 +288,7 @@ public:
                                             scvfIdx,
                                             eIdx,
                                             outsideScvIndices,
-                                            q,
+                                            interiorBoundary ? 0.0 : q,
                                             boundary
                                             );
                     }
@@ -304,7 +308,7 @@ public:
                                             scvfIdx,
                                             eIdx,
                                             boundaryIdx,
-                                            q,
+                                            interiorBoundary ? 0.0 : q,
                                             boundary
                                             );
                     }
@@ -530,6 +534,10 @@ public:
     //! Returns whether or not an scvf is on an interior boundary
     bool isOnInteriorBoundary(const SubControlVolumeFace& scvf) const
     { return enableInteriorBoundaries ? interiorBoundaryScvfs_[scvf.index()] : false; }
+
+    //! Returns whether or not an scvf is on an interior boundary
+    bool isOnInteriorBoundary(IndexType scvfIdx) const
+    { return enableInteriorBoundaries ? interiorBoundaryScvfs_[scvfIdx] : false; }
 
     //! Returns whether or not an scvf touches the domain boundary
     bool touchesDomainBoundary(const SubControlVolumeFace& scvf) const

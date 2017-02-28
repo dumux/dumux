@@ -96,8 +96,8 @@ public:
         const auto n = localScvf.unitOuterNormal();
         const auto v = [&] ()
                         {
-                            auto res = localScvf.ip();
-                            res -= localScvf.globalScvf().facetCorner();
+                            auto res = n;
+                            res *= -0.5*completeFacetData.volVars().extrusionFactor();
                             res /= res.two_norm2();
                             return res;
                         } ();
