@@ -110,23 +110,23 @@ public:
             if(compIdx == mainCompIdx)
                 continue;
 
-            auto eqIdx = 1;
-
-            const Scalar tij = transmissibility_(problem, fvGeometry, elemVolVars, scvf, compIdx);
-            const Scalar insideMoleFraction = insideVolVars.moleFraction(phaseIdx, compIdx);
+            // get equation index
+            const auto eqIdx = conti0EqIdx + compIdx;
 
             if(scvf.boundary())
             {
                 const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(momentumBalanceIdx) || bcTypes.isNeumann(eqIdx)) // TODO: catch neumann and outflow in localResidual's evalBoundary_()
+                if(bcTypes.isOutflow(eqIdx) && eqIdx != pressureIdx)
                     return flux;
             }
+
+            const Scalar tij = transmissibility_(problem, fvGeometry, elemVolVars, scvf, compIdx);
+            const Scalar insideMoleFraction = insideVolVars.moleFraction(phaseIdx, compIdx);
 
             const Scalar outsideMolarDensity = scvf.boundary() ? insideVolVars.molarDensity() : outsideVolVars.molarDensity();
             const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
             const Scalar outsideMoleFraction = outsideVolVars.moleFraction(phaseIdx, compIdx);
             flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
-            ++eqIdx;
         }
 
         if(!(useMoles && replaceCompEqIdx == mainCompIdx))
