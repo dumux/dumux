@@ -395,7 +395,7 @@ private:
                                     scvFaceIndices[scvfCounter],
                                     eIdx,
                                     neighborVolVarIndices[scvfCounter],
-                                    q,
+                                    globalFvGeometry().isOnInteriorBoundary(scvFaceIndices[scvfCounter]) ? 0.0 : q,
                                     is.boundary()
                                     );
 
@@ -480,7 +480,7 @@ private:
                                                 scvFaceIndices[scvfCounter],
                                                 eIdxGlobal,
                                                 neighborVolVarIndices[scvfCounter],
-                                                q,
+                                                globalFvGeometry().isOnInteriorBoundary(scvFaceIndices[scvfCounter]) ? 0.0 : q,
                                                 is.boundary()
                                                 );
 
