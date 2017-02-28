@@ -78,11 +78,11 @@ SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(ChannelNCTestProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(ChannelNCTestProblem, UseMoles, true);
 
-#if ENABLE_NAVIERSTOKES
+// #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, true);
-#else
-SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, false);
-#endif
+// #else
+// SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, false);
+// #endif
 }
 
 /*!
@@ -237,20 +237,10 @@ public:
      */
     BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryValues values;
-
-        values[pressureIdx] = 1.1e+5;
-        values[transportCompIdx] = 0.0;
+        BoundaryValues values = initialAtPos(globalPos);
 
         if(isInlet(globalPos))
-        {
             values[transportCompIdx] = 1e-3;
-            values[velocityXIdx] = inletVelocity_;
-        }
-        else
-            values[velocityXIdx] = 0.0;
-
-        values[velocityYIdx] = 0.0;
 
         return values;
     }
@@ -272,7 +262,11 @@ public:
         InitialValues values;
         values[pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
+
+        // parabolic velocity profile
+        values[velocityXIdx] =  inletVelocity_*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
+                               / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
+
         values[velocityYIdx] = 0.0;
 
         return values;
