@@ -114,24 +114,7 @@ public:
 
     //! evaluates if an scvf is on an interior boundary
     bool isInteriorBoundary(const BulkElement& element, const BulkSubControlVolumeFace& scvf) const
-    {
-        // TODO: Facet elements that are on the bulk domain boundary
-        if (scvf.boundary())
-            return false;
-
-        if (couplingMapper_.isInitialized())
-        {
-            const auto& couplingData = couplingMapper_.getBulkCouplingData(element);
-
-            // if the element is coupled, check if the scvf is so as well
-            if (!couplingData.isCoupled)
-                return false;
-            return couplingData.getScvfCouplingData(scvf).first;
-        }
-
-        // If the mapper has not been initialized yet, use the private function
-        return isInteriorBoundary_(scvf.insideScvIdx(), scvf.outsideScvIdx());
-    }
+    { return bulkProblem().model().globalFvGeometry().isOnInteriorBoundary(scvf); }
 
     const std::vector<LowDimIndexType>& couplingStencil(const BulkElement& element)
     { return couplingMapper_.getBulkCouplingData(element).couplingStencil; }
