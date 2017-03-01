@@ -147,14 +147,6 @@ public:
     /*!
      * @brief Returns true if grid cells have been marked for adaption
      */
-    bool wasAdapted()
-    {
-        int sumMarked = problem_.grid().comm().sum(marked_);
-        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
-
-        return (sumMarked != 0 || sumCoarsened != 0);
-    }
-
     bool wasAdapted() const
     {
         int sumMarked = problem_.grid().comm().sum(marked_);
@@ -438,10 +430,8 @@ public:
     {}
     void adaptGrid()
     {}
-    bool wasAdapted()
-    {
-        return false;
-    }
+    bool wasAdapted() const
+    { return false; }
     void setLevels(int, int)
     {}
     void setTolerance(int, int)

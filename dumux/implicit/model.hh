@@ -423,23 +423,32 @@ public:
      */
     void updateBegin()
     {
-        if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
+        if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridChanged())
         {
-            uPrev_ = uCur_;
-            prevGlobalVolVars_ = curGlobalVolVars_;
-
+            // update boundary indices
             updateBoundaryIndices_();
 
-            int numDofs = asImp_().numDofs();
-
             if (isBox)
-                boxVolume_.resize(numDofs);
+                boxVolume_.resize(asImp_().numDofs());
 
-            jacAsm_->init(problem_());
+            // update the fv geometry
+            globalFvGeometryPtr_->update(problem_());
+
+            // resize and update the volVars with the initial solution
+            curGlobalVolVars_.update(problem_(), curSol());
+
+            // resize the matrix and assembly map if necessary
+            localJacobian().init(problem_());
+            jacobianAssembler().init(problem_());
+
+            // update the flux variables caches
+            globalfluxVarsCache_.update(problem_());
+
+            // update the previous solution and volvars
+            uPrev_ = uCur_;
+            prevGlobalVolVars_ = curGlobalVolVars_;
         }
-
     }
-
 
     /*!
      * \brief Called by the update() method if it was

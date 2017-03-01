@@ -30,6 +30,7 @@
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 
 #include "fracturespatialparams.hh"

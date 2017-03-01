@@ -139,7 +139,7 @@ public:
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
      */
-    Scalar molarDensity(const int phaseIdx) const
+    Scalar molarDensity(const int phaseIdx = wPhaseIdx) const
     { return phaseIdx == wPhaseIdx ? this->fluidState_.molarDensity(phaseIdx) : 0.0; }
 
     /*!

@@ -170,7 +170,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar saturation(const int phaseIdx) const
+    Scalar saturation(const int phaseIdx = wPhaseIdx) const
     { return phaseIdx == wPhaseIdx ? fluidState_.saturation(wPhaseIdx) : 1.0-fluidState_.saturation(wPhaseIdx); }
 
     /*!
@@ -179,7 +179,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar density(const int phaseIdx) const
+    Scalar density(const int phaseIdx = wPhaseIdx) const
     { return phaseIdx == wPhaseIdx ? fluidState_.density(phaseIdx) : 0.0; }
 
     /*!
@@ -193,7 +193,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar pressure(const int phaseIdx) const
+    Scalar pressure(const int phaseIdx = wPhaseIdx) const
     { return phaseIdx == wPhaseIdx ? fluidState_.pressure(phaseIdx) : pn_; }
 
     /*!
@@ -207,7 +207,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar mobility(const int phaseIdx) const
+    Scalar mobility(const int phaseIdx = wPhaseIdx) const
     { return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
 
     /*!
@@ -217,7 +217,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      * \note The non-wetting phase is infinitely mobile
      */
-    Scalar viscosity(const int phaseIdx) const
+    Scalar viscosity(const int phaseIdx = wPhaseIdx) const
     { return phaseIdx == wPhaseIdx ? fluidState_.viscosity(wPhaseIdx) : 0.0; }
 
     /*!
@@ -226,7 +226,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar relativePermeability(const int phaseIdx) const
+    Scalar relativePermeability(const int phaseIdx = wPhaseIdx) const
     { return phaseIdx == wPhaseIdx ? relativePermeabilityWetting_ : 1.0; }
 
     /*!
@@ -260,7 +260,7 @@ public:
      *       manually do a conversion. It is not correct if the density is not constant
      *       or the gravity different
      */
-    Scalar pressureHead(const int phaseIdx) const
+    Scalar pressureHead(const int phaseIdx = wPhaseIdx) const
     { return 100.0 *(pressure(phaseIdx) - pn_)/density(phaseIdx)/9.81; }
 
     /*!
@@ -274,7 +274,7 @@ public:
      * \note this function is here as a convenience to the user to not have to
      *       manually do a conversion.
      */
-    Scalar waterContent(const int phaseIdx) const
+    Scalar waterContent(const int phaseIdx = wPhaseIdx) const
     { return saturation(phaseIdx) * porosity_; }
 
 protected:

@@ -25,6 +25,7 @@
 #define DUMUX_INJECTION_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>

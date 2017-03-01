@@ -131,7 +131,19 @@ public:
      *        initializing the subproblems / models
      */
     void postInit()
-    {}
+    {
+        glue_ = std::make_shared<CCMultiDimensionGlue<TypeTag>>(bulkProblem(), lowDimProblem());
+        asImp_().computeLowDimVolumeFractions();
+    }
+
+    /*!
+     * \brief Update after the grid has changed
+     */
+    void update()
+    {
+        asImp_().computePointSourceData();
+        asImp_().computeLowDimVolumeFractions();
+    }
 
     /*!
      * \brief The bulk coupling stencil, i.e. which low-dimensional dofs
@@ -342,6 +354,31 @@ public:
         }
 
         std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
+    }
+
+    //! Compute the low dim volume fraction in the bulk domain cells
+    void computeLowDimVolumeFractions()
+    {
+        // intersect the bounding box trees
+        glue_->build();
+
+        // compute the low dim volume fractions
+        for (const auto& is : intersections(*glue_))
+        {
+            // all inside elements are identical...
+            const auto& inside = is.inside(0);
+            const auto intersectionGeometry = is.geometry();
+            const unsigned int lowDimElementIdx = lowDimProblem().elementMapper().index(inside);
+
+            // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
+            const auto radius = lowDimProblem().spatialParams().radius(lowDimElementIdx);
+            for (unsigned int outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            {
+                const auto& outside = is.outside(outsideIdx);
+                const unsigned int bulkElementIdx = bulkProblem().elementMapper().index(outside);
+                lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
+            }
+        }
     }
 
     /*!
@@ -597,6 +634,9 @@ private:
 
     //! id generator for point sources
     unsigned int idCounter_;
+
+    //! The glue object
+    std::shared_ptr<CCMultiDimensionGlue<TypeTag>> glue_;
 };
 
 } // end namespace Dumux

@@ -139,7 +139,7 @@ public:
         vtkOutputModule.addSecondaryVariable("mobility", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("kr", [](const VolumeVariables& v){ return v.relativePermeability(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
-        if(GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity));
+        if(GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             vtkOutputModule.addSecondaryVariable("pressure head", [](const VolumeVariables& v){ return v.pressureHead(wPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("water content", [](const VolumeVariables& v){ return v.waterContent(wPhaseIdx); });
 
