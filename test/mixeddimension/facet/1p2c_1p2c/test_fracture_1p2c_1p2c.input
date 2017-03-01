@@ -9,8 +9,7 @@ EpisodeTime = 315360000 # [s]
 File = ./grids/real.msh
 
 [Problem]
-Name = test_real
-InjectionRate = 5
+Name = test_real_xi
 
 [MixedDimension]
 UseIterativeSolver = False
@@ -27,6 +26,7 @@ MatrixPermeability = 1e-13 # [m^2]
 
 [Mpfa]
 Q = 0.33
+Xi = 0.66
 
 [Vtk]
 AddVelocity = False

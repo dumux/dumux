@@ -275,12 +275,7 @@ public:
             values.setAllDirichlet();
 
         if (couplingManager().isInteriorBoundary(element, scvf))
-        {
-          if (isOpenFracture(scvf.ipGlobal()))
-            values.setAllDirichlet();
-          else
             values.setAllNeumann();
-        }
 
         return values;
     }

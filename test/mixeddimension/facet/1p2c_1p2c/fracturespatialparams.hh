@@ -86,8 +86,8 @@ public:
                         const ElementSolutionVector& elemSol) const
     {
         using std::pow;
-        static const Scalar openK = pow(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FractureAperture), 2)/12;
-        static const Scalar barrierK = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability)/50;
+        static const Scalar openK = permeability_*1e3;
+        static const Scalar barrierK = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability)/100;
 
         if (isOpenFracture(element))
             return openK;
@@ -116,7 +116,7 @@ public:
                     const ElementSolutionVector& elemSol) const
     {
         if (isOpenFracture(element))
-            return 1.0;
+            return 0.8;
         else if (isBarrier(element))
             return 0.1;
         return 0.5;
@@ -154,9 +154,9 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     {
-        // the barrier is denser
+        // the barrier is lighter
         if (isBarrier(element))
-            return 3500;
+            return 1350;
         return 2700; /*density of granite [kg/m^3]*/
     }
 
@@ -173,7 +173,7 @@ public:
     {
         // the barrier is more conductive
         if (isBarrier(element))
-            return 4.5;
+            return 5.6;
         return 2.8;
     }
 
