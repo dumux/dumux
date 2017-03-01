@@ -38,6 +38,7 @@ namespace Properties
 // forward declaration
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(InteriorBoundaryData);
+NEW_PROP_TAG(EnableInteriorBoundaries);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
