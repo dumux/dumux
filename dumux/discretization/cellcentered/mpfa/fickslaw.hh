@@ -302,6 +302,9 @@ public:
                                                                               facetVolVars.saturation(phaseIdx),
                                                                               /*Diffusion coefficient*/ 1.0);
 
+                // check if we divide by zero
+                if (factor*outsideFactor <= 0.0)
+                    return 0.0;
                 return harmonicMean(factor, outsideFactor);
             }
         }
@@ -325,7 +328,9 @@ public:
             }
             outsideFactor /= scvf.outsideScvIndices().size();
 
-            // use the harmonic mean of the two
+            // check if we divide by zero
+            if (factor*outsideFactor <= 0.0)
+                return 0.0;
             return harmonicMean(factor, outsideFactor);
         }
 
