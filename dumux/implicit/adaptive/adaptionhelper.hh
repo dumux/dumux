@@ -67,9 +67,10 @@ public:
     //! Constructs an adaptive helper object
     /**
      * In addition to providing a storage object for cell-centered Methods, this class provides
-     * mapping functionality to adapt the grid.
+     * mapping functionality to adapt the grid. It uses gridView, a DUNE gridview object corresponding
+     * to diffusion and transport equation
      *
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
+     *  @param problem The current problem
      */
     ImplicitAdaptionHelper(Problem& problem)
     {}

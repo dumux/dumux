@@ -56,7 +56,7 @@ double calcOffDiagonalNorm(Matrix& matrix)
 }
 
 /*!
- * \briefFunction to calculate eigenvalues of n x n matrices
+ * \brief Function to calculate eigenvalues of n x n matrices
  *
  * \param eigVel Vector for storing the eigenvalues
  * \param matrix n x n matrices for which eigenvalues have to be calculated

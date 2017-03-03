@@ -97,7 +97,7 @@ public:
                   << std::endl;
     }
 
-    //! \copydoc ParentType::newtonUpdateShift()
+    //! \copydoc NewtonController::newtonUpdateShift()
     void newtonUpdateShift(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {

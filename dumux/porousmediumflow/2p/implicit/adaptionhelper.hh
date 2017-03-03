@@ -92,7 +92,7 @@ private:
 public:
     //! Constructs an adaption helper object
     /**
-     *  @param gridView a DUNE gridview object
+     *  @param problem The current problem
      */
     TwoPAdaptionHelper(Problem& problem) : ParentType(problem), adaptionMap_(problem.grid(), 0)
     {
@@ -479,6 +479,7 @@ public:
      *
      * \param adaptedValues Container for model-specific values to be adapted
      * \param u The variables to be stored
+     * \param scvIdx The SCV (sub-control-volume) index
      */
     static void setAdaptionValues(AdaptedValues& adaptedValues, PrimaryVariables& u, int scvIdx)
     {
