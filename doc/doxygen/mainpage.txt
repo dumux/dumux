@@ -10,7 +10,7 @@ documenting C/C++ code.
 
 The <a href="pages.html">Related Pages</a> gives a good overview on everything beyond the
 actual DuMuX code.
-This includes a \ref bibliography of the publications DuMuX is based on.<br>
+This includes a  <a href="a07334.html">bibliography</a> of the publications DuMuX is based on.<br>
 Further, a \ref parameterList containing all implemented parameters and
 a \ref featureList of special features used in the test problems is available.<br>
 Auxiliary script files can be find in \ref Binaries.<br>
