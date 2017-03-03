@@ -104,6 +104,8 @@ class SubProblemLocalJacobian : public GET_PROP_TYPE(SubProblemTypeTag, LocalJac
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(SubProblemTypeTag, SolutionVector);
 
+    enum { isBox = GET_PROP_VALUE(SubProblemTypeTag, ImplicitIsBox) };
+
 public:
 
     // copying a local jacobian is not a good idea
@@ -138,8 +140,6 @@ public:
                   JacobianMatrixCoupling& couplingMatrix,
                   SolutionVector& residual)
     {
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-
         // prepare the volvars/fvGeometries in case caching is disabled
         auto fvGeometry = localView(this->model_().globalFvGeometry());
         fvGeometry.bind(element);
@@ -153,12 +153,31 @@ public:
         auto elemFluxVarsCache = localView(this->model_().globalFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        // set the actual dof index
-        this->globalI_ = this->problem_().elementMapper().index(element);
-
         // check for boundaries on the element
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
+
+        assemble_(element, fvGeometry, prevElemVolVars, curElemVolVars, elemFluxVarsCache, elemBcTypes, matrix, couplingMatrix, residual);
+    }
+
+protected:
+
+    // for cell-centered models
+    template<class JacobianMatrix, class JacobianMatrixCoupling, class T = SubProblemTypeTag, typename std::enable_if<((!GET_PROP_VALUE(T, ImplicitIsBox))), bool>::type = 0>
+    void assemble_(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     ElementVolumeVariables& prevElemVolVars,
+                     ElementVolumeVariables& curElemVolVars,
+                     ElementFluxVariablesCache& elemFluxVarsCache,
+                     const ElementBoundaryTypes& elemBcTypes,
+                     JacobianMatrix& matrix,
+                     JacobianMatrixCoupling& couplingMatrix,
+                     SolutionVector& residual)
+    {
+        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
+
+        // set the actual dof index
+        this->globalI_ = this->problem_().elementMapper().index(element);
 
         // Evaluate the undeflected element local residual
         this->localResidual().eval(element,
@@ -204,7 +223,18 @@ public:
                                        residual);
     }
 
-protected:
+    // for box models
+    template<class JacobianMatrix, class JacobianMatrixCoupling, class T = SubProblemTypeTag, typename std::enable_if<((GET_PROP_VALUE(T, ImplicitIsBox))), bool>::type = 0>
+    void assemble_(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     ElementVolumeVariables& prevElemVolVars,
+                     ElementVolumeVariables& curElemVolVars,
+                     ElementFluxVariablesCache& elemFluxVarsCache,
+                     const ElementBoundaryTypes& elemBcTypes,
+                     JacobianMatrix& matrix,
+                     JacobianMatrixCoupling& couplingMatrix,
+                     SolutionVector& residual)
+    {}
 
     /*!
      * \brief Returns a reference to the problem.
