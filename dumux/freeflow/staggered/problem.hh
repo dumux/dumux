@@ -88,6 +88,16 @@ public:
      */
     // \{
 
+    /*!
+     * \brief Returns dirichlet values at a given scv face.
+       This method can be overloaded in the actual problem, e.g. for coupling strategies
+     *
+     * \param scvf The sub control volume face
+     */
+    auto dirichlet(const SubControlVolumeFace& scvf) const
+    {
+        return asImp_().dirichletAtPos(scvf.center());
+    }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.

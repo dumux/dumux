@@ -303,7 +303,7 @@ protected:
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
                 const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
-                const Scalar dirichletValue = this->problem().dirichletAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
+                const Scalar dirichletValue = this->problem().dirichlet(scvf)[faceIdx][scvf.directionIndex()];
                 this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
             }
 
