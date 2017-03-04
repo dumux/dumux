@@ -107,8 +107,18 @@ public:
           dirIdx_ = geometryHelper.directionIndex();
           normalInPosCoordDir_ = unitOuterNormal()[directionIndex()] > 0.0;
           outerNormalScalar_ = unitOuterNormal()[directionIndex()];
+          isGhostFace_ = false;
       }
 
+      //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
+      StaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
+                                    const std::vector<IndexType>& scvIndices)
+      {
+          isGhostFace_ = true;
+          center_ = dofPosition;
+          scvIndices_ = scvIndices;
+          scvfIndex_ = -1;
+      }
     /*//! The copy constrcutor
     StaggeredSubControlVolumeFace(const StaggeredSubControlVolumeFace& other) = delete;
 
@@ -135,6 +145,12 @@ public:
 
     //! The center of the sub control volume face
     GlobalPosition center() const
+    {
+        return center_;
+    }
+
+    //! The center of the sub control volume face
+    GlobalPosition dofPosition() const
     {
         return center_;
     }
@@ -265,6 +281,7 @@ private:
     int dirIdx_;
     bool normalInPosCoordDir_;
     Scalar outerNormalScalar_;
+    bool isGhostFace_;
 
 };
 
