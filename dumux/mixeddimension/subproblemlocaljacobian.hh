@@ -278,18 +278,20 @@ protected:
 
                 // restore the original element solution
                 curElemSol[scv.index()][pvIdx] = this->problem_().model().curSol()[scv.dofIndex()][pvIdx];
+
+                evalPartialDerivativeCoupling_(element,
+                    fvGeometry,
+                    scv,
+                    curElemVolVars,
+                    elemFluxVarsCache,
+                    elemBcTypes,
+                    couplingMatrix,
+                    residual);
             }
 
             // TODO: what if we have an extended source stencil????
 
             //TODO: is otherElement in this method required? is otherResidual correct?
-            // evalPartialDerivativeCoupling_(element,
-            //                                fvGeometry,
-            //                                curElemVolVars,
-            //                                elemFluxVarsCache,
-            //                                elemBcTypes,
-            //                                couplingMatrix,
-            //                                residual);
         }
     }
 
@@ -321,6 +323,7 @@ protected:
     decltype(auto) otherProblem_(typename std::enable_if<!std::is_same<typename GET_PROP_TYPE(T, LowDimProblemTypeTag), SubProblemTypeTag>::value, void>::type* x = nullptr)
     { return globalProblem_().lowDimProblem(); }
 
+    // cell-centered
     template<class JacobianMatrixCoupling>
     void evalPartialDerivativeCoupling_(const Element& element,
                                         const FVElementGeometry& fvGeometry,
@@ -412,6 +415,102 @@ protected:
 
                 // update the global jacobian matrix (coupling block)
                 this->updateGlobalJacobian_(couplingMatrix, this->globalI_, globalJ, pvIdx, partialDeriv);
+            }
+        }
+    }
+
+    // box
+    template<class JacobianMatrixCoupling, class SubControlVolume>
+    void evalPartialDerivativeCoupling_(const Element& element,
+                                        const FVElementGeometry& fvGeometry,
+                                        const SubControlVolume& scv,
+                                        ElementVolumeVariables& curElemVolVars,
+                                        ElementFluxVariablesCache& elemFluxVarsCache,
+                                        const ElementBoundaryTypes& elemBcTypes,
+                                        JacobianMatrixCoupling& couplingMatrix,
+                                        SolutionVector& residual)
+    {
+        const auto& couplingStencil = globalProblem_().couplingManager().couplingStencil(element);
+
+        for (auto globalJ : couplingStencil)
+        {
+            const auto otherResidual = globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                                fvGeometry,
+                                                                                                scv,
+                                                                                                curElemVolVars,
+                                                                                                elemBcTypes,
+                                                                                                elemFluxVarsCache);
+
+            auto& otherPriVars = otherProblem_().model().curSol()[globalJ];
+            auto originalOtherPriVars = otherPriVars;
+
+            // derivatives in the neighbors with repect to the current elements
+            PrimaryVariables partialDeriv;
+            for (int pvIdx = 0; pvIdx < partialDeriv.size(); pvIdx++)
+            {
+                const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx]);
+                Scalar delta = 0;
+
+                if (numericDifferenceMethod_ >= 0)
+                {
+                    // we are not using backward differences, i.e. we need to
+                    // calculate f(x + \epsilon)
+
+                    // deflect primary variables
+                    otherPriVars[pvIdx] += eps;
+                    delta += eps;
+
+                    // calculate the residual with the deflected primary variables
+                    partialDeriv = globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                           fvGeometry,
+                                                                                           scv,
+                                                                                           curElemVolVars,
+                                                                                           elemBcTypes,
+                                                                                           elemFluxVarsCache);
+                }
+                else
+                {
+                    // we are using backward differences, i.e. we don't need
+                    // to calculate f(x + \epsilon) and we can recycle the
+                    // (already calculated) residual f(x)
+                    partialDeriv = otherResidual;
+                }
+
+
+                if (numericDifferenceMethod_ <= 0)
+                {
+                    // we are not using forward differences, i.e. we
+                    // need to calculate f(x - \epsilon)
+
+                    // deflect the primary variables
+                    otherPriVars[pvIdx] -= 2*eps;
+                    delta += eps;
+
+                    // calculate the residual with the deflected primary variables
+                    partialDeriv -= globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                            fvGeometry,
+                                                                                            scv,
+                                                                                            curElemVolVars,
+                                                                                            elemBcTypes,
+                                                                                            elemFluxVarsCache);
+                }
+                else
+                {
+                    // we are using forward differences, i.e. we don't need to
+                    // calculate f(x - \epsilon) and we can recycle the
+                    // (already calculated) residual f(x)
+                    partialDeriv -= otherResidual;
+                }
+
+                // divide difference in residuals by the magnitude of the
+                // deflections between the two function evaluation
+                partialDeriv /= delta;
+
+                // restore the original state of the element solution vector
+                otherPriVars = originalOtherPriVars;
+
+                // update the global jacobian matrix (coupling block)
+                this->updateGlobalJacobian_(couplingMatrix, scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.dofIndex()]);
             }
         }
     }
