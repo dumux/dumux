@@ -234,7 +234,64 @@ protected:
                      JacobianMatrix& matrix,
                      JacobianMatrixCoupling& couplingMatrix,
                      SolutionVector& residual)
-    {}
+    {
+        constexpr auto numEq = GET_PROP_VALUE(T, NumEq);
+
+        // the element solution
+        auto curElemSol = this->problem_().model().elementSolution(element, this->problem_().model().curSol());
+
+        // calculate the actual element residual
+        this->localResidual().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+        this->residual_ = this->localResidual().residual();
+
+        // residual[this->globalI_] = this->localResidual().residual(0);
+
+        this->problem_().model().updatePVWeights(fvGeometry);
+
+        // calculation of the derivatives
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            // dof index and corresponding actual pri vars
+            const auto dofIdx = scv.dofIndex();
+            auto& curVolVars = this->getCurVolVars(curElemVolVars, scv);
+            VolumeVariables origVolVars(curVolVars);
+
+            // add precalculated residual for this scv into the global container
+            residual[dofIdx] += this->residual_[scv.index()];
+
+            // calculate derivatives w.r.t to the privars at the dof at hand
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                this->evalPartialDerivative_(matrix,
+                                       element,
+                                       fvGeometry,
+                                       prevElemVolVars,
+                                       curElemVolVars,
+                                       curElemSol,
+                                       scv,
+                                       elemBcTypes,
+                                       elemFluxVarsCache,
+                                       pvIdx);
+
+                // restore the original state of the scv's volume variables
+                curVolVars = origVolVars;
+
+                // restore the original element solution
+                curElemSol[scv.index()][pvIdx] = this->problem_().model().curSol()[scv.dofIndex()][pvIdx];
+            }
+
+            // TODO: what if we have an extended source stencil????
+
+            //TODO: is otherElement in this method required? is otherResidual correct?
+            // evalPartialDerivativeCoupling_(element,
+            //                                fvGeometry,
+            //                                curElemVolVars,
+            //                                elemFluxVarsCache,
+            //                                elemBcTypes,
+            //                                couplingMatrix,
+            //                                residual);
+        }
+    }
 
     /*!
      * \brief Returns a reference to the problem.
