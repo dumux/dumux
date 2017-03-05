@@ -256,18 +256,22 @@ protected:
 
         for (const auto& element : elements(problem_().bulkGridView()))
         {
-            const auto& stencil = problem_().couplingManager().stencil(element);
             const auto& couplingStencil = problem_().couplingManager().couplingStencil(element);
 
-            for (unsigned int scvIdx = 0; scvIdx < element.subEntities(bulkDim); ++scvIdx)
+            for (unsigned int vIdx = 0; vIdx < element.subEntities(bulkDim); ++vIdx)
             {
-                auto globalI = problem_().model().bulkVertexMapper().subIndex(element, scvIdx, bulkDim);
-
-                for (auto&& globalJ : stencil)
+                const auto globalI = problem_().model().bulkVertexMapper().subIndex(element, vIdx, bulkDim);
+                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(bulkDim); ++vIdx2)
+                {
+                    const auto globalJ = problem_().model().bulkVertexMapper().subIndex(element, vIdx2, bulkDim);
                     bulkPattern.add(globalI, globalJ);
+                    bulkPattern.add(globalJ, globalI);
+                }
 
                 for (auto&& globalJ : couplingStencil)
                     bulkCouplingPattern.add(globalI, globalJ);
+
+                //TODO: additionalDofDependencies
             }
         }
 
@@ -286,18 +290,22 @@ protected:
 
         for (const auto& element : elements(problem_().lowDimGridView()))
         {
-            const auto& stencil = problem_().couplingManager().stencil(element);
             const auto& couplingStencil = problem_().couplingManager().couplingStencil(element);
 
-            for (unsigned int scvIdx = 0; scvIdx < element.subEntities(lowDimDim); ++scvIdx)
+            for (unsigned int vIdx = 0; vIdx < element.subEntities(lowDimDim); ++vIdx)
             {
-                auto globalI = problem_().model().lowDimVertexMapper().subIndex(element, scvIdx, lowDimDim);
-
-                for (auto&& globalJ : stencil)
+                const auto globalI = problem_().model().lowDimVertexMapper().subIndex(element, vIdx, lowDimDim);
+                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(lowDimDim); ++vIdx2)
+                {
+                    const auto globalJ = problem_().model().lowDimVertexMapper().subIndex(element, vIdx2, lowDimDim);
                     lowDimPattern.add(globalI, globalJ);
+                    lowDimPattern.add(globalJ, globalI);
+                }
 
                 for (auto&& globalJ : couplingStencil)
                     lowDimCouplingPattern.add(globalI, globalJ);
+
+                //TODO: additionalDofDependencies
             }
         }
 
