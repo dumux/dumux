@@ -65,13 +65,14 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVaria
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables); // TODO ?
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
 
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+//    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
 //    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
@@ -108,11 +109,11 @@ public:
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
-//        CellCenterPrimaryVariables flux(0.0);
-//
-//        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
-//        flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);
-//        return flux;
+        CellCenterPrimaryVariables flux(0.0);
+
+        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
+        flux += diffusiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, scvf);
+        return flux;
     }
 
 private:
@@ -123,53 +124,60 @@ private:
                                                           const GlobalFaceVars& globalFaceVars,
                                                           const SubControlVolumeFace &scvf)
     {
-//        CellCenterPrimaryVariables flux(0.0);
-//
-//        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-//        const auto& insideVolVars = elemVolVars[insideScv];
-//
-//        // if we are on an inflow/outflow boundary, use the volVars of the element itself
-//        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
-//        bool isOutflow = false;
-//        if(scvf.boundary())
-//        {
-//            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-//                if(bcTypes.isOutflow(momentumBalanceIdx))
-//                    isOutflow = true;
-//        }
-//
-//        const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
-//
-//        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-//
-//        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
-//        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-//        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-//
-//        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
-//        const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
-//        const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
-//
-//        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-//        {
-//            // get equation index
-//            const auto eqIdx = conti0EqIdx + compIdx;
-//            if (eqIdx == replaceCompEqIdx)
-//                continue;
-//
-//            const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(phaseIdx, compIdx) : upstreamVolVars.massFraction(phaseIdx, compIdx);
-//            const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(phaseIdx, compIdx) : downstreamVolVars.massFraction(phaseIdx, compIdx);
-//
-//            flux[eqIdx] = (upWindWeight * upstreamDensity * upstreamFraction +
-//                          (1.0 - upWindWeight) * downstreamDensity * downstreamFraction)
-//                          * velocity;
-//        }
-//        // in case one balance is substituted by the total mass balance
-//        if (replaceCompEqIdx < numComponents)
-//            flux[replaceCompEqIdx] = (upWindWeight * upstreamDensity + (1.0 - upWindWeight) * downstreamDensity) * velocity;
-//
-//        flux *= scvf.area() * sign(scvf.outerNormalScalar());
-//        return flux;
+        CellCenterPrimaryVariables flux(0.0);
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+
+        // if we are on an inflow/outflow boundary, use the volVars of the element itself
+        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
+        bool isOutflow = false;
+        if(scvf.boundary())
+        {
+            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                if(bcTypes.isOutflow(momentumBalanceIdx))
+                    isOutflow = true;
+        }
+
+        const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+
+        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
+        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+
+        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+        const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
+        const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
+        const Scalar upstreamEnthalpy = upstreamVolVars.enthalpy();
+        const Scalar downstreamEnthalpy = downstreamVolVars.enthalpy();
+
+//        flux[massBalanceIdx] = TODO??
+        flux[energyBalanceIdx] = (upWindWeight * upstreamDensity * upstreamEnthalpy
+                                 + (1.0 - upWindWeight) * downstreamDensity * downstreamEnthalpy)
+                                 * velocity;
+
+        flux *= scvf.area() * sign(scvf.outerNormalScalar());
+        return flux;
+    }
+
+    CellCenterPrimaryVariables diffusiveFluxForCellCenter_(const FluxVariables& fluxVars)
+    {
+        CellCenterPrimaryVariables flux(0.0);
+
+        // compute diffusive flux --> no diffusive flux (only 1 component)
+
+        // compute conductive flux
+        computeConductiveFlux_(flux, fluxVars);
+
+        return flux;
+    }
+
+    void computeConductiveFlux_(CellCenterPrimaryVariables& flux, FluxVariables& fluxVars)
+    {
+        flux[energyBalanceIdx] -= fluxVars.temperatureGrad() * fluxVars.face().normal
+                   * (fluxVars.thermalConductivity() + fluxVars.thermalEddyConductivity());
     }
 };
 
