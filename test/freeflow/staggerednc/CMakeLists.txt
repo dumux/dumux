@@ -12,7 +12,8 @@ add_dumux_test(test_purediffusion test_channel test_channel.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-purediffusion.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_purediffusion-00013.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_purediffusion.input")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_purediffusion.input"
+                 --zeroThreshold {"velocity_liquid \(m/s\)":1e-22})
 
 add_dumux_test(test_advection test_channel test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
