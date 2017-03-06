@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief Provides a grid creator which a regular grid made of
- *        quadrilaterals.
+ * \brief Provides a grid creator for a piece of cake grid
  */
 
 #ifndef DUMUX_CAKE_GRID_CREATOR_HH
@@ -43,11 +42,10 @@ NEW_PROP_TAG(Grid);
 }
 
 /*!
- * \brief Provides a grid creator which a regular grid made of
- *        quadrilaterals.
+ * \brief Provides a grid creator with a method for creating creating vectors
+ *        with polar Coordinates and one for creating a cartesian grid from
+ *        these polar coordinates.
  *
- * A quadrilateral is a line segment in 1D, a rectangle in 2D and a
- * cube in 3D.
  */
 template <class TypeTag>
 class CakeGridCreator
@@ -68,7 +66,7 @@ class CakeGridCreator
 
 public:
     /*!
-     * \brief Create the Grid
+     * \brief Make the grid.
      */
     static void makeGrid()
     {
@@ -100,12 +98,8 @@ public:
     * - Axial : min/max value for axial coordinate
     *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
     *   the radial, angular and axial direction are oriented
-    * - Cells0 : number of cells array for x-coordinate
-    * - Cells1 : number of cells array for y-coordinate
-    * - Cells2 : number of cells array for z-coordinate
-    * - Grading0 : grading factor array for x-coordinate
-    * - Grading1 : grading factor array for y-coordinate
-    * - Grading2 : grading factor array for z-coordinate
+    * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 3 specifies x, y or z
+    * - Grading : grading factor array for x-coordinate (Same here)
     * - Verbosity : whether the grid construction should output to standard out
     *
     * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
@@ -323,14 +317,12 @@ public:
                         localPositions[i] += lower;
                     }
 
-
                     for (unsigned int i = 0; i < localPositions.size(); ++i)
                     {
                         globalPositions[dimIdx].push_back(localPositions[i]);
                     }
                 }
                 globalPositions[dimIdx].push_back(positions[dimIdx].back());
-
             }
 
             polarCoordinates[0] = globalPositions[indices[0]];
@@ -361,7 +353,6 @@ public:
      */
     static std::shared_ptr<Grid> createCakeGrid(std::array<ScalarVector, dim> &polarCoordinates, Dune::FieldVector<int, dim> &indices)
     {
-
         vector dR = polarCoordinates[0];
         vector dA = polarCoordinates[1];
 
@@ -380,11 +371,13 @@ public:
 
             vector dZ = polarCoordinates[2];
 
-            for (int j = 0; j <= dA.size() - 1; ++j){
-                for (int l = 0; l <= dZ.size() - 1; ++l){
-                    for (int i = 0; i <= dR.size()- 1; ++i){
+            for (int j = 0; j <= dA.size() - 1; ++j)
+            {
+                for (int l = 0; l <= dZ.size() - 1; ++l)
+                {
+                    for (int i = 0; i <= dR.size()- 1; ++i)
+                    {
                         // Get radius for the well (= a hole) in the center
-
                         Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
 
                         // transform into cartesian Coordinates
@@ -394,10 +387,8 @@ public:
                         v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
                         std::cout << "Coordinates of : " << v[0] << " " << v[1] << " " << v[2] << std::endl;
                         gf.insertVertex(v);
-
                     }
                 }
-
             }
 
             std::cout << "Filled node vector" << std::endl;
@@ -420,7 +411,8 @@ public:
                     }
                     else {
                         // assign nodes for 360°-cake
-                        for (int i = 0; i < dR.size() - 1; ++i){
+                        for (int i = 0; i < dR.size() - 1; ++i)
+                        {
                             // z = z + 1;
                             std::vector<unsigned int> vid({z, z+1, t, t+1, z+dR.size(), z+dR.size()+1, t+dR.size(), t+dR.size()+1});
                             for (int i = 0; i < vid.size(); ++i)
@@ -430,12 +422,11 @@ public:
                             gf.insertElement(type, vid);
                             t = t + 1;
                             z = z+1;
-                            }
+                        }
                         t = t + 1;
                         z = z+1;
-                        }
-                        std::cout << "assign nodes 360 ends..." << std::endl;
-
+                    }
+                    std::cout << "assign nodes 360 ends..." << std::endl;
                 }
 
                 z = z + dR.size();
@@ -480,9 +471,11 @@ public:
                         z = z+1;
 
                     }
-                    else {
+                    else
+                    {
                         // assign nodes for 360°-cake
-                        for (int i = 0; i < dR.size() - 1; ++i){
+                        for (int i = 0; i < dR.size() - 1; ++i)
+                        {
                             // z = z + 1;
                             std::vector<unsigned int> vid({z, z+1, t, t+1});
                             for (int i = 0; i < vid.size(); ++i)
@@ -492,10 +485,10 @@ public:
                             gf.insertElement(type, vid);
                             t = t + 1;
                             z = z+1;
-                            }
+                        }
                         t = t + 1;
                         z = z+1;
-                        }
+                    }
                         std::cout << "assign nodes 360 ends..." << std::endl;
             }
         }

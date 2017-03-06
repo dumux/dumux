@@ -17,18 +17,18 @@
 /*!
  * \file
  *
- * \brief Test for gmsh interface of the grid creator
+ * \brief Test for the cake grid creator
  */
 #include "config.h"
 #include <iostream>
 #include <dune/common/parametertreeparser.hh>
-#include <dune/geometry/referenceelements.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/grid/common/mcmgmapper.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/geometry/referenceelements.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/vtk.hh>
 #include <dumux/common/start.hh>
-#include <dumux/io/cakegridcreator.hh>
 #include <dumux/common/basicproperties.hh>
+#include <dumux/io/cakegridcreator.hh>
 
 namespace Dumux
 {
@@ -41,8 +41,6 @@ NEW_TYPE_TAG(GridCreatorCakeTest, INHERITS_FROM(NumericModel));
 SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
 SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::UGGrid<3>);
-#else
-SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::YaspGrid<3>);
 #endif
 }
 }
