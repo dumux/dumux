@@ -113,23 +113,13 @@ public:
                 rho += volVars.density(phaseIdx)*shapeValues[scv.index()][0];
 
             // the global shape function gradient
-            DimVector gradI;
-            jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
-
-            gradI *= volVars.pressure(phaseIdx);
-            gradP += gradI;
+            DimVector gradN;
+            jacInvT.mv(shapeJacobian[scv.index()][0], gradN);
+            gradP.axpy(volVars.pressure(phaseIdx), gradN);
         }
+
         if (enableGravity)
-        {
-            // gravitational acceleration
-            DimVector g(problem.gravityAtPos(scvf.center()));
-
-            // turn gravity into a force
-            g *= rho;
-
-            // subtract from pressure gradient
-            gradP -= g;
-        }
+            gradP.axpy(-rho, problem.gravityAtPos(scvf.center()));
 
         // apply the permeability and return the flux
         auto KGradP = applyPermeability_(K, gradP);
@@ -137,15 +127,14 @@ public:
     }
 
 private:
-    static DimVector applyPermeability_(const DimWorldMatrix& K, const DimVector& gradI)
+    inline static DimVector applyPermeability_(const DimWorldMatrix& K, const DimVector& gradI)
     {
         DimVector result(0.0);
         K.mv(gradI, result);
-
         return result;
     }
 
-    static DimVector applyPermeability_(const Scalar k, const DimVector& gradI)
+    inline static DimVector applyPermeability_(const Scalar k, const DimVector& gradI)
     {
         DimVector result(gradI);
         result *= k;
