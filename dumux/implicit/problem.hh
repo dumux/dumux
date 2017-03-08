@@ -539,33 +539,6 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial phase state inside a control volume.
-     *
-     * \param vertex The vertex
-     * \param vIdxGlobal The global index of the vertex
-     * \param globalPos The global position
-     */
-    int initialPhasePresence(const Vertex &vertex,
-                             int &vIdxGlobal,
-                             const GlobalPosition &globalPos) const
-    {
-        // forward to generic interface
-        return asImp_().initialPhasePresenceAtPos(globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide a initialPhasePresenceAtPos() method.");
-        return 0;
-    }
-
-    /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
      *
      * This means the factor by which a lower-dimensional (1D or 2D)

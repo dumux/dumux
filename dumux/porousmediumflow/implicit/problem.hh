@@ -86,6 +86,34 @@ public:
      */
     // \{
 
+     /*!
+     * \brief Evaluate the initial phase state inside a control volume.
+     *
+     * \param element The element
+     * \param fvGeometry The fvGeometry
+     * \param scvIdx The scvIdx
+     */
+    int initialPhasePresence(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
+    {
+        // forward to generic interface
+        return asImp_().initialPhasePresenceAtPos(fvGeometry.subContVol[scvIdx].global);
+    }
+
+     /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param globalPos The global position
+     */
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide a initialPhasePresenceAtPos() method.");
+        return 0;
+    }
+
+
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
      *
