@@ -87,8 +87,8 @@ public:
      * \brief Create the Grid.
      *        Specialization for bulk dim = 2 and lowDim dim = 1
      */
-    template<class T = TypeTag>
-    static typename std::enable_if<bulkDim == 2 && lowDimDim == 1>::type
+    template<int bd = bulkDim, int ld = lowDimDim>
+    static typename std::enable_if<bd == 2 && ld == 1>::type
     makeGrid()
     {
         const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
@@ -201,36 +201,31 @@ public:
 
                     // get the connected vertex indices
                     std::vector<LowDimIndexType> elemVertexIndices(2);
+                    std::vector<BulkIndexType> originalVertexIndices(2);
 
-                    const auto vIdx1 = elemData[3 + noOfTags];
-                    const auto vIdx2 = elemData[3 + noOfTags + 1];
+                    originalVertexIndices[0] = elemData[3 + noOfTags];
+                    originalVertexIndices[1] = elemData[3 + noOfTags + 1];
 
-                    elemVertexIndices[0] = findIndexInVector_(lowDimVertexIndices, vIdx1);
-                    elemVertexIndices[1] = findIndexInVector_(lowDimVertexIndices, vIdx2);
+                    elemVertexIndices[0] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[0]);
+                    elemVertexIndices[1] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[1]);
 
-                    if (elemVertexIndices[0] == invalidIndex)
+                    for (unsigned int i = 0; i < 2; ++i)
                     {
-                        const auto v1 = bulkVertices[vIdx1-1];
+                        if (elemVertexIndices[i] == invalidIndex)
+                        {
+                            const auto vIdx = originalVertexIndices[i];
+                            const auto v = bulkVertices[vIdx-1];
 
-                        lowDimVertices.push_back(v1);
-                        lowDimVertexIndices.push_back(vIdx1);
-                        lowDimFactory.insertVertex(v1);
+                            lowDimVertices.push_back(v);
+                            lowDimVertexIndices.push_back(vIdx);
+                            lowDimFactory.insertVertex(v);
 
-                        elemVertexIndices[0] = lowDimVertices.size()-1;
-                    }
-                    if (elemVertexIndices[1] == invalidIndex)
-                    {
-                        const auto v2 = bulkVertices[vIdx2-1];
-
-                        lowDimVertices.push_back(v2);
-                        lowDimVertexIndices.push_back(vIdx2);
-                        lowDimFactory.insertVertex(v2);
-
-                        elemVertexIndices[1] = lowDimVertices.size()-1;
+                            elemVertexIndices[i] = lowDimVertices.size()-1;
+                        }
                     }
 
                     // store the low dim elements' vertices
-                    lowDimElemVertices.push_back(std::vector<BulkIndexType>({vIdx1, vIdx2}));
+                    lowDimElemVertices.push_back(originalVertexIndices);
 
                     // insert element into the factory
                     lowDimFactory.insertElement(gt, elemVertexIndices);
@@ -263,9 +258,7 @@ public:
                         lowDimCouplingMap[lowDimElemIdx].push_back(bulkElementCounter);
 
                     // subtract 1 from the element indices (gmsh starts at index 1)
-                    elemVertexIndices[0] -= 1;
-                    elemVertexIndices[1] -= 1;
-                    elemVertexIndices[2] -= 1;
+                    std::for_each(elemVertexIndices.begin(), elemVertexIndices.end(), [] (auto& i) { i--; });
 
                     // insert bulk element into the factory
                     bulkFactory.insertElement(gt, elemVertexIndices);
@@ -300,10 +293,7 @@ public:
                         lowDimCouplingMap[lowDimElemIdx].push_back(bulkElementCounter);
 
                     // subtract 1 from the element indices (gmsh starts at index 1)
-                    elemVertexIndices[0] -= 1;
-                    elemVertexIndices[1] -= 1;
-                    elemVertexIndices[2] -= 1;
-                    elemVertexIndices[3] -= 1;
+                    std::for_each(elemVertexIndices.begin(), elemVertexIndices.end(), [] (auto& i) { i--; });
 
                     // insert bulk element into the factory
                     bulkFactory.insertElement(gt, elemVertexIndices);
@@ -324,6 +314,222 @@ public:
         std::cout << bulkElementCounter << " bulk elements and "
                   << lowDimElementCounter << " low dim elements have been created." << std::endl;
 
+
+        bulkGridPtr_() = std::shared_ptr<BulkGrid>(bulkFactory.createGrid());
+        lowDimGridPtr_() = std::shared_ptr<LowDimGrid>(lowDimFactory.createGrid());
+
+        // set up the map from insertion to actual global indices for bulk elements
+        BulkElementMapper elementMapper(bulkGrid().leafGridView());
+        auto& map = bulkInsertionToGlobalIdxMap_();
+        map.resize(bulkElementCounter);
+        for (const auto& element : elements(bulkGrid().leafGridView()))
+            map[bulkFactory.insertionIndex(element)] = elementMapper.index(element);
+    }
+
+    /*!
+     * \brief Create the Grid.
+     *        Specialization for bulk dim = 3 and lowDim dim = 2
+     */
+    template<int bd = bulkDim, int ld = lowDimDim>
+    static typename std::enable_if<bd == 3 && ld == 2>::type
+    makeGrid()
+    {
+        const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
+
+        // set up the grid factories
+        auto& bulkFactory = bulkFactory_();
+        auto& lowDimFactory = lowDimFactory_();
+
+        // open the mesh file
+        std::cout << "Opening " << fileName << std::endl;
+        std::ifstream mshFile(fileName.c_str());
+        if (mshFile.fail())
+            DUNE_THROW(Dune::InvalidStateException, "Could not open the given .msh file. Make sure it exists");
+        if (getFileExtension_(fileName) != "msh")
+            DUNE_THROW(Dune::InvalidStateException, "Please provide a .msh file for this grid creator");
+
+        // read file until we get to the list of nodes
+        std::string line;
+        std::getline(mshFile, line);
+        while (line.compare(0, 6, "$Nodes") != 0)
+            std::getline(mshFile, line);
+
+        // get total number of nodes
+        std::getline(mshFile, line);
+        const auto numVertices = stringToNumber_(line);
+
+        // read vertices line by line
+        std::getline(mshFile, line);
+        std::vector<GlobalPosition> bulkVertices(numVertices);
+        unsigned int vertexCounter = 0;
+        while (line.compare(0, 9, "$EndNodes") != 0)
+        {
+            // read the coordinates of the vertex
+            std::string buf;
+            std::stringstream stream(line);
+
+            // drop first entry in line
+            stream >> buf;
+            std::vector<std::string> coords;
+            while (stream >> buf)
+                coords.push_back(buf);
+
+            // "create" a vertex
+            GlobalPosition v;
+            for (int i = 0; i < dimWorld; ++i)
+                v[i] = stringToNumber_(coords[i]);
+
+            // insert vertex into container and the bulk grid factory
+            bulkVertices[vertexCounter] = v;
+            bulkFactory.insertVertex(v);
+            std::getline(mshFile, line);
+            vertexCounter++;
+        }
+
+        // we should always find as many vertices as the mesh file states
+        assert(vertexCounter == numVertices);
+
+        // read file until we get to the list of elements
+        while(line.compare(0, 9, "$Elements") != 0)
+            std::getline(mshFile, line);
+
+        // get total number of elements
+        std::getline(mshFile, line);
+        const auto numElements = stringToNumber_(line);
+
+        // while inserting the low dim vertices, keep track of indices that have
+        // been inserted already and element vertex indices in "original" indexing
+        std::vector<GlobalPosition> lowDimVertices;
+        std::vector<LowDimIndexType> lowDimVertexIndices;
+        std::vector<std::vector<BulkIndexType>> lowDimElemVertices;
+
+        lowDimVertices.reserve(numVertices);
+        lowDimVertexIndices.reserve(numVertices);
+        lowDimElemVertices.reserve(numElements);
+
+        // the coupling data container lowDim -> bulk
+        auto& lowDimCouplingMap = lowDimCouplingElements_();
+
+        // read in the elements line by line
+        std::getline(mshFile, line);
+        BulkIndexType bulkElementCounter = 0;
+        LowDimIndexType lowDimElementCounter = 0;
+        while (line.compare(0, 12, "$EndElements") != 0)
+        {
+            // read the data of this element
+            std::string buf;
+            std::stringstream stream(line);
+            std::vector<unsigned int> elemData;
+            while (stream >> buf)
+                elemData.push_back(stringToNumber_(buf));
+
+            // get number of gmsh tags for this element
+            const auto noOfTags = elemData[2];
+
+            // get element type, make container of indexvertices and insert element
+            const auto elemType = elemData[1];
+
+            switch (elemType)
+            {
+                case 15: // points
+                {
+                    // do nothing for points
+                    break;
+                }
+
+                case 1: // lines
+                {
+                    // do nothing for lines
+                    break;
+                }
+
+                case 2: // 3-node triangle
+                {
+                    // the geometry type for lines
+                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::simplex, 2);
+
+                    // get the connected vertex indices
+                    std::vector<LowDimIndexType> elemVertexIndices(3);
+                    std::vector<BulkIndexType> originalVertexIndices(3);
+
+                    originalVertexIndices[0] = elemData[3 + noOfTags];
+                    originalVertexIndices[1] = elemData[3 + noOfTags + 1];
+                    originalVertexIndices[2] = elemData[3 + noOfTags + 2];
+
+                    elemVertexIndices[0] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[0]);
+                    elemVertexIndices[1] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[1]);
+                    elemVertexIndices[2] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[2]);
+
+                    for (unsigned int i = 0; i < 3; ++i)
+                    {
+                        if (elemVertexIndices[i] == invalidIndex)
+                        {
+                            const auto vIdx = originalVertexIndices[i];
+                            const auto v = bulkVertices[vIdx-1];
+
+                            lowDimVertices.push_back(v);
+                            lowDimVertexIndices.push_back(vIdx);
+                            lowDimFactory.insertVertex(v);
+
+                            elemVertexIndices[i] = lowDimVertices.size()-1;
+                        }
+                    }
+
+                    // store the low dim elements' vertices
+                    lowDimElemVertices.push_back(originalVertexIndices);
+
+                    // insert element into the factory
+                    lowDimFactory.insertElement(gt, elemVertexIndices);
+
+                    // increase low dim element counter
+                    lowDimElementCounter++;
+                    break;
+                }
+
+                case 4: // 4-node tetrahedron
+                {
+                    // the geometry type for triangles
+                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::simplex, 3);
+
+                    // we know that the low dim elements have been read already
+                    if (lowDimCouplingMap.empty())
+                        lowDimCouplingMap.resize(lowDimElementCounter);
+
+                    // get the vertex indices of this bulk element
+                    std::vector<BulkIndexType> elemVertexIndices(4);
+                    elemVertexIndices[0] = elemData[3 + noOfTags];
+                    elemVertexIndices[1] = elemData[3 + noOfTags + 1];
+                    elemVertexIndices[2] = elemData[3 + noOfTags + 2];
+                    elemVertexIndices[3] = elemData[3 + noOfTags + 3];
+
+                    // get the insertion indices of the low dim elements connected to this element
+                    const auto lowDimElemIndices = obtainLowDimConnections_(lowDimElemVertices, elemVertexIndices);
+
+                    // if we found some, insert the connections in the map
+                    for (auto lowDimElemIdx : lowDimElemIndices)
+                        lowDimCouplingMap[lowDimElemIdx].push_back(bulkElementCounter);
+
+                    // subtract 1 from the element indices (gmsh starts at index 1)
+                    std::for_each(elemVertexIndices.begin(), elemVertexIndices.end(), [] (auto& i) { i--; });
+
+                    // insert bulk element into the factory
+                    bulkFactory.insertElement(gt, elemVertexIndices);
+
+                    // increase bulk element counter
+                    bulkElementCounter++;
+                    break;
+                }
+
+                default:
+                    DUNE_THROW(Dune::NotImplemented, "GmshDualFacetGridCreator for given element type");
+            }
+
+            // get next line
+            std::getline(mshFile, line);
+        }
+
+        std::cout << bulkElementCounter << " bulk elements and "
+                  << lowDimElementCounter << " low dim elements have been created." << std::endl;
 
         bulkGridPtr_() = std::shared_ptr<BulkGrid>(bulkFactory.createGrid());
         lowDimGridPtr_() = std::shared_ptr<LowDimGrid>(lowDimFactory.createGrid());
