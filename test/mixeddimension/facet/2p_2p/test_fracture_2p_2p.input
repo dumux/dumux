@@ -1,0 +1,36 @@
+[TimeManager]
+DtInitial = 1e-2 # [s]
+TEnd = 10000 # [s]
+DtInitialBulkProblem = 1 # [s]
+DtInitialLowDimProblem = 1 # [s]
+EpisodeTime = 10000 # [s]
+
+[Grid]
+File = ./grids/domain.msh
+
+[Problem]
+Name = test_2pfracture
+
+[MixedDimension]
+UseIterativeSolver = False
+
+[IterativeAlgorithm]
+MaxIterations = 100
+Tolerance = 1.0e-8
+Verbose = 1
+
+[SpatialParams]
+FractureAperture = 1e-2 # [m]
+FracturePermeability = 5e-9 # [m^2]
+MatrixPermeability = 1e-13 # [m^2]
+
+[Mpfa]
+Q = 0.33
+Xi = 0.66
+
+[Vtk]
+AddVelocity = False
+
+[Newton]
+MaxRelativeShift = 1e-5
+MaxSteps = 20
