@@ -147,46 +147,29 @@ public:
     {
         ParentType::init(problem);
 
-        unsigned numDofs = this->numDofs();
-
-        staticDat_.resize(numDofs);
+        staticDat_.resize(this->numDofs());
 
         setSwitched_(false);
 
-        // check, if velocity output can be used (works only for cubes so far)
+        FVElementGeometry fvGeometry;
+
         for (const auto& element : elements(this->gridView_()))
         {
-            if (!isBox) // i.e. cell-centered discretization
+            // deal with the current element
+            fvGeometry.update(this->gridView_(), element);
+
+            // loop over all element vertices, i.e. sub control volumes
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
-                int eIdxGlobal = this->dofMapper().index(element);
-                const GlobalPosition &globalPos = element.geometry().center();
+                // get the global index of the degree of freedom
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 // initialize phase presence
-                staticDat_[eIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(*(this->gridView_().template begin<dim>()),
-                                                            eIdxGlobal, globalPos);
-                staticDat_[eIdxGlobal].wasSwitched = false;
+                staticDat_[dofIdxGlobal].phasePresence = this->problem_().initialPhasePresence(element, fvGeometry, scvIdx);
 
-                staticDat_[eIdxGlobal].oldPhasePresence
-                    = staticDat_[eIdxGlobal].phasePresence;
-            }
-        }
+                staticDat_[dofIdxGlobal].wasSwitched = false;
 
-        if (isBox) // i.e. vertex-centered discretization
-        {
-            for (const auto& vertex : vertices(this->gridView_()))
-            {
-                int vIdxGlobal = this->dofMapper().index(vertex);
-                const GlobalPosition &globalPos = vertex.geometry().corner(0);
-
-                // initialize phase presence
-                staticDat_[vIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(vertex, vIdxGlobal,
-                                                            globalPos);
-                staticDat_[vIdxGlobal].wasSwitched = false;
-
-                staticDat_[vIdxGlobal].oldPhasePresence
-                    = staticDat_[vIdxGlobal].phasePresence;
+                staticDat_[dofIdxGlobal].oldPhasePresence = staticDat_[dofIdxGlobal].phasePresence;
             }
         }
     }
