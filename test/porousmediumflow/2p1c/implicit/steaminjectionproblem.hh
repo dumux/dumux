@@ -249,13 +249,9 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      *
-     * \param vert The vertex
-     * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
-                             int &globalIdx,
-                             const GlobalPosition &globalPos) const
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
     {
         return wPhaseOnly;
     }
