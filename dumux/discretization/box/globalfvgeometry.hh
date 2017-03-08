@@ -141,8 +141,8 @@ public:
 
             // construct the sub control volume faces
             unsigned int scvfLocalIdx = 0;
-            scvfs_[eIdx].resize(element.subEntities(1));
-            for (; scvfLocalIdx < element.subEntities(1); ++scvfLocalIdx)
+            scvfs_[eIdx].resize(element.subEntities(dim-1));
+            for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
                 std::vector<IndexType> localScvIndices({static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
