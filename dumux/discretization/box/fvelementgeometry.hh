@@ -299,7 +299,7 @@ private:
         }
 
         // construct the sub control volume faces
-        const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(1);
+        const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(dim-1);
         scvfs_.resize(numInnerScvf);
 
         unsigned int scvfLocalIdx = 0;
