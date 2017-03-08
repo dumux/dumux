@@ -39,6 +39,7 @@ namespace Dumux
 //! forward declaration of properties
 namespace Properties
 {
+NEW_PROP_TAG(EffectiveDiffusivityModel);
 NEW_PROP_TAG(ThermalConductivityModel);
 };
 
@@ -104,7 +105,7 @@ class TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>
 {
 public:
 
-    //! return void lambda here
+    //! return advection tensor/scalar lambda here
     static auto getAdvectionLambda()
     {
         return [] (const auto& problem,
@@ -115,8 +116,28 @@ public:
                { return volVars.permeability(); };
     }
 
-    //! return void lambda here
-    static auto getDiffusionLambda(unsigned int phaseIdx, unsigned int compIdx)
+    //! return diffusion tensor/scalar lambda here (single-phasic case)
+    template<class T = TypeTag>
+    static auto getDiffusionLambda(unsigned int phaseIdx,
+                                   unsigned int compIdx,
+                                   typename std::enable_if<(GET_PROP_VALUE(T, NumPhases) == 1), void>::type* dummy = nullptr)
+    {
+        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+        return [phaseIdx, compIdx] (const auto& problem,
+                                    const auto& element,
+                                    const auto& volVars,
+                                    const auto& fvGeometry,
+                                    const auto& scv)
+               { return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
+                                                           volVars.saturation(phaseIdx),
+                                                           volVars.diffusionCoefficient(phaseIdx, compIdx)); };
+    }
+
+    //! return diffusion tensor/scalar lambda here (multi-phasic case)
+    template<class T = TypeTag>
+    static auto getDiffusionLambda(unsigned int phaseIdx,
+                                   unsigned int compIdx,
+                                   typename std::enable_if<(GET_PROP_VALUE(T, NumPhases) > 1), void>::type* dummy = nullptr)
     {
         return [phaseIdx, compIdx] (const auto& problem,
                                     const auto& element,
@@ -126,7 +147,7 @@ public:
                { return volVars.diffusionCoefficient(phaseIdx, compIdx); };
     }
 
-    //! return void lambda here
+    //! return fourier coefficient/tensor lambda here
     static auto getHeatConductionLambda()
     {
         using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);

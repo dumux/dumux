@@ -192,7 +192,8 @@ public:
 
 
         // get the scaling factor for the effective diffusive fluxes
-        const auto effFactor = Implementation::computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+        const auto effFactor = numPhases == 1 ? 1.0 :
+                               Implementation::computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
 
         // if factor is zero, the flux will end up zero anyway
         if (effFactor == 0.0)

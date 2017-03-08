@@ -28,6 +28,7 @@
 
 #include <dumux/discretization/cellcentered/mpfa/fickslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
+#include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
 namespace Dumux
 {
@@ -155,7 +156,8 @@ public:
         const bool isInteriorBoundary = fluxVarsCache.isInteriorBoundary();
 
         // get the scaling factor for the effective diffusive fluxes
-        const auto effFactor = computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+        const auto effFactor = numPhases == 1 ? 1.0 :
+                               computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
 
         // if factor is zero, the flux will end up zero anyway
         if (effFactor == 0.0)
@@ -169,7 +171,7 @@ public:
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
         // calculate the density at the interface
-        const auto rho = interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
+        const auto rho = interpolateDensity(problem, element, fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
 
         // calculate Tij*xj
         Scalar flux(0.0);
@@ -185,7 +187,9 @@ public:
     }
 
     template<typename GetRhoFunction>
-    static Scalar interpolateDensity(const FVElementGeometry& fvGeometry,
+    static Scalar interpolateDensity(const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
                                      const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
                                      const FluxVariablesCache& fluxVarsCache,
@@ -210,9 +214,10 @@ public:
     }
 
     //! Here we want to calculate the factors with which the diffusion coefficient has to be
-    //! scaled to get the effective diffusivity. For this we use the effective diffusivity with
-    //! a diffusion coefficient of 1.0 as input. Then we scale the transmissibilites during flux
-    //! calculation (above) with the harmonic average of the two factors
+    //! scaled to get the effective diffusivity (for numPhases > 1). For this we use the effective
+    //! diffusivity with a diffusion coefficient of 1.0 as input. Then we scale the transmissibilites
+    //! during flux calculation (above) with the harmonic average of the two factors. We need to do this
+    //! as the mpfa cannot handle diffusion coefficients of zero in the local equation systems.
     static Scalar computeEffectivityFactor(const FVElementGeometry& fvGeometry,
                                            const ElementVolumeVariables& elemVolVars,
                                            const SubControlVolumeFace& scvf,
@@ -295,24 +300,55 @@ public:
                 // get the scvf corresponding to actual interior neumann face
                 const auto& curScvf = fvGeometry.scvf(data.scvfIndex());
 
-                // get the volvars of the actual interior neumann face
-                const auto facetVolVars = data.facetVolVars(fvGeometry, curScvf);
+                if (numPhases > 1)
+                {
+                    // get the volume variables of the actual interior neumann face
+                    const auto facetVolVars = data.facetVolVars(fvGeometry);
 
-                // calculate "leakage factor"
-                const auto n = curScvf.unitOuterNormal();
-                const auto v = [&] ()
-                                {
-                                    auto res = n;
-                                    res *= -0.5*facetVolVars.extrusionFactor();
-                                    res /= res.two_norm2();
-                                    return res;
-                                } ();
+                    // calculate "leakage factor"
+                    const auto n = curScvf.unitOuterNormal();
+                    const auto v = [&] ()
+                                    {
+                                        auto res = n;
+                                        res *= -0.5*facetVolVars.extrusionFactor();
+                                        res /= res.two_norm2();
+                                        return res;
+                                    } ();
 
-                // add value to vector of interior neumann fluxes
-                facetCouplingFluxes[data.localIndexInInteractionVolume()] += getX(facetVolVars)*
-                                                                             curScvf.area()*
-                                                                             elemVolVars[curScvf.insideScvIdx()].extrusionFactor()*
-                                                                             MpfaHelper::nT_M_v(n, facetVolVars.diffusionCoefficient(phaseIdx, compIdx), v);
+                    // add value to vector of interior neumann fluxes
+                    facetCouplingFluxes[data.localIndexInInteractionVolume()] += getX(facetVolVars)*
+                                                                                 curScvf.area()*
+                                                                                 elemVolVars[curScvf.insideScvIdx()].extrusionFactor()*
+                                                                                 MpfaHelper::nT_M_v(n, facetVolVars.diffusionCoefficient(phaseIdx, compIdx), v);
+                }
+                else
+                {
+                    // get the complete data of the actual interior neumann face
+                    const auto completeFacetData = data.completeCoupledFacetData(fvGeometry);
+
+                    // calculate "leakage factor"
+                    const auto n = curScvf.unitOuterNormal();
+                    const auto v = [&] ()
+                                    {
+                                        auto res = n;
+                                        res *= -0.5*completeFacetData.volVars().extrusionFactor();
+                                        res /= res.two_norm2();
+                                        return res;
+                                    } ();
+
+                    auto getD = TensorLambdaFactory<TypeTag, myDiscretizationMethod>::getDiffusionLambda(phaseIdx, compIdx);
+                    const auto D = getD(completeFacetData.problem(),
+                                        completeFacetData.element(),
+                                        completeFacetData.volVars(),
+                                        completeFacetData.fvGeometry(),
+                                        completeFacetData.scv());
+
+                    // add value to vector of interior neumann fluxes
+                    facetCouplingFluxes[data.localIndexInInteractionVolume()] += getX(completeFacetData.volVars())*
+                                                                                 curScvf.area()*
+                                                                                 elemVolVars[curScvf.insideScvIdx()].extrusionFactor()*
+                                                                                 MpfaHelper::nT_M_v(n, D, v);
+                }
             }
         }
 
