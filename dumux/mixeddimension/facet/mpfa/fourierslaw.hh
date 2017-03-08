@@ -166,7 +166,7 @@ public:
                 // get the scvf corresponding to actual interior neumann face
                 const auto& curScvf = fvGeometry.scvf(data.scvfIndex());
 
-                // get the volvars of the actual interior neumann face
+                // get the complete data of the actual interior neumann face
                 const auto completeFacetData = data.completeCoupledFacetData(fvGeometry);
 
                 // calculate "leakage factor"
