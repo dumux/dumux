@@ -21,58 +21,67 @@
  *
  * \brief Channel flow test for the staggered grid (Navier-)Stokes model
  */
-#ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
-#define DUMUX_CHANNEL_TEST_PROBLEM_HH
+#ifndef DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
+#define DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/freeflow/staggered/model.hh>
+#include <dumux/freeflow/staggerednc/model.hh>
 #include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/constant.hh>
+
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 namespace Dumux
 {
 template <class TypeTag>
-class ChannelTestProblem;
+class DensityDrivenFlowProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<ChannelTestProblem<TypeTag>>
+    struct isStationary<DensityDrivenFlowProblem<TypeTag>>
     { static const bool value = false; };
 }
 
 namespace Properties
 {
-NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(DensityDrivenFlowProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
 
-SET_PROP(ChannelTestProblem, Fluid)
+NEW_PROP_TAG(FluidSystem);
+
+// Select the fluid system
+SET_TYPE_PROP(DensityDrivenFlowProblem, FluidSystem,
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
+
+SET_PROP(DensityDrivenFlowProblem, PhaseIdx)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    static constexpr int value = FluidSystem::wPhaseIdx;
 };
 
+SET_INT_PROP(DensityDrivenFlowProblem, ReplaceCompEqIdx, 0);
+
 // Set the grid type
-SET_TYPE_PROP(ChannelTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DensityDrivenFlowProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelTestProblem, Problem, Dumux::ChannelTestProblem<TypeTag> );
+SET_TYPE_PROP(DensityDrivenFlowProblem, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFVGeometryCache, true);
 
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(ChannelTestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, UseMoles, true);
 
 #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableInertiaTerms, true);
 #else
-SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableInertiaTerms, false);
 #endif
 }
 
@@ -81,12 +90,13 @@ SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
    \todo doc me!
  */
 template <class TypeTag>
-class ChannelTestProblem : public NavierStokesProblem<TypeTag>
+class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
 {
     typedef NavierStokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -97,12 +107,14 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
+        transportEqIdx = 1,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
         momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
+        velocityYIdx = Indices::velocityYIdx,
+        transportCompIdx = 1/*FluidSystem::wCompIdx*/
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -116,6 +128,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
@@ -124,18 +137,20 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
-    ChannelTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), eps_(1e-6)
+    DensityDrivenFlowProblem(TimeManager &timeManager, const GridView &gridView)
+    : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                                              std::string,
                                              Problem,
                                              Name);
 
-        inletVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             Scalar,
+        useWholeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             bool,
                                              Problem,
-                                             InletVelocity);
+                                             UseWholeLength);
+
+        FluidSystem::init();
     }
 
     /*!
@@ -193,15 +208,20 @@ public:
 
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
+        values.setOutflow(transportEqIdx);
+        values.setOutflow(massBalanceIdx);
 
-        // set a fixed pressure in one cell
-        if (isOutlet(globalPos))
-        {
+        if(globalPos[1] <  eps_)
             values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
+
+        if(globalPos[1] > this->bBoxMax()[1] - eps_)
+        {
+            if(useWholeLength_)
+                values.setDirichlet(transportEqIdx);
+            else
+                if(globalPos[0] > 0.4 && globalPos[0] < 0.6)
+                    values.setDirichlet(transportEqIdx);
         }
-        else
-            values.setOutflow(massBalanceIdx);
 
         return values;
     }
@@ -215,23 +235,11 @@ public:
     BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryValues values;
-        values[pressureIdx] = 1.1e+5;
 
-        if(isInlet(globalPos))
-        {
-            values[velocityXIdx] = inletVelocity_;
-            values[velocityYIdx] = 0.0;
-        }
-        else if(isWall(globalPos))
-        {
-            values[velocityXIdx] = 0.0;
-            values[velocityYIdx] = 0.0;
-        }
-        else if(isOutlet(globalPos))
-        {
-            values[velocityXIdx] = 1.0;
-            values[velocityYIdx]= 0.0;
-        }
+        values[pressureIdx] = 1.1e+5;
+        values[transportCompIdx] = 1e-3;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
 
         return values;
     }
@@ -252,34 +260,43 @@ public:
     {
         InitialValues values;
         values[pressureIdx] = 1.1e+5;
+        values[transportCompIdx] = 0.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
         return values;
     }
 
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& delRho = outputModule.createScalarField("delRho", 0);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto ccDofIdx = scv.dofIndex();
+
+                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                elemVolVars.bind(element, fvGeometry, this->model().curSol());
+
+                delRho[ccDofIdx] = elemVolVars[scv].density() - 999.694;
+            }
+        }
+    }
+
     // \}
 
 private:
-
-    bool isInlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
-
-    bool isOutlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
-    }
-
-    bool isWall(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
-    }
-
-    Scalar eps_;
-    Scalar inletVelocity_;
+    const Scalar eps_{1e-6};
     std::string name_;
+    bool useWholeLength_;
 };
 } //end namespace
 

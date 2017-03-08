@@ -120,6 +120,7 @@ public:
     StaggeredLocalJacobian()
     {
         numericDifferenceMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
+        baseEps_ = GET_PROP_VALUE(TypeTag, BaseEpsilon);
     }
 
     /*!
@@ -327,6 +328,7 @@ private:
             for(auto pvIdx : PriVarIndices(faceIdx))
             {
                 PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(this->model_().curSol()[faceIdx][globalJ]));
+
                 const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, faceIdx);
                 priVars[pvIdx] += eps;
                 curFaceVars.update(priVars[faceIdx]);
@@ -571,7 +573,7 @@ private:
 
     AssemblyMap assemblyMap_;
 
-    static constexpr auto baseEps_{GET_PROP_VALUE(TypeTag, BaseEpsilon)};
+    std::array<std::array<Scalar, 2>, 2> baseEps_;
 };
 
 }

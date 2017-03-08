@@ -109,12 +109,13 @@ public:
                 {
                     if(bcTypes.isDirichlet(eqIdx))
                         boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichletAtPos(scvf.center())[cellCenterIdx][eqIdx];
-                    else if(bcTypes.isNeumann(eqIdx))
+                    else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx))
                         boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else
-                        DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
+                        if(eqIdx == Indices::pressureIdx)
+                            DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
                 ElementSolutionVector elemSol{std::move(boundaryPriVars)};
                 volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem, element, insideScv);

@@ -96,27 +96,32 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, false>
 
 public:
 
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& globalFaceVars,
-                                  const SubControlVolumeFace &scvf,
-                                  const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
+                                                        const Element &element,
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const SubControlVolumeFace &scvf,
+                                                        const FluxVariablesCache& fluxVarsCache)
     {
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         CellCenterPrimaryVariables flux(0.0);
+        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
 
-        if(sign(scvf.outerNormalScalar()) == sign(velocity))
-            flux[0] = insideVolVars.density() * velocity;
-        else
-            flux[0] = outsideVolVars.density() * velocity;
+        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
+        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+
+        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+
+        flux = (upWindWeight * upstreamVolVars.density() +
+               (1.0 - upWindWeight) * downstreamVolVars.density()) * velocity;
+
         return flux * scvf.area() * sign(scvf.outerNormalScalar());
     }
 
@@ -360,60 +365,6 @@ private:
       const Scalar sgn = sign(normalFace.outerNormalScalar());
       return tangentialDiffusiveFlux * sgn * normalFace.area() * 0.5;
   }
-};
-
-
-// specialization for miscible, isothermal flow
-template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, false>
-: public FluxVariablesBase<TypeTag>, public FreeFlowFluxVariablesImpl<TypeTag, false, false>
-{
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
-
-    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
-    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
-    using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
-
-    enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        conti0EqIdx = Indices::conti0EqIdx
-    };
-
-public:
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& globalFaceVars,
-                                  const SubControlVolumeFace &scvf,
-                                  const FluxVariablesCache& fluxVarsCache)
-    {
-        CellCenterPrimaryVariables priVars(0.0);
-        priVars[0] = ParentType::computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
-//         priVars[1] = ParentType::computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
-        return priVars;
-    }
 };
 
 } // end namespace

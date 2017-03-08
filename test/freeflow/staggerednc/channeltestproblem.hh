@@ -19,61 +19,70 @@
 /*!
  * \file
  *
- * \brief Channel flow test for the staggered grid (Navier-)Stokes model
+ * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model
  */
-#ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
-#define DUMUX_CHANNEL_TEST_PROBLEM_HH
+#ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
+#define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/freeflow/staggered/model.hh>
+#include <dumux/freeflow/staggerednc/model.hh>
 #include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/constant.hh>
+
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 namespace Dumux
 {
 template <class TypeTag>
-class ChannelTestProblem;
+class ChannelNCTestProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<ChannelTestProblem<TypeTag>>
+    struct isStationary<ChannelNCTestProblem<TypeTag>>
     { static const bool value = false; };
 }
 
 namespace Properties
 {
-NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
 
-SET_PROP(ChannelTestProblem, Fluid)
+NEW_PROP_TAG(FluidSystem);
+
+// Select the fluid system
+SET_TYPE_PROP(ChannelNCTestProblem, FluidSystem,
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
+
+SET_PROP(ChannelNCTestProblem, PhaseIdx)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    static constexpr int value = FluidSystem::wPhaseIdx;
 };
 
+SET_INT_PROP(ChannelNCTestProblem, ReplaceCompEqIdx, 0);
+
 // Set the grid type
-SET_TYPE_PROP(ChannelTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ChannelNCTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelTestProblem, Problem, Dumux::ChannelTestProblem<TypeTag> );
+SET_TYPE_PROP(ChannelNCTestProblem, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFVGeometryCache, true);
 
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(ChannelTestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(ChannelNCTestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(ChannelNCTestProblem, UseMoles, true);
 
-#if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, true);
-#else
-SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
-#endif
+// #if ENABLE_NAVIERSTOKES
+SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, true);
+// #else
+// SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, false);
+// #endif
 }
 
 /*!
@@ -81,12 +90,13 @@ SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
    \todo doc me!
  */
 template <class TypeTag>
-class ChannelTestProblem : public NavierStokesProblem<TypeTag>
+class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     typedef NavierStokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -97,12 +107,14 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
+        transportEqIdx = 1,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
         momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
+        velocityYIdx = Indices::velocityYIdx,
+        transportCompIdx = 1/*FluidSystem::wCompIdx*/
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -116,6 +128,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
@@ -124,8 +137,8 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
-    ChannelTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), eps_(1e-6)
+    ChannelNCTestProblem(TimeManager &timeManager, const GridView &gridView)
+    : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                                              std::string,
@@ -136,6 +149,7 @@ public:
                                              Scalar,
                                              Problem,
                                              InletVelocity);
+        FluidSystem::init();
     }
 
     /*!
@@ -191,17 +205,26 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
-
-        // set a fixed pressure in one cell
-        if (isOutlet(globalPos))
+        if(isInlet(globalPos))
         {
-            values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
-        }
-        else
+            values.setDirichlet(momentumBalanceIdx);
             values.setOutflow(massBalanceIdx);
+            values.setDirichlet(transportEqIdx);
+        }
+        else if(isOutlet(globalPos))
+        {
+            values.setOutflow(momentumBalanceIdx);
+            values.setDirichlet(massBalanceIdx);
+            values.setOutflow(transportEqIdx);
+        }
+
+        else
+        {
+            // set Dirichlet values for the velocity everywhere
+            values.setDirichlet(momentumBalanceIdx);
+            values.setOutflow(massBalanceIdx);
+            values.setOutflow(transportEqIdx);
+        }
 
         return values;
     }
@@ -214,24 +237,10 @@ public:
      */
     BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryValues values;
-        values[pressureIdx] = 1.1e+5;
+        BoundaryValues values = initialAtPos(globalPos);
 
         if(isInlet(globalPos))
-        {
-            values[velocityXIdx] = inletVelocity_;
-            values[velocityYIdx] = 0.0;
-        }
-        else if(isWall(globalPos))
-        {
-            values[velocityXIdx] = 0.0;
-            values[velocityYIdx] = 0.0;
-        }
-        else if(isOutlet(globalPos))
-        {
-            values[velocityXIdx] = 1.0;
-            values[velocityYIdx]= 0.0;
-        }
+            values[transportCompIdx] = 1e-3;
 
         return values;
     }
@@ -252,7 +261,12 @@ public:
     {
         InitialValues values;
         values[pressureIdx] = 1.1e+5;
-        values[velocityXIdx] = 0.0;
+        values[transportCompIdx] = 0.0;
+
+        // parabolic velocity profile
+        values[velocityXIdx] =  inletVelocity_*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
+                               / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
+
         values[velocityYIdx] = 0.0;
 
         return values;
@@ -277,7 +291,7 @@ private:
         return globalPos[0] > eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
     }
 
-    Scalar eps_;
+    const Scalar eps_{1e-6};
     Scalar inletVelocity_;
     std::string name_;
 };

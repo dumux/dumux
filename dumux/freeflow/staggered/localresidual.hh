@@ -39,6 +39,7 @@ namespace Properties
 NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalance);
 NEW_PROP_TAG(EnableInertiaTerms);
+NEW_PROP_TAG(ReplaceCompEqIdx);
 }
 
 /*!
@@ -124,21 +125,22 @@ public:
 
 
     CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& globalFaceVars,
-                                  const SubControlVolumeFace &scvf,
-                                  const ElementFluxVariablesCache& elemFluxVarsCache)
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars,
+                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const SubControlVolumeFace &scvf,
+                                                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
-        return fluxVars.computeFluxForCellCenter(element,  fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache[scvf]);
+        return fluxVars.computeFluxForCellCenter(this->problem(), element, fvGeometry, elemVolVars,
+                                                 globalFaceVars, scvf, elemFluxVarsCache[scvf]);
     }
 
     CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& elemVolVars,
-                                     const GlobalFaceVars& globalFaceVars,
-                                     const SubControlVolume &scv)
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const ElementVolumeVariables& elemVolVars,
+                                                          const GlobalFaceVars& globalFaceVars,
+                                                          const SubControlVolume &scv)
     {
         return CellCenterPrimaryVariables(0.0);
     }
@@ -158,7 +160,7 @@ public:
                                     const VolumeVariables& volVars)
     {
         CellCenterPrimaryVariables storage;
-        storage[0] = volVars.density(0);
+        storage[0] = volVars.density();
         return storage;
     }
 
@@ -178,7 +180,7 @@ public:
     {
         FacePrimaryVariables storage(0.0);
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-        storage[0] = volVars.density(0) * velocity;
+        storage[0] = volVars.density() * velocity;
         return storage;
     }
 
@@ -251,18 +253,31 @@ protected:
         {
             if (scvf.boundary())
             {
-                // For the mass-balance residual, do the same as if the face was not on a boundary.This might need to be changed sometime...
-                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
+                auto boundaryFlux = computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
 
                 // handle the actual boundary conditions:
                 const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+
+                if(bcTypes.hasNeumann())
+                {
+                    // handle Neumann BCs, i.e. overwrite certain fluxes by user-specified values
+                    for(int eqIdx = 0; eqIdx < GET_PROP_VALUE(TypeTag, NumEqCellCenter); ++eqIdx)
+                        if(bcTypes.isNeumann(eqIdx))
+                        {
+                            const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
+                            boundaryFlux[eqIdx] = this->problem().neumannAtPos(scvf.center())[cellCenterIdx][eqIdx]
+                                                   * extrusionFactor * scvf.area();
+                        }
+                }
+
+                this->ccResidual_ += boundaryFlux;
 
                 // set a fixed pressure for cells adjacent to a wall
                 if(bcTypes.isDirichlet(massBalanceIdx) && bcTypes.isDirichlet(momentumBalanceIdx))
                 {
                     const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                     const auto& insideVolVars = elemVolVars[insideScv];
-                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.dofPosition())[cellCenterIdx][pressureIdx];
+                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
                 }
             }
         }
@@ -336,91 +351,6 @@ private:
     }
 };
 
-// specialization for miscible, isothermal flow
-template<class TypeTag>
-class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
-{
-    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false, false>;
-    friend class StaggeredLocalResidual<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-
-        conti0EqIdx = Indices::conti0EqIdx
-    };
-
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
-
-    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
-    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-     /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub-control
-     *        volume of a finite volume element for the immiscible models.
-     * \param scv The sub control volume
-     * \param volVars The current or previous volVars
-     * \note This function should not include the source and sink terms.
-     * \note The volVars can be different to allow computing
-     *       the implicit euler time derivative here
-     */
-    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars)
-    {
-        CellCenterPrimaryVariables storage;
-        // compute storage term of all components within all phases
-
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-        {
-            auto eqIdx = conti0EqIdx + compIdx;
-            auto s = volVars.molarDensity(0)
-                     * volVars.moleFraction(0, compIdx);
-
-//             if (eqIdx != replaceCompEqIdx)
-                storage[eqIdx] += s;
-
-            // in case one balance is substituted by the total mass balance
-//             if (replaceCompEqIdx < numComponents)
-//                 storage[replaceCompEqIdx] += s;
-        }
-    }
-};
 
 // specialization for immiscible, non-isothermal flow
 template<class TypeTag>
@@ -481,8 +411,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public Staggered
                                     const VolumeVariables& volVars)
     {
         CellCenterPrimaryVariables storage;
-        storage[massBalanceIdx] = volVars.density(0);
-        storage[energyBalanceIdx] = volVars.density(0) * volVars.internalEnergy(0);
+        storage[massBalanceIdx] = volVars.density();
+        storage[energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
         return storage;
     }
 };

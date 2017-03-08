@@ -18,33 +18,40 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ * \brief  Defines the indices for the staggered Navier-Stokes NC model.
  */
-#ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
-#define DUMUX_DISCRETIZATION_FICKS_LAW_HH
+#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
+#define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/staggered/indices.hh>
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class FicksLawImplementation
-{};
-
+// \{
 /*!
- * \ingroup CCTpfaFicksLaw
- * \brief Evaluates the diffusive mass flux according to Fick's law
+ * \ingroup NavierStokesNCModel
+ * \ingroup ImplicitIndices
+ * \brief Indices for the staggered Navier-Stokes NC model model.
+ *
+ * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag>
-using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template <class TypeTag, int PVOffset = 0>
+struct NavierStokesNCIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
+{
+private:
+    using ParentType = NavierStokesCommonIndices<TypeTag, PVOffset>;
 
+public:
+
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int mainCompIdx = phaseIdx;
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    // TODO: componentIdx?
+    //TODO: what about the offset?
+
+};
+
+// \}
 } // end namespace
-
-#include <dumux/discretization/cellcentered/tpfa/fickslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/fickslaw.hh>
-#include <dumux/discretization/box/fickslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fickslaw.hh>
 
 #endif
