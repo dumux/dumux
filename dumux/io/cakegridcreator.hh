@@ -45,13 +45,11 @@ NEW_PROP_TAG(Grid);
  * \brief Provides a grid creator with a method for creating creating vectors
  *        with polar Coordinates and one for creating a cartesian grid from
  *        these polar coordinates.
- *
  */
 template <class TypeTag>
 class CakeGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef std::vector<Scalar> vector;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef Dune::GridFactory<Grid> GridFactory;
     typedef std::shared_ptr<Grid> GridPointer;
@@ -112,7 +110,8 @@ public:
     {
         // Only construction from the input file is possible
         // Look for the necessary keys to construct from the input file
-        try {
+        try
+        {
             typedef typename GET_PROP(TypeTag, ParameterTree) Params;
             auto params = Params::tree();
             typedef std::vector<int> IntVector;
@@ -206,7 +205,7 @@ public:
               catch (Dumux::ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
             }
 
-            //make the grid
+            // make the grid
             // sanity check of the input parameters
             bool verbose = false;
             try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
@@ -337,9 +336,11 @@ public:
                 std::cout << "angular coordinate[" << i << "] " << polarCoordinates[1][i] << std::endl;
             }
         }
-        catch (Dumux::ParameterException &e) {
-                DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters:" << std::endl
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".Positions0, ..." << std::endl);
+        catch (Dumux::ParameterException &e)
+        {
+            DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters:" << std::endl
+                                                  << GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                                  << ".Positions0, ..." << std::endl);
         }
         catch (...) { throw; }
     }
@@ -349,16 +350,17 @@ public:
      *
      * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
      * \param indices Indices specifing the radial, angular and axial direction (in this order)
-     *
      */
-    static std::shared_ptr<Grid> createCakeGrid(std::array<ScalarVector, dim> &polarCoordinates, Dune::FieldVector<int, dim> &indices)
+    static std::shared_ptr<Grid> createCakeGrid(std::array<ScalarVector, dim> &polarCoordinates,
+                                                Dune::FieldVector<int, dim> &indices)
     {
-        vector dR = polarCoordinates[0];
-        vector dA = polarCoordinates[1];
+        ScalarVector dR = polarCoordinates[0];
+        ScalarVector dA = polarCoordinates[1];
 
         GridFactory gf;
         Dune::GeometryType type;
-        if (dim == 3){
+        if (dim == 3)
+        {
             type.makeHexahedron();
         }
         else
@@ -367,10 +369,9 @@ public:
         }
 
         //create nodes
-        if (dim == 3){
-
-            vector dZ = polarCoordinates[2];
-
+        if (dim == 3)
+        {
+            ScalarVector dZ = polarCoordinates[2];
             for (int j = 0; j <= dA.size() - 1; ++j)
             {
                 for (int l = 0; l <= dZ.size() - 1; ++l)
@@ -396,28 +397,39 @@ public:
             // assign nodes
             unsigned int z = 0;
             unsigned int t = 0;
-            for (int j = 0; j < dA.size() - 1; ++j){
-                for (int l = 0; l < dZ.size() - 1; ++l){
-                    if (j < dA.size() - 2){
-                        for (int i = 0; i < dR.size() - 1; ++i){
-                            std::vector<unsigned int> vid({z, z+1, z+dR.size()*dZ.size(), z+dR.size()*dZ.size()+1, z+dR.size(), z+dR.size()+1, z+dR.size()*dZ.size()+dR.size(), z+dR.size()*dZ.size()+dR.size()+1});
+            for (int j = 0; j < dA.size() - 1; ++j)
+            {
+                for (int l = 0; l < dZ.size() - 1; ++l)
+                {
+                    if (j < dA.size() - 2)
+                    {
+                        for (int i = 0; i < dR.size() - 1; ++i)
+                        {
+                            unsigned int rSize = dR.size();
+                            unsigned int zSize = dZ.size();
+                            std::vector<unsigned int> vid({z, z+1, z+rSize*zSize,
+                                                           z+rSize*zSize+1, z+rSize, z+rSize+1,
+                                                           z+rSize*zSize+rSize, z+rSize*zSize+rSize+1});
 
                             gf.insertElement(type, vid);
 
                             z = z+1;
                         }
                         z = z+1;
-
                     }
-                    else {
+                    else
+                    {
                         // assign nodes for 360°-cake
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
                             // z = z + 1;
-                            std::vector<unsigned int> vid({z, z+1, t, t+1, z+dR.size(), z+dR.size()+1, t+dR.size(), t+dR.size()+1});
-                            for (int i = 0; i < vid.size(); ++i)
+                            unsigned int rSize = dR.size();
+                            std::vector<unsigned int> vid({z, z+1, t,
+                                                           t+1, z+rSize, z+rSize+1,
+                                                           t+rSize, t+rSize+1});
+                            for (int k = 0; k < vid.size(); ++k)
                             {
-                                std::cout << "vid = " << vid[i] << std::endl;
+                                std::cout << "vid = " << vid[k] << std::endl;
                             }
                             gf.insertElement(type, vid);
                             t = t + 1;
@@ -432,15 +444,16 @@ public:
                 z = z + dR.size();
             }
         }
-        else{
-            for (int j = 0; j <= dA.size() - 1; ++j){
-                for (int i = 0; i <= dR.size()- 1; ++i){
+        else
+        {
+            for (int j = 0; j <= dA.size() - 1; ++j)
+            {
+                for (int i = 0; i <= dR.size()- 1; ++i)
+                {
                     // Get radius for the well (= a hole) in the center
-
                     Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
 
                     // transform into cartesian Coordinates
-
                     Dune::FieldVector <double, dim> v(0.0);
 
                     v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
@@ -454,42 +467,42 @@ public:
             // assign nodes
             unsigned int z = 0;
             unsigned int t = 0;
-            for (int j = 0; j < dA.size() - 1; ++j){
-                    if (j < dA.size() - 2){
-                        for (int i = 0; i < dR.size() - 1; ++i){
-                            std::vector<unsigned int> vid({z, z+1, z+dR.size(), z+dR.size()+1});
-
-                            for (int i = 0; i < vid.size(); ++i)
-                            {
-                                std::cout << "vid = " << vid[i] << std::endl;
-                            }
-
-                            gf.insertElement(type, vid);
-
-                            z = z+1;
-                        }
-                        z = z+1;
-
-                    }
-                    else
+            for (int j = 0; j < dA.size() - 1; ++j)
+            {
+                if (j < dA.size() - 2)
+                {
+                    for (int i = 0; i < dR.size() - 1; ++i)
                     {
-                        // assign nodes for 360°-cake
-                        for (int i = 0; i < dR.size() - 1; ++i)
+                        unsigned int rSize = dR.size();
+                        std::vector<unsigned int> vid({z, z+1, z+rSize, z+rSize+1});
+                        for (int k = 0; k < vid.size(); ++k)
                         {
-                            // z = z + 1;
-                            std::vector<unsigned int> vid({z, z+1, t, t+1});
-                            for (int i = 0; i < vid.size(); ++i)
-                            {
-                                std::cout << "vid = " << vid[i] << std::endl;
-                            }
-                            gf.insertElement(type, vid);
-                            t = t + 1;
-                            z = z+1;
+                            std::cout << "vid = " << vid[k] << std::endl;
                         }
+                        gf.insertElement(type, vid);
+                        z = z+1;
+                    }
+                    z = z+1;
+                }
+                else
+                {
+                    // assign nodes for 360°-cake
+                    for (int i = 0; i < dR.size() - 1; ++i)
+                    {
+                        // z = z + 1;
+                        std::vector<unsigned int> vid({z, z+1, t, t+1});
+                        for (int k = 0; k < vid.size(); ++k)
+                        {
+                            std::cout << "vid = " << vid[k] << std::endl;
+                        }
+                        gf.insertElement(type, vid);
                         t = t + 1;
                         z = z+1;
                     }
-                        std::cout << "assign nodes 360 ends..." << std::endl;
+                    t = t + 1;
+                    z = z+1;
+                }
+                std::cout << "assign nodes 360 ends..." << std::endl;
             }
         }
         // assign nodes ends...
