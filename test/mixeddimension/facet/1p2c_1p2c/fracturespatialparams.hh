@@ -86,7 +86,7 @@ public:
                         const ElementSolutionVector& elemSol) const
     {
         using std::pow;
-        static const Scalar openK = permeability_*1e3;
+        static const Scalar openK = pow(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FractureAperture), 2)/12;
         static const Scalar barrierK = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability)/100;
 
         if (isOpenFracture(element))
@@ -116,7 +116,7 @@ public:
                     const ElementSolutionVector& elemSol) const
     {
         if (isOpenFracture(element))
-            return 0.8;
+            return 1.0;
         else if (isBarrier(element))
             return 0.1;
         return 0.5;

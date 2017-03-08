@@ -6,10 +6,10 @@ DtInitialLowDimProblem = 1 # [s]
 EpisodeTime = 315360000 # [s]
 
 [Grid]
-File = ./grids/real.msh
+File = ./grids/real_modified.msh
 
 [Problem]
-Name = test_real_xi
+Name = test_real
 
 [MixedDimension]
 UseIterativeSolver = False
@@ -20,7 +20,7 @@ Tolerance = 1.0e-8
 Verbose = 1
 
 [SpatialParams]
-FractureAperture = 1e-2 # [m]
+FractureAperture = 2e-4 # [m]
 FracturePermeability = 5e-11 # [m^2]
 MatrixPermeability = 1e-13 # [m^2]
 
