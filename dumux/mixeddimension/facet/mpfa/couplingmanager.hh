@@ -73,7 +73,6 @@ class CCMpfaFacetCouplingManager
 
     static constexpr int dimWorld = BulkGridView::dimensionworld;
     static constexpr int lowDimDimWorld = LowDimGridView::dimensionworld;
-    static_assert(dimWorld == lowDimDimWorld, "dimWorld cannot be different for the two sub-domains!");
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -92,7 +91,16 @@ public:
         lowDimLocalResidual_.init(lowDimProblem);
     }
 
-    void preInit() {}
+    void preInit()
+    {
+        couplingMapper_.setInitializationStatus(false);
+    }
+
+    void init()
+    {
+        preInit();
+        postInit();
+    }
 
     void postInit()
     {

@@ -29,6 +29,7 @@
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
 #include <dumux/mixeddimension/subproblemproperties.hh>
+#include <dumux/mixeddimension/facet/mpfa/globalfvgeometry.hh>
 #include <dumux/mixeddimension/facet/mpfa/interactionvolume.hh>
 #include <dumux/mixeddimension/facet/mpfa/interiorboundarydata.hh>
 #include <dumux/mixeddimension/facet/mpfa/darcyslaw.hh>
@@ -41,6 +42,9 @@ namespace Dumux
 namespace Properties
 {
 NEW_TYPE_TAG(FacetCouplingBulkMpfaModel, INHERITS_FROM(CCMpfaModel));
+
+//! The GlobalFvGeometry class
+SET_TYPE_PROP(FacetCouplingBulkMpfaModel, GlobalFVGeometry, CCMpfaFacetGlobalFVGeometry<TypeTag>);
 
 //! The boundary interaction volume class (we use the facet coupling specialized o-method interaction volume)
 SET_TYPE_PROP(FacetCouplingBulkMpfaModel, BoundaryInteractionVolume, CCMpfaOFacetCouplingInteractionVolume<TypeTag>);

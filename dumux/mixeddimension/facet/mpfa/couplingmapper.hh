@@ -133,6 +133,9 @@ public:
      */
     void init()
     {
+        if (isInitialized())
+            return;
+
         const auto& bulkGridView = bulkProblem_().gridView();
         const auto& lowDimGridView = lowDimProblem_().gridView();
 
@@ -236,6 +239,11 @@ public:
 
     bool isInitialized() const
     { return isInitialized_; }
+
+    void setInitializationStatus(bool status)
+    {
+        isInitialized_ = status;
+    }
 
 private:
     const BulkProblem& bulkProblem_() const
