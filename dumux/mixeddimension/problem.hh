@@ -144,8 +144,10 @@ public:
         lowDimProblem().setCouplingManager(couplingManager_);
 
         // initialize the subproblem time managers (this also initializes the subproblems)
-        bulkTimeManager().init(bulkProblem(), tStart, dtBulkProblem, tEnd, restart);
+        // the lowDim time manager is initialized first as the bulk problem might need some data from the
+        // lowDim problem for its initialization (e.g. for models using facet coupling with the global caching)
         lowDimTimeManager().init(lowDimProblem(), tStart, dtLowDimProblem, tEnd, restart);
+        bulkTimeManager().init(bulkProblem(), tStart, dtBulkProblem, tEnd, restart);
 
         // finalize the problem coupler
         couplingManager().postInit();
