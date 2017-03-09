@@ -83,6 +83,14 @@ SET_BOOL_PROP(TwoPNIMatrixProblem, ProblemEnableGravity, true);
 // Solution-independent tensors
 SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, SolutionDependentAdvection, false);
+
+// enable global caches
+SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, EnableGlobalFluxVariablesCache, true);
 }
 
 /*!
@@ -249,6 +257,10 @@ public:
 
     //! Get the coupling manager
     const CouplingManager& couplingManager() const
+    { return *couplingManager_; }
+
+    //! Get the coupling manager
+    CouplingManager& couplingManager()
     { return *couplingManager_; }
 
 private:
