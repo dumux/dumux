@@ -162,7 +162,7 @@ public:
 
         // get coupling data for this scvf
         const auto element = problem_().model().globalFvGeometry().element(elementIndex());
-        const auto& scvfCouplingData = couplingMapper.getBulkCouplingData(element).getScvfCouplingData(fvGeometry.scvf(scvfIndex()));
+        const auto& scvfCouplingData = couplingMapper.getBulkCouplingData(element).getScvfCouplingData(scvfIndex());
 
         // obtain data necessary to fully instantiate the complete coupled facet data
         assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
