@@ -45,5 +45,6 @@ using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, D
 #include <dumux/discretization/cellcentered/tpfa/fourierslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
 #include <dumux/discretization/box/fourierslaw.hh>
+#include <dumux/discretization/staggered/freeflow/fourierslaw.hh>
 
 #endif
