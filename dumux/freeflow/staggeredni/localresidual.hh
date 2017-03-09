@@ -42,7 +42,7 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
+//NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalance);
 NEW_PROP_TAG(EnableInertiaTerms);
 //NEW_PROP_TAG(ReplaceCompEqIdx);
@@ -71,29 +71,14 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public Staggered
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    enum { // TODO adapt
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
+    enum {
         energyBalanceIdx = Indices::energyBalanceIdx
     };
 
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
-
-//    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
 public:
     /*!
-     * \brief Evaluate the amount the additional quantities to the stokes model
+     * \brief Evaluate the amount the additional quantities to the Stokes model
      *        (energy equation).
      *
      * The result should be averaged over the volume (e.g. phase mass
@@ -102,11 +87,10 @@ public:
     CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv, const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage(0.0);
-
-//        const Scalar density = useMoles? volVars.molarDensity() : volVars.density();
+        const Scalar density = useMoles? volVars.molarDensity() : volVars.density();
 
         // compute storage of mass
-        storage[massBalanceIdx] = volVars.density(0); // TODO ParentType?
+        storage = ParentType::computeStorageForCellCenter(scv, volVars);
 
         // compute the storage of energy
         storage[energyBalanceIdx] = volVars.density(0) * volVars.internalEnergy(0);

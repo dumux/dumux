@@ -42,7 +42,7 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the implicit single-phase problems
+//! The type tags for the non-isothermal Navier Stokes problems
 NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 
 //! The type tags for the corresponding non-isothermal problems

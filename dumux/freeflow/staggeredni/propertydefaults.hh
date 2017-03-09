@@ -61,11 +61,11 @@ NEW_PROP_TAG(FluxVariablesCache);
 // \{
 
 ///////////////////////////////////////////////////////////////////////////
-// default property values for the isothermal single phase model
+// default property values for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
-SET_INT_PROP(NavierStokesNI, NumEqCellCenter, 2);
+SET_PROP(NavierStokesNI, NumEqCellCenter, GET_PROP_VALUE(TypeTag, NonIsothermalNumEq) + 1);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(NavierStokesNI, VolumeVariables, NavierStokesNIVolumeVariables<TypeTag>);
@@ -142,6 +142,8 @@ SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, true);
 // SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
 //
 
+SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
+
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)
 // { private :
@@ -168,6 +170,9 @@ SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, true);
 
 //set isothermal NumEq
 // SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
+
+//set non-isothermal NumEq
+ SET_INT_PROP(NavierStokesNI, NonIsothermalNumEq, 1);
 
 
 // \}

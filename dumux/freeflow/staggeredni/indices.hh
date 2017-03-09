@@ -43,7 +43,8 @@ private:
 
 public:
 
-    static constexpr int energyBalanceIdx = PVOffset + 1; // TODO
+    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int energyBalanceIdx = PVOffset + numEq - 1;
     static constexpr int temperatureIdx = energyBalanceIdx;
 
 };

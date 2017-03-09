@@ -33,7 +33,7 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
+//NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalance);
 NEW_PROP_TAG(EnableInertiaTerms);
 }
@@ -65,22 +65,12 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVaria
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables); // TODO ?
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
 
-//    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
-//    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-//    //! The index of the component balance equation that gets replaced with the total mass balance
-//    static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 
     using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
 
@@ -89,15 +79,8 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVaria
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-        temperatureIdx = Indices::temperatureIdx, // TODO necessary?
-
-        massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         energyBalanceIdx = Indices::energyBalanceIdx,
-        conti0EqIdx = Indices::conti0EqIdx,
-        phaseIdx = Indices::phaseIdx
     };
 
 public:
@@ -112,7 +95,8 @@ public:
         CellCenterPrimaryVariables flux(0.0);
 
         flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
-        flux += diffusiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, scvf);
+        flux += HeatConductionType::diffusiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, scvf);
+        flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;
     }
 
@@ -135,7 +119,7 @@ private:
         if(scvf.boundary())
         {
             const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(momentumBalanceIdx))
+                if(bcTypes.isOutflow(momentumBalanceIdx)) // TODO ??
                     isOutflow = true;
         }
 
@@ -153,31 +137,10 @@ private:
         const Scalar upstreamEnthalpy = upstreamVolVars.enthalpy();
         const Scalar downstreamEnthalpy = downstreamVolVars.enthalpy();
 
-//        flux[massBalanceIdx] = TODO??
         flux[energyBalanceIdx] = (upWindWeight * upstreamDensity * upstreamEnthalpy
                                  + (1.0 - upWindWeight) * downstreamDensity * downstreamEnthalpy)
                                  * velocity;
-
-        flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;
-    }
-
-    CellCenterPrimaryVariables diffusiveFluxForCellCenter_(const FluxVariables& fluxVars)
-    {
-        CellCenterPrimaryVariables flux(0.0);
-
-        // compute diffusive flux --> no diffusive flux (only 1 component)
-
-        // compute conductive flux
-        computeConductiveFlux_(flux, fluxVars);
-
-        return flux;
-    }
-
-    void computeConductiveFlux_(CellCenterPrimaryVariables& flux, FluxVariables& fluxVars)
-    {
-        flux[energyBalanceIdx] -= fluxVars.temperatureGrad() * fluxVars.face().normal
-                   * (fluxVars.thermalConductivity() + fluxVars.thermalEddyConductivity());
     }
 };
 
