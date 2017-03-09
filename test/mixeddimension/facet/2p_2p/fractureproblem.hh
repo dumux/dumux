@@ -84,6 +84,13 @@ SET_BOOL_PROP(TwoPNIFractureProblem, ProblemEnableGravity, true);
 // Solution-independent tensors
 SET_BOOL_PROP(TwoPCCMpfaFractureProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, SolutionDependentAdvection, false);
+
+SET_BOOL_PROP(TwoPCCMpfaFractureProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPCCMpfaFractureProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(TwoPCCMpfaFractureProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, EnableGlobalFluxVariablesCache, true);
 }
 
 template <class TypeTag>
