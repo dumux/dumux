@@ -1,0 +1,11 @@
+[Grid]
+Cells0 = 3
+Cells1 = 8
+Cells2 = 3
+Grading0 = 1.5
+Grading1 = 1.0
+Grading2 = 1.5
+Radial0 = 0.0 1.0
+Angular1 = 0.0 360.0
+Axial2 = 0.0 1.0
+WellRadius = 0.005
