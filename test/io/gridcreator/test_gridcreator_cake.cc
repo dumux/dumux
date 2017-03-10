@@ -23,6 +23,7 @@
 #include <iostream>
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
@@ -53,21 +54,24 @@ int main(int argc, char** argv)
         Dune::MPIHelper::instance(argc, argv);
 
         // Some typedefs
-        typedef typename TTAG(GridCreatorCakeTest) TypeTag;
-        typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef typename Dumux::CakeGridCreator<TypeTag> GridCreator;
+        using TypeTag = TTAG(GridCreatorCakeTest);
+        using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+        using GridCreator = typename Dumux::CakeGridCreator<TypeTag>;
 
         // Read the parameters from the input file
-        typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+        using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
 
         //First read parameters from input file
         Dune::ParameterTreeParser::readINITree("test_gridcreator_cake.input", ParameterTree::tree());
 
-//      Make the grid
+        //Make the grid
+        Dune::Timer timer;
         GridCreator::makeGrid();
+        std::cout << "Constructing cake grid with " << GridCreator::grid().leafGridView().size(0) << " elements took "
+                  << timer.elapsed() << " seconds.\n";
         // construct a vtk output writer and attach the boundaryMakers
-        Dune::VTKSequenceWriter<Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView(), "cake", ".", "");
-        vtkWriter.write(0);
+        Dune::VTKWriter<Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView());
+        vtkWriter.write("cake-00000");
 
         return 0;
     }
@@ -90,6 +94,4 @@ int main(int argc, char** argv)
     std::cerr << "You need to have ALUGrid or UGGrid installed to run this test\n";
     return 77;
 #endif
-} //closing main
-//} //closing namespace dumux
-
+} // main
