@@ -85,11 +85,17 @@ NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
  */
 NEW_PROP_TAG(NewtonUseLineSearch);
 
+//! indicate whether the absolute residual should be used in the residual criterion
+NEW_PROP_TAG(NewtonEnableAbsoluteResidualCriterion);
+
 //! indicate whether the shift criterion should be used
 NEW_PROP_TAG(NewtonEnableShiftCriterion);
 
 //! the value for the maximum relative shift below which convergence is declared
 NEW_PROP_TAG(NewtonMaxRelativeShift);
+
+//! the value for the maximum absolute residual below which convergence is declared
+NEW_PROP_TAG(NewtonMaxAbsoluteResidual);
 
 //! indicate whether the residual criterion should be used
 NEW_PROP_TAG(NewtonEnableResidualCriterion);
@@ -124,11 +130,13 @@ NEW_PROP_TAG(JacobianAssembler);
 SET_TYPE_PROP(NewtonMethod, NewtonController, NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
+SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteResidualCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableChop, false);
 SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift, 1e-8);
+SET_SCALAR_PROP(NewtonMethod, NewtonMaxAbsoluteResidual, 1e-5);
 SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction, 1e-5);
 SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
 SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
@@ -177,8 +185,10 @@ public:
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
 
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
+        enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
         enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
-        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion);
+        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion)
+                                   || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
@@ -188,6 +198,7 @@ public:
         }
 
         setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
+        setMaxAbsoluteResidual(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxAbsoluteResidual));
         setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
         setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
         setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
@@ -205,6 +216,15 @@ public:
      */
     void setMaxRelativeShift(Scalar tolerance)
     { shiftTolerance_ = tolerance; }
+
+    /*!
+     * \brief Set the maximum acceptable absolute residual for declaring convergence.
+     *
+     * \param tolerance The maximum absolute residual at which
+     *                  the scheme is considered finished
+     */
+    void setMaxAbsoluteResidual(Scalar tolerance)
+    { residualTolerance_ = tolerance; }
 
     /*!
      * \brief Set the maximum acceptable residual norm reduction.
@@ -274,17 +294,25 @@ public:
         }
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
-            return reduction_ <= reductionTolerance_;
+            if(enableAbsoluteResidualCriterion_)
+                return residual_ <= residualTolerance_;
+            else
+                return reduction_ <= reductionTolerance_;
         }
         else if (satisfyResidualAndShiftCriterion_)
         {
-            return shift_ <= shiftTolerance_
-                    && reduction_ <= reductionTolerance_;
+            if(enableAbsoluteResidualCriterion_)
+                return shift_ <= shiftTolerance_
+                        && residual_ <= residualTolerance_;
+            else
+                return shift_ <= shiftTolerance_
+                        && reduction_ <= reductionTolerance_;
         }
         else
         {
             return shift_ <= shiftTolerance_
-                    || reduction_ <= reductionTolerance_;
+                    || reduction_ <= reductionTolerance_
+                    || residual_ <= residualTolerance_;
         }
 
         return false;
@@ -462,7 +490,8 @@ public:
             if (enableResidualCriterion_)
             {
                 SolutionVector tmp(uLastIter);
-                reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                reduction_ = residual_;
                 reduction_ /= initialResidual_;
             }
         }
@@ -487,7 +516,9 @@ public:
             std::cout << "\rNewton iteration " << numSteps_ << " done";
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
-            if (enableResidualCriterion_)
+            if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
+                std::cout << ", residual = " << residual_;
+            else if (enableResidualCriterion_)
                 std::cout << ", residual reduction = " << reduction_;
             std::cout << endIterMsg().str() << "\n";
         }
@@ -656,7 +687,8 @@ protected:
            uCurrentIter += uLastIter;
 
            // calculate the residual of the current solution
-           reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+           residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+           reduction_ = residual_;
            reduction_ /= initialResidual_;
 
            if (reduction_ < lastReduction_ || lambda <= 0.125) {
@@ -683,9 +715,11 @@ protected:
 
     // residual criterion variables
     Scalar reduction_;
+    Scalar residual_;
     Scalar lastReduction_;
     Scalar initialResidual_;
     Scalar reductionTolerance_;
+    Scalar residualTolerance_;
 
     // optimal number of iterations we want to achieve
     int targetSteps_;
@@ -700,6 +734,7 @@ protected:
     bool enablePartialReassemble_;
     bool enableJacobianRecycling_;
     bool useLineSearch_;
+    bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
