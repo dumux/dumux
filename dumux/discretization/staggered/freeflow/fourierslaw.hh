@@ -77,6 +77,7 @@ public:
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
     static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
+                                                           const Element& element,
                                                            const FVElementGeometry& fvGeometry,
                                                            const ElementVolumeVariables& elemVolVars,
                                                            const SubControlVolumeFace &scvf)
@@ -112,7 +113,7 @@ public:
                 else
                 {
                     distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-                    outsideTemp = problem.dirichletAtPos(scvf.center())[energyBalanceIdx]);
+                    outsideTemp = problem.dirichletAtPos(scvf.center())[energyBalanceIdx];
                 }
         }
         else
