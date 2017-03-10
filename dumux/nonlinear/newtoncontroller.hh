@@ -87,7 +87,7 @@ NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
 NEW_PROP_TAG(NewtonUseLineSearch);
 
 //! indicate whether the absolute residual should be used in the residual criterion
-NEW_PROP_TAG(NewtonUseAbsoluteResidualCriterion);
+NEW_PROP_TAG(NewtonEnableAbsoluteResidualCriterion);
 
 //! indicate whether the shift criterion should be used
 NEW_PROP_TAG(NewtonEnableShiftCriterion);
@@ -127,7 +127,7 @@ NEW_PROP_TAG(JacobianAssembler);
 SET_TYPE_PROP(NewtonMethod, NewtonController, NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
-SET_BOOL_PROP(NewtonMethod, NewtonUseAbsoluteResidualCriterion, false);
+SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteResidualCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion, false);
@@ -182,9 +182,10 @@ public:
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
 
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
-        useAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseAbsoluteResidualCriterion);
+        enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
         enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
-        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion);
+        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion)
+                                   || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
@@ -290,14 +291,14 @@ public:
         }
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
-            if(useAbsoluteResidualCriterion_)
+            if(enableAbsoluteResidualCriterion_)
                 return residual_ <= residualTolerance_;
             else
                 return reduction_ <= reductionTolerance_;
         }
         else if (satisfyResidualAndShiftCriterion_)
         {
-            if(useAbsoluteResidualCriterion_)
+            if(enableAbsoluteResidualCriterion_)
                 return shift_ <= shiftTolerance_
                         && residual_ <= residualTolerance_;
             else
@@ -521,7 +522,7 @@ public:
             std::cout << "\rNewton iteration " << numSteps_ << " done";
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
-            if (enableResidualCriterion_ && useAbsoluteResidualCriterion_)
+            if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << ", residual = " << residual_;
             else if (enableResidualCriterion_)
                 std::cout << ", residual reduction = " << reduction_;
@@ -748,7 +749,7 @@ protected:
     bool enablePartialReassemble_;
     bool enableJacobianRecycling_;
     bool useLineSearch_;
-    bool useAbsoluteResidualCriterion_;
+    bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
