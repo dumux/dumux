@@ -17,6 +17,10 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
 * IMPROVEMENTS and ENHANCEMENTS:
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+    - A gridcreator for piece-of-cake-type grids has been added. It is capable
+      of creating meshes with gradually in- and decreasing distances between nodes.
+      It also allows the creation of a 360° cake where the last elements are
+      connected to the first elements.
     - shouldWriteRestartFile() is now, as shouldWriteOutput() already was,
       called before the time level is advanced. So it might be necessary to use
       ...WillBeFinished instead of ...IsFinished for writing restart files at
