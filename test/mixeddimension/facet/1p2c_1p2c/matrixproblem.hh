@@ -74,6 +74,9 @@ SET_BOOL_PROP(OnePTwoCNIMatrixProblem, ProblemEnableGravity, false);
 SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentAdvection, false);
 
+SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, EnableGlobalFVGeometryCache, true);
+
 // change mpfa method
 // SET_PROP(OnePTwoCICCMpfaMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
 // SET_PROP(OnePTwoCNICCMpfaMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
@@ -275,12 +278,7 @@ public:
             values.setAllDirichlet();
 
         if (couplingManager().isInteriorBoundary(element, scvf))
-        {
-            if (isOpenFracture(scvf.ipGlobal()))
-                values.setAllDirichlet();
-            else
-                values.setAllNeumann();
-        }
+            values.setAllNeumann();
 
         return values;
     }
@@ -365,11 +363,14 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    CouplingManager& couplingManager()
+    { return *couplingManager_; }
+
     bool isOpenFracture(const GlobalPosition& globalPos) const
     {
-        for (const auto& segment : openFractureSegments_)
-            if (isOnSegment_(segment, globalPos))
-                return true;
+        //for (const auto& segment : openFractureSegments_)
+        //    if (isOnSegment_(segment, globalPos))
+        //        return true;
         return false;
     }
 
