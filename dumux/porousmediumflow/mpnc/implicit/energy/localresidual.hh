@@ -273,7 +273,7 @@ if (!isfinite(flux[energyEqIdx]) )
         Scalar lumpedHeatConduction = - lumpedConductivity * temperatureGradientNormal ;
         flux[energyEqIdx] += lumpedHeatConduction;
 #ifndef NDEBUG
-using std::isfinite
+using std::isfinite;
 if (!isfinite(flux[energyEqIdx]) )
     DUNE_THROW(NumericalProblem, "Calculated non-finite energy flux");
 #endif
