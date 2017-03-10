@@ -776,7 +776,7 @@ public:
                     Scalar gradingFactor = grading[dimIdx][zoneIdx];
                     Scalar length = upper - lower;
                     Scalar height = 1.0;
-                    bool reverse = false;
+                    bool increasingCellSize = false;
 
                     if (verbose)
                     {
@@ -785,6 +785,22 @@ public:
                                   << " upper "  << upper
                                   << " numCells "  << numCells
                                   << " grading "  << gradingFactor;
+                    }
+
+                    if (gradingFactor > 1.0)
+                    {
+                        increasingCellSize = true;
+                    }
+
+                    // take absolute values and reverse cell size increment to achieve
+                    // reverse behavior for negative values
+                    if (gradingFactor < 0.0)
+                    {
+                        gradingFactor = -gradingFactor;
+                        if (gradingFactor < 1.0)
+                        {
+                            increasingCellSize = true;
+                        }
                     }
 
                     if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
@@ -797,23 +813,6 @@ public:
                     }
                     else
                     {
-                        if (gradingFactor < -1.0)
-                        {
-                            gradingFactor = -gradingFactor;
-                        }
-                        else if (gradingFactor > 0.0 && gradingFactor < 1.0)
-                        {
-                            gradingFactor = 1.0 / gradingFactor;
-                        }
-                        else if (gradingFactor > 1.0)
-                        {
-                            reverse = true;
-                        }
-                        else
-                        {
-                            DUNE_THROW(Dune::NotImplemented, "This grading factor is not implemented.");
-                        }
-
                         height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
 
                         if (verbose)
@@ -832,7 +831,7 @@ public:
                         Scalar hI = height;
                         if (!(gradingFactor < 1.0 + 1e-7 && gradingFactor > 1.0 - 1e-7))
                         {
-                            if (reverse)
+                            if (increasingCellSize)
                             {
                                 hI *= pow(gradingFactor, i);
                             }
