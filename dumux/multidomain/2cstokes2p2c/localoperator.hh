@@ -432,6 +432,12 @@ public:
         const Scalar normalMassFlux1 = boundaryVars1.normalVelocity()
                                        * cParams.elemVolVarsCur1[vertInElem1].density();
 
+        const Scalar diffusiveMoleFlux1 = bfNormal1
+                                          * boundaryVars1.moleFractionGrad(transportCompIdx1)
+                                          * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                            + boundaryVars1.eddyDiffusivity())
+                                          * boundaryVars1.molarDensity();
+
         using std::abs;
         if (abs(bfNormal1[1]) < 1e-10)
         {
@@ -452,7 +458,9 @@ public:
             if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
             {
                 couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
-                                        -normalMassFlux1);
+                                        - normalMassFlux1
+                                        + diffusiveMoleFlux1 * FluidSystem::molarMass(transportCompIdx1)
+                                        - diffusiveMoleFlux1 * FluidSystem::molarMass(phaseCompIdx1));
             }
             else
             {
@@ -568,33 +576,27 @@ public:
             {
                 Scalar advectiveFlux = normalMassFlux1
                                        * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-
-                Scalar diffusiveFlux = bfNormal1.two_norm()
-                                       * globalProblem_.evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
-                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
-                                         + boundaryVars1.eddyDiffusivity())
-                                       * boundaryVars1.molarDensity()
-                                       * FluidSystem::molarMass(transportCompIdx1);
+                Scalar diffusiveFluxBL = bfNormal1.two_norm()
+                                         * globalProblem_.evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                         * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                           + boundaryVars1.eddyDiffusivity())
+                                         * boundaryVars1.molarDensity()
+                                         * FluidSystem::molarMass(transportCompIdx1);
 
                 const Scalar massTransferCoeff = globalProblem_.evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
 
                 if (massTransferModel_ && globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                 {
-                    Scalar diffusiveFluxAtCorner = bfNormal1
-                                                   * boundaryVars1.moleFractionGrad(transportCompIdx1)
-                                                   * (boundaryVars1.diffusionCoeff(transportCompIdx1)
-                                                      + boundaryVars1.eddyDiffusivity())
-                                                   * boundaryVars1.molarDensity()
-                                                   * FluidSystem::molarMass(transportCompIdx1);
+                    Scalar diffusiveFluxAtCorner = diffusiveMoleFlux1 * FluidSystem::molarMass(transportCompIdx1);
 
                     couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
-                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFluxBL) -
                                             (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
                 }
                 else
                 {
                     couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
-                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFluxBL) +
                                             (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
                 }
             }
@@ -605,13 +607,7 @@ public:
 
                 Scalar advectiveFlux = normalMassFlux1
                                        * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-
-                Scalar diffusiveFlux = bfNormal1
-                                       * boundaryVars1.moleFractionGrad(transportCompIdx1)
-                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
-                                          + boundaryVars1.eddyDiffusivity())
-                                       * boundaryVars1.molarDensity()
-                                       * FluidSystem::molarMass(transportCompIdx1);
+                Scalar diffusiveFlux = diffusiveMoleFlux1 * FluidSystem::molarMass(transportCompIdx1);
 
                 couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
                                         -(advectiveFlux - diffusiveFlux));

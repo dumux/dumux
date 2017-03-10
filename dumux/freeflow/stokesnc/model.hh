@@ -96,6 +96,12 @@ class StokesncModel : public StokesModel<TypeTag>
 
 
 public:
+    StokesncModel()
+    {
+        static_assert(useMoles || numComponents < 3,
+                      "This model is restricted to 2 components when using mass fractions! To use mole fractions set property UseMoles true.");
+    }
+
     //! \copydoc ImplicitModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,

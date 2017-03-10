@@ -145,6 +145,8 @@ public:
      */
     void init(Problem &problem)
     {
+        static_assert(numComponents < 3, "This model is restricted to 2 components! You may use the 2pnc model instead.");
+
         ParentType::init(problem);
 
         staticDat_.resize(this->numDofs());
@@ -598,7 +600,7 @@ public:
             if (xww + xwn > xwMax)
             {
                 // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
+                std::cout << "Wetting phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xww + xwn: "
                           << xww + xwn << std::endl;
                 newPhasePresence = bothPhases;
@@ -626,7 +628,7 @@ public:
             if (xnw + xnn > xgMax)
             {
                 // nonwetting phase appears
-                std::cout << "nonwetting phase appears at vertex " << dofIdxGlobal
+                std::cout << "Nonwetting phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xnw + xnn: "
                           << xnw + xnn << std::endl;
                 newPhasePresence = bothPhases;

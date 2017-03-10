@@ -46,6 +46,16 @@ SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(Stokes2cTestProblem, Problem, Stokes2cTestProblem<TypeTag>);
 
+// Set the problem property
+#ifdef USE_MASSES
+SET_BOOL_PROP(Stokes2cTestProblem, UseMoles, false);
+#else
+SET_BOOL_PROP(Stokes2cTestProblem, UseMoles, true);
+#endif
+
+// Use the liquid phase, because the effect of changes in mole/mass fraction is smaller than for gas
+SET_BOOL_PROP(Stokes2cTestProblem, PhaseIdx, 0);
+
 // Select the fluid system
 SET_TYPE_PROP(Stokes2cTestProblem, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
@@ -91,9 +101,11 @@ class Stokes2cTestProblem : public StokesProblem<TypeTag>
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx,
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::massOrMoleFracIdx
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx,
+        phaseIdx = Indices::phaseIdx,
+        transportCompIdx = Indices::transportCompIdx
     };
-
+    enum { useMoles = GET_PROP_VALUE(TypeTag, UseMoles) };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -169,11 +181,6 @@ public:
                         const GlobalPosition &globalPos) const
     {
         initial_(values, globalPos);
-
-        if (onUpperBoundary_(globalPos))
-        {
-            values[massOrMoleFracIdx] = 0.005;
-        }
     }
 
     //! \copydoc ImplicitProblem::neumann()
@@ -229,9 +236,31 @@ private:
                                / (0.25*(this->bBoxMax()[0] - this->bBoxMin()[0])*(this->bBoxMax()[0] - this->bBoxMin()[0]));
 
         if (onUpperBoundary_(globalPos))
-            values[massOrMoleFracIdx] = 0.005;
+        {
+            Scalar moleFracTransportedComp = 0.005;
+            if (useMoles)
+                values[massOrMoleFracIdx] = moleFracTransportedComp;
+            else
+            {
+                Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(transportCompIdx)
+                                               + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(phaseIdx);
+                values[massOrMoleFracIdx] = moleFracTransportedComp * FluidSystem::molarMass(transportCompIdx)
+                                            / averageMolarMassPhase;
+            }
+        }
         else
-            values[massOrMoleFracIdx] = 0.007;
+        {
+            Scalar moleFracTransportedComp = 0.007;
+            if (useMoles)
+                values[massOrMoleFracIdx] = moleFracTransportedComp;
+            else
+            {
+                Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(transportCompIdx)
+                                               + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(phaseIdx);
+                values[massOrMoleFracIdx] = moleFracTransportedComp * FluidSystem::molarMass(transportCompIdx)
+                                            / averageMolarMassPhase;
+            }
+        }
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const

@@ -81,14 +81,6 @@ public:
                 const int scvIdx,
                 const bool isOldSol)
     {
-
-        // Model is restricted to 2 components when using mass fractions
-        if (!useMoles && numComponents>2)
-        {
-            DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions!\
-                                              To use mole fractions set property UseMoles true ...");
-        }
-
         // set the mole fractions first
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState(), isOldSol);
 

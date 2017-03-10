@@ -362,10 +362,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         if(useMoles) // mole-fraction formulation
         {
             // add diffusive flux of gas component in liquid phase
-            Scalar tmp = - (fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal);
-            tmp *=
-                fluxVars.porousDiffCoeff(wPhaseIdx) *
-                fluxVars.molarDensity(wPhaseIdx);
+            Scalar tmp = -(fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal)
+                         * fluxVars.porousDiffCoeff(wPhaseIdx)
+                         * fluxVars.molarDensity(wPhaseIdx);
             // add the diffusive fluxes only to the component mass balance
             if (replaceCompEqIdx != contiNEqIdx)
                 flux[contiNEqIdx] += tmp;
@@ -373,10 +372,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                 flux[contiWEqIdx] -= tmp;
 
             // add diffusive flux of liquid component in non-wetting phase
-            tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal);
-            tmp *=
-                fluxVars.porousDiffCoeff(nPhaseIdx) *
-                fluxVars.molarDensity(nPhaseIdx);
+            tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal)
+                  * fluxVars.porousDiffCoeff(nPhaseIdx)
+                  * fluxVars.molarDensity(nPhaseIdx);
             // add the diffusive fluxes only to the component mass balance
             if (replaceCompEqIdx != contiWEqIdx)
                 flux[contiWEqIdx] += tmp;
@@ -385,27 +383,43 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         }
         else // mass-fraction formulation
         {
-            // add diffusive flux of gas component in liquid phase
-            Scalar tmp = - (fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal);
-            tmp *=
-                fluxVars.porousDiffCoeff(wPhaseIdx) *
-                fluxVars.molarDensity(wPhaseIdx);
-            // add the diffusive fluxes only to the component mass balance
-            if (replaceCompEqIdx != contiNEqIdx)
-                flux[contiNEqIdx] += tmp * FluidSystem::molarMass(nCompIdx);
+            // add diffusive flux of gas component in wetting phase
+            Scalar tmp = -(fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal)
+                         * fluxVars.porousDiffCoeff(wPhaseIdx)
+                         * fluxVars.molarDensity(wPhaseIdx);
+            // add the diffusive fluxes to the component mass balance and total mass balance
+            if (replaceCompEqIdx < numComponents)
+            {
+                flux[replaceCompEqIdx] += tmp * FluidSystem::molarMass(nCompIdx);
+                flux[replaceCompEqIdx] -= tmp * FluidSystem::molarMass(wCompIdx);
+            }
             if (replaceCompEqIdx != contiWEqIdx)
+            {
                 flux[contiWEqIdx] -= tmp * FluidSystem::molarMass(wCompIdx);
-
-            // add diffusive flux of liquid component in non-wetting phase
-            tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal);
-            tmp *=
-                fluxVars.porousDiffCoeff(nPhaseIdx) *
-                fluxVars.molarDensity(nPhaseIdx);
-            // add the diffusive fluxes only to the component mass balance
-            if (replaceCompEqIdx != contiWEqIdx)
-                flux[contiWEqIdx] += tmp * FluidSystem::molarMass(wCompIdx);
+            }
             if (replaceCompEqIdx != contiNEqIdx)
+            {
+                flux[contiNEqIdx] += tmp * FluidSystem::molarMass(nCompIdx);
+            }
+
+            // add diffusive fluxes of liquid component in non-wetting phase
+            tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal)
+                  * fluxVars.porousDiffCoeff(nPhaseIdx)
+                  * fluxVars.molarDensity(nPhaseIdx);
+            // add the diffusive fluxes to the component mass balance and total mass balance
+            if (replaceCompEqIdx < numComponents)
+            {
+                flux[replaceCompEqIdx] += tmp * FluidSystem::molarMass(wCompIdx);
+                flux[replaceCompEqIdx] -= tmp * FluidSystem::molarMass(nCompIdx);
+            }
+            if (replaceCompEqIdx != contiWEqIdx)
+            {
+                flux[contiWEqIdx] += tmp * FluidSystem::molarMass(wCompIdx);
+            }
+            if (replaceCompEqIdx != contiNEqIdx)
+            {
                 flux[contiNEqIdx] -= tmp * FluidSystem::molarMass(nCompIdx);
+            }
         }
     }
 
