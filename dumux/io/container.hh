@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iterator>
 
 namespace Dumux {
 
