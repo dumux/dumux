@@ -74,6 +74,10 @@ SET_BOOL_PROP(OnePTwoCNIFractureProblem, ProblemEnableGravity, false);
 // Solution-independent tensors
 SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentAdvection, false);
+
+SET_BOOL_PROP(OnePTwoCICCFractureProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(OnePTwoCNICCFractureProblem, EnableGlobalFVGeometryCache, true);
+
 }
 
 /*!
