@@ -238,7 +238,7 @@ public:
         if (isLowerLeftCell_(globalPos))
             values.setDirichlet(massBalanceIdx);
         else
-            values.setNeumann(massBalanceIdx);
+            values.setOutflow(massBalanceIdx);
 
         return values;
     }
