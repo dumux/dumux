@@ -18,23 +18,36 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief The available discretization methods in Dumux
+ * \brief The face variables class for free flow staggered grid models
  */
-#ifndef DUMUX_DISCRETIZARION_METHODS_HH
-#define DUMUX_DISCRETIZARION_METHODS_HH
+#ifndef DUMUX_DISCRETIZATION_MIMETIC_FACEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_MIMETIC_FACEVARIABLES_HH
+
+#include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {
-    //! The discretization methods
-    //! \note Use none if specifying a discretization method is required but
-    //!       the class in question is not specific to a a discretization method
-    //!       or the classification is non-applicable
-    enum class DiscretizationMethods : unsigned int
+template<class TypeTag>
+class MimeticFaceVariables
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+public:
+    void update(const FacePrimaryVariables &facePrivars)
     {
-        None, Box, CCTpfa, CCMpfa, Staggered, Mimetic
-    };
+        facePriVars_ = facePrivars;
+    }
 
-} // end namespace Dumux
+    FacePrimaryVariables facePriVars() const
+    {
+        return facePriVars_;
+    }
+
+
+private:
+    FacePrimaryVariables facePriVars_;
+};
+
+} // end namespace
 
 #endif

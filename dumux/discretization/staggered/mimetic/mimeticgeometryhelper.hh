@@ -18,22 +18,51 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief The available discretization methods in Dumux
+ * \brief Helper class constructing the dual grid finite volume geometries
+ *        for the staggered discretization method
  */
-#ifndef DUMUX_DISCRETIZARION_METHODS_HH
-#define DUMUX_DISCRETIZARION_METHODS_HH
+#ifndef DUMUX_DISCRETIZATION_MIMETIC_GEOMETRY_HELPER_HH
+#define DUMUX_DISCRETIZATION_MIMETIC_GEOMETRY_HELPER_HH
 
 namespace Dumux
 {
-    //! The discretization methods
-    //! \note Use none if specifying a discretization method is required but
-    //!       the class in question is not specific to a a discretization method
-    //!       or the classification is non-applicable
-    enum class DiscretizationMethods : unsigned int
+
+template<class GridView>
+class MimeticGeometryHelper
+{
+    using Scalar = typename GridView::ctype;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    using Intersection = typename GridView::Intersection;
+    static constexpr int codimIntersection =  1;
+
+
+public:
+    MimeticGeometryHelper(const Intersection& intersection, const GridView& gridView)
+    : intersection_(intersection), gridView_(gridView)
     {
-        None, Box, CCTpfa, CCMpfa, Staggered, Mimetic
-    };
+    }
+
+    /*!
+    * \brief Returns the global dofIdx of the intersection itself
+    */
+   int dofIndex() const
+   {
+       //TODO: use proper intersection mapper!
+       const auto inIdx = intersection_.indexInInside();
+       return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
+   }
+
+protected:
+
+    // TODO: check whether to use references here or not
+    const Intersection intersection_; //! The intersection of interest
+    const GridView gridView_;
+};
+
+
+
 
 } // end namespace Dumux
 
