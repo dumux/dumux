@@ -30,6 +30,9 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
     - In the TwoPTwoC model, the indices are no longer dependent on the
       formulation. Further, the values of "nPhaseOnly" and "bothPhases"
       have been harmonized with those in TwoPNC
+	- In the NC models, the initial phase presence is now set by the function
+	  initialPhasePresenceAtPos(globalPos) instead of 
+	  initialPhasePresence(vertex, vIdxGlobal, globalPos) in the problem file.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.11: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
