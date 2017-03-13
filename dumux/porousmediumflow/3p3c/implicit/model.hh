@@ -153,39 +153,25 @@ public:
 
         setSwitched_(false);
 
-        if (isBox)
-        {
-            for (const auto& vertex : vertices(this->gridView_()))
-            {
-                int vIdxGlobal = this->dofMapper().index(vertex);
+        FVElementGeometry fvGeometry;
 
-                const GlobalPosition &globalPos = vertex.geometry().corner(0);
+        for (const auto& element : elements(this->gridView_()))
+        {
+            // deal with the current element
+            fvGeometry.update(this->gridView_(), element);
+
+            // loop over all element vertices, i.e. sub control volumes
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
+            {
+                // get the global index of the degree of freedom
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 // initialize phase presence
-                staticDat_[vIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(vertex, vIdxGlobal,
-                                                        globalPos);
-                staticDat_[vIdxGlobal].wasSwitched = false;
+                staticDat_[dofIdxGlobal].phasePresence = this->problem_().initialPhasePresence(element, fvGeometry, scvIdx);
 
-                staticDat_[vIdxGlobal].oldPhasePresence
-                    = staticDat_[vIdxGlobal].phasePresence;
-            }
-        }
-        else
-        {
-            for (const auto& element : elements(this->gridView_()))
-            {
-                int eIdxGlobal = this->dofMapper().index(element);
-                const GlobalPosition &globalPos = element.geometry().center();
+                staticDat_[dofIdxGlobal].wasSwitched = false;
 
-                // initialize phase presence
-                staticDat_[eIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(*this->gridView_().template begin<dim> (),
-                                                            eIdxGlobal, globalPos);
-                staticDat_[eIdxGlobal].wasSwitched = false;
-
-                staticDat_[eIdxGlobal].oldPhasePresence
-                    = staticDat_[eIdxGlobal].phasePresence;
+                staticDat_[dofIdxGlobal].oldPhasePresence = staticDat_[dofIdxGlobal].phasePresence;
             }
         }
     }
