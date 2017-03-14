@@ -30,6 +30,9 @@
 #include "properties.hh"
 #include <dumux/discretization/methods.hh>
 
+#include <dumux/porousmediumflow/implicit/mimetic/fluxvariables.hh>
+
+#include <dumux/discretization/staggered/mimetic/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/mimetic/mimeticgeometryhelper.hh>
 #include <dumux/discretization/staggered/mimetic/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/mimetic/facevariables.hh>
@@ -65,6 +68,13 @@ public:
 
 //! The variables living on the faces
 SET_TYPE_PROP(MimeticModel, FaceVariables, MimeticFaceVariables<TypeTag>);
+
+//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+//! by default, we set the flux variables to ones for porous media
+SET_TYPE_PROP(MimeticModel, FluxVariables, PorousMediumFluxVariablesMimetic<TypeTag>);
+
+//! The global flux variables cache vector class
+SET_TYPE_PROP(MimeticModel, GlobalFluxVariablesCache, Dumux::MimeticGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 } // namespace Properties
 

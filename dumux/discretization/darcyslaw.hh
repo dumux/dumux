@@ -49,5 +49,6 @@ using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, Discr
 #include <dumux/discretization/box/darcyslaw.hh>
 #include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/darcyslaw.hh>
+#include <dumux/discretization/staggered/mimetic/darcyslaw.hh>
 
 #endif

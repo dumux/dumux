@@ -106,8 +106,9 @@ public:
                                   const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
-        CellCenterPrimaryVariables flux;
+        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
 
+        CellCenterPrimaryVariables flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // the physical quantities for which we perform upwinding
@@ -115,13 +116,10 @@ public:
                               { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
             auto eqIdx = conti0EqIdx + phaseIdx;
-            //flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-            flux[eqIdx] = fluxVars.computeFluxForCellCenter(this->problem(), element,  fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache[scvf], phaseIdx);
+            flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
             //EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
-
-            flux[eqIdx] *= elemVolVars[0].density(0);
         }
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.

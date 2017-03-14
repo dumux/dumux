@@ -387,6 +387,119 @@ public:
     }
 };
 
+//! Upwind scheme for the Mimetic scheme
+template<class TypeTag>
+class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::Mimetic>
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+public:
+    // For surface and network grids (dim < dimWorld) we have to do a special upwind scheme
+    template<class FluxVariables, class UpwindTermFunction, int d = dim, int dw = dimWorld>
+    static typename std::enable_if<(d < dw), Scalar>::type
+    apply(const FluxVariables& fluxVars,
+          const UpwindTermFunction& upwindTerm,
+          Scalar flux, int phaseIdx)
+    {
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+
+        // the volume variables of the inside sub-control volume
+        const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
+
+        // check if this is a branching point
+        if (fluxVars.scvFace().numOutsideScvs() > 1)
+        {
+            // more complicated upwind scheme
+            // we compute a flux-weighted average of all inflowing branches
+            Scalar branchingPointUpwindTerm = 0.0;
+            Scalar sumUpwindFluxes = 0.0;
+
+            // if the inside flux is positive (outflow) do fully upwind and return flux
+            if (!std::signbit(flux))
+                return upwindTerm(insideVolVars)*flux;
+            else
+                sumUpwindFluxes += flux;
+
+            for (unsigned int i = 0; i < fluxVars.scvFace().numOutsideScvs(); ++i)
+            {
+                 // compute the outside flux
+                const auto outsideScvIdx = fluxVars.scvFace().outsideScvIdx(i);
+                const auto outsideElement = fluxVars.fvGeometry().globalFvGeometry().element(outsideScvIdx);
+                const auto& flippedScvf = fluxVars.fvGeometry().flipScvf(fluxVars.scvFace().index(), i);
+
+                const auto outsideFlux = AdvectionType::flux(fluxVars.problem(),
+                                                             outsideElement,
+                                                             fluxVars.fvGeometry(),
+                                                             fluxVars.elemVolVars(),
+                                                             flippedScvf,
+                                                             phaseIdx,
+                                                             fluxVars.elemFluxVarsCache());
+
+                if (!std::signbit(outsideFlux))
+                    branchingPointUpwindTerm += upwindTerm(fluxVars.elemVolVars()[outsideScvIdx])*outsideFlux;
+                else
+                    sumUpwindFluxes += outsideFlux;
+            }
+
+            // the flux might be zero
+            if (sumUpwindFluxes != 0.0)
+                branchingPointUpwindTerm /= -sumUpwindFluxes;
+            else
+                branchingPointUpwindTerm = 0.0;
+
+            // upwind scheme (always do fully upwind at branching points)
+            // a weighting here would lead to an error since the derivation is based on a fully upwind scheme
+            // TODO How to implement a weight of e.g. 0.5
+            if (std::signbit(flux))
+                return flux*branchingPointUpwindTerm;
+            else
+                return flux*upwindTerm(insideVolVars);
+        }
+        // non-branching points and boundaries
+        else
+        {
+            // upwind scheme
+            const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
+            if (std::signbit(flux))
+                return flux*(upwindWeight*upwindTerm(outsideVolVars)
+                             + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
+            else
+                return flux*(upwindWeight*upwindTerm(insideVolVars)
+                             + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+        }
+    }
+
+    // For grids with dim == dimWorld we use a simple upwinding scheme
+    template<class FluxVariables, class UpwindTermFunction, int d = dim, int dw = dimWorld>
+    static typename std::enable_if<(d == dw), Scalar>::type
+    apply(const FluxVariables& fluxVars,
+          const UpwindTermFunction& upwindTerm,
+          Scalar flux, int phaseIdx)
+    {
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+
+        const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
+        const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
+        if (std::signbit(flux))
+            return flux*(upwindWeight*upwindTerm(outsideVolVars)
+                         + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
+        else
+            return flux*(upwindWeight*upwindTerm(insideVolVars)
+                         + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+    }
+};
+
 /*!
  * \ingroup Discretization
  * \brief The upwind scheme used for the advective fluxes.

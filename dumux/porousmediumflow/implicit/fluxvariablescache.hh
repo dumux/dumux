@@ -256,6 +256,38 @@ class CCMpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public G
                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
+// forward declaration of the base class of the tpfa flux variables cache
+template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
+class MimeticPorousMediumFluxVariablesCache;
+
+// specialization for the cell centered tpfa method
+template<class TypeTag>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Mimetic>
+      : public MimeticPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
+                                                             GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
+                                                             GET_PROP_VALUE(TypeTag, EnableEnergyBalance)> {};
+
+// specialization for the case of pure advection
+template<class TypeTag>
+class MimeticPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
+
+// specialization for the case of advection & diffusion
+template<class TypeTag>
+class MimeticPorousMediumFluxVariablesCache<TypeTag, true, true, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
+
+// specialization for the case of advection & heat conduction
+template<class TypeTag>
+class MimeticPorousMediumFluxVariablesCache<TypeTag, true, false, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
+
+// specialization for the case of advection, diffusion & heat conduction
+template<class TypeTag>
+class MimeticPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                        public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
+                                                                        public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
+
+
 // TODO further specializations
 
 } // end namespace

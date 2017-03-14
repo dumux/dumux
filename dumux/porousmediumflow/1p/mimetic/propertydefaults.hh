@@ -33,8 +33,6 @@
 #include "../implicit/volumevariables.hh"
 #include "indices.hh"
 #include <dumux/porousmediumflow/immiscible/mimetic/localresidual.hh>
-#include "fluxvariables.hh"
-#include "fluxvariablescache.hh"
 #include "problem.hh"
 #include "velocityoutput.hh"
 
@@ -51,9 +49,9 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(FluxVariables);
-NEW_PROP_TAG(FluxVariablesCache);
-NEW_PROP_TAG(StaggeredGeometryHelper);
+//NEW_PROP_TAG(FluxVariables);
+//NEW_PROP_TAG(FluxVariablesCache);
+//NEW_PROP_TAG(StaggeredGeometryHelper);
 }
 // \{
 
@@ -76,10 +74,10 @@ SET_TYPE_PROP(OnePMimetic, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
 //! by default, we set the flux variables to ones for porous media
-SET_TYPE_PROP(OnePMimetic, FluxVariables, OnePMimeticFluxVariables<TypeTag>);
+//SET_TYPE_PROP(OnePMimetic, FluxVariables, OnePMimeticFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for porous media
-SET_TYPE_PROP(OnePMimetic, FluxVariablesCache, OnePMimeticFluxVariablesCache<TypeTag>);
+//SET_TYPE_PROP(OnePMimetic, FluxVariablesCache, OnePMimeticFluxVariablesCache<TypeTag>);
 
 //! Enable advection
 SET_BOOL_PROP(OnePMimetic, EnableAdvection, true);
