@@ -27,7 +27,7 @@
 #ifndef DUMUX_1P_MIMETIC_PROPERTIES_HH
 #define DUMUX_1P_MIMETIC_PROPERTIES_HH
 
-// #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/implicit/staggered/mimetic/properties.hh>
 
 namespace Dumux
 {
@@ -42,10 +42,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit single-phase problems
-NEW_TYPE_TAG(OnePMimetic);
-
-//! The type tags for the corresponding non-isothermal problems
-// NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NonIsothermal));
+NEW_TYPE_TAG(OnePMimetic, INHERITS_FROM(MimeticModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

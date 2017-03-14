@@ -44,11 +44,6 @@
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1p.hh>
 
-#include <dumux/discretization/staggered/mimetic/mimeticgeometryhelper.hh>
-#include <dumux/discretization/staggered/mimetic/subcontrolvolumeface.hh>
-#include <dumux/discretization/staggered/mimetic/facevariables.hh>
-
-
 
 namespace Dumux
 {
@@ -69,34 +64,6 @@ namespace Properties {
 SET_INT_PROP(OnePMimetic, NumEqCellCenter, 1); //!< set the number of equations to 1
 SET_INT_PROP(OnePMimetic, NumEqFace, 1); //!< set the number of equations to 1
 SET_INT_PROP(OnePMimetic, NumPhases, 1); //!< The number of phases in the 1p model is 1
-
-//! The sub-controlvolume face
-SET_PROP(OnePMimetic, SubControlVolumeFace)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-public:
-    typedef Dumux::MimeticSubControlVolumeFace<ScvfGeometry, IndexType> type;
-};
-
-//! The geometry helper required for the stencils, etc.
-SET_PROP(OnePMimetic, StaggeredGeometryHelper)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-public:
-    using type = MimeticGeometryHelper<GridView>;
-};
-
-//! The variables living on the faces
-SET_TYPE_PROP(OnePMimetic, FaceVariables, MimeticFaceVariables<TypeTag>);
-
-SET_PROP(OnePMimetic, DiscretizationMethod)
-{
-    static const DiscretizationMethods value = DiscretizationMethods::Mimetic;
-};
 
 //! The local residual function
 SET_TYPE_PROP(OnePMimetic, LocalResidual, ImmiscibleMimeticLocalResidual<TypeTag>);
@@ -126,13 +93,6 @@ SET_BOOL_PROP(OnePMimetic, EnableEnergyBalance, false);
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(OnePMimetic, Indices, OnePMimeticIndices<TypeTag>);
 
-//! The weight of the upwind control volume when calculating
-//! fluxes. Use central differences by default.
-SET_SCALAR_PROP(OnePMimetic, ImplicitMassUpwindWeight, 0.5);
-
-//! weight for the upwind mobility in the velocity calculation
-//! fluxes. Use central differences by default.
-SET_SCALAR_PROP(OnePMimetic, ImplicitMobilityUpwindWeight, 0.5);
 
 //! The fluid system to use by default
 SET_TYPE_PROP(OnePMimetic, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
