@@ -21,8 +21,8 @@
  *
  * \brief Velocity output for implicit (porous media) models
  */
-#ifndef DUMUX_1P_MIMETIC_VELOCITYOUTPUT_HH
-#define DUMUX_1P_MIMETIC_VELOCITYOUTPUT_HH
+#ifndef DUMUX_MIMETIC_VELOCITYOUTPUT_HH
+#define DUMUX_MIMETIC_VELOCITYOUTPUT_HH
 
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
@@ -43,7 +43,7 @@ namespace Properties
  * \brief Velocity output for implicit (porous media) models
  */
 template<class TypeTag>
-class OnePMimeticVelocityOutput
+class MimeticVelocityOutput
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -75,7 +75,7 @@ public:
      *
      * \param problem The problem to be solved
      */
-    OnePMimeticVelocityOutput(const Problem& problem)
+    MimeticVelocityOutput(const Problem& problem)
     : problem_(problem)
     {
         // check, if velocity output can be used (works only for cubes so far)

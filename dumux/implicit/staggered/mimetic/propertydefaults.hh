@@ -31,6 +31,7 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/porousmediumflow/implicit/mimetic/fluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/mimetic/velocityoutput.hh>
 
 #include <dumux/discretization/staggered/mimetic/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/mimetic/mimeticgeometryhelper.hh>
@@ -76,6 +77,7 @@ SET_TYPE_PROP(MimeticModel, FluxVariables, PorousMediumFluxVariablesMimetic<Type
 //! The global flux variables cache vector class
 SET_TYPE_PROP(MimeticModel, GlobalFluxVariablesCache, Dumux::MimeticGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
+SET_TYPE_PROP(MimeticModel, VelocityOutput, MimeticVelocityOutput<TypeTag>);
 } // namespace Properties
 
 } // namespace Dumux

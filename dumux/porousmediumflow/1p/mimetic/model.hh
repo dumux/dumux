@@ -24,10 +24,9 @@
  *        Adaption of the fully implicit scheme to the one-phase flow model.
  */
 
-#ifndef DUMUX_NAVIERSTOKES_MODEL_HH
-#define DUMUX_NAVIERSTOKES_MODEL_HH
+#ifndef DUMUX_1P_MIMETIC_MODEL_HH
+#define DUMUX_1P_MIMETIC_MODEL_HH
 
-// #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "properties.hh"
 
 namespace Dumux

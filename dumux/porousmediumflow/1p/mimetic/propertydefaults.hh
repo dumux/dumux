@@ -34,8 +34,6 @@
 #include "indices.hh"
 #include <dumux/porousmediumflow/immiscible/mimetic/localresidual.hh>
 #include "problem.hh"
-#include "velocityoutput.hh"
-
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -71,13 +69,6 @@ SET_TYPE_PROP(OnePMimetic, Model, OnePMimeticModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(OnePMimetic, VolumeVariables, OnePVolumeVariables<TypeTag>);
-
-//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
-//! by default, we set the flux variables to ones for porous media
-//SET_TYPE_PROP(OnePMimetic, FluxVariables, OnePMimeticFluxVariables<TypeTag>);
-
-//! The flux variables cache class, by default the one for porous media
-//SET_TYPE_PROP(OnePMimetic, FluxVariablesCache, OnePMimeticFluxVariablesCache<TypeTag>);
 
 //! Enable advection
 SET_BOOL_PROP(OnePMimetic, EnableAdvection, true);
@@ -121,12 +112,7 @@ SET_BOOL_PROP(OnePMimetic, VtkAddVelocity, false);
 
 // enable gravity by default
 SET_BOOL_PROP(OnePMimetic, ProblemEnableGravity, true);
-
-SET_BOOL_PROP(OnePMimetic, EnableInertiaTerms, false);
-
-SET_BOOL_PROP(OnePMimetic, EnableEnergyTransport, false);
-
-SET_BOOL_PROP(OnePMimetic, EnableComponentTransport, false);
+;
 
 SET_PROP(OnePMimetic, BoundaryValues)
 {
@@ -136,18 +122,6 @@ private:
 public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
-
-//SET_TYPE_PROP(NavierStokes, VtkOutputModule, FreeFlowStaggeredVtkOutputModule<TypeTag>);
-//
-SET_TYPE_PROP(OnePMimetic, VelocityOutput, OnePMimeticVelocityOutput<TypeTag>);
-
-//! average is used as default model to compute the effective thermal heat conductivity
-// SET_PROP(NavierStokesNI, ThermalConductivityModel)
-// { private :
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//   public:
-//     typedef ThermalConductivityAverage<Scalar> type;
-// };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

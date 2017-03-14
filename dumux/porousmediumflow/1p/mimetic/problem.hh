@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for all stokes problems which use the box scheme.
  */
-#ifndef DUMUX_MIMETIC_PROBLEM_HH
-#define DUMUX_MIMETIC_PROBLEM_HH
+#ifndef DUMUX_1P_MIMETIC_PROBLEM_HH
+#define DUMUX_1P_MIMETIC_PROBLEM_HH
 
 #include <dumux/implicit/problem.hh>
 

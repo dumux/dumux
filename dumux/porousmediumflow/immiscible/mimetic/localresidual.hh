@@ -79,9 +79,6 @@ class ImmiscibleMimeticLocalResidual : public Dumux::StaggeredLocalResidual<Type
          // grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-
-        pressureIdx = Indices::pressureIdx,
-        facePressureIdx = Indices::facePressureIdx
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
