@@ -3,65 +3,18 @@
 
 \Dumux has the following folder structure, which is similar to other \Dune modules.
 \begin{itemize}
-\item \texttt{bin}: contains binaries, e.g. used for the automatic testing
+\item \texttt{bin}: binaries, e.g. used for the automatic testing, postprocessing, installation
 \item \texttt{cmake}: the configuration options for building \Dumux
-\item \texttt{doc}: contains the Doxygen documentation (\texttt{doc/doxygen/html/index.html}),
-                    this handbook, and various logos
+\item \texttt{doc}: files necessary for the Doxygen documentation and this handbook, and various logos
 \item \texttt{dumux}: the main folder, containing the source files, see \ref{fig:dumux-structure}
       for a visualized structure. For more information on the models have a look at the
       Doxygen documentation.
-  \begin{itemize}
-  \item \texttt{common}: general methods shared by all models, 
-         like the \texttt{start.hh} or the time manager
-
-  \item \texttt{freeflow}: single-phase free-flow models. All models are discretized
-         fully implicitly using the box-method.
-
-  \item \texttt{geomechanics}: models for solving rock mechanics and flow.
-
-  \item \texttt{implicit}: contains the general methods shared
-         by all implicit models, together with specilized methods
-         for the two discretization types \texttt{box} and \texttt{cellcentered}. 
-         The \texttt{adaptive} folder contains methods for grid adaption. 
-         The specialized model files can be found 
-         at \texttt{porousmediumflow/model of interest/implicit/},
-         \texttt{freeflow/model of interest/}, or \texttt{geomechanics/model of interest/}.
-
-  \item \texttt{io}: additional in-/output possibilities like restart files,
-        gnuplot-interface and a VTKWriter.
-
-  \item \texttt{linear}: contains linear solver backends.
-
-  \item \texttt{material}: all material parameters and constitutive equations.
-        Properties of a pure chemical (pseudo)substance (e.g. water, air) are located
-        in \texttt{components}. The fluidsystems collect information from the \texttt{components} and
-        \texttt{binarycoefficients} (like Henry coefficients), and combines them with fluid phase characteristics
-        (e.g. viscosity, density).
-        The folder \texttt{spatialparams} contains all spatially dependend variables, like permeability and porosity.
-        The class in \texttt{implicitspatialparameters.hh} provides spatial averaging routines.
-        Constitutive relations are found in \texttt{fluidmatrixinteractions}.
-
-  \item \texttt{multidomain}: coupling handling and coupling conditions for connecting
-        different model types in different subdomains.
-
-  \item \texttt{nonlinear}: Newton's method.
-
-  \item \texttt{parallel}: helper files for parallel simulations.
-  
-  \item \texttt{porousmediumflow}: contains all models for porous media setups.
-
-  \item \texttt{sequential}: contains the general methods shared
-         by all sequential models. The specialized model files can be found 
-         at \texttt{porousmediumflow/model of interest/sequential/}.
-\end{itemize}
-
 \item \texttt{test}: tests for each numerical model and some functionality.
       The structure is equivalent to the dumux folder, the \texttt{references} folder
       contains solutions for the automatic testing. Each test program consist of source
-      \texttt{*.cc}, the problem definition \texttt{*problem.hh}, the definition of the spatially dependent
-      parameters \texttt{*spatialparameters.hh} and an input file \texttt{*.input}.
+      \texttt{*.cc}, the problem definition \texttt{*problem.hh}, and an input file \texttt{*.input}.
+      If necessary, spatially dependent parameters are defined in \texttt{*spatialparameters.hh}.
       For more detailed descriptions of the tests, please have a look at the Doxygen documentation.
-
 \item \texttt{tutorial}: contains the tutorials described in Chapter \ref{chp:tutorial}.
 \end{itemize}
 
@@ -102,27 +55,30 @@
 [.\node[draw=dumuxYellow, ultra thick] {dumux};
   [.\node[FirstLevel] {common};
     \node[ThirdLevel] {
-          Common files of the implicit (box and cell centered) models and the
-          sequential models: time integration, start routine, the  property
-          system, ...};
+          Common files of the implicit and the sequential models:
+          time integration, start routine \texttt{start.hh}, the property system, ...};
   ]
   [.\node[FirstLevel] {freeflow};
     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Specific model definition for free flow problems using the (Navier-) Stokes
-                         and algebraic turbulence models.};
+      \node[ThirdLevel] {Single-phase free flow models using Navier-Stokes
+                         and algebraic turbulence models.
+                         All models are discretized with the box-method.};
     ]
   ]
   [.\node[FirstLevel] {geomechanics};
     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Specific model definition for coupled flow and geomechnics simulations.};
+      \node[ThirdLevel] {Specific model files for coupling flow and rock mechanisms.};
     ]
   ]
   [.\node[FirstLevel] {implicit};
 %     [.\node[SecondLevel] {\emph{models}};
       \node[ThirdLevel] {Common functionality of cell centered and box formulation:
-                         assembling in implicitlocaljacobian.hh, evaluation of partial derivative
-                         in implicitlocalresidual.hh, base classes for model and problem definition.};
+                         assembling in localjacobian.hh, evaluation of partial derivative
+                         in localresidual.hh, base classes for model and problem definition.};
 %     ]
+    [.\node[SecondLevel] {adaptive};
+      \node[ThirdLevel] {Contains the methods for grid adaption.};
+    ]
     [.\node[SecondLevel] {box};
       \node[ThirdLevel] {Specific files for the gerenal fully implicit boxmethod:
                          assembler, dual mesh geometry in fvelementgeometry.hh,
@@ -133,10 +89,13 @@
                          mesh geometry in fvelementgeometry.hh, base classes for model and
                          problem definition.};
     ]
+    [.\node[SecondLevel] {cornerpoint};
+      \node[ThirdLevel] {Files need for handling cornerpoint grids.};
+    ]
   ]
   [.\node[FirstLevel] {io};
-    \node[ThirdLevel] {Additional in-/output possibilities like restart files, gnuplot-interface
-                       and a VTKWriter extension. Grid Creator files.};
+    \node[ThirdLevel] {Additional in-/output possibilities like restart files, gnuplot-interface,
+                       VTKWriter extensions and files for grid generation.};
   ]
   [.\node[FirstLevel] {linear};
     \node[ThirdLevel] {Linear solver backend.};
@@ -146,13 +105,15 @@
       \node[ThirdLevel] {Binary coefficients (like binary diffusion coefficients) and those
                          needed for the constitutive relationships (e.g. Henry coefficient)};
     ]
+    [.\node[SecondLevel] {chemistry};
+      \node[ThirdLevel] {Files needed to account for, e.g. electrochemical processes as in a fuel cell.};
+    ]
     [.\node[SecondLevel] {components};
       \node[ThirdLevel] {Properties of a pure chemical substance (e.g. water)
                          or pseudo substance (e.g. air).};
     ]
     [.\node[SecondLevel] {constraintsolvers};
-      \node[ThirdLevel] {Constraint solvers specify a well defined set of input variables
-                         and make sure that the resulting fluid state is consistent with a
+      \node[ThirdLevel] {Constraint solvers to make sure that the resulting fluid state is consistent with a
                          given set of thermodynamic equations.};
     ]
     [.\node[SecondLevel] {eos};
@@ -161,16 +122,16 @@
                          and density.};
     ]
     [.\node[SecondLevel] {fluidmatrixint.};
-      \node[ThirdLevel] {Constitutive relationships (e.g. capillary pressure - saturation - curve};
+      \node[ThirdLevel] {Constitutive relationships (e.g. capillary pressures, relative permeabilities};
     ]
     [.\node[SecondLevel] {fluidstates};
-      \node[ThirdLevel] {Fluid states are responsible for representing the complete thermodynamic
+      \node[ThirdLevel] {Fluid states are responsible for caching the thermodynamic
                          configuration of a system at a given spatial and temporal position.};
     ]
     [.\node[SecondLevel] {fluidsystems};
       \node[ThirdLevel] {Fluid systems express the thermodynamic relations between quantities.};
     ]
-    [.\node[SecondLevel] {spatialparameters};
+    [.\node[SecondLevel] {spatialparams};
       \node[ThirdLevel] {Base class for all spatially dependent variables, like permeability and
                          porosity. Includes spatial averaging routines. All other properties are
                          specified in the specific files of the respective models.};
@@ -178,8 +139,8 @@
   ]
   [.\node[FirstLevel] {multidomain};
     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Localoperators, which implement the correct coupling and
-                         communication between the submodels, and model specific properties.};
+      \node[ThirdLevel] {Localoperators, which implement the coupling and communication
+                         between models in different subdomains, and model specific properties.};
     ]
     [.\node[SecondLevel] {common};
       \node[ThirdLevel] {The multidomain wrappers, generic functions, and properties.};
@@ -192,21 +153,15 @@
     \node[ThirdLevel] {Newton's method.};
   ]
   [.\node[FirstLevel] {parallel};
-    \node[ThirdLevel] {Files for parallel programming.};
-  ]    
+    \node[ThirdLevel] {Helper files for parallel simulations.};
+  ]
   [.\node[FirstLevel] {porousmediumflow};
     [.\node[SecondLevel] {\emph{models}};
     \node[ThirdLevel] {Specific model definition for porous medium flow simulations, 
-                       in both \emph{implicit} or \emph{sequential} formulation: 
+                       in both \texttt{implicit} or \texttt{sequential} formulation:
                        implementation of equations,
                        model specific properties and indices.};
     ]
-  ]
-  [.\node[FirstLevel] {sequential};
-%     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {
-           General model definitions for the sequential formulation.};
-%     ]
   ]
 ]
 \end{tikzpicture}

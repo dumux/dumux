@@ -146,7 +146,7 @@ two-phase model uses the \texttt{TwoPImmiscibleFluidSystem}, which
 assumes immiscibility of the phases, but requires the components
 used for the wetting and non-wetting phases to be explicitly set. In
 this case, liquid water which uses the relations from
-IAPWS'97~\cite{IAPWS1997} is chosen as the wetting phase on line
+IAPWS'97~\cite{IAPWS-HP} is chosen as the wetting phase on line
 \ref{tutorial-implicit:wettingPhase} and liquid oil is chosen as the
 non-wetting phase on line \ref{tutorial-implicit:nonwettingPhase}. The
 last property, which is set in line \ref{tutorial-implicit:gravity},
@@ -248,7 +248,7 @@ of mixtures such as density or enthalpy are of interest. These
 interactions are defined by {\em fluid systems}, which are located in
 \verb+dumux/material/fluidsystems+. A more thorough overview of the
 \Dumux fluid framework can be found 
-at \url{http://www.dumux.org/doxygen-stable/html-2.10/modules.php}
+at \url{http://www.dumux.org/doxygen-stable/html-\DumuxVersion/modules.php}
 %in chapter~\ref{sec:fluidframework}.
 
 % In this example, a class for the definition of a two-phase system is used. This allows for the choice
@@ -412,7 +412,7 @@ To do that, you have to select different components via the property system in t
 If you want to take a closer look on how the fluid classes are defined and which
 substances are already available please browse through the files in the directory
 \texttt{/dumux/material/components} and read 
-the doxygen documentation \url{http://www.dumux.org/doxygen-stable/html-2.10/modules.php}.
+the doxygen documentation \url{http://www.dumux.org/doxygen-stable/html-\DumuxVersion/modules.php}.
 %chapter~\ref{sec:fluidframework}.
 
 \item \textbf{Use a Full-Fledged Fluid System} \\
