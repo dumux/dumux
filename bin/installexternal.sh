@@ -391,7 +391,7 @@ installTypeTree()
     fi
 
     if [ ! -e dune-typetree ]; then
-        git clone -b releases/2.3 https://gitlab.dune-project.org/pdelab/dune-typetree.git
+        git clone -b releases/2.3 https://gitlab.dune-project.org/staging/dune-typetree.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
