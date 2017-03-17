@@ -11,7 +11,7 @@ instructions in Section \ref{install}.
 
 The shell-script \texttt{checkout-dumux}
 facilitates setting up a {\Dune}/{\Dumux} directory tree.
-It is available after obtaining a download link, but not directly from the \texttt{dumux} website \cite{DUMUX-DOWNLOAD}.
+It is available after obtaining a download link via \url{http://www.dumux.org/download/}.
 For example the second line below will check out the required \Dune modules and \texttt{dumux},
 \texttt{dumux-devel} and the \texttt{external} folder, which contains some useful external software and libraries.
 Again,  \texttt{joeuser} needs to be replaced by the actual user name.
@@ -24,19 +24,20 @@ Be aware that you cannot get \texttt{dumux-devel} or the external libraries from
 you have an GitLab account with the right privileges.
 
 If you want to install \Dune and \Dumux without the help of \texttt{checkout-dumux} script a complete installation
-guide can be found in chapter \ref{install} or on the \Dune website \cite{DUNE-INST}.
+guide can be found in chapter \ref{install}.
 
 \subsection{Build of \Dune and \Dumux}
 \label{buildIt}
-Building of \Dune and \Dumux is done by the command-line script \texttt{dunecontrol} as described in \Dune Installation Notes \cite{DUNE-INST}.
-More details about the build-system can be found in the \Dune CMake FAQs \cite{DUNE-CMAKE}.
+Building of \Dune and \Dumux is done by the command-line script \texttt{dunecontrol} as described in
+\Dune Installation Notes\footnote{\url{https://www.dune-project.org/doc/installation/}}.
+More details about the build-system can be found in the \Dune buildsystem documentation\footnote{\url{https://www.dune-project.org/buildsystem/}}.
 If something fails during the execution of \texttt{dunecontrol} feel free to report it to the \Dune or \Dumux developer mailing list,
 but also try to include error details.
 
 It is possible to compile \Dumux with nearly no explicit options to the build system.
-However, for the successful compilation of \Dune and \Dumux, it is currently necessary to pass the
-the option \texttt{-fno-strict-aliasing} to the \Cplusplus compiler
-\cite{WIKIPED-ALIASING}, which is done here via a command-line argument to \texttt{dunecontrol}:
+However, for the successful compilation of \Dune and \Dumux, it is currently necessary to pass
+the option \texttt{-fno-strict-aliasing} to the \Cplusplus compiler,
+which is done here via a command-line argument to \texttt{dunecontrol}:
 \begin{lstlisting}[style=Bash]
 $ # make sure you are in the directory DUNE-Root
 $ ./dune-common/bin/dunecontrol --configure-opts="CXXFLAGS=-fno-strict-aliasing" --use-cmake all

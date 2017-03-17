@@ -14,9 +14,10 @@ Please check in said paragraph whether you can fulfill them. In addition, sectio
 
 In a technical sense \Dumux is a module of \Dune.
 Thus, the installation procedure of \Dumux is the same as that of \Dune.
-Details regarding the installation of \Dune are provided on the \Dune website \cite{DUNE-INST}.
+Details regarding the installation of \Dune are provided on the \Dune website \cite{DUNE-HP}.
 If you are interested in more details about the build system that is used,
-they can be found in the {\Dune} CMake FAQs \cite{DUNE-CMAKE} and CMake's documentation \cite{CMAKE-DOC}.
+they can be found in the \Dune buildsystem documentation\footnote{\url{https://www.dune-project.org/buildsystem/}} and
+CMake's documentation\footnote{\url{https://cmake.org/documentation/}}.
 
 All \Dune modules, including \Dumux, get extracted into a common directory, as it
 is done in an ordinary \Dune installation.
@@ -122,7 +123,7 @@ Then, enter the previously created directory and check out the desired modules.
 As you see below, the check-out uses two different servers for getting the sources,
 one for \Dune and one for \Dumux.
 The \Dune modules of the stable 2.4 release branch are checked out as described
-on the \Dune website \cite{DUNE-DOWNLOAD-GIT}:
+on the \Dune website \cite{DUNE-HP}:
 
 \begin{lstlisting}[style=Bash]
 $ mkdir DUNE-ROOT
@@ -137,13 +138,14 @@ $ git clone -b releases/2.0 https://gitlab.dune-project.org/PDELab/dune-pdelab.g
 \end{lstlisting}
 
 The newest and maybe unstable developments are also provided in these repositories and can be found in the \emph{master} branch.
-Please check the \Dune website \cite{DUNE-DOWNLOAD-GIT} for further information. We always try to keep up with the latest developments of \Dune.
+Please check the \Dune website \cite{DUNE-HP} for further information. We always try to keep up with the latest developments of \Dune.
 However, the current \Dumux release is based on the stable 2.4 release and it might not compile without further adaptations using the newest versions of \Dune.
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
 on the Dune grid interface, act similar.
 
-The \texttt{dumux} module is checked out as described below (see also the \Dumux website \cite{DUMUX-HP}).
+The \texttt{dumux} module is checked out as described below (see also the \Dumux website:
+\url{http://www.dumux.org/}).
 Its file tree has to be created in the \Dune-Root directory, where the \Dune modules
 have also been checked out to. Subsequently, the next command
 is executed there, too. The dumux root directory is called \texttt{dumux} here.
@@ -198,7 +200,7 @@ This enhances \texttt{dumux} by providing maybe unstable code from the developer
 Doxygen documentation is done by especially formatted comments integrated in the source code,
 which can get extracted by the program \texttt{doxygen}. Beside extracting these comments,
 \texttt{doxygen} builds up a web-browsable code structure documentation
-like class hierarchy of code displayed as graphs, see \cite{DOXYGEN-HP}.
+like class hierarchy of code displayed as graphs, see \url{http://www.stack.nl/~dimitri/doxygen/}.
 
 The Doxygen documentation of a module can be built, if \texttt{doxygen} is installed,
 by running \texttt{dunecontrol}, entering the \texttt{build-*}directory, and execute
@@ -208,13 +210,16 @@ This should also work for other \Dune modules.
 
 \subsubsection{Handbook}
 To build the \Dumux handbook go into the \texttt{build-}directory and
-run \texttt{make doc} or \texttt{make dumux-handbook\_pdf}. The pdf can then be found
-in \texttt{MODULE\_BUILD\_DIRECTORY/doc/handbook/dumux-handbook.pdf}.
+run \texttt{make doc} or \texttt{make 0\_dumux-handbook\_pdf}. The pdf can then be found
+in \texttt{MODULE\_BUILD\_DIRECTORY/doc/handbook/0\_dumux-handbook.pdf}.
 
 \subsection{External Libraries and Modules} \label{sec:external-modules-libraries}
 The libraries described below provide additional functionality but are not generally required to run \Dumux.
-If you are going to use an external library check the information provided on the \Dune website \cite{DUNE-EXT-LIB}.
-If you are going to use an external \Dune module the website on external modules \cite{DUNE-EXT-MOD} can be helpful.
+If you are going to use an external library check the information provided on the \Dune website%
+\footnote{DUNE: External libraries, \url{https://www.dune-project.org/doc/external-libraries/}}.
+If you are going to use an external \Dune module the website on external modules%
+\footnote{DUNE: External modules, \url{https://www.dune-project.org/groups/external/}}
+can be helpful.
 
 Installing an external library can require additional libraries which are also used by \Dune.
 For some libraries, such as BLAS or MPI, multiple versions can be installed on the system.
@@ -236,40 +241,40 @@ and some more libraries and tools which are prerequisites for their use.
 
 \begin{itemize}
 \item \textbf{dune-ALUGrid}: Grid library, comes as a \Dune module.
-  The parallel version needs also a graph partitioner, such as \texttt{ParMETIS}.
-  Download: \texttt{\url{https://gitlab.dune-project.org/extensions/dune-alugrid}}
+  The parallel version needs also a graph partitioner, such as {ParMETIS}.
+  Download: \url{https://gitlab.dune-project.org/extensions/dune-alugrid}
 
 \item \textbf{dune-foamgrid}: External grid module. One- and two-dimensional grids
   in a physical space of arbitrary dimension; non-manifold grids, growth, element
   paramterizations, and movable vertices. This makes FoamGrid the grid data structure
   of choice for simulating structures such as foams, discrete fracture networks,
   or network flow problems.
-  Download: \texttt{\url{https://gitlab.dune-project.org/extensions/dune-foamgrid}}
+  Download: \url{https://gitlab.dune-project.org/extensions/dune-foamgrid}
 
 \item \textbf{\Dune-multidomaingrid} and \textbf{\Dune-multidomain}: External modules which offer a meta grid that
   has different sub-domains. Each sub-domain can have a local operator that is coupled by a coupling condition. They are
   used for multi-physics approaches or domain decomposition methods. Download:
-  \texttt{\url{https://github.com/smuething/dune-multidomaingrid}}
-  and \texttt{\url{https://github.com/smuething/dune-multidomain}}
+  \url{https://github.com/smuething/dune-multidomaingrid}
+  and \url{https://github.com/smuething/dune-multidomain}
 
 \item \textbf{\Dune-PDELab}: External module to write more easily discretizations. PDELab provides
   a sound number of discretizations like FEM or discontinuous Galerkin methods.
-  Download: \texttt{\url{http://www.dune-project.org/pdelab}}
+  Download: \url{https://gitlab.dune-project.org/pdelab/dune-pdelab}
 
 \item \textbf{PARDISO}: External library for solving linear equations. The package PARDISO is a thread-safe,
   high-performance, robust, memory efficient and easy to use software for solving large sparse symmetric
   and asymmetric linear systems of equations on shared memory multiprocessors. The precompiled binary
-  can be downloaded after personal registration from the PARDISO website: \texttt{\url{http://www.pardiso-project.org}}
+  can be downloaded after personal registration from the PARDISO website: \url{http://www.pardiso-project.org}
 
 \item \textbf{SuperLU}: External library for solving linear equations. SuperLU is a general purpose
   library for the direct solution of large, sparse, non-symmetric systems of linear equations.
-  Download: \texttt{\url{http://crd.lbl.gov/~xiaoye/SuperLU}}
+  Download: \url{http://crd.lbl.gov/~xiaoye/SuperLU}
 
 \item \textbf{UMFPack}: External library for solving linear equeations. It is part of SuiteSparse.
 
 \item \textbf{UG}: External library for use as grid. UG is a toolbox for unstructured grids, released under GPL.
   To build UG the tools \texttt{lex}/\texttt{yacc} or the GNU variants of \texttt{flex}/\texttt{bison} must be provided.
-  Download: \texttt{\url{http://www.iwr.uni-heidelberg.de/frame/iwrwikiequipment/software/ug}}
+  Download: \url{https://gitlab.dune-project.org/staging/dune-uggrid}
 \end{itemize}
 
 The following are dependencies of some of the used libraries. You will need them
