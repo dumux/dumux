@@ -27,8 +27,8 @@
 #ifndef DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 
-// #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 #include <dumux/freeflow/staggered/properties.hh>
+//#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
 {

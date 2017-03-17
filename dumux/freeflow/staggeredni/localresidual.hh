@@ -26,15 +26,12 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NI_LOCAL_RESIDUAL_HH
 
-//#include <dune/istl/matrix.hh> // TODO ?
+#include <dune/istl/matrix.hh> // TODO ?
 
-//#include <dumux/common/valgrind.hh> // TODO ?
+#include <dumux/common/valgrind.hh> // TODO ?
 #include <dumux/implicit/staggered/localresidual.hh>
 
-//#include "properties.hh" // TODO ?
-//
-//#include "volumevariables.hh" // TODO ?
-//#include "fluxvariables.hh" // TODO ?
+#include "properties.hh" // TODO ?
 
 namespace Dumux
 {
@@ -61,20 +58,37 @@ NEW_PROP_TAG(EnableInertiaTerms);
 template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
 class StaggeredNavierStokesResidualImpl;
 
+template<class TypeTag>
+using StaggeredNavierStokesResidual = StaggeredNavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
+                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+
+
 // specialization for immiscible, non-isothermal flow
 template<class TypeTag>
 class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
 {
     friend class StaggeredLocalResidual<TypeTag>;
 
+    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false, false>;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
     enum {
         energyBalanceIdx = Indices::energyBalanceIdx
     };
+
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
@@ -94,6 +108,9 @@ public:
 
         // compute the storage of energy
         storage[energyBalanceIdx] = volVars.density(0) * volVars.internalEnergy(0);
+
+        std::cout << "** Subcontrolvolume " << scv.index() << ": energy storage = "
+               << storage[energyBalanceIdx] << std::endl;
 
         return storage;
     }

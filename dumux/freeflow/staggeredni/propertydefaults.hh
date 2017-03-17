@@ -30,13 +30,13 @@
 #include "properties.hh"
 
 #include "model.hh"
-#include "volumevariables.hh"
+#include "../staggered/volumevariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
+#include "fluxvariables.hh"
 #include "../staggered/problem.hh"
 // #include "../staggered/model.hh"
 #include "../staggered/propertydefaults.hh"
-
 
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -44,9 +44,7 @@
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1p.hh>
 
-#include <dumux/material/fluidstates/compositional.hh>
-
-
+#include <dumux/material/fluidstates/immiscible.hh>
 
 
 namespace Dumux
@@ -65,11 +63,12 @@ NEW_PROP_TAG(FluxVariablesCache);
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
-SET_PROP(NavierStokesNI, NumEqCellCenter, GET_PROP_VALUE(TypeTag, NonIsothermalNumEq) + 1);
+SET_INT_PROP(NavierStokesNI, NumEqCellCenter, 1); // temp. (additional to pressure)
 
 //! the VolumeVariables property
-SET_TYPE_PROP(NavierStokesNI, VolumeVariables, NavierStokesNIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokesNI, Model, NavierStokesNIModel<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, Indices, NavierStokesNIIndices<TypeTag>);
 
 
 /*!
@@ -84,7 +83,7 @@ SET_PROP(NavierStokesNI, FluidState)
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     public:
-        typedef CompositionalFluidState<Scalar, FluidSystem> type; // TODO necessary?
+        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
 // //! Enable advection
@@ -94,7 +93,7 @@ SET_PROP(NavierStokesNI, FluidState)
 // SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
 //
 //! Non-Isothermal model by default
-SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, true);
+//SET_BOOL_PROP(NavierStokesNI, EnableEnergyBalance, true);
 //
 // //! The indices required by the isothermal single-phase model
 // SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
@@ -172,7 +171,7 @@ SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
 // SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
 
 //set non-isothermal NumEq
- SET_INT_PROP(NavierStokesNI, NonIsothermalNumEq, 1);
+// SET_INT_PROP(NavierStokesNI, NonIsothermalNumEq, 1);
 
 
 // \}

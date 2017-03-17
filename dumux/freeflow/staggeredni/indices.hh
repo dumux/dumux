@@ -18,38 +18,32 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the staggered Navier-Stokes NC model.
+ * \brief  Defines the indices for the staggered Navier-Stokes NI model.
  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
 
-#include <dumux/freeflow/staggered/indices.hh>
+//#include <dumux/freeflow/staggered/indices.hh>
+//#include "properties.hh"
 
 namespace Dumux
 {
 // \{
 /*!
- * \ingroup NavierStokesNCModel
+ * \ingroup NavierStokesNIModel
  * \ingroup ImplicitIndices
  * \brief Indices for the staggered Navier-Stokes NI model model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-struct NavierStokesNIIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
+class NavierStokesNIIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
 {
-private:
-    using ParentType = NavierStokesCommonIndices<TypeTag, PVOffset>;
-
 public:
-
     static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
     static constexpr int energyBalanceIdx = PVOffset + numEq - 1;
     static constexpr int temperatureIdx = energyBalanceIdx;
-
 };
-
-// \}
 } // end namespace
 
 #endif
