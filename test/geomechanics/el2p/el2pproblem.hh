@@ -54,7 +54,7 @@ NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
 NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
 // Set the grid type
-SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>);
+SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::YaspGrid<3>);
 
 
 SET_PROP(El2P_TestProblem, PressureFEM)
