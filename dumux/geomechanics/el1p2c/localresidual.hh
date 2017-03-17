@@ -270,35 +270,28 @@ namespace Dumux
             void computeDiffusiveFlux(PrimaryVariables &flux,
                                       const FluxVariables &fluxVars) const
             {
-                Scalar tmp(0);
+                // diffusive flux of the transported component
+                Scalar tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
+                tmp *= fluxVars.diffCoeffPM();
 
-                // diffusive flux of second component
+                // dispersive flux of transported component
+                DimVector normalDisp;
+                fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+                tmp -= (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
+
                 if(useMoles)
                 {
-                    // diffusive flux of the second component - mole fraction
-                    tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
-                    tmp *= fluxVars.diffCoeffPM();
-
-                    // dispersive flux of second component - mole fraction
-                                DimVector normalDisp;
-                                fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-                                tmp -= (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
-
                     flux[transportEqIdx] += tmp;
                 }
                 else
                 {
-                    // diffusive flux of the second component - mass fraction
-                    tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
-                    tmp *= fluxVars.diffCoeffPM();
-
-                    // dispersive flux of second component - mass fraction
-                               DimVector normalDisp;
-                               fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-                               tmp -= (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
-
                     // convert it to a mass flux and add it
                     flux[transportEqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
+
+                    // account for diffusive fluxes in the total mass balance
+                    // in contrast to a molar formulation they do not cancel out
+                    flux[conti0EqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
+                    flux[conti0EqIdx] -= tmp * FluidSystem::molarMass(phaseIdx);
                 }
             }
 

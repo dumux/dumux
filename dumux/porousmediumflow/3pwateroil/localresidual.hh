@@ -74,8 +74,8 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    //! property that defines whether mole or mass fractions are used
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static const bool useMassOutput = GET_PROP_VALUE(TypeTag, UseMassOutput);
+
 public:
 
     /*!
@@ -143,7 +143,7 @@ public:
 protected:
     void evalPhaseStorage_(const int phaseIdx)
     {
-        if(!useMoles) //mass-fraction formulation
+        if(useMassOutput) //mass-fraction formulation
         {
             // evaluate the storage terms of a single phase
             for (int i=0; i < this->fvGeometry_().numScv; i++) {

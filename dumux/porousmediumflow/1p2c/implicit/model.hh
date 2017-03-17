@@ -48,8 +48,10 @@ namespace Dumux
  * Gravity can be enabled or disabled via the property system.
  * By inserting this into the continuity equation, one gets
  \f[
- \phi\frac{\partial \varrho}{\partial t} - \text{div} \left\{
+ \phi\frac{\partial \varrho}{\partial t}
+ - \text{div} \left\{
    \varrho \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
+   + \sum_\kappa \varrho D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa
  \right\} = q \;,
  \f]
  *

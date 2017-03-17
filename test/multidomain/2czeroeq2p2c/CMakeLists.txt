@@ -7,7 +7,8 @@ add_dumux_test(test_2czeroeq2p2c test_2czeroeq2p2c test_2czeroeq2p2c.cc
                   --files ${CMAKE_SOURCE_DIR}/test/references/2czeroeq2p2c-ff-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/zeroeq2c-00028.vtu
                           ${CMAKE_SOURCE_DIR}/test/references/2czeroeq2p2c-pm-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/2p2c-00028.vtu)
+                          ${CMAKE_CURRENT_BINARY_DIR}/2p2c-00028.vtu
+                  --zeroThreshold {"v_1":5e-5,"velocityN_0":5e-10,"velocityW_0":5e-10,"velocityW_1":1e-10})
 
 #install sources
 install(FILES

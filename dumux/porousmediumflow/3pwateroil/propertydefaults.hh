@@ -116,9 +116,11 @@ SET_BOOL_PROP(ThreePWaterOilNI, VtkAddVelocity, false);
 // enable gravity by default
 SET_BOOL_PROP(ThreePWaterOilNI, ProblemEnableGravity, true);
 
-SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
+ //!< Define that mole fractions are used in the balance equations per default
+SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true);
 
-
+//! Output the storage term in mass
+SET_BOOL_PROP(ThreePWaterOilNI, UseMassOutput, false);
 
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.

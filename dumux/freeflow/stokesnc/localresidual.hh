@@ -207,21 +207,26 @@ public:
             {
                 if (conti0EqIdx+compIdx != massBalanceIdx)
                 {
-                    flux[conti0EqIdx+compIdx] -= fluxVars.moleFractionGrad(compIdx)
-                      * fluxVars.face().normal
-                      * (fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
-                      * fluxVars.molarDensity();
+                    flux[conti0EqIdx+compIdx] += -(fluxVars.moleFractionGrad(transportCompIdx) * fluxVars.face().normal)
+                                                 * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
+                                                 * fluxVars.molarDensity();
                     Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
                 }
             }
         }
         else
         {
-            flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)
-              * fluxVars.face().normal
-              * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
-              * fluxVars.molarDensity()
-              * FluidSystem::molarMass(transportCompIdx);// Multiplied by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
+            Scalar diffusiveMolarFlux = -(fluxVars.moleFractionGrad(transportCompIdx) * fluxVars.face().normal)
+                                        * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
+                                        * fluxVars.molarDensity();
+            // Multiply by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
+            flux[transportEqIdx] += diffusiveMolarFlux * FluidSystem::molarMass(transportCompIdx);
+            // Add the diffusive fluxes to the total mass balance, this is necessary as
+            // diffusive mole fluxes cancel out, but not the diffusive mass fluxes
+            // NOTE: for the phaseCompIdx the diffusiveMolarFlux is inverted, because it was calculated
+            //       by moleFractionGrad(transportCompIdx)
+            flux[massBalanceIdx] += diffusiveMolarFlux * FluidSystem::molarMass(transportCompIdx);
+            flux[massBalanceIdx] += -diffusiveMolarFlux * FluidSystem::molarMass(phaseCompIdx);
             Valgrind::CheckDefined(flux[transportEqIdx]);
         }
     }

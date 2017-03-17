@@ -37,7 +37,7 @@ namespace Dumux {
  *        n-component Stokes model.
  *
  * This model implements a non-isothermal n-component Stokes flow of a fluid
- * solving a momentum balance, a mass balance, conservation equations for \f$n-1\f$ components,
+ * solving a momentum balance, a total mass balance, conservation equations for \f$n-1\f$ components,
  * and one balance equation for the energy.
  *
  * The momentum balance:
@@ -55,10 +55,14 @@ namespace Dumux {
  * \f]
  * is added to the momentum balance equation.
  *
- * The mass balance equation:
+ * The total mass balance equation:
  * \f[
  *    \frac{\partial \varrho_g}{\partial t}
- *    + \text{div} \left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ *    + \text{div} \left(
+ *        \varrho_g {\boldsymbol{v}}_g
+ *        - \sum_\kappa D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \textbf{grad}\, x_g^\kappa
+ *      \right)
+ *    - q_g = 0
  * \f]
  *
  * The component mass balance equations:
@@ -75,8 +79,7 @@ namespace Dumux {
  * \f[
  *    \frac{\partial (\varrho_g  u_g)}{\partial t}
  *    + \text{div} \left( \varrho_g h_g {\boldsymbol{v}}_g
- *    - \sum_\kappa \left[ h^\kappa_g D^\kappa_g \varrho_g \frac{M^\kappa}{M_g}
- *                         \textbf{grad}\, x^\kappa_g \right]
+ *    - \sum_\kappa h^\kappa_g D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \textbf{grad}\, x^\kappa_g
  *    - \lambda_g \textbf{grad}\, T \right) - q_T = 0
  * \f]
  *

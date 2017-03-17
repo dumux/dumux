@@ -218,35 +218,22 @@ public:
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
-        Scalar tmp(0);
+        // diffusive flux of the transported component
+        Scalar tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
+        tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
 
-        // diffusive flux of second component
-        if(useMoles) // mole-fraction formulation
+        // dispersive flux of transported component
+        GlobalPosition normalDisp;
+        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+        tmp -= fluxVars.molarDensity()*
+               (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
+
+        if(useMoles)
         {
-            // diffusive flux of the second component - molefraction
-            tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
-            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
-
-            // dispersive flux of second component - molefraction
-                        GlobalPosition normalDisp;
-                        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-                        tmp -= fluxVars.molarDensity()*
-                            (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
-
             flux[transportEqIdx] += tmp;
         }
-        else // mass-fraction formulation
+        else
         {
-            // diffusive flux of the second component - massfraction
-            tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
-            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
-
-            // dispersive flux of second component - massfraction
-                       GlobalPosition normalDisp;
-                       fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-                       tmp -= fluxVars.molarDensity()*
-                       (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
-
             // convert it to a mass flux and add it
             flux[transportEqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
         }

@@ -40,10 +40,14 @@ namespace Dumux
  * the Reynolds-averaged Navier-Stokes (RANS) equation with zero equation
  * (algebraic) turbulence model is used.
  *
- * Mass balance:
+ * Total mass balance:
  * \f[
  *  \frac{\partial \varrho_\textrm{g}}{\partial t}
- *  + \text{div} \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} \right)
+ *  + \text{div} \left(
+ *       \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *       - \sum_\kappa \left[ D^\kappa_\textrm{g} + D^\kappa_\textrm{g,t} \right]
+ *                     \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \textbf{grad}\, x_\textrm{g}^\kappa
+ *    \right)
  *  - q_\textrm{g} = 0
  * \f]
  *
@@ -60,7 +64,7 @@ namespace Dumux
  *   - \varrho_\textrm{g} {\bf g} = 0
  * \f]
  *
- * Component mass balance equations:
+ * Component mass balance equations, needed \f$n-1\f$ times:
  * \f[
  *  \frac{\partial \left(\varrho_\textrm{g} X_\textrm{g}^\kappa\right)}{\partial t}
  *  + \text{div} \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} X_\textrm{g}^\kappa

@@ -132,9 +132,6 @@ class ThreePWaterOilModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -146,6 +143,8 @@ public:
      */
     void init(Problem &problem)
     {
+        static_assert(GET_PROP_VALUE(TypeTag, UseMoles), "This model is not implemented for balancing masses.");
+
         ParentType::init(problem);
 
         staticDat_.resize(this->numDofs());
