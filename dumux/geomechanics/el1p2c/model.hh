@@ -35,7 +35,7 @@ namespace Dumux {
  *
  * This model implements a one-phase flow of an incompressible fluid, that consists of two components.
  * The deformation of the solid matrix is described with a quasi-stationary momentum balance equation.
- * The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941).
+ * The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941 \cite Biot1941a).
  * The total stress acting on a rock is partially supported by the rock matrix and partially supported
  * by the pore fluid. The effective stress represents the share of the total stress which is supported
  * by the solid rock matrix and can be determined as a function of the strain according to Hooke's law.
@@ -49,8 +49,11 @@ namespace Dumux {
  * Gravity can be enabled or disabled via the property system.
  * By inserting this into the volume balance of the solid-fluid mixture, one gets
  \f[
- \frac{\partial \text{div} \textbf{u}}{\partial t} - \text{div} \left\{
-   \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho_w {\textbf g} \right)\right\} = q \;,
+ \frac{\partial \text{div} \textbf{u}}{\partial t}
+ - \text{div} \left\{
+   \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho_w {\textbf g} \right)
+   + \sum_\kappa D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa
+ \right\} = q \;,
  \f]
  *
  * The transport of the components \f$\kappa \in \{ w, a \}\f$ is described by the following equation:
@@ -64,7 +67,7 @@ namespace Dumux {
  \f]
  *
  * If the model encounters stability problems, a stabilization term can be switched on. The stabilization
- * term is defined in Aguilar et al (2008):
+ * term is defined in Aguilar et al. (2008) \cite Aguilar2008a.
  \f[
  \beta \text{div} \textbf{grad} \frac{\partial p}{\partial t}
  \f]
@@ -77,10 +80,12 @@ namespace Dumux {
  * The balance equations
  * with the stabilization term are given below:
  \f[
- \frac{\partial \text{div} \textbf{u}}{\partial t} - \text{div} \left\{
+ \frac{\partial \text{div} \textbf{u}}{\partial t}
+ - \text{div} \left\{
    \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho_w {\textbf g} \right)
+   + \sum_\kappa D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa
    + \varrho_w \beta \textbf{grad} \frac{\partial p}{\partial t}
-   \right\} = q \;,
+ \right\} = q \;,
  \f]
  *
  * The transport of the components \f$\kappa \in \{ w, a \}\f$ is described by the following equation:

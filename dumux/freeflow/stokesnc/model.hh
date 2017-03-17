@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief Adaption of the box scheme to the compositional Stokes model.
  *
  * This model implements an isothermal n-component Stokes flow of a fluid
- * solving a momentum balance, a mass balance and conservation equations for \f$n-1\f$
+ * solving a momentum balance, a total mass balance and conservation equations for \f$n-1\f$
  * components. When using mole fractions naturally the densities represent molar
  * densities
  *
@@ -54,10 +54,14 @@ namespace Dumux {
  * \f]
  * is added to the momentum balance equation.
  *
- * The mass balance equation:
+ * The total mass balance equation:
  * \f[
  *    \frac{\partial \varrho_g}{\partial t}
- *    + \text{div} \left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ *    + \text{div} \left(
+ *        \varrho_g {\boldsymbol{v}}_g
+ *        - \sum_\kappa D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \textbf{grad}\, x_g^\kappa
+ *      \right)
+ *    - q_g = 0
  * \f]
  *
  * The component mass balance equations:

@@ -41,15 +41,23 @@ namespace Dumux {
  * The total mass balance equation:
  * \f[
  *  \left[
- *    \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} \right) \cdot \boldsymbol{n}
+ *    \left(
+ *      \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *      - \sum_\kappa {\boldsymbol{j}}^\kappa_\textrm{g,ff,t,diff}
+ *    \right) \cdot \boldsymbol{n}
  *  \right]^\textrm{ff}
  *  = -\left[
- *      \left( \varrho_\textrm{g} \boldsymbol{v}_\textrm{g}
- *             + \varrho_\textrm{l} \boldsymbol{v}_\textrm{l} \right) \cdot \boldsymbol{n}
+ *      \left(
+ *        \varrho_\textrm{g} \boldsymbol{v}_\textrm{g}
+ *        + \varrho_\textrm{l} \boldsymbol{v}_\textrm{l}
+ *        - \sum_\kappa {\boldsymbol{j}}^\kappa_\textrm{g,pm,diff}
+ *        - \sum_\kappa {\boldsymbol{j}}^\kappa_\textrm{l,pm,diff}
+*        \right) \cdot \boldsymbol{n}
  *    \right]^\textrm{pm}
  * \f]
  * in which \f$n\f$ represents a vector normal to the interface pointing outside of
- * the specified subdomain.
+ * the specified subdomain. The diffusive fluxes \f$ j_\textrm{diff} \f$ are the diffusive fluxes as
+ * they are implemented in the individual subdomain models.
  *
  * The momentum balance (tangential), which corresponds to the Beavers-Jospeh Saffman condition:
  * \f[

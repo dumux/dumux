@@ -43,7 +43,7 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
  *
  * This model implements a two-phase flow of compressible immiscible fluids \f$\alpha \in \{ w, n \}\f$.
  * The deformation of the solid matrix is described with a quasi-stationary momentum balance equation.
- * The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941).
+ * The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941 \cite Biot1941a).
  * The total stress acting on a rock is partially supported by the rock matrix and partially supported
  * by the pore fluid. The effective stress represents the share of the total stress which is supported
  * by the solid rock matrix and can be determined as a function of the strain according to Hooke's law.
@@ -65,7 +65,7 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
  \f]
  *
  *
- * A quasi-stationary momentum balance equation is solved for the changes with respect to the initial conditions (Darcis 2012), note
+ * A quasi-stationary momentum balance equation is solved for the changes with respect to the initial conditions, note
  * that this implementation assumes the soil mechanics sign convention (i.e. compressive stresses are negative):
  \f[
  \text{div}\left( \boldsymbol{\Delta \sigma'}- \Delta p_{eff} \boldsymbol{I} \right) + \Delta \varrho_b {\textbf g} = 0 \;,
