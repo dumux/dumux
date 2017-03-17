@@ -3,19 +3,20 @@
 
 \subsection{Communicate with \Dumux Developers}
 
-\paragraph{GitLab Issues}
-The bug-tracking system \emph{GitLab Issues} offers the possibility to report bugs or
-discuss new development requests. Feel free to register (if you don't have a \emph{Git} account alreay) and to constribute
+\paragraph{Issues and Bug Tracking}
+The bug-tracking system \emph{GitLab Issues} offers the possibility to report bugs or discuss new development requests.
+Feel free to register (if you don't have a \emph{Git} account already) and to constribute
 at \url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/issues}.
 
-\paragraph{Flyspray}
-The bug-tracking system \emph{Flyspray} has been replaced by \emph{GitLab Issues} and will not
-be used anymore.
+\paragraph{Commits, Merges, etc.}
+To be up-to-date with the latest changes made to any git-repository you can use RSS Feeds.
+Simply click on \emph{Issues} or \emph{Activity} and then select a tab you are interested in
+and use your favorite RSS-application for receiving the news.
 
 \paragraph{Automatic Testing Dashboard}
 The automatic testing using \emph{BuildBot} helps to constantly check the
 \Dumux problems for compiling and running correctly. It is available at
-\url{http://www.dumux.org/dashboard.php}.
+\url{https://git.iws.uni-stuttgart.de/buildbot/#/builders}.
 
 \paragraph{The General Mailing List:}
 If you have questions, specific problems (which you really struggle to solve on your own),
@@ -23,11 +24,6 @@ or hints for the \Dumux-developers, please contact the mailing list \url{dumux@i
 You can subscribe to the mailing list via
 \url{https://listserv.uni-stuttgart.de/mailman/listinfo/dumux}, then you
 will be informed about upcoming releases or events.
-
-\paragraph{The Commit Mailing List:}
-If you want to be informed about \Dumux-commits you can subscribe to the mailing list:
-\url{https://listserv.uni-stuttgart.de/mailman/listinfo/dumux-commits}.
-
 
 \subsection{Tips and Tricks}
 \Dumux users and developers at the LH2 are also referred to the internal Wiki for
@@ -98,10 +94,10 @@ Dune::dinfo << "message"; // will NOT be printed
 \end{lstlisting}
 
 \paragraph{Make headercheck:}
-To check one header file for all necessary includes to compile the contained
-code, use \texttt{make headercheck}. Go to the top level in your build-directory
-and type \texttt{make headercheck} to check all headers or press 'tab' to use the
-auto-completion to search for a specific header.
+To check one header file for all necessary includes to compile the contained code, use \texttt{make headercheck}.
+Include the option \texttt{-DENABLE\_HEADERCHECK=1} in your opts file and run \texttt{dunecontrol}.
+Then go to the top level in your build-directory and type \texttt{make headercheck} to check all headers
+or press 'tab' to use the auto-completion to search for a specific header.
 
 \paragraph{Naming conventions}
 General guidelines for naming conventions are specified in Section \ref{sc_guidelines}.
