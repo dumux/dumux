@@ -108,11 +108,11 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static const char *phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
-        static const char *name[] = {
-            "l",
-            "g"
+        static const std::string name[] = {
+            std::string("l"),
+            std::string("g")
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);

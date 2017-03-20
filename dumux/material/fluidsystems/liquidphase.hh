@@ -69,7 +69,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static const char *phaseName(int phaseIdx = 0)
+    static std::string phaseName(int phaseIdx = 0)
     { return Component::name(); }
 
     /*!
@@ -77,13 +77,13 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static const char *componentName(int compIdx = 0)
+    static std::string componentName(int compIdx = 0)
     { return Component::name(); }
 
     /*!
      * \brief A human readable name for the component.
      */
-    static const char *name()
+    static std::string name()
     { return Component::name(); }
 
     /*!

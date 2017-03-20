@@ -24,6 +24,7 @@
  */
 #include <config.h>
 #include <iostream>
+#include <memory>
 
 #if HAVE_DUNE_ALUGRID || HAVE_UG
 
@@ -126,17 +127,13 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(FVTypeTag, Problem) FVProblem;
         typedef GET_PROP(FVTypeTag, ParameterTree) FVParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, FVParameterTree::tree());
-        FVProblem *fvProblem = new FVProblem(grid->leafGridView());
+        auto fvProblem = std::make_shared<FVProblem>(grid->leafGridView());
 
-        std::string fvOutput("test_diffusion3d_fv");
-        fvOutput += outputName;
+        std::string fvOutput("test_diffusion3d_fv" + outputName);
         if (numRefine > 0)
-        {
-            char refine[128];
-            sprintf(refine, "_numRefine%d", numRefine);
-            fvOutput += refine;
-        }
-        fvProblem->setName(fvOutput.c_str());
+            fvOutput += "_numRefine" + std::to_string(numRefine);
+
+        fvProblem->setName(fvOutput);
         timer.reset();
         fvProblem->init();
         fvProblem->calculateFVVelocity();
@@ -144,55 +141,44 @@ int main(int argc, char** argv)
         fvProblem->writeOutput();
         Dumux::ResultEvaluation fvResult;
         fvResult.evaluate(grid->leafGridView(), *fvProblem, consecutiveNumbering);
-        delete fvProblem;
 
         typedef TTAG (FVMPFAL3DTestProblem)
         MPFALTypeTag;
         typedef GET_PROP_TYPE(MPFALTypeTag, Problem) MPFALProblem;
         typedef GET_PROP(MPFALTypeTag, ParameterTree) MPFALParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, MPFALParameterTree::tree());
-        MPFALProblem *mpfaProblem = new MPFALProblem(grid->leafGridView());
+        auto mpfaProblem = std::make_shared<MPFALProblem>(grid->leafGridView());
 
-        std::string fvmpfaOutput("test_diffusion3d_fvmpfal");
-        fvmpfaOutput += outputName;
+        std::string fvmpfaOutput("test_diffusion3d_fvmpfal" + outputName);
         if (numRefine > 0)
-        {
-            char refine[128];
-            sprintf(refine, "_numRefine%d", numRefine);
-            fvmpfaOutput += refine;
-        }
-        mpfaProblem->setName(fvmpfaOutput.c_str());
+            fvmpfaOutput += "_numRefine" + std::to_string(numRefine);
+
+        mpfaProblem->setName(fvmpfaOutput);
         timer.reset();
         mpfaProblem->init();
         double mpfaTime = timer.elapsed();
         mpfaProblem->writeOutput();
         Dumux::ResultEvaluation mpfaResult;
         mpfaResult.evaluate(grid->leafGridView(), *mpfaProblem, consecutiveNumbering);
-        delete mpfaProblem;
 
         typedef TTAG (MimeticTestProblem)
         MimeticTypeTag;
         typedef GET_PROP_TYPE(MimeticTypeTag, Problem) MimeticProblem;
         typedef GET_PROP(MimeticTypeTag, ParameterTree) MimeticParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, MimeticParameterTree::tree());
-        MimeticProblem *mimeticProblem = new MimeticProblem(grid->leafGridView());
+        auto mimeticProblem = std::make_shared<MimeticProblem>(grid->leafGridView());
 
-        std::string mimeticOutput("test_diffusion3d_mimetic");
-        mimeticOutput += outputName;
+        std::string mimeticOutput("test_diffusion3d_mimetic" + outputName);
         if (numRefine > 0)
-        {
-            char refine[128];
-            sprintf(refine, "_numRefine%d", numRefine);
-            mimeticOutput += refine;
-        }
-        mimeticProblem->setName(mimeticOutput.c_str());
+            mimeticOutput += "_numRefine" + std::to_string(numRefine);
+
+        mimeticProblem->setName(mimeticOutput);
         timer.reset();
         mimeticProblem->init();
         double mimeticTime = timer.elapsed();
         mimeticProblem->writeOutput();
         Dumux::ResultEvaluation mimeticResult;
         mimeticResult.evaluate(grid->leafGridView(), *mimeticProblem, consecutiveNumbering);
-        delete mimeticProblem;
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
         std::cout.precision(2);

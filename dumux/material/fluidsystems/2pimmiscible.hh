@@ -82,13 +82,13 @@ public:
      * \brief Return the human readable name of a fluid phase
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static const char *phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        static const char *name[] = {
-            "w",
-            "n"
+        static std::string name[] = {
+            std::string("w"),
+            std::string("n")
         };
         return name[phaseIdx];
     }
@@ -179,7 +179,7 @@ public:
      *
      * \param compIdx index of the component
      */
-    static const char *componentName(int compIdx)
+    static std::string componentName(int compIdx)
     {
         assert(0 <= compIdx && compIdx < numComponents);
 

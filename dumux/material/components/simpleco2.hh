@@ -50,7 +50,7 @@ public:
     /*!
      * \brief A human readable name for the \f$CO_2\f$.
      */
-    static const char *name()
+    static std::string name()
     { return "CO2"; }
 
     /*!
