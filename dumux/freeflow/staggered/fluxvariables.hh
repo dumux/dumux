@@ -197,6 +197,7 @@ public:
     * \param globalFaceVars The face variables
     */
    FacePrimaryVariables computeNormalMomentumFlux(const Problem& problem,
+                                                  const Element& element,
                                                   const SubControlVolumeFace& scvf,
                                                   const FVElementGeometry& fvGeometry,
                                                   const ElementVolumeVariables& elemVolVars,
@@ -248,6 +249,7 @@ public:
    * \param globalFaceVars The face variables
    */
   FacePrimaryVariables computeTangetialMomentumFlux(const Problem& problem,
+                                                    const Element& element,
                                                     const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
                                                     const ElementVolumeVariables& elemVolVars,
@@ -268,9 +270,9 @@ public:
           const auto& normalFace = fvGeometry.scvf(eIdx, subFaceData.localNormalFaceIdx);
 
           if(navierStokes)
-              tangentialFlux += computeAdvectivePartOfTangentialMomentumFlux_(problem, scvf, normalFace, subFaceData, elemVolVars, velocity);
+              tangentialFlux += computeAdvectivePartOfTangentialMomentumFlux_(problem, element, scvf, normalFace, subFaceData, elemVolVars, velocity);
 
-          tangentialFlux += computeDiffusivePartOfTangentialMomentumFlux_(problem, scvf, normalFace, subFaceData, elemVolVars, velocity);
+          tangentialFlux += computeDiffusivePartOfTangentialMomentumFlux_(problem, element, scvf, normalFace, subFaceData, elemVolVars, velocity);
       }
       return tangentialFlux;
   }
@@ -279,6 +281,7 @@ private:
 
   template<class SubFaceData, class VelocityHelper>
   FacePrimaryVariables computeAdvectivePartOfTangentialMomentumFlux_(const Problem& problem,
+                                                                     const Element& element,
                                                                      const SubControlVolumeFace& scvf,
                                                                      const SubControlVolumeFace& normalFace,
                                                                      const SubFaceData& subFaceData,
@@ -310,7 +313,7 @@ private:
               transportedVelocity = velocity(outerDofIdx);
           else // this is the case when the outer parallal dof would lie outside the domain TODO: discuss which one is better
             //   transportedVelocity = problem.dirichlet(makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
-              transportedVelocity = problem.dirichlet(scvf)[faceIdx][scvf.directionIndex()];
+              transportedVelocity = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
       }
 
       const Scalar momentum = upVolVars.density() * transportedVelocity;
@@ -321,6 +324,7 @@ private:
 
   template<class SubFaceData, class VelocityHelper>
   FacePrimaryVariables computeDiffusivePartOfTangentialMomentumFlux_(const Problem& problem,
+                                                                     const Element& element,
                                                                      const SubControlVolumeFace& scvf,
                                                                      const SubControlVolumeFace& normalFace,
                                                                      const SubFaceData& subFaceData,
@@ -353,7 +357,7 @@ private:
 
       const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
                                   velocity(outerNormalVelocityIdx) :
-                                  problem.dirichlet(makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[faceIdx][normalDirIdx];
+                                  problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[faceIdx][normalDirIdx];
 
       const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
                                     (outerNormalVelocity - innerNormalVelocity) :
@@ -368,7 +372,7 @@ private:
       const int outerParallelFaceDofIdx = subFaceData.outerParallelFaceDofIdx;
       const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?
                                            velocity(outerParallelFaceDofIdx) :
-                                           problem.dirichlet(makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
+                                           problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
 
       const Scalar parallelDeltaV = normalFace.normalInPosCoordDir() ?
                                    (outerParallelVelocity - innerParallelVelocity) :

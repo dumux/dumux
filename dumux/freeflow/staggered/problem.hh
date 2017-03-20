@@ -94,7 +94,7 @@ public:
      *
      * \param scvf The sub control volume face
      */
-    auto dirichlet(const SubControlVolumeFace& scvf) const
+    auto dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         return asImp_().dirichletAtPos(scvf.center());
     }

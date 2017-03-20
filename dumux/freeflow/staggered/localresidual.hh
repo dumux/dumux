@@ -214,8 +214,8 @@ public:
     {
         FacePrimaryVariables flux(0.0);
         FluxVariables fluxVars;
-        flux += fluxVars.computeNormalMomentumFlux(this->problem(), scvf, fvGeometry, elemVolVars, globalFaceVars);
-        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), scvf, fvGeometry, elemVolVars, globalFaceVars);
+        flux += fluxVars.computeNormalMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
         flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
         return flux;
     }
@@ -303,7 +303,7 @@ protected:
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
                 const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
-                const Scalar dirichletValue = this->problem().dirichlet(scvf)[faceIdx][scvf.directionIndex()];
+                const Scalar dirichletValue = this->problem().dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
                 this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
             }
 
