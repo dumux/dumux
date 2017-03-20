@@ -61,7 +61,7 @@ public:
     //! Index of the solid phase
     static constexpr int sPhaseIdx = 2;
 
-    static const char *phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
         if (phaseIdx == sPhaseIdx)
             return "s";

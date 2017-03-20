@@ -139,7 +139,7 @@ int start(int argc,
     std::string fvOutput = "test_diffusion3d_fv" + outputName;
     if (numRefine > 0)
         fvOutput += "_numRefine" + std::to_string(numRefine);
-    fvProblem->setName(fvOutput.c_str());
+    fvProblem->setName(fvOutput);
 
     timer.reset();
 
@@ -167,7 +167,7 @@ int start(int argc,
     std::string fvmpfaOutput = "test_diffusion3d_fvmpfal" + outputName;
     if (numRefine > 0)
         fvmpfaOutput += "_numRefine" + std::to_string(numRefine);
-    mpfaProblem->setName(fvmpfaOutput.c_str());
+    mpfaProblem->setName(fvmpfaOutput);
 
     timer.reset();
 
@@ -195,7 +195,7 @@ int start(int argc,
     std::string mimeticOutput = "test_diffusion3d_mimetic" + outputName;
     if (numRefine > 0)
         mimeticOutput += "_numRefine" + std::to_string(numRefine);
-    mimeticProblem->setName(mimeticOutput.c_str());
+    mimeticProblem->setName(mimeticOutput);
 
     timer.reset();
 

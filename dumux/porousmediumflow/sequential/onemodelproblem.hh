@@ -493,9 +493,9 @@ public:
      * It could be either overwritten by the problem files, or simply
      * declared over the setName() function in the application file.
      */
-    const char *name() const
+    const std::string& name() const
     {
-        return simname_.c_str();
+        return simname_;
     }
 
     /*!
@@ -505,7 +505,7 @@ public:
      * the application problem is declared! If not, the default name "sim"
      * will be used.
      */
-    void setName(const char *newName)
+    void setName(const std::string& newName)
     {
         simname_ = newName;
     }

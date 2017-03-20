@@ -48,7 +48,7 @@ public:
     /*!
      * \brief A human readable name for Air.
      */
-    static const char *name()
+    static std::string name()
     { return "Air"; }
 
     /*!
