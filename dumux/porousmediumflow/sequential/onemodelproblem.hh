@@ -501,7 +501,7 @@ public:
      * the application problem is declared! If not, the default name "sim"
      * will be used.
      */
-    void setName(std::string newName)
+    void setName(const std::string& newName)
     {
         simname_ = newName;
     }
