@@ -42,6 +42,7 @@ namespace Properties
 {
 // forward declaration of properties
 NEW_PROP_TAG(ProblemEnableGravity);
+NEW_PROP_TAG(GlobalFaceVars);
 }
 
 /*!
@@ -64,8 +65,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::Mimetic>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
@@ -87,14 +86,20 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::Mimetic>
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace &scvf)
         {
-            W_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+            W_ = Implementation::calculateMatrix(problem, element, fvGeometry, elemVolVars, scvf);
+            //ti_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+
         }
 
         const DynamicMatrix& W() const
         { return W_; }
 
+        const Scalar& tij() const
+        { return ti_; }
+
     private:
         DynamicMatrix W_;
+        Scalar ti_;
     };
 
     //! Class that fills the cache corresponding to Mimetic Darcy's Law
@@ -182,9 +187,13 @@ public:
                 const auto xFace = scvfIt.ipGlobal();
                 const auto gFace = problem.gravityAtPos(xFace);
                 Scalar hFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx] - rho*(gFace*xFace);
-                flux += scvfIt.area() * W[indexFace][indexLocal] * (hInside - hFace);
+                flux += W[indexFace][indexLocal] * (hInside - hFace);
                 indexLocal++;
             }
+//            const auto xFace = scvf.ipGlobal();
+//            const auto gFace = problem.gravityAtPos(xFace);
+//            Scalar hFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx] - rho*(gFace*xFace);
+//            flux = fluxVarsCache.tij()* (hInside - hFace);
         }
         else // no gravity
         {
@@ -196,17 +205,20 @@ public:
             for (auto&& scvfIt : scvfs(fvGeometry))
             {
                 Scalar pFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx];
-                flux += scvfIt.area() * W[indexFace][indexLocal] * (pInside - pFace);
+                flux += W[indexFace][indexLocal] * (pInside - pFace);
                 indexLocal++;
             }
+
+//            Scalar pFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx];
+//            flux = fluxVarsCache.tij()* (pInside - pFace);
         }
 
-        return flux * scvf.area();
+        return flux;
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
     // During the binding, the transmissibilities will be computed and stored using the method below.
-    static DynamicMatrix calculateTransmissibilities(const Problem& problem,
+    static DynamicMatrix calculateMatrix(const Problem& problem,
                                                       const Element& element,
                                                       const FVElementGeometry& fvGeometry,
                                                       const ElementVolumeVariables& elemVolVars,
@@ -226,6 +238,7 @@ public:
         DynamicMatrix R(numFaces, dim, 0.0);
         DynamicMatrix N(numFaces, dim, 0.0);
         DynamicMatrix Id(numFaces, numFaces, 0.0);
+        std::vector<Scalar> coNormalNorms(numFaces);
 
         for(int i=0; i<numFaces; i++)
             Id[i][i] = 1.0;
@@ -236,10 +249,14 @@ public:
             const auto& insideVolVars = elemVolVars[insideScv];
 
             int index = scvf.localFaceIdx();
-            N[index] = calculateCoNormal_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()));
+            auto coNormal = calculateCoNormal_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()));
+            coNormalNorms[index] = coNormal.two_norm();
+            N[index] = coNormal;
+            N[index] /= coNormalNorms[index];
+            N[index] *= scvf.area();
             R[index] =  scvf.ipGlobal();
             R[index] -= insideScv.center();
-            R[index] *= scvf.area();
+            //R[index] *= scvf.area();
         }
 
         DynamicMatrix LocalK = multiplyMatrices(getTransposed(N),R);
@@ -251,7 +268,46 @@ public:
         StabMatrix *= 0.5*trace(W);
         W += StabMatrix;
 
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideVolVars = elemVolVars[insideScv];
+
+            int index = scvf.localFaceIdx();
+            W[index] *= coNormalNorms[index];
+        }
+
         return W;
+    }
+
+    // The flux variables cache has to be bound to an element prior to flux calculations
+    // During the binding, the transmissibilities will be computed and stored using the method below.
+    static Scalar calculateTransmissibilities(const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const ElementVolumeVariables& elemVolVars,
+                                              const SubControlVolumeFace& scvf)
+    {
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        // check if we evaluate the permeability in the volume (for discontinuous fields, default)
+        // or at the scvf center for analytical permeability fields (e.g. convergence studies)
+        auto getPermeability = [&problem](const VolumeVariables& volVars,
+                                          const GlobalPosition& scvfIpGlobal)
+                               {
+                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
+                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+                                    else
+                                        return volVars.permeability();
+                               };
+
+        Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()),
+                                    insideScv, insideVolVars.extrusionFactor());
+
+        ti = scvf.area()*ti;
+
+        return ti;
     }
 
 private:
@@ -271,6 +327,41 @@ private:
         Knormal *= K;
 
         return Knormal;
+    }
+
+    //! compute the transmissibility ti, overload for tensor permeabilites
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
+                                  const DimWorldMatrix &K,
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
+    {
+        GlobalPosition Knormal;
+        K.mv(scvf.unitOuterNormal(), Knormal);
+
+        auto distanceVector = scvf.ipGlobal();
+        distanceVector -= scv.center();
+        distanceVector /= distanceVector.two_norm2();
+
+        Scalar omega = Knormal * distanceVector;
+        omega *= extrusionFactor;
+
+        return omega;
+    }
+
+    //! compute the transmissibility ti, overload for scalar permeabilites
+    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
+                                  const Scalar K,
+                                  const SubControlVolume &scv,
+                                  Scalar extrusionFactor)
+    {
+        auto distanceVector = scvf.ipGlobal();
+        distanceVector -= scv.center();
+        distanceVector /= distanceVector.two_norm2();
+
+        Scalar omega = K * (distanceVector * scvf.unitOuterNormal());
+        omega *= extrusionFactor;
+
+        return omega;
     }
 };
 
