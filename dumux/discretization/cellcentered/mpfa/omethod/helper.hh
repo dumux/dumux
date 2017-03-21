@@ -628,8 +628,8 @@ public:
         std::vector<ScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
-        scvSeeds.reserve(50);
-        scvfSeeds.reserve(50);
+        scvSeeds.reserve(100);
+        scvfSeeds.reserve(100);
 
         // The vertex index around which we construct the interaction volume
         const auto vIdxGlobal = scvf.vertexIndex();
@@ -656,8 +656,8 @@ public:
         std::vector<ScvfSeed> scvfSeeds;
 
         // reserve sufficient memory
-        scvSeeds.reserve(50);
-        scvfSeeds.reserve(50);
+        scvSeeds.reserve(100);
+        scvfSeeds.reserve(100);
 
         // The vertex index around which we construct the interaction volume
         const auto vIdxGlobal = scvf.vertexIndex();
