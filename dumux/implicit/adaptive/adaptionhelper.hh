@@ -47,21 +47,7 @@ template<class TypeTag>
 class ImplicitAdaptionHelper
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-    };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<dofCodim>::Entity DofEntity;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
 public:
     //! Constructs an adaptive helper object
@@ -113,23 +99,8 @@ public:
                    "a reconstructPrimVars method.");
     }
 
-protected:
-
-    int dofIndex(const Problem& problem, const DofEntity& entity) const
-    {
-                return problem.model().dofMapper().index(entity);
-    }
-
-    int dofIndex(const Problem& problem, const Element& element, const int scvIdx) const
-    {
-                return problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-    }
-
-    int elementIndex(const Problem& problem, const Element& element) const
-    {
-                return problem.elementMapper().index(element);
-    }
-
 };
-}
+
+} // end namespace Dumux
+
 #endif

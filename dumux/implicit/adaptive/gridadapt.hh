@@ -74,8 +74,8 @@ public:
         : problem_(problem),
           adaptionHelper_(problem),
           adaptionIndicator_(problem),
-          marked_(0),
-          coarsened_(0)
+          sumRefine_(0),
+          sumCoarsen_(0)
     {
             levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
             levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
@@ -149,10 +149,7 @@ public:
      */
     bool wasAdapted() const
     {
-        int sumMarked = problem_.grid().comm().sum(marked_);
-        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
-
-        return (sumMarked != 0 || sumCoarsened != 0);
+        return (sumRefine_ != 0 || sumCoarsen_ != 0);
     }
 
     /*!
@@ -222,9 +219,6 @@ private:
     template<class Indicator>
     void adaptGrid(Indicator& indicator)
     {
-        // reset internal counter for marked elements
-        marked_ = coarsened_ = 0;
-
         // check for adaption interval: Adapt only at certain time step indices
         if (problem_.timeManager().timeStepIndex() % adaptionInterval_ != 0)
             return;
@@ -235,16 +229,17 @@ private:
         indicator.calculateIndicator();
 
         /**** 2) mark elements according to indicator     *********/
-        markElements(indicator);
+        int refine, coarsen;
+        std::tie(refine, coarsen) = markElements(indicator);
 
         // abort if nothing in grid is marked
-        int sumMarked = problem_.grid().comm().sum(marked_);
-        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
-        if (sumMarked == 0 && sumCoarsened == 0)
+        sumRefine_ = problem_.grid().comm().sum(refine);
+        sumCoarsen_ = problem_.grid().comm().sum(coarsen);
+        if (sumRefine_ == 0 && sumCoarsen_ == 0)
             return;
-        else
-            Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
-                        << coarsened_ << " to be coarsened." << std::endl;
+        else if (problem_.grid().comm().rank() == 0)
+            Dune::dinfo << sumRefine_ << " cells have been marked to be refined, "
+                        << sumCoarsen_ << " to be coarsened." << std::endl;
 
         /****  2b) Do pre-adaption step    *****/
         problem_.grid().preAdapt();
@@ -280,11 +275,10 @@ private:
      * @param indicator The refinement indicator that is applied
      */
     template<class Indicator>
-    void markElements(Indicator& indicator)
+    std::pair<int, int> markElements(Indicator& indicator)
     {
-        typedef std::unordered_map<int, int> CoarsenMarkerType;
-        CoarsenMarkerType coarsenMarker;
-
+        int refine = 0;
+        int coarsen = 0;
         for (const auto& element : elements(problem_.gridView()))
         {
             // only mark non-ghost elements
@@ -294,18 +288,19 @@ private:
                 if (indicator.refine(element) && element.level() < levelMax_)
                 {
                     problem_.grid().mark( 1,  element);
-                    ++marked_;
+                    ++refine;
 
                     // this also refines the neighbor elements
-                    checkNeighborsRefine_(element);
+                    refine += checkNeighborsRefine_(element);
                 }
                 if (indicator.coarsen(element) && element.hasFather())
                 {
                     problem_.grid().mark( -1, element );
-                    ++coarsened_;
+                    ++coarsen;
                 }
             }
         }
+        return std::make_pair(refine, coarsen);
     }
 
     /*!
@@ -320,9 +315,10 @@ private:
      * @param level level of the refined element: it is at least 1
      * @return true if everything was successful
      */
-    bool checkNeighborsRefine_(const Element &element, int level = 1)
+    int checkNeighborsRefine_(const Element &element, int level = 1)
     {
         // this also refines the neighbor elements
+        int refine = 0;
         for(const auto& intersection : intersections(problem_.gridView(), element))
         {
             if(!intersection.neighbor())
@@ -338,13 +334,13 @@ private:
                 && (outside.level() < element.level()))
             {
                 problem_.grid().mark(1, outside);
-                ++marked_;
+                ++refine;
 
                 if(level != levelMax_)
-                    checkNeighborsRefine_(outside, ++level);
+                    refine += checkNeighborsRefine_(outside, ++level);
             }
         }
-        return true;
+        return refine;
     }
 
 
@@ -359,7 +355,7 @@ private:
      */
     void forceRefineRatio(int maxLevelDelta = 1)
     {
-        LeafGridView leafGridView = problem_.gridView();
+        auto leafGridView = problem_.gridView();
         // delete all existing marks
         problem_.grid().postAdapt();
         bool done;
@@ -394,7 +390,7 @@ private:
                 problem_.grid().postAdapt();
             }
         }
-        while (done!=true);
+        while (!done);
     }
 
     // private Variables
@@ -402,8 +398,8 @@ private:
     AdaptionHelper adaptionHelper_;
     AdaptionIndicator adaptionIndicator_;
 
-    int marked_;
-    int coarsened_;
+    int sumRefine_;
+    int sumCoarsen_;
 
     int levelMin_;
     int levelMax_;

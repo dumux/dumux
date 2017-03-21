@@ -20,7 +20,6 @@
 #define DUMUX_IMPLICIT_GRIDADAPTINITIALIZATIONINDICATOR_HH
 
 #include <dune/geometry/type.hh>
-#include <dune/common/dynvector.hh>
 #include "gridadaptproperties.hh"
 
 /**
@@ -53,9 +52,9 @@ template<class TypeTag>
 class ImplicitGridAdaptInitializationIndicator
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum
     {
@@ -64,27 +63,22 @@ private:
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::Grid::ctype CoordScalar;
-    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
-    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
+    using CoordScalar = typename GridView::Grid::ctype;
+    using ReferenceElement = typename Dune::ReferenceElement<CoordScalar, dim>;
+    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+    using AdaptionIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionIndicator);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-
     enum { refineCell = 1 };
-
-
-
 
     /*! \brief Search for a source term
      *
@@ -97,10 +91,9 @@ private:
                     const FVElementGeometry& fvGeometry,
                     const ElementVolumeVariables& elemVolVars)
     {
-        PrimaryVariables source(0.0);
-        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
+        for (auto&& scv : scvs(fvGeometry))
         {
-            problem_.solDependentSource(source, element, fvGeometry, scvIdx, elemVolVars);
+            auto source = problem_.source(element, fvGeometry, elemVolVars, scv);
             if (source.infinity_norm() > eps_)
                 return true;
         }
@@ -118,57 +111,53 @@ private:
      *  \param element A grid element
      *  \param intersection The boundary intersection
      */
-    bool hasRefineBC_(ElementBoundaryTypes &elemBcTypes,
-                      const Element& element,
-                      const Intersection& intersection,
+    bool hasRefineBC_(const Element& element,
                       const FVElementGeometry& fvGeometry,
-                      const ElementVolumeVariables& elemVolVars)
+                      const ElementVolumeVariables& elemVolVars,
+                      const SubControlVolumeFace& scvf,
+                      const ElementBoundaryTypes &elemBcTypes)
     {
         // Check for boundary conditions
         if(isBox)
         {
-            Dune::GeometryType geoType = element.geometry().type();
-            const ReferenceElement &refElement = ReferenceElements::general(geoType);
-            int fIdx = intersection.indexInInside();
-            int numFaceVerts = refElement.size(fIdx, 1, dim);
-            for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
-            {
-                int scvIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
-                BoundaryTypes bcTypes = elemBcTypes[scvIdx];
-                problemBoundaryTypes_(bcTypes, element.template subEntity<dim>(scvIdx));
-                int bfIdx = fvGeometry.boundaryFaceIndex(fIdx, faceVertexIdx);
-                for (int i = 0; i < numEq; i++)
-                {
-                    if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
-                        return true;
-                    if(bcTypes.isNeumann(i) && refineAtFluxBC_)
-                    {
-                        PrimaryVariables fluxes(0.0);
-                        problem_.solDependentNeumann(fluxes, element, fvGeometry,
-                                                 intersection, scvIdx, bfIdx,
-                                                 elemVolVars);
-                        if (fluxes.infinity_norm() > eps_)
-                            return true;
-                    }
-                }
-            }
-
+            // Dune::GeometryType geoType = element.geometry().type();
+            // const ReferenceElement &refElement = ReferenceElements::general(geoType);
+            // int fIdx = intersection.indexInInside();
+            // int numFaceVerts = refElement.size(fIdx, 1, dim);
+            // for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
+            // {
+            //     int scvIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
+            //     BoundaryTypes bcTypes = elemBcTypes[scvIdx];
+            //     problemBoundaryTypes_(bcTypes, element.template subEntity<dim>(scvIdx));
+            //     int bfIdx = fvGeometry.boundaryFaceIndex(fIdx, faceVertexIdx);
+            //     for (int i = 0; i < numEq; i++)
+            //     {
+            //         if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
+            //             return true;
+            //         if(bcTypes.isNeumann(i) && refineAtFluxBC_)
+            //         {
+            //             PrimaryVariables fluxes(0.0);
+            //             problem_.solDependentNeumann(fluxes, element, fvGeometry,
+            //                                      intersection, scvIdx, bfIdx,
+            //                                      elemVolVars);
+            //             if (fluxes.infinity_norm() > eps_)
+            //                 return true;
+            //         }
+            //     }
+            // }
+            return false;
         }
         else
         {
-            BoundaryTypes bcTypes = elemBcTypes[0];
-            problem_.boundaryTypes(bcTypes, intersection);
-            int bfIdx = intersection.indexInInside();
+            auto bcTypes = problem_.boundaryTypes(element, scvf);
             for (int i = 0; i < numEq; i++)
             {
                 if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
                     return true;
-                if(bcTypes.isNeumann(i) && refineAtFluxBC_)
+
+                else if(bcTypes.isNeumann(i) && refineAtFluxBC_)
                 {
-                    PrimaryVariables fluxes(0.0);
-                    problem_.solDependentNeumann(fluxes, element, fvGeometry,
-                                                 intersection, 0, bfIdx,
-                                                 elemVolVars);
+                    auto fluxes = problem_.neumann(element, fvGeometry, elemVolVars, scvf);
                     if (fluxes.infinity_norm() > eps_)
                         return true;
                 }
@@ -179,16 +168,19 @@ private:
 
     // only actually call the problem method when it exists
     template <class T = TypeTag>
-    void problemBoundaryTypes_(BoundaryTypes& bcTypes,
-                              const typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), Vertex>::type& v) const
+    BoundaryTypes problemBoundaryTypes_(const Element &element,
+                                        const typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox),
+                                        SubControlVolume>::type& scv) const
     {
-        problem_.boundaryTypes(bcTypes, v);
+        return problem_.boundaryTypes(element, scv);
     }
     template <class T = TypeTag>
-    void problemBoundaryTypes_(BoundaryTypes& bcTypes,
-                              const typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), Vertex>::type& v) const
-    {}
-
+    BoundaryTypes problemBoundaryTypes_(const Element &element,
+                                        const typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox),
+                                        SubControlVolume>::type& scv) const
+    {
+        return BoundaryTypes();
+    }
 
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
@@ -199,19 +191,17 @@ public:
         if (!enableInitializationIndicator_)
             return;
 
-        //First adapt for boundary conditions and sources to get a good initial solution
+        // first adapt for boundary conditions and sources to get a good initial solution
         if (nextMaxLevel_ == maxAllowedLevel_)
             adaptionIndicator_.calculateIndicator();
 
         // prepare an indicator for refinement
-        indicatorVector_.resize(problem_.gridView().size(0));
-        indicatorVector_ = 0;
+        indicatorVector_.resize(problem_.gridView().size(0), 0);
 
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf elements
         for (const auto& element : elements(problem_.gridView()))
         {
-
             int globalIdxI = problem_.elementMapper().index(element);
             int level = element.level();
             using std::max;
@@ -229,10 +219,11 @@ public:
                 continue;
 
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
-            FVElementGeometry fvGeometry;
-            ElementVolumeVariables elemVolVars;
-            fvGeometry.update(problem_.gridView(), element);
-            elemVolVars.update(problem_, element, fvGeometry, false /* oldSol? */);
+            auto fvGeometry = localView(problem_.model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(problem_.model().curGlobalVolVars());
+            elemVolVars.bindElement(element, fvGeometry, problem_.model().curSol());
 
             // Check if we have to refine around a source term
             if (indicatorVector_[globalIdxI] != refineCell && refineAtSource_)
@@ -246,18 +237,18 @@ public:
             }
 
             // get the element boundary types
-            ElementBoundaryTypes bcTypes;
-            bcTypes.update(problem_, element, fvGeometry);
+            ElementBoundaryTypes elemBcTypes;
+            elemBcTypes.update(problem_, element, fvGeometry);
 
             // Check if we have to refine at the boundary
             if (indicatorVector_[globalIdxI] != refineCell && (refineAtDirichletBC_ || refineAtFluxBC_))
             {
                 // Calculate the boundary indicator for all boundary intersections
-                for (const auto& intersection : intersections(problem_.gridView(), element))
+                for (auto&& scvf : scvfs(fvGeometry))
                 {
-                    if (intersection.boundary())
+                    if (scvf.boundary())
                     {
-                        if(hasRefineBC_(bcTypes, element, intersection, fvGeometry, elemVolVars))
+                        if(hasRefineBC_(element, fvGeometry, elemVolVars, scvf, elemBcTypes))
                         {
                             nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                             indicatorVector_[globalIdxI] = refineCell;
@@ -275,7 +266,7 @@ public:
      *
      *  \param element A grid element
      */
-    bool refine(const Element& element)
+    bool refine(const Element& element) const
     {
         int idx = problem_.elementMapper().index(element);
 
@@ -293,28 +284,21 @@ public:
      *
      *  \param element A grid element
      */
-    bool coarsen(const Element& element)
-    {
-        return false;
-    }
+    bool coarsen(const Element& element) const
+    { return false; }
 
-    int maxLevel()
-    {
-        return maxLevel_;
-    }
+    int maxLevel() const
+    { return maxLevel_; }
 
     /*! \brief Initializes the adaption indicator class */
-    void init()
-    {};
+    void init() {}
 
     /*! \brief If the model needs to be initialized after adaption.
      *         We always need to initialize since the hasRefineBC_ method needs information from
                an up-to-date model.
      */
-    bool initializeModel()
-    {
-        return true;
-    }
+    constexpr bool initializeModel() const
+    { return true; }
 
     /*! \brief Constructs a GridAdaptionIndicator instance
      *
@@ -346,7 +330,7 @@ public:
 private:
     Problem& problem_;
     AdaptionIndicator& adaptionIndicator_;
-    Dune::DynamicVector<int> indicatorVector_;
+    std::vector<int> indicatorVector_;
     int maxLevel_;
     int nextMaxLevel_;
     int minAllowedLevel_;
@@ -388,7 +372,7 @@ public:
      *
      *  \param element A grid element
      */
-    bool refine(const Element& element)
+    bool refine(const Element& element) const
     {
         return false;
     }
@@ -399,19 +383,18 @@ public:
      *
      *  \param element A grid element
      */
-    bool coarsen(const Element& element)
+    bool coarsen(const Element& element) const
     {
         return false;
     }
 
-    bool initializeModel()
+    constexpr bool initializeModel() const
     {
         return false;
     }
 
     /*! \brief Initializes the adaption indicator class*/
-    void init()
-    {};
+    void init() {}
 
     /*! \brief Constructs a GridAdaptionIndicator for initialization of an adaptive grid
      *
