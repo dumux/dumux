@@ -199,15 +199,15 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static const char *componentName(int compIdx)
+    static std::string componentName(int compIdx)
     {
-        static const char *name[] = {
-            H2O::name(),
-            N2::name()
-        };
+        switch (compIdx)
+        {
+            case H2OIdx: return H2O::name();
+            case N2Idx: return N2::name();
+        }
 
-        assert(0 <= compIdx && compIdx < numComponents);
-        return name[compIdx];
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
