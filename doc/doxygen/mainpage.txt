@@ -14,7 +14,7 @@ This includes a Bibliography of the publications DuMuX is based on.<br>
 Further, a \ref parameterList containing all implemented parameters and
 a \ref featureList of special features used in the test problems is available.<br>
 Auxiliary script files can be find in \ref Binaries.<br>
-In addition, the current Todo List, Warning List, and Deprecated List are given.
+In addition, the current Todo List, Warning List, and Deprecated List are given (if available).
 
 \section mods Modules
 
