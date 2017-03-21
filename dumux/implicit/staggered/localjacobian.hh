@@ -224,7 +224,7 @@ public:
     const AssemblyMap& assemblyMap() const
     { return assemblyMap_; }
 
-private:
+protected:
     void evalPartialDerivatives_(const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
