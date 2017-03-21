@@ -102,7 +102,40 @@ public:
 
     TwoPFacetCouplingProblem(TimeManager &timeManager, const BulkGridView &bulkGridView, const LowDimGridView &lowDimGridView)
     : ParentType(timeManager, bulkGridView, lowDimGridView)
-    {}
+    {
+        this->timeManager().startNextEpisode(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, Problem, InitializationTime));
+    }
+
+    /*!
+     * \brief This will be called after the initialization run.
+     */
+    void episodeEnd()
+    {
+        static const double InitializationTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, Problem, InitializationTime);
+        static const double InjectionTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, Problem, InjectionTime);
+
+        const auto t = this->timeManager().time();
+
+        // after initialization
+        if (t < InjectionTime + InitializationTime)
+        {
+            this->timeManager().startNextEpisode(InjectionTime);
+            this->bulkTimeManager().startNextEpisode(InjectionTime);
+            this->lowDimTimeManager().startNextEpisode(InjectionTime);
+            this->timeManager().setTimeStepSize(10);
+            this->bulkTimeManager().setTimeStepSize(10);
+            this->lowDimTimeManager().setTimeStepSize(10);
+        }
+        else
+        {
+            this->timeManager().startNextEpisode();
+            this->bulkTimeManager().startNextEpisode();
+            this->lowDimTimeManager().startNextEpisode();
+            this->timeManager().setTimeStepSize(10);
+            this->bulkTimeManager().setTimeStepSize(10);
+            this->lowDimTimeManager().setTimeStepSize(10);
+        }
+    }
 
     bool shouldWriteOutput() const
     { return true; }

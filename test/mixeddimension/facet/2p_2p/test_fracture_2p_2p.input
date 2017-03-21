@@ -1,15 +1,22 @@
 [TimeManager]
-DtInitial = 1e-2 # [s]
-TEnd = 10000 # [s]
+DtInitial = 10 # [s]
+TEnd = 1576800000 # [s]
 DtInitialBulkProblem = 1 # [s]
 DtInitialLowDimProblem = 1 # [s]
-EpisodeTime = 10000 # [s]
+EpisodeTime = 10000
 
 [Grid]
-File = ./grids/domain.msh
+File = ./grids/network3d.msh
 
 [Problem]
-Name = test_2pfracture
+Name = test_1p2c_q33_lowdimmpfa
+InitializationTime = 10000
+InjectionTime = 157680000
+InjectionData = 0.0 0.3 # [kg_H20/s], [kg_DNAPL/kg_phase]
+InjectionXMin = 310
+InjectionXMax = 337
+InjectionYMin = 313
+InjectionYMax = 337
 
 [MixedDimension]
 UseIterativeSolver = False
@@ -20,8 +27,8 @@ Tolerance = 1.0e-8
 Verbose = 1
 
 [SpatialParams]
-FractureAperture = 1e-2 # [m]
-FracturePermeability = 5e-9 # [m^2]
+FractureAperture = 1 # [m]
+FracturePermeability = 1e-9 # [m^2]
 MatrixPermeability = 1e-13 # [m^2]
 
 [Mpfa]

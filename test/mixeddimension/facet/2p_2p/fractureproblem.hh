@@ -25,14 +25,14 @@
 #define DUMUX_2P_FRACTURE_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/mixeddimension/subproblemproperties.hh>
 
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/components/h2o.hh>
+#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include "fracturespatialparams.hh"
 
 namespace Dumux
@@ -46,27 +46,25 @@ namespace Properties
 {
 NEW_TYPE_TAG(TwoPFractureProblem, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(TwoPNIFractureProblem, INHERITS_FROM(TwoPNI));
-NEW_TYPE_TAG(TwoPCCMpfaFractureProblem, INHERITS_FROM(CCTpfaModel, TwoPFractureProblem, FractureSpatialParams));
+NEW_TYPE_TAG(TwoPCCMpfaFractureProblem, INHERITS_FROM(CCMpfaModel, TwoPFractureProblem, FractureSpatialParams));
 NEW_TYPE_TAG(TwoPNICCMpfaFractureProblem, INHERITS_FROM(CCTpfaModel, TwoPNIFractureProblem, FractureSpatialParams));
 
-// Set fluid configuration
-SET_PROP(TwoPFractureProblem, FluidSystem)
+// Set the wetting phase
+SET_PROP(TwoPFractureProblem, WettingPhase)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    using type = FluidSystems::TwoPImmiscible<Scalar,
-                                              FluidSystems::LiquidPhase<Scalar, H2O<Scalar>>,
-                                              FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar>>>;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
-SET_PROP(TwoPNIFractureProblem, FluidSystem)
+
+// Set the non-wetting phase
+SET_PROP(TwoPFractureProblem, NonwettingPhase)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    using type = FluidSystems::TwoPImmiscible<Scalar,
-                                              FluidSystems::LiquidPhase<Scalar, H2O<Scalar>>,
-                                              FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar>>>;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 // Set the problem property
@@ -85,8 +83,6 @@ SET_BOOL_PROP(TwoPNIFractureProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(TwoPCCMpfaFractureProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, SolutionDependentAdvection, false);
 
-SET_BOOL_PROP(TwoPCCMpfaFractureProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(TwoPCCMpfaFractureProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(TwoPNICCMpfaFractureProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(TwoPCCMpfaFractureProblem, EnableGlobalFluxVariablesCache, true);
@@ -140,9 +136,6 @@ public:
     TwoPFractureProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
-        //initialize fluid system
-        FluidSystem::init();
-
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "_fracture";
         eps_ = 1e-6;
     }
@@ -191,10 +184,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
-            values.setAllDirichlet();
-        else
-            values.setAllNeumann();
+        values.setAllNeumann();
         return values;
     }
 
@@ -223,7 +213,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 8e5 - 7e5*globalPos[0]/this->bBoxMax()[0] + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
+        values[pwIdx] = 2e5 + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
         return values;
     }
 
@@ -235,7 +225,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 8e5 - 7e5*globalPos[0]/this->bBoxMax()[0] + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
+        values[pwIdx] = 2e5 + (170 - globalPos[2])*9.81*1000;
         values[Indices::temperatureIdx] = temperature();
         return values;
     }
