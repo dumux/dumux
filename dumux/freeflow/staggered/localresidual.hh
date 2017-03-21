@@ -344,7 +344,7 @@ private:
         // treat outflow BCs
         if(scvf.boundary())
         {
-            const Scalar pressure = this->problem().dirichletAtPos(scvf.center())[cellCenterIdx][pressureIdx] - deltaP;
+            const Scalar pressure = this->problem().dirichlet(element, scvf)[cellCenterIdx][pressureIdx] - deltaP;
             result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
         return result;
