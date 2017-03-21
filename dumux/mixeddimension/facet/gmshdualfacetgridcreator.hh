@@ -65,6 +65,7 @@ class GmshDualFacetGridCreator
     // obtain the grid types of the sub problems
     using BulkGrid = typename GET_PROP_TYPE(BulkProblemTypeTag, Grid);
     using LowDimGrid = typename GET_PROP_TYPE(LowDimProblemTypeTag, Grid);
+    using BulkElement = typename BulkGrid::template Codim<0>::Entity;
     using LowDimElement = typename LowDimGrid::template Codim<0>::Entity;
 
     // The Bulk Element Mapper
@@ -576,6 +577,12 @@ public:
 
         return globalIndices;
     }
+
+    static BulkIndexType getInsertionIndex(const BulkElement& element)
+    { return bulkFactory_().insertionIndex(element); }
+
+    static LowDimIndexType getInsertionIndex(const LowDimElement& element)
+    { return lowDimFactory_().insertionIndex(element); }
 
 private:
 
