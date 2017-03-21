@@ -28,12 +28,11 @@
 #include <dumux/mixeddimension/facet/mpfa/properties.hh>
 #include <dumux/mixeddimension/subproblemproperties.hh>
 
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/components/h2o.hh>
+#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include "matrixspatialparams.hh"
 
 namespace Dumux
@@ -48,24 +47,22 @@ NEW_TYPE_TAG(TwoPNIMatrixProblem, INHERITS_FROM(TwoPNI));
 NEW_TYPE_TAG(TwoPCCMpfaMatrixProblem, INHERITS_FROM(FacetCouplingBulkMpfaModel, TwoPMatrixProblem, MatrixSpatialParams));
 NEW_TYPE_TAG(TwoPNICCMpfaMatrixProblem, INHERITS_FROM(FacetCouplingBulkMpfaModel, TwoPNIMatrixProblem, MatrixSpatialParams));
 
-// Set fluid configuration
-SET_PROP(TwoPMatrixProblem, FluidSystem)
+// Set the wetting phase
+SET_PROP(TwoPMatrixProblem, WettingPhase)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    using type = FluidSystems::TwoPImmiscible<Scalar,
-                                              FluidSystems::LiquidPhase<Scalar, H2O<Scalar>>,
-                                              FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar>>>;
+    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
-SET_PROP(TwoPNIMatrixProblem, FluidSystem)
+
+// Set the non-wetting phase
+SET_PROP(TwoPMatrixProblem, NonwettingPhase)
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    using type = FluidSystems::TwoPImmiscible<Scalar,
-                                              FluidSystems::LiquidPhase<Scalar, H2O<Scalar>>,
-                                              FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar>>>;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 // Set the problem property
@@ -85,8 +82,6 @@ SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, SolutionDependentAdvection, false);
 
 // enable global caches
-SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(TwoPNICCMpfaMatrixProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(TwoPCCMpfaMatrixProblem, EnableGlobalFluxVariablesCache, true);
@@ -148,9 +143,6 @@ public:
     TwoPMpfaMatrixProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
-        //initialize fluid system
-        FluidSystem::init();
-
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "_matrix";
         eps_ = 1e-6;
     }
@@ -171,10 +163,11 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; }
 
-    /*!
-     * \brief Return the sources within the domain.
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition& globalPos) const
+
+    PrimaryVariables source(const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume& scv) const
     { return PrimaryVariables(0.0); }
 
     /*!
@@ -186,9 +179,9 @@ public:
         BoundaryTypes values;
         const auto globalPos = scvf.ipGlobal();
 
-        values.setAllNeumann();
-        if (globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
-            values.setAllDirichlet();
+        values.setAllDirichlet();
+        if (globalPos[2] > this->bBoxMax()[2] - eps_ || globalPos[2] < eps_)
+            values.setAllNeumann();
 
         if (couplingManager().isInteriorBoundary(element, scvf))
             values.setAllNeumann();
@@ -207,14 +200,7 @@ public:
      *        control volume (isothermal case).
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    {
-        auto values = initialAtPos(globalPos);
-
-        if (globalPos[0] < eps_ && globalPos[2] > 120 && globalPos[1] < 355 && globalPos[1] > 305)
-            values[snIdx] = 0.5;
-
-        return values;
-    }
+    { return initialAtPos(globalPos); }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -224,7 +210,43 @@ public:
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
-    { return PrimaryVariables(0.0); }
+    {
+        static const Scalar initTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitializationTime);
+        static const Scalar injectionTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionTime);
+
+        static const Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionXMin);
+        static const Scalar xMax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionXMax);
+        static const Scalar yMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionYMin);
+        static const Scalar yMax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionYMax);
+
+        static const PrimaryVariables injectionSpecifics = [&] ()
+        {
+            const auto injectionData = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, PrimaryVariables, Problem, InjectionData);
+
+            PrimaryVariables injection;
+            // turn phase flux into mol/s/m³
+            injection[0] = injectionData[0];
+
+            // component flux
+            injection[1] = injectionData[0]*injectionData[1];
+
+            // turn into mass flux per area
+            injection /= (xMax-xMin)*(yMax-yMin);
+
+            return injection;
+        } ();
+
+        const auto globalPos = scvf.ipGlobal();
+        const auto time = this->timeManager().time() + this->timeManager().timeStepSize();
+        if (globalPos[2] > this->bBoxMax()[2] - eps_ &&
+            globalPos[0] < xMax && globalPos[0] > xMin &&
+            globalPos[1] < yMax && globalPos[1] > yMin)
+            {
+                if (time > initTime && time < injectionTime + initTime)
+                    return injectionSpecifics;
+            }
+        return PrimaryVariables(0.0);
+    }
 
     /*!
      * \brief Evaluate the initial value for a control volume (isothermal case)
@@ -234,7 +256,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 8e5 - 7e5*globalPos[0]/this->bBoxMax()[0] + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
+        values[pwIdx] = 2e5 + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
         return values;
     }
 
@@ -246,7 +268,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 8e5 - 7e5*globalPos[0]/this->bBoxMax()[0] + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
+        values[pwIdx] = 2e5 + (this->bBoxMax()[2] - globalPos[2])*9.81*1000;
         values[Indices::temperatureIdx] = temperature();
         return values;
     }
