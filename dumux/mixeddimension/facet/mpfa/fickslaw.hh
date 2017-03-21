@@ -83,7 +83,7 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
         {
             const auto& localFaceData = iv.getLocalFaceData(scvf);
             diffusionTij_[phaseIdx][compIdx] = iv.getTransmissibilities(localFaceData);
-            // get the stencil only for the first call
+            // copy the stencil only for the first call
             if (phaseIdx == 0 && compIdx == 1)
                 diffusionVolVarsStencil_ = iv.volVarsStencil();
 
