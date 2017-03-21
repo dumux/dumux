@@ -469,17 +469,10 @@ public:
 
         writer.attachVertexData(pressure, "P");
 
-        char nameMoleFraction0[42], nameMoleFraction1[42];
-        snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
-        snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
-        writer.attachVertexData(moleFraction0, nameMoleFraction0);
-        writer.attachVertexData(moleFraction1, nameMoleFraction1);
-
-        char nameMassFraction0[42], nameMassFraction1[42];
-        snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
-        snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
-        writer.attachVertexData(massFraction0, nameMassFraction0);
-        writer.attachVertexData(massFraction1, nameMassFraction1);
+        writer.attachVertexData(moleFraction0, "x_" + FluidSystem::componentName(0));
+        writer.attachVertexData(moleFraction1, "x_" + FluidSystem::componentName(1));
+        writer.attachVertexData(massFraction0, "X_" + FluidSystem::componentName(0));
+        writer.attachVertexData(massFraction1, "X_" + FluidSystem::componentName(1));
 
         writer.attachVertexData(displacement, "u", dim);
         writer.attachVertexData(density, "rho");
