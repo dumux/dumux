@@ -264,8 +264,21 @@ public:
                                     return res;
                                 } ();
 
+                const auto facetH = [&] ()
+                                    {
+                                        if (!gravity)
+                                            return facetVolVars.pressure(phaseIdx);
+                                        else
+                                        {
+                                            const auto x = fvGeometry.scvf(data.scvfIndex()).ipGlobal();
+                                            const auto g = problem.gravityAtPos(x);
+
+                                            return facetVolVars.pressure(phaseIdx) - rho*(g*x);
+                                        }
+                                    } ();
+
                 // add value to vector of interior neumann fluxes
-                facetCouplingFluxes[data.localIndexInInteractionVolume()] += facetVolVars.pressure(phaseIdx)*
+                facetCouplingFluxes[data.localIndexInInteractionVolume()] += facetH*
                                                                              curScvf.area()*
                                                                              elemVolVars[curScvf.insideScvIdx()].extrusionFactor()*
                                                                              MpfaHelper::nT_M_v(n, facetVolVars.permeability(), v);
