@@ -35,7 +35,7 @@ add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/evaporationatmosphere-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00005.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00017.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpnckinetic"
                  --zeroThreshold {"TnMinusTs":0.5,"TwMinusTn":0.5,"velocity_w_1":2e-12})
 

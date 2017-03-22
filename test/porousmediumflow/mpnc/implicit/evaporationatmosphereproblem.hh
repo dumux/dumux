@@ -111,9 +111,6 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableDiffusion, true);
 // do not use a chopped newton method in the beginning
 SET_BOOL_PROP(EvaporationAtmosphereProblem, NewtonEnableChop, false);
 
-// Enable the re-use of the jacobian matrix whenever possible?
-SET_BOOL_PROP(EvaporationAtmosphereProblem, ImplicitEnableJacobianRecycling, true);
-
 //#################
 // Which Code to compile
 // Specify whether there is any energy equation
