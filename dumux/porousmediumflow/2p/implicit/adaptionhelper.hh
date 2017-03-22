@@ -288,9 +288,9 @@ public:
                     if (element.hasFather())
                     {
                         auto eFather = element.father();
-                        while(eFather.isNew() && eFather.level() > 0) eFather = eFather.father();
-                        FVElementGeometry fvGeometryFather;
-                        fvGeometryFather.update(problem.gridView(), eFather);
+                        while(eFather.isNew() && eFather.level() > 0)
+                            eFather = eFather.father();
+
                         Scalar massFather = 0.0;
 
                         if(!isBox)
