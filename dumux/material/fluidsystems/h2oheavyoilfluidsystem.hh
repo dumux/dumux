@@ -179,7 +179,7 @@ public:
     /*!
      * \brief Return the human readable name of a phase (used in indices)
      */
-    static const char *phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
         case wPhaseIdx: return "w";
@@ -192,7 +192,7 @@ public:
     /*!
      * \brief Return the human readable name of a component (used in indices)
      */
-    static const char *componentName(int compIdx)
+    static std::string componentName(int compIdx)
     {
         switch (compIdx) {
         case H2OIdx: return H2O::name();

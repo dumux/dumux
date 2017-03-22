@@ -228,7 +228,7 @@ public:
     /*!
      * \brief A human readable name for the component.
      */
-    static const char *name()
+    static std::string name()
     { return RawComponent::name(); }
 
     /*!
@@ -557,7 +557,7 @@ public:
 private:
     // prints a warning if the result is not in range or the table has
     // not been initialized
-    static void printWarning_(const char *quantity, Scalar arg1, Scalar arg2)
+    static void printWarning_(std::string quantity, Scalar arg1, Scalar arg2)
     {
 #ifndef NDEBUG
         if (warningPrinted_)

@@ -181,7 +181,7 @@ protected:
      */
     template <class MultiWriter>
     void commitScalarBuffer_(MultiWriter &writer,
-                             const char *name,
+                             const std::string& name,
                              ScalarVector &buffer,
                              bool vertexCentered = true)
     {
@@ -196,13 +196,13 @@ protected:
      */
     template <class MultiWriter>
     void commitPhaseBuffer_(MultiWriter &writer,
-                            const char *pattern,
+                            const std::string& pattern,
                             PhaseVector &buffer,
                             bool vertexCentered = true)
     {
         char name[512];
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            snprintf(name, 512, pattern, FluidSystem::phaseName(phaseIdx));
+            snprintf(name, 512, pattern.c_str(), FluidSystem::phaseName(phaseIdx).c_str());
 
             if (vertexCentered)
                 writer.attachVertexData(buffer[phaseIdx], name, 1);
@@ -216,13 +216,13 @@ protected:
      */
     template <class MultiWriter>
     void commitComponentBuffer_(MultiWriter &writer,
-                                const char *pattern,
+                                const std::string& pattern,
                                 ComponentVector &buffer,
                                 bool vertexCentered = true)
     {
         char name[512];
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            snprintf(name, 512, pattern, FluidSystem::componentName(compIdx));
+            snprintf(name, 512, pattern.c_str(), FluidSystem::componentName(compIdx).c_str());
 
             if (vertexCentered)
                 writer.attachVertexData(buffer[compIdx], name, 1);
@@ -236,16 +236,16 @@ protected:
      */
     template <class MultiWriter>
     void commitPhaseComponentBuffer_(MultiWriter &writer,
-                                     const char *pattern,
+                                     const std::string& pattern,
                                      PhaseComponentMatrix &buffer,
                                      bool vertexCentered = true)
     {
         char name[512];
         for (int phaseIdx= 0; phaseIdx < numPhases; ++phaseIdx) {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                snprintf(name, 512, pattern,
-                         FluidSystem::phaseName(phaseIdx),
-                         FluidSystem::componentName(compIdx));
+                snprintf(name, 512, pattern.c_str(),
+                         FluidSystem::phaseName(phaseIdx).c_str(),
+                         FluidSystem::componentName(compIdx).c_str());
 
                 if (vertexCentered)
                     writer.attachVertexData(buffer[phaseIdx][compIdx], name, 1);

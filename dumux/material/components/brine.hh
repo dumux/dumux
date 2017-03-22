@@ -59,7 +59,7 @@ public:
     /*!
      * \brief A human readable name for the brine.
      */
-    static const char *name()
+    static std::string name()
     { return "Brine"; }
 
     /*!

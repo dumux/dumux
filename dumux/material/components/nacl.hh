@@ -46,7 +46,7 @@ public:
     /*!
      * \brief A human readable name for the NaCl.
      */
-    static const char *name()
+    static std::string name()
     {
         return "NaCl";
     }
