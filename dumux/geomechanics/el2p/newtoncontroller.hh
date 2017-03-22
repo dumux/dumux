@@ -18,7 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
+ *
+ * \brief An el2p specific controller for the newton solver.
+ *
+ * This controller 'knows' what a 'physically meaningful' solution is
+ * which allows the newton method to abort quicker if the solution is
+ * way out of bounds.
  */
+
 #ifndef DUMUX_EL2P_NEWTON_CONTROLLER_HH
 #define DUMUX_EL2P_NEWTON_CONTROLLER_HH
 

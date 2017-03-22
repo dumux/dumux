@@ -20,6 +20,7 @@
  * \file
  *
  * \brief @copybrief Dumux::FluidSystems::BaseFluidSystem
+ *
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
 #define DUMUX_BASE_FLUID_SYSTEM_HH
@@ -27,6 +28,8 @@
 #include "nullparametercache.hh"
 
 namespace Dumux
+{
+namespace FluidSystems
 {
 /*!
  * \ingroup Fluidsystems
@@ -36,10 +39,6 @@ namespace Dumux
  *       liquid phase. This contribution is probably not big, but somebody
  *       has to find out its influence.
  */
-
-namespace FluidSystems
-{
-
 template <class Scalar, class Implementation>
 class BaseFluidSystem
 {

@@ -16,6 +16,14 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Test for a cornerpoint grid applied on a gas injection scenario
+ */
+
+
+
 #ifndef DUMUX_CC2P_CORNERPOINT_PROBLEM_HH
 #define DUMUX_CC2P_CORNERPOINT_PROBLEM_HH
 
