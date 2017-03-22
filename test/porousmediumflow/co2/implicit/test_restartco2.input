@@ -1,5 +1,5 @@
 [TimeManager]
-DtInitial = 23452.1# [s]
+DtInitial = 33223.9# [s]
 TEnd = 1e6# [s]
 
 [Grid]
@@ -26,4 +26,4 @@ AddVelocity = FALSE
 ResidualReduction = 1e-10
 
 [TimeManager]
-Restart = 42008.6
+Restart = 65460.8
