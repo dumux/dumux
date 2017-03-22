@@ -51,7 +51,7 @@ public:
     /*!
      * \brief A human readable name for methane.
      */
-    static const char *name()
+    static std::string name()
     { return "CH4"; }
 
     /*!

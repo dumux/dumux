@@ -265,11 +265,11 @@ public:
     // \}
 
     //! \copydoc ImplicitProblem::name()
-    const char *name() const
-    { return simname_.c_str(); }
+    const std::string& name() const
+    { return simname_; }
 
     //! \copydoc ImplicitProblem::setName()
-    static void setName(const char *newName)
+    static void setName(std::string newName)
     { simname_ = newName; }
 
     //! \copydoc ImplicitProblem::timeManager()

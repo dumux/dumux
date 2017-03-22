@@ -114,6 +114,10 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
       This is important if you implement problem classes not deriving from the base
       problem classes in Dumux (`ImplicitProblem`, `OneModelProblem`,
       `ImpetProblem`, and `MultidomainProblem`).
+    - All name-related methods that previously returned / received `const char*`
+      do now use the type-safe alternative `std::string`. An example is
+      `FluidSystem::componentName()`. If you need a
+      `const char*` for special operation use the string member `c_str()`.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.10: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name

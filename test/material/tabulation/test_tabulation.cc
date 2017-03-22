@@ -26,6 +26,7 @@
  * else.
  */
 #include <config.h>
+#include <string>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
@@ -33,7 +34,7 @@
 bool success;
 
 template <class Scalar>
-void isSame(const char *str, Scalar v, Scalar vRef, Scalar tol=1e-3)
+void isSame(const std::string& str, Scalar v, Scalar vRef, Scalar tol=1e-3)
 {
     using std::abs;
     if (abs( (v - vRef)/vRef ) > tol) {

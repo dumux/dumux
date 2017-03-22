@@ -57,7 +57,7 @@ public:
     /*!
      * \brief A human readable name for the CO2.
      */
-    static const char *name()
+    static std::string name()
     { return "CO2"; }
 
     /*!
