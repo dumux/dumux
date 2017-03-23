@@ -1,10 +1,12 @@
 /* ***************** Porousmediaflow ******************/
 /*!
- * \defgroup Porousmediaflow Porous-Medium Flow (fully implicit if not denoted otherwise)
+ * \defgroup Porousmediaflow Porous-Medium Flow
+ * \brief fully implicit if not denoted otherwise
  */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup OnePModels 1p (one-phase Darcy flow)
+     * \defgroup OnePModels 1p
+     * \brief one-phase Darcy flow
      */
         /*!
          * \ingroup OnePModels
@@ -20,13 +22,15 @@
          */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup OnePTwoCModel 1p2c (one-phase, two-component Darcy flow)
+     * \defgroup OnePTwoCModel 1p2c
+     * \brief one-phase, two-component Darcy flow
      *
      * \copydetails Dumux::OnePTwoCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPModels 2p (two-phase Darcy flow)
+     * \defgroup TwoPModels 2p
+     * \brief two-phase Darcy flow
      */
         /*!
          * \ingroup TwoPModels
@@ -49,19 +53,22 @@
          */
      /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
+     * \defgroup TwoPOneCModel 2p1c
+     * \brief two-phase, one-component Darcy flow
      *
      * \copydetails Dumux::TwoPOneCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
+     * \defgroup TwoPOneCModel 2p1c
+     * \brief two-phase, one-component Darcy flow
      *
      * \copydetails Dumux::TwoPOneCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPTwoCModels 2p2c (two-phase, two-component Darcy flow)
+     * \defgroup TwoPTwoCModels 2p2c
+     * \brief two-phase, two-component Darcy flow
      */
         /*!
          * \ingroup TwoPTwoCModels
@@ -81,67 +88,78 @@
          */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPDFMModel 2pdfm (two-phase Darcy flow in discrete fracture-matrix)
+     * \defgroup TwoPDFMModel 2pdfm
+     * \brief two-phase Darcy flow in discrete fracture-matrix
      *
      * \copydetails Dumux::TwoPDFMModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPMincModel 2pminc (two-phase Darcy flow dual continuum)
+     * \defgroup TwoPMincModel 2pminc
+     * \brief two-phase Darcy flow dual continuum
      *
      * \copydetails Dumux::TwoPMincModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPNCModel 2pnc (two-phase, n-component Darcy flow)
+     * \defgroup TwoPNCModel 2pnc
+     * \brief two-phase, n-component Darcy flow
      *
      * \copydetails Dumux::TwoPNCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup TwoPNCMinModel 2pncmin (two-phase, n-component Darcy flow with mineralization)
+     * \defgroup TwoPNCMinModel 2pncmin
+     * \brief two-phase, n-component Darcy flow with mineralization
      *
      * \copydetails Dumux::TwoPNCMinModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup ThreePModel 3p (three-phase Darcy flow)
+     * \defgroup ThreePModel 3p
+     * \brief three-phase Darcy flow
      *
      * \copydetails Dumux::ThreePModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup ThreePThreeCModel 3p3c (three-phase, three-component Darcy flow)
+     * \defgroup ThreePThreeCModel 3p3c
+     * \brief three-phase, three-component Darcy flow
      *
      * \copydetails Dumux::ThreePThreeCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup ThreePWaterOilModel 3pwateroil (three-phase, two-component Darcy flow)
+     * \defgroup ThreePWaterOilModel 3pwateroil
+     * \brief three-phase, two-component Darcy flow
      *
      * \copydetails Dumux::ThreePWaterOilModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup CO2Model CO2 (two-phase, two-component Darcy flow)
+     * \defgroup CO2Model CO2
+     * \brief two-phase, two-component Darcy flow
      *
      * \copydetails Dumux::CO2Model
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup MPNCModel MpNc (m-phase, n-component Darcy flow)
+     * \defgroup MPNCModel MpNc
+     * \brief m-phase, n-component Darcy flow
      *
      * \copydetails Dumux::MPNCModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup NIModel Non-isothermal (energy equation, to be added to an isothermal model)
+     * \defgroup NIModel Non-isothermal
+     * \brief energy equation, to be added to an isothermal model
      *
      * \copydetails Dumux::NIModel
      */
     /*!
      * \ingroup Porousmediaflow
-     * \defgroup RichardsModel Richards (Richards flow)
+     * \defgroup RichardsModel Richards
+     * \brief Richards flow
      *
      * \copydetails Dumux::RichardsModel
      */
@@ -152,19 +170,22 @@
  */
     /*!
      * \ingroup Geomechanics
-     * \defgroup ElOnePTwoCBoxModel El1p2c (one-phase, two-component Darcy flow, linear elastic deformation model)
+     * \defgroup ElOnePTwoCBoxModel El1p2c
+     * \brief one-phase, two-component Darcy flow, linear elastic deformation model
      *
      * \copydetails Dumux::ElOnePTwoCModel
      */
     /*!
      * \ingroup Geomechanics
-     * \defgroup ElTwoPBoxModel El2p (two-phase Darcy flow, linear elastic deformation model)
+     * \defgroup ElTwoPBoxModel El2p
+     * \brief two-phase Darcy flow, linear elastic deformation model
      *
      * \copydetails Dumux::ElTwoPModel
      */
     /*!
      * \ingroup Geomechanics
-     * \defgroup ElasticBoxModel Elastic (linear elastic deformation model)
+     * \defgroup ElasticBoxModel Elastic
+     * \brief linear elastic deformation model
      *
      * \copydetails Dumux::ElasticModel
      */
@@ -175,37 +196,43 @@
  */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxStokesModel Stokes (one-phase Stokes flow)
+     * \defgroup BoxStokesModel Stokes
+     * \brief one-phase Stokes flow
      *
      * \copydetails Dumux::StokesModel
      */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxStokesncModel Stokesnc (one-phase, n-component Stokes flow)
+     * \defgroup BoxStokesncModel Stokesnc
+     *  \brief one-phase, n-component Stokes flow
      *
      * \copydetails Dumux::StokesncModel
      */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxStokesncniModel Stokesncni (one-phase, n-component, non-isothermal Stokes flow)
+     * \defgroup BoxStokesncniModel Stokesncni
+     * \brief one-phase, n-component, non-isothermal Stokes flow
      *
      * \copydetails Dumux::StokesncniModel
      */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxZeroEqModel Zeroeq (one-phase Stokes flow with zero-eq turbulence model)
+     * \defgroup BoxZeroEqModel Zeroeq
+     * \brief one-phase Stokes flow with zero-eq turbulence model
      *
      * \copydetails Dumux::ZeroEqModel
      */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxZeroEqncModel Zeroeqnc (one-phase, n-component Stokes flow with zero-eq turbulence model)
+     * \defgroup BoxZeroEqncModel Zeroeqnc
+     * \brief one-phase, n-component Stokes flow with zero-eq turbulence model
      *
      * \copydetails Dumux::ZeroEqncModel
      */
     /*!
      * \ingroup Freeflow
-     * \defgroup BoxZeroEqncniModel Zeroeqncni (one-phase, n-component, non-isothermal Stokes flow with zero-eq turbulence model)
+     * \defgroup BoxZeroEqncniModel Zeroeqncni
+     * \brief one-phase, n-component, non-isothermal Stokes flow with zero-eq turbulence model
      *
      * \copydetails Dumux::ZeroEqncniModel
      */
@@ -216,11 +243,13 @@
  */
     /*!
      * \ingroup Multidomain
-     * \defgroup MultidomainModel Multidomain
+     * \defgroup MultidomainModel
+     * \brief Multidomain
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCStokesTwoCModel 2cstokes2p2c (1p2c Stokes flow coupled to 2p2c Darcy flow)
+     * \defgroup TwoPTwoCStokesTwoCModel 2cstokes2p2c
+     * \brief 1p2c Stokes flow coupled to 2p2c Darcy flow
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
@@ -233,7 +262,8 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCNIStokesTwoCNIModel 2cnistokes2p2cni (1p2cni Stokes flow coupled to 2p2cni Darcy flow)
+     * \defgroup TwoPTwoCNIStokesTwoCNIModel 2cnistokes2p2cni
+     * \brief 1p2cni Stokes flow coupled to 2p2cni Darcy flow
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
@@ -249,7 +279,8 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCZeroEqTwoCModel 2czeroeq2p2c (1p2c Stokes flow with zero-eq turbulence model coupled to 2p2c Darcy flow)
+     * \defgroup TwoPTwoCZeroEqTwoCModel 2czeroeq2p2c
+     * \brief  1p2c Stokes flow with zero-eq turbulence model coupled to 2p2c Darcy flow
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
@@ -262,7 +293,8 @@
      */
     /*!
      * \ingroup Multidomain
-     * \defgroup TwoPTwoCNIZeroEqTwoCNIModel 2cnizeroeq2p2cni (1p2cni Stokes flow with zero-eq turbulence model coupled to 2p2cni Darcy flow)
+     * \defgroup TwoPTwoCNIZeroEqTwoCNIModel 2cnizeroeq2p2cni
+     * \brief 1p2cni Stokes flow with zero-eq turbulence model coupled to 2p2cni Darcy flow
      *
      * # Coupling Conditions
      * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
@@ -279,70 +311,85 @@
 
 /* ***************** Fully Implicit ******************/
 /*!
- * \defgroup ImplicitModel Fully-Coupled Fully-Implicit Scheme
+ * \defgroup ImplicitModel Implicit Scheme
+ * \brief Fully-Coupled Fully-Implicit Scheme
  */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitBaseProblems Base Problems
+     * \defgroup ImplicitBaseProblems
+     * \brief Base Problems
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup Discretizations Discretizations
+     * \defgroup Discretizations
+     * \brief Discretizations
      */
          /*!
          * \ingroup Discretizations
-         * \defgroup CCModel Fully-implicit cell-centered discretization
+         * \defgroup CCModel
+         * \brief Fully-implicit cell-centered discretization
          */
          /*!
          * \ingroup Discretizations
-         * \defgroup BoxModel Fully-implicit box discretization
+         * \defgroup BoxModel
+         * \brief Fully-implicit box discretization
          */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitBoundaryTypes Boundary Types
+     * \defgroup ImplicitBoundaryTypes
+     * \brief Boundary Types
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitFluxVariables Flux Variables
+     * \defgroup ImplicitFluxVariables
+     * \brief Flux Variables
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitIndices Indices
+     * \defgroup ImplicitIndices
+     * \brief Indices
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitLocalJacobian Local Jacobian
+     * \defgroup ImplicitLocalJacobian
+     * \brief Local Jacobian
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitLocalResidual Local Residual
+     * \defgroup ImplicitLocalResidual
+     * \brief Local Residual
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitProperties Properties
+     * \defgroup ImplicitProperties
+     * \brief Properties
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitVolumeVariables Volume Variables
+     * \defgroup ImplicitVolumeVariables
+     * \brief Volume Variables
      */
 
 /* ***************** Sequential ******************/
 /*!
- * \defgroup Sequential Sequential Scheme (Implicit Pressure, Explicit Transport)
+ * \defgroup Sequential Sequential Scheme
+ * \brief Implicit Pressure, Explicit Transport
  */
     /*!
      * \ingroup Sequential
-     * \defgroup IMPETproblems Base Problems
+     * \defgroup IMPETproblems
+     * \brief Base Problems
      */
     /*!
      * \ingroup Sequential
-     * \defgroup IMPETProperties Properties
+     * \defgroup IMPETProperties
+     * \brief Properties
      */
 
 /* ***************** Material ******************/
 /*!
  * \defgroup Material Material and Fluid Framework
- * Short description of the most important concepts of the material and fluid framework:
+ * \brief Short description of the most important concepts of the material and fluid framework:
  *
  *  - __Binary coefficient:__  @copydoc Binarycoefficients
  *
@@ -373,8 +420,10 @@
     /*!
      * \ingroup Material
      * \defgroup Binarycoefficients Binary Coefficients
-     *  Binary coefficients describe the relations
-     *  of a mixture of two components. Typical binary coefficients are
+     * \brief  Binary coefficients describe the relations
+     *  of a mixture of two components.
+     *
+     * Typical binary coefficients are
      *  Henry coefficients or binary molecular diffusion
      *  coefficients. So far, the programming interface for accessing binary
      *  coefficients has not been standardized in Dumux.
@@ -382,23 +431,28 @@
     /*!
      * \ingroup Material
      * \defgroup Components Components
-     * Components are fluid systems which provide the
+     * \brief Components are fluid systems which provide the
      *  thermodynamic relations for the liquid and gas phase of a single
-     *  chemical species or a fixed mixture of species. Their main purpose
+     *  chemical species or a fixed mixture of species.
+     *
+     * Their main purpose
      *  is to provide a convenient way to access these quantities from
      *  full-fledged fluid systems. Components are not supposed to be used
      *  by models directly.
      */
          /*!
          * \ingroup Components
-         * \defgroup IAPWS IAPWS
+         * \defgroup IAPWS
+         * \brief Properties of water and steam, see \cite IAPWS1997
          */
      /*!
      * \ingroup Material
      * \defgroup ConstraintSolver Constraint Solver
-     * Constraint solvers are auxiliary tools to
+     * \brief Constraint solvers are auxiliary tools to
      * make sure that a fluid state is consistent with some thermodynamic
-     * constraints. All constraint solvers specify a well defined set of
+     * constraints.
+     *
+     * All constraint solvers specify a well defined set of
      * input variables and make sure that the resulting fluid state is
      * consistent with a given set of thermodynamic equations.
      * Constraint solvers connect the thermodynamic relations expressed by
@@ -409,20 +463,25 @@
      */
     /*!
      * \ingroup Material
-     * \defgroup EOS Equation of State
+     * \defgroup EOS
+     * \brief Equation of State
      *
-     * Equations of state (EOS) are auxiliary
+     * \brief Equations of state (EOS) are auxiliary
      * classes which provide relations between a fluid phase's temperature,
-     * pressure, composition and density. Since these classes are only used
+     * pressure, composition and density.
+     *
+     * Since these classes are only used
      * internally in fluid systems, their programming interface is
      * currently ad-hoc.
      */
     /*!
      * \ingroup Material
      * \defgroup FluidStates Fluid States
-     * Fluid states are responsible for representing the
+     * \brief Fluid states are responsible for representing the
      * complete thermodynamic configuration of a system at a given spatial
-     * and temporal position. A fluid state always provides access methods
+     * and temporal position.
+     *
+     * A fluid state always provides access methods
      * to __all__ thermodynamic quantities, but the concept of a fluid state does not
      * mandate what assumptions are made to store these thermodynamic
      * quantities. What fluid states also do __not__ do is to make sure
@@ -432,9 +491,11 @@
     /*!
      * \ingroup Material
      * \defgroup Fluidsystems Fluid Systems
-     * Fluid systems express the thermodynamic relations 
+     * \brief Fluid systems express the thermodynamic relations.
     *  Strictly speaking, these relations are
-    *  functions, mathematically.} between quantities. Since functions do
+    *  functions, dealing mathematically between quantities.
+    *
+    *  Since functions do
     *  not exhibit any internal state, fluid systems are stateless classes,
     *  i.e. all member functions are static. This is a conscious
     *  decision since the thermodynamic state of the system is expressed by
@@ -443,30 +504,35 @@
     /*!
      * \ingroup Material
      *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
-     * Some parameters are functions of the fluid state as well as parameters of
-     * the matrix. For example the capillary pressure is a function of the phase saturation
+     * \brief Some parameters are functions of the fluid state as well as parameters of
+     * the matrix.
+     *
+     * For example the capillary pressure is a function of the phase saturation
      * and the shape parameter \f$\lambda\f$ which is dependent on the material. All such relations
      * are gathered in this module.
      */
         /*!
          * \ingroup fluidmatrixinteractions
-         *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix Interactions
+         *  \defgroup fluidmatrixinteractionslaws
+         *  \brief Laws for Fluid-Matrix Interactions
          */
          /*!
          * \ingroup fluidmatrixinteractions
-         *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions
+         *  \defgroup fluidmatrixinteractionsparams
+         *  \brief Parameters for Fluid-Matrix Interactions
          */
     /*!
      * \ingroup Material
      * \defgroup ParameterCache Parameter Cache
-     * Fluid systems sometimes require
+     * \brief Fluid systems sometimes require
      * computationally expensive parameters for multiple relations. Such
      * parameters can be cached using a so-called parameter
-     * cache. Parameter cache objects are specific for each fluid system
+     * cache.
+     *
+     * Parameter cache objects are specific for each fluid system
      * but they must provide a common interface to update the internal
      * parameters depending on the quantities which changed since the last
-     * update.
-     * All fluid systems must export a type for their __ParameterCache__
+     * update. All fluid systems must export a type for their __ParameterCache__
      * objects. Parameter caches can be used to cache parameter that are
      * expensive to compute and are required in multiple thermodynamic
      * relations. For fluid systems which do need to cache parameters,
@@ -479,7 +545,7 @@
      * Note, that the parameter cache interface only guarantees that if a
      * more specialized <tt>update()</tt> method is called, it is not slower
      * than the next more-general method (e.g. calling <tt>updateSingleMoleFraction()</tt>
-     * may be as expensive as <tt>updateAll()}</tt>. It is thus advisable to
+     * may be as expensive as <tt>updateAll()</tt>. It is thus advisable to
      * rather use a more general <tt>update()</tt> method once than multiple
      * calls to specialized <tt>update()</tt> methods.
      * To make usage of parameter caches easier for the case where all cached
@@ -490,9 +556,11 @@
     /*!
      * \ingroup Material
      * \defgroup SpatialParameters Spatial Parameters
-     * All parameters which depend on the matrix and
+     * \brief All parameters which depend on the matrix and
      * therefore on the position within the model domain are defined as spatial
-     * parameters. For example permeability, porosity etc.
+     * parameters.
+     *
+     * For example permeability, porosity etc.
      *
      */
 
@@ -502,46 +570,56 @@
  */
     /*!
      * \ingroup Common
-     * \defgroup BC Boundary Conditions
+     * \defgroup BC
+     * \brief Boundary Conditions
      */
     /*!
      * \ingroup Common
-     * \defgroup Math Elementary Math Functions
+     * \defgroup Math
+     * \brief Elementary Math Functions
      */
     /*!
      * \ingroup Common
-     * \defgroup Exception Exceptions
+     * \defgroup Exception
+     * \brief Exceptions
      */
     /*!
      * \ingroup Common
-     * \defgroup Linear Linear Solver Backends
+     * \defgroup Linear
+     * \brief Linear Solver Backends
      */
     /*!
      * \ingroup Common
-     * \defgroup Newton Newton Solver
+     * \defgroup Newton
+     * \brief Newton Solver
      */
     /*!
      * \ingroup Common
      * \defgroup Parameter Parameters
-     * See the file parameterlist for available parameters.
+     * \brief See the \ref parameterList for available parameters.
      */
     /*!
      * \ingroup Common
-     * \defgroup Properties Property System
+     * \defgroup Properties
+     * \brief Property System
      */
     /*!
      * \ingroup Common
-     * \defgroup Spline Splines
+     * \defgroup Spline
+     * \brief Splines
      */
     /*!
      * \ingroup Common
-     * \defgroup Start Starting the Simulation
+     * \defgroup Start
+     * \brief Starting the Simulation
      */
     /*!
      * \ingroup Common
-     * \defgroup SimControl Time Manager
+     * \defgroup SimControl
+     * \brief Time Manager
      */
     /*!
      * \ingroup Common
-     * \defgroup Valgrind Valgrind
+     * \defgroup Valgrind
+     * \brief Valgrind
      */
