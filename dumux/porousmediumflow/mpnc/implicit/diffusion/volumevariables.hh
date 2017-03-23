@@ -144,6 +144,11 @@ protected:
     Scalar diffCoeffG_[numComponents][numComponents];
 };
 
+
+/*!
+ * \brief Variables for the disabled diffusive fluxes in the MpNc model within
+ *        a finite volume.
+ */
 // dummy class for the case where diffusion is disabled
 template<class TypeTag>
 class MPNCVolumeVariablesDiffusion<TypeTag, false>

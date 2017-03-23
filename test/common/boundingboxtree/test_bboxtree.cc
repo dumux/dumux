@@ -47,6 +47,11 @@ namespace Properties
 #endif
 }
 
+/*!
+ *
+ * \brief Bounding box tree tests
+ */
+
 template<class TypeTag>
 class BBoxTreeTests
 {

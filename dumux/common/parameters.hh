@@ -278,6 +278,10 @@ void print(std::ostream &os = std::cout)
 const char *getString_(const char *foo = 0)
 { return foo; }
 
+/*!
+ * \ingroup Parameter
+ * \brief Class sorting params and runTimeParams
+ */
 template <class TypeTag>
 class Param
 {

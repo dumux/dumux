@@ -116,6 +116,9 @@ public:
     typedef Dune::FieldVector<Scalar, 2> TimeStepFluxType;
 
 protected:
+    /**
+     * \brief Data for local timestepping
+     */
     struct LocalTimesteppingData
     {
         Dune::FieldVector<EntryType, 2*dim> faceFluxes;

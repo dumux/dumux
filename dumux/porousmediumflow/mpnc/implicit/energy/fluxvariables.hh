@@ -34,7 +34,7 @@ namespace Dumux
 /*!
  * \ingroup MPNCModel
  * \ingroup ImplicitFluxVariables
- * \brief Variables for the enthalpy fluxes in the MpNc model
+ * \brief Variables for the enthalpy fluxes in the MpNc model for the isothermal case
  */
 template <class TypeTag, bool enableEnergy/*=false*/, int numEnergyEquations/*=0*/>
 class MPNCFluxVariablesEnergy
@@ -81,6 +81,11 @@ public:
     {}
 };
 
+/*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitFluxVariables
+ * \brief Variables for the enthalpy fluxes in the MpNc model
+ */
 template <class TypeTag>
 class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*numEnergyEquations=*/1>
 {

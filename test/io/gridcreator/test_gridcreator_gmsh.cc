@@ -46,6 +46,10 @@ namespace Properties
     SET_STRING_PROP(GridCreatorGmshTest, GridParameterGroup, "BifurcationGrid");
 }
 
+/*!
+ *
+ * \brief Test for gmsh interface of the grid creator
+ */
 template<class TypeTag>
 class GridCreatorGmshTest
 {

@@ -30,7 +30,9 @@
 
 namespace Dumux
 {
-
+/*!
+ * \brief Contains the phase indices
+ */
 struct JohansenIndices
 {
     static const int wPhaseIdx = 0;

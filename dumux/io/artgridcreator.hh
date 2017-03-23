@@ -501,6 +501,9 @@ class FractureMapper
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator)  GridCreator;
 public:
     // mapper: one data element in every entity
+    /*!
+     * \brief Maps one data element in every entity
+    */
     template<int dim>
     struct FaceLayout
     {

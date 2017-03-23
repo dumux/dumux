@@ -28,7 +28,9 @@
 
 namespace Dumux
 {
-
+/*!
+ * \brief   Indices for three permanent phases
+ */
 struct SimpleThreePIndices
 {
     static const int wPhaseIdx = 0;

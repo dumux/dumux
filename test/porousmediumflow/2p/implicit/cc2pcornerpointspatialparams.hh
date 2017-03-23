@@ -60,7 +60,10 @@ public:
     typedef EffToAbsLaw<EffectiveLaw> type;
 };
 }
-
+/*!
+ *
+ * \brief The spatial parameters for the CC2PCornerPointProblem
+ */
 template<class TypeTag>
 class CC2PCornerPointSpatialParams : public ImplicitSpatialParams<TypeTag>
 {

@@ -32,6 +32,9 @@ namespace Dumux
 {
 namespace HeterogeneousCO2Tables
 {
+/*!
+* \brief Class providing the tabulated values of CO2 for density and enthalpy
+*/
 // the real work is done by some external program which provides
 // ready-to-use tables.
 #include "co2values.inc"

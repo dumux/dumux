@@ -218,7 +218,11 @@ protected:
     Scalar moleFraction_[numPhases][numComponents];
 };
 
-
+/*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitFluxVariables
+ * \brief Variables for the diffusive fluxes in the MpNc model
+ */
 template<class TypeTag>
 class MPNCFluxVariablesDiffusion<TypeTag, false>
 {

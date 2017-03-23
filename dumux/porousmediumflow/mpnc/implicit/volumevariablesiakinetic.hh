@@ -40,6 +40,11 @@ namespace Dumux
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // specialization for the case of kinetic mass AND energy transfer
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+/*!
+ * \brief Volume variables required for the modules which require the specific interfacial
+ *        area between fluid phases. This is the specialization for the case of kinetic
+ *         mass AND energy transfer
+ */
 template <class TypeTag, bool enableKinetic >
 class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*numEnergyEqs=*/3>
 {
@@ -332,6 +337,11 @@ private:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // specialization for the case of NO kinetic mass but kinteic energy transfer of a fluid mixture and solid
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*!
+ * \brief Volume variables required for the modules which require the specific interfacial
+ *        area between fluid phases. This is the specialization for the case of NO kinetic
+ *        mass but kinteic energy transfer of a fluid mixture and solid
+ */
 template <class TypeTag>
 class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/false, /*numEnergyEqs=*/2>
 {
@@ -471,6 +481,11 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // specialization for the case of (only) kinetic mass transfer
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+/*!
+ * \brief Volume variables required for the modules which require the specific interfacial
+ *        area between fluid phases. This is the specialization specialization for the case
+ *        of (only) kinetic mass transfer
+ */
 template <class TypeTag>
 class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*numEnergyEqs=*/0>
 {

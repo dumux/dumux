@@ -39,6 +39,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPMincModel
+ * \brief Adaption of the fully implicit scheme to the two-phase flow model.
  */
 template<class TypeTag >
 class TwoPMincModel : public TwoPModel<TypeTag>

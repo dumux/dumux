@@ -45,6 +45,11 @@ class DUNE_DEPRECATED_MSG("CompositionFromFugacities2pncmin is deprecated. Use C
   : public CompositionFromFugacities<Scalar, FluidSystem>
 { };
 
+/*!
+ * \ingroup ConstraintSolver
+ * \brief Calculates the chemical equilibrium from the component
+ *        fugacities in a phase.
+ */
 template <class Scalar, class FluidSystem>
 class DUNE_DEPRECATED_MSG("compositionFromFugacities2pncmin is deprecated. Use CompositionFromFugacities instead.")
   compositionFromFugacities2pncmin

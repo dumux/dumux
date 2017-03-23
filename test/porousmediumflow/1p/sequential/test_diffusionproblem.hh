@@ -40,7 +40,9 @@
 namespace Dumux
 {
 
-// A simple unit sqare grid creator
+/*!
+* \brief A simple unit sqare grid creator
+*/
 template <class Grid>
 class UnitCubeGridCreator
 {
