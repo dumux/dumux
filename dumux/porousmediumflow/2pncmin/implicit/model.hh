@@ -209,6 +209,11 @@ public:
             for (int j = 0; j < numComponents; ++j)
                 massFraction[i][j] = writer.allocateManagedBuffer(numDofs);
 
+        ScalarField *moleFraction[numPhases][numComponents];
+        for (int i = 0; i < numPhases; ++i)
+            for (int j = 0; j < numComponents; ++j)
+                moleFraction[i][j] = writer.allocateManagedBuffer(numDofs);
+
         ScalarField *molarity[numComponents];
         for (int j = 0; j < numComponents ; ++j)
             molarity[j] = writer.allocateManagedBuffer(numDofs);
@@ -273,6 +278,10 @@ public:
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                         (*massFraction[phaseIdx][compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].massFraction(phaseIdx,compIdx);
 
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].moleFraction(phaseIdx,compIdx);
+
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     (*molarity[compIdx])[dofIdxGlobal] = (elemVolVars[scvIdx].molarity(wPhaseIdx, compIdx));
 
@@ -316,21 +325,31 @@ public:
         if (dim == 3)
             writer.attachDofData(*Perm[2], "Kzz", isBox);
 
-        for (int i = 0; i < numPhases; ++i)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int j = 0; j < numComponents; ++j)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 std::ostringstream oss;
-                oss << "X^" << FluidSystem::phaseName(i) << "_" << FluidSystem::componentName(j);
-                writer.attachDofData(*massFraction[i][j], oss.str(), isBox);
+                oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                writer.attachDofData(*massFraction[phaseIdx][compIdx], oss.str(), isBox);
             }
         }
 
-        for (int j = 0; j < numComponents; ++j)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                std::ostringstream oss;
+                oss << "x_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                writer.attachDofData(*moleFraction[phaseIdx][compIdx], oss.str(), isBox);
+            }
+        }
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             std::ostringstream oss;
-            oss << "m^w_" << FluidSystem::componentName(j);
-            writer.attachDofData(*molarity[j], oss.str(), isBox);
+            oss << "m_" << FluidSystem::phaseName(wPhaseIdx) << "^" << FluidSystem::componentName(compIdx);
+            writer.attachDofData(*molarity[compIdx], oss.str(), isBox);
         }
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
