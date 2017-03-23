@@ -59,6 +59,7 @@ NEW_TYPE_TAG(CCTwoPNCNI, INHERITS_FROM(CCModel, TwoPNCNI));
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
 NEW_PROP_TAG(NumMajorComponents); //!< Number of major fluid components which are considered in the calculation of the phase density
+NEW_PROP_TAG(SetMoleFractionsForWettingPhase); //!< Set the mole fraction in the wetting or non-wetting phase
 NEW_PROP_TAG(TwoPNCIndices); //!< Enumerations for the 2pncMin models
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters

@@ -260,14 +260,20 @@ public:
 
             // set the known mole fractions in the fluidState so that they
             // can be used by the Miscible2pNCComposition constraint solver
+            unsigned int knownPhaseIdx = nPhaseIdx;
+            if (GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase))
+            {
+                knownPhaseIdx = wPhaseIdx;
+            }
+
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-                fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
+                fluidState.setMoleFraction(knownPhaseIdx, compIdx, priVars[compIdx]);
             }
 
             Miscible2pNCComposition::solve(fluidState,
                         paramCache,
-                        wPhaseIdx,  //known phaseIdx
+                        knownPhaseIdx,
                         /*setViscosity=*/true,
                         /*setEnthalpy=*/false);
         }
