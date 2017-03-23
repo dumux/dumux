@@ -285,6 +285,7 @@ public:
         ScalarField *mobW          = writer.allocateManagedBuffer (numDofs);
         ScalarField *mobN          = writer.allocateManagedBuffer (numDofs);
         ScalarField *temperature   = writer.allocateManagedBuffer (numDofs);
+        ScalarField *phasePresence = writer.allocateManagedBuffer (numDofs);
         ScalarField *poro          = writer.allocateManagedBuffer (numDofs);
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
         VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
@@ -345,6 +346,7 @@ public:
                 (*mobN)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(nPhaseIdx);
                 (*poro)[dofIdxGlobal]           = elemVolVars[scvIdx].porosity();
                 (*temperature)[dofIdxGlobal]    = elemVolVars[scvIdx].temperature();
+                (*phasePresence)[dofIdxGlobal]  = staticDat_[dofIdxGlobal].phasePresence;
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -378,30 +380,28 @@ public:
         writer.attachDofData(*mobN, "mobN", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*temperature, "temperature", isBox);
+        writer.attachDofData(*phasePresence, "phasePresence", isBox);
         writer.attachDofData(*perm[0], "Kxx", isBox);
         if (dim >= 2)
             writer.attachDofData(*perm[1], "Kyy", isBox);
         if (dim == 3)
             writer.attachDofData(*perm[2], "Kzz", isBox);
 
-        for (int i = 0; i < numPhases; ++i)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int j = 0; j < numComponents; ++j)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 std::ostringstream oss;
-                oss << "x"
-                    << FluidSystem::componentName(j)
-                    << FluidSystem::phaseName(i);
-                writer.attachDofData(*moleFraction[i][j], oss.str(), isBox);
+                oss << "x_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                writer.attachDofData(*moleFraction[phaseIdx][compIdx], oss.str(), isBox);
             }
         }
 
-        for (int j = 0; j < numComponents; ++j)
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             std::ostringstream oss;
-            oss << "m^w_"
-                << FluidSystem::componentName(j);
-            writer.attachDofData(*molarity[j], oss.str().c_str(), isBox);
+            oss << "m_" << FluidSystem::phaseName(wPhaseIdx) << "^" << FluidSystem::componentName(compIdx);
+            writer.attachDofData(*molarity[compIdx], oss.str(), isBox);
         }
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
