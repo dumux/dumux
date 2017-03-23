@@ -59,7 +59,7 @@ add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00007.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00008.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni")
 endif()
 
