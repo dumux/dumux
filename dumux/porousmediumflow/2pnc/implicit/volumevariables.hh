@@ -200,20 +200,25 @@ public:
         // set the saturations
         /////////////
 
-    Scalar Sg;
+        Scalar Sg;
         if (phasePresence == nPhaseOnly)
             Sg = 1.0;
-        else if (phasePresence == wPhaseOnly) {
+        else if (phasePresence == wPhaseOnly)
+        {
             Sg = 0.0;
         }
-        else if (phasePresence == bothPhases) {
+        else if (phasePresence == bothPhases)
+        {
             if (formulation == pwsn)
                 Sg = priVars[switchIdx];
             else if (formulation == pnsw)
                 Sg = 1.0 - priVars[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
-    else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        else
+        {
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        }
         fluidState.setSaturation(nPhaseIdx, Sg);
         fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
 
@@ -223,7 +228,7 @@ public:
 
         // calculate capillary pressure
         const MaterialLawParams &materialParams
-        = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+            = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar pc = MaterialLaw::pc(materialParams, 1 - Sg);
 
         // extract the pressures
@@ -249,10 +254,10 @@ public:
         // calculate the phase compositions
         /////////////
 
-    typename FluidSystem::ParameterCache paramCache;
-
+        typename FluidSystem::ParameterCache paramCache;
         // now comes the tricky part: calculate phase composition
-        if (phasePresence == bothPhases) {
+        if (phasePresence == bothPhases)
+        {
             // both phases are present, phase composition results from
             // the nonwetting <-> wetting equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
@@ -277,44 +282,46 @@ public:
                         /*setViscosity=*/true,
                         /*setEnthalpy=*/false);
         }
-        else if (phasePresence == nPhaseOnly){
-
+        else if (phasePresence == nPhaseOnly)
+        {
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
-
             moleFrac[wCompIdx] =  priVars[switchIdx];
-
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                    moleFrac[compIdx] = priVars[compIdx];
-
+            {
+                moleFrac[compIdx] = priVars[compIdx];
+            }
 
             Scalar sumMoleFracOtherComponents = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                    sumMoleFracOtherComponents+=moleFrac[compIdx];
+            {
+                sumMoleFracOtherComponents+=moleFrac[compIdx];
+            }
 
             sumMoleFracOtherComponents += moleFrac[wCompIdx];
             moleFrac[nCompIdx] = 1 - sumMoleFracOtherComponents;
 
-
             // Set fluid state mole fractions
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
-                    fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
-
+            {
+                fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
+            }
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                              nPhaseIdx,
+                                             nPhaseIdx,
                                              /*setViscosity=*/true,
                                              /*setEnthalpy=*/false);
 
         }
-        else if (phasePresence == wPhaseOnly){
-        // only the wetting phase is present, i.e. wetting phase
-        // composition is stored explicitly.
-        // extract _mass_ fractions in the nonwetting phase
+        else if (phasePresence == wPhaseOnly)
+        {
+            // only the wetting phase is present, i.e. wetting phase
+            // composition is stored explicitly.
+            // extract _mass_ fractions in the nonwetting phase
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
@@ -325,7 +332,7 @@ public:
             Scalar sumMoleFracNotWater = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-                    sumMoleFracNotWater+=moleFrac[compIdx];
+                sumMoleFracNotWater+=moleFrac[compIdx];
             }
             sumMoleFracNotWater += moleFrac[nCompIdx];
             moleFrac[wCompIdx] = 1 -sumMoleFracNotWater;
@@ -379,13 +386,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
-    {
-        if (phaseIdx < numPhases)
-            return fluidState_.density(phaseIdx);
-
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
-    }
+    { return fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Returns the mass density of a given phase within the
@@ -394,13 +395,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
-    {
-        if (phaseIdx < numPhases)
-            return fluidState_.molarDensity(phaseIdx);
-
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
-    }
+    { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within
@@ -409,9 +404,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
-    {
-        return fluidState_.pressure(phaseIdx);
-    }
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Returns temperature inside the sub-control volume.
@@ -430,9 +423,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar mobility(int phaseIdx) const
-    {
-        return mobility_[phaseIdx];
-    }
+    { return mobility_[phaseIdx]; }
 
     /*!
      * \brief Returns the effective capillary pressure within the control volume
@@ -447,7 +438,6 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
-
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
@@ -455,12 +445,12 @@ public:
     { return diffCoeff_[phaseIdx][compIdx]; }
 
     /*!
-     * \brief Returns the molarity of a component in the phase
+     * \brief Returns the molarity of a component in the phase \f$ moles/m^3 \f$
      *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
      */
-     Scalar molarity(int phaseIdx, int compIdx) const // [moles/m^3]
+     Scalar molarity(int phaseIdx, int compIdx) const
     { return this->fluidState_.molarity(phaseIdx, compIdx);}
 
      /*!
@@ -470,9 +460,7 @@ public:
       * \param compIdx the index of the component
       */
      Scalar massFraction(int phaseIdx, int compIdx) const
-     {
-        return this->fluidState_.massFraction(phaseIdx, compIdx);
-     }
+     { return this->fluidState_.massFraction(phaseIdx, compIdx); }
 
      /*!
       * \brief Returns the mole fraction of a component in the phase
@@ -481,12 +469,9 @@ public:
       * \param compIdx the index of the component
       */
      Scalar moleFraction(int phaseIdx, int compIdx) const
-     {
-        return this->fluidState_.moleFraction(phaseIdx, compIdx);
-     }
+     { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
 
 protected:
-
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
                                const Element &element,
@@ -505,8 +490,8 @@ protected:
     }
 
     /*!
-        * \brief Called by update() to compute the energy related quantities
-        */
+     * \brief Called by update() to compute the energy related quantities
+     */
     void updateEnergy_(const PrimaryVariables &priVars,
                         const Problem &problem,
                         const Element &element,
@@ -515,8 +500,8 @@ protected:
                         bool isOldSol)
     { };
 
-    Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
+    Scalar porosity_; //!< Effective porosity within the control volume
+    Scalar mobility_[numPhases]; //!< Effective mobility within the control volume
     Scalar density_;
     FluidState fluidState_;
     Scalar theta_;
@@ -530,7 +515,6 @@ private:
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
-
 };
 
 } // end namespace

@@ -673,10 +673,8 @@ protected:
                         globalSol[dofIdxGlobal][switchIdx] = 0.9999;
                     else if (formulation == pwsn)
                         globalSol[dofIdxGlobal][switchIdx] = 0.0001;
-
                 }
             }
-
 
             staticDat_[dofIdxGlobal].phasePresence = newPhasePresence;
             staticDat_[dofIdxGlobal].wasSwitched = wouldSwitch;
