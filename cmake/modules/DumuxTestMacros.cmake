@@ -54,7 +54,8 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   else()
     dune_add_test(NAME ${dumux_test}
                   TARGET ${dumux_test_executable}
-                  COMMAND ${dumux_test_args})
+                  COMMAND ${dumux_test_args}
+                  TIMEOUT 600) # set default timeout
     # tests always require the executable to run
     set_tests_properties(${dumux_test} PROPERTIES REQUIRED_FILES ${dumux_test_executable})
   endif()
