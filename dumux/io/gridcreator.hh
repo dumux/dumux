@@ -796,13 +796,15 @@ public:
                     // reverse behavior for negative values
                     if (gradingFactor < 0.0)
                     {
-                        gradingFactor = -gradingFactor;
+                        using std::abs;
+                        gradingFactor = abs(gradingFactor);
                         if (gradingFactor < 1.0)
                         {
                             increasingCellSize = true;
                         }
                     }
 
+                    // if the grading factor is exactly 1.0 do equal spacing
                     if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
                     {
                         height = 1.0 / numCells;
@@ -811,6 +813,7 @@ public:
                             std::cout << " -> h "  << height * length << std::endl;
                         }
                     }
+                    // if grading factor is not 1.0, do power law spacing
                     else
                     {
                         height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
