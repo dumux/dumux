@@ -105,11 +105,11 @@ int main()
     if (!passed) return 1;
 
     // we can write also std::arrays (all container providing begin and end)
-    passed = passed && Dumux::testContainerWriter<std::array<double, 2>>(std::array<double, 2>{1.0, 2.0});
-    passed = passed && Dumux::testContainerWriter<std::array<int, 2>>(std::array<int, 2>{1, 2});
-    passed = passed && Dumux::testContainerWriter<std::array<std::string, 2>>(std::array<std::string, 2>{"1.0", "2.0"});
+    passed = passed && Dumux::testContainerWriter<std::array<double, 2>>({{1.0, 2.0}});
+    passed = passed && Dumux::testContainerWriter<std::array<int, 2>>({{1, 2}});
+    passed = passed && Dumux::testContainerWriter<std::array<std::string, 2>>({{"1.0", "2.0"}});
     passed = passed && Dumux::testContainerWriter<std::array<Dune::FieldVector<double, 3>, 2>>(
-                        std::array<Dune::FieldVector<double, 3>, 2>{Dune::FieldVector<double, 3>(0.0), Dune::FieldVector<double, 3>(1.0)});
+                        std::array<Dune::FieldVector<double, 3>, 2>{{Dune::FieldVector<double, 3>(0.0), Dune::FieldVector<double, 3>(1.0)}});
     if (!passed) return 1;
 
     return 0;
