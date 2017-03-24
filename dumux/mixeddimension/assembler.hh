@@ -182,7 +182,8 @@ protected:
                                                               residual_[lowDimIdx]);
     }
 
-    void buildBulkMatrixBlocksCC_(BulkMatrixBlock& m, BulkCouplingMatrixBlock& cm)
+    template <class T = BulkProblemTypeTag, typename std::enable_if<((!GET_PROP_VALUE(T, ImplicitIsBox))), bool>::type = 0>
+    void buildBulkMatrixBlocks_(BulkMatrixBlock& m, BulkCouplingMatrixBlock& cm)
     {
         // get occupation pattern of the matrix
         Dune::MatrixIndexSet bulkPattern, bulkCouplingPattern;
@@ -213,7 +214,8 @@ protected:
         bulkCouplingPattern.exportIdx(cm);
     }
 
-    void buildLowDimMatrixBlocksCC_(LowDimMatrixBlock& m, LowDimCouplingMatrixBlock& cm)
+    template <class T = LowDimProblemTypeTag, typename std::enable_if<((!GET_PROP_VALUE(T, ImplicitIsBox))), bool>::type = 0>
+    void buildLowDimMatrixBlocks_(LowDimMatrixBlock& m, LowDimCouplingMatrixBlock& cm)
     {
         // get occupation pattern of the matrix
         Dune::MatrixIndexSet lowDimPattern, lowDimCouplingPattern;
@@ -244,63 +246,73 @@ protected:
         lowDimCouplingPattern.exportIdx(cm);
     }
 
-    // void buildBulkMatrixBlocksBox_(BulkMatrixBlock& m, BulkCouplingMatrixBlock& cm)
-    // {
-    //     // get occupation pattern of the matrix
-    //     Dune::MatrixIndexSet bulkPattern, bulkCouplingPattern;
-    //     bulkPattern.resize(m.N(), m.M());
-    //     bulkCouplingPattern.resize(cm.N(), cm.M());
+    template <class T = BulkProblemTypeTag, typename std::enable_if<((GET_PROP_VALUE(T, ImplicitIsBox))), bool>::type = 0>
+    void buildBulkMatrixBlocks_(BulkMatrixBlock& m, BulkCouplingMatrixBlock& cm)
+    {
+        // get occupation pattern of the matrix
+        Dune::MatrixIndexSet bulkPattern, bulkCouplingPattern;
+        bulkPattern.resize(m.N(), m.M());
+        bulkCouplingPattern.resize(cm.N(), cm.M());
 
-    //     for (const auto& element : elements(problem_().bulkGridView()))
-    //     {
-    //         const auto& stencil = problem_().couplingManager().stencil(element);
-    //         const auto& couplingStencil = problem_().couplingManager().couplingStencil(element);
+        for (const auto& element : elements(problem_().bulkGridView()))
+        {
+            const auto& couplingStencil = problem_().couplingManager().couplingStencil(element);
 
-    //         for (unsigned int scvIdx = 0; scvIdx < element.subEntities(bulkDim); ++scvIdx)
-    //         {
-    //             auto globalI = problem_().model().bulkVertexMapper().subIndex(element, scvIdx, bulkDim);
+            for (unsigned int vIdx = 0; vIdx < element.subEntities(bulkDim); ++vIdx)
+            {
+                const auto globalI = problem_().model().bulkVertexMapper().subIndex(element, vIdx, bulkDim);
+                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(bulkDim); ++vIdx2)
+                {
+                    const auto globalJ = problem_().model().bulkVertexMapper().subIndex(element, vIdx2, bulkDim);
+                    bulkPattern.add(globalI, globalJ);
+                    bulkPattern.add(globalJ, globalI);
+                }
 
-    //             for (auto&& globalJ : stencil)
-    //                 bulkPattern.add(globalI, globalJ);
+                for (auto&& globalJ : couplingStencil)
+                    bulkCouplingPattern.add(globalI, globalJ);
 
-    //             for (auto&& globalJ : couplingStencil)
-    //                 bulkCouplingPattern.add(globalI, globalJ);
-    //         }
-    //     }
+                //TODO: additionalDofDependencies
+            }
+        }
 
-    //     // export occupation patterns to matrices
-    //     bulkPattern.exportIdx(m);
-    //     bulkCouplingPattern.exportIdx(cm);
-    // }
+        // export occupation patterns to matrices
+        bulkPattern.exportIdx(m);
+        bulkCouplingPattern.exportIdx(cm);
+    }
 
-    // void buildLowDimMatrixBlocksBox_(LowDimMatrixBlock& m, LowDimCouplingMatrixBlock& cm)
-    // {
-    //     // get occupation pattern of the matrix
-    //     Dune::MatrixIndexSet lowDimPattern, lowDimCouplingPattern;
-    //     lowDimPattern.resize(m.N(), m.M());
-    //     lowDimCouplingPattern.resize(cm.N(), cm.M());
+    template <class T = LowDimProblemTypeTag, typename std::enable_if<((GET_PROP_VALUE(T, ImplicitIsBox))), bool>::type = 0>
+    void buildLowDimMatrixBlocks_(LowDimMatrixBlock& m, LowDimCouplingMatrixBlock& cm)
+    {
+        // get occupation pattern of the matrix
+        Dune::MatrixIndexSet lowDimPattern, lowDimCouplingPattern;
+        lowDimPattern.resize(m.N(), m.M());
+        lowDimCouplingPattern.resize(cm.N(), cm.M());
 
-    //     for (const auto& element : elements(problem_().lowDimGridView()))
-    //     {
-    //         const auto& stencil = problem_().couplingManager().stencil(element);
-    //         const auto& couplingStencil = problem_().couplingManager().couplingStencil(element);
+        for (const auto& element : elements(problem_().lowDimGridView()))
+        {
+            const auto& couplingStencil = problem_().couplingManager().couplingStencil(element);
 
-    //         for (unsigned int scvIdx = 0; scvIdx < element.subEntities(lowDimDim); ++scvIdx)
-    //         {
-    //             auto globalI = problem_().model().lowDimVertexMapper().subIndex(element, scvIdx, lowDimDim);
+            for (unsigned int vIdx = 0; vIdx < element.subEntities(lowDimDim); ++vIdx)
+            {
+                const auto globalI = problem_().model().lowDimVertexMapper().subIndex(element, vIdx, lowDimDim);
+                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(lowDimDim); ++vIdx2)
+                {
+                    const auto globalJ = problem_().model().lowDimVertexMapper().subIndex(element, vIdx2, lowDimDim);
+                    lowDimPattern.add(globalI, globalJ);
+                    lowDimPattern.add(globalJ, globalI);
+                }
 
-    //             for (auto&& globalJ : stencil)
-    //                 lowDimPattern.add(globalI, globalJ);
+                for (auto&& globalJ : couplingStencil)
+                    lowDimCouplingPattern.add(globalI, globalJ);
 
-    //             for (auto&& globalJ : couplingStencil)
-    //                 lowDimCouplingPattern.add(globalI, globalJ);
-    //         }
-    //     }
+                //TODO: additionalDofDependencies
+            }
+        }
 
-    //     // export occupation patterns to matrices
-    //     lowDimPattern.exportIdx(m);
-    //     lowDimCouplingPattern.exportIdx(cm);
-    // }
+        // export occupation patterns to matrices
+        lowDimPattern.exportIdx(m);
+        lowDimCouplingPattern.exportIdx(cm);
+    }
 
     // Construct the multitype matrix for the global jacobian
     void createMatrix_()
@@ -318,18 +330,8 @@ protected:
         auto A22 = LowDimMatrixBlock(lowDimSize, lowDimSize, LowDimMatrixBlock::random);
         auto A21 = LowDimCouplingMatrixBlock(lowDimSize, bulkSize, LowDimCouplingMatrixBlock::random);
 
-        // cell-centered
-        if (!bulkIsBox)
-            buildBulkMatrixBlocksCC_(A11, A12);
-        else{
-            // buildBulkMatrixBlocksBox_(A11, A12);
-        }
-
-        if (!lowDimIsBox)
-            buildLowDimMatrixBlocksCC_(A22, A21);
-        else{
-            // buildLowDimMatrixBlocksBox_(A22, A21);
-        }
+        buildBulkMatrixBlocks_(A11, A12);
+        buildLowDimMatrixBlocks_(A22, A21);
 
         (*matrix_)[bulkIdx][bulkIdx] = A11;
         (*matrix_)[bulkIdx][lowDimIdx] = A12;
