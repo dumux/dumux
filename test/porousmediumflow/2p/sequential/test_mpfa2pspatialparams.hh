@@ -30,7 +30,11 @@
 
 namespace Dumux
 {
-
+/*!
+ * \file
+ *
+ * \brief Spatial parameters for the sequential 2p test problems
+ */
 template<class TypeTag>
 class Test2PSpatialParams;
 
@@ -53,7 +57,8 @@ public:
 };
 }
 
-/** \todo Please doc me! */
+/*! \brief Spatial parameters for the sequential 2p test problems
+ */
 
 template<class TypeTag>
 class Test2PSpatialParams: public FVSpatialParams<TypeTag>

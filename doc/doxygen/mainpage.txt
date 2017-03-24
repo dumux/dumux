@@ -1,9 +1,3 @@
-/*!
- * \file
- *
- * \brief documentation for the doxygen main page
- */
-
 /** \mainpage DuMuX Documentation
 
 \section intro Introduction
@@ -12,17 +6,19 @@ Welcome to the DuMuX documentation pages. This documentation has been
 generated using <a href="http://www.doxygen.org/index.html">Doxygen</a>, a free source code documentation system for
 documenting C/C++ code.
 
+\section relatedPages Related pages
+
+The <a href="pages.html">Related Pages</a> gives a good overview on everything beyond the
+actual DuMuX code.
+This includes a Bibliography of the publications DuMuX is based on.<br>
+Further, a \ref parameterList containing all implemented parameters and
+a \ref featureList of special features used in the test problems is available.<br>
+Auxiliary script files can be find in \ref Binaries.<br>
+In addition, the current Todo List, Warning List, and Deprecated List are given (if available).
+
 \section mods Modules
 
 The best way to start is from the page <a href="modules.html">Modules</a> which gives
-you access to the documentation by category.
-
-\section params Parameters
-
-An overview of all availabe parameters is given in \ref parameterlist.txt.
-
-\section features Features
-
-An overview of special features implemented in the DuMuX-test-problems is given in \ref featurelist.txt.
+you access to the documentation by the model categories.
 
 */

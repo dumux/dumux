@@ -109,7 +109,9 @@ public:
      * \brief Add a effective thermal conductivity-saturation curve to the plot
      *
      * \param gnuplot The gnuplot interface
-     * \param params The material law parameters
+     * \param porosity The porosity
+     * \param rhoSolid The solid density
+     * \param lambdaSolid Thermal conductivity of the solid
      * \param lowerSat Minimum x-value for data set
      * \param upperSat Maximum x-value for data set
      * \param curveName Name of the data set

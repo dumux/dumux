@@ -55,7 +55,12 @@ namespace Properties
     NEW_PROP_TAG(AwnSurface);
     NEW_PROP_TAG(AwnSurfaceParams);
 }
-
+/*!
+ * \brief Plot variables over a line specified by two arguments.
+ *        These output files are meant for visualization with another
+ *        program (matlab, gnuplot...)
+ *
+ */
 template<class TypeTag>
 class PlotOverLine2D
 {

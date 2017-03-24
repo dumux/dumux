@@ -28,7 +28,9 @@
 
 namespace Dumux
 {
-
+/*!
+ * \brief   Indices for the wetting and the non-wetting Phase
+ */
 struct SomertonIndices
 {
     static constexpr int wPhaseIdx = 0;

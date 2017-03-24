@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Dumux solver backend the Pardiso direct solver.
+ * \brief Dumux solver backend for the Pardiso direct solver.
  */
 #ifndef DUMUX_PARDISO_BACKEND_HH
 #define DUMUX_PARDISO_BACKEND_HH

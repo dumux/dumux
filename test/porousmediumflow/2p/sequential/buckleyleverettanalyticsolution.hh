@@ -44,6 +44,11 @@ struct CheckMaterialLaw
     }
 };
 
+/**
+ * \ingroup fracflow
+ * @brief IMplicit Pressure Explicit Saturation (IMPES) scheme for the solution of
+ * the Buckley-Leverett problem
+ */
 template<typename Scalar>
 struct CheckMaterialLaw<Scalar, LinearMaterial<Scalar> >
 {
@@ -53,8 +58,13 @@ struct CheckMaterialLaw<Scalar, LinearMaterial<Scalar> >
     }
 };
 
+/**
+ * \ingroup fracflow
+ * @brief IMplicit Pressure Explicit Saturation (IMPES) scheme for the solution of
+ * the Buckley-Leverett problem
+ */
 template<typename Scalar>
-struct CheckMaterialLaw<Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
+struct CheckMaterialLaw <Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
 {
     static bool isLinear()
     {
@@ -62,6 +72,9 @@ struct CheckMaterialLaw<Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
     }
 };
 
+/**
+* @brief  Analytical solution of the buckley-leverett problem
+*/
 template<class TypeTag> class BuckleyLeverettAnalytic
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;

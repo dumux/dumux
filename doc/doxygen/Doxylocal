@@ -1,5 +1,5 @@
 # This file contains local changes to the doxygen configuration
-# please us '+=' to add file/directories to the lists
+# please use '+=' to add file/directories to the lists
 
 PREDEFINED            += "NEW_PROP_TAG(name)=Property tag name" \
                          "NEW_TYPE_TAG(name)=Type tag name" \
@@ -10,6 +10,7 @@ INPUT                 += @srcdir@/mainpage.txt \
                          @top_srcdir@/dumux \
                          @top_srcdir@/test \
                          @top_srcdir@/tutorial \
+                         @srcdir@/extradoc/binaries.txt \
                          @srcdir@/extradoc/parameterlist.txt \
                          @srcdir@/extradoc/featurelist.txt
 

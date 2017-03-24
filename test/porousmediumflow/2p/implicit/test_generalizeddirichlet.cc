@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Test for a generalized Dirichlet boundary condition.
+ */
+
 #include <config.h>
 #include "generalizeddirichletproblem.hh"
 #include <dumux/common/start.hh>

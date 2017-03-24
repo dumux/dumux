@@ -1,8 +1,7 @@
 /*!
- *\file
- *\ingroup Parameter
+ * \page parameterList Parameter List
  *
- *\brief List of currently useable run-time parameters
+ * \brief List of currently useable run-time parameters
  *
  * The listed run-time parameters are in general available,
  * but we point out that a certain model might not be able
@@ -11,8 +10,9 @@
  * | Group | Parameter | Type | Default Value | Explanation |
  * | :- | :- | :- | :- | :-
  * | - | ParameterFile | std::string | executable.input | name of the parameter file |
- * | \b BoundaryLayer | Model | int | 0 | 0 for none, 1 Blasius, 2 and 3 turbulent BL, 9 constant thickness |
- * | | ConstThickness | Scalar | - | constant BL thickness (BL model 9) |
+ * | \b BoundaryLayer | Model | int | 0 | 0 for none; 1 constant thickness; 2 Blasius laminar; 3 turbulent; 4, 5, 6, 7 viscous sublayer |      
+ * | | ConstThickness | Scalar | - | constant BL thickness (BL model 1) |
+ * | | HydraulicDiameter | Scalar | - | hydraulic diameter for BL model 7 |
  * | | Offset | Scalar | - | virtual run-up distance for BL models |
  * | | RoughnessLength | Scalar | - | Equivalent sand grain roughness [m] |
  * | | YPlus | Scalar | - | Conversion factor between dimensionless wall distance y^+ and actual wall distance |
@@ -20,13 +20,10 @@
  * | | RefTemperature | Scalar | - | free stream temperature |
  * | | RefVelocity | Scalar | - | free stream velocity |
  * | \b Grid | File | std::string | - | name of the grid file, if a corresponding GridCreator is used |
- * | | InterfacePosX | Scalar | 0.0 | x-coordinate of the refinement point/line (only Interface-GridCreator) |
- * | | InterfacePosY | Scalar | 0.0 | y-coordinate of the refinement point/line (only Interface-GridCreator) |
  * | | LowerLeft | globalPosition | - | coordinates of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
  * | | Cells | globalPosition | - | number of cells in respective coordinate directions for the Cube/SimplexGridCreator |
- * | | RefineTopX | bool | false | Refine to the right of the domain (only Interface-GridCreator) |
- * | | RefineTopY | bool | false | Refine to the top of the domain (only Interface-GridCreator) |
  * | | UpperRight | globalPosition | - | coordinates of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
+ * | | Verbosity | bool | - | whether the grid construction should output to standard out |
  * | \b GridAdapt | AdaptionInterval | int | 1 | time step interval for adaption |
  * | | CoarsenPercentileFlux | Scalar | 0.2 | percentile of cells coarsened because of flux criterion |
  * | | CoarsenPercentileSat | Scalar | 0.2 | percentile of cells coarsened because of saturation criterion |
@@ -98,10 +95,12 @@
  * | | WriteConvergence | bool | false | specifies whether the convergence rate and the global residual gets written out to disk for every Newton iteration |
  * | \b Pardiso | NumProcessors | int | - | |
  * | \b Problem | EnableGravity | bool | true | returns whether gravity is considered in the problem |
- * | | GasDensity | Scalar | - | The density of the gas (only components/constant.hh) |
- * | | GasKinematicViscosity | Scalar | - | The kinematic viscosity of the gas (only components/constant.hh) |
- * | | LiquidDensity | Scalar | - | The density of the liquid (only components/constant.hh) |
- * | | LiquidKinematicViscosity | Scalar | - | The kinematic viscosity of the liquid (only components/constant.hh) |
+ * | | GasDensity | Scalar | 1.0 | The density of the gas (only components/constant.hh) |
+ * | | GasKinematicViscosity | Scalar | 1.0 | The kinematic viscosity of the gas (only components/constant.hh) |
+ * | | InteractingContinuaType | int | 0 | defines interaction of the nested continua (0: constant volume fractions, 1: equally distanced nested continua, 2: DFM generated volume fractions) |
+ * | | LiquidDensity | Scalar | 1.0 | The density of the liquid (only components/constant.hh) |
+ * | | LiquidKinematicViscosity | Scalar | 1.0 | The kinematic viscosity of the liquid (only components/constant.hh) |
+ * | | MolarMass | Scalar | 1.0 | The molar mass (only components/constant.hh) |
  * | | Name | std::string | - | The name of the current problem, used for output |
  * | | Salinity | Scalar | 1e-3 | |
  * | \b SpatialParams | ForchCoeff | Scalar | 0.55 | property for the forchheimer coefficient |

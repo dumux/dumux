@@ -1,0 +1,14 @@
+/*!
+ * \page Binaries Scripts
+ *
+ * \brief List of auxiliary scripts provided with DuMuX
+ *
+ * | Folder | Filename | Functionality |
+ * | :- | :- | :- |
+ * | bin | installexternal.sh | Easily install external modules (e.g. opm, dune-pdelab, gstat, ug, ...). |
+ * | bin/postprocessing | extractlinedata.py | Extract all data point from a vtu over a defined line (requires pvpython). |
+ * | bin/postprocessing | extractpointdataovertime.py | Extract transient data from a .pvd for a specific point (requires pvpython). |
+ * | bin/postprocessing | l2error.py | Calculate the L2-error between two vectors. |
+ * | bin/testing | fuzzycomparevtu.py | Compare to vtu files allowing for a tiny mismatch. |
+ * | bin/testing | runtest.py | Start a test including fuzzy-comparison. |
+ */

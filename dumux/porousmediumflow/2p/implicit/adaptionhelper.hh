@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Base class holding the variables for implicit models.
+ */
+
 #ifndef DUMUX_TWOP_ADAPTIONHELPER_HH
 #define DUMUX_TWOP_ADAPTIONHELPER_HH
 
@@ -90,9 +96,9 @@ private:
     PersistentContainer adaptionMap_;
 
 public:
-    //! Constructs an adaption helper object
-    /**
-     *  @param gridView a DUNE gridview object
+    /*! \brief Constructs an adaption helper object
+    /*
+     *  @param problem The current problem
      */
     TwoPAdaptionHelper(Problem& problem) : ParentType(problem), adaptionMap_(problem.grid(), 0)
     {
@@ -101,7 +107,7 @@ public:
     }
 
     /*!
-     * Store primary variables
+     * \brief Store primary variables
      *
      * To reconstruct the solution in father elements, problem properties might
      * need to be accessed.
@@ -190,7 +196,7 @@ public:
     }
 
     /*!
-     * Reconstruct missing primary variables (where elements are created/deleted)
+     * \brief Reconstruct missing primary variables (where elements are created/deleted)
      *
      * To reconstruct the solution in father elements, problem properties might
      * need to be accessed.
@@ -445,8 +451,9 @@ public:
 //#endif
     }
 
-    //! Stores sons entries into father element for averaging
-    /**
+    /*!
+     * \brief Stores sons entries into father element for averaging
+     *
      * Sum up the adaptedValues (sons values) into father element. We store from leaf
      * upwards, so sons are stored first, then cells on the next leaf (=fathers)
      * can be averaged.
@@ -471,14 +478,16 @@ public:
             adaptedValuesFather.associatedMass += adaptedValues.associatedMass;
         }
     }
-    //! Set adapted values in CellData
-    /**
+    /*!
+     * \brief Set adapted values in CellData
+     *
      * This methods stores reconstructed values into the cellData object, by
      * this setting a newly mapped solution to the storage container of the
      * sequential models.
      *
      * \param adaptedValues Container for model-specific values to be adapted
      * \param u The variables to be stored
+     * \param scvIdx The SCV (sub-control-volume) index
      */
     static void setAdaptionValues(AdaptedValues& adaptedValues, PrimaryVariables& u, int scvIdx)
     {

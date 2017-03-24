@@ -52,6 +52,8 @@ namespace Properties
 //! The type traits required for using the AMG backend
 NEW_PROP_TAG(AmgTraits);
 
+/*! \brief Non-overlapping solver traits for parallel computing
+ */
 template <class MType, class VType, bool isParallel>
 class NonoverlappingSolverTraits
 {
@@ -63,6 +65,8 @@ public:
 };
 
 #if HAVE_MPI
+/*! \brief Non-overlapping solver traits for parallel computing if MPI available
+ */
 template <class MType, class VType>
 class NonoverlappingSolverTraits<MType, VType, true>
 {
@@ -95,7 +99,8 @@ public:
     typedef typename SolverTraits::ScalarProduct ScalarProduct;
     typedef typename SolverTraits::Smoother Smoother;
 };
-
+/*! \brief Overlapping solver traits for parallel computing
+ */
 template <class MType, class VType, bool isParallel>
 class OverlappingSolverTraits
 {
@@ -107,6 +112,8 @@ public:
 };
 
 #if HAVE_MPI
+/*! \brief Non-overlapping solver traits for parallel computing if MPI available
+ */
 template <class MType, class VType>
 class OverlappingSolverTraits<MType, VType, true>
 {

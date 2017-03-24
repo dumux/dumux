@@ -36,7 +36,7 @@
 namespace Dumux {
 
 /*!
- * \brief A MpNc specific controller for the newton solver, which knows
+ * \brief A MpNc specific controller for the newton solver assuming local thermal equilibrium, which knows
  *       'physically meaningful' solution.
  */
 template <class TypeTag, bool enableKinetic /* = false */>
@@ -97,6 +97,10 @@ private:
 
 };
 
+/*!
+ * \brief A MpNc specific controller for the newton solver, which knows
+ *       'physically meaningful' solution.
+ */
 template <class TypeTag>
 class MpNcNewtonChop<TypeTag, /*enableKinetic=*/true>
 {

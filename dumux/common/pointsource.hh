@@ -49,6 +49,10 @@ NEW_PROP_TAG(TimeManager);
 } // end namespace Properties
 
 // forward declarations
+/*!
+ * \ingroup Common
+ * \brief A point helper class
+ */
 template<class TypeTag>
 class PointSourceHelper;
 

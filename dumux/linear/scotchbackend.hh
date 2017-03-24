@@ -39,7 +39,9 @@ extern "C"
 
 namespace Dumux
 {
-
+/*!
+ * \brief An interface to the scotch library for matrix reordering
+ */
 template<class IndexType>
 class ScotchBackend
 {

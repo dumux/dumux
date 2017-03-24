@@ -72,47 +72,43 @@ class FvMpfaL3dTransmissibilityCalculator
 
 
 public:
-    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix
+    typedef Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> TransmissibilityType;//!< Type of the transmissibility matrix
 
     int chooseTransmissibility(TransmissibilityType& transmissibilityOne,
                                TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo);
 
-    int transmissibility(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+    int transmissibility(TransmissibilityType& transmissibility,
                          InteractionVolume& interactionVolume,
                          std::vector<DimVector >& lambda,
                          int idx1, int idx2, int idx3, int idx4, int idx5, int idx6);
 
-    int transmissibility(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+    int transmissibility(TransmissibilityType& transmissibility,
                          InteractionVolume& interactionVolume,
                          std::vector<DimVector >& lambda,
                          int idx1, int idx2, int idx3, int idx4, int idx5, int idx6,
                          Dune::FieldVector<bool, 4> &useCases);
 
-
-    int transmissibilityTPFA(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+    int transmissibilityTPFA( TransmissibilityType& transmissibility,
                              InteractionVolume& interactionVolume,
                              std::vector<DimVector >& lambda,
                              int idx1, int idx2);
 
-    int transmissibilityCaseOne(
-                                Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+    int transmissibilityCaseOne(TransmissibilityType& transmissibility,
                                 InteractionVolume& interactionVolume,
                                 std::vector<DimVector >& lambda,
                                 int idx1, int idx2, int idx3, int idx5);
 
-    int transmissibilityCaseTwo(
-                                Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+    int transmissibilityCaseTwo(TransmissibilityType& transmissibility,
                                 InteractionVolume& interactionVolume,
                                 std::vector<DimVector >& lambda,
                                 int idx1, int idx2, int idx4, int idx6);
-    int transmissibilityCaseThree(
-                                  Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+
+    int transmissibilityCaseThree( TransmissibilityType& transmissibility,
                                   InteractionVolume& interactionVolume,
                                   std::vector<DimVector >& lambda,
                                   int idx1, int idx2, int idx4, int idx5);
 
-    int transmissibilityCaseFour(
-                                 Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+    int transmissibilityCaseFour( TransmissibilityType& transmissibility,
                                  InteractionVolume& interactionVolume,
                                  std::vector<DimVector >& lambda,
                                  int idx1, int idx2, int idx3, int idx6);

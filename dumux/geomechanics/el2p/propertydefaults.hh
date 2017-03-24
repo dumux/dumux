@@ -386,6 +386,8 @@ public:
     typedef Dune::FieldVector<Scalar, numEq> type;
 };
 
+/*! @copydoc Properties::NonoverlappingSolverTraits
+ */
 template <class TypeTag, class MType, class VType, bool isParallel>
 class ElasticTwoPSolverTraits
 : public NonoverlappingSolverTraits<MType, VType, isParallel>
@@ -394,6 +396,8 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
 };
 
+/*! @copydoc Properties::NonoverlappingSolverTraits
+ */
 template <class TypeTag, class MType, class VType>
 class ElasticTwoPSolverTraits<TypeTag, MType, VType, true>
 : public NonoverlappingSolverTraits<MType, VType, true>

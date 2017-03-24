@@ -1,8 +1,6 @@
 /*!
- *\file
- *\ingroup Feature
- *
- *\brief List of Features implemented in the DuMuX-test-problems
+ * \page featureList Feature List
+ * \brief List of Features implemented in the DuMuX-test-problems
  *
  * The list gives an overview over features that are already
  * implemented in DuMuX and in which respective test problem

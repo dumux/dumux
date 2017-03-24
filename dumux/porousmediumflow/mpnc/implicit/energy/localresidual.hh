@@ -119,7 +119,10 @@ public:
     }
 };
 
-
+/*!
+ * \brief Specialization of the energy module for the nonisothermal case.
+ *
+ */
 template <class TypeTag>
 class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/ 1 >
 {

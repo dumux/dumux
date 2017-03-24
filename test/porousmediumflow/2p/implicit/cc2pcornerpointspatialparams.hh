@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief The spatial parameters for the CC2PCornerPointProblem
+ */
+
+
 #ifndef DUMUX_CC2P_CORNERPOINT_SPATIAL_PARAMS_HH
 #define DUMUX_CC2P_CORNERPOINT_SPATIAL_PARAMS_HH
 
@@ -53,7 +60,10 @@ public:
     typedef EffToAbsLaw<EffectiveLaw> type;
 };
 }
-
+/*!
+ *
+ * \brief The spatial parameters for the CC2PCornerPointProblem
+ */
 template<class TypeTag>
 class CC2PCornerPointSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
