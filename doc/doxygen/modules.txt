@@ -243,7 +243,7 @@
  */
     /*!
      * \ingroup Multidomain
-     * \defgroup MultidomainModel
+     * \defgroup MultidomainModel Multidomain
      * \brief Multidomain
      */
     /*!
@@ -316,57 +316,57 @@
  */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitBaseProblems
+     * \defgroup ImplicitBaseProblems Base Problems
      * \brief Base Problems
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup Discretizations
+     * \defgroup Discretizations Discretizations
      * \brief Discretizations
      */
          /*!
          * \ingroup Discretizations
-         * \defgroup CCModel
+         * \defgroup CCModel CCModel
          * \brief Fully-implicit cell-centered discretization
          */
          /*!
          * \ingroup Discretizations
-         * \defgroup BoxModel
+         * \defgroup BoxModel BoxModel
          * \brief Fully-implicit box discretization
          */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitBoundaryTypes
+     * \defgroup ImplicitBoundaryTypes Boundary Types
      * \brief Boundary Types
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitFluxVariables
+     * \defgroup ImplicitFluxVariables Flux Variables
      * \brief Flux Variables
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitIndices
+     * \defgroup ImplicitIndices Indices
      * \brief Indices
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitLocalJacobian
+     * \defgroup ImplicitLocalJacobian Local Jacobian
      * \brief Local Jacobian
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitLocalResidual
+     * \defgroup ImplicitLocalResidual Local Residual
      * \brief Local Residual
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitProperties
+     * \defgroup ImplicitProperties Properties
      * \brief Properties
      */
     /*!
      * \ingroup ImplicitModel
-     * \defgroup ImplicitVolumeVariables
+     * \defgroup ImplicitVolumeVariables Volume Variables
      * \brief Volume Variables
      */
 
@@ -377,12 +377,12 @@
  */
     /*!
      * \ingroup Sequential
-     * \defgroup IMPETproblems
+     * \defgroup IMPETproblems Base problems
      * \brief Base Problems
      */
     /*!
      * \ingroup Sequential
-     * \defgroup IMPETProperties
+     * \defgroup IMPETProperties Properties
      * \brief Properties
      */
 
@@ -442,7 +442,7 @@
      */
          /*!
          * \ingroup Components
-         * \defgroup IAPWS
+         * \defgroup IAPWS IAPWS
          * \brief Properties of water and steam, see \cite IAPWS1997
          */
      /*!
@@ -463,7 +463,7 @@
      */
     /*!
      * \ingroup Material
-     * \defgroup EOS
+     * \defgroup EOS Equations of State
      * \brief Equation of State
      *
      * \brief Equations of state (EOS) are auxiliary
@@ -513,12 +513,12 @@
      */
         /*!
          * \ingroup fluidmatrixinteractions
-         *  \defgroup fluidmatrixinteractionslaws
+         *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix Interactions
          *  \brief Laws for Fluid-Matrix Interactions
          */
          /*!
          * \ingroup fluidmatrixinteractions
-         *  \defgroup fluidmatrixinteractionsparams
+         *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions
          *  \brief Parameters for Fluid-Matrix Interactions
          */
     /*!
@@ -570,27 +570,27 @@
  */
     /*!
      * \ingroup Common
-     * \defgroup BC
+     * \defgroup BC Boundary Conditions
      * \brief Boundary Conditions
      */
     /*!
      * \ingroup Common
-     * \defgroup Math
+     * \defgroup Math Elementary Math Functions
      * \brief Elementary Math Functions
      */
     /*!
      * \ingroup Common
-     * \defgroup Exception
+     * \defgroup Exception Exceptions
      * \brief Exceptions
      */
     /*!
      * \ingroup Common
-     * \defgroup Linear
+     * \defgroup Linear Linear Solver Backends
      * \brief Linear Solver Backends
      */
     /*!
      * \ingroup Common
-     * \defgroup Newton
+     * \defgroup Newton Newton Solver
      * \brief Newton Solver
      */
     /*!
@@ -600,26 +600,26 @@
      */
     /*!
      * \ingroup Common
-     * \defgroup Properties
+     * \defgroup Properties Property System
      * \brief Property System
      */
     /*!
      * \ingroup Common
-     * \defgroup Spline
+     * \defgroup Spline Splines
      * \brief Splines
      */
     /*!
      * \ingroup Common
-     * \defgroup Start
+     * \defgroup Start Starting the Simulation
      * \brief Starting the Simulation
      */
     /*!
      * \ingroup Common
-     * \defgroup SimControl
+     * \defgroup SimControl Time Manager
      * \brief Time Manager
      */
     /*!
      * \ingroup Common
-     * \defgroup Valgrind
+     * \defgroup Valgrind Valgrind
      * \brief Valgrind
      */
