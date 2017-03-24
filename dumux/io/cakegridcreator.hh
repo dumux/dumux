@@ -25,12 +25,15 @@
 #ifndef DUMUX_CAKE_GRID_CREATOR_HH
 #define DUMUX_CAKE_GRID_CREATOR_HH
 
-#include <dune/grid/common/gridfactory.hh>
-#include <dumux/common/basicproperties.hh>
-#include <dumux/common/propertysystem.hh>
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
+
+#include <dune/common/dynvector.hh>
+#include <dune/grid/common/gridfactory.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/common/propertysystem.hh>
 
 namespace Dumux
 {
@@ -49,18 +52,19 @@ NEW_PROP_TAG(Grid);
 template <class TypeTag>
 class CakeGridCreator
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef Dune::GridFactory<Grid> GridFactory;
-    typedef std::shared_ptr<Grid> GridPointer;
+    using ThisType = CakeGridCreator<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridFactory = Dune::GridFactory<Grid>;
+    using GridPointer = std::shared_ptr<Grid>;
 
     enum { dim = Grid::dimension,
            dimWorld = Grid::dimensionworld
          };
 
-    typedef std::vector<Scalar> ScalarVector;
-    typedef std::array<unsigned int, dim> CellArray;
-    typedef Dune::FieldVector<typename Grid::ctype, dimWorld> GlobalPosition;
+    using ScalarVector = std::vector<Scalar>;
+    using CellArray = std::array<unsigned int, dim>;
+    using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimWorld>;
 
 public:
     /*!
@@ -68,22 +72,18 @@ public:
      */
     static void makeGrid()
     {
-        if (dim < 2)
-        {
-            DUNE_THROW(Dune::NotImplemented, "The CakeGridCreator is not implemented for 1D.");
-        }
-        std::cout << "makeGrid() starts..." << std::endl;
+        static_assert(dim == 2 || dim == 3, "The CakeGridCreator is only implemented for 2D and 3D.");
+
+        bool verbose = false;
+        try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
+        catch (Dumux::ParameterException &e) {  }
 
         std::array<ScalarVector, dim> polarCoordinates;
-
         // Indices specifing in which direction the piece of cake is oriented
-        Dune::FieldVector<int, dim> indices;
-        // Fill with -1 for later checks
-        indices = int(-1);
+        Dune::FieldVector<int, dim> indices(-1);
 
-        createVectors(polarCoordinates, indices);
-        gridPtr() = CakeGridCreator<TypeTag>::createCakeGrid(polarCoordinates, indices);
-        std::cout << "makeGrid() ends..." << std::endl;
+        createVectors(polarCoordinates, indices, verbose);
+        gridPtr() = ThisType::createCakeGrid(polarCoordinates, indices, verbose);
     }
 
     /*!
@@ -106,24 +106,21 @@ public:
     * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
     * to avoid issues with imprecise fraction numbers.
     */
-    static void createVectors(std::array<ScalarVector, dim> &polarCoordinates, Dune::FieldVector<int, dim> &indices)
+    static void createVectors(std::array<ScalarVector, dim> &polarCoordinates,
+                              Dune::FieldVector<int, dim> &indices,
+                              bool verbose = false)
     {
         // Only construction from the input file is possible
         // Look for the necessary keys to construct from the input file
         try
         {
-            typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-            auto params = Params::tree();
-            typedef std::vector<int> IntVector;
-
             // The positions
             std::array<ScalarVector, dim> positions;
 
             for (int i = 0; i < dim; ++i)
             {
-                std::string paramNameRadial = GET_PROP_VALUE(TypeTag, GridParameterGroup);
-                paramNameRadial += ".Radial";
-                paramNameRadial += std::to_string(i);
+                const auto paramNameRadial = GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                             + ".Radial" + std::to_string(i);
                 try
                 {
                     positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramNameRadial.c_str());
@@ -131,9 +128,8 @@ public:
                 }
                 catch (Dumux::ParameterException &e) { }
 
-                std::string paramNameAngular = GET_PROP_VALUE(TypeTag, GridParameterGroup);
-                paramNameAngular += ".Angular";
-                paramNameAngular += std::to_string(i);
+                const auto paramNameAngular = GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                              + ".Angular" + std::to_string(i);
                 try
                 {
                     positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramNameAngular.c_str());
@@ -143,9 +139,8 @@ public:
 
                 if (dim == 3)
                 {
-                    std::string paramNameAxial = GET_PROP_VALUE(TypeTag, GridParameterGroup);
-                    paramNameAxial += ".Axial";
-                    paramNameAxial += std::to_string(i);
+                    const auto paramNameAxial = GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                                + ".Axial" + std::to_string(i);
                     try
                     {
                         positions[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramNameAxial.c_str());
@@ -164,10 +159,11 @@ public:
                     && (indices[1] != indices[0]))
                     && (indices[2] + indices[1] + indices[0] == 3) ) )
                 {
-                    std::cout << " indices[0] " << indices[0] << std::endl;
-                    std::cout << " indices[1] " << indices[1] << std::endl;
-                    std::cout << " indices[2] " << indices[2] << std::endl;
-                    DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial correctly and unambiguous!" << std::endl);
+                    if (verbose)
+                        std::cout << " indices[0] " << indices[0]
+                                  << " indices[1] " << indices[1]
+                                  << " indices[2] " << indices[2] << std::endl;
+                    DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial correctly and unambiguously!" << std::endl);
                 }
             }
             else
@@ -177,72 +173,68 @@ public:
                     &&   (indices[1] != indices[0])
                     &&   (indices[1] + indices[0] == 1) ) )
                 {
-                    std::cout << " indices[0] " << indices[0] << std::endl;
-                    std::cout << " indices[1] " << indices[1] << std::endl;
-                    DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial correctly and unambiguous!" << std::endl);
+                    if (verbose)
+                        std::cout << " indices[0] " << indices[0]
+                                  << " indices[1] " << indices[1] << std::endl;
+                    DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial correctly and unambiguously!" << std::endl);
                 }
             }
 
             // the number of cells (has a default)
-            std::array<IntVector, dim> cells;
+            std::array<std::vector<int>, dim> cells;
             for (int i = 0; i < dim; ++i)
             {
-              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
-              paramName += ".Cells";
-              paramName += std::to_string(i);
-              try { cells[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, IntVector, paramName.c_str()); }
-              catch (Dumux::ParameterException &e) { cells[i].resize(positions[i].size()-1, 1.0); }
+                const auto paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                       + ".Cells" + std::to_string(i);
+                try { cells[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, std::vector<int>, paramName.c_str()); }
+                catch (Dumux::ParameterException &e) { cells[i].resize(positions[i].size()-1, 1.0); }
             }
 
             // grading factor (has a default)
             std::array<ScalarVector, dim> grading;
             for (int i = 0; i < dim; ++i)
             {
-              std::string paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup);
-              paramName += ".Grading";
-              paramName += std::to_string(i);
-              try { grading[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramName.c_str()); }
-              catch (Dumux::ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
+                const auto paramName = GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                       + ".Grading" + std::to_string(i);
+                try { grading[i] = GET_RUNTIME_PARAM_CSTRING(TypeTag, ScalarVector, paramName.c_str()); }
+                catch (Dumux::ParameterException &e) { grading[i].resize(positions[i].size()-1, 1.0); }
             }
 
             // make the grid
             // sanity check of the input parameters
-            bool verbose = false;
-            try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
-            catch (Dumux::ParameterException &e) {  }
-
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
+                // check that cells and position have same size
                 if (cells[dimIdx].size() + 1 != positions[dimIdx].size())
-                {
                     DUNE_THROW(Dune::RangeError, "Make sure to specify correct \"Cells\" and \"Positions\" arrays");
-                }
-                if (grading[dimIdx].size() + 1 != positions[dimIdx].size())
-                {
+
+                // check that grading and position have same size
+                else if (grading[dimIdx].size() + 1 != positions[dimIdx].size())
                     DUNE_THROW(Dune::RangeError, "Make sure to specify correct \"Grading\" and \"Positions\" arrays");
-                }
-                Scalar temp = std::numeric_limits<Scalar>::lowest();
+
+                // make sure we have monotonically increasing positions
                 for (unsigned int posIdx = 0; posIdx < positions[dimIdx].size(); ++posIdx)
-                {
-                    if (temp > positions[dimIdx][posIdx])
-                    {
-                        DUNE_THROW(Dune::RangeError, "Make sure to specify a monotone increasing \"Positions\" array");
-                    }
-                    temp = positions[dimIdx][posIdx];
-                }
+                    if (!std::is_sorted(positions[dimIdx].begin(), positions[dimIdx].end()))
+                        DUNE_THROW(Dune::GridError, "Make sure to specify a monotone increasing \"Positions\" array");
             }
 
             std::array<ScalarVector, dim> globalPositions;
             using std::pow;
             for (int dimIdx = 0; dimIdx < dim; dimIdx++)
             {
+                std::size_t numGlobalPositions = 0;
+                for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
+                    numGlobalPositions += cells[dimIdx][zoneIdx] + 1;
+
+                globalPositions[dimIdx].resize(numGlobalPositions);
+                std::size_t posIdx = 0;
                 for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
                 {
-                    Scalar lower = positions[dimIdx][zoneIdx];
-                    Scalar upper = positions[dimIdx][zoneIdx+1];
-                    int numCells = cells[dimIdx][zoneIdx];
+                    const Scalar lower = positions[dimIdx][zoneIdx];
+                    const Scalar upper = positions[dimIdx][zoneIdx+1];
+                    const int numCells = cells[dimIdx][zoneIdx];
                     Scalar gradingFactor = grading[dimIdx][zoneIdx];
-                    Scalar length = upper - lower;
+                    const Scalar length = upper - lower;
                     Scalar height = 1.0;
                     bool increasingCellSize = false;
 
@@ -256,29 +248,28 @@ public:
                     }
 
                     if (gradingFactor > 1.0)
-                    {
                         increasingCellSize = true;
-                    }
 
                     // take absolute values and reverse cell size increment to achieve
                     // reverse behavior for negative values
                     if (gradingFactor < 0.0)
                     {
-                        gradingFactor = -gradingFactor;
+                        using std::abs;
+                        gradingFactor = abs(gradingFactor);
+
                         if (gradingFactor < 1.0)
-                        {
                             increasingCellSize = true;
-                        }
                     }
 
+                    // if the grading factor is exactly 1.0 do equal spacing
                     if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
                     {
                         height = 1.0 / numCells;
                         if (verbose)
-                        {
                             std::cout << " -> h "  << height * length << std::endl;
-                        }
                     }
+
+                    // if grading factor is not 1.0, do power law spacing
                     else
                     {
                         height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
@@ -292,37 +283,30 @@ public:
                         }
                     }
 
-                    std::vector<Scalar> localPositions;
-                    localPositions.push_back(0);
-                    for (int i = 0; i < numCells-1; i++)
+                    // the positions inside a global segment
+                    Dune::DynamicVector<Scalar> localPositions(numCells, 0.0);
+                    for (int i = 1; i < numCells; i++)
                     {
                         Scalar hI = height;
                         if (!(gradingFactor < 1.0 + 1e-7 && gradingFactor > 1.0 - 1e-7))
                         {
                             if (increasingCellSize)
-                            {
-                                hI *= pow(gradingFactor, i);
-                            }
+                                hI *= pow(gradingFactor, i-1);
+
                             else
-                            {
-                                hI *= pow(gradingFactor, numCells-i-1);
-                            }
+                                hI *= pow(gradingFactor, numCells-i);
                         }
-                        localPositions.push_back(localPositions[i] + hI);
+                        localPositions[i] = localPositions[i-1] + hI;
                     }
 
-                    for (int i = 0; i < localPositions.size(); i++)
-                    {
-                        localPositions[i] *= length;
-                        localPositions[i] += lower;
-                    }
+                    localPositions *= length;
+                    localPositions += lower;
 
-                    for (unsigned int i = 0; i < localPositions.size(); ++i)
-                    {
-                        globalPositions[dimIdx].push_back(localPositions[i]);
-                    }
+                    for (int i = 0; i < numCells; ++i)
+                        globalPositions[dimIdx][posIdx++] = localPositions[i];
                 }
-                globalPositions[dimIdx].push_back(positions[dimIdx].back());
+
+                globalPositions[dimIdx][posIdx] = positions[dimIdx].back();
             }
 
             polarCoordinates[0] = globalPositions[indices[0]];
@@ -331,15 +315,14 @@ public:
                 polarCoordinates[2] = globalPositions[dim - indices[0] - indices[1]];
 
             // convert angular coordinates into radians
-            for (int i = 0; i< polarCoordinates[1].size(); ++i)
-            {
-                polarCoordinates[1][i] = polarCoordinates[1][i]/180*M_PI;
-                std::cout << "angular coordinate[" << i << "] " << polarCoordinates[1][i] << std::endl;
-            }
+            std::transform(polarCoordinates[1].begin(), polarCoordinates[1].end(),
+                           polarCoordinates[1].begin(),
+                           [](Scalar s){ return s*M_PI/180; });
+
         }
         catch (Dumux::ParameterException &e)
         {
-            DUNE_THROW(Dumux::ParameterException, "Please supply the mandatory parameters:" << std::endl
+            DUNE_THROW(Dumux::ParameterException, "Please supply all mandatory parameters:" << std::endl
                                                   << GET_PROP_VALUE(TypeTag, GridParameterGroup)
                                                   << ".Positions0, ..." << std::endl);
         }
@@ -353,23 +336,16 @@ public:
      * \param indices Indices specifing the radial, angular and axial direction (in this order)
      */
     static std::shared_ptr<Grid> createCakeGrid(std::array<ScalarVector, dim> &polarCoordinates,
-                                                Dune::FieldVector<int, dim> &indices)
+                                                Dune::FieldVector<int, dim> &indices,
+                                                bool verbose = false)
     {
         ScalarVector dR = polarCoordinates[0];
         ScalarVector dA = polarCoordinates[1];
 
-        GridFactory gf;
-        Dune::GeometryType type;
-        if (dim == 3)
-        {
-            type.makeHexahedron();
-        }
-        else
-        {
-            type.makeCube(2);
-        }
+        GridFactory gridFactory;
+        Dune::GeometryType type; type.makeCube(dim);
 
-        //create nodes
+        // create nodes
         if (dim == 3)
         {
             ScalarVector dZ = polarCoordinates[2];
@@ -380,20 +356,27 @@ public:
                     for (int i = 0; i <= dR.size()- 1; ++i)
                     {
                         // Get radius for the well (= a hole) in the center
-                        Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
+                        const Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
 
                         // transform into cartesian Coordinates
+                        using std::cos;
+                        using std::sin;
                         Dune::FieldVector <double, dim> v(0.0);
                         v[indices[2]] = dZ[l];
                         v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
                         v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
-                        std::cout << "Coordinates of : " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-                        gf.insertVertex(v);
+                        if (verbose)
+                        {
+                            std::cout << "Coordinates of : "
+                                      << v[0] << " " << v[1] << " " << v[2] << std::endl;
+                        }
+                        gridFactory.insertVertex(v);
                     }
                 }
             }
 
-            std::cout << "Filled node vector" << std::endl;
+            if (verbose)
+                std::cout << "Filled node vector" << std::endl;
 
             // assign nodes
             unsigned int z = 0;
@@ -412,7 +395,15 @@ public:
                                                            z+rSize*zSize+1, z+rSize, z+rSize+1,
                                                            z+rSize*zSize+rSize, z+rSize*zSize+rSize+1});
 
-                            gf.insertElement(type, vid);
+                            if (verbose)
+                            {
+                                std::cout << "element vertex ids: ";
+                                for (int k = 0; k < vid.size(); ++k)
+                                    std::cout << vid[k] << " ";
+                                std::cout << std::endl;
+                            }
+
+                            gridFactory.insertElement(type, vid);
 
                             z = z+1;
                         }
@@ -428,23 +419,31 @@ public:
                             std::vector<unsigned int> vid({z, z+1, t,
                                                            t+1, z+rSize, z+rSize+1,
                                                            t+rSize, t+rSize+1});
-                            for (int k = 0; k < vid.size(); ++k)
+
+                            if (verbose)
                             {
-                                std::cout << "vid = " << vid[k] << std::endl;
+                                std::cout << "element vertex ids: ";
+                                for (int k = 0; k < vid.size(); ++k)
+                                    std::cout << vid[k] << " ";
+                                std::cout << std::endl;
                             }
-                            gf.insertElement(type, vid);
+
+                            gridFactory.insertElement(type, vid);
                             t = t + 1;
                             z = z+1;
                         }
                         t = t + 1;
                         z = z+1;
                     }
-                    std::cout << "assign nodes 360 ends..." << std::endl;
+                    if (verbose)
+                        std::cout << "assign nodes 360° ends..." << std::endl;
                 }
 
                 z = z + dR.size();
             }
         }
+
+        // for dim = 2
         else
         {
             for (int j = 0; j <= dA.size() - 1; ++j)
@@ -452,15 +451,15 @@ public:
                 for (int i = 0; i <= dR.size()- 1; ++i)
                 {
                     // Get radius for the well (= a hole) in the center
-                    Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
+                    const Scalar wellRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, WellRadius);
 
                     // transform into cartesian Coordinates
                     Dune::FieldVector <double, dim> v(0.0);
 
                     v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
                     v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
-                    std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
-                    gf.insertVertex(v);
+                    if(verbose) std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
+                    gridFactory.insertVertex(v);
                 }
             }
             std::cout << "Filled node vector" << std::endl;
@@ -476,11 +475,16 @@ public:
                     {
                         unsigned int rSize = dR.size();
                         std::vector<unsigned int> vid({z, z+1, z+rSize, z+rSize+1});
-                        for (int k = 0; k < vid.size(); ++k)
+
+                        if (verbose)
                         {
-                            std::cout << "vid = " << vid[k] << std::endl;
+                            std::cout << "element vertex ids: ";
+                            for (int k = 0; k < vid.size(); ++k)
+                                std::cout << vid[k] << " ";
+                            std::cout << std::endl;
                         }
-                        gf.insertElement(type, vid);
+
+                        gridFactory.insertElement(type, vid);
                         z = z+1;
                     }
                     z = z+1;
@@ -492,11 +496,16 @@ public:
                     {
                         // z = z + 1;
                         std::vector<unsigned int> vid({z, z+1, t, t+1});
-                        for (int k = 0; k < vid.size(); ++k)
+
+                        if (verbose)
                         {
-                            std::cout << "vid = " << vid[k] << std::endl;
+                            std::cout << "element vertex ids: ";
+                            for (int k = 0; k < vid.size(); ++k)
+                                std::cout << vid[k] << " ";
+                            std::cout << std::endl;
                         }
-                        gf.insertElement(type, vid);
+
+                        gridFactory.insertElement(type, vid);
                         t = t + 1;
                         z = z+1;
                     }
@@ -506,8 +515,8 @@ public:
                 std::cout << "assign nodes 360 ends..." << std::endl;
             }
         }
-        // assign nodes ends...
-        return std::shared_ptr<Grid>(gf.createGrid());
+        // return the grid pointer
+        return std::shared_ptr<Grid>(gridFactory.createGrid());
 
     }
 
