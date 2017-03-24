@@ -27,7 +27,11 @@
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 
+#ifdef USE_TWOPNC
+#include <dumux/porousmediumflow/2pnc/implicit/model.hh>
+#else
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
+#endif
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "waterairspatialparams.hh"
@@ -41,7 +45,11 @@ class WaterAirProblem;
 
 namespace Properties
 {
+#ifdef USE_TWOPNC
+NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(TwoPNCNI, WaterAirSpatialParams));
+#else
 NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
+#endif
 NEW_TYPE_TAG(WaterAirBoxProblem, INHERITS_FROM(BoxModel, WaterAirProblem));
 NEW_TYPE_TAG(WaterAirCCProblem, INHERITS_FROM(CCModel, WaterAirProblem));
 
@@ -171,7 +179,9 @@ public:
             std::cout<<"problem uses mass-fractions"<<std::endl;
         }
 
+#ifndef USE_TWOPNC
         this->spatialParams().plotMaterialLaw();
+#endif
     }
 
     /*!

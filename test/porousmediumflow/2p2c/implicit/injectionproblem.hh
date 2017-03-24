@@ -24,7 +24,11 @@
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
+#ifdef USE_TWOPNC
+#include <dumux/porousmediumflow/2pnc/implicit/model.hh>
+#else
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
+#endif
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
@@ -38,7 +42,11 @@ class InjectionProblem;
 
 namespace Properties
 {
+#ifdef USE_TWOPNC
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPNC, InjectionSpatialParams));
+#else
 NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
+#endif
 NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
 NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
 
