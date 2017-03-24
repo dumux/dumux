@@ -23,8 +23,8 @@
  *        N-component fluid system assuming that all N phases are
  *        present
  */
-#ifndef DUMUX_MISCIBLE_MULTIPHASE_COMPOSITION_HH
-#define DUMUX_MISCIBLE_MULTIPHASE_COMPOSITION_HH
+#ifndef DUMUX_MISCIBLE_TWOPNC_COMPOSITION_HH
+#define DUMUX_MISCIBLE_TWOPNC_COMPOSITION_HH
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
