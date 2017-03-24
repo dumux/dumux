@@ -269,7 +269,7 @@ public:
                             std::cout << " -> h "  << height * length << std::endl;
                     }
 
-                    // if not do power spacing
+                    // if grading factor is not 1.0, do power law spacing
                     else
                     {
                         height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
@@ -366,8 +366,10 @@ public:
                         v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
                         v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
                         if (verbose)
+                        {
                             std::cout << "Coordinates of : "
                                       << v[0] << " " << v[1] << " " << v[2] << std::endl;
+                        }
                         gridFactory.insertVertex(v);
                     }
                 }

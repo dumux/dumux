@@ -37,7 +37,7 @@ namespace Dumux
 namespace Properties
 {
 NEW_TYPE_TAG(GridCreatorCakeTest, INHERITS_FROM(NumericModel));
-//     Set the grid type
+// Set the grid type
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(GridCreatorCakeTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
@@ -61,10 +61,10 @@ int main(int argc, char** argv)
         // Read the parameters from the input file
         using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
 
-        //First read parameters from input file
+        // first read parameters from input file
         Dune::ParameterTreeParser::readINITree("test_gridcreator_cake.input", ParameterTree::tree());
 
-        //Make the grid
+        // make the grid
         Dune::Timer timer;
         GridCreator::makeGrid();
         std::cout << "Constructing cake grid with " << GridCreator::grid().leafGridView().size(0) << " elements took "
