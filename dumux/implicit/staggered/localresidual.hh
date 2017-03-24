@@ -164,14 +164,11 @@ public:
               const ElementBoundaryTypes &bcTypes,
               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        // resize and reset all terms
+        // resize and reset all face terms
         const auto numScvf = fvGeometry.numScvf();
 
-        ccResidual_ = 0.0;
-        ccStorageTerm_ = 0.0;
-
-        faceResiduals_.resize(numScvf);
-        faceStorageTerms_.resize(numScvf);
+        faceResiduals_.resize(numScvf, false /*copyOldValues*/);
+        faceStorageTerms_.resize(numScvf, false /*copyOldValues*/);
         faceResiduals_ = 0.0;
         faceStorageTerms_ = 0.0;
 
@@ -206,14 +203,14 @@ public:
      *                vertices of the element
      */
     void evalCellCenter(const Element &element,
-              const FVElementGeometry& fvGeometry,
-              const SubControlVolume& scv,
-              const ElementVolumeVariables& prevElemVolVars,
-              const ElementVolumeVariables& curElemVolVars,
-              const GlobalFaceVars& prevFaceVars,
-              const GlobalFaceVars& curFaceVars,
-              const ElementBoundaryTypes &bcTypes,
-              const ElementFluxVariablesCache& elemFluxVarsCache)
+                        const FVElementGeometry& fvGeometry,
+                        const SubControlVolume& scv,
+                        const ElementVolumeVariables& prevElemVolVars,
+                        const ElementVolumeVariables& curElemVolVars,
+                        const GlobalFaceVars& prevFaceVars,
+                        const GlobalFaceVars& curFaceVars,
+                        const ElementBoundaryTypes &bcTypes,
+                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         // reset all terms
         ccResidual_ = 0.0;
@@ -241,15 +238,23 @@ public:
      *                vertices of the element
      */
     void evalFace(const Element &element,
-              const FVElementGeometry& fvGeometry,
-              const SubControlVolumeFace& scvf,
-              const ElementVolumeVariables& prevElemVolVars,
-              const ElementVolumeVariables& curElemVolVars,
-              const GlobalFaceVars& prevFaceVars,
-              const GlobalFaceVars& curFaceVars,
-              const ElementBoundaryTypes &bcTypes,
-              const ElementFluxVariablesCache& elemFluxVarsCache)
+                  const FVElementGeometry& fvGeometry,
+                  const SubControlVolumeFace& scvf,
+                  const ElementVolumeVariables& prevElemVolVars,
+                  const ElementVolumeVariables& curElemVolVars,
+                  const GlobalFaceVars& prevFaceVars,
+                  const GlobalFaceVars& curFaceVars,
+                  const ElementBoundaryTypes &bcTypes,
+                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                  const bool resizeResidual = false)
     {
+        if(resizeResidual)
+        {
+            const auto numScvf = fvGeometry.numScvf();
+            faceResiduals_.resize(numScvf);
+            faceStorageTerms_.resize(numScvf);
+        }
+
         faceResiduals_[scvf.localFaceIdx()] = 0.0;
         faceStorageTerms_[scvf.localFaceIdx()] = 0.0;
 
