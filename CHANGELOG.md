@@ -15,12 +15,15 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
       dune-cornerpoint), the OPM release 2016.04 has to be used.
 
 * IMPROVEMENTS and ENHANCEMENTS:
-
-* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - A gridcreator for piece-of-cake-type grids has been added. It is capable
       of creating meshes with gradually in- and decreasing distances between nodes.
       It also allows the creation of a 360° cake where the last elements are
       connected to the first elements.
+    - Python script for post processing can be found in bin/postprocessing
+      covering plot over line, plot over time, and L2 error calculation
+      from Vtk files
+
+* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - shouldWriteRestartFile() is now, as shouldWriteOutput() already was,
       called before the time level is advanced. So it might be necessary to use
       ...WillBeFinished instead of ...IsFinished for writing restart files at
@@ -34,9 +37,9 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
     - In the TwoPTwoC model, the indices are no longer dependent on the
       formulation. Further, the values of "nPhaseOnly" and "bothPhases"
       have been harmonized with those in TwoPNC
-	- In the NC models, the initial phase presence is now set by the function
-	  initialPhasePresenceAtPos(globalPos) instead of 
-	  initialPhasePresence(vertex, vIdxGlobal, globalPos) in the problem file.
+    - In the NC models, the initial phase presence is now set by the function
+      initialPhasePresenceAtPos(globalPos) instead of
+      initialPhasePresence(vertex, vIdxGlobal, globalPos) in the problem file.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.11: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
