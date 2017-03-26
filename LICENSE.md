@@ -25,9 +25,11 @@ Copyright holders
 | 2015-2017  | Dennis Gläser              |
 | 2012-2017  | Christoph Grüninger        |
 | 2016-2017  | Katharina Heck             |
+| 2017       | Rainer Helmig              |
 | 2015-2017  | Johannes Hommel            |
 | 2012-2015  | Vishal Jambhekar           |
 | 2013-2014  | Muhammad Adil Javed        |
+| 2017       | Kata Kurgyis               |
 | 2012-2017  | Alexander Kissinger        |
 | 2013-2017  | Timo Koch                  |
 | 2008-2012  | Andreas Lauser             |
@@ -45,7 +47,7 @@ Copyright holders
 | 2011       | Michael Sinsbeck           |
 | 2010       | Leopold Stadler            |
 | 2012-2014  | Alexandru Tatomir          |
-| 2015-2016  | Larissa de Vries           |
+| 2015-2017  | Larissa de Vries           |
 | 2013       | Katharina Türk             |
 | 2010-2014  | Lena Walter                |
 | 2015-2017  | Kilian Weishaupt           |
