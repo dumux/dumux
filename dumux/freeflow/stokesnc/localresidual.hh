@@ -207,8 +207,8 @@ public:
             {
                 if (conti0EqIdx+compIdx != massBalanceIdx)
                 {
-                    flux[conti0EqIdx+compIdx] += -(fluxVars.moleFractionGrad(transportCompIdx) * fluxVars.face().normal)
-                                                 * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
+                    flux[conti0EqIdx+compIdx] += -(fluxVars.moleFractionGrad(compIdx) * fluxVars.face().normal)
+                                                 * (fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
                                                  * fluxVars.molarDensity();
                     Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
                 }
