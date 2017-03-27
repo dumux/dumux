@@ -19,9 +19,8 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
       of creating meshes with gradually in- and decreasing distances between nodes.
       It also allows the creation of a 360° cake where the last elements are
       connected to the first elements.
-    - Python script for post processing can be found in bin/postprocessing
-      covering plot over line, plot over time, and L2 error calculation
-      from Vtk files
+    - A python script for the post-process-calculation of the L2 error
+      from Vtk files has been added.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - shouldWriteRestartFile() is now, as shouldWriteOutput() already was,
