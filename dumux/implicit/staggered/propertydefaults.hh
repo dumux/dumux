@@ -262,8 +262,11 @@ private:
     static constexpr Scalar dFacedFace = 1e-8;
 
 public:
-    static constexpr std::array<std::array<Scalar, 2>, 2> value{{{dCCdCC,   dCCdFace},
-                                                                 {dFacedCC, dFacedFace}}};
+    static constexpr auto getEps()
+    {
+        return std::array<std::array<Scalar, 2>, 2>{{{dCCdCC, dCCdFace},
+                                                     {dFacedCC, dFacedFace}}};
+    }
 };
 
 } // namespace Properties

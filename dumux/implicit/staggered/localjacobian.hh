@@ -120,7 +120,6 @@ public:
     StaggeredLocalJacobian()
     {
         numericDifferenceMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
-        baseEps_ = GET_PROP_VALUE(TypeTag, BaseEpsilon);
     }
 
     /*!
@@ -573,7 +572,8 @@ protected:
 
     AssemblyMap assemblyMap_;
 
-    std::array<std::array<Scalar, 2>, 2> baseEps_;
+    using BaseEpsilon = typename GET_PROP(TypeTag, BaseEpsilon);
+    const std::array<std::array<Scalar, 2>, 2> baseEps_ = BaseEpsilon::getEps();
 };
 
 }
