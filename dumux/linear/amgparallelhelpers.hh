@@ -25,13 +25,19 @@
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/porousmediumflow/sequential/pressureproperties.hh>
-#include <dumux/linear/amgproperties.hh>
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/paamg/pinfo.hh>
+
+#include "linearsolverproperties.hh"
 
 namespace Dumux
 {
+
+namespace Properties
+{
+//! The type traits required for using the AMG backend
+NEW_PROP_TAG(AmgTraits);
+}
 
 /*!
  * \brief A parallel helper class providing a nonoverlapping

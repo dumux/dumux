@@ -35,6 +35,7 @@
 #include <cmath>
 #include <iostream>
 #include <dune/common/deprecated.hh>
+#include <dumux/common/exceptions.hh>
 
 namespace Dumux
 {

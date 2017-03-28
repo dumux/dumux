@@ -26,6 +26,7 @@
 #define DUMUX_TWOP_ADAPTIONHELPER_HH
 
 #include <dumux/implicit/adaptive/adaptionhelper.hh>
+#include "properties.hh"
 
 namespace Dumux {
 

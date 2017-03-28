@@ -25,6 +25,7 @@
 #define PERMEABILITYRUTQVISTSTANG_HH
 
 #include <algorithm>
+#include <cmath>
 
 namespace Dumux
 {

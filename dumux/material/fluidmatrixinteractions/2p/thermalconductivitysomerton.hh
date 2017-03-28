@@ -25,6 +25,7 @@
 #define THERMALCONDUCTIVITY_SOMERTON_HH
 
 #include <algorithm>
+#include <cmath>
 
 namespace Dumux
 {

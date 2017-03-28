@@ -26,6 +26,7 @@
 
 #include <limits>
 #include <cassert>
+#include <iostream>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
