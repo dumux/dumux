@@ -26,6 +26,7 @@
 #define DUMUX_TWOP_ADAPTIONHELPER_HH
 
 #include <dumux/implicit/adaptive/adaptionhelper.hh>
+#include "properties.hh"
 
 namespace Dumux {
 
@@ -97,7 +98,7 @@ private:
 
 public:
     /*! \brief Constructs an adaption helper object
-    /*
+     *
      *  @param problem The current problem
      */
     TwoPAdaptionHelper(Problem& problem) : ParentType(problem), adaptionMap_(problem.grid(), 0)

@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-#include <math.h>
+#include <cmath>
 #include <assert.h>
 
 namespace Dumux
