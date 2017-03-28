@@ -29,6 +29,7 @@
 #include "brookscoreyparams.hh"
 
 #include <algorithm>
+#include <cmath>
 
 namespace Dumux
 {

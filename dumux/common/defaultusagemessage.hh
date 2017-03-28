@@ -23,6 +23,8 @@
 #ifndef DUMUX_DEFAULT_USAGE_MESSAGE_HH
 #define DUMUX_DEFAULT_USAGE_MESSAGE_HH
 
+#include <string>
+
 namespace Dumux
 {
 
