@@ -813,8 +813,8 @@ public:
     /*!
      * \brief Returns the diffusivity coefficient matrix
      */
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
-    { return diffusionCoefficient_; }
+    Scalar diffCoeff(int phaseIdx) const
+    { return diffusionCoefficient_[phaseIdx]; }
 
     /*!
      * \brief Returns the adsorption information

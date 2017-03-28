@@ -32,7 +32,7 @@
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
-
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include "indices.hh"
 #include "model.hh"
@@ -109,6 +109,14 @@ SET_BOOL_PROP(ThreePWaterOilNI, UseSimpleModel, true);
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+//! Use the model after Millington (1961) for the effective diffusivity
+SET_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ public:
+    typedef DiffusivityMillingtonQuirk<Scalar> type;
+};
 
 // disable velocity output by default
 SET_BOOL_PROP(ThreePWaterOilNI, VtkAddVelocity, false);

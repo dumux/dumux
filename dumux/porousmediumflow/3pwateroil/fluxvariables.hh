@@ -53,6 +53,7 @@ class ThreePWaterOilFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariab
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -207,8 +208,10 @@ private:
         const VolumeVariables &volVarsI = elemVolVars[this->face().i];
         const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 
-        Dune::FieldVector<Scalar, numPhases> diffusionCoefficientVector_i = volVarsI.diffusionCoefficient();
-        Dune::FieldVector<Scalar, numPhases> diffusionCoefficientVector_j = volVarsJ.diffusionCoefficient();
+        // the effective diffusion coefficients at vertex i and j
+        Scalar diffCoeffI;
+        Scalar diffCoeffJ;
+
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -221,24 +224,20 @@ private:
                 volVarsJ.saturation(phaseIdx) <= 0)
             {
                 porousDiffCoeff_[phaseIdx] = 0.0;
-                continue;
             }
+            else
+            {
 
-            // calculate tortuosity at the nodes i and j needed
-            // for porous media diffusion coefficient
+                diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                             volVarsI.saturation(phaseIdx),
+                                                                             volVarsI.diffCoeff(phaseIdx));
 
-            Scalar tauI =
-                1.0/(volVarsI.porosity() * volVarsI.porosity()) *
-                pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
-            Scalar tauJ =
-                1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
-                pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
-            // Diffusion coefficient in the porous medium
+                diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                             volVarsJ.saturation(phaseIdx),
+                                                                             volVarsJ.diffCoeff(phaseIdx));
 
-            // -> harmonic mean
-            porousDiffCoeff_[phaseIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientVector_i[phaseIdx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientVector_j[phaseIdx]);
-
+                porousDiffCoeff_[phaseIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
+            }
         }
     }
 
