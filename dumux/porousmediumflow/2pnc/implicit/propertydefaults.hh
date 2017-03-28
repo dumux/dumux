@@ -172,6 +172,7 @@ SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
 //! Use the ImplicitSpatialParams by default
 SET_TYPE_PROP(TwoPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
+//! Use the model after Millington (1961) for the effective diffusivity
 SET_PROP(TwoPNC, EffectiveDiffusivityModel)
 {
 private :
