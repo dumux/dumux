@@ -28,6 +28,9 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
       connected to the first elements.
     - A python script for the post-process-calculation of the L2 error
       from Vtk files has been added.
+    - An absolute residual criterion has been implemented for the Newton solver.
+      The criterion is enabled by using the property EnableAbsoluteResidualCriterion.
+      The property MaxAbsoluteResidual speficies the convergence tolerance.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - shouldWriteRestartFile() is now, as shouldWriteOutput() already was,
