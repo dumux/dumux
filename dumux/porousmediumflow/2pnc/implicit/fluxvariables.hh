@@ -183,28 +183,27 @@ protected:
                     porousDiffCoeff_[phaseIdx][compIdx] = 0.0;
                 }
             }
-
             else
             {
-              for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-              {
-                  if (phaseIdx == compIdx)
-                  {
-                   porousDiffCoeff_[phaseIdx][compIdx] = 0.0;
-                  }
-                  else
-                  {
-                    diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
-                                                                             volVarsI.saturation(phaseIdx),
-                                                                             volVarsI.diffCoeff(phaseIdx, compIdx));
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    if (phaseIdx == compIdx)
+                    {
+                        porousDiffCoeff_[phaseIdx][compIdx] = 0.0;
+                    }
+                    else
+                    {
+                        diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                                     volVarsI.saturation(phaseIdx),
+                                                                                     volVarsI.diffCoeff(phaseIdx, compIdx));
 
-                    diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
-                                                                             volVarsJ.saturation(phaseIdx),
-                                                                             volVarsJ.diffCoeff(phaseIdx, compIdx));
+                        diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                                     volVarsJ.saturation(phaseIdx),
+                                                                                     volVarsJ.diffCoeff(phaseIdx, compIdx));
 
-                    porousDiffCoeff_[phaseIdx][compIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
+                        porousDiffCoeff_[phaseIdx][compIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
+                    }
                 }
-              }
             }
         }
     }
