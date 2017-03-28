@@ -5,10 +5,9 @@ import os
 
 # parse arguments
 parser = argparse.ArgumentParser(
-  prog='pvpython ' + sys.argv[0],
+  prog='\033[1m\033[94m' + 'pvpython' + '\033[0m' + ' ' + sys.argv[0],
   description='Extract data from the paraview plotOverLine filter.'
 )
-parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--files', nargs='+', required=True, help="vtu files to be processed")
 parser.add_argument('-o', '--outputDirectory', default='', help="Directory to which the data files are written")
 parser.add_argument('-of', '--outFile', default='', help="Basename of the written csv file")
@@ -18,7 +17,10 @@ parser.add_argument('-r', '--resolution', type=int, default=1000, help='Resoluti
 parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of the output. 1 = print progress. 2 = print data columns')
 args = vars(parser.parse_args())
 
-from paraview.simple import *
+try:
+    from paraview.simple import *
+except ImportError:
+    print("`paraview.simple` not found. Make sure using pvpython instead of python.")
 
 # import locations
 commonOutDirectory = False
