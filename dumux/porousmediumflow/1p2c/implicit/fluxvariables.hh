@@ -190,7 +190,7 @@ public:
     /*!
     * \brief The binary diffusion coefficient for each fluid phase in the porous medium \f$\mathrm{[m^2/s]}\f$.
     */
-    Scalar porousDiffCoeff() const
+    Scalar porousDiffCoeff(int phaseIdx = 0) const
     {
         // TODO: tensorial porousDiffCoeff_usion coefficients
         return porousDiffCoeff_;

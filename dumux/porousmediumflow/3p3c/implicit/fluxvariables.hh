@@ -222,9 +222,6 @@ private:
         const VolumeVariables &volVarsI = elemVolVars[this->face().i];
         const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 
-        Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficientMatrix_i = volVarsI.diffusionCoefficient();
-        Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficientMatrix_j = volVarsJ.diffusionCoefficient();
-
         // the effective diffusion coefficients at vertex i and j
         Scalar diffCoeffI;
         Scalar diffCoeffJ;
@@ -248,10 +245,10 @@ private:
             // Diffusion coefficient in the porous medium
             diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
                                                                          volVarsI.saturation(phaseIdx),
-                                                                         diffusionCoefficientMatrix_i[phaseIdx][wCompIdx]);
+                                                                         volVarsI.diffCoeff(phaseIdx, wCompIdx));
             diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
                                                                          volVarsJ.saturation(phaseIdx),
-                                                                         diffusionCoefficientMatrix_j[phaseIdx][wCompIdx]);
+                                                                         volVarsJ.diffCoeff(phaseIdx, wCompIdx));
 
             // -> harmonic mean
             porousDiffCoeff_[phaseIdx][wCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
@@ -259,10 +256,10 @@ private:
             // Diffusion coefficient in the porous medium
             diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
                                                                          volVarsI.saturation(phaseIdx),
-                                                                         diffusionCoefficientMatrix_i[phaseIdx][nCompIdx]);
+                                                                         volVarsI.diffCoeff(phaseIdx, nCompIdx));
             diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
                                                                          volVarsJ.saturation(phaseIdx),
-                                                                         diffusionCoefficientMatrix_j[phaseIdx][nCompIdx]);
+                                                                         volVarsJ.diffCoeff(phaseIdx, nCompIdx));
 
             // -> harmonic mean
             porousDiffCoeff_[phaseIdx][nCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
@@ -270,10 +267,10 @@ private:
             // Diffusion coefficient in the porous medium
             diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
                                                                          volVarsI.saturation(phaseIdx),
-                                                                         diffusionCoefficientMatrix_i[phaseIdx][gCompIdx]);
+                                                                         volVarsI.diffCoeff(phaseIdx, gCompIdx));
             diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
                                                                          volVarsJ.saturation(phaseIdx),
-                                                                         diffusionCoefficientMatrix_j[phaseIdx][gCompIdx]);
+                                                                         volVarsJ.diffCoeff(phaseIdx, gCompIdx));
 
             // -> harmonic mean
             porousDiffCoeff_[phaseIdx][gCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
@@ -288,8 +285,18 @@ public:
      * \tparam numPhases The number of phases of the problem
      * \tparam numComponents The number of components of the problem
      */
+    DUNE_DEPRECATED_MSG("porousDiffCoeff() is deprecated. Use porousDiffCoeff(phaseIdx, compIdx) instead.")
     Dune::FieldMatrix<Scalar, numPhases, numComponents> porousDiffCoeff() const
     { return porousDiffCoeff_; };
+
+    /*!
+     * \brief The binary diffusion coefficient for each fluid phase.
+     *
+     *   \param phaseIdx The phase index
+     *   \param compIdx The component index
+     */
+    Scalar porousDiffCoeff(int phaseIdx, int compIdx) const
+    { return porousDiffCoeff_[phaseIdx][compIdx];}
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
