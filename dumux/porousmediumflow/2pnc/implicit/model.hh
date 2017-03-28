@@ -268,27 +268,35 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // get the number of degrees of freedom
-        auto numDofs = this->numDofs();
+        unsigned numDofs = this->numDofs();
 
-        ScalarField *sn            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *sw            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pn            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pw            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pc            = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoW          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoN          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobW          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobN          = writer.allocateManagedBuffer (numDofs);
-        ScalarField *temperature   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *phasePresence = writer.allocateManagedBuffer (numDofs);
-        ScalarField *poro          = writer.allocateManagedBuffer (numDofs);
-        VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
-        VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
+        // create the required scalar fields
+        ScalarField *sN    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *sW    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pn    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pw    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pc    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoW  = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoN  = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobW  = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *phasePresence = writer.allocateManagedBuffer(numDofs);
+        ScalarField *massFrac[numPhases][numComponents];
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                massFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
+        ScalarField *moleFrac[numPhases][numComponents];
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                        moleFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
+        ScalarField *temperature = writer.allocateManagedBuffer(numDofs);
+        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
+        VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
+        VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
@@ -301,26 +309,14 @@ public:
             }
         }
 
-        ScalarField *moleFraction[numPhases][numComponents];
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                moleFraction[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
+        unsigned numElements = this->gridView_().size(0);
+        ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        ScalarField *molarity[numComponents];
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            molarity[compIdx] = writer.allocateManagedBuffer(numDofs);
-
-        ScalarField *perm[dim];
-        for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
-            perm[j] = writer.allocateManagedBuffer(numDofs);
-
-        auto numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer (numElements);
-
-        for (const auto& element : elements(this->gridView_()))
+        for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
         {
-            auto eIdxGlobal = this->problem_().elementMapper().index(element);
-            (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
+            int eIdx = this->elementMapper().index(element);
+            (*rank)[eIdx] = this->gridView_().comm().rank();
+
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), element);
 
@@ -332,77 +328,75 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                GlobalPosition globalPos = fvGeometry.subContVol[scvIdx].global;
-                (*sn)[dofIdxGlobal]             = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                (*sw)[dofIdxGlobal]             = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*pn)[dofIdxGlobal]             = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pw)[dofIdxGlobal]             = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                (*pc)[dofIdxGlobal]             = elemVolVars[scvIdx].capillaryPressure();
-                (*rhoW)[dofIdxGlobal]           = elemVolVars[scvIdx].density(wPhaseIdx);
-                (*rhoN)[dofIdxGlobal]           = elemVolVars[scvIdx].density(nPhaseIdx);
-                (*mobW)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                (*mobN)[dofIdxGlobal]           = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                (*poro)[dofIdxGlobal]           = elemVolVars[scvIdx].porosity();
-                (*temperature)[dofIdxGlobal]    = elemVolVars[scvIdx].temperature();
-                (*phasePresence)[dofIdxGlobal]  = staticDat_[dofIdxGlobal].phasePresence;
-
+                (*sN)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                (*sW)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                (*pn)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pw)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*pc)[dofIdxGlobal]    = elemVolVars[scvIdx].capillaryPressure();
+                (*rhoW)[dofIdxGlobal]  = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoN)[dofIdxGlobal]  = elemVolVars[scvIdx].density(nPhaseIdx);
+                (*mobW)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                (*mobN)[dofIdxGlobal]  = elemVolVars[scvIdx].mobility(nPhaseIdx);
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                        (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].moleFraction(phaseIdx,compIdx);
+                    {
+                        (*massFrac[phaseIdx][compIdx])[dofIdxGlobal]
+                            = elemVolVars[scvIdx].massFraction(phaseIdx, compIdx);
 
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    (*molarity[compIdx])[dofIdxGlobal] = (elemVolVars[scvIdx].molarity(wPhaseIdx, compIdx));
+                        Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
+                    }
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    {
+                        (*moleFrac[phaseIdx][compIdx])[dofIdxGlobal]
+                            = elemVolVars[scvIdx].moleFraction(phaseIdx, compIdx);
 
-                Tensor K = perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
-
-                for (int j = 0; j<dim; ++j)
-                    (*perm[j])[dofIdxGlobal] = K[j][j];
-            };
-
-            // velocity output
-            if(velocityOutput.enableOutput()){
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                        Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[dofIdxGlobal][0]);
+                    }
+                (*poro)[dofIdxGlobal]  = elemVolVars[scvIdx].porosity();
+                (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                (*phasePresence)[dofIdxGlobal]
+                    = staticDat_[dofIdxGlobal].phasePresence;
             }
 
-        } // loop over element
+            // velocity output
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
 
-        writer.attachDofData(*sn, "Sn", isBox);
-        writer.attachDofData(*sw, "Sw", isBox);
-        writer.attachDofData(*pn, "pn", isBox);
-        writer.attachDofData(*pw, "pw", isBox);
-        writer.attachDofData(*pc, "pc", isBox);
-        writer.attachDofData(*rhoW, "rhoW", isBox);
-        writer.attachDofData(*rhoN, "rhoN", isBox);
-        writer.attachDofData(*mobW, "mobW", isBox);
-        writer.attachDofData(*mobN, "mobN", isBox);
-        writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*temperature, "temperature", isBox);
-        writer.attachDofData(*phasePresence, "phasePresence", isBox);
-        writer.attachDofData(*perm[0], "Kxx", isBox);
-        if (dim >= 2)
-            writer.attachDofData(*perm[1], "Kyy", isBox);
-        if (dim == 3)
-            writer.attachDofData(*perm[2], "Kzz", isBox);
+        } // loop over elements
 
+        writer.attachDofData(*sN,     "Sn", isBox);
+        writer.attachDofData(*sW,     "Sw", isBox);
+        writer.attachDofData(*pn,     "pn", isBox);
+        writer.attachDofData(*pw,     "pw", isBox);
+        writer.attachDofData(*pc,     "pc", isBox);
+        writer.attachDofData(*rhoW,   "rhoW", isBox);
+        writer.attachDofData(*rhoN,   "rhoN", isBox);
+        writer.attachDofData(*mobW,   "mobW", isBox);
+        writer.attachDofData(*mobN,   "mobN", isBox);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                std::ostringstream oss;
+                oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                writer.attachDofData(*massFrac[phaseIdx][compIdx], oss.str(), isBox);
+            }
+        }
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 std::ostringstream oss;
                 oss << "x_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
-                writer.attachDofData(*moleFraction[phaseIdx][compIdx], oss.str(), isBox);
+                writer.attachDofData(*moleFrac[phaseIdx][compIdx], oss.str(), isBox);
             }
         }
-
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-        {
-            std::ostringstream oss;
-            oss << "m_" << FluidSystem::phaseName(wPhaseIdx) << "^" << FluidSystem::componentName(compIdx);
-            writer.attachDofData(*molarity[compIdx], oss.str(), isBox);
-        }
+        writer.attachDofData(*poro, "porosity", isBox);
+        writer.attachDofData(*temperature,    "temperature", isBox);
+        writer.attachDofData(*phasePresence,  "phase presence", isBox);
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
         {
