@@ -174,12 +174,8 @@ SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
 SET_TYPE_PROP(TwoPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_PROP(TwoPNC, EffectiveDiffusivityModel)
-{ private :
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef DiffusivityMillingtonQuirk<Scalar> type;
-};
+SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel,
+             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Enable gravity by default
 SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
