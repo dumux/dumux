@@ -15,6 +15,13 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
       dune-cornerpoint), the OPM release 2016.04 has to be used.
 
 * IMPROVEMENTS and ENHANCEMENTS:
+    - For the two-component models using a mass-based formulation together
+      with a total mass balance ('ReplaceCompEqIdx') do now consider the diffusive
+      mass fluxes of the components in the total mass balance. The sum of the two
+      diffusive mass fluxes do not cancel out, because the Fickian diffusion assumes
+      the two diffusive mole fluxes to cancel out.
+    - For the 2p2c models, the Kelvin equation was implemented, which accounts for
+      a lowering of the saturated vapor pressure based for high capillary pressures.
     - A gridcreator for piece-of-cake-type grids has been added. It is capable
       of creating meshes with gradually in- and decreasing distances between nodes.
       It also allows the creation of a 360° cake where the last elements are
@@ -39,6 +46,8 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
     - In the NC models, the initial phase presence is now set by the function
       initialPhasePresenceAtPos(globalPos) instead of
       initialPhasePresence(vertex, vIdxGlobal, globalPos) in the problem file.
+    - The script 'fix_includes.sh' was removed, which was only necessary
+      for transition from 2.8 to 2.9
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.11: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
@@ -46,6 +55,7 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
   after the corresponding run.
 
 * Deprecated CLASSES/FILES, to be removed after 2.11:
+    - 'ComputeFromReferencePhase2pNC' is replaced by 'ComputeFromReferencePhase2p'
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.11:
 
