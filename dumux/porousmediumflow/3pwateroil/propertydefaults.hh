@@ -111,12 +111,8 @@ SET_BOOL_PROP(ThreePWaterOilNI, UseSimpleModel, true);
 SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel)
-{ private :
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef DiffusivityMillingtonQuirk<Scalar> type;
-};
+SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
+             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // disable velocity output by default
 
