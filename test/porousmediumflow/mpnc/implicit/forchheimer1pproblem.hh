@@ -440,7 +440,7 @@ private:
     {        return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;    }
 
     Scalar temperature_;
-    static constexpr Scalar eps_ = 1e-6;;
+    static constexpr Scalar eps_ = 1e-6;
     std::string outputName_;
     Scalar pMax_, pMin_ ;
 

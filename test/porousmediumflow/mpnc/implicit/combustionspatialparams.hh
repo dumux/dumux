@@ -336,7 +336,7 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;;
+    static constexpr Scalar eps_ = 1e-6;
 
     // Porous Medium Domain
     Scalar intrinsicPermeability_ ;

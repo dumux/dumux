@@ -97,7 +97,7 @@ private:
 
 public:
     /*! \brief Constructs an adaption helper object
-    /*
+     *
      *  @param problem The current problem
      */
     TwoPAdaptionHelper(Problem& problem) : ParentType(problem), adaptionMap_(problem.grid(), 0)
