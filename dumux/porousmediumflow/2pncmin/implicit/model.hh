@@ -201,22 +201,22 @@ public:
         ScalarField *permeabilityFactor = writer.allocateManagedBuffer (numDofs);
         ScalarField *precipitateVolumeFraction[numSPhases];
 
-        for (int i = 0; i < numSPhases; ++i)
-            precipitateVolumeFraction[i] = writer.allocateManagedBuffer(numDofs);
+        for (int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
+            precipitateVolumeFraction[sPhaseIdx] = writer.allocateManagedBuffer(numDofs);
 
         ScalarField *massFraction[numPhases][numComponents];
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                massFraction[i][j] = writer.allocateManagedBuffer(numDofs);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                massFraction[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
 
         ScalarField *moleFraction[numPhases][numComponents];
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                moleFraction[i][j] = writer.allocateManagedBuffer(numDofs);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                moleFraction[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
 
         ScalarField *molarity[numComponents];
-        for (int j = 0; j < numComponents ; ++j)
-            molarity[j] = writer.allocateManagedBuffer(numDofs);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            molarity[compIdx] = writer.allocateManagedBuffer(numDofs);
 
         ScalarField *Perm[dim];
         for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
@@ -287,7 +287,7 @@ public:
 
                 Tensor K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
 
-                for (int j = 0; j<dim; ++j)
+                for (int j = 0; j < dim; ++j)
                     (*Perm[j])[dofIdxGlobal] = K[j][j] * elemVolVars[scvIdx].permeabilityFactor();
             };
 

@@ -302,13 +302,13 @@ public:
         }
 
         ScalarField *moleFraction[numPhases][numComponents];
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                moleFraction[i][j] = writer.allocateManagedBuffer(numDofs);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                moleFraction[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
 
         ScalarField *molarity[numComponents];
-        for (int j = 0; j < numComponents ; ++j)
-            molarity[j] = writer.allocateManagedBuffer(numDofs);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            molarity[compIdx] = writer.allocateManagedBuffer(numDofs);
 
         ScalarField *perm[dim];
         for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
