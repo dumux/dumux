@@ -440,10 +440,8 @@ public:
     {
         if (phaseIdx < numPhases)
             return this->fluidState_.density(phaseIdx);
-        else if (phaseIdx >= numPhases)
-            return FluidSystem::precipitateDensity(phaseIdx);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+            return FluidSystem::precipitateDensity(phaseIdx);
     }
     /*!
      * \brief Returns the mass density of a given phase within the
@@ -455,10 +453,8 @@ public:
     {
         if (phaseIdx < numPhases)
             return this->fluidState_.molarDensity(phaseIdx);
-        else if (phaseIdx >= numPhases)
-            return FluidSystem::precipitateMolarDensity(phaseIdx);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+            return FluidSystem::precipitateMolarDensity(phaseIdx);
     }
 
     /*!
