@@ -38,6 +38,22 @@ namespace Dumux
 /*!
  * \ingroup Linear
  * \brief A general solver backend allowing arbitrary preconditioners and solvers.
+ *
+ * This class is used as a base class for specific solver-preconditioner
+ * combinations. Several parameters from the group LinearSolver are read to
+ * customize the solver and preconditioner:
+ *
+ * Verbosity: determines how verbose the linear solver should print output.
+ *
+ * MaxIterations: the maximum number of iterations for the linear solver.
+ *
+ * ResidualReduction: the threshold for declaration of convergence.
+ *
+ * PreconditionerRelaxation: relaxation parameter for the preconditioner.
+ *
+ * PreconditionerIterations: usually specifies the number of times the
+ * preconditioner is applied. In case of ILU(n), it specifies the order of the
+ * applied ILU.
  */
 template <class TypeTag>
 class IterativePrecondSolverBackend
@@ -104,7 +120,20 @@ private:
 
 /*!
  * \ingroup Linear
- * \brief Sequential ILUn-preconditioned BiCSTAB solver.
+ * \brief Sequential ILU(n)-preconditioned BiCSTAB solver.
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. It can be applied to
+ * nonsymmetric matrices.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: ILU(n) incomplete LU factorization. The order n can be
+ * provided by the parameter LinearSolver.PreconditionerIterations and controls
+ * the fill-in. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -130,6 +159,19 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SOR-preconditioned BiCSTAB solver.
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. It can be applied to
+ * nonsymmetric matrices.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: SOR successive overrelaxation method. The relaxation is
+ * controlled by the parameter LinearSolver.PreconditionerRelaxation. In each
+ * preconditioning step, it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -154,7 +196,20 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential SSOR-preconditioned BiCSTAB solver.
+ * \brief Sequential SSOR-preconditioned BiCGSTAB solver.
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. While, it can be
+ * applied to nonsymmetric matrices, the preconditioner SSOR assumes symmetry.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: SSOR symmetric successive overrelaxation method. The
+ * relaxation is controlled by the parameter LinearSolver.PreconditionerRelaxation.
+ * In each preconditioning step, it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -179,7 +234,20 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential GS-preconditioned BiCSTAB solver.
+ * \brief Sequential GS-preconditioned BiCGSTAB solver.
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. While, it can be
+ * applied to nonsymmetric matrices, the preconditioner SSOR assumes symmetry.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: GS Gauss-Seidel method. It can be damped by the relaxation
+ * parameter LinearSolver.PreconditionerRelaxation. In each preconditioning step,
+ * it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -205,6 +273,18 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential Jacobi-preconditioned BiCSTAB solver.
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. While, it can be
+ * applied to nonsymmetric matrices, the preconditioner SSOR assumes symmetry.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: Jacobi method. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation. In each preconditioning step, it is
+ * applied as often as given by the parameter LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -229,7 +309,19 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential ILUn-preconditioned CG solver.
+ * \brief Sequential ILU(n)-preconditioned CG solver.
+ *
+ * Solver: CG (conjugate gradient) is an iterative method for solving linear
+ * systems with a symmetric, positive definite matrix.\n
+ * See:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate
+ * gradient algorithm on GPU", Journal of Computational and Applied Mathematics,
+ * Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025.
+ *
+ * Preconditioner: ILU(n) incomplete LU factorization. The order n can be
+ * provided by the parameter LinearSolver.PreconditionerIterations and controls
+ * the fill-in. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -255,6 +347,18 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SOR-preconditioned CG solver.
+ *
+ * Solver: CG (conjugate gradient) is an iterative method for solving linear
+ * systems with a symmetric, positive definite matrix.\n
+ * See:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate
+ * gradient algorithm on GPU", Journal of Computational and Applied Mathematics,
+ * Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025.
+ *
+ * Preconditioner: SOR successive overrelaxation method. The relaxation is
+ * controlled by the parameter LinearSolver.PreconditionerRelaxation. In each
+ * preconditioning step, it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class SORCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -280,6 +384,18 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SSOR-preconditioned CG solver.
+ *
+ * Solver: CG (conjugate gradient) is an iterative method for solving linear
+ * systems with a symmetric, positive definite matrix.\n
+ * See:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate
+ * gradient algorithm on GPU", Journal of Computational and Applied Mathematics,
+ * Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025.
+ *
+ * Preconditioner: SSOR symmetric successive overrelaxation method. The
+ * relaxation is controlled by the parameter LinearSolver.PreconditionerRelaxation.
+ * In each preconditioning step, it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -305,6 +421,18 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential GS-preconditioned CG solver.
+ *
+ * Solver: CG (conjugate gradient) is an iterative method for solving linear
+ * systems with a symmetric, positive definite matrix.\n
+ * See:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate
+ * gradient algorithm on GPU", Journal of Computational and Applied Mathematics,
+ * Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025.
+ *
+ * Preconditioner: GS Gauss-Seidel method. It can be damped by the relaxation
+ * parameter LinearSolver.PreconditionerRelaxation. In each preconditioning step,
+ * it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class GSCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -330,6 +458,17 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential Jacobi-preconditioned CG solver.
+ *
+ * Solver: CG (conjugate gradient) is an iterative method for solving linear
+ * systems with a symmetric, positive definite matrix.\n
+ * See:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate
+ * gradient algorithm on GPU", Journal of Computational and Applied Mathematics,
+ * Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025.
+ *
+ * Preconditioner: Jacobi method. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation. In each preconditioning step, it is
+ * applied as often as given by the parameter LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -355,6 +494,19 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential SSOR-preconditioned GMRes solver.
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems." SIAM J. Sci. and Stat.
+ * Comput. 7: 856–869.
+ *
+ * Preconditioner: SSOR symmetric successive overrelaxation method. The
+ * relaxation is controlled by the parameter LinearSolver.PreconditionerRelaxation.
+ * In each preconditioning step, it is applied as often as given by the parameter
+ * LinearSolver.PreconditionerIterations.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
@@ -381,6 +533,18 @@ public:
 /*!
  * \ingroup Linear
  * \brief Base class for backend combinations of linear solvers and a ILU0 preconditioner
+ *
+ * This class is used as a base class for combinations of a specific linear
+ * solver with the ILU(0) preconditioner. Several parameters from the group
+ * LinearSolver are read to customize the solver and preconditioner:
+ *
+ * Verbosity: determines how verbose the linear solver should print output.
+ *
+ * MaxIterations: the maximum number of iterations for the linear solver.
+ *
+ * ResidualReduction: the threshold for declaration of convergence.
+ *
+ * PreconditionerRelaxation: relaxation parameter for the preconditioner.
  */
 template <class TypeTag>
 class ILU0SolverBackend
@@ -445,7 +609,19 @@ private:
 
 /*!
  * \ingroup Linear
- * \brief Sequential ILU0-preconditioned BiCGSTAB solver.
+ * \brief Sequential ILU(0)-preconditioned BiCGSTAB solver.
+ *
+ * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
+ * faster and smoother convergence than the original BiCG. It can be applied to
+ * nonsymmetric matrices.\n
+ * See: Van der Vorst, H. A. (1992). "Bi-CGSTAB: A Fast and Smoothly Converging
+ * Variant of Bi-CG for the Solution of Nonsymmetric Linear Systems".
+ * SIAM J. Sci. and Stat. Comput. 13 (2): 631–644. doi:10.1137/0913035.
+ *
+ * Preconditioner: ILU(0) incomplete LU factorization. The order 0 indicates
+ * that no fill-in is allowed. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
@@ -470,7 +646,18 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
 
 /*!
  * \ingroup Linear
- * \brief Sequential ILU0-preconditioned CG solver.
+ * \brief Sequential ILU(0)-preconditioned CG solver.
+ *
+ * Solver: CG (conjugate gradient) is an iterative method for solving linear
+ * systems with a symmetric, positive definite matrix.\n
+ * See:  Helfenstein, R., Koko, J. (2010). "Parallel preconditioned conjugate
+ * gradient algorithm on GPU", Journal of Computational and Applied Mathematics,
+ * Volume 236, Issue 15, Pages 3584–3590, http://dx.doi.org/10.1016/j.cam.2011.04.025.
+ *
+ * Preconditioner: ILU(0) incomplete LU factorization. The order 0 indicates
+ * that no fill-in is allowed. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
@@ -496,6 +683,18 @@ public:
 /*!
  * \ingroup Linear
  * \brief Sequential ILU0-preconditioned GMRes solver.
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems." SIAM J. Sci. and Stat.
+ * Comput. 7: 856–869.
+ *
+ * Preconditioner: ILU(0) incomplete LU factorization. The order 0 indicates
+ * that no fill-in is allowed. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
@@ -521,7 +720,20 @@ public:
 
 /*!
  * \ingroup Linear
- * \brief Sequential ILUn-preconditioned GMRes solver.
+ * \brief Sequential ILU(n)-preconditioned GMRes solver.
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems." SIAM J. Sci. and Stat.
+ * Comput. 7: 856–869.
+ *
+ * Preconditioner: ILU(n) incomplete LU factorization. The order n can be
+ * provided by the parameter LinearSolver.PreconditionerIterations and controls
+ * the fill-in. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
 class ILUnRestartedGMResBackend : public IterativePrecondSolverBackend<TypeTag>
@@ -546,6 +758,14 @@ public:
 };
 
 #if HAVE_SUPERLU
+/*!
+ * \ingroup Linear
+ * \brief Direct linear solver using the SuperLU library.
+ *
+ * See: Li, X. S. (2005). "An overview of SuperLU: Algorithms, implementation,
+ * and user interface." ACM Transactions on Mathematical Software (TOMS) 31(3): 302-325.
+ * http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
+ */
 template <class TypeTag>
 class SuperLUBackend
 {
@@ -604,6 +824,14 @@ private:
 
 
 #if HAVE_UMFPACK
+/*!
+ * \ingroup Linear
+ * \brief Direct linear solver using the UMFPack library.
+ *
+ * See: Davis, Timothy A. (2004). "Algorithm 832". ACM Transactions on
+ * Mathematical Software 30 (2): 196–199. doi:10.1145/992200.992206.
+ * http://faculty.cse.tamu.edu/davis/suitesparse.html
+ */
 template <class TypeTag>
 class UMFPackBackend
 {
