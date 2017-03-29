@@ -36,6 +36,7 @@
 #include "newtoncontroller.hh"
 
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -174,6 +175,10 @@ SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
 
 //! Use the ImplicitSpatialParams by default
 SET_TYPE_PROP(TwoPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+//! Use the model after Millington (1961) for the effective diffusivity
+SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel,
+             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Enable gravity by default
 SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);

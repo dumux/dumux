@@ -118,19 +118,19 @@ public:
         // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = fluxVars.porousDiffCoeff();
         // add diffusive flux of gas component in liquid phase
         Scalar tmp;
-        tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx] * fluxVars.molarDensity(wPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(wPhaseIdx) * fluxVars.molarDensity(wPhaseIdx);
         tmp *= (fluxVars.moleFractionCompNGrad(wPhaseIdx) * fluxVars.face().normal);
         Scalar jNW = tmp;
 
         Scalar jWW = -jNW;
 
-        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(gPhaseIdx) * fluxVars.molarDensity(gPhaseIdx);
         tmp *= (fluxVars.moleFractionCompWGrad(gPhaseIdx) * fluxVars.face().normal);
         Scalar jWG = tmp;
 
         Scalar jNG = -jWG;
 
-        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(nPhaseIdx) * fluxVars.molarDensity(nPhaseIdx);
         tmp *= (fluxVars.moleFractionCompWGrad(nPhaseIdx) * fluxVars.face().normal);
         Scalar jWN = tmp;
 

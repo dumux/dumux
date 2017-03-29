@@ -153,12 +153,8 @@ SET_TYPE_PROP(TwoPTwoC, Indices, TwoPTwoCIndices <TypeTag, /*PVOffset=*/0>);
 SET_TYPE_PROP(TwoPTwoC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 //! Use the model after Millington (1961) for the effective diffusivity
-SET_PROP(TwoPTwoC, EffectiveDiffusivityModel)
-{ private :
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef DiffusivityMillingtonQuirk<Scalar> type;
-};
+SET_TYPE_PROP(TwoPTwoC, EffectiveDiffusivityModel,
+             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Disable velocity output by default
 SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);

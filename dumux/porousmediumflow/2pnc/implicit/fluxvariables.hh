@@ -53,6 +53,7 @@ class TwoPNCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -167,6 +168,10 @@ protected:
         const VolumeVariables &volVarsI = elemVolVars[this->face().i];
         const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 
+        // the effective diffusion coefficients at vertex i and j
+        Scalar diffCoeffI;
+        Scalar diffCoeffJ;
+
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             /* If there is no phase saturation on either side of the face
@@ -178,31 +183,25 @@ protected:
                     porousDiffCoeff_[phaseIdx][compIdx] = 0.0;
                 }
             }
-
             else
             {
-                // calculate tortuosity at the nodes i and j needed
-                // for porous media diffusion coefficient
-                using std::pow;
-                Scalar tauI =  1.0/(volVarsI.porosity() * volVarsI.porosity()) *
-                                pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
-
-                Scalar tauJ =   1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
-                                pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
-                // Diffusion coefficient in the porous medium
-
-                // -> harmonic mean
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
-                    if(phaseIdx==compIdx)
+                    if (phaseIdx == compIdx)
                     {
                         porousDiffCoeff_[phaseIdx][compIdx] = 0.0;
                     }
                     else
                     {
-                        auto porousDiffI = volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * volVarsI.diffCoeff(phaseIdx, compIdx);
-                        auto porousDiffJ = volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * volVarsJ.diffCoeff(phaseIdx, compIdx);
-                        porousDiffCoeff_[phaseIdx][compIdx] = harmonicMean(porousDiffI, porousDiffJ);
+                        diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                                     volVarsI.saturation(phaseIdx),
+                                                                                     volVarsI.diffCoeff(phaseIdx, compIdx));
+
+                        diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                                     volVarsJ.saturation(phaseIdx),
+                                                                                     volVarsJ.diffCoeff(phaseIdx, compIdx));
+
+                        porousDiffCoeff_[phaseIdx][compIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
                     }
                 }
             }

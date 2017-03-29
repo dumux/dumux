@@ -187,31 +187,31 @@ public:
     {
         // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = fluxVars.porousDiffCoeff();
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][gCompIdx] * fluxVars.molarDensity(wPhaseIdx);
+        Scalar tmp = - fluxVars.porousDiffCoeff(wPhaseIdx, gCompIdx) * fluxVars.molarDensity(wPhaseIdx);
         tmp *= (fluxVars.moleFractionCompGGrad(wPhaseIdx) * fluxVars.face().normal);
         Scalar jGW = tmp;
 
-        tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][nCompIdx] * fluxVars.molarDensity(wPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(wPhaseIdx, nCompIdx) * fluxVars.molarDensity(wPhaseIdx);
         tmp *= (fluxVars.moleFractionCompNGrad(wPhaseIdx) * fluxVars.face().normal);
         Scalar jNW = tmp;
 
         Scalar jWW = -(jGW+jNW);
 
-        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][wCompIdx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(gPhaseIdx, wCompIdx) * fluxVars.molarDensity(gPhaseIdx);
         tmp *= (fluxVars.moleFractionCompWGrad(gPhaseIdx) * fluxVars.face().normal);
         Scalar jWG = tmp;
 
-        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][nCompIdx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(gPhaseIdx, nCompIdx) * fluxVars.molarDensity(gPhaseIdx);
         tmp *= (fluxVars.moleFractionCompNGrad(gPhaseIdx) * fluxVars.face().normal);
         Scalar jNG = tmp;
 
         Scalar jGG = -(jWG+jNG);
 
-        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][wCompIdx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(nPhaseIdx, wCompIdx) * fluxVars.molarDensity(nPhaseIdx);
         tmp *= (fluxVars.moleFractionCompWGrad(nPhaseIdx) * fluxVars.face().normal);
         Scalar jWN = tmp;
 
-        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][gCompIdx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp = - fluxVars.porousDiffCoeff(nPhaseIdx, gCompIdx) * fluxVars.molarDensity(nPhaseIdx);
         tmp *= (fluxVars.moleFractionCompGGrad(nPhaseIdx) * fluxVars.face().normal);
         Scalar jGN = tmp;
 

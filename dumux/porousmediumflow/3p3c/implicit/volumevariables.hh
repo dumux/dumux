@@ -543,36 +543,36 @@ public:
          */
 
         // diffusivity coefficents
-        diffusionCoefficient_[gPhaseIdx][wCompIdx] =
+        diffCoeff_[gPhaseIdx][wCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               gPhaseIdx,
                                               wCompIdx);
-        diffusionCoefficient_[gPhaseIdx][nCompIdx] =
+        diffCoeff_[gPhaseIdx][nCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               gPhaseIdx,
                                               nCompIdx);
-        diffusionCoefficient_[gPhaseIdx][gCompIdx] = 0.0; // dummy, should not be used !
+        diffCoeff_[gPhaseIdx][gCompIdx] = 0.0; // dummy, should not be used !
 
-        diffusionCoefficient_[wPhaseIdx][gCompIdx] =
+        diffCoeff_[wPhaseIdx][gCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               wPhaseIdx,
                                               gCompIdx);
-        diffusionCoefficient_[wPhaseIdx][nCompIdx] =
+        diffCoeff_[wPhaseIdx][nCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               wPhaseIdx,
                                               nCompIdx);
-        diffusionCoefficient_[wPhaseIdx][wCompIdx] = 0.0; // dummy, should not be used !
+        diffCoeff_[wPhaseIdx][wCompIdx] = 0.0; // dummy, should not be used !
 
         /* no diffusion in NAPL phase considered  at the moment */
-        diffusionCoefficient_[nPhaseIdx][nCompIdx] = 0.0;
-        diffusionCoefficient_[nPhaseIdx][wCompIdx] = 0.0;
-        diffusionCoefficient_[nPhaseIdx][gCompIdx] = 0.0;
+        diffCoeff_[nPhaseIdx][nCompIdx] = 0.0;
+        diffCoeff_[nPhaseIdx][wCompIdx] = 0.0;
+        diffCoeff_[nPhaseIdx][gCompIdx] = 0.0;
 
-        Valgrind::CheckDefined(diffusionCoefficient_);
+        Valgrind::CheckDefined(diffCoeff_);
 
         // porosity
         porosity_ = problem.spatialParams().porosity(element,
@@ -688,8 +688,15 @@ public:
     /*!
      * \brief Returns the diffusivity coefficient matrix.
      */
+    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffCoeff(phaseIdx, compIdx) instead.")
     Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient() const
-    { return diffusionCoefficient_; }
+    { return diffCoeff_; }
+
+    /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar diffCoeff(int phaseIdx, int compIdx) const
+    { return diffCoeff_[phaseIdx][compIdx]; }
 
     /*!
      * \brief Returns the adsorption information.
@@ -738,7 +745,7 @@ protected:
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     /* We need a tensor here !! */
     //!< Binary diffusion coefficients of the 3 components in the phases
-    Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient_;
+    Dune::FieldMatrix<Scalar, numPhases, numComponents> diffCoeff_;
     FluidState fluidState_;
 
 private:
