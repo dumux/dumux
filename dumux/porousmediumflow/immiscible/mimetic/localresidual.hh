@@ -84,7 +84,7 @@ class ImmiscibleMimeticLocalResidual : public Dumux::StaggeredLocalResidual<Type
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
-    enum { conti0EqIdx = Indices::conti0EqIdx };
+    enum { conti0EqIdx = Indices::conti0EqIdx};
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
@@ -209,11 +209,30 @@ public:
                                             const GlobalFaceVars& globalFaceVars,
                                             const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        FacePrimaryVariables flux(0.0);
-//        FluxVariables fluxVars;
-        flux += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
-//        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), scvf, fvGeometry, elemVolVars, globalFaceVars);
-//        flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+//        FacePrimaryVariables flux(0.0);
+////        FluxVariables fluxVars;
+//        flux += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+////        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), scvf, fvGeometry, elemVolVars, globalFaceVars);
+////        flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+
+
+        FluxVariables fluxVars;
+        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+
+        FacePrimaryVariables flux;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // the physical quantities for which we perform upwinding
+            auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+                              { return 1.0; };
+
+            auto eqIdx = conti0EqIdx + phaseIdx;
+            flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            //EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+        }
+
         return flux;
     }
 
@@ -263,7 +282,7 @@ protected:
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf,
                               const ElementVolumeVariables& elemVolVars,
-                              const GlobalFaceVars& faceVars,
+                              const GlobalFaceVars& globalFaceVars,
                               const ElementBoundaryTypes& elemBcTypes,
                               const ElementFluxVariablesCache& elemFluxVarsCache)
     {
@@ -277,16 +296,46 @@ protected:
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVolVars = elemVolVars[insideScv];
-                this->faceResiduals_[scvf.localFaceIdx()] = computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
 
                 auto neumannFlux = this->evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
-                this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux[faceIdx];
+
+                //this->faceResiduals_[scvf.localFaceIdx()] = computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+                FluxVariables fluxVars;
+                fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+
+                FacePrimaryVariables flux;
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    // the physical quantities for which we perform upwinding
+                    auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+                                      { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
+
+                    auto eqIdx = conti0EqIdx + phaseIdx;
+                    flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+
+//                    if(neumannFlux[phaseIdx] > 0.0)
+//                        this->faceResiduals_[scvf.localFaceIdx()][eqIdx] = flux[eqIdx] - neumannFlux[phaseIdx];
+//                    else
+//                        this->faceResiduals_[scvf.localFaceIdx()][eqIdx] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[0] - globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[1];
+
+
+                    //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+                    //EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+                }
+
+//                std::cout << "neumannFlux" << neumannFlux << std::endl;
+//
+                for(int faceEqIdx = 0; faceEqIdx < neumannFlux.size(); ++faceEqIdx)
+                {
+                    this->faceResiduals_[scvf.localFaceIdx()][faceEqIdx] = flux[faceEqIdx];
+                    this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux[faceEqIdx];
+                }
             }
             else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVolVars = elemVolVars[insideScv];
-                this->faceResiduals_[scvf.localFaceIdx()] = faceVars.faceVars(scvf.dofIndex()).facePriVars() - this->problem().dirichlet(element, scvf)[faceIdx];
+                this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars() - this->problem().dirichlet(element, scvf)[faceIdx];
             }
         }
     }
@@ -294,27 +343,27 @@ protected:
     /*!
      * \brief Add Neumann boundary conditions for a single scv face
      */
-    PrimaryVariables evalNeumannSegment_(const Element& element,
+    FacePrimaryVariables evalNeumannSegment_(const Element& element,
                                          const FVElementGeometry& fvGeometry,
                                          const ElementVolumeVariables& elemVolVars,
                                          const SubControlVolumeFace &scvf,
                                          const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the neumann boundary fluxes
-        PrimaryVariables flux(0);
+        FacePrimaryVariables flux(0);
 
-        auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf);
+        auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[faceIdx];
 
         // multiply neumann fluxes with the area and the extrusion factor
         auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
         neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
 
         // add fluxes to the residual
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            if (bcTypes.isNeumann(eqIdx))
-                flux[eqIdx] += neumannFluxes[eqIdx];
+//        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+//            if (bcTypes.isNeumann(eqIdx))
+//                flux[eqIdx] += neumannFluxes[faceIdx][eqIdx];
 
-        return flux;
+        return neumannFluxes;
     }
 
 
