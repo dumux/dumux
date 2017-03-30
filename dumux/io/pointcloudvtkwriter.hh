@@ -332,6 +332,8 @@ private:
                 file << " 0 0 ";
             if(x.size() == 2)
                 file << " 0 ";
+            if(x.size() == 3)
+                file << " ";
 
             // introduce a line break after a certain time
             if((++counter)  > numBeforeLineBreak)
