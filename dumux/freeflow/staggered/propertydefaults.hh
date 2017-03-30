@@ -117,7 +117,7 @@ SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
 SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
 
 //! Isothermal model by default
-SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
+SET_BOOL_PROP(NavierStokes, EnableEnergyBalanceStokes, false);
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);

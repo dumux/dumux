@@ -97,6 +97,7 @@ NEW_PROP_TAG(MolecularDiffusionType); //! The type for the calculation of the mo
 NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the parameters for the diffusive fluxes depend on the solution
 NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy equation
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
+NEW_PROP_TAG(EnableEnergyBalanceStokes); //! Specifies if the model solves an energy equation
 NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
 // specify if we evaluate the permeability in the volume (for discontinuous fields)

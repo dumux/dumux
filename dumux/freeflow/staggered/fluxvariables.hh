@@ -33,7 +33,7 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(EnableComponentTransport);
-NEW_PROP_TAG(EnableEnergyBalance);
+NEW_PROP_TAG(EnableEnergyBalanceStokes);
 NEW_PROP_TAG(EnableInertiaTerms);
 }
 
@@ -49,7 +49,7 @@ class FreeFlowFluxVariablesImpl;
  */
 template<class TypeTag>
 using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
-                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalanceStokes)>;
 
 /*!
  * \ingroup Discretization
