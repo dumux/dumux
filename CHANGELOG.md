@@ -36,6 +36,8 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
     - An absolute residual criterion has been implemented for the Newton solver.
       The criterion is enabled by using the property `EnableAbsoluteResidualCriterion`.
       The property `MaxAbsoluteResidual` speficies the convergence tolerance.
+    - The calculation of the gas viscosity for the component `air` has been improved,
+      making it more accurate.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - `shouldWriteRestartFile()` is now, as `shouldWriteOutput()` already was,
