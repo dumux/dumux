@@ -28,8 +28,9 @@
 #include <dumux/freeflow/staggeredni/model.hh>
 #include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/constant.hh>
+//#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+//#include <dumux/material/components/constant.hh>
 
 namespace Dumux
 {
@@ -47,12 +48,26 @@ namespace Properties
 {
 NEW_TYPE_TAG(ChannelNITestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNI));
 
-SET_PROP(ChannelNITestProblem, Fluid)
+//SET_PROP(ChannelNITestProblem, Fluid)
+//{
+//private:
+//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+//public:
+//    typedef FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+//};
+
+NEW_PROP_TAG(FluidSystem);
+
+// Select the fluid system
+SET_TYPE_PROP(ChannelNITestProblem, FluidSystem,
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
+
+SET_PROP(ChannelNITestProblem, PhaseIdx)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    static constexpr int value = FluidSystem::wPhaseIdx;
 };
 
 // Set the grid type
@@ -87,6 +102,7 @@ class ChannelNITestProblem : public NavierStokesProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -127,7 +143,7 @@ class ChannelNITestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     ChannelNITestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)//, eps_(1e-6)
+    : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                                              std::string,
@@ -138,6 +154,7 @@ public:
                                              Scalar,
                                              Problem,
                                              InletVelocity);
+        FluidSystem::init();
     }
 
     /*!
@@ -158,16 +175,6 @@ public:
     bool shouldWriteRestartFile() const
     {
         return false;
-    }
-
-//    /*!
-//     * \brief Return the temperature within the domain in [K].
-//     *
-//     * This problem assumes a temperature of 10 degrees Celsius.
-//     */
-    Scalar temperature() const // TODO remove!
-    {
-        return 273.15 + 10;
     }
 
     /*!
@@ -194,7 +201,6 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
         values.setDirichlet(energyBalanceIdx);
@@ -227,7 +233,7 @@ public:
         {
             values[velocityXIdx] = inletVelocity_;
             values[velocityYIdx] = 0.0;
-            values[temperatureIdx] = 263.15; // TODO
+            values[temperatureIdx] = 303.15; // TODO
         }
         else if(isWall(globalPos))
         {
