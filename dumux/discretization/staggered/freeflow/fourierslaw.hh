@@ -57,8 +57,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Staggered >
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -90,15 +90,16 @@ public:
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         // effective conductivity tensors
-        auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-        auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
+        auto insideLambda = insideVolVars.thermalConductivity();
+        auto outsideLambda = outsideVolVars.thermalConductivity();
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();
         outsideLambda *= outsideVolVars.extrusionFactor();
 
         // the resulting averaged conductivity tensor
-        const auto lambda = problem.spatialParams().harmonicMean(insideLambda, outsideLambda, scvf.unitOuterNormal());
+//        const auto lambda = problem.spatialParams().harmonicMean(insideLambda, outsideLambda, scvf.unitOuterNormal());
+        const auto lambda = harmonicMean(insideLambda, outsideLambda); // TODO unitOuterNormal?!
 
         const Scalar insideTemp = insideVolVars.temperature();
         Scalar distance(0.0), outsideTemp(insideTemp);
@@ -118,13 +119,13 @@ public:
         }
         else
         {
-            distance = (insideScv.dofPosition() - outsideScv.dofPosition());
+            distance = (insideScv.dofPosition() - outsideScv.dofPosition()).two_norm();
             outsideTemp = outsideVolVars.temperature();
         }
 
-        flux[energyBalanceIdx] = (insideTemp - outsideTemp);
+        flux[energyBalanceIdx] = -1.0 * (insideTemp - outsideTemp);
         flux[energyBalanceIdx] *= lambda / distance;
-        return -1.0*flux;
+        return flux;
     }
 };
 } // end namespace
