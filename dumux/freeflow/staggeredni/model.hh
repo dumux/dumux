@@ -79,6 +79,8 @@ class NavierStokesNIModel : public NavierStokesModel<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
@@ -93,8 +95,8 @@ public:
 
         // add temperature to output
         auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature();});
-
+//        vtkOutputModule.addPrimaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature();});
+        vtkOutputModule.addPrimaryVariable("temperature", Indices::temperatureIdx);
     }
 };
 }

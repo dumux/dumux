@@ -27,15 +27,15 @@
 #ifndef DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 #define DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 
+// TODO clean-up
 #include "properties.hh"
 
 #include "model.hh"
-#include "../staggered/volumevariables.hh"
+#include "volumevariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
 #include "fluxvariables.hh"
 #include "../staggered/problem.hh"
-// #include "../staggered/model.hh"
 #include "../staggered/propertydefaults.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
@@ -63,12 +63,29 @@ NEW_PROP_TAG(FluxVariablesCache);
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
-SET_INT_PROP(NavierStokesNI, NumEqCellCenter, 1); // temp. (additional to pressure)
+SET_INT_PROP(NavierStokesNI, NumEqCellCenter, 2);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(NavierStokesNI, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, VolumeVariables, NavierStokesNIVolumeVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokesNI, Model, NavierStokesNIModel<TypeTag>);
 SET_TYPE_PROP(NavierStokesNI, Indices, NavierStokesNIIndices<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNI, EnableEnergyBalanceStokes, true);
+
+SET_BOOL_PROP(NavierStokesNI, UseMoles, true);
+
+SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
+
+SET_INT_PROP(NavierStokesNI, PhaseIdx, 0); //!< Defines the phaseIdx
+
+
+////! average is used as default model to compute the effective thermal heat conductivity
+//SET_PROP(NavierStokesNI, ThermalConductivityModel)
+//{ private :
+//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+//  public:
+//    typedef ThermalConductivityAverage<Scalar> type;
+//};
 
 
 /*!
@@ -77,14 +94,14 @@ SET_TYPE_PROP(NavierStokesNI, Indices, NavierStokesNIIndices<TypeTag>);
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(NavierStokesNI, FluidState)
-{
-    private:
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    public:
-        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
-};
+//SET_PROP(NavierStokesNI, FluidState)
+//{
+//    private:
+//        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+//        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+//    public:
+//        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+//};
 
 // //! Enable advection
 // SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
@@ -138,18 +155,8 @@ SET_PROP(NavierStokesNI, FluidState)
 //
 // SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
 //
-// SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
+// SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, true);
 //
-
-SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
-
-//! average is used as default model to compute the effective thermal heat conductivity
-// SET_PROP(NavierStokesNI, ThermalConductivityModel)
-// { private :
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//   public:
-//     typedef ThermalConductivityAverage<Scalar> type;
-// };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

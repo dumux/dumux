@@ -34,7 +34,7 @@ namespace Properties
 {
 // forward declaration
 //NEW_PROP_TAG(EnableComponentTransport);
-NEW_PROP_TAG(EnableEnergyBalance);
+NEW_PROP_TAG(EnableEnergyBalanceStokes);
 NEW_PROP_TAG(EnableInertiaTerms);
 }
 
@@ -93,10 +93,8 @@ public:
                                                         const FluxVariablesCache& fluxVarsCache)
     {
         CellCenterPrimaryVariables flux(0.0);
-
         flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
-        flux += HeatConductionType::diffusiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, scvf);
-        flux *= scvf.area() * sign(scvf.outerNormalScalar());
+        flux += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 
@@ -119,7 +117,7 @@ private:
         if(scvf.boundary())
         {
             const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(momentumBalanceIdx)) // TODO ??
+                if(bcTypes.isOutflow(momentumBalanceIdx))
                     isOutflow = true;
         }
 
@@ -140,6 +138,8 @@ private:
         flux[energyBalanceIdx] = (upWindWeight * upstreamDensity * upstreamEnthalpy
                                  + (1.0 - upWindWeight) * downstreamDensity * downstreamEnthalpy)
                                  * velocity;
+
+        flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;
     }
 };

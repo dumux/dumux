@@ -26,12 +26,12 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NI_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh> // TODO ?
+#include <dune/istl/matrix.hh>
 
-#include <dumux/common/valgrind.hh> // TODO ?
+#include <dumux/common/valgrind.hh>
 #include <dumux/implicit/staggered/localresidual.hh>
 
-#include "properties.hh" // TODO ?
+#include "properties.hh"
 
 namespace Dumux
 {
@@ -39,17 +39,17 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-//NEW_PROP_TAG(EnableComponentTransport);
-NEW_PROP_TAG(EnableEnergyBalance);
+NEW_PROP_TAG(EnableComponentTransport);
+NEW_PROP_TAG(EnableEnergyBalanceStokes);
 NEW_PROP_TAG(EnableInertiaTerms);
-//NEW_PROP_TAG(ReplaceCompEqIdx);
+NEW_PROP_TAG(ReplaceCompEqIdx);
 }
 
 /*!
- * \ingroup CCModel
+ * \ingroup StaggeredModel
  * \ingroup StaggeredLocalResidual
  * \brief Element-wise calculation of the residual for models
- * 			based on the fully implicit cell-centered scheme
+ * 			based on the staggered grid scheme
  *
  * \todo Please doc me more!
  */
@@ -58,24 +58,17 @@ NEW_PROP_TAG(EnableInertiaTerms);
 template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
 class StaggeredNavierStokesResidualImpl;
 
-template<class TypeTag>
-using StaggeredNavierStokesResidual = StaggeredNavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
-                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
-
-
 // specialization for immiscible, non-isothermal flow
 template<class TypeTag>
 class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
 {
     friend class StaggeredLocalResidual<TypeTag>;
-
     using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false, false>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -83,10 +76,12 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public Staggered
     typename DofTypeIndices::FaceIdx faceIdx;
 
     enum {
+        massBalanceIdx = Indices::massBalanceIdx,
         energyBalanceIdx = Indices::energyBalanceIdx
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
@@ -98,19 +93,16 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      */
-    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv, const VolumeVariables& volVars) const
+    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv, const VolumeVariables& volVars)
     {
         CellCenterPrimaryVariables storage(0.0);
         const Scalar density = useMoles? volVars.molarDensity() : volVars.density();
 
         // compute storage of mass
-        storage = ParentType::computeStorageForCellCenter(scv, volVars);
+        storage[massBalanceIdx] = volVars.density();
 
         // compute the storage of energy
-        storage[energyBalanceIdx] = volVars.density(0) * volVars.internalEnergy(0);
-
-        std::cout << "** Subcontrolvolume " << scv.index() << ": energy storage = "
-               << storage[energyBalanceIdx] << std::endl;
+        storage[energyBalanceIdx] = density * volVars.internalEnergy();
 
         return storage;
     }

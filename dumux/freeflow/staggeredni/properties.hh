@@ -45,6 +45,8 @@ namespace Properties {
 //! The type tags for the non-isothermal Navier Stokes problems
 NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 
+NEW_PROP_TAG(EnableEnergyBalanceStokes);
+
 //! The type tags for the corresponding non-isothermal problems
 // NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NonIsothermal));
 
@@ -67,6 +69,8 @@ NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 //NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
 //NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
 //NEW_PROP_TAG(UseMoles); //!< Defines whether molar (true) or mass (false) density is used
+NEW_PROP_TAG(PhaseIdx); //!< Defines the phaseIdx
+
 // \}
 }
 

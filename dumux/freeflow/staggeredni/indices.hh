@@ -40,8 +40,9 @@ template <class TypeTag, int PVOffset = 0>
 class NavierStokesNIIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
 {
 public:
-    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
-    static constexpr int energyBalanceIdx = PVOffset + numEq - 1;
+    static const int numEqCC = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+
+    static constexpr int energyBalanceIdx = PVOffset + numEqCC -1;
     static constexpr int temperatureIdx = energyBalanceIdx;
 };
 } // end namespace
