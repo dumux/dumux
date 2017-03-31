@@ -742,7 +742,7 @@ private:
     {        return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;    }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;;
+    static constexpr Scalar eps_ = 1e-6;
     Scalar percentOfEquil_ ;
     int nTemperature_;
     int nPressure_;
