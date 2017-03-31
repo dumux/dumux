@@ -726,7 +726,7 @@ private:
     {   return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;}
 
 private:
-    static constexpr Scalar eps_ = 1e-6;;
+    static constexpr Scalar eps_ = 1e-6;
     int nTemperature_;
     int nPressure_;
     std::string outputName_;
