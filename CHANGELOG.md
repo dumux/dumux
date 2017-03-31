@@ -15,47 +15,61 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
       dune-cornerpoint), the OPM release 2016.04 has to be used.
 
 * IMPROVEMENTS and ENHANCEMENTS:
-    - The folder `bin/moduleutil` was added. It contains two scripts:
-      `getusedversions.sh` to extract the versions used for each dune/dumux module and 
-      `extractmodulepart.sh` to extract a dumux module only containing the necessary files
-      for compiling specified executables (this script was used to create the dumux-pub
-      modules).
-    - For the two-component models using a mass-based formulation together
-      with a total mass balance (`ReplaceCompEqIdx`) do now consider the diffusive
-      mass fluxes of the components in the total mass balance. The sum of the two
-      diffusive mass fluxes do not cancel out, because the Fickian diffusion assumes
-      the two diffusive mole fluxes to cancel out.
-    - For the `TwoPTwoC` models, the Kelvin equation was implemented, which accounts for
-      a lowering of the saturated vapor pressure based for high capillary pressures.
-    - A gridcreator for piece-of-cake-type grids has been added. It is capable
-      of creating meshes with gradually in- and decreasing distances between nodes.
-      It also allows the creation of a 360° cake where the last elements are
-      connected to the first elements.
-    - A python script for the post-process-calculation of the L2 error
-      from Vtk files has been added.
+    - The two-component models using a mass-based formulation together with a
+      total mass balance (`ReplaceCompEqIdx`) do now consider the diffusive mass
+      fluxes of the components in the total mass balance. The sum of the two
+      diffusive mass fluxes do not cancel out, because the Fickian diffusion
+      assumes the two diffusive mole fluxes to cancel out.
+
+    - The calculation of the gas viscosity for the component `Air` has been
+      improved, making it more accurate.
+
+    - For the `TwoPTwoC` models, the Kelvin equation was implemented, which
+      accounts for a lowering of the saturated vapor pressure due to high
+      capillary pressures.
+
+    - A grid creator for piece-of-cake-type grids has been added. It is capable
+      of creating meshes with gradually in- and decreasing distances between
+      nodes. It also allows the creation of a 360° cake where the last elements
+      are connected to the first elements.
+
     - An absolute residual criterion has been implemented for the Newton solver.
-      The criterion is enabled by using the property `EnableAbsoluteResidualCriterion`.
-      The property `MaxAbsoluteResidual` speficies the convergence tolerance.
-    - The calculation of the gas viscosity for the component `air` has been improved,
-      making it more accurate.
+      The criterion is enabled by using the property
+      `EnableAbsoluteResidualCriterion`. The property `MaxAbsoluteResidual`
+      speficies the convergence tolerance.
+
+    - The folder `bin/moduleutil` was added. It contains two scripts:
+      `getusedversions.sh` to extract the versions used for each Dune/Dumux
+      module and `extractmodulepart.sh` to extract a Dumux module only
+      containing the necessary files for compiling specified executables (this
+      script was used to create the dumux-pub modules).
+
+    - A python script `l2error.py` for the post-process calculation of the L2
+      error from Vtk files has been added in `bin/postprocessing`.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - `shouldWriteRestartFile()` is now, as `shouldWriteOutput()` already was,
       called before the time level is advanced. So it might be necessary to use
       `...WillBeFinished` instead of `...IsFinished` for writing restart files at
       the correct time.
-    - In the `ZeroEq` models, the properties `BBoxMinIsWall` and `BBoxMaxIsWall` have
-      been replaced by the functions `bBoxMaxIsWall()` and `bBoxMaxIsWall()` in the
-      problem file.
-    - In the `TwoPNC` (and, consequently the `TwoPNCMin`) models, the old formulations
-      `pgSl`, `plSg` as well as `pnSw` and `pwSg` have been replaced by the `pnsw` and `pwsn`,
-      to satisfy the naming convention and be consistent with `TwoPTwoC`.
+
+    - In the `ZeroEq` models, the properties `BBoxMinIsWall` and `BBoxMaxIsWall`
+      have been replaced by the functions `bBoxMaxIsWall()` and
+      `bBoxMaxIsWall()` in the problem file.
+
+    - In the `TwoPNC` (and, consequently the `TwoPNCMin`) models, the old
+      formulations `pgSl`, `plSg` as well as `pnSw` and `pwSg` have been
+      replaced by the `pnsw` and `pwsn`, to satisfy the naming convention and be
+      consistent with `TwoPTwoC`.
+
     - In the `TwoPTwoC` model, the indices are no longer dependent on the
       formulation. Further, the values of `nPhaseOnly` and `bothPhases`
       have been harmonized with those in `TwoPNC`.
+
     - In the `NC` models, the initial phase presence is now set by the function
       `initialPhasePresenceAtPos(globalPos)` instead of
       `initialPhasePresence(vertex, vIdxGlobal, globalPos)` in the problem file.
+
     - The script `fix_includes.sh` was removed, which was only necessary
       for transition from 2.8 to 2.9
 
