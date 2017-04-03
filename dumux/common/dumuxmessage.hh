@@ -37,7 +37,7 @@ namespace Dumux
 class DumuxMessage
 {
     //! The current number of messages. Please adjust if you add one.
-    static const int nMessages_ = 13;
+    static const int nMessages_ = 11;
 
 public:
 
@@ -165,73 +165,6 @@ public:
                     std::cout << "Chuck Norris has successfully compiled DuMuX." << std::endl;
                 else
                     std::cout << "Chuck Norris has compiled DuMuX even two times in a row!" << std::endl;
-            break;
-            case 12:
-                if(firstCall)
-                {
-                  std::cout << "                                           7MMN$?ZMMM                        " << std::endl;
-                  std::cout << "                                         MM          NM                      " << std::endl;
-                  std::cout << "                                       ,M   MMMMMMMM   M                     " << std::endl;
-                  std::cout << "                     NMN   8MM        OM  MM        MM  M                    " << std::endl;
-                  std::cout << "                    M,        ,MMMMMM$M  MM$         M  ~M                   " << std::endl;
-                  std::cout << "                   MZ  MMIMMM    MO  M~ M    MMMMM   M,  M                   " << std::endl;
-                  std::cout << "                   M  M    +MMM   +MMM  M     MMMM  MM  M,                   " << std::endl;
-                  std::cout << "             =MMMMIM  M$       DM,M= MN MMMM8  +NMMM   MMM?MMMM7             " << std::endl;
-                  std::cout << "       MMMMM       M  M  MMMM    8M    MMMMMM$       MM          $MMMM?      " << std::endl;
-                  std::cout << " MMMM:             M  OM     MMMMIM     M$       MMMM                   NMMMM" << std::endl;
-                  std::cout << " M MMMZ             M  $MMMM,     8MM,+MMMMMMNZ~MMMMMI                 DMMM+M" << std::endl;
-                  std::cout << " M      MMMM+     NMMM   DMM   NMM,  M~ ,MMMMM     MM :MMMM      DMMM$      M" << std::endl;
-                  std::cout << " M           ZMMM,    MM      I    MM         MM     MM     MMMM:           M" << std::endl;
-                  std::cout << " M            M   +MMMMM8MM8   =MMM             MM     NMMZ   M             M" << std::endl;
-                  std::cout << " M            M      M   MMMM   ,M              ZMM     M     M             M" << std::endl;
-                  std::cout << " M            M      M      M   NMN        MMMM=  IM    M     M             M" << std::endl;
-                  std::cout << " M            M      M      MO  ~M  8MMMM7         M    M:    M             M" << std::endl;
-                  std::cout << " M            M      M       M   M    M7           M    ,M    M             M" << std::endl;
-                  std::cout << " M            M      M       M   M    MI           M+    M    M             M" << std::endl;
-                  std::cout << " M            M      M      IM   M    M7            M     MM  M             M" << std::endl;
-                  std::cout << " M            M      M      M   ZM    M7            ,M    :: 7MMMMMM        M" << std::endl;
-                  std::cout << " M            M      M     MD N M     M7              MN  MM ,M             M" << std::endl;
-                  std::cout << " M            M      M    MOMM  M     MI               MMM ,M M             M" << std::endl;
-                  std::cout << " M            M      M  ZMMM M M      MI               M  NMMMM             M" << std::endl;
-                  std::cout << " M            M      M,MMN   MM7      MI               M      MM,           M" << std::endl;
-                  std::cout << " M            M      M       MD       M7               M      M             M" << std::endl;
-                  std::cout << " M            M      M      DM        M7               M      M             M" << std::endl;
-                  std::cout << " M            M      M      M         M7               M      M             M" << std::endl;
-                  std::cout << " ,M           M      M                M7               M      M           ~M'" << std::endl;
-                  std::cout << "   7MM        M      M                M7               M      M         MM   " << std::endl;
-                  std::cout << "      OMM     M      M                MI               M      M      MM,     " << std::endl;
-                  std::cout << "         MMN  M      M                MI               M      M   MM$        " << std::endl;
-                  std::cout << "            MMM      M                MI               M      MMMM           " << std::endl;
-                  std::cout << "               MM,   M                M7               M    MM8              " << std::endl;
-                  std::cout << "                  NM M                M7               M ~MM                 " << std::endl;
-                  std::cout << "                     MM               M7              :MM                    " << std::endl;
-                  std::cout << "                       7MM            M7            MM                       " << std::endl;
-                  std::cout << "                          IMM         M7         MM,                         " << std::endl;
-                  std::cout << "                             MMM,     M7      MM                             " << std::endl;
-                  std::cout << "                                MM7   MI   MMO                               " << std::endl;
-                  std::cout << "DuMuX 2.11                         MMIM7MMN                 10 years of DuMuX" << std::endl;
-                  std::cout << "Anniversary Edition                   MM               Rainer's 60th Birthday" << std::endl;
-
-                }
-                else
-                {
-                    std::cout << "DuMuX 2.11 - Anniversary Edition: 10 years of DuMuX / Rainer's 60th Birthday" << std::endl;
-                }
-            break;
-            case 13:
-                if(firstCall)
-                {
-                  std::cout << "\033[0;31m  _  _                      \033[0;36m ___ _     _   _       _             \033[1;33m___      _              " << std::endl;
-                  std::cout << "\033[0;31m | || |__ _ _ __ _ __ _  _  \033[0;36m| _ |_)_ _| |_| |_  __| |__ _ _  _  \033[1;33m| _ \\__ _(_)_ _  ___ _ _ " << std::endl;
-                  std::cout << "\033[0;31m | __ / _` | '_ \\ '_ \\ || | \033[0;36m| _ \\ | '_|  _| ' \\/ _` / _` | || | \033[1;33m|   / _` | | ' \\/ -_) '_|" << std::endl;
-                  std::cout << "\033[0;31m |_||_\\__,_| .__/ .__/\\_, | \033[0;36m|___/_|_|  \\__|_||_\\__,_\\__,_|\\_, | \033[1;33m|_|_\\__,_|_|_||_\\___|_|  " << std::endl;
-                  std::cout << "\033[0;31m           |_|  |_|   |__/  \033[0;36m                              |__/                           " << std::endl;
-                  std::cout << "\033[0m"; // reset color
-                }
-                else
-                {
-                    std::cout << "DuMuX 2.11 - Anniversary Edition: Rainer's 60th Birthday / 10 years of DuMuX" << std::endl;
-                }
             break;
 
             // Note: If you add a case, you have to increase the number of messages (nMessages_ variable).
