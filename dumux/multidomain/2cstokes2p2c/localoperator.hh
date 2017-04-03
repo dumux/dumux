@@ -53,15 +53,23 @@ namespace Dumux {
  * The total mass balance equation:
  * \f[
  *  \left[
- *    \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} \right) \cdot \boldsymbol{n}
+ *    \left(
+ *      \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *      - \sum_\kappa {\boldsymbol{j}}^\kappa_\textrm{g,ff,t,diff}
+ *    \right) \cdot \boldsymbol{n}
  *  \right]^\textrm{ff}
  *  = -\left[
- *      \left( \varrho_\textrm{g} \boldsymbol{v}_\textrm{g}
- *             + \varrho_\textrm{l} \boldsymbol{v}_\textrm{l} \right) \cdot \boldsymbol{n}
+ *      \left(
+ *        \varrho_\textrm{g} \boldsymbol{v}_\textrm{g}
+ *        + \varrho_\textrm{l} \boldsymbol{v}_\textrm{l}
+ *        - \sum_\kappa {\boldsymbol{j}}^\kappa_\textrm{g,pm,diff}
+ *        - \sum_\kappa {\boldsymbol{j}}^\kappa_\textrm{l,pm,diff}
+*        \right) \cdot \boldsymbol{n}
  *    \right]^\textrm{pm}
  * \f]
  * in which \f$n\f$ represents a vector normal to the interface pointing outside of
- * the specified subdomain.
+ * the specified subdomain. The diffusive fluxes \f$ j_\textrm{diff} \f$ are the diffusive fluxes as
+ * they are implemented in the individual subdomain models.
  *
  * The momentum balance (tangential), which corresponds to the Beavers-Jospeh Saffman condition:
  * \f[
@@ -113,8 +121,6 @@ namespace Dumux {
  *  \right]^\textrm{pm}
  *  = 0
  * \f]
- * in which the diffusive fluxes \f$ j_\textrm{diff} \f$ are the diffusive fluxes as
- * they are implemented in the individual subdomain models.
  *
  * The component mass balance equation (continuity of mass/ mole fractions):
  * \f[
@@ -175,7 +181,8 @@ public:
     };
 
     // Stokes
-    enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq) };
+    enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq),
+           useMoles1 = GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) };
     enum { numComponents1 = Stokes2cIndices::numComponents };
     enum { // equation indices
         momentumXIdx1 = Stokes2cIndices::momentumXIdx,         //!< Index of the x-component of the momentum balance
@@ -191,7 +198,8 @@ public:
     };
 
     // Darcy
-    enum { numEq2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumEq) };
+    enum { numEq2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumEq),
+           useMoles2 = GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles) };
     enum { numPhases2 = GET_PROP_VALUE(TwoPTwoCTypeTag, NumPhases) };
     enum { // equation indices
         contiWEqIdx2 = TwoPTwoCIndices::contiWEqIdx,     //!< Index of the continuity equation for water component
@@ -429,10 +437,20 @@ public:
         const GlobalPosition& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
 
         const GlobalPosition& bfNormal1 = boundaryVars1.face().normal;
-        const Scalar normalMassFlux1 = boundaryVars1.normalVelocity()
-                                       * cParams.elemVolVarsCur1[vertInElem1].density();
+        const Scalar density1 = useMoles1 ? cParams.elemVolVarsCur1[vertInElem1].molarDensity()
+                                          : cParams.elemVolVarsCur1[vertInElem1].density();
+        const Scalar massMoleFrac1 = useMoles1 ? cParams.elemVolVarsCur1[vertInElem1].moleFraction(transportCompIdx1)
+                                               : cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
 
-        if (std::abs(bfNormal1[1]) < 1e-10)
+        const Scalar normalPhaseFlux1 = boundaryVars1.normalVelocity() * density1;
+        const Scalar diffusiveMoleFlux1 = bfNormal1
+                                          * boundaryVars1.moleFractionGrad(transportCompIdx1)
+                                          * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                            + boundaryVars1.eddyDiffusivity())
+                                          * boundaryVars1.molarDensity();
+
+        using std::abs;
+        if (abs(bfNormal1[1]) < 1e-10)
         {
             DUNE_THROW(Dune::NotImplemented, "The coupling conditions are not implemented for vertical interfaces.");
         }
@@ -445,13 +463,16 @@ public:
         }
         if (cParams.boundaryTypes2.isCouplingNeumann(massBalanceIdx2))
         {
-            static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                          "This coupling condition is only implemented for mass fraction formulation.");
-
             if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
             {
+                Scalar diffusiveFlux = diffusiveMoleFlux1 * FluidSystem::molarMass(transportCompIdx1)
+                                       - diffusiveMoleFlux1 * FluidSystem::molarMass(phaseCompIdx1);
+                if (useMoles1)
+                {
+                    diffusiveFlux = 0.0;
+                }
                 couplingRes2.accumulate(lfsu2.child(massBalanceIdx2), vertInElem2,
-                                        -normalMassFlux1);
+                                        - normalPhaseFlux1 + diffusiveFlux);
             }
             else
             {
@@ -477,7 +498,8 @@ public:
         SpatialParams spatialParams = globalProblem_.sdProblem2().spatialParams();
         Scalar beaversJosephCoeff = spatialParams.beaversJosephCoeffAtPos(globalPos1);
         assert(beaversJosephCoeff > 0);
-        beaversJosephCoeff /= std::sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
+        using std::sqrt;
+        beaversJosephCoeff /= sqrt(spatialParams.intrinsicPermeability(sdElement2, cParams.fvGeometry2, vertInElem2));
 
         // Neumann-like conditions
         if (cParams.boundaryTypes1.isCouplingNeumann(momentumXIdx1))
@@ -535,19 +557,19 @@ public:
                 Scalar sumNormalPhaseFluxes = 0.0;
                 for (int phaseIdx=0; phaseIdx<numPhases2; ++phaseIdx)
                 {
-                    sumNormalPhaseFluxes -= boundaryVars2.volumeFlux(phaseIdx)
-                                            * cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
+                    Scalar density = useMoles2 ? cParams.elemVolVarsCur2[vertInElem2].molarDensity(phaseIdx)
+                                               : cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
+                    sumNormalPhaseFluxes -= boundaryVars2.volumeFlux(phaseIdx) * density;
                 }
                 couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
-                                        -sumNormalPhaseFluxes
-                                        / cParams.elemVolVarsCur1[vertInElem1].density());
+                                        -sumNormalPhaseFluxes / density1);
             }
             else
             {
                 // set residualStokes[momentumYIdx1] = v_y in stokesnccouplinglocalresidual.hh
                 couplingRes1.accumulate(lfsu1.child(momentumYIdx1), vertInElem1,
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
-                                        / cParams.elemVolVarsCur1[vertInElem1].density());
+                                        / density1);
             }
         }
 
@@ -564,52 +586,46 @@ public:
             // only enter here, if a boundary layer model is used for the computation of the diffusive fluxes
             if (blModel_)
             {
-                Scalar advectiveFlux = normalMassFlux1
-                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-
-                Scalar diffusiveFlux = bfNormal1.two_norm()
-                                       * globalProblem_.evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
-                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
-                                         + boundaryVars1.eddyDiffusivity())
-                                       * boundaryVars1.molarDensity()
-                                       * FluidSystem::molarMass(transportCompIdx1);
+                Scalar advectiveFlux = normalPhaseFlux1 * massMoleFrac1;
+                Scalar diffusiveFluxBL = bfNormal1.two_norm()
+                                         * globalProblem_.evalBoundaryLayerConcentrationGradient(cParams, vertInElem1)
+                                         * (boundaryVars1.diffusionCoeff(transportCompIdx1)
+                                           + boundaryVars1.eddyDiffusivity())
+                                         * boundaryVars1.molarDensity();
+                if (!useMoles1)
+                {
+                    diffusiveFluxBL *= FluidSystem::molarMass(transportCompIdx1);
+                }
 
                 const Scalar massTransferCoeff = globalProblem_.evalMassTransferCoefficient(cParams, vertInElem1, vertInElem2);
 
                 if (massTransferModel_ && globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                 {
-                    Scalar diffusiveFluxAtCorner = bfNormal1
-                                                   * boundaryVars1.moleFractionGrad(transportCompIdx1)
-                                                   * (boundaryVars1.diffusionCoeff(transportCompIdx1)
-                                                      + boundaryVars1.eddyDiffusivity())
-                                                   * boundaryVars1.molarDensity()
-                                                   * FluidSystem::molarMass(transportCompIdx1);
+                    Scalar diffusiveFluxAtCorner = diffusiveMoleFlux1;
+                    if (!useMoles1)
+                    {
+                        diffusiveFluxAtCorner *= FluidSystem::molarMass(transportCompIdx1);
+                    }
 
                     couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
-                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) -
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFluxBL) -
                                             (1.-massTransferCoeff)*(advectiveFlux - diffusiveFluxAtCorner));
                 }
                 else
                 {
                     couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
-                                            -massTransferCoeff*(advectiveFlux - diffusiveFlux) +
+                                            -massTransferCoeff*(advectiveFlux - diffusiveFluxBL) +
                                             (1.-massTransferCoeff)*globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
                 }
             }
             else if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
             {
-                static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
-                              "This coupling condition is only implemented for mass fraction formulation.");
-
-                Scalar advectiveFlux = normalMassFlux1
-                                       * cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
-
-                Scalar diffusiveFlux = bfNormal1
-                                       * boundaryVars1.moleFractionGrad(transportCompIdx1)
-                                       * (boundaryVars1.diffusionCoeff(transportCompIdx1)
-                                          + boundaryVars1.eddyDiffusivity())
-                                       * boundaryVars1.molarDensity()
-                                       * FluidSystem::molarMass(transportCompIdx1);
+                Scalar advectiveFlux = normalPhaseFlux1 * massMoleFrac1;
+                Scalar diffusiveFlux = diffusiveMoleFlux1;
+                if (!useMoles1)
+                {
+                    diffusiveFlux *= FluidSystem::molarMass(transportCompIdx1);
+                }
 
                 couplingRes2.accumulate(lfsu2.child(contiWEqIdx2), vertInElem2,
                                         -(advectiveFlux - diffusiveFlux));
@@ -628,13 +644,12 @@ public:
         // Dirichlet-like conditions
         if (cParams.boundaryTypes1.isCouplingDirichlet(transportEqIdx1))
         {
-            static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
-                          "This coupling condition is only implemented for mass fraction formulation.");
-
             // set residualStokes[transportEqIdx1] = x in stokesnccouplinglocalresidual.hh
             // coupling residual is added to "real" residual
+            Scalar massMoleFrac = useMoles2 ? cParams.elemVolVarsCur2[vertInElem2].moleFraction(nPhaseIdx2, wCompIdx2)
+                                            : cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2);
             couplingRes1.accumulate(lfsu1.child(transportEqIdx1), vertInElem1,
-                                    -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
+                                    -massMoleFrac);
         }
         if (cParams.boundaryTypes2.isCouplingDirichlet(contiWEqIdx2))
         {
