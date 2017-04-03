@@ -811,7 +811,7 @@ public:
     /*!
      * \brief Returns the diffusivity coefficient matrix
      */
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
+    const Dune::FieldVector<Scalar, numPhases>& diffusionCoefficient() const
     { return diffusionCoefficient_; }
 
     /*!

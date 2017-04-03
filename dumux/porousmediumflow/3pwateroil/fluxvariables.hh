@@ -244,10 +244,12 @@ private:
 
 public:
     /*!
-     * \brief The diffusivity vector
+     * \brief The binary diffusion coefficient for each fluid phase.
+     *
+     *   \param phaseIdx The phase index
      */
-    Dune::FieldVector<Scalar, numPhases> porousDiffCoeff() const
-    { return porousDiffCoeff_; };
+    Scalar porousDiffCoeff(int phaseIdx) const
+    { return porousDiffCoeff_[phaseIdx];}
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
@@ -285,9 +287,8 @@ protected:
 
     // the diffusivity matrix for the porous medium
     Dune::FieldVector<Scalar, numPhases> porousDiffCoeff_;
-
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -35,7 +35,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <dune/common/deprecated.hh>
 #include <dumux/common/exceptions.hh>
 
 namespace Dumux
@@ -60,27 +59,6 @@ template <class Scalar>
 class Region2
 {
 public:
-    /*!
-     * \brief Returns true if IAPWS region 2 applies for a
-     *        (temperature, pressure) pair.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    DUNE_DEPRECATED_MSG("isValid is deprecated. Use checkValidityRange instead.")
-    static constexpr bool isValid(Scalar temperature, Scalar pressure)
-    {
-        return temperature <= 623.15 && pressure <= 100e6;
-
-        // actually this is:
-        /*
-        return
-           (273.15 <= temperature && temperature <= 623.15 && pressure <= vaporPressure(temperature)) ||
-           (623.15 < temperature && temperature <= 863.15 && pressure <= auxPressure(temperature)) ||
-           (863.15 < temperature && temperature <= 1073.15 && pressure < 100e6);
-        */
-    }
-
     /*!
      * \brief Returns true if IAPWS region 2 applies for a
      *        (temperature, pressure) pair.
