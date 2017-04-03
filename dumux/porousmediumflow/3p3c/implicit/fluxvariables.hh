@@ -279,17 +279,6 @@ private:
 
 public:
     /*!
-     * \brief The diffusivity matrix
-     *
-     * \tparam Scalar Field type
-     * \tparam numPhases The number of phases of the problem
-     * \tparam numComponents The number of components of the problem
-     */
-    DUNE_DEPRECATED_MSG("porousDiffCoeff() is deprecated. Use porousDiffCoeff(phaseIdx, compIdx) instead.")
-    Dune::FieldMatrix<Scalar, numPhases, numComponents> porousDiffCoeff() const
-    { return porousDiffCoeff_; };
-
-    /*!
      * \brief The binary diffusion coefficient for each fluid phase.
      *
      *   \param phaseIdx The phase index

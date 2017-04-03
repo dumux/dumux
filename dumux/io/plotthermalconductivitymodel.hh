@@ -24,8 +24,6 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -61,30 +59,6 @@ class PlotThermalConductivityModel
     };
 
 public:
-    /*!
-     * \brief Constructor
-     *
-     * Initializes the fluid system.
-     *
-     * \param temperature temperature in \f$\mathrm{[K]}\f$
-     * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
-     */
-    DUNE_DEPRECATED_MSG("PlotThermalConductivityModel(Scalar, Scalar, bool) is deprecated. Use PlotThermalConductivityModel(Scalar, Scalar) instead.")
-    PlotThermalConductivityModel(Scalar temperature,
-                                 Scalar pressure,
-                                 bool interaction)
-    : numIntervals_(1000)
-    {
-        FluidState fluidstate;
-        fluidstate.setTemperature(temperature);
-        fluidstate.setPressure(wPhaseIdx, pressure);
-        fluidstate.setPressure(nPhaseIdx, pressure);
-        lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
-        lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
-        gnuplot_.setInteraction(interaction);
-    }
-
     /*!
      * \brief Constructor
      *
@@ -143,52 +117,8 @@ public:
         gnuplot.addDataSetToPlot(sw, lambda, curveName, curveOptions);
     }
 
-    /*!
-     * \brief Plot the effective thermal conductivity-saturation curve
-     *
-     * \param porosity The porosity of the porous medium
-     * \param rhoSolid The density of the solid material
-     * \param lambdaSolid The thermal conductivity of the solid material
-     * \param lowerSat Minimum x-value
-     * \param upperSat Maximum x-value
-     * \param curveTitle Name of the plotted curve
-     */
-    DUNE_DEPRECATED_MSG("plotlambdaeff() is deprecated. Use addlambdaeffcurve() instead.")
-    void plotlambdaeff(Scalar porosity,
-                       Scalar rhoSolid,
-                       Scalar lambdaSolid,
-                       Scalar lowerSat = 0.0,
-                       Scalar upperSat = 1.0,
-                       std::string curveTitle = "")
-    {
-        std::vector<Scalar> sw(numIntervals_+1);
-        std::vector<Scalar> lambda(numIntervals_+1);
-        Scalar satInterval = upperSat - lowerSat;
-        Scalar lambdaMin = 0.0;
-        Scalar lambdaMax = -1e100;
-        using std::max;
-        using std::min;
-        for (int i = 0; i <= numIntervals_; i++)
-        {
-            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            lambda[i] = ThermalConductivityModel::effectiveThermalConductivity(sw[i], lambdaW_,
-                                                                               lambdaN_, lambdaSolid,
-                                                                               porosity, rhoSolid);
-            lambdaMin = min(lambdaMin, lambda[i]);
-            lambdaMax = max(lambdaMax, lambda[i]);
-        }
-
-        gnuplot_.setXRange(lowerSat, upperSat);
-        gnuplot_.setYRange(lambdaMin, lambdaMax);
-        gnuplot_.setXlabel("wetting phase saturation [-]");
-        gnuplot_.setYlabel("effective thermal conductivity [W/(m K)]");
-        gnuplot_.addDataSetToPlot(sw, lambda, curveTitle + "_lambda_eff");
-        gnuplot_.plot("lambdaeff");
-    }
-
 private:
     int numIntervals_;
-    GnuplotInterface<Scalar> gnuplot_;
     Scalar lambdaN_;
     Scalar lambdaW_;
 };

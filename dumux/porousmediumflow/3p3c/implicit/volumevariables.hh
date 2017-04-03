@@ -686,13 +686,6 @@ public:
     { return porosity_; }
 
     /*!
-     * \brief Returns the diffusivity coefficient matrix.
-     */
-    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffCoeff(phaseIdx, compIdx) instead.")
-    Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient() const
-    { return diffCoeff_; }
-
-    /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffCoeff(int phaseIdx, int compIdx) const
