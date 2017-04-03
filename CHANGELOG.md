@@ -1,3 +1,37 @@
+Differences Between DuMuX 2.11 and DuMuX 2.12
+=============================================
+
+* IMPORTANT NOTES:
+    - DuMuX 2.12 is expected to run based on Dune 2.4.1, 2.5 and the Dune
+      master. We will try to keep the compatibility with the Dune master
+      as long as it is technically feasible and our resources allow it. If
+      you want to use Dumux multidomain models, you have to stick with the
+      Dune 2.4 core and specific versions of other modules, see
+      `test/multidomain/README` for details.
+
+    - DuMux 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+
+    - For employing corner-point grids by means of opm-grid (former
+      dune-cornerpoint), the OPM release 2016.04 has to be used.
+
+* IMPROVEMENTS and ENHANCEMENTS:
+
+* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+
+* Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.12: BEWARE: The
+  compiler will not print any warning if a deprecated property or parameter name
+  is used. If possible, a run-time warning will appear in the summary lines
+  after the corresponding run.
+
+* Deprecated CLASSES/FILES, to be removed after 2.12:
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.12:
+
+* DELETED classes/files, property names, constants/enums,
+  member functions, which have been deprecated in DuMuX 2.11  :
+    - Everything listed as deprecated below has been removed.
+
+
 Differences Between DuMuX 2.10 and DuMuX 2.11
 =============================================
 
