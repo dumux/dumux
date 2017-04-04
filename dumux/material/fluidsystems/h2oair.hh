@@ -569,6 +569,19 @@ public:
         return 1.0;
     }
 
+    /*!
+     * \brief Returns the relative humidity of the gas phase.
+     *
+     * The relative humidity is the ratio of the partial pressure of water vapor
+     * to the equilibrium vapor pressure of water at a given temperature.
+     */
+    template <class FluidState>
+    static Scalar relativeHumidity(const FluidState &fluidState)
+    {
+        return fluidState.partialPressure(nPhaseIdx, wCompIdx)
+               / H2O::vaporPressure(fluidState.temperature(nPhaseIdx));
+    }
+
     using Base::diffusionCoefficient;
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
