@@ -29,6 +29,12 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(TauTortuosity);
+}
+
 /*!
  * \ingroup fluidmatrixinteractionslaws
  *

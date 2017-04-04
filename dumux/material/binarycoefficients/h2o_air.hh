@@ -24,6 +24,8 @@
 #ifndef DUMUX_BINARY_COEFF_H2O_AIR_HH
 #define DUMUX_BINARY_COEFF_H2O_AIR_HH
 
+#include <cmath>
+
 
 namespace Dumux
 {
