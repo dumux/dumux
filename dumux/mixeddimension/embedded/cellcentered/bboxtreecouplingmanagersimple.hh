@@ -225,9 +225,6 @@ public:
         // initializes the point source id counter
         clear();
 
-        // a vector for the volumes the low-dim domain occupies in the bulk domain if it were full-dimensional
-        lowDimVolumeInBulkElement_.resize(this->bulkGridView().size(0));
-
         // intersect the bounding box trees
         glue_->build();
 
@@ -297,6 +294,10 @@ public:
     //! Compute the low dim volume fraction in the bulk domain cells
     void computeLowDimVolumeFractions()
     {
+        // resize the storage vector
+        lowDimVolumeInBulkElement_.resize(this->bulkGridView().size(0));
+
+        // compute the low dim volume fractions
         for (const auto& is : intersections(*glue_))
         {
             // all inside elements are identical...

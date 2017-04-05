@@ -362,6 +362,9 @@ public:
         // intersect the bounding box trees
         glue_->build();
 
+        // resize the storage vector
+        lowDimVolumeInBulkElement_.resize(bulkProblem().gridView().size(0));
+
         // compute the low dim volume fractions
         for (const auto& is : intersections(*glue_))
         {
