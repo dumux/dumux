@@ -170,7 +170,7 @@ public:
     }
 
     //! The geometry of the sub control volume face
-    const Geometry geometry() const
+    Geometry geometry() const
     {
         return Geometry(geomType_, corners_);
     }
