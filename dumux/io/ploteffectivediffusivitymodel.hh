@@ -24,8 +24,6 @@
 #ifndef DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 #define DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
@@ -48,14 +46,6 @@ class PlotEffectiveDiffusivityModel
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
-    //! Constructor
-    DUNE_DEPRECATED_MSG("PlotEffectiveDiffusivityModel(bool) is deprecated. Use PlotEffectiveDiffusivityModel() instead.")
-    PlotEffectiveDiffusivityModel(bool interaction)
-    : numIntervals_(1000)
-    {
-        gnuplot_.setInteraction(interaction);
-    }
-
     //! Constructor
     PlotEffectiveDiffusivityModel()
     : numIntervals_(1000)
@@ -94,48 +84,8 @@ public:
         gnuplot.addDataSetToPlot(sw, deff, curveName, curveOptions);
     }
 
-    /*!
-     * \brief Plot the effective diffusion factor-saturation curve
-     *
-     * \param porosity The porosity of the porous medium
-     * \param lowerSat Minimum x-value
-     * \param upperSat Maximum x-value
-     * \param curveTitle Name of the plotted curve
-     */
-    DUNE_DEPRECATED_MSG("plotdeff() is deprecated. Use adddeffcurve() instead.")
-    void plotdeff(Scalar porosity,
-                  Scalar lowerSat = 0.0,
-                  Scalar upperSat = 1.0,
-                  std::string curveTitle = "")
-    {
-        std::vector<Scalar> sw(numIntervals_+1);
-        std::vector<Scalar> deff(numIntervals_+1);
-        Scalar satInterval = upperSat - lowerSat;
-        Scalar deffMin = 1e100;
-        Scalar deffMax = -1e100;
-
-        for (int i = 0; i <= numIntervals_; i++)
-        {
-            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            deff[i] = EffectiveDiffusivityModel::effectiveDiffusivity(porosity, sw[i],
-                                                                      1.0 /*Diffusion Coefficient*/);
-            using std::max;
-            using std::min;
-            deffMin = min(deffMin, deff[i]);
-            deffMax = max(deffMax, deff[i]);
-        }
-
-        gnuplot_.setXRange(lowerSat, upperSat);
-        gnuplot_.setYRange(deffMin, deffMax);
-        gnuplot_.setXlabel("phase saturation [-]");
-        gnuplot_.setYlabel("effective diffusion/molecular diffusion [-]");
-        gnuplot_.addDataSetToPlot(sw, deff, curveTitle + "_d_eff");
-        gnuplot_.plot("deff");
-    }
-
 private:
     int numIntervals_;
-    GnuplotInterface<Scalar> gnuplot_;
 };
 } // end of namespace
 

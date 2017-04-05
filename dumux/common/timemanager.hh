@@ -348,23 +348,6 @@ public:
     { return time() + timeStepSize() >= episodeStartTime_ + episodeLength(); }
 
     /*!
-     * \brief Returns true if the current episode is finished at the
-     *        current time.
-     */
-    DUNE_DEPRECATED_MSG("episodeIsOver() is deprecated and has been replaced by episodeIsFinished() instead.")
-    bool episodeIsOver() const
-    { return episodeIsFinished(); }
-
-    /*!
-     * \brief Returns true if the current episode will be finished
-     *        after the current time step.
-     */
-    DUNE_DEPRECATED_MSG("episodeWillBeOver() is deprecated and has been replaced by episodeWillBeFinished() instead.")
-    bool episodeWillBeOver() const
-    { return episodeWillBeFinished(); }
-
-
-    /*!
      * \brief Aligns the time step size to the episode boundary if the
      *        current time step crosses the boundary of the current episode.
      */

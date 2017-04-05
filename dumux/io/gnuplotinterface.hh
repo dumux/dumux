@@ -42,7 +42,6 @@
 #include <string>
 #include <vector>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/stdstreams.hh>
 
 namespace Dumux
@@ -139,18 +138,6 @@ public:
         file.open(fileName);
         file << plot;
         file.close();
-    }
-
-    /*!
-     * \brief Deletes all plots from a plotting window and resets user-defined options
-     */
-    DUNE_DEPRECATED_MSG("reset() is deprecated. Use resetPlot() instead.")
-    void reset()
-    {
-        curveFile_.resize(0);
-        curveOptions_.resize(0);
-        curveTitle_.resize(0);
-        plotOptions_ = "";
     }
 
     /*!
@@ -257,17 +244,6 @@ public:
         curveFile_.push_back("'" + fileName + "'");
         curveOptions_.push_back(plotOptions);
         curveTitle_.push_back(plotName);
-    }
-
-    /*!
-     * \brief Set whether a gnuplot window will be opened or not
-     *
-     * \param interaction Open window or not
-     */
-    DUNE_DEPRECATED_MSG("setInteraction() is deprecated. Use setOpenPlotWindow() instead.")
-    void setInteraction(bool interaction)
-    {
-        setOpenPlotWindow(interaction);
     }
 
     /*!

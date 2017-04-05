@@ -243,13 +243,6 @@ private:
 
 public:
     /*!
-     * \brief The diffusivity vector
-     */
-    DUNE_DEPRECATED_MSG("porousDiffCoeff() is deprecated. Use porousDiffCoeff(phaseIdx) instead.")
-    Dune::FieldVector<Scalar, numPhases> porousDiffCoeff() const
-    { return porousDiffCoeff_; };
-
-    /*!
      * \brief The binary diffusion coefficient for each fluid phase.
      *
      *   \param phaseIdx The phase index
