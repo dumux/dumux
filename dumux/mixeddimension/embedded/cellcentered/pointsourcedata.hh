@@ -182,7 +182,7 @@ public:
         BulkPrimaryVariables bulkPriVars(0.0);
         if (enableBulkCircleInterpolation_)
         {
-            // compute the average of the bulk pressure over the circle around the integration point
+            // compute the average of the bulk privars over the circle around the integration point
             // this computes $\bar{p} = \frac{1}{2\pi R} int_0^2*\pi p R \text{d}\theta.
             if (bulkIsBox)
             {
@@ -191,7 +191,7 @@ public:
                 Scalar weightSum = 0.0;
                 for (unsigned int j = 0; j < circleStencil_.size(); ++j)
                 {
-                    BulkPrimaryVariables priVars = 0.0;
+                    BulkPrimaryVariables priVars(0.0);
                     for (unsigned int i = 0; i < circleCornerIndices_[j].size(); ++i)
                         for (unsigned int priVarIdx = 0; priVarIdx < priVars.size(); ++priVarIdx)
                             priVars[priVarIdx] += sol[circleCornerIndices_[j][i]][priVarIdx]*circleShapeValues_[j][i];
@@ -207,7 +207,9 @@ public:
                 Scalar weightSum = 0.0;
                 for (unsigned int j = 0; j < circleStencil_.size(); ++j)
                 {
-                    bulkPriVars += sol[circleStencil_[j]]*circleIpWeight_[j];
+                    for (unsigned int priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
+                        bulkPriVars[priVarIdx] += sol[circleStencil_[j]][priVarIdx]*circleIpWeight_[j];
+
                     weightSum += circleIpWeight_[j];
                 }
                 bulkPriVars /= weightSum;
