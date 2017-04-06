@@ -37,6 +37,8 @@
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
+#include <dune/common/deprecated.hh>
+
 #include "properties.hh"
 
 namespace Dumux
@@ -811,8 +813,17 @@ public:
     /*!
      * \brief Returns the diffusivity coefficient matrix
      */
-    const Dune::FieldVector<Scalar, numPhases>& diffusionCoefficient() const
-    { return diffusionCoefficient_; }
+    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffCoeff(int phaseIdx) instead.")
+    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
+    {
+        return diffusionCoefficient_;
+    }
+
+    /*!
+     * \brief Returns the diffusivity coefficient
+     */
+    Scalar diffCoeff(int phaseIdx) const
+    { return diffusionCoefficient_[phaseIdx]; }
 
     /*!
      * \brief Returns the adsorption information
