@@ -61,19 +61,19 @@ public:
     {   Dune::dwarn << "No init routine defined - make sure that this is not necessary!" << std::endl; }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true if the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()
     { DUNE_THROW(Dune::NotImplemented, "Component::gasIsCompressible()"); }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
+     * \brief Returns true if the gas phase is assumed to be ideal
      */
     static bool gasIsIdeal()
     { DUNE_THROW(Dune::NotImplemented, "Component::gasIsCompressible()"); }
 
     /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
+     * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidIsCompressible()"); }
