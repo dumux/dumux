@@ -42,6 +42,7 @@
 #include <string>
 #include <vector>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/stdstreams.hh>
 
 namespace Dumux
@@ -63,15 +64,14 @@ public:
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
         pipe_(0), openPlotWindow_(true), persist_(persist),
-        datafileSeparator_(' '), plotStyle_("lines"),
-        curveFile_(0), curveOptions_(0), curveTitle_(0),
-        xRangeMin_(1e100), xRangeMax_(-1e100),
-        yRangeMin_(1e100), yRangeMax_(-1e100),
+        terminalType_("x11"),
+        datafileSeparator_(' '), linetype_("solid"),
+        xRangeIsSet_(false), yRangeIsSet_(false),
         xLabel_(""), yLabel_(""),
-        plotOptions_(""),
         gnuplotPath_(GNUPLOT_EXECUTABLE)
     {
         open(persist_);
+        resetPlot();
     }
 
     //! \brief The destructor
@@ -87,25 +87,35 @@ public:
      * \param plottingWindowNumber Change the number of the window in which the plot is shown
      * \param terminalType Set the terminal type for the graphical output
      */
-    void plot(const std::string &title, const unsigned int plottingWindowNumber = 0, const std::string& terminalType = "x11")
+    DUNE_DEPRECATED_MSG("The signature of plot(string, int, string) has been changed to plot(string, string, int).")
+    void plot(const std::string &title, const unsigned int plottingWindowNumber, const std::string& terminalType = "x11")
+    {
+        setTerminalType(terminalType);
+        plot(title, terminalType, plottingWindowNumber);
+    }
+
+    /*!
+     * \brief Plots the files for a specific window number, writes a gnuplot and png file.
+     *
+     * \param filename The name of the output file
+     */
+    void plot(const std::string &filename = "")
     {
         // set correct terminal and general options
         std::string plot = "reset\n";
-        plot += "set datafile separator \'" + convertToString(datafileSeparator_) + "\'\n";
-        if (plottingWindowNumber != 0)
-            plot += "set term " + terminalType + " " + convertToString(plottingWindowNumber) + " \n";
-        if (xRangeMin_ < 1e100 || xRangeMax_ > -1e100)
-        {
-            plot += "set xrange [" + convertToString(xRangeMin_)
-                    + ":" + convertToString(xRangeMax_) + "]" + "\n";
-        }
-        if (yRangeMin_ < 1e100 || yRangeMax_ > -1e100)
-        {
-            plot += "set yrange [" + convertToString(yRangeMin_)
-                    + ":" + convertToString(yRangeMax_) + "]" + "\n";
-        }
+        plot += "set datafile separator \'" + std::string(1, datafileSeparator_) + "\'\n";
+
+        // set the terminal if the defaults were overwritten
+        if (terminalType_.compare("x11") != 0 || linetype_.compare("solid") != 0)
+          plot += "set term " + terminalType_ + " " + linetype_ + " " + " \n";
+
+        // set the labels and axes ranges
         plot += "set xlabel \"" + xLabel_ + "\"\n";
         plot += "set ylabel \"" + yLabel_ + "\"\n";
+        if (xRangeIsSet_)
+            plot += "set xrange [" + std::to_string(xRangeMin_) + ":" + std::to_string(xRangeMax_) + "]" + "\n";
+        if (yRangeIsSet_)
+            plot += "set yrange [" + std::to_string(yRangeMin_) + ":" + std::to_string(yRangeMax_) + "]" + "\n";
 
         // set user defined options
         plot += plotOptions_ + "\n";
@@ -128,16 +138,19 @@ public:
             executeGnuplot(plot.c_str());
 #endif
 
-        // create a gnuplot file for output a png
-        plot += "\n";
-        plot += "set term pngcairo size 800,600\n";
-        plot += "set output \"" + title + ".png\"\n";
-        plot += "replot\n";
-        std::string fileName = title + ".gp";
-        std::ofstream file;
-        file.open(fileName);
-        file << plot;
-        file.close();
+        // create a gnuplot file if a filename is specified
+        if (filename.compare("") != 0)
+        {
+            plot += "\n";
+            plot += "set term pngcairo size 800,600 " + linetype_ + " \n";
+            plot += "set output \"" + filename + ".png\"\n";
+            plot += "replot\n";
+            std::string fileName = filename + ".gp";
+            std::ofstream file;
+            file.open(fileName);
+            file << plot;
+            file.close();
+        }
     }
 
     /*!
@@ -234,8 +247,8 @@ public:
         file.open(fileName);
         for (unsigned int i = 0; i < x.size(); i++)
         {
-            checkNumber(x[i], "x[i] i=" + convertToString(i) + " in " + fileName);
-            checkNumber(y[i], "y[i] i=" + convertToString(i) + " in " + fileName);
+            checkNumber(x[i], "x[i] i=" + std::to_string(i) + " in " + fileName);
+            checkNumber(y[i], "y[i] i=" + std::to_string(i) + " in " + fileName);
             file << x[i] << datafileSeparator_ << y[i] << std::endl;
         }
         file.close();
@@ -269,29 +282,27 @@ public:
     /*!
      * \brief Sets the range for the x-axis
      *
-     * \param lowerEnd The lowest plotted value for the x-axis
-     * \param upperEnd The highest plotted value for the x-axis
+     * \param min The lowest plotted value for the x-axis
+     * \param max The highest plotted value for the x-axis
      */
-    void setXRange(Scalar lowerEnd, Scalar upperEnd)
+    void setXRange(Scalar min, Scalar max)
     {
-        using std::max;
-        using std::min;
-        xRangeMin_ = min(xRangeMin_, lowerEnd);
-        xRangeMax_ = max(xRangeMax_, upperEnd);
+        xRangeMin_ = min;
+        xRangeMax_ = max;
+        xRangeIsSet_ = true;
     }
 
     /*!
      * \brief Sets the range for the y-axis
      *
-     * \param lowerEnd The lowest plotted value for the y-axis
-     * \param upperEnd The highest plotted value for the y-axis
+     * \param min The lowest plotted value for the y-axis
+     * \param max The highest plotted value for the y-axis
      */
-    void setYRange(Scalar lowerEnd, Scalar upperEnd)
+    void setYRange(Scalar min, Scalar max)
     {
-        using std::max;
-        using std::min;
-        yRangeMin_ = min(yRangeMin_, lowerEnd);
-        yRangeMax_ = max(yRangeMax_, upperEnd);
+        yRangeMin_ = min;
+        yRangeMax_ = max;
+        yRangeIsSet_ = true;
     }
 
     /*!
@@ -324,6 +335,26 @@ public:
         datafileSeparator_ = separator;
     }
 
+    /*!
+     * \brief Sets the terminal used for interactive outpu
+     *
+     * \param terminal The user-specified terminal
+     */
+    void setTerminalType(std::string terminal)
+    {
+        terminalType_ = terminal;
+    }
+
+    /*!
+     * \brief Use dashed (true) or solid (false) lines
+     *
+     * \param dashed Use dashed lines
+     */
+    void useDashedLines(bool dashed)
+    {
+        linetype_ = dashed ? "dashed" : "solid";
+    }
+
 private:
     // Give plot command to gnuplot
     void executeGnuplot(const std::string& plotCommand) const
@@ -343,28 +374,22 @@ private:
             Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 
-    // Convert number or character to string
-    template<class T>
-    std::string convertToString(const T input) const
-    {
-        std::ostringstream stream;
-        stream << input;
-        return stream.str();
-    }
-
     std::FILE * pipe_;
     bool openPlotWindow_;
     bool persist_;
+    std::string terminalType_;
     char datafileSeparator_;
-    std::string plotStyle_;
+    std::string linetype_;
     StringVector curveFile_;
     StringVector curveOptions_;
     StringVector curveTitle_;
     bool interaction_;
     Scalar xRangeMin_;
     Scalar xRangeMax_;
+    Scalar xRangeIsSet_;
     Scalar yRangeMin_;
     Scalar yRangeMax_;
+    Scalar yRangeIsSet_;
     std::string xLabel_;
     std::string yLabel_;
     std::string plotOptions_;
