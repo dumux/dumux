@@ -475,13 +475,13 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true if the gas phase is assumed to be compressible
      */
     static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
+     * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static constexpr bool liquidIsCompressible()
     { return true; }
@@ -554,7 +554,7 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
+     * \brief Returns true if the gas phase is assumed to be ideal
      */
     static constexpr bool gasIsIdeal()
     { return false; }

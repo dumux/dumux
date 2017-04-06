@@ -126,7 +126,7 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true if the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()
     { return true; }
@@ -144,7 +144,7 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
+     * \brief Returns true if the gas phase is assumed to be ideal
      */
     static bool gasIsIdeal()
     { return true; }
