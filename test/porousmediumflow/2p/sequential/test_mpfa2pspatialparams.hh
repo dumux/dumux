@@ -279,7 +279,7 @@ private:
     {
         for (int i = 0; i < dim; i++)
         {
-            if (globalPos[i] < lensOneLowerLeft_[i] + eps_ || globalPos[i] > lensOneUpperRight_[i] - eps_)
+            if (globalPos[i] < lensOneLowerLeft_[i] - eps_ || globalPos[i] > lensOneUpperRight_[i] + eps_)
             {
                 return false;
             }
@@ -290,7 +290,7 @@ private:
     {
         for (int i = 0; i < dim; i++)
         {
-            if (globalPos[i] < lensTwoLowerLeft_[i] + eps_ || globalPos[i] > lensTwoUpperRight_[i] - eps_)
+            if (globalPos[i] < lensTwoLowerLeft_[i] - eps_ || globalPos[i] > lensTwoUpperRight_[i] + eps_)
             {
                 return false;
             }
@@ -301,7 +301,7 @@ private:
     {
         for (int i = 0; i < dim; i++)
         {
-            if (globalPos[i] < lensThreeLowerLeft_[i] + eps_ || globalPos[i] > lensThreeUpperRight_[i] - eps_)
+            if (globalPos[i] < lensThreeLowerLeft_[i] - eps_ || globalPos[i] > lensThreeUpperRight_[i] + eps_)
             {
                 return false;
             }
