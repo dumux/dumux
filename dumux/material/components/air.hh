@@ -63,7 +63,7 @@ public:
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of Air.
      */
     static Scalar criticalTemperature()
-    { return 132.531 ; /* [K] */ }
+    { return 132.6312; /* [K] */ }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of Air.
@@ -110,6 +110,7 @@ public:
         // Assume an ideal gas
         return IdealGas::pressure(temperature, density/molarMass());
     }
+
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
      *
@@ -126,40 +127,119 @@ public:
      * therefore not considered below
      * the same holds for the correction value kappa for highly polar substances
      *
+     * This calculation was introduced into Dumux in 2012 although the method here
+     * is designed for general polar substances. Air, however, is (a) non-polar,
+     * and (b) there are more precise methods available
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    static Scalar oldGasViscosity(Scalar temperature, Scalar pressure)
     {
-
         const Scalar Tc = criticalTemperature();
         const Scalar Vc = 84.525138; // critical specific volume [cm^3/mol]
         const Scalar omega = 0.078; // accentric factor
         const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
 
-        Scalar Fc = 1 - 0.2756*omega;
-        Scalar Tstar = 1.2593 * temperature/Tc;
-        Scalar Omega_v =
-            1.16145*std::pow(Tstar, -0.14874) +
-            0.52487*std::exp(- 0.77320*Tstar) +
-            2.16178*std::exp(- 2.43787*Tstar);
-        Scalar mu = 40.785 * Fc * std::sqrt(M * temperature)
-                    / (std::cbrt(Vc * Vc) * Omega_v);
+        const Scalar Fc = 1.0 - 0.2756*omega;
+        const Scalar Tstar = 1.2593*temperature/Tc;
+
+        using std::exp;
+        using std::pow;
+        const Scalar Omega_v = 1.16145*pow(Tstar, -0.14874)
+                               + 0.52487*exp(-0.77320*Tstar)
+                               + 2.16178*exp(-2.43787*Tstar);
+
+        using std::cbrt;
+        using std::sqrt;
+        const Scalar mu = 40.785 * Fc * sqrt(M * temperature)/(cbrt(Vc * Vc) * Omega_v);
 
         // convertion from micro poise to Pa s
-        return mu/1e6 / 10;
+        return mu/1.0e6/10.0;
     }
 
-    // simpler method, from old constrelAir.hh
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
+     *
+     * Simple method, already implemented in MUFTE-UG, but pretty accurate.
+     *
+     * The pressure correction is even simpler and developed and tested by
+     * Holger Class in 2016 against the results of the Lemmon and Jacobsen (2004)
+     * approach \cite LemmonJacobsen2004
+     * It shows very reasonable results throughout realistic pressure and
+     * temperature ranges up to several hundred Kelvin and up to 500 bar
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    {
+        // above 1200 K, the function becomes inaccurate
+        // since this should realistically never happen, we can live with it
+        const Scalar tempCelsius = temperature - 273.15;
+        const Scalar pressureCorrectionFactor = 9.7115e-9*tempCelsius*tempCelsius - 5.5e-6*tempCelsius + 0.0010809;
+
+        using std::sqrt;
+        const Scalar mu = 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0)
+                          * (1.0 + (pressure/1.0e5 - 1.0)*pressureCorrectionFactor);
+        return mu;
+    }
+
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
+     *
+     * Simple method, already implemented in MUFTE-UG, but pretty accurate
+     * at atmospheric pressures.
+     * Gas viscosity is not very dependent on pressure. Thus, for
+     * low pressures one might switch the pressure correction off
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
     static Scalar simpleGasViscosity(Scalar temperature, Scalar pressure)
     {
-        if(temperature < 273.15 || temperature > 660.)
-        {
-            DUNE_THROW(NumericalProblem,
-                "simpleGasViscosity: Temperature out of range! (T = " << temperature << " K)");
-        }
-        return 1.496e-6 * std::sqrt(temperature * temperature * temperature) / (temperature + 120.);
+        // above 1200 K, the function becomes inaccurate
+        // since this should realistically never happen, we can live with it
+        using std::sqrt;
+        return 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0);
+    }
 
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
+     *
+     * This is a very exact approach by Lemmon and Jacobsen (2004) \cite LemmonJacobsen2004
+     * All the values and parameters used below are explained in their paper
+     * Since they use ''eta'' for dyn. viscosity, we do it as well for easier
+     * comparison with the paper
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar exactGasViscosity(Scalar temperature, Scalar pressure)
+    {
+        const Scalar epsk = 103.3; // [K]
+
+        using namespace std;
+        const Scalar logTstar = log(temperature/epsk);
+        const Scalar Omega = exp(0.431
+                                 - 0.4623*logTstar
+                                 + 0.08406*logTstar*logTstar
+                                 + 0.005341*logTstar*logTstar*logTstar
+                                 - 0.00331*logTstar*logTstar*logTstar*logTstar);
+
+        const Scalar sigma = 0.36; // [nm]
+        const Scalar eta0 = 0.0266958*sqrt(1000.0*molarMass()*temperature)/(sigma*sigma*Omega);
+
+        const Scalar tau = criticalTemperature()/temperature;
+        const Scalar rhoc = 10.4477; // [mol/m^3]
+        const Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;
+        const Scalar etaR = 10.72 * pow(tau, 0.2) * delta
+                            + 1.122 * pow(tau, 0.05) * pow(delta, 4)
+                            + 0.002019 * pow(tau, 2.4) * pow(delta, 9)
+                            - 8.876 * pow(tau, 0.6) * delta * exp(-delta)
+                            - 0.02916 * pow(tau, 3.6) * pow(delta, 8) * exp(-delta);
+
+        return (eta0 + etaR)*1e-6;
     }
 
     /*!
@@ -190,11 +270,9 @@ public:
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
     {
-        return
-            gasEnthalpy(temperature, pressure)
-            -
-            IdealGas::R * temperature // = pressure * molar volume for an ideal gas
-            / molarMass(); // conversion from [J/(mol K)] to [J/(kg K)]
+        return gasEnthalpy(temperature, pressure)
+               - IdealGas::R * temperature // = pressure * molar volume for an ideal gas
+                 / molarMass(); // conversion from [J/(mol K)] to [J/(kg K)]
     }
 
     /*!
@@ -216,21 +294,21 @@ public:
         // scale temperature with reference temp of 100K
         Scalar phi = temperature/100;
 
+        using std::pow;
         Scalar c_p = 0.661738E+01
                 -0.105885E+01 * phi
-                +0.201650E+00 * std::pow(phi,2)
-                -0.196930E-01 * std::pow(phi,3)
-                +0.106460E-02 * std::pow(phi,4)
-                -0.303284E-04 * std::pow(phi,5)
-                +0.355861E-06 * std::pow(phi,6);
-        c_p +=   -0.549169E+01 * std::pow(phi,-1)
-                +0.585171E+01* std::pow(phi,-2)
-                -0.372865E+01* std::pow(phi,-3)
-                +0.133981E+01* std::pow(phi,-4)
-                -0.233758E+00* std::pow(phi,-5)
-                +0.125718E-01* std::pow(phi,-6);
+                +0.201650E+00 * pow(phi,2)
+                -0.196930E-01 * pow(phi,3)
+                +0.106460E-02 * pow(phi,4)
+                -0.303284E-04 * pow(phi,5)
+                +0.355861E-06 * pow(phi,6);
+        c_p +=  -0.549169E+01 * pow(phi,-1)
+                +0.585171E+01 * pow(phi,-2)
+                -0.372865E+01 * pow(phi,-3)
+                +0.133981E+01 * pow(phi,-4)
+                -0.233758E+00 * pow(phi,-5)
+                +0.125718E-01 * pow(phi,-6);
         c_p *= IdealGas::R / (molarMass() * 1000); // in J/mol/K * mol / kg / 1000 = kJ/kg/K
-
 
         return  c_p;
     }
