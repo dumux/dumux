@@ -46,7 +46,7 @@ class Brine_Air {
 
 public:
     /*!
-     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of water in the Air phase.
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of water in the Air phase.
      *
      * According to B. Xu et al. (2003) \cite xu2003 <BR>
      * \param temperature the temperature \f$\mathrm{[K]}\f$
@@ -67,7 +67,7 @@ public:
     /*!
         * Lacking better data on water-air diffusion in liquids, we use at the
         * moment the diffusion coefficient of the air's main component nitrogen!!
-        * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
+        * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
         *
         * The empirical equations for estimating the diffusion coefficient in
         * infinite solution which are presented in Reid, 1987 all show a
@@ -558,7 +558,7 @@ private:
     }
 
     /*!
-     * \brief The fugacity coefficent of Air for a Air-H2O mixture.
+     * \brief The fugacity coefficient of Air for a Air-H2O mixture.
      *
      * \param temperature the temperature [K]
      * \param pg the gas phase pressure [Pa]

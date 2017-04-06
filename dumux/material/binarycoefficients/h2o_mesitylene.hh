@@ -39,7 +39,7 @@ class H2O_Mesitylene
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for mesitylene in liquid water.
+     * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for mesitylene in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * See:
      *
@@ -57,7 +57,7 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular water and mesitylene.
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and mesitylene.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      *
@@ -107,7 +107,7 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for mesitylene in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for mesitylene in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      *

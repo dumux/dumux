@@ -127,7 +127,7 @@ public:
         // point in the porous medium
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // make sure to only calculate diffusion coefficents
+            // make sure to only calculate diffusion coefficients
             // for phases which exist in both finite volumes
             if (elemVolVars[i].saturation(phaseIdx) <= 1e-4 ||
                 elemVolVars[j].saturation(phaseIdx) <= 1e-4)
