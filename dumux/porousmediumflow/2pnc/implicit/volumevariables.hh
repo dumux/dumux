@@ -150,7 +150,7 @@ public:
             int compIIdx = phaseIdx;
             for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
             {
-                // binary diffusion coefficents
+                // binary diffusion coefficients
                 diffCoeff_[phaseIdx][compJIdx] = 0.0;
                 if(compIIdx!= compJIdx)
                 {

@@ -508,7 +508,7 @@ protected:
     GlobalPosition potentialGrad_;
     //! mole-fraction gradient
     GlobalPosition moleFractionGrad_;
-    //! the effective diffusion coefficent in the porous medium
+    //! the effective diffusion coefficient in the porous medium
     Scalar porousDiffCoeff_;
 
     //! the dispersion tensor in the porous medium

@@ -39,7 +39,7 @@ class H2O_HeavyOil
 {
 public:
     /*!
-     * \brief Henry coefficent \f$[N/m^2]\f$  for heavy oil in liquid water.
+     * \brief Henry coefficient \f$[N/m^2]\f$  for heavy oil in liquid water.
      *
      * See:
      *
@@ -55,7 +55,7 @@ public:
     }
 
     /*!
-     * \brief Henry coefficent \f$[N/m^2]\f$  for water in liquid heavy oil.
+     * \brief Henry coefficient \f$[N/m^2]\f$  for water in liquid heavy oil.
      *
      * See:
      *
@@ -70,7 +70,7 @@ public:
 
 
     /*!
-     * \brief Binary diffusion coefficent [m^2/s] for molecular water and heavy oil.
+     * \brief Binary diffusion coefficient [m^2/s] for molecular water and heavy oil.
      *
      */
     template <class Scalar>
@@ -80,7 +80,7 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent [m^2/s] for tce in liquid water.
+     * \brief Diffusion coefficient [m^2/s] for tce in liquid water.
      *
      * \todo
      */

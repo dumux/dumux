@@ -134,12 +134,12 @@ public:
     static const Scalar liquidEnthalpy(Scalar T,
                                        Scalar p, Scalar salinity = constantSalinity)
     {
-        /*Numerical coefficents from PALLISER*/
+        /*Numerical coefficients from PALLISER*/
         static const Scalar f[] = {
             2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10
         };
 
-        /*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
+        /*Numerical coefficients from MICHAELIDES for the enthalpy of brine*/
         static const Scalar a[4][3] = {
             { +9633.6, -4080.0, +286.49 },
             { +166.58, +68.577, -4.6856 },

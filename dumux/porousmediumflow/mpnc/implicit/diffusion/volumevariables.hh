@@ -69,7 +69,7 @@ public:
     {
         Valgrind::SetUndefined(*this);
 
-        // diffusion coefficents in liquid
+        // diffusion coefficients in liquid
         diffCoeffL_[0] = 0.0;
         for (int compIdx = 1; compIdx < numComponents; ++compIdx) {
             diffCoeffL_[compIdx] =
@@ -81,7 +81,7 @@ public:
         }
         Valgrind::CheckDefined(diffCoeffL_);
 
-        // diffusion coefficents in gas
+        // diffusion coefficients in gas
         for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
             diffCoeffG_[compIIdx][compIIdx] = 0;
             for (int compJIdx = compIIdx + 1; compJIdx < numComponents; ++compJIdx) {
@@ -92,7 +92,7 @@ public:
                                                                 compIIdx,
                                                                 compJIdx);
 
-                // fill the symmetric part of the diffusion coefficent
+                // fill the symmetric part of the diffusion coefficient
                 // matrix
                 diffCoeffG_[compJIdx][compIIdx] = diffCoeffG_[compIIdx][compJIdx];
             }

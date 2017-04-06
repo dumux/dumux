@@ -133,7 +133,7 @@ public:
      */
     static bool isIdealMixture(int phaseIdx)
     {
-        // always use the reference oil for the fugacity coefficents,
+        // always use the reference oil for the fugacity coefficients,
         // so they cannot be dependent on composition and they the
         // phases thus always an ideal mixture
         return phaseIdx == wPhaseIdx;
