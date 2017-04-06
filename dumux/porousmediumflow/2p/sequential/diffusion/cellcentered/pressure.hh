@@ -266,11 +266,13 @@ public:
                 }
                 if (sat > 1.0)
                 {
-                    maxError_ = std::max(maxError_, (sat - 1.0) / timeStep_);
+                    using std::max;
+                    maxError_ = max(maxError_, (sat - 1.0) / timeStep_);
                 }
                 if (sat < 0.0)
                 {
-                    maxError_ = std::max(maxError_, (-sat) / timeStep_);
+                    using std::max;
+                    maxError_ = max(maxError_, (-sat) / timeStep_);
                 }
             }
         }
@@ -677,7 +679,8 @@ void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
         if (sat < 0.0) {error =  sat;}
         error /= timeStep_;
 
-        Scalar errorAbs = std::abs(error);
+        using std::abs;
+        Scalar errorAbs = abs(error);
 
         if ((errorAbs*timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_) && (!problem_.timeManager().willBeFinished()))
         {

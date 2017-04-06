@@ -207,6 +207,9 @@ public:
     void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
     {
         values = 0;
+        using std::sin;
+        using std::cos;
+        using std::atan;
 
         double pi = 4.0*atan(1.0);
 
@@ -241,6 +244,9 @@ public:
 
     Scalar exact (const GlobalPosition& globalPos) const
     {
+        using std::sin;
+        using std::atan;
+
         double pi = 4.0*atan(1.0);
 
         return (1.0+sin(pi*globalPos[0])*sin(pi*(globalPos[1]+1.0/2.0))*sin(pi*(globalPos[2]+1.0/3.0)));
@@ -249,6 +255,10 @@ public:
     Dune::FieldVector<Scalar,dim> exactGrad (const GlobalPosition& globalPos) const
     {
         Dune::FieldVector<Scalar,dim> grad(0);
+        using std::sin;
+        using std::cos;
+        using std::atan;
+
         double pi = 4.0*atan(1.0);
         grad[0] = pi*cos(pi*globalPos[0])*sin(pi*(globalPos[1]+1.0/2.0))*sin(pi*(globalPos[2]+1.0/3.0));
         grad[1] = pi*sin(pi*globalPos[0])*cos(pi*(globalPos[1]+1.0/2.0))*sin(pi*(globalPos[2]+1.0/3.0));

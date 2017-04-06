@@ -213,8 +213,10 @@ protected:
                 Scalar sj = elemVolVars[face().j].saturation(phaseIdx, fractureIdx);
                 Scalar rhoi = elemVolVars[face().i].density(phaseIdx, fractureIdx);
                 Scalar rhoj = elemVolVars[face().j].density(phaseIdx, fractureIdx);
-                Scalar fi = std::max(0.0, std::min(si/1e-5, 0.5));
-                Scalar fj = std::max(0.0, std::min(sj/1e-5, 0.5));
+                using std::max;
+                using std::min;
+                Scalar fi = max(0.0, min(si/1e-5, 0.5));
+                Scalar fj = max(0.0, min(sj/1e-5, 0.5));
                 if (fi + fj == 0)
                     // doesn't matter because no wetting phase is present in
                     // both cells!

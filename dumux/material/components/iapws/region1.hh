@@ -164,13 +164,13 @@ public:
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
+        using std::pow;
         Scalar result = 0.0;
         for (int i = 0; i < 34; i++) {
-            result +=
-                n(i) *
-                std::pow(7.1 - pi_, I(i)) *
-                std::pow(tau_ - 1.222,  J(i)-1) *
-                J(i);
+            result += n(i) *
+                      pow(7.1 - pi_, I(i)) *
+                      pow(tau_ - 1.222,  J(i)-1) *
+                      J(i);
         }
 
         return result;
@@ -192,13 +192,13 @@ public:
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
+        using std::pow;
         Scalar result = 0.0;
         for (int i = 0; i < 34; i++) {
-            result +=
-                -n(i) *
-                I(i) *
-                std::pow(7.1 - pi_, I(i) - 1) *
-                std::pow(tau_ - 1.222, J(i));
+            result += -n(i) *
+                       I(i) *
+                       pow(7.1 - pi_, I(i) - 1) *
+                       pow(tau_ - 1.222, J(i));
         }
 
         return result;
@@ -221,14 +221,14 @@ public:
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
+        using std::pow;
         Scalar result = 0.0;
         for (int i = 0; i < 34; i++) {
-            result +=
-                -n(i) *
-                I(i) *
-                J(i) *
-                std::pow(7.1 - pi_, I(i) - 1) *
-                std::pow(tau_ - 1.222, J(i) - 1);
+            result += -n(i) *
+                       I(i) *
+                       J(i) *
+                       pow(7.1 - pi_, I(i) - 1) *
+                       pow(tau_ - 1.222, J(i) - 1);
         }
 
         return result;
@@ -251,14 +251,14 @@ public:
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
+        using std::pow;
         Scalar result = 0.0;
         for (int i = 0; i < 34; i++) {
-            result +=
-                n(i) *
-                I(i) *
-                (I(i) - 1) *
-                std::pow(7.1 - pi_, I(i) - 2) *
-                std::pow(tau_ - 1.222, J(i));
+            result += n(i) *
+                      I(i) *
+                      (I(i) - 1) *
+                      pow(7.1 - pi_, I(i) - 2) *
+                      pow(tau_ - 1.222, J(i));
         }
 
         return result;
@@ -280,14 +280,14 @@ public:
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
+        using std::pow;
         Scalar result = 0.0;
         for (int i = 0; i < 34; i++) {
-            result +=
-                n(i) *
-                std::pow(7.1 - pi_, I(i)) *
-                J(i) *
-                (J(i) - 1) *
-                std::pow(tau_ - 1.222,  J(i) - 2);
+            result += n(i) *
+                      pow(7.1 - pi_, I(i)) *
+                      J(i) *
+                      (J(i) - 1) *
+                      pow(tau_ - 1.222,  J(i) - 2);
         }
 
         return result;

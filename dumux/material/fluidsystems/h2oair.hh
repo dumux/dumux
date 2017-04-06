@@ -314,9 +314,10 @@ public:
     {
         assert(compIdx == wCompIdx && phaseIdx == wPhaseIdx);
 
+        using std::exp;
         return fugacityCoefficient(fluidState, phaseIdx, compIdx)
                * fluidState.pressure(phaseIdx)
-               * std::exp(-(fluidState.pressure(nPhaseIdx)-fluidState.pressure(wPhaseIdx))
+               * exp(-(fluidState.pressure(nPhaseIdx)-fluidState.pressure(wPhaseIdx))
                           / density(fluidState, phaseIdx)
                           / (Dumux::Constants<Scalar>::R / molarMass(compIdx))
                           / fluidState.temperature());
@@ -447,12 +448,13 @@ public:
         }
         else if (phaseIdx == nPhaseIdx)
         {
+            using std::max;
             if (!useComplexRelations)
                 // for the gas phase assume an ideal gas
                 return
                     IdealGas::molarDensity(T, p)
                     * fluidState.averageMolarMass(nPhaseIdx)
-                    / std::max(1e-5, sumMoleFrac);
+                    / max(1e-5, sumMoleFrac);
 
             return
                 H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
@@ -513,6 +515,7 @@ public:
                 for (int i = 0; i < numComponents; ++i)
                 {
                     Scalar divisor = 0;
+                    using std::sqrt;
                     for (int j = 0; j < numComponents; ++j)
                     {
                         // 1 + (mu[i]/mu[j]^1/2 * (M[i]/M[j])^1/4)

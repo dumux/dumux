@@ -251,7 +251,8 @@ public:
         // first check if we are in the plane of the triangle
         // if not we can return early
         const double t = v.dot(n);
-        if (std::abs(t) > v1.two_norm()*eps_) // take |v1| as scale
+        using std::abs;
+        if (abs(t) > v1.two_norm()*eps_) // take |v1| as scale
             return false;
 
         // compute the normal to the triangle made of point and first edge
@@ -691,7 +692,8 @@ public:
         // small than the interval length and the
         // sign of v1 & v2 are the same
         using std::abs;
-        return (std::signbit(v1) == std::signbit(v2)
+        using std::signbit;
+        return (signbit(v1) == signbit(v2)
                 && abs(v1) < abs(v2)*(1 + eps_));
     }
 

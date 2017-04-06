@@ -66,9 +66,11 @@ public:
         // deflection in any degree of freedom.
         this->shift_ = 0;
 
+        using std::abs;
+        using std::max;
         for (int i = 0; i < int(uOld.base().size()); ++i) {
-            Scalar vertErr = std::abs(deltaU.base()[i]/(1.0 + std::abs((uOld.base()[i]) + uOld.base()[i] - deltaU.base()[i])/2));
-            this->shift_ = std::max(this->shift_, vertErr);
+            Scalar vertErr = abs(deltaU.base()[i]/(1.0 + abs((uOld.base()[i]) + uOld.base()[i] - deltaU.base()[i])/2));
+            this->shift_ = max(this->shift_, vertErr);
         }
 
         this->shift_ = this->gridView_().comm().max(this->shift_);
@@ -102,6 +104,7 @@ public:
                            SolutionVector &x,
                            SolutionVector &b)
     {
+        using std::min;
         try {
             if (this->numSteps_ == 0)
             {
@@ -109,7 +112,8 @@ public:
                 if (this->gridView_().comm().size() > 1)
                     norm2 = this->gridView_().comm().sum(norm2);
 
-                initialAbsoluteError_ = std::sqrt(norm2);
+                using std::sqrt;
+                initialAbsoluteError_ = sqrt(norm2);
                 lastAbsoluteError_ = initialAbsoluteError_;
             }
 

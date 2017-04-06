@@ -167,6 +167,9 @@ public:
         static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
         Scalar lnPhiAir, phiAir;
 
+        using std::log;
+        using std::pow;
+        using std::exp;
         lnPhiAir = log(V / (V - b_Air)) + b_Air / (V - b_Air) - 2 * a_Air / (R
                 * pow(T, 1.5) * b_Air) * log((V + b_Air) / V) + a_Air * b_Air
                 / (R * pow(T, 1.5) * b_Air * b_Air) * (log((V + b_Air) / V)
@@ -195,6 +198,9 @@ public:
         static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
         Scalar lnPhiH2O, phiH2O;
 
+        using std::log;
+        using std::pow;
+        using std::exp;
         lnPhiH2O = log(V / (V - b_Air)) + b_H2O / (V - b_Air) - 2 * a_Air_H2O
                 / (R * pow(T, 1.5) * b_Air) * log((V + b_Air) / V) + a_Air
                 * b_H2O / (R * pow(T, 1.5) * b_Air * b_Air) * (log((V + b_Air)
@@ -266,6 +272,7 @@ private:
         Scalar xi = computeXi_(temperature, pg); // Xi_{Air-Na+-Cl-}
         Scalar lnGammaStar = 2 * lambda * molalityNaCl + xi * molalityNaCl
                 * molalityNaCl;
+        using std::exp;
         Scalar gammaStar = exp(lnGammaStar);
         return gammaStar; // molal activity coefficient of Air in brine
     }
@@ -285,6 +292,7 @@ private:
         Scalar k0_H2O = equilibriumConstantH2O_(T); // equilibrium constant for H2O at 1 bar
         Scalar phi_H2O = fugacityCoefficientH2O(T, pg); // fugacity coefficient of H2O for the water-Air system
         Scalar pg_bar = pg / 1.e5;
+        using std::exp;
         Scalar A = k0_H2O / (phi_H2O * pg_bar) * exp(deltaP * v_av_H2O / (R * T));
         return A;
 
@@ -305,6 +313,7 @@ private:
         Scalar k0_Air = equilibriumConstantAir_(T); // equilibrium constant for Air at 1 bar
         Scalar phi_Air = fugacityCoefficientAir(T, pg); // fugacity coefficient of Air for the water-Air system
         Scalar pg_bar = pg / 1.e5;
+        using std::exp;
         Scalar B = phi_Air * pg_bar / (55.508 * k0_Air) * exp(-(deltaP
                 * v_av_Air) / (R * T));
         return B;
@@ -322,9 +331,10 @@ private:
         static const Scalar c[6] = { -0.411370585, 6.07632013E-4, 97.5347708,
                 -0.0237622469, 0.0170656236, 1.41335834E-5 };
 
+        using std::log;
         Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
         lambda = c[0] + c[1] * T + c[2] / T + c[3] * pg_bar / T + c[4] * pg_bar
-                / (630.0 - T) + c[5] * T * std::log(pg_bar);
+                / (630.0 - T) + c[5] * T * log(pg_bar);
 
         return lambda;
     }
@@ -434,6 +444,9 @@ public:
         const Scalar pgAir = partialPressureAir_(temperature, pg);
         const Scalar phiAir = fugacityCoeffAir_(temperature, pgAir, rhoAir);
 
+        using std::log;
+        using std::pow;
+        using std::exp;
         const Scalar exponent = A - log(phiAir) + 2*B*mol_NaCl + C*pow(mol_NaCl,2);
 
         const Scalar mol_Airw = pgAir / (1e5 * exp(exponent)); /* paper: equation (6) */
@@ -468,6 +481,7 @@ private:
         const Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
         const Scalar Tr = 630.0 - T;
 
+        using std::log;
         return
             c[0] +
             c[1]*T +
@@ -498,13 +512,14 @@ private:
 
         const Scalar pg_bar = pg / 1.0E5; /* conversion from Pa to bar */
 
+        using std::log;
         return
             c1 +
             c2*T +
             c3/T +
             c8*pg_bar/T +
             c9*pg_bar/(630.0-T) +
-            c11*T*std::log(pg_bar);
+            c11*T*log(pg_bar);
     }
     /*!
      * \brief computation of C
@@ -595,6 +610,8 @@ private:
         const Scalar C = a[6] + a[7] / (Tr * Tr) + a[8] / (Tr * Tr * Tr);
         const Scalar D = a[9] + a[10] / (Tr * Tr) + a[11] / (Tr * Tr * Tr);
 
+        using std::log;
+        using std::exp;
         const Scalar lnphiAir =
             Z - 1 -
             log(Z) +
@@ -608,9 +625,9 @@ private:
                 a[13] + 1 -
                 (  a[13] + 1 +
                    a[14]/(Vr*Vr)
-                    )*std::exp(-a[14]/(Vr*Vr)));
+                    )*exp(-a[14]/(Vr*Vr)));
 
-        return std::exp(lnphiAir);
+        return exp(lnphiAir);
     }
 
 };

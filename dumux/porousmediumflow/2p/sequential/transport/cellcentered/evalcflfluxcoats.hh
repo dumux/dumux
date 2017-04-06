@@ -130,10 +130,13 @@ public:
         if (rejectForTimeStepping_)
             return 0.99 / cflFluxDefault;
 
-        if (std::isnan(cflFluxFunctionCoatsOut_) || std::isinf(cflFluxFunctionCoatsOut_)){cflFluxFunctionCoatsOut_ = 0.0;}
-        if (std::isnan(cflFluxFunctionCoatsIn_) || std::isinf(cflFluxFunctionCoatsIn_)){cflFluxFunctionCoatsIn_ = 0.0;}
+        using std::isnan;
+        using std::isinf;
+        if (isnan(cflFluxFunctionCoatsOut_) || isinf(cflFluxFunctionCoatsOut_)){cflFluxFunctionCoatsOut_ = 0.0;}
+        if (isnan(cflFluxFunctionCoatsIn_) || isinf(cflFluxFunctionCoatsIn_)){cflFluxFunctionCoatsIn_ = 0.0;}
 
-        Scalar cflFluxFunctionCoats = std::max(cflFluxFunctionCoatsIn_, cflFluxFunctionCoatsOut_);
+        using std::max;
+        Scalar cflFluxFunctionCoats = max(cflFluxFunctionCoatsIn_, cflFluxFunctionCoatsOut_);
 
         if (cflFluxFunctionCoats <= 0)
         {
@@ -155,7 +158,8 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
+        using std::max;
+        Scalar porosity = max(problem_.spatialParams().porosity(element), porosityThreshold_);
         return (getCflFluxFunction(element) * porosity * element.geometry().volume());
     }
 
@@ -188,7 +192,11 @@ public:
 private:
     Scalar getCflFluxFunctionDefault()
     {
-        if (std::isnan(fluxIn_) || std::isinf(fluxIn_))
+        using std::isnan;
+        using std::isinf;
+        using std::max;
+
+        if (isnan(fluxIn_) || isinf(fluxIn_))
         {
             fluxIn_ = 1e-100;
         }
@@ -200,7 +208,7 @@ private:
 
         if (velocityType_ == vt)
         {
-            if (std::isnan(fluxOut_) || std::isinf(fluxOut_))
+            if (isnan(fluxOut_) || isinf(fluxOut_))
             {
                 fluxOut_ = 1e-100;
             }
@@ -209,21 +217,21 @@ private:
         }
         else
         {
-            if (std::isnan(fluxWettingOut_) || std::isinf(fluxWettingOut_))
+            if (isnan(fluxWettingOut_) || isinf(fluxWettingOut_))
             {
                 fluxWettingOut_ = 1e-100;
             }
-            if (std::isnan(fluxNonwettingOut_) || std::isinf(fluxNonwettingOut_))
+            if (isnan(fluxNonwettingOut_) || isinf(fluxNonwettingOut_))
             {
                 fluxNonwettingOut_ = 1e-100;
             }
 
-            cFLFluxOut = std::max(fluxWettingOut_, fluxNonwettingOut_);
+            cFLFluxOut = max(fluxWettingOut_, fluxNonwettingOut_);
         }
 
 
         //determine timestep
-        Scalar cFLFluxFunction = std::max(cFLFluxIn, cFLFluxOut);
+        Scalar cFLFluxFunction = max(cFLFluxIn, cFLFluxOut);
 
         return cFLFluxFunction;
     }
@@ -386,7 +394,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             GlobalPosition distVec = globalPosNeighbor - globalPos;
 
             // compute distance between cell centers
-            Scalar dist = std::abs(distVec * unitOuterNormal);
+            using std::abs;
+            Scalar dist = abs(distVec * unitOuterNormal);
 
             Scalar satJ = cellDataJ.saturation(wPhaseIdx);
             Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
@@ -413,13 +422,14 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Scalar transmissibility =  meanPermeability * intersection.geometry().volume() / dist;
 
             Scalar satUpw = 0;
+            using std::max;
             if (upwindWI)
             {
-                satUpw = std::max(satI, 0.0);
+                satUpw = max(satI, 0.0);
             }
             else
             {
-                satUpw = std::max(satJ, 0.0);
+                satUpw = max(satJ, 0.0);
             }
 
             Scalar ds = epsDerivative_;
@@ -432,17 +442,17 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 ds += epsDerivative_;
             }
 
-            Scalar dLambdaWDs = MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), std::abs(satPlus)) / viscosityW;
-            dLambdaWDs -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), std::abs(satMinus)) / viscosityW;
+            Scalar dLambdaWDs = MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), abs(satPlus)) / viscosityW;
+            dLambdaWDs -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), abs(satMinus)) / viscosityW;
             dLambdaWDs /= (ds);
 
             if (upwindNwI)
             {
-                satUpw = std::max(1 - satI, 0.0);
+                satUpw = max(1 - satI, 0.0);
             }
             else
             {
-                satUpw = std::max(1 - satJ, 0.0);
+                satUpw = max(1 - satJ, 0.0);
             }
 
             ds = epsDerivative_;
@@ -463,10 +473,10 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Scalar lambdaNwCap = 0.5 * (lambdaNwI + lambdaNwJ);
 
             Scalar potentialDiff = cellDataI.potential(wPhaseIdx) - cellDataJ.potential(wPhaseIdx);
-            Scalar cflFlux = transmissibility * lambdaNw * dLambdaWDs * std::abs(potentialDiff) / lambdaT;
+            Scalar cflFlux = transmissibility * lambdaNw * dLambdaWDs * abs(potentialDiff) / lambdaT;
 
             potentialDiff = cellDataI.potential(nPhaseIdx) - cellDataJ.potential(nPhaseIdx);
-            cflFlux -= transmissibility * lambdaW * dLambdaNwDs * std::abs(potentialDiff) / lambdaT;
+            cflFlux -= transmissibility * lambdaW * dLambdaNwDs * abs(potentialDiff) / lambdaT;
 
             cflFlux -= transmissibility * lambdaWCap * lambdaNwCap * (dpc_dsI + dpc_dsJ) / lambdaT;
 
@@ -606,21 +616,23 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 bcValues[wPhaseIdx] *= faceArea;
                 bcValues[nPhaseIdx] *= faceArea;
 
+                using std::abs;
+
                 if (bcValues[wPhaseIdx] > 0)
                 {
-                    cflFluxFunctionCoatsOut_ += std::abs(bcValues[wPhaseIdx]);
+                    cflFluxFunctionCoatsOut_ += abs(bcValues[wPhaseIdx]);
                 }
                 else
                 {
-                    cflFluxFunctionCoatsIn_ += std::abs(bcValues[wPhaseIdx]);
+                    cflFluxFunctionCoatsIn_ += abs(bcValues[wPhaseIdx]);
                 }
                 if (bcValues[nPhaseIdx] > 0)
                 {
-                    cflFluxFunctionCoatsOut_ += std::abs(bcValues[nPhaseIdx]);
+                    cflFluxFunctionCoatsOut_ += abs(bcValues[nPhaseIdx]);
                 }
                 else
                 {
-                    cflFluxFunctionCoatsIn_ += std::abs(bcValues[nPhaseIdx]);
+                    cflFluxFunctionCoatsIn_ += abs(bcValues[nPhaseIdx]);
                 }
 
                 return;
@@ -652,13 +664,14 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satWBound) / viscosityNwBound;
 
             Scalar satUpw = 0;
+            using std::max;
             if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside))
             {
-                satUpw = std::max(satI, 0.0);
+                satUpw = max(satI, 0.0);
             }
             else
             {
-                satUpw = std::max(satWBound, 0.0);
+                satUpw = max(satWBound, 0.0);
             }
 
             Scalar ds = epsDerivative_;
@@ -677,11 +690,11 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
 
             if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
             {
-                satUpw = std::max(1 - satI, 0.0);
+                satUpw = max(1 - satI, 0.0);
             }
             else
             {
-                satUpw = std::max(1 - satWBound, 0.0);
+                satUpw = max(1 - satWBound, 0.0);
             }
 
             ds = epsDerivative_;
@@ -702,12 +715,13 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Scalar lambdaNwCap = 0.5 * (lambdaNwI + lambdaNwBound);
 
             Scalar potDiff = cellDataI.potential(wPhaseIdx) - potWBound;
-            Scalar cflFlux = transmissibility * lambdaNw * dLambdaWDs * std::abs(potDiff) / lambdaT;
+            using std::abs;
+            Scalar cflFlux = transmissibility * lambdaNw * dLambdaWDs * abs(potDiff) / lambdaT;
 
             cflFlux -= transmissibility * lambdaWCap * lambdaNwCap * (dpc_dsI + dpc_dsBound) / lambdaT;
 
             potDiff = cellDataI.potential(nPhaseIdx) - potNwBound;
-            cflFlux -= transmissibility * lambdaW * dLambdaNwDs * std::abs(potDiff) / lambdaT;
+            cflFlux -= transmissibility * lambdaW * dLambdaNwDs * abs(potDiff) / lambdaT;
 
             if ((cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside) && lambdaW > threshold_) ||
                 (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside) && lambdaW < threshold_))

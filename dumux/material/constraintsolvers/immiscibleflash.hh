@@ -335,18 +335,20 @@ protected:
         for (int pvIdx = 0; pvIdx < numEq; ++ pvIdx) {
             Scalar tmp = getQuantity_(fluidState, pvIdx);
             Scalar delta = deltaX[pvIdx];
-
-            relError = std::max(relError, std::abs(delta)*quantityWeight_(fluidState, pvIdx));
+            using std::max;
+            using std::abs;
+            using std::min;
+            relError = max(relError, abs(delta)*quantityWeight_(fluidState, pvIdx));
 
             if (isSaturationIdx_(pvIdx)) {
                 // dampen to at most 20% change in saturation per
                 // iteration
-                delta = std::min(0.2, std::max(-0.2, delta));
+                delta = min(0.2, max(-0.2, delta));
             }
             else if (isPressureIdx_(pvIdx)) {
                 // dampen to at most 30% change in pressure per
                 // iteration
-                delta = std::min(0.30*fluidState.pressure(0), std::max(-0.30*fluidState.pressure(0), delta));
+                delta = min(0.30*fluidState.pressure(0), max(-0.30*fluidState.pressure(0), delta));
             }
 
             setQuantityRaw_(fluidState, pvIdx, tmp - delta);
@@ -501,7 +503,8 @@ protected:
 
             // make sure that the first M-1 saturations does not get
             // negative
-            value = std::max(0.0, value);
+            using std::max;
+            value = max(0.0, value);
             fs.setSaturation(phaseIdx, value);
         }
     }

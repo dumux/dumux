@@ -187,7 +187,8 @@ public:
         const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
         std::cout << "storage: " << storageTotal << '\n';
 
-        const Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        using std::max;
+        const Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 

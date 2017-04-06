@@ -285,7 +285,8 @@ public:
             // the effort, since the fugacity coefficient of the other
             // component is infinite anyway...
             return 1.0;
-        return std::numeric_limits<Scalar>::infinity();
+        using std::numeric_limits;
+        return numeric_limits<Scalar>::infinity();
     }
 
     using Base::diffusionCoefficient;

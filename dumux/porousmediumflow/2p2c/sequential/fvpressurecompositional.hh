@@ -455,7 +455,8 @@ void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
     Dune::dinfo << "secant guess"<< std::endl;
         Scalar dt_estimate = 0.;
         problem_.transportModel().update(0., dt_estimate, updateEstimate_, false);
-        dt_estimate = std::min ( problem_.timeManager().timeStepSize(), dt_estimate);
+        using std::min;
+        dt_estimate = min ( problem_.timeManager().timeStepSize(), dt_estimate);
         //make sure the right time-step is used by all processes in the parallel case
         if (problem_.gridView().comm().size() > 1)
             dt_estimate = problem_.gridView().comm().min(dt_estimate);
@@ -640,7 +641,8 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                                             fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
-                        if (std::abs(oldPc - pc) < 10.0)
+                        using std::abs;
+                        if (abs(oldPc - pc) < 10.0)
                             iter = maxiter;
 
                         pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
@@ -715,7 +717,8 @@ void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
 
         asImp_().updateMaterialLawsInElement(element, postTimeStep);
 
-        maxError = std::max(maxError, fabs(cellData.volumeError()));
+        using std::max;
+        maxError = max(maxError, fabs(cellData.volumeError()));
     }
     if (problem_.gridView().comm().size() > 1)
         maxError_ = problem_.gridView().comm().max(maxError_);
@@ -853,7 +856,9 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         mass[compIdx] -= massIncrement[compIdx];
 
         //check routines if derivatives are meaningful
-        if (std::isnan(cellData.dv(compIdx)) || std::isinf(cellData.dv(compIdx)) )
+        using std::isnan;
+        using std::isinf;
+        if (isnan(cellData.dv(compIdx)) || isinf(cellData.dv(compIdx)) )
         {
             DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
         }

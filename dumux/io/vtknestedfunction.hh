@@ -105,7 +105,8 @@ public:
                        " fields are supported so far.");
 
         double val = buf_[idx][mycomp];
-        if (std::abs(val) < std::numeric_limits<float>::min())
+        using std::abs;
+        if (abs(val) < std::numeric_limits<float>::min())
             val = 0;
 
         return val;

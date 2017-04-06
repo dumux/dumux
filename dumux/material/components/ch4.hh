@@ -152,7 +152,6 @@ public:
         // calculate: \int_0^T c_p dT
         return
             1/molarMass()* // conversion from [J/mol] to [J/kg]
-
             T*(cpVapA + T*
                (cpVapB/2 + T*
                 (cpVapC/3 + T*
@@ -204,17 +203,20 @@ public:
         const Scalar M = molarMass() * 1e3; // molar mas [g/mol]
         const Scalar dipole = 0.0; // dipole moment [debye]
 
-        Scalar mu_r4 = 131.3 * dipole / std::sqrt(Vc * Tc);
+        using std::sqrt;
+        Scalar mu_r4 = 131.3 * dipole / sqrt(Vc * Tc);
         mu_r4 *= mu_r4;
         mu_r4 *= mu_r4;
 
+        using std::exp;
+        using std::pow;
         Scalar Fc = 1 - 0.2756*omega + 0.059035*mu_r4;
         Scalar Tstar = 1.2593 * temperature/Tc;
         Scalar Omega_v =
-            1.16145*std::pow(Tstar, -0.14874) +
-            0.52487*std::exp(- 0.77320*Tstar) +
-            2.16178*std::exp(- 2.43787*Tstar);
-        Scalar mu = 40.785*Fc*std::sqrt(M*temperature)/(std::pow(Vc, 2./3)*Omega_v);
+            1.16145*pow(Tstar, -0.14874) +
+            0.52487*exp(- 0.77320*Tstar) +
+            2.16178*exp(- 2.43787*Tstar);
+        Scalar mu = 40.785*Fc*sqrt(M*temperature)/(pow(Vc, 2./3)*Omega_v);
 
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;

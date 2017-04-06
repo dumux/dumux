@@ -87,6 +87,9 @@ public:
     {
         Scalar massTransferCoeff = 1.0;
 
+        using std::sqrt;
+        using std::pow;
+
         // no mass transfer model
         if (massTransferModel_ == 0)
         {
@@ -97,7 +100,7 @@ public:
         {
             // use meaningful transfer coefficients
             assert (0 < massTransferCoeff_ && massTransferCoeff_ < 1.0);
-            massTransferCoeff = std::pow(saturation_, massTransferCoeff_);
+            massTransferCoeff = pow(saturation_, massTransferCoeff_);
         }
         // Schlünder model (Schlünder, CES 1988)
         else if (massTransferModel_ == 2)
@@ -105,8 +108,8 @@ public:
             // check if characteristic pore radius was set
             assert (charPoreRadius_ < 9e9);
             massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
-                                     * std::sqrt(M_PI/(4.*moistureContent_))
-                                     * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
+                                     * sqrt(M_PI/(4.*moistureContent_))
+                                     * (sqrt(M_PI/(4.*moistureContent_)) - 1.);
 
             massTransferCoeff = 1./massTransferCoeff;
         }
@@ -119,8 +122,8 @@ public:
             Scalar charPoreRadius = 2 * surfaceTension / capillaryPressure_;
 
             massTransferCoeff = 1. + 2./M_PI * charPoreRadius / blThickness_
-                                     * std::sqrt(M_PI/(4.*moistureContent_))
-                                     * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
+                                     * sqrt(M_PI/(4.*moistureContent_))
+                                     * (sqrt(M_PI/(4.*moistureContent_)) - 1.);
 
             massTransferCoeff = 1./massTransferCoeff;
         }

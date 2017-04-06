@@ -50,9 +50,10 @@ public:
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {
-        Scalar r = (0.8942+1.47*exp(-0.04394*(temperature-273.15)))*1.E-10;
+      using std::exp;
+      Scalar r = (0.8942+1.47*exp(-0.04394*(temperature-273.15)))*1.E-10;
 
-        return 1./r;
+      return 1./r;
     }
 
     /*!
@@ -75,6 +76,7 @@ public:
         const Scalar T0=273.15;    /* reference temperature */
         Scalar Dgaw;
 
+        using std::pow;
         Dgaw=Daw*(pg0/pressure)*pow((temperature/T0),Theta);
 
         return Dgaw;

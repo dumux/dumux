@@ -150,7 +150,8 @@ public:
      */
     Scalar phaseMassFraction(int phaseIdx)
     {
-        if (std::isnan(nu_[phaseIdx]))  //in contrast to the standard update() method, satflash() does not calculate nu.
+      using std::isnan;
+        if (isnan(nu_[phaseIdx]))  //in contrast to the standard update() method, satflash() does not calculate nu.
         {
             nu_[wPhaseIdx] = sw_ * density_[wPhaseIdx] / (sw_ * density_[wPhaseIdx] + (1. - sw_) * density_[nPhaseIdx]);
             nu_[nPhaseIdx] = 1. - nu_[wPhaseIdx];

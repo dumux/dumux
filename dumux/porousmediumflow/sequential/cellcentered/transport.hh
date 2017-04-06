@@ -224,7 +224,8 @@ public:
         evalCflFluxFunction_ = std::make_shared<EvalCflFluxFunction>(problem);
 
         Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
-        subCFLFactor_ = std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
+        using std::min;
+        subCFLFactor_ = min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
         verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
 
         localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
@@ -399,17 +400,18 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         updateVec[globalIdxI] += source;
 
         //calculate time step
+        using std::min;
         if (localTimeStepping_)
         {
             Scalar dtCfl = evalCflFluxFunction().getDt(element);
 
             timeStepData_[globalIdxI].dt = dtCfl;
-            dt = std::min(dt, dtCfl);
+            dt = min(dt, dtCfl);
         }
         else
         {
             //calculate time step
-            dt = std::min(dt, evalCflFluxFunction().getDt(element));
+            dt = min(dt, evalCflFluxFunction().getDt(element));
         }
 
         //store update
@@ -469,7 +471,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
         for (const auto& intersection : intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
-
+            using std::min;
             if (intersection.neighbor())
             {
                 auto neighbor = intersection.outside();
@@ -487,14 +489,14 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                     if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_
                         || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
                     {
-                        Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
+                        Scalar timeStep  = min(localDataI.dt, localDataJ.dt);
 
                         if (levelI < levelJ)
                         {
                             typename FaceDt::iterator it = faceDt.find(indexInInside);
                             if (it != faceDt.end())
                             {
-                                it->second = std::min(it->second, timeStep);
+                                it->second = min(it->second, timeStep);
                             }
                             else
                             {
@@ -507,7 +509,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                             localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * timeStep;
                         }
 
-                        dt = std::min(dt, timeStep);
+                        dt = min(dt, timeStep);
                     }
                 }
             }
@@ -516,7 +518,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                 if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
                 {
                     localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * localDataI.dt;
-                    dt = std::min(dt, subCFLFactor_ * localDataI.dt);
+                    dt =min(dt, subCFLFactor_ * localDataI.dt);
                 }
             }
         }
@@ -583,9 +585,10 @@ void FVTransport<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
 
         if (accumulatedDt_ < realDt)
         {
+            using std::min;
             while(true)
             {
-                Scalar dtCorrection = std::min(0.0, realDt - accumulatedDt_);
+                Scalar dtCorrection = min(0.0, realDt - accumulatedDt_);
                 subDt += dtCorrection;
 
                 if (verbosity_ > 0)

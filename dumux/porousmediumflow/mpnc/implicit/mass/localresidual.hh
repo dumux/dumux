@@ -79,7 +79,8 @@ public:
                 volVars.saturation(phaseIdx)*
                 volVars.molarity(phaseIdx, compIdx);
 #ifndef NDEBUG
-if (!std::isfinite(storage[compIdx]))
+using std::isfinite;
+if (!isfinite(storage[compIdx]))
     DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
 #endif
         }
@@ -119,8 +120,8 @@ if (!std::isfinite(storage[compIdx]))
 
         const VolumeVariables &up = fluxVars.volVars(upIdx);
         const VolumeVariables &dn = fluxVars.volVars(dnIdx);
-
-if (!std::isfinite(volumeFlux))
+using std::isfinite;
+if (!isfinite(volumeFlux))
     DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase" << phaseIdx);
         ////////
         // advective fluxes of all components in the phase
@@ -140,7 +141,8 @@ if (!std::isfinite(volumeFlux))
                 const Scalar mobConDn   = mobDn*conDn;
                 const Scalar meanMobCon = harmonicMean(mobConUp, mobConDn);
 
-                const Scalar x      = std::abs(kGradPNormal);
+                using std::abs;
+                const Scalar x      = abs(kGradPNormal);
                 const Scalar sign   = (kGradPNormal > 0)?-1:1;
 
                 // approximate the mean viscosity at the face
@@ -170,7 +172,8 @@ if (!std::isfinite(volumeFlux))
                     compFlux = sp2.eval(x);
                 }
                 #ifndef NDEBUG
-                if (!std::isfinite(compFlux))
+                using std::isfinite;
+                if (!isfinite(compFlux))
                     DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in smooth upwinding");
                 #endif
 
@@ -183,7 +186,8 @@ if (!std::isfinite(volumeFlux))
                         ((     massUpwindWeight)*up.molarity(phaseIdx, compIdx)
                                 +
                         (  1. - massUpwindWeight)*dn.molarity(phaseIdx, compIdx) );
-                        if (!std::isfinite(flux[compIdx]))
+                        using std::isfinite;
+                        if (!isfinite(flux[compIdx]))
                             DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.temperature(phaseIdx) << "S "<<up.saturation(phaseIdx)  ) ;
             }
         }

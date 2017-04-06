@@ -102,8 +102,8 @@ public:
 
         const Scalar mW = refComponentMolecularWeight() *1000. ;  // in [g/mol];
 
-        return A+(B/mW)-(C/std::pow((mW+D),E));
-
+        using std::pow;
+        return A+(B/mW)-(C/pow((mW+D),E));
     }
 
     static Scalar perbutationFactorBoilingTemperature()
@@ -114,12 +114,13 @@ public:
         const Scalar D = 9.0180e-2;
         const Scalar E = -1.0482;
 
-        Scalar deltaSpecificGravity = std::log(refComponentSpecificGravity()/specificGravity());
-        Scalar deltaMolecularWeight = std::log(refComponentMolecularWeight()/molecularWeight());
+        using std::log;
+        Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
+        Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        return A*std::pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*std::pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using std::pow;
+        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
-
     }
 
     static Scalar perbutationFactorCriticalTemperature()
@@ -130,12 +131,13 @@ public:
         const Scalar D = -5.7090e-2;
         const Scalar E = -8.4583e-2;
 
-        Scalar deltaSpecificGravity = std::log(refComponentSpecificGravity()/specificGravity());
-        Scalar deltaMolecularWeight = std::log(refComponentMolecularWeight()/molecularWeight());
+        using std::log;
+        Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
+        Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        return A*std::pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*std::pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using std::pow;
+        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
-
     }
 
     static Scalar perbutationFactorCriticalPressure()
@@ -146,75 +148,73 @@ public:
         const Scalar D = -2.2389e-1;
         const Scalar E = 2.6984;
 
-        Scalar deltaSpecificGravity = std::log(refComponentSpecificGravity()/specificGravity());
-        Scalar deltaMolecularWeight = std::log(refComponentMolecularWeight()/molecularWeight());
+        using std::log;
+        Scalar deltaSpecificGravity = log(refComponentSpecificGravity()/specificGravity());
+        Scalar deltaMolecularWeight = log(refComponentMolecularWeight()/molecularWeight());
 
-        return A*std::pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*std::pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
+        using std::pow;
+        return A*pow(deltaSpecificGravity,2) + B*deltaSpecificGravity + C*pow(deltaMolecularWeight,2) + D*deltaMolecularWeight
                 + E*deltaSpecificGravity*deltaMolecularWeight;
-
     }
 
-     static Scalar refComponentBoilingTemperature()
+    static Scalar refComponentBoilingTemperature()
     {
         const Scalar A = 477.63;    //All factors for 1 atm /  101325 pascals [760 mmHg]
         const Scalar B = 88.51;
         const Scalar C = 1007;
         const Scalar D = 1214.40;
 
-        return A*std::log((1000.*refComponentMolecularWeight() + B)/(1000.*refComponentMolecularWeight()+C)) + D;
-
+        using std::log;
+        return A*log((1000.*refComponentMolecularWeight() + B)/(1000.*refComponentMolecularWeight()+C)) + D;
     }
 
-        static Scalar refComponentCriticalTemperature()
+    static Scalar refComponentCriticalTemperature()
     {
         const Scalar A = 226.50;
         const Scalar B = 6.78;
         const Scalar C = 1.282e6;
         const Scalar D = 2668;
 
-        return A*std::log((1000.*refComponentMolecularWeight() + B)/(1000.*refComponentMolecularWeight()+C)) + D ;
-
+        using std::log;
+        return A*log((1000.*refComponentMolecularWeight() + B)/(1000.*refComponentMolecularWeight()+C)) + D ;
     }
 
-        static Scalar refComponentCriticalPressure()
+    static Scalar refComponentCriticalPressure()
     {
         const Scalar A = 141.20;
         const Scalar B = 45.66e-2;
         const Scalar C = 16.59e-3;
         const Scalar D = 2.19;
 
-        return (A*1000.*molecularWeight())/(std::pow(B + (C*1000.*molecularWeight()),D)) ;
-
+        using std::pow;
+        return (A*1000.*molecularWeight())/(pow(B + (C*1000.*molecularWeight()),D)) ;
     }
 
    /*!
     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at heavyoil's boiling point (1 atm)
     */
-       static Scalar boilingTemperature()
+    static Scalar boilingTemperature()
     {
-
-           return refComponentBoilingTemperature() * std::pow((1 + 2*perbutationFactorBoilingTemperature())/(1 - 2*perbutationFactorBoilingTemperature()),2);
-
+        using std::pow;
+        return refComponentBoilingTemperature() * pow((1 + 2*perbutationFactorBoilingTemperature())/(1 - 2*perbutationFactorBoilingTemperature()),2);
     }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of heavyoil
      */
-       static Scalar criticalTemperature()
+    static Scalar criticalTemperature()
     {
-
-           return refComponentCriticalTemperature() * std::pow((1 + 2*perbutationFactorCriticalTemperature())/(1 - 2*perbutationFactorCriticalTemperature()),2);
-
+        using std::pow;
+        return refComponentCriticalTemperature() * pow((1 + 2*perbutationFactorCriticalTemperature())/(1 - 2*perbutationFactorCriticalTemperature()),2);
     }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of heavyoil
      */
-        static Scalar criticalPressure()
+    static Scalar criticalPressure()
     {
-
-            return refComponentCriticalPressure() * std::pow((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
-
+        using std::pow;
+        return refComponentCriticalPressure() * pow((1 + 2*perbutationFactorCriticalPressure())/(1 - 2*perbutationFactorCriticalPressure()),2);
     }
 
   /*!
@@ -231,8 +231,9 @@ public:
         const Scalar C = 42.95101;
 
         Scalar T = temperature - 273.15;
-        return 100*1.334*std::pow(10.0, (A - (B/(T + C))));  // in [Pa]
 
+        using std::pow;
+        return 100*1.334*pow(10.0, (A - (B/(T + C))));  // in [Pa]
     }
 
     static Scalar vaporTemperature(Scalar pressure)
@@ -243,8 +244,8 @@ public:
 
         const Scalar P = pressure;
 
-        return  Scalar ((B/(A-std::log10(P/100*1.334)))-C);
-
+        using std::log10;
+        return  Scalar ((B/(A-log10(P/100*1.334)))-C);
     }
 
     /*!
@@ -268,8 +269,8 @@ public:
         // Enthalpy may have arbitrary reference state, but the empirical/fitted heatCapacity function needs Kelvin as input and is
         // fit over a certain temperature range. This suggests choosing an interval of integration being in the actual fit range.
         // I.e. choosing T=273.15K  as reference point for liquid enthalpy.
-
-        const Scalar sqrt1over3 = std::sqrt(1./3.);
+        using std::sqrt;
+        const Scalar sqrt1over3 = sqrt(1./3.);
         const Scalar TEval1 = 0.5*(temperature-273.15)*        sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
         const Scalar TEval2 = 0.5*(temperature-273.15)* (-1)*  sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
 
@@ -289,22 +290,26 @@ public:
     static Scalar heatVap(Scalar temperature,
                    const  Scalar pressure)
     {
-        temperature = std::min(temperature, criticalTemperature()); // regularization
-        temperature = std::max(temperature, 0.0); // regularization
+        using std::min;
+        using std::max;
+        temperature = min(temperature, criticalTemperature()); // regularization
+        temperature = max(temperature, 0.0); // regularization
 
         Scalar T_crit = criticalTemperature();
         Scalar Tr1 = boilingTemperature()/criticalTemperature();
         Scalar p_crit = criticalPressure();
 
         //        Chen method, eq. 7-11.4 (at boiling)
+        using std::log;
         const Scalar DH_v_boil = Consts::R * T_crit * Tr1
-                                        * (3.978 * Tr1 - 3.958 + 1.555*std::log(p_crit * 1e-5 /*Pa->bar*/ ) )
+                                        * (3.978 * Tr1 - 3.958 + 1.555*log(p_crit * 1e-5 /*Pa->bar*/ ) )
                                         / (1.07 - Tr1); /* [J/mol] */
 
         /* Variation with temp according to Watson relation eq 7-12.1*/
+        using std::pow;
         const Scalar Tr2 = temperature/criticalTemperature();
         const Scalar n = 0.375;
-        const Scalar DH_vap = DH_v_boil * std::pow(((1.0 - Tr2)/(1.0 - Tr1)), n);
+        const Scalar DH_vap = DH_v_boil * pow(((1.0 - Tr2)/(1.0 - Tr1)), n);
 
         return (DH_vap/molarMass());          // we need [J/kg]
     }
@@ -383,18 +388,22 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
     {
-        temperature = std::min(temperature, 500.0); // regularization
-        temperature = std::max(temperature, 250.0);
+        using std::min;
+        using std::max;
+        temperature = min(temperature, 500.0); // regularization
+        temperature = max(temperature, 250.0);
 
         // reduced temperature
         Scalar Tr = temperature/criticalTemperature();
 
+        using std::pow;
+        using std::exp;
         Scalar Fp0 = 1.0;
         Scalar xi = 0.00474;
         Scalar eta_xi =
-            Fp0*(0.807*std::pow(Tr,0.618)
-                 - 0.357*std::exp(-0.449*Tr)
-                 + 0.34*std::exp(-4.058*Tr)
+            Fp0*(0.807*pow(Tr,0.618)
+                 - 0.357*exp(-0.449*Tr)
+                 + 0.34*exp(-4.058*Tr)
                  + 0.018);
 
         return eta_xi/xi/1e7; // [Pa s]
@@ -414,12 +423,15 @@ public:
         /* according to Lashanizadegan et al (2008) in Chemical Engineering Communications:  */
         /* Simultaneous Heat and Fluid Flow in Porous Media: Case Study: Steam Injection for Tertiary Oil Recovery */
 
-        //return 1027919.422*std::exp(-0.04862*temperature); // [Pa s]
+        //using std::exp;
+        //return 1027919.422*exp(-0.04862*temperature); // [Pa s]
 
         //according to http://www.ecltechnology.com/subsur/reports/pvt_tgb.pdf [Page 10]
         Scalar temperatureFahrenheit = (9/5)*(temperature-273.15)+32;
         Scalar API = 9;
-            return ((std::pow(10,0.10231*std::pow(API,2)-3.9464*API+46.5037))*(std::pow(temperatureFahrenheit,-0.04542*std::pow(API,2)+1.70405*API-19.18)))*0.001;
+
+        using std::pow;
+        return ((pow(10,0.10231*pow(API,2)-3.9464*API+46.5037))*(pow(temperatureFahrenheit,-0.04542*pow(API,2)+1.70405*API-19.18)))*0.001;
 
     }
     /*!
@@ -461,12 +473,15 @@ protected:
      */
     static Scalar molarLiquidDensity_(Scalar temperature)
     {
-        temperature = std::min(temperature, 500.0); // regularization
-        temperature = std::max(temperature, 250.0);
+        using std::min;
+        using std::max;
+        temperature = min(temperature, 500.0); // regularization
+        temperature = max(temperature, 250.0);
 
+        using std::pow;
         const Scalar Z_RA = 0.2556; // from equation
-        const Scalar expo = 1.0 + std::pow(1.0 - temperature/criticalTemperature(), 2.0/7.0);
-        Scalar V = Consts::R*criticalTemperature()/criticalPressure()*std::pow(Z_RA, expo); // liquid molar volume [cm^3/mol]
+        const Scalar expo = 1.0 + pow(1.0 - temperature/criticalTemperature(), 2.0/7.0);
+        Scalar V = Consts::R*criticalTemperature()/criticalPressure()*pow(Z_RA, expo); // liquid molar volume [cm^3/mol]
 
         return 1.0/V; // molar density [mol/m^3]
     }

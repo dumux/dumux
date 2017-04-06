@@ -134,6 +134,10 @@ protected:
                                    const ElementVolumeVariables &elemVolVars)
     {
         // no eddy diffusivity model
+        using std::abs;
+        using std::sqrt;
+        using std::exp;
+
         if (eddyDiffusivityModel_ == EddyDiffusivityIndices::noEddyDiffusivityModel)
             return;
 
@@ -155,10 +159,10 @@ protected:
             mixingLengthDiffusivity_ = 0.0;
             if (this->distanceToWallReal() > 0.0 && yPlusReal_ > 0.0)
                 mixingLengthDiffusivity_ = this->karmanConstant() * this->distanceToWallReal()
-                                           * (1.0 - std::exp(-yPlusReal_ / aPlus))
-                                           / std::sqrt(1.0 - std::exp(-bPlus * yPlusReal_));
+                                           * (1.0 - exp(-yPlusReal_ / aPlus))
+                                           / sqrt(1.0 - exp(-bPlus * yPlusReal_));
 
-            eddyDiffusivity_ = mixingLengthDiffusivity_ * mixingLengthDiffusivity_ * std::abs(velGrad_);
+            eddyDiffusivity_ = mixingLengthDiffusivity_ * mixingLengthDiffusivity_ * abs(velGrad_);
         }
 
         // Deissler near wall law
@@ -168,9 +172,9 @@ protected:
         {
             const Scalar deisslerConstant = 0.124;
             const Scalar beta = this->density() * deisslerConstant * deisslerConstant
-                                * std::abs(this->velocity()[flowNormal_])
+                                * abs(this->velocity()[flowNormal_])
                                 * this->distanceToWallReal();
-            eddyDiffusivity_ = beta * (1.0 - std::exp(-beta / this->dynamicViscosity()));
+            eddyDiffusivity_ = beta * (1.0 - exp(-beta / this->dynamicViscosity()));
             eddyDiffusivity_ /= this->density();
         }
 
@@ -180,13 +184,13 @@ protected:
         {
             // Sc_t at flow = 0.86
             // Sc_t in wall = 1.34
-            Scalar kappaMeier = this->karmanConstant() / std::sqrt(0.86);
-            Scalar aPlusMeier = std::sqrt(1.34) / std::sqrt(0.86) * 26.0;
+            Scalar kappaMeier = this->karmanConstant() / sqrt(0.86);
+            Scalar aPlusMeier = sqrt(1.34) / sqrt(0.86) * 26.0;
             mixingLengthDiffusivity_ = 0.0;
             if (this->distanceToWallReal() > 0.0 && yPlusReal_ > 0.0)
                 mixingLengthDiffusivity_ = kappaMeier * this->distanceToWallReal()
-                                           * (1.0 - std::exp(- yPlusReal_ / aPlusMeier));
-            eddyDiffusivity_  = mixingLengthDiffusivity_ * mixingLengthDiffusivity_ * std::abs(velGrad_);
+                                           * (1.0 - exp(- yPlusReal_ / aPlusMeier));
+            eddyDiffusivity_  = mixingLengthDiffusivity_ * mixingLengthDiffusivity_ * abs(velGrad_);
         }
 
         // exponential (after Mamayev)
@@ -197,7 +201,7 @@ protected:
             if (velGradWall_ == 0) // means incredible high Ri
                 eddyDiffusivity_ = 0.0;
             else
-                eddyDiffusivity_ = std::exp(-m * richardsonNumber())
+                eddyDiffusivity_ = exp(-m * richardsonNumber())
                                    * this->kinematicEddyViscosity();
         }
 

@@ -81,7 +81,8 @@ public:
         Scalar B = (n[2]*sigma + n[3])*sigma + n[4];
         Scalar C = (n[5]*sigma + n[6])*sigma + n[7];
 
-        Scalar tmp = 2*C/(std::sqrt(B*B - 4*A*C) - B);
+        using std::sqrt;
+        Scalar tmp = 2*C/(sqrt(B*B - 4*A*C) - B);
         tmp *= tmp;
         tmp *= tmp;
 
@@ -104,15 +105,17 @@ public:
             -0.48232657361591e4, 0.40511340542057e6, -0.23855557567849,
             0.65017534844798e3
         };
+
+        using std::pow;
         Scalar beta = pow((pressure/1e6 /*from Pa to MPa*/), (1./4.));
         Scalar beta2 = pow(beta, 2.);
         Scalar E = beta2 + n[2] * beta + n[5];
         Scalar F = n[0]*beta2 + n[3]*beta + n[6];
         Scalar G = n[1]*beta2 + n[4]*beta + n[7];
 
-        Scalar D = ( 2.*G)/(-F -std::sqrt(pow(F,2.) - 4.*E*G));
-
-        Scalar temperature = (n[9] + D - std::sqrt(pow(n[9]+D , 2.) - 4.* (n[8] + n[9]*D)) ) * 0.5;
+        using std::sqrt;
+        Scalar D = ( 2.*G)/(-F -sqrt(pow(F,2.) - 4.*E*G));
+        Scalar temperature = (n[9] + D - sqrt(pow(n[9]+D , 2.) - 4.* (n[8] + n[9]*D)) ) * 0.5;
 
         return temperature;
     }

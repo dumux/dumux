@@ -323,6 +323,9 @@ public:
 
     Scalar exact (const GlobalPosition& globalPos) const
     {
+        using std::sin;
+        using std::atan;
+
         Scalar pi = 4.0*atan(1.0);
 
         return (sin(pi*globalPos[0])*sin(pi*globalPos[1]));
@@ -331,6 +334,10 @@ public:
     Dune::FieldVector<Scalar,dim> exactGrad (const GlobalPosition& globalPos) const
         {
         Dune::FieldVector<Scalar,dim> grad(0);
+        using std::sin;
+        using std::cos;
+        using std::atan;
+
         Scalar pi = 4.0*atan(1.0);
         grad[0] = pi*cos(pi*globalPos[0])*sin(pi*globalPos[1]);
         grad[1] = pi*cos(pi*globalPos[1])*sin(pi*globalPos[0]);
@@ -364,6 +371,10 @@ private:
     {
         Scalar temp = temperatureAtPos(globalPos);
         Scalar referencePress = referencePressureAtPos(globalPos);
+
+        using std::sin;
+        using std::cos;
+        using std::atan;
 
         Scalar pi = 4.0 * atan(1.0);
         Scalar x = globalPos[0];

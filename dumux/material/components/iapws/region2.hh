@@ -144,16 +144,16 @@ public:
         Scalar result;
 
         // ideal gas part
+        using std::pow;
         result = ln(pi);
         for (int i = 0; i < 9; ++i)
-            result += n_g(i)*std::pow(tau, J_g(i));
+            result += n_g(i)*pow(tau, J_g(i));
 
         // residual part
         for (int i = 0; i < 43; ++i)
-            result +=
-                n_r(i)*
-                std::pow(pi, I_r(i))*
-                std::pow(tau - 0.5, J_r(i));
+            result += n_r(i)*
+                      pow(pi, I_r(i))*
+                      pow(tau - 0.5, J_r(i));
         return result;
     }
 
@@ -175,21 +175,20 @@ public:
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
         // ideal gas part
+        using std::pow;
         Scalar result = 0;
         for (int i = 0; i < 9; i++) {
-            result +=
-                n_g(i) *
-                J_g(i) *
-                std::pow(tau_, J_g(i) - 1);
+            result += n_g(i) *
+                      J_g(i) *
+                      pow(tau_, J_g(i) - 1);
         }
 
         // residual part
         for (int i = 0; i < 43; i++) {
-            result +=
-                n_r(i) *
-                std::pow(pi_,  I_r(i)) *
-                J_r(i) *
-                std::pow(tau_ - 0.5, J_r(i) - 1);
+            result += n_r(i) *
+                      pow(pi_,  I_r(i)) *
+                      J_r(i) *
+                      pow(tau_ - 0.5, J_r(i) - 1);
         }
 
         return result;
@@ -216,12 +215,12 @@ public:
         Scalar result = 1/pi_;
 
         // residual part
+        using std::pow;
         for (int i = 0; i < 43; i++) {
-            result +=
-                n_r(i) *
-                I_r(i) *
-                std::pow(pi_, I_r(i) - 1) *
-                std::pow(tau_ - 0.5, J_r(i));
+            result += n_r(i) *
+                      I_r(i) *
+                      pow(pi_, I_r(i) - 1) *
+                      pow(tau_ - 0.5, J_r(i));
         }
 
         return result;
@@ -248,13 +247,13 @@ public:
         Scalar result = 0;
 
         // residual part
+        using std::pow;
         for (int i = 0; i < 43; i++) {
-            result +=
-                n_r(i) *
-                I_r(i) *
-                J_r(i) *
-                std::pow(pi_, I_r(i) - 1) *
-                std::pow(tau_ - 0.5, J_r(i) - 1);
+            result += n_r(i) *
+                      I_r(i) *
+                      J_r(i) *
+                      pow(pi_, I_r(i) - 1) *
+                      pow(tau_ - 0.5, J_r(i) - 1);
         }
 
         return result;
@@ -281,13 +280,13 @@ public:
         Scalar result = -1/(pi_*pi_);
 
         // residual part
+        using std::pow;
         for (int i = 0; i < 43; i++) {
-            result +=
-                n_r(i) *
-                I_r(i) *
-                (I_r(i) - 1) *
-                std::pow(pi_, I_r(i) - 2) *
-                std::pow(tau_ - 0.5, J_r(i));
+            result += n_r(i) *
+                      I_r(i) *
+                      (I_r(i) - 1) *
+                      pow(pi_, I_r(i) - 2) *
+                      pow(tau_ - 0.5, J_r(i));
         }
 
         return result;
@@ -311,23 +310,23 @@ public:
         Scalar pi_ = pi(pressure);    /* reduced pressure */
 
         // ideal gas part
+        using std::pow;
         Scalar result = 0;
         for (int i = 0; i < 9; i++) {
-            result +=
-                n_g(i) *
-                J_g(i) *
-                (J_g(i) - 1) *
-                std::pow(tau_, J_g(i) - 2);
+            result += n_g(i) *
+                      J_g(i) *
+                      (J_g(i) - 1) *
+                      pow(tau_, J_g(i) - 2);
         }
 
         // residual part
+        using std::pow;
         for (int i = 0; i < 43; i++) {
-            result +=
-                n_r(i) *
-                std::pow(pi_,  I_r(i)) *
-                J_r(i) *
-                (J_r(i) - 1.) *
-                std::pow(tau_ - 0.5, J_r(i) - 2.);
+            result += n_r(i) *
+                      pow(pi_,  I_r(i)) *
+                      J_r(i) *
+                      (J_r(i) - 1.) *
+                      pow(tau_ - 0.5, J_r(i) - 2.);
         }
 
         return result;

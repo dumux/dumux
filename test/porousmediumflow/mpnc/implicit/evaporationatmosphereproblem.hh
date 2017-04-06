@@ -637,8 +637,9 @@ private:
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){
             // Use homogenous pressure in the domain and let the newton find the pressure distribution
-            p[wPhaseIdx] = pnInitial_  - std::abs(capPress[wPhaseIdx]);
-            p[nPhaseIdx] = p[wPhaseIdx] + std::abs(capPress[wPhaseIdx]);
+            using std::abs;
+            p[wPhaseIdx] = pnInitial_  - abs(capPress[wPhaseIdx]);
+            p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
         }
         else if (this->spatialParams().inFF_(globalPos)){
             p[nPhaseIdx] = pnInitial_ ;

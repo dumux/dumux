@@ -90,6 +90,7 @@ private:
 
         PrimaryVariables sourceCheck(0.0);
 
+        using std::abs;
         for (int i = 1; i <= numCheckCoords; i++)
         {
             for (int j = 1; j <= numCheckCoords; j++)
@@ -103,7 +104,7 @@ private:
 
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     {
-                        if (std::abs(sourceCheck[eqIdx]) > std::abs(source[eqIdx]))
+                        if (abs(sourceCheck[eqIdx]) > abs(source[eqIdx]))
                         {
                             source[eqIdx] = sourceCheck[eqIdx];
                         }
@@ -119,7 +120,7 @@ private:
 
                         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                         {
-                            if (std::abs(sourceCheck[eqIdx]) > std::abs(source[eqIdx]))
+                            if (abs(sourceCheck[eqIdx]) > abs(source[eqIdx]))
                             {
                                 source[eqIdx] = sourceCheck[eqIdx];
                             }
@@ -236,16 +237,19 @@ public:
 
         // 1) calculate Indicator -> min, maxvalues
         // Schleife über alle Leaf-Elemente
+        using std::abs;
+        using std::max;
+        using std::min;
         for (const auto& element : elements(problem_.gridView()))
         {
             int globalIdxI = problem_.variables().index(element);
 
             int level = element.level();
-            maxLevel_ = std::max(level, maxLevel_);
+            maxLevel_ = max(level, maxLevel_);
 
             if (level < minAllowedLevel_)
             {
-                nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                 indicatorVector_[globalIdxI] = refineCell;
                 continue;
             }
@@ -256,9 +260,9 @@ public:
                 virtualHierarchicSourceSearch_(source, element);
                 for (int i = 0; i < numEq; i++)
                 {
-                    if (std::abs(source[i]) > 1e-10)
+                    if (abs(source[i]) > 1e-10)
                     {
-                        nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                        nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                         indicatorVector_[globalIdxI] = refineCell;
                         break;
                     }
@@ -282,16 +286,16 @@ public:
                         {
                             if (bcTypes.isDirichlet(i) && refineAtDirichletBC_)
                             {
-                                nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                                nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                                 indicatorVector_[globalIdxI] = refineCell;
                                 break;
                             }
                         }
                         for (int j = 0; j < numPhases; j++)
                         {
-                            if (std::abs(values[j]) > 1e-10)
+                            if (abs(values[j]) > 1e-10)
                             {
-                                nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                                nextMaxLevel_ = min(max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                                 indicatorVector_[globalIdxI] = refineCell;
                                 break;
                             }

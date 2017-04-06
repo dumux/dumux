@@ -104,9 +104,10 @@ public:
                     const MaterialLawParams &materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
-                    const Scalar pn = std::max(this->problem_().nonWettingReferencePressure(), pw + pcMin);
+                    using std::max;
+                    const Scalar pn = max(this->problem_().nonWettingReferencePressure(), pw + pcMin);
                     const Scalar pcOld = pn - pw;
-                    const Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(materialLawParams, pcOld));
+                    const Scalar SwOld = max(0.0, MaterialLaw::sw(materialLawParams, pcOld));
 
                     // convert into minimum and maximum wetting phase
                     // pressures
@@ -114,7 +115,8 @@ public:
                     const Scalar pwMax = pn - MaterialLaw::pc(materialLawParams, SwOld + 0.2);
 
                     // clamp the result
-                    uCurrentIter[dofIdxGlobal][pressureIdx] = std::max(pwMin, std::min(uCurrentIter[dofIdxGlobal][pressureIdx], pwMax));
+                    using std::min; using std::max;
+                    uCurrentIter[dofIdxGlobal][pressureIdx] = max(pwMin, min(uCurrentIter[dofIdxGlobal][pressureIdx], pwMax));
                 }
             }
         }

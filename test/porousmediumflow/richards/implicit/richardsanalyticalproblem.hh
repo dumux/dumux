@@ -208,13 +208,16 @@ public:
 
         // linear model with complex solution
         // calcluated with Matlab script "Richards.m"
-        values = (std::pow(std::tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*(1.0/1.0E1)
-            -1.0/1.0E1)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*4.0E-8-((std::pow(std::tanh(globalPos[1]
+        using std::pow;
+        using std::tanh;
+
+        values = (pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*(1.0/1.0E1)
+            -1.0/1.0E1)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*4.0E-8-((pow(tanh(globalPos[1]
             *5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))-1.0E3)
-            *(std::pow(std::tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
-            *(1.0/2.0)-pwTop*(1.0/2.0))*5.0E-16+std::tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1)
-            *(std::pow(std::tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
-            *(1.0/2.0)-pwTop*(1.0/2.0))*(pwBottom*5.0E-16-(std::tanh(globalPos[1]*5.0+time*(1.0/1.0E1)
+            *(pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
+            *(1.0/2.0)-pwTop*(1.0/2.0))*5.0E-16+tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1)
+            *(pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
+            *(1.0/2.0)-pwTop*(1.0/2.0))*(pwBottom*5.0E-16-(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)
             -1.5E1)+1.0)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*5.0E-16+4.99995E-6)*1.0E1;
     }
 
@@ -259,8 +262,9 @@ public:
         const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
+        using std::tanh;
         Scalar pw = pwBottom
-          + 0.5 * (std::tanh( (5.0 * globalPos[1]) - 15.0 + time/10.0) + 1.0) * (pwTop - pwBottom);
+          + 0.5 * (tanh( (5.0 * globalPos[1]) - 15.0 + time/10.0) + 1.0) * (pwTop - pwBottom);
 
         values[pwIdx] = pw;
     }
@@ -319,8 +323,9 @@ public:
     {
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
+        using std::tanh;
         Scalar pw = pwBottom
-          + 0.5 * (std::tanh( (5.0 * globalPos[1]) - 15.0 + time/10.0) + 1.0) * (pwTop - pwBottom);
+          + 0.5 * (tanh( (5.0 * globalPos[1]) - 15.0 + time/10.0) + 1.0) * (pwTop - pwBottom);
 
         values[pwIdx] = pw;
     }
@@ -365,7 +370,8 @@ public:
                     qIt->weight() * geometry.integrationElement(qIt->position());
             }
         }
-        return std::sqrt(l2error/l2analytic);
+        using std::sqrt;
+        return sqrt(l2error/l2analytic);
     }
 
     /*!

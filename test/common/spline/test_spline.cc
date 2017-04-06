@@ -55,10 +55,11 @@ void testCommon(const Spline &sp,
         double y1 = sp.eval(x[i]);
         double y2 = (i<n-1)?sp.eval(x[i]+eps):y[n-1];
 
-        if (std::abs(y0 - y[i]) > 100*eps || std::abs(y2 - y[i]) > 100*eps)
+        using::std::abs;
+        if (abs(y0 - y[i]) > 100*eps || abs(y2 - y[i]) > 100*eps)
             DUNE_THROW(Dune::InvalidStateException,
                        "Spline seems to be discontinuous at sampling point " << i << "!");
-        if (std::abs(y1 - y[i]) > eps)
+        if (abs(y1 - y[i]) > eps)
             DUNE_THROW(Dune::InvalidStateException,
                        "Spline does not capture sampling point " << i << "!");
 
@@ -68,7 +69,7 @@ void testCommon(const Spline &sp,
         double d0 = (i>0)?sp.evalDerivative(x[i]-eps):d1;
         double d2 = (i<n-1)?sp.evalDerivative(x[i]+eps):d1;
 
-        if (std::abs(d1 - d0) > 1000*eps || std::abs(d2 - d0) > 1000*eps)
+        if (abs(d1 - d0) > 1000*eps || abs(d2 - d0) > 1000*eps)
             DUNE_THROW(Dune::InvalidStateException,
                        "Spline seems to exhibit a discontinuous derivative at sampling point " << i << "!");
     }
@@ -90,11 +91,12 @@ void testFull(const Spline &sp,
     // make sure the derivative at both end points is correct
     double d0 = sp.evalDerivative(x[0]);
     double d1 = sp.evalDerivative(x[n-1]);
-    if (std::abs(d0 - m0) > eps)
+    using std::abs;
+    if (abs(d0 - m0) > eps)
         DUNE_THROW(Dune::InvalidStateException,
                    "Invalid derivative at beginning of interval: is "
                    << d0 << " ought to be " << m0);
-    if (std::abs(d1 - m1) > eps)
+    if (abs(d1 - m1) > eps)
         DUNE_THROW(Dune::InvalidStateException,
                    "Invalid derivative at end of interval: is "
                    << d1 << " ought to be " << m1);

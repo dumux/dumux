@@ -154,8 +154,9 @@ public:
         gstatOutput.close();
 
         // post processing
+        using std::pow;
         if (fieldType_ == FieldType::log10)
-          std::for_each(data_.begin(), data_.end(), [](Scalar& s){ s = std::pow(10.0, s); });
+          std::for_each(data_.begin(), data_.end(), [](Scalar& s){ s = pow(10.0, s); });
     }
 
     //! \brief Return an entry of the data vector
@@ -175,7 +176,8 @@ public:
         if (fieldType_ == FieldType::log10)
         {
             logPerm = data_;
-            std::for_each(logPerm.begin(), logPerm.end(), [](Scalar& s){ s = std::log10(s); });
+            using std::log10;
+            std::for_each(logPerm.begin(), logPerm.end(), [](Scalar& s){ s = log10(s); });
             vtkwriter.addCellData(logPerm, "log10 of " + dataName);
         }
         vtkwriter.write(vtkName, Dune::VTK::OutputType::ascii);

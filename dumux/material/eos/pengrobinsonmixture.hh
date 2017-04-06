@@ -116,25 +116,31 @@ public:
         Scalar sumMoleFractions = 0.0;
         for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
             sumMoleFractions += fs.moleFraction(phaseIdx, compJIdx);
-        Scalar deltai = 2*std::sqrt(params.aPure(phaseIdx, compIdx))/params.a(phaseIdx);
+
+        using std::sqrt;
+        Scalar deltai = 2*sqrt(params.aPure(phaseIdx, compIdx))/params.a(phaseIdx);
         Scalar tmp = 0;
         for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
             tmp +=
                 fs.moleFraction(phaseIdx, compJIdx)
                 / sumMoleFractions
-                * std::sqrt(params.aPure(phaseIdx, compJIdx))
+                * sqrt(params.aPure(phaseIdx, compJIdx))
                 * (1.0 - StaticParameters::interactionCoefficient(compIdx, compJIdx));
         }
         deltai *= tmp;
 
         Scalar base =
-            (2*Z + Bstar*(u + std::sqrt(u*u - 4*w))) /
-            (2*Z + Bstar*(u - std::sqrt(u*u - 4*w)));
-        Scalar expo =  Astar/(Bstar*std::sqrt(u*u - 4*w))*(bi_b - deltai);
+            (2*Z + Bstar*(u + sqrt(u*u - 4*w))) /
+            (2*Z + Bstar*(u - sqrt(u*u - 4*w)));
+        Scalar expo =  Astar/(Bstar*sqrt(u*u - 4*w))*(bi_b - deltai);
 
+        using std::exp;
+        using std::max;
+        using std::min;
+        using std::pow;
         Scalar fugCoeff =
-            std::exp(bi_b*(Z - 1))/std::max(1e-9, Z - Bstar) *
-            std::pow(base, expo);
+            exp(bi_b*(Z - 1))/max(1e-9, Z - Bstar) *
+            pow(base, expo);
 
         ////////
         // limit the fugacity coefficient to a reasonable range:
@@ -142,14 +148,16 @@ public:
         // on one side, we want the mole fraction to be at
         // least 10^-3 if the fugacity is at the current pressure
         //
-        fugCoeff = std::min(1e10, fugCoeff);
+
+        fugCoeff = min(1e10, fugCoeff);
         //
         // on the other hand, if the mole fraction of the component is 100%, we want the
         // fugacity to be at least 10^-3 Pa
         //
-        fugCoeff = std::max(1e-10, fugCoeff);
+        fugCoeff = max(1e-10, fugCoeff);
         ///////////
-        if (!std::isfinite(fugCoeff)) {
+        using std::isfinite;
+        if (!isfinite(fugCoeff)) {
             std::cout << "Non finite phi: " << fugCoeff << "\n";
         }
 

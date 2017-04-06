@@ -231,7 +231,8 @@ public:
         // set no-flux on top and bottom, hydrostatic on the rest
         // use the intersection normal to decide
         const GlobalPosition normal = intersection.centerUnitOuterNormal();
-        if (std::abs(normal[dimWorld-1]) > 0.5 - eps_)
+        using std::abs;
+        if (abs(normal[dimWorld-1]) > 0.5 - eps_)
             values.setAllNeumann();
         else
             values.setAllDirichlet();

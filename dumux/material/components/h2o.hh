@@ -130,8 +130,10 @@ public:
      */
     static Scalar vaporPressure(Scalar T)
     {
-        T = std::min(T, criticalTemperature());
-        T = std::max(T,tripleTemperature());
+        using std::min;
+        using std::max;
+        T = min(T, criticalTemperature());
+        T = max(T,tripleTemperature());
 
         return Region4::saturationPressure(T);
     }
@@ -150,8 +152,10 @@ public:
      */
     static Scalar vaporTemperature(Scalar pressure)
     {
-        pressure = std::min(pressure, criticalPressure());
-        pressure = std::max(pressure, triplePressure());
+        using std::min;
+        using std::max;
+        pressure = min(pressure, criticalPressure());
+        pressure = max(pressure, triplePressure());
 
         return Region4::vaporTemperature(pressure);
     }
@@ -580,7 +584,9 @@ public:
         Scalar deltaP = pressure*2;
         Valgrind::CheckDefined(pressure);
         Valgrind::CheckDefined(deltaP);
-        for (int i = 0; i < 5 && std::abs(pressure*1e-9) < std::abs(deltaP); ++i) {
+
+        using std::abs;
+        for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i) {
             Scalar f = gasDensity(temperature, pressure) - density;
 
             Scalar df_dp;
@@ -674,7 +680,9 @@ public:
         Scalar eps = pressure*1e-7;
 
         Scalar deltaP = pressure*2;
-        for (int i = 0; i < 5 && std::abs(pressure*1e-9) < std::abs(deltaP); ++i) {
+
+        using std::abs;
+        for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i) {
             Scalar f = liquidDensity(temperature, pressure) - density;
 
             Scalar df_dp;

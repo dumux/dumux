@@ -130,11 +130,13 @@ public:
             muBar += tmp3 * tmp;
             tmp3 *= 1.0/TBar - 1;
         }
+        using std::exp;
         muBar *= rhoBar;
-        muBar = std::exp(muBar);
+        muBar = exp(muBar);
 
         // muBar *= muBar_0
-        muBar  *= 100*std::sqrt(TBar);
+        using std::sqrt;
+        muBar  *= 100*sqrt(TBar);
         constexpr Scalar H[4] = {
             1.67752, 2.20462, 0.6366564, -0.241605
         };
@@ -197,6 +199,7 @@ public:
         Scalar rhobar = rho / thcond_rhostar;
 
         /* fast implementation... minimised calls to 'pow' routine... */
+        using std::sqrt;
         Scalar Troot = sqrt(Tbar);
         Scalar Tpow = Troot;
         Scalar lam = 0;
@@ -206,11 +209,14 @@ public:
             Tpow *= Tbar;
         }
 
+        using std::exp;
         lam += thcond_b0 + thcond_b1
                 * rhobar + thcond_b2
                 * exp(thcond_B1 * ((rhobar + thcond_B2)*(rhobar + thcond_B2)));
 
-        Scalar DTbar = fabs(Tbar - 1) + thcond_c4;
+        using std::abs;
+        using std::pow;
+        Scalar DTbar = abs(Tbar - 1) + thcond_c4;
         Scalar DTbarpow = pow(DTbar, 3./5);
         Scalar Q = 2. + thcond_c5 / DTbarpow;
 

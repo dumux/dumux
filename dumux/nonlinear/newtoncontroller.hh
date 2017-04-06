@@ -379,7 +379,8 @@ public:
 
             Scalar shiftAtDof = model_().relativeShiftAtDof(uLastIter[i],
                                                             uNewI);
-            shift_ = std::max(shift_, shiftAtDof);
+            using std::max;
+            shift_ = max(shift_, shiftAtDof);
         }
 
         if (gridView_().comm().size() > 1)
@@ -407,7 +408,8 @@ public:
                 if (gridView_().comm().size() > 1)
                     norm2 = gridView_().comm().sum(norm2);
 
-                initialResidual_ = std::sqrt(norm2);
+                using std::sqrt;
+                initialResidual_ = sqrt(norm2);
             }
 
             int converged = linearSolver_.solve(A, x, b);

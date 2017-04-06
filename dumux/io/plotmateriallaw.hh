@@ -86,7 +86,6 @@ public:
     }
 
     /*!
-
      * \brief Add a saturation-capillary pressure data set to the plot
      *
      * \param gnuplot The gnuplot interface
@@ -293,8 +292,10 @@ private:
      */
     bool checkValues_(Scalar value1, Scalar value2)
     {
-        return !std::isnan(value1) && !std::isinf(value1)
-               && !std::isnan(value2) && !std::isinf(value2);
+        using std::isnan;
+        using std::isinf;
+        return !isnan(value1) && !isinf(value1)
+               && !isnan(value2) && !isinf(value2);
     }
 
     int numIntervals_;

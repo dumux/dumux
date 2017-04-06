@@ -264,6 +264,7 @@ public:
         // update the vector with the distances of the current
         // evaluation point used for linearization from the original
         // evaluation point
+        using std::abs;
         for (int i = 0; i < vertexDelta_.size(); ++i) {
             PrimaryVariables uCurrent(u[i]);
             PrimaryVariables uNext(uCurrent);
@@ -274,7 +275,7 @@ public:
             Scalar dist = model_().relativeErrorVertex(i,
                                                        uCurrent,
                                                        uNext);
-            vertexDelta_[i] += std::abs(dist);
+            vertexDelta_[i] += abs(dist);
         }
 
     }
@@ -315,8 +316,9 @@ public:
                 // the relative tolerance
                 vertexColor_[i] = Red;
             }
+            using std::max;
             nextReassembleTolerance_ =
-                std::max(nextReassembleTolerance_, vertexDelta_[i]);
+                max(nextReassembleTolerance_, vertexDelta_[i]);
         };
 
         // Mark all red elements
