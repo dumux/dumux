@@ -20,6 +20,8 @@
   * \file
   * \brief This files contains a class to adapt the mass transfer in the
   *        boundary layer of the free flow, near to a porous-interface.
+  *
+  * This model bases on work published by Schlünder 1988 \cite Schluender1988a.
   */
 #ifndef DUMUX_MASS_TRANSFER_MODEL_HH
 #define DUMUX_MASS_TRANSFER_MODEL_HH
@@ -29,17 +31,13 @@
 
 namespace Dumux
 {
-/*!
-  * \brief This files contains a class to adapt the mass transfer in the
-  *        boundary layer of the free flow, near to a porous-interface.
-  */
 template <class TypeTag>
 class MassTransferModel
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 /*!
-  * \brief This files contains a class to adapt the mass transfer in the
+  * \brief This class adapts the mass transfer in the
   *        boundary layer of the free flow, near to a porous-interface.
   *
   * \param saturation Saturation of the component's phase inside the porous medium
@@ -80,7 +78,7 @@ public:
      * Provides different options for the determining the mass transfer coefficient:<br>
      * 0) no mass transfer model<br>
      * 1) exponential law with a saturation as base and a mass transfer coefficient as exponent<br>
-     * 2) the conventional Schlünder model with one characteristic pore size<br>
+     * 2) the conventional Schlünder \cite Schluender1988a model with one characteristic pore size<br>
      * 3) the Schlünder model with a variable characteristic pore size deduced from the
      *    two-phase relations (Van Genuchten curve)<br>
      * 4) a manually adapted Schlünder model
