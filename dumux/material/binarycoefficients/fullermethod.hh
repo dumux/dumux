@@ -31,7 +31,7 @@ namespace BinaryCoeff
 {
 /*!
  * \ingroup Binarycoefficients
- * \brief Estimate binary diffusion coefficents \f$\mathrm{[m^2/s]}\f$ in gases according to
+ * \brief Estimate binary diffusion coefficients \f$\mathrm{[m^2/s]}\f$ in gases according to
  *        the method by Fuller.
  *
  * \param M molar masses \f$\mathrm{[g/mol]}\f$
@@ -39,7 +39,7 @@ namespace BinaryCoeff
  * \param temperature The temperature \f$\mathrm{[K]}\f$
  * \param pressure phase pressure \f$\mathrm{[Pa]}\f$
  *
- * This function estimates the diffusion coefficents in binary gases
+ * This function estimates the diffusion coefficients in binary gases
  * using to the method proposed by Fuller. This method and is only
  * valid at "low" pressures.
  *

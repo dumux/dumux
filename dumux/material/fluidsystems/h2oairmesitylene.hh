@@ -353,7 +353,7 @@ public:
     using Base::diffusionCoefficient;
     /*!
      * \brief Given all mole fractions, return the diffusion
-     *        coefficent in \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
+     *        coefficient in \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      * \param compIdx The index of the component

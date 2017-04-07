@@ -215,7 +215,7 @@ private:
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // make sure to calculate only diffusion coefficents
+            // make sure to calculate only diffusion coefficients
             // for phases which exist in both finite volumes
             /* \todo take care: This should be discussed once again
              * as long as a meaningful value can be found for the required mole fraction

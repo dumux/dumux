@@ -48,7 +48,7 @@ public:
     { return "LNAPL"; }
 
     /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
+     * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
     { return false; }

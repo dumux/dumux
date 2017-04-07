@@ -676,7 +676,7 @@ public:
          *            for the porous media happens at another place!
          */
 
-        // diffusivity coefficents
+        // diffusivity coefficients
         diffusionCoefficient_[gPhaseIdx] = FluidSystem::diffusionCoefficient(fluidState_, gPhaseIdx);
 
         diffusionCoefficient_[wPhaseIdx] = FluidSystem::diffusionCoefficient(fluidState_, wPhaseIdx);

@@ -541,7 +541,7 @@ private:
     }
 
     /*!
-     * \brief The fugacity coefficent of CO2 for a CO2-H2O mixture.
+     * \brief The fugacity coefficient of CO2 for a CO2-H2O mixture.
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
