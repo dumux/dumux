@@ -1,8 +1,7 @@
-Readme
-======
+<img src="doc/logo/dumux_logo_hires_whitebg.png" alt="dumux logo" width="400"/>
 
 What is DuMuX?
---------------
+===============
 
 [DuMuX][0] is a simulation toolbox mainly aimed at flow and transport
 processes in porous media. DuMuX is based on the [DUNE][1]
@@ -14,14 +13,14 @@ description of the goals and motivations behind DuMuX.
 
 
 Installation
-------------
+===============
 
 Have a look at the [installation guide][3] or use the [DuMuX handbook]
 [4], chapter 2.
 
 
 License
--------
+========
 
 DuMuX is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 2 or - at your option - any later
@@ -38,11 +37,11 @@ license.
 See the file `LICENSE.md` for full copying permissions.
 
 Automated Testing
------------------
+==================
 
 DuMuX features many tests (some unit tests and test problems) that can
 be run manually. We have experimental support for automated testing with buildbot.
-Click <a href="https://git.iws.uni-stuttgart.de/buildbot/#/builders" target="_blank">here</a>
+Click <a href="https://git.iws.uni-stuttgart.de/buildbot/#/builders" target="_blank">here (buildbot)</a>
 to see the latest builds (clicking on a build
 number will show a detailed overview of the build).
 
