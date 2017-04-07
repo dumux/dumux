@@ -50,7 +50,7 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for air and mesitylene.
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and mesitylene.
      * I used the method according to Wilke and Lee
      * see W.J. Lyman, W.F. Reehl, D.H. Rosenblatt (1990) \cite lyman1990 <BR>
      * \param temperature temperature in \f$\mathrm{[K]}\f$

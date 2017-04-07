@@ -43,7 +43,7 @@ class N2_O2
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for molecular oxygen in liquid nitrogen.
+     * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for molecular oxygen in liquid nitrogen.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
     template <class Scalar>
@@ -53,7 +53,7 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
      *
      * Uses fullerMethod to determine the diffusion of water in nitrogen.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
@@ -73,7 +73,7 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */

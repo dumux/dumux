@@ -466,7 +466,7 @@ public:
     using Base::binaryDiffusionCoefficient;
     /*!
      * \brief Given the phase compositions, return the binary
-     *        diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
+     *        diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIIdx Index of the component i
