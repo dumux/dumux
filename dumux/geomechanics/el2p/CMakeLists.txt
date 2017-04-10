@@ -1,3 +1,4 @@
+add_subdirectory("decoupled")
 
 #install headers
 install(FILES

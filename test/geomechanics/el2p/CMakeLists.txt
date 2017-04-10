@@ -14,7 +14,13 @@ if(MPI_FOUND)
                    --files ${CMAKE_SOURCE_DIR}/test/references/el2p-parallel-reference.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/s0004-p0001-el2p-00047.vtu
                    --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_el2p")
+
 endif()
+
+# compile test_el2p_2pdecoupled
+add_dumux_test(test_el2pdecoupled test_el2pdecoupled test_el2pdecoupled.cc
+  echo
+  )
 
 #install sources
 install(FILES

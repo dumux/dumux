@@ -1,0 +1,79 @@
+[TimeManager]
+TInitEnd = 3600       # [s]
+TEnd = 10000         # [s]
+DtInitial = 3600 # [s]
+DtInitialSubProblem1 = 3600
+DtInitialSubProblem2 = 3600
+EpisodeLengthInit = 3600  # [s]
+EpisodeLengthMainSimulation = 100 # [s]
+NumIterationsInit = 3
+NumIterations = 30
+
+[Grid]
+File = ./grids/fault_finitewidth.msh
+Refine = 0
+
+[Damping]
+DampingFactor = 0.05
+
+[Problem]
+Name = el2p_2pdecoupled # name passed to the output routines
+
+[FailureParameters]
+DeltaT = 0.01          # Timestep lenght of failure [s]
+DeltaSigma = 0.1e6  # Stress drop [Pa]
+RangeOfFailureInfluence = 0
+
+ratioResidualShearStrength_UndamagedShearStrength = 1.00
+FullHealing = 0
+
+MohrCoulombWorstCase = 0
+
+SpatialTolerance = 7 # was 3 for the fine grid
+SpatialTolerance2 = 7 # was 3 for the fine grid
+FaultAngle = -11.3099 # angle of the fault in degrees
+
+FrictionAngleMatrix = 70.0 # in degrees
+FrictionAngleFault  = 31.0 # in degrees
+CohesionMatrix = 0.0
+CohesionFault  = 0.0
+DilationAngle = 10
+
+[Injection]
+Rate = 0.0007  # source injection rate [kg / (m^3 s)] consistent with 700 kg / (100 x 100 x 300 m^3)
+DepthBOR = 2500     # Depth at the bottom of the scenario [m]
+InjectionStop = 20000.01  # 26531.38 for UndamagedShearStrength = 1.00, 26800 for UndamagedShearStrength = 0.95 [s]
+XminSource1 = 486.200       # x-Coordinate of the injection 1 (left)
+XmaxSource1 = 486.400       # x-Coordinate of the injection 1 (right)
+YminSource1 = 937.500     # y-Coordinate of the injection 1 (bottom)
+YmaxSource1 = 938.100      # y-Coordinate of the injection 1 (top)
+
+XminSource2 = 488.500       # x-Coordinate of the injection 2 (left)
+XmaxSource2 = 488.850    # x-Coordinate of the injection 2 (right)
+YminSource2 = 936.900    # y-Coordinate of the injection 2 (bottom)
+YmaxSource2 = 937.900    # y-Coordinate of the injection 2 (top)
+
+[Fluid]
+BrineDensity = 1000
+
+[ElasticParameters]
+Ematrix = 30e9
+Efault = 5e9
+nuFault = 0.25
+nuMatrix = 0.2
+
+[TransportParameters]
+Kinit = 1.E-19  # initial permeability [m²]
+KMatrix     = 1.E-19  # permeability [m²]
+KFault = 1.E-16
+
+Phi   = 0.01     # porosity
+
+[Neumann]
+StressY = 0.0
+
+[Implicit]
+MobilityUpwindWeight = 1.0
+
+# [LinearSolver]
+# Verbosity = 2
