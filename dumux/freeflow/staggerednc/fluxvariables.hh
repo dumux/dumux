@@ -146,13 +146,10 @@ private:
 
             const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
             const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-            const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+            const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
 
             const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
             const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
-
-
-
             const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(phaseIdx, compIdx) : upstreamVolVars.massFraction(phaseIdx, compIdx);
             const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(phaseIdx, compIdx) : downstreamVolVars.massFraction(phaseIdx, compIdx);
 
