@@ -165,7 +165,7 @@ public:
         const auto& scvfCouplingData = couplingMapper.getBulkCouplingData(element).getScvfCouplingData(fvGeometry.scvf(scvfIndex()));
 
         // obtain data necessary to fully instantiate the complete coupled facet data
-        assert(!scvfCouplingData.first && "no coupled facet element found for given scvf!");
+        assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
         const auto& lowDimProblem = problem_().couplingManager().lowDimProblem();
 
         auto lowDimElement = lowDimProblem.model().globalFvGeometry().element(scvfCouplingData.second);
