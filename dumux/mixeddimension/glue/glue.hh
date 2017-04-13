@@ -238,15 +238,11 @@ public:
 
     //! Return a reference to the bulk problem
     BulkProblem& bulkProblem()
-    {
-        return bulkProblem_;
-    }
+    { return bulkProblem_; }
 
     //! Return a reference to the low dimensional problem
     LowDimProblem& lowDimProblem()
-    {
-        return lowDimProblem_;
-    }
+    { return lowDimProblem_; }
 
     //! Return begin iterator to intersection container
     typename Intersections::const_iterator ibegin() const
@@ -255,6 +251,10 @@ public:
     //! Return end iterator to intersection container
     typename Intersections::const_iterator iend() const
     { return intersections_.end(); }
+
+    //! the number of intersections
+    std::size_t size() const
+    { return intersections_.size(); }
 
 private:
     BulkProblem& bulkProblem_;
