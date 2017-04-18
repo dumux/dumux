@@ -64,7 +64,7 @@ public:
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
         pipe_(0), openPlotWindow_(true), persist_(persist),
-        terminalType_("x11"),
+        terminalType_("x11"), outputDirectory_("./"),
         datafileSeparator_(' '), linetype_("solid"),
         xRangeIsSet_(false), yRangeIsSet_(false),
         xLabel_(""), yLabel_(""),
@@ -87,11 +87,11 @@ public:
      * \param plottingWindowNumber Change the number of the window in which the plot is shown
      * \param terminalType Set the terminal type for the graphical output
      */
-    DUNE_DEPRECATED_MSG("The signature of plot(string, int, string) has been changed to plot(string, string, int).")
+    DUNE_DEPRECATED_MSG("The signature of plot(string, int, string) has been changed to plot(string).")
     void plot(const std::string &title, const unsigned int plottingWindowNumber, const std::string& terminalType = "x11")
     {
         setTerminalType(terminalType);
-        plot(title, terminalType, plottingWindowNumber);
+        plot(title);
     }
 
     /*!
@@ -125,8 +125,7 @@ public:
         for (unsigned int i = 0; i < curveFile_.size(); ++i)
         {
             plot += + " " + curveFile_[i]
-                    + " " + curveOptions_[i]
-                    + " title '" + curveTitle_[i] + "'";
+                    + " " + curveOptions_[i];
             if (i < curveFile_.size()-1)
                 plot += ",\\";
             plot += "\n";
@@ -145,9 +144,9 @@ public:
             plot += "set term pngcairo size 800,600 " + linetype_ + " \n";
             plot += "set output \"" + filename + ".png\"\n";
             plot += "replot\n";
-            std::string fileName = filename + ".gp";
+            std::string gnuplotFileName = outputDirectory_ + filename + ".gp";
             std::ofstream file;
-            file.open(fileName);
+            file.open(gnuplotFileName);
             file << plot;
             file.close();
         }
@@ -168,9 +167,8 @@ public:
      */
     void resetPlot()
     {
-        curveFile_.resize(0);
-        curveOptions_.resize(0);
-        curveTitle_.resize(0);
+        curveFile_.clear();
+        curveOptions_.clear();
         plotOptions_ = "";
     }
 
@@ -194,57 +192,68 @@ public:
             assert("Could not close pipe to Gnuplot!");
     }
 
-    /*!
-     * \brief Adds a function to list of plotted lines
-     *
-     * \param function Function to be plotted
-     * \param plotName The name of the data set
-     * \param plotOptions Specific gnuplot options passed to this plot
-     */
+    DUNE_DEPRECATED_MSG("The signature of addFunctionToPlot(string, string, string) has been changed to addFunctionToPlot(string, string).")
     void addFunctionToPlot(const std::string function,
                            const std::string plotName,
-                           const std::string plotOptions = "with lines")
+                           const std::string plotOptions)
     {
-        curveFile_.push_back(function);
-        curveOptions_.push_back(plotOptions);
-        curveTitle_.push_back(plotName);
+        addFunctionToPlot(function, "title '" + plotName + "' " + plotOptions);
     }
 
     /*!
-     * \brief Adds a file to list of plotted lines
+     * \brief Adds a function to list of plots
      *
-     * \param file Function to be plotted
-     * \param plotName The name of the data set
-     * \param plotOptions Specific gnuplot options passed to this plot
+     * \param function Function to be plotted
+     * \param options Specific gnuplot options passed to this plot
      */
+    void addFunctionToPlot(const std::string function,
+                           const std::string options = "with lines")
+    {
+        curveFile_.push_back(function);
+        curveOptions_.push_back(options);
+    }
+
+    DUNE_DEPRECATED_MSG("The signature of addFileToPlot(string, string, string) has been changed to addFileToPlot(string, string).")
     void addFileToPlot(const std::string file,
                        const std::string plotName,
-                       const std::string plotOptions = "with lines")
+                       const std::string plotOptions)
     {
-        curveFile_.push_back("'" + file + "'");
-        curveOptions_.push_back(plotOptions);
-        curveTitle_.push_back(plotName);
+        addFileToPlot(file, "title '" + plotName + "' " + plotOptions);
+    }
+
+    /*!
+     * \brief Adds a file to list of plots
+     *
+     * \param fileName Name and path of the file to be plotted
+     * \param options Specific gnuplot options passed to this plot
+     */
+    void addFileToPlot(const std::string fileName,
+                       const std::string options = "with lines")
+    {
+        curveFile_.push_back("'" + fileName + "'");
+        curveOptions_.push_back(options);
     }
 
     /*!
      * \brief Adds a data set and writes a data file
      *
+     * The title of the plot can be changed by setting the title in the options
+     *
      * \param x Vector containing the x-axis data points
      * \param y Vector containing the y-axis data points
-     * \param plotName The name of the data set
-     * \param plotOptions Specific gnuplot options passed to this plot
+     * \param fileName The name of the written data file
+     * \param options Specific gnuplot options passed to this plot
      */
     void addDataSetToPlot(const std::vector<Scalar>& x,
                           const std::vector<Scalar>& y,
-                          const std::string plotName,
-                          const std::string plotOptions = "with lines")
+                          const std::string fileName,
+                          const std::string options = "with lines")
     {
         assert(x.size() == y.size());
 
-        //write data to file
-        std::string fileName = plotName + ".dat";
+        // write data to file
         std::ofstream file;
-        file.open(fileName);
+        file.open(outputDirectory_ + fileName);
         for (unsigned int i = 0; i < x.size(); i++)
         {
             checkNumber(x[i], "x[i] i=" + std::to_string(i) + " in " + fileName);
@@ -255,8 +264,7 @@ public:
 
         // adding file to list of plotted lines
         curveFile_.push_back("'" + fileName + "'");
-        curveOptions_.push_back(plotOptions);
-        curveTitle_.push_back(plotName);
+        curveOptions_.push_back(options);
     }
 
     /*!
@@ -346,6 +354,16 @@ public:
     }
 
     /*!
+     * \brief Sets the output directory for data and gnuplot files
+     *
+     * \param outputDirectory The user-specified terminal
+     */
+    void setOutputDirectory(std::string outputDirectory)
+    {
+        outputDirectory_ = outputDirectory + "/";
+    }
+
+    /*!
      * \brief Use dashed (true) or solid (false) lines
      *
      * \param dashed Use dashed lines
@@ -378,11 +396,11 @@ private:
     bool openPlotWindow_;
     bool persist_;
     std::string terminalType_;
+    std::string outputDirectory_;
     char datafileSeparator_;
     std::string linetype_;
     StringVector curveFile_;
     StringVector curveOptions_;
-    StringVector curveTitle_;
     bool interaction_;
     Scalar xRangeMin_;
     Scalar xRangeMax_;

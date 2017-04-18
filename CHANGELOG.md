@@ -17,6 +17,9 @@ Differences Between DuMuX 2.11 and DuMuX 2.12
 * IMPROVEMENTS and ENHANCEMENTS:
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+  - gnuplotinterface.hh: The add...ToPlot() functions have changed signature,
+    the curve name/title is not mandatory anymore and can be specified together
+    with the curve options.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.12: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
