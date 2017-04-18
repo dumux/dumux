@@ -56,10 +56,9 @@ class GnuplotInterface
 {
 public:
     typedef std::vector<std::string> StringVector;
-    enum PlotStyle
-    {
-        lines, points, linesPoints, impulses, dots
-    };
+    enum class CurveType
+    { function, file, data };
+    typedef std::vector<CurveType> CurveTypeVector;
 
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
@@ -122,13 +121,27 @@ public:
 
         // plot curves
         plot += "plot";
-        for (unsigned int i = 0; i < curveFile_.size(); ++i)
+        std::string plotCommandForFile(plot);
+        for (unsigned int i = 0; i < curve_.size(); ++i)
         {
-            plot += + " " + curveFile_[i]
-                    + " " + curveOptions_[i];
-            if (i < curveFile_.size()-1)
+            if (curveType_[i] == CurveType::function)
+            {
+                plot += + " " + curve_[i] + " " + curveOptions_[i];
+                plotCommandForFile += + " " + curve_[i] + " " + curveOptions_[i];
+            }
+            else
+            {
+                plot += + " '" + outputDirectory_ + curve_[i] + "' " + curveOptions_[i];
+                plotCommandForFile += + " '" + curve_[i] + "' " + curveOptions_[i];
+            }
+
+            if (i < curve_.size()-1)
+            {
                 plot += ",\\";
+                plotCommandForFile += ",\\";
+            }
             plot += "\n";
+            plotCommandForFile += "\n";
         }
 
         // live plot of the results if gnuplot is installed
@@ -140,14 +153,14 @@ public:
         // create a gnuplot file if a filename is specified
         if (filename.compare("") != 0)
         {
-            plot += "\n";
-            plot += "set term pngcairo size 800,600 " + linetype_ + " \n";
-            plot += "set output \"" + filename + ".png\"\n";
-            plot += "replot\n";
+            plotCommandForFile += "\n";
+            plotCommandForFile += "set term pngcairo size 800,600 " + linetype_ + " \n";
+            plotCommandForFile += "set output \"" + filename + ".png\"\n";
+            plotCommandForFile += "replot\n";
             std::string gnuplotFileName = outputDirectory_ + filename + ".gp";
             std::ofstream file;
             file.open(gnuplotFileName);
-            file << plot;
+            file << plotCommandForFile;
             file.close();
         }
     }
@@ -167,13 +180,13 @@ public:
      */
     void resetPlot()
     {
-        curveFile_.clear();
+        curve_.clear();
         curveOptions_.clear();
         plotOptions_ = "";
     }
 
     /*!
-     * \brief Closes gnuplot
+     * \brief Opens gnuplot
      */
     void open(const bool persist = true)
     {
@@ -209,8 +222,9 @@ public:
     void addFunctionToPlot(const std::string function,
                            const std::string options = "with lines")
     {
-        curveFile_.push_back(function);
+        curve_.push_back(function);
         curveOptions_.push_back(options);
+        curveType_.push_back(CurveType::function);
     }
 
     DUNE_DEPRECATED_MSG("The signature of addFileToPlot(string, string, string) has been changed to addFileToPlot(string, string).")
@@ -230,8 +244,9 @@ public:
     void addFileToPlot(const std::string fileName,
                        const std::string options = "with lines")
     {
-        curveFile_.push_back("'" + fileName + "'");
+        curve_.push_back(fileName);
         curveOptions_.push_back(options);
+        curveType_.push_back(CurveType::file);
     }
 
     /*!
@@ -263,8 +278,9 @@ public:
         file.close();
 
         // adding file to list of plotted lines
-        curveFile_.push_back("'" + fileName + "'");
+        curve_.push_back(fileName);
         curveOptions_.push_back(options);
+        curveType_.push_back(CurveType::data);
     }
 
     /*!
@@ -399,8 +415,9 @@ private:
     std::string outputDirectory_;
     char datafileSeparator_;
     std::string linetype_;
-    StringVector curveFile_;
+    StringVector curve_;
     StringVector curveOptions_;
+    CurveTypeVector curveType_;
     bool interaction_;
     Scalar xRangeMin_;
     Scalar xRangeMax_;
