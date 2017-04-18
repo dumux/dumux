@@ -59,9 +59,9 @@ int main()
     gnuplot.setDatafileSeparator(',');
     gnuplot.setOption("set arrow from 0,0 to 2,20 head filled lc rgb 'dark-gray'");
     gnuplot.setOption("set label 'arrow' at 1,15 center tc rgb 'dark-gray'");
-    gnuplot.addDataSetToPlot(x, y, "dataSet_f(x)=x^2", "every 5 w lp ps 2");
-    gnuplot.addFunctionToPlot("x**3", "function_f(x)=x^3");
-    gnuplot.addFileToPlot("dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat");
+    gnuplot.addDataSetToPlot(x, y, "dataSet.csv", "every 5 w lp ps 2");
+    gnuplot.addFunctionToPlot("x**3", "title 'function_f(x)=x^3'");
+    gnuplot.addFileToPlot("dataSet.csv");
     gnuplot.plot("plot");
     exit(0);
 }
