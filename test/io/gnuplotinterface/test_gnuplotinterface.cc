@@ -52,6 +52,7 @@ int main()
         yMax = max(yMax, y[i]);
     }
 
+    gnuplot.setOutputDirectory("output");
     gnuplot.setXRange(0, 5);
     gnuplot.setYRange(yMin, yMax);
     gnuplot.setXlabel("x [-]");

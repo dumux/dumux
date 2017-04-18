@@ -1,3 +1,4 @@
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output")
 add_dumux_test(test_gnuplotinterface test_gnuplotinterface test_gnuplotinterface.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_gnuplotinterface)
 

@@ -64,7 +64,7 @@ public:
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
         pipe_(0), openPlotWindow_(true), persist_(persist),
-        terminalType_("x11"),
+        terminalType_("x11"), outputDirectory_("./"),
         datafileSeparator_(' '), linetype_("solid"),
         xRangeIsSet_(false), yRangeIsSet_(false),
         xLabel_(""), yLabel_(""),
@@ -144,9 +144,9 @@ public:
             plot += "set term pngcairo size 800,600 " + linetype_ + " \n";
             plot += "set output \"" + filename + ".png\"\n";
             plot += "replot\n";
-            std::string fileName = filename + ".gp";
+            std::string gnuplotFileName = outputDirectory_ + filename + ".gp";
             std::ofstream file;
-            file.open(fileName);
+            file.open(gnuplotFileName);
             file << plot;
             file.close();
         }
@@ -253,7 +253,7 @@ public:
 
         // write data to file
         std::ofstream file;
-        file.open(fileName);
+        file.open(outputDirectory_ + fileName);
         for (unsigned int i = 0; i < x.size(); i++)
         {
             checkNumber(x[i], "x[i] i=" + std::to_string(i) + " in " + fileName);
@@ -354,6 +354,16 @@ public:
     }
 
     /*!
+     * \brief Sets the output directory for data and gnuplot files
+     *
+     * \param outputDirectory The user-specified terminal
+     */
+    void setOutputDirectory(std::string outputDirectory)
+    {
+        outputDirectory_ = outputDirectory + "/";
+    }
+
+    /*!
      * \brief Use dashed (true) or solid (false) lines
      *
      * \param dashed Use dashed lines
@@ -386,6 +396,7 @@ private:
     bool openPlotWindow_;
     bool persist_;
     std::string terminalType_;
+    std::string outputDirectory_;
     char datafileSeparator_;
     std::string linetype_;
     StringVector curveFile_;
