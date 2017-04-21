@@ -37,20 +37,7 @@ namespace Dumux
  * \ingroup NavierStokesModel
  * \brief A single-phase, non-isothermal flow model using the fully implicit scheme.
  *
- * Single-phase, non-isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
- *
- * and solves the mass continuity equation:
- * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
- * \f]
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
+ * All equations are discretized using a staggered grid as spatial
  * and the implicit Euler method as time discretization.
  * The model supports compressible as well as incompressible fluids.
  */
@@ -95,7 +82,6 @@ public:
 
         // add temperature to output
         auto& vtkOutputModule = problem.vtkOutputModule();
-//        vtkOutputModule.addPrimaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature();});
         vtkOutputModule.addPrimaryVariable("temperature", Indices::temperatureIdx);
     }
 };

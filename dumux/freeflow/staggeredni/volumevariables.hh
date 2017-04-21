@@ -73,7 +73,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, this->fluidState_);
     }
 
     /*!
@@ -86,25 +86,25 @@ public:
                                    FluidState& fluidState)
     {
         fluidState.setTemperature(elemSol[0][Indices::temperatureIdx]);
-        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+        fluidState.setSaturation(phaseIdx, 1.0);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setDensity(/*phaseIdx=*/0, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setViscosity(/*phaseIdx=*/0, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
 
         // compute and set the enthalpy
-        value = FluidSystem::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setEnthalpy(/*phaseIdx=*/0, value);
+        value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, value);
     }
 
     /*!
@@ -124,6 +124,17 @@ public:
    {
        return this->fluidState_.molarDensity(phaseIdx);
    }
+
+   /*!
+   * \brief Returns the molar mass of a given phase within the
+   *        control volume.
+   *
+   * \param phaseIdx The phase index
+   */
+  Scalar molarMass() const
+  {
+      return this->fluidState_.averageMolarMass(phaseIdx);
+  }
 
     /*!
      * \brief Returns the total internal energy of the fluid phase in the
@@ -153,30 +164,19 @@ public:
     Scalar thermalConductivity() const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); }
 
+    /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$
+     *        of the fluid phase in the sub-control volume.
+     */
+    Scalar temperature() const
+     { return this->fluidState_.temperature(phaseIdx); }
 
 protected:
-    FluidState fluidState_;
 
     // this method gets called by the parent class. since this method
     // is protected, we are friends with our parent...
     friend class NavierStokesVolumeVariables<TypeTag>;
 
-    static Scalar temperature_(const CellCenterPrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int scvIdx)
-    {
-        return priVars[temperatureIdx];
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
-    }
 };
 
 } // end namespace

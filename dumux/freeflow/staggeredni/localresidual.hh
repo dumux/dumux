@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal Stokes box model with a staggered grid.
+ *        using the non-isothermal Stokes model with a staggered grid.
  *
  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_LOCAL_RESIDUAL_HH
@@ -39,10 +39,8 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalanceStokes);
 NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(ReplaceCompEqIdx);
 }
 
 /*!
@@ -83,28 +81,62 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false, true> : public Staggered
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+//    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
-     * \brief Evaluate the amount the additional quantities to the Stokes model
-     *        (energy equation).
+     * \brief Evaluate the cell center storage terms of the non-isothermal Stokes model.
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
+     *
+     * \param scv The sub control volume
+     * \param volVars The volume variables
      */
     CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv, const VolumeVariables& volVars)
     {
         CellCenterPrimaryVariables storage(0.0);
-        const Scalar density = useMoles? volVars.molarDensity() : volVars.density();
+//        const Scalar density = useMoles? volVars.molarDensity() : volVars.density();
 
         // compute storage of mass
-        storage[massBalanceIdx] = volVars.density();
+        storage = ParentType::computeStorageForCellCenter(scv, volVars);
 
         // compute the storage of energy
-        storage[energyBalanceIdx] = density * volVars.internalEnergy();
+        storage[energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
 
         return storage;
+    }
+
+
+    /*!
+     * \brief Evaluate the cell center source terms of the non-isothermal Stokes model.
+     *
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub control volume divided by the volume)
+     *
+     * \param element The element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param globalFaceVars The face variables
+     * \param scv The sub control volume
+     */
+    CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const ElementVolumeVariables& elemVolVars,
+                                                          const GlobalFaceVars& globalFaceVars,
+                                                          const SubControlVolume &scv)
+    {
+        CellCenterPrimaryVariables source(0.0);
+
+        source = this->problem().sourceAtPos(scv.center())[cellCenterIdx][massBalanceIdx];
+        source = this->problem().sourceAtPos(scv.center())[cellCenterIdx][energyBalanceIdx];
+
+        return source;
     }
 };
 

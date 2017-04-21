@@ -39,10 +39,10 @@
 #include "../staggered/propertydefaults.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+//#include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/nullcomponent.hh>
-#include <dumux/material/fluidsystems/1p.hh>
+//#include <dumux/material/components/nullcomponent.hh>
+//#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
@@ -78,110 +78,6 @@ SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
 
 SET_INT_PROP(NavierStokesNI, PhaseIdx, 0); //!< Defines the phaseIdx
 
-
-////! average is used as default model to compute the effective thermal heat conductivity
-//SET_PROP(NavierStokesNI, ThermalConductivityModel)
-//{ private :
-//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//  public:
-//    typedef ThermalConductivityAverage<Scalar> type;
-//};
-
-
-/*!
- * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This should be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- *        This can be done in the problem.
- */
-//SET_PROP(NavierStokesNI, FluidState)
-//{
-//    private:
-//        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//    public:
-//        typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
-//};
-
-// //! Enable advection
-// SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
-//
-// //! The one-phase model has no molecular diffusion
-// SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
-//
-//! Non-Isothermal model by default
-//SET_BOOL_PROP(NavierStokesNI, EnableEnergyBalance, true);
-//
-// //! The indices required by the isothermal single-phase model
-// SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
-//
-// //! The weight of the upwind control volume when calculating
-// //! fluxes. Use central differences by default.
-// SET_SCALAR_PROP(NavierStokes, ImplicitMassUpwindWeight, 0.5);
-//
-// //! weight for the upwind mobility in the velocity calculation
-// //! fluxes. Use central differences by default.
-// SET_SCALAR_PROP(NavierStokes, ImplicitMobilityUpwindWeight, 0.5);
-//
-// //! The fluid system to use by default
-// SET_TYPE_PROP(NavierStokes, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
-//
-// SET_PROP(NavierStokes, Fluid)
-// { private:
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-// public:
-//     typedef FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
-// };
-//
-// /*!
-//  * \brief The fluid state which is used by the volume variables to
-//  *        store the thermodynamic state. This should be chosen
-//  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
-//  *        This can be done in the problem.
-//  */
-// SET_PROP(NavierStokes, FluidState){
-//     private:
-//         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//     public:
-//         typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
-// };
-//
-// // disable velocity output by default
-// SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
-//
-// // enable gravity by default
-// SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);
-//
-// SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
-//
-// SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, true);
-//
-
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
-
-// set isothermal Model
-// SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
-
-//set isothermal VolumeVariables
-// SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);
-
-//set isothermal LocalResidual
-// SET_TYPE_PROP(NavierStokesNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
-
-//set isothermal Indices
-// SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
-
-//set isothermal NumEq
-// SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
-
-//set non-isothermal NumEq
-// SET_INT_PROP(NavierStokesNI, NonIsothermalNumEq, 1);
-
-
-// \}
 } // end namespace Properties
 
 } // end namespace Dumux

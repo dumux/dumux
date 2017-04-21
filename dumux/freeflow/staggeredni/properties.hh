@@ -28,7 +28,6 @@
 #define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 
 #include <dumux/freeflow/staggered/properties.hh>
-//#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
 {
@@ -53,22 +52,6 @@ NEW_PROP_TAG(EnableEnergyBalanceStokes);
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-//NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-//NEW_PROP_TAG(Indices); //!< Enumerations for the model
-//NEW_PROP_TAG(FluidSystem); //!< The type of the fluid system to use
-//NEW_PROP_TAG(Fluid); //!< The fluid used for the default fluid system
-//NEW_PROP_TAG(FluidState); //!< The type of the fluid state to use
-//NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-//NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
-//NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-//NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
-//NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
-//NEW_PROP_TAG(BoundaryValues); //!< Type to set values on the boundary
-//NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
-//NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
-//NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
-//NEW_PROP_TAG(UseMoles); //!< Defines whether molar (true) or mass (false) density is used
 NEW_PROP_TAG(PhaseIdx); //!< Defines the phaseIdx
 
 // \}

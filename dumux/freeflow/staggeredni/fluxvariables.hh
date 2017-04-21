@@ -33,14 +33,9 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-//NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalanceStokes);
 NEW_PROP_TAG(EnableInertiaTerms);
 }
-
-// // forward declaration
-// template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
-// class FreeFlowFluxVariablesImpl;
 
 /*!
  * \ingroup ImplicitModel
@@ -48,9 +43,6 @@ NEW_PROP_TAG(EnableInertiaTerms);
  *        specializations are provided for combinations of physical processes
  * \note  Not all specializations are currently implemented
  */
-// template<class TypeTag>
-// using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
-//                                                                  GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 // specialization for immiscible, non-isothermal flow
 template<class TypeTag>
@@ -69,7 +61,6 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVaria
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
@@ -79,11 +70,20 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVaria
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        energyBalanceIdx = Indices::energyBalanceIdx,
+        energyBalanceIdx = Indices::energyBalanceIdx
     };
 
 public:
+    /*!
+    * \brief Returns the fluxes for the cell center primary variables
+    * \param problem The problem
+    * \param element The element
+    * \param fvGeometry The finite-volume geometry
+    * \param elemVolVars All volume variables for the element
+    * \param globalFaceVars The face variables
+    * \param scvf The sub control volume face
+    * \param fluxVarsCache The flux variables cache
+    */
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
@@ -93,13 +93,21 @@ public:
                                                         const FluxVariablesCache& fluxVarsCache)
     {
         CellCenterPrimaryVariables flux(0.0);
+        flux = ParentType::computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
         flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
         flux += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 
 private:
-
+    /*!
+    * \brief Returns the advective fluxes for the cell center primary variables
+    * \param problem The problem
+    * \param fvGeometry The finite-volume geometry
+    * \param elemVolVars All volume variables for the element
+    * \param globalFaceVars The face variables
+    * \param scvf The sub control volume face
+    */
     CellCenterPrimaryVariables advectiveFluxForCellCenter_(const Problem& problem,
                                                           const FVElementGeometry& fvGeometry,
                                                           const ElementVolumeVariables& elemVolVars,
@@ -117,7 +125,7 @@ private:
         if(scvf.boundary())
         {
             const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(momentumBalanceIdx))
+                if(bcTypes.isOutflow(energyBalanceIdx))
                     isOutflow = true;
         }
 
@@ -127,7 +135,7 @@ private:
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
 
         const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
         const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
@@ -138,8 +146,8 @@ private:
         flux[energyBalanceIdx] = (upWindWeight * upstreamDensity * upstreamEnthalpy
                                  + (1.0 - upWindWeight) * downstreamDensity * downstreamEnthalpy)
                                  * velocity;
-
         flux *= scvf.area() * sign(scvf.outerNormalScalar());
+
         return flux;
     }
 };
