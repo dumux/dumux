@@ -51,6 +51,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -64,7 +65,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Staggered >
     static const int dimWorld = GridView::dimensionworld;
 
     enum {
-        energyBalanceIdx = Indices::energyBalanceIdx
+        massBalanceIdx = Indices::massBalanceIdx,
+        energyBalanceIdx = Indices::energyBalanceIdx,
+        phaseIdx = Indices::phaseIdx
     };
 
 public:
@@ -98,35 +101,28 @@ public:
         outsideLambda *= outsideVolVars.extrusionFactor();
 
         // the resulting averaged conductivity tensor
-//        const auto lambda = problem.spatialParams().harmonicMean(insideLambda, outsideLambda, scvf.unitOuterNormal());
-        const auto lambda = harmonicMean(insideLambda, outsideLambda); // TODO unitOuterNormal?!
+        const auto lambda = harmonicMean(insideLambda, outsideLambda);
 
         const Scalar insideTemp = insideVolVars.temperature();
-        Scalar distance(0.0), outsideTemp(insideTemp);
+        const Scalar outsideTemp = scvf.boundary() ? problem.dirichletAtPos(scvf.center())[energyBalanceIdx]
+                                                   : outsideVolVars.temperature();
+        const Scalar distance = scvf.boundary() ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
+                                                : (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
 
         if(scvf.boundary())
         {
             const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-            if(bcTypes.isOutflow(energyBalanceIdx))
-                return flux; // TODO flux = 0??
-            else if(bcTypes.isNeumann(energyBalanceIdx))
-                return flux; // TODO: implement neumann
-                else
-                {
-                    distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-                    outsideTemp = problem.dirichletAtPos(scvf.center())[energyBalanceIdx];
-                }
-        }
-        else
-        {
-            distance = (insideScv.dofPosition() - outsideScv.dofPosition()).two_norm();
-            outsideTemp = outsideVolVars.temperature();
+            if(bcTypes.isOutflow(energyBalanceIdx) || bcTypes.isNeumann(energyBalanceIdx))
+                return flux;
         }
 
         flux[energyBalanceIdx] = -1.0 * (insideTemp - outsideTemp);
         flux[energyBalanceIdx] *= lambda / distance;
+        flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;
     }
+
+
 };
 } // end namespace
 
