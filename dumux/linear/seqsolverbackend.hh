@@ -718,6 +718,72 @@ public:
   }
 };
 
+#if HAVE_SUPERLU
+
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILU0-preconditioned (from SuperLU) GMRes solver.
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems." SIAM J. Sci. and Stat.
+ * Comput. 7: 856–869.
+ *
+ * Preconditioner: ILU(0) incomplete LU factorization from the SuperLU library.
+ * The order 0 indicates
+ * that no fill-in is allowed. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
+ */
+template <class TypeTag>
+class SuperLUILU0RestartedGMResBackend
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    static constexpr int blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
+    static constexpr int blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize);
+
+public:
+
+    SuperLUILU0RestartedGMResBackend(const Problem& problem) {}
+
+    template<class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        // use the dune wrapper to turn a solver into a preconditioner
+        using Preconditioner = Dune::SuperLU_ILU<Matrix, Vector, Vector>;
+        using Solver = Dune::RestartedGMResSolver<Vector>;
+
+        // get the parameters
+        static const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
+        static const int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+        static const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
+
+        Vector bTmp(b);
+
+        // constructor computes the LU factorization
+        Preconditioner precond(A, (verbosity > 0));
+
+        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
+        MatrixAdapter operatorA(A);
+
+        Solver solver(operatorA, precond, residReduction, restart, maxIter, verbosity);
+        solver.apply(x, bTmp, result_);
+
+        return result_.converged;
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    { return result_; }
+
+private:
+    Dune::InverseOperatorResult result_;
+};
+
+#endif // HAVE_SUPERELU
+
 /*!
  * \ingroup Linear
  * \brief Sequential ILU(n)-preconditioned GMRes solver.
@@ -788,8 +854,11 @@ public:
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 
     int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+
+    // constructor computes the LU factorization
     Dune::SuperLU<ISTLMatrix> solver(A, verbosity > 0);
 
+    // solves the linear system using L and U
     solver.apply(x, bTmp, result_);
 
     int size = x.size();
