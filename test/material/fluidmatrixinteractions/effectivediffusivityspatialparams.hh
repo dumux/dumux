@@ -114,7 +114,7 @@ public:
         gnuplot.setOpenPlotWindow(GET_PARAM_FROM_GROUP(TypeTag, bool, Output, OpenPlotWindow));
         PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Diffusivity, File);
-        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity_, 0.0, 1.0, fileName);
+        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity_, 0.0, 1.0, fileName + ".dat");
         gnuplot.plot("d_eff");
     }
 
