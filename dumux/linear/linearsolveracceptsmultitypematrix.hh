@@ -60,6 +60,10 @@ struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0RestartedGMResBackend
 { static constexpr bool value = false; };
 
 template<typename TypeTag>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, SuperLUILU0RestartedGMResBackend<TypeTag>>
+{ static constexpr bool value = false; };
+
+template<typename TypeTag>
 struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnRestartedGMResBackend<TypeTag>>
 { static constexpr bool value = false; };
 
