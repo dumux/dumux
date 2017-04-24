@@ -28,9 +28,7 @@
 #include <dumux/freeflow/staggeredni/model.hh>
 #include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
-//#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
-//#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 
 namespace Dumux
 {
@@ -48,26 +46,12 @@ namespace Properties
 {
 NEW_TYPE_TAG(ChannelNITestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNI));
 
-//SET_PROP(ChannelNITestProblem, Fluid)
-//{
-//private:
-//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//public:
-//    typedef FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
-//};
-
-NEW_PROP_TAG(FluidSystem);
-
-// Select the fluid system
-SET_TYPE_PROP(ChannelNITestProblem, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
-
-SET_PROP(ChannelNITestProblem, PhaseIdx)
+SET_PROP(ChannelNITestProblem, Fluid)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    static constexpr int value = FluidSystem::wPhaseIdx;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
 // Set the grid type
@@ -154,6 +138,10 @@ public:
                                              Scalar,
                                              Problem,
                                              InletVelocity);
+        inletTemp_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             Scalar,
+                                             Problem,
+                                             InletTemp);
         FluidSystem::init();
     }
 
@@ -227,13 +215,13 @@ public:
     {
         BoundaryValues values;
         values[pressureIdx] = 1.1e+5;
-        values[temperatureIdx]= 283.15; // TODO
+        values[temperatureIdx]= 283.15;
 
         if(isInlet(globalPos))
         {
             values[velocityXIdx] = inletVelocity_;
             values[velocityYIdx] = 0.0;
-            values[temperatureIdx] = 303.15; // TODO
+            values[temperatureIdx] = inletTemp_;
         }
         else if(isWall(globalPos))
         {
@@ -291,7 +279,7 @@ private:
     }
 
     const Scalar eps_{1e-6};
-    Scalar inletVelocity_;
+    Scalar inletVelocity_, inletTemp_;
     std::string name_;
 };
 } //end namespace
