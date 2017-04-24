@@ -349,7 +349,7 @@ public:
         gnuplot_.setOption("set label 'at time " + stream.str() + "' at screen 0.15,0.90 left");
         gnuplot_.setDatafileSeparator(' ');
         std::string fileName = outputName_ + "plotOverLineIntoDepth.dat";
-        gnuplot_.addFileToPlot(fileName, fileName, " u 11:4 w l");
+        gnuplot_.addFileToPlot(fileName, "u 11:4 w l");
         gnuplot_.plot("plot");
     }
 
