@@ -81,9 +81,10 @@ public:
         // The list of bulk element indices connected to a low dim element
         std::vector<BulkIndexType> couplingStencil;
 
-        // We store for each directly connected element a list of
-        // global scvf indices over which the two domains are coupled
-        std::vector<std::pair<BulkIndexType, std::vector<BulkIndexType>>> elementScvfList;
+        // We store for each directly connected element a list of global scvf indices
+        // over which the two domains are coupled (in two separate vectors with identical indexing)
+        std::vector<BulkIndexType> elementList;
+        std::vector<std::vector<BulkIndexType>> scvfLists;
 
         // The constructor
         BulkDataInLowDim() : isCoupled(false) {}
@@ -104,17 +105,16 @@ public:
         // The constructor
         LowDimDataInBulk() : isCoupled(false) {}
 
-        // For a given scvf of the element this method returns a pair of a bool and an index. The boolean
-        // indicates if this scvf does couple to a low dim element, the index is the low dim element index
-        std::pair<bool, LowDimIndexType> getScvfCouplingData(const BulkSubControlVolumeFace& scvf) const
-        { return getScvfCouplingData(scvf.index()); }
+        // For a given scvf of the element this method returns the low dim element index.
+        LowDimIndexType getCouplingLowDimElementIndex(const BulkSubControlVolumeFace& scvf) const
+        { return getCouplingLowDimElementIndex(scvf.index()); }
 
-        std::pair<bool, LowDimIndexType> getScvfCouplingData(BulkIndexType scvfIdx) const
+        LowDimIndexType getCouplingLowDimElementIndex(BulkIndexType scvfIdx) const
         {
             for (const auto& pair : scvfToLowDimData)
                 if (pair.first == scvfIdx)
-                    return std::make_pair(true, pair.second);
-            return std::make_pair(false, 0);
+                    return pair.second;
+            DUNE_THROW(Dune::InvalidStateException, "The bulk element/scvf combination provided does not couple to a low dim element!");
         }
     };
 
@@ -181,12 +181,12 @@ public:
 
                             // also, insert scvf stencil to the coupling stencil of the low dim element
                             const auto scvfStencil = [&] ()
-                            {
-                                if (bulkProblem_().model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
-                                    return bulkProblem_().model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf).globalScvIndices();
-                                else
-                                    return bulkProblem_().model().globalFvGeometry().interactionVolumeSeed(scvf).globalScvIndices();
-                            } ();
+                                                     {
+                                                        if (bulkProblem_().model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
+                                                            return bulkProblem_().model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf).globalScvIndices();
+                                                        else
+                                                            return bulkProblem_().model().globalFvGeometry().interactionVolumeSeed(scvf).globalScvIndices();
+                                                     } ();
 
                             auto& lowDimCouplingStencil = lowDimCouplingData_[lowDimElementGlobalIdx].couplingStencil;
                             lowDimCouplingStencil.insert(lowDimCouplingStencil.end(), scvfStencil.begin(), scvfStencil.end());
@@ -201,7 +201,8 @@ public:
                     }
 
                     // insert data into the low dim map
-                    lowDimCouplingData_[lowDimElementGlobalIdx].elementScvfList.emplace_back(std::make_pair(bulkElementIdx, std::move(scvfIndices)));
+                    lowDimCouplingData_[lowDimElementGlobalIdx].elementList.emplace_back(bulkElementIdx);
+                    lowDimCouplingData_[lowDimElementGlobalIdx].scvfLists.emplace_back(std::move(scvfIndices));
                 }
             }
             else if (bulkElementIndices.size() == 1)

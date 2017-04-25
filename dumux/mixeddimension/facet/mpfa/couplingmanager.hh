@@ -130,7 +130,7 @@ public:
     const std::vector<BulkIndexType>& couplingStencil(const LowDimElement& element)
     { return couplingMapper_.getLowDimCouplingData(element).couplingStencil; }
 
-    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
+    //! evaluate coupling residual of the bulk element with respect to low dim DOF
     //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
     BulkPrimaryVariables evalCouplingResidual(const BulkElement& element,
                                               const BulkFVElementGeometry& fvGeometry,
@@ -151,7 +151,7 @@ public:
         return bulkLocalResidual_.residual(0);
     }
 
-    //! evaluate coupling residual for the derivative low dim DOF with respect to bulk DOF
+    //! evaluate coupling residual of the low dim element with respect to bulk DOF
     //! we only need to evaluate the part of the residual that will be influence by the bulk DOF
     LowDimPrimaryVariables evalCouplingResidual(const LowDimElement& element,
                                                 const LowDimFVElementGeometry& fvGeometry,
@@ -166,9 +166,7 @@ public:
             return LowDimPrimaryVariables(0.0);
 
         // calculate the source term of the low dim element
-        const auto eIdx = lowDimProblem().elementMapper().index(element);
-        const auto& scv = fvGeometry.scv(eIdx);
-
+        const auto& scv = fvGeometry.scv(lowDimProblem().elementMapper().index(element));
         auto source = lowDimLocalResidual_.computeSource(element, fvGeometry, curElemVolVars, scv);
         source *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
         return source;
@@ -190,8 +188,7 @@ public:
         // evaluate the fluxes over each scvf in each bulk neighbor. Prepare the local views
         // of the first element, the necessary quantities for all the scvfs will be in there,
         // as the scvfs in the other elements are the "flipped" scvfs of the ones in the first element
-        const auto& firstPair = couplingData.elementScvfList[0];
-        const auto firstBulkElement = bulkProblem().model().globalFvGeometry().element(firstPair.first);
+        const auto firstBulkElement = bulkProblem().model().globalFvGeometry().element(couplingData.elementList[0]);
 
         auto bulkFvGeometry = localView(bulkProblem().model().globalFvGeometry());
         bulkFvGeometry.bind(firstBulkElement);
@@ -203,11 +200,10 @@ public:
         bulkElemFluxVarsCache.bind(firstBulkElement, bulkFvGeometry, bulkElemVolVars);
 
         BulkPrimaryVariables flux(0.0);
-        for (const auto& pair : couplingData.elementScvfList)
+        for (unsigned int i = 0; i < couplingData.elementList.size(); ++i)
         {
-            const auto bulkElement = bulkProblem().model().globalFvGeometry().element(pair.first);
-            for (auto scvfIdx : pair.second)
-                flux += bulkLocalResidual_.computeFlux(bulkElement,
+            for (const auto scvfIdx : couplingData.scvfLists[i])
+                flux += bulkLocalResidual_.computeFlux(bulkProblem().model().globalFvGeometry().element(couplingData.elementList[i]),
                                                        bulkFvGeometry,
                                                        bulkElemVolVars,
                                                        bulkFvGeometry.scvf(scvfIdx),
@@ -224,10 +220,8 @@ public:
                                         const BulkFVElementGeometry& fvGeometry,
                                         const BulkSubControlVolumeFace& scvf) const
     {
-        const auto& scvfCouplingData = couplingMapper_.getBulkCouplingData(element).getScvfCouplingData(scvf);
-
-        assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
-        const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(scvfCouplingData.second);
+        const auto lowDimElementIndex = couplingMapper_.getBulkCouplingData(element).getCouplingLowDimElementIndex(scvf);
+        const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(lowDimElementIndex);
         auto lowDimFvGeometry = localView(lowDimProblem().model().globalFvGeometry());
         lowDimFvGeometry.bindElement(lowDimElement);
 
@@ -236,7 +230,7 @@ public:
         lowDimVolVars.update(lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol),
                              lowDimProblem(),
                              lowDimElement,
-                             lowDimFvGeometry.scv(scvfCouplingData.second));
+                             lowDimFvGeometry.scv(lowDimElementIndex));
         return lowDimVolVars;
     }
 
@@ -244,16 +238,14 @@ public:
     Scalar lowDimExtrusionFactor(const BulkElement& element,
                                  const BulkSubControlVolumeFace& scvf) const
     {
-        const auto& scvfCouplingData = couplingMapper_.getBulkCouplingData(element).getScvfCouplingData(scvf);
-
-        assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
-        const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(scvfCouplingData.second);
+        const auto lowDimElementIndex = couplingMapper_.getBulkCouplingData(element).getCouplingLowDimElementIndex(scvf);
+        const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(lowDimElementIndex);
         auto lowDimFvGeometry = localView(lowDimProblem().model().globalFvGeometry());
         lowDimFvGeometry.bindElement(lowDimElement);
 
         const auto& lowDimCurSol = lowDimProblem().model().curSol();
         return lowDimProblem().extrusionFactor(lowDimElement,
-                                               lowDimFvGeometry.scv(scvfCouplingData.second),
+                                               lowDimFvGeometry.scv(lowDimElementIndex),
                                                lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol));
     }
 
