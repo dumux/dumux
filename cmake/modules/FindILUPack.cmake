@@ -27,6 +27,7 @@ find_path(ILUPACK_INCLUDE_DIR
           "${CMAKE_SOURCE_DIR}/../external/ilupack/include/"
 )
 
+
 find_library(LIBILUPACK_MC64
     NAMES libilupack_mc64.a
     PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
@@ -70,28 +71,100 @@ find_library(LIBBLASLIKE
     PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
 )
 
+# check version specific macros
+include(CheckCSourceCompiles)
+include(CMakePushCheckState)
+cmake_push_check_state()
 
-set(ILUPACK_INCLUDE_DIRS ${ILUPACK_INCLUDE_DIR})
-set(ILUPACK_ILUPACK_LIBRARIES
-    ${LIBBLASLIKE}
-    ${LIBILUPACK_MUMPS}
-    ${LIBGFORTRAN}
-    ${LIBGOMP}
-    ${LIBMUMPS}
-    ${LIBSPARSPAK}
-    ${LIBMETISOMP}
-    ${LIBMETIS})
+# we need if clauses here because variable is set variable-NOTFOUND
+#
+if(ILUPACK_INCLUDE_DIR)
+  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ILUPACK_INCLUDE_DIR})
+endif(ILUPACK_INCLUDE_DIR)
+if(LIBBLASLIKE)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBBLASLIKE})
+endif(LIBBLASLIKE)
+if(LIBILUPACK_MUMPS)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBILUPACK_MUMPS})
+endif(LIBILUPACK_MUMPS)
+if(LIBGFORTRAN)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBGFORTRAN})
+endif(LIBGFORTRAN)
+if(LIBGOMP)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBGOMP})
+endif(LIBGOMP)
+if(LIBMUMPS)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBMUMPS})
+endif(LIBMUMPS)
+if(LIBSPARSPAK)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBSPARSPAK})
+endif(LIBSPARSPAK)
+if(LIBMETISOMP)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBMETISOMP})
+endif(LIBMETISOMP)
+if(LIBMETIS)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBMETIS})
+endif(LIBMETIS)
 
-dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_ILUPACK=1"
-                            LIBRARIES "${ILUPACK_ILUPACK_LIBRARIES}"
-                            INCLUDE_DIRS "${ILUPACK_INCLUDE_DIRS}")
+# behave like a CMake module is supposed to behave
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  "ILUPACK"
+  DEFAULT_MSG
+  ILUPACK_INCLUDE_DIR
+  LIBBLASLIKE
+  LIBILUPACK_MUMPS
+  LIBGOMP
+  LIBMUMPS
+  LIBSPARSPAK
+  LIBMETISOMP
+  LIBMETIS
+)
 
-# include(FindPackageHandleStandardArgs)
-# find_package_handle_standard_args(
-#   "ILUPACK"
-#   ILUPACK_INCLUDE_DIR
-#   #TODO: what does belong here?
-# )
+mark_as_advanced(ILUPACK_INCLUDE_DIR
+                 LIBBLASLIKE
+                 LIBILUPACK_MUMPS
+                 LIBGOMP
+                 LIBMUMPS
+                 LIBSPARSPAK
+                 LIBMETISOMP
+                 LIBMETIS
+)
+
+# if both headers and libraries are found, store results
+if(ILUPACK_FOUND)
+    set(ILUPACK_INCLUDE_DIRS ${ILUPACK_INCLUDE_DIR})
+    set(ILUPACK_LIBRARIES
+        ${LIBBLASLIKE}
+        ${LIBILUPACK_MUMPS}
+        ${LIBGFORTRAN}
+        ${LIBGOMP}
+        ${LIBMUMPS}
+        ${LIBSPARSPAK}
+        ${LIBMETISOMP}
+        ${LIBMETIS})
+    # log result
+    file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+    "Determining location of ILUPack succeeded:\n"
+    "Include directory: ${ILUPACK_INCLUDE_DIRS}\n"
+    "Library directory: ${ILUPACK_LIBRARIES}\n\n")
+    set(ILUPACK_DUNE_COMPILE_FLAGS "${ILUPACK_INCLUDE_DIRS}"
+    CACHE STRING "Compile flags used by DUNE when compiling ILUPack programs")
+    set(ILUPACK_DUNE_LIBRARIES ${ILUPACK_LIBRARIES}
+    CACHE STRING "Libraries used by DUNE when linking ILUPack programs")
+else(ILUPACK_FOUND)
+  # log errornous result
+  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+    "Determining location of ILUPack failed:\n"
+    "Include directory: ${ILUPACK_INCLUDE_DIRS}\n"
+    "Library directory: ${ILUPACK_LIBRARIES}\n\n")
+endif(ILUPACK_FOUND)
 
 # set macros for config.h
 set(HAVE_ILUPACK ${ILUPACK_FOUND})
+
+if(ILUPACK_FOUND)
+    dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_ILUPACK=1"
+                                LIBRARIES "${ILUPACK_LIBRARIES}"
+                                INCLUDE_DIRS "${ILUPACK_INCLUDE_DIRS}")
+endif()
