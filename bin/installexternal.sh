@@ -172,6 +172,29 @@ installGStat()
     fi
 }
 
+installILUPack()
+{
+    cd $EXTDIR
+    rm -rf ilupack* standalone
+
+    if [ ! -e ilupack05102016.zip ]; then
+        wget http://www.icm.tu-bs.de/~bolle/ilupack/download/ilupack05102016.zip
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    unzip ilupack05102016.zip
+    cd ilupack/include
+
+    # comment-out two conflicting typedefs
+    sed -i s#'typedef struct { real r, i; } complex'#'// typedef struct { real r, i; } complex'#g f2c.h
+    sed -i s#'typedef struct { doubleprecision r, i; } doublecomplex'#'// typedef struct { doubleprecision r, i; } doublecomplex'#g f2c.h
+
+    echo "Successfully installed ILUPack."
+}
+
 installMETIS()
 {
     cd $EXTDIR
@@ -316,7 +339,7 @@ installOPM()
     if [ ! -e opm-output ]; then
         git clone -b release/2016.10 https://github.com/OPM/opm-output
     fi
-    
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -472,6 +495,7 @@ usage()
     echo "  foamgrid         Download dune-foamgrid."
     echo "  glpk             Download and install glpk."
     echo "  gstat            Download and install gstat."
+    echo "  ilupack          Download and install ilupack"
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
@@ -540,6 +564,7 @@ for TMP in "$@"; do
             installFoamGrid
             installGLPK
             installGStat
+            installILUPack
             installMETIS
             installMultidomain
             installMultidomainGrid
@@ -570,6 +595,11 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installGStat
+            ;;
+        ilupack)
+            SOMETHING_DONE="y"
+            createExternalDirectory
+            installILUPack
             ;;
         metis)
             SOMETHING_DONE="y"
