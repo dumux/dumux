@@ -73,6 +73,9 @@
 /* Define to 1 if quadmath was found */
 #cmakedefine HAVE_QUAD 1
 
+/* Define to 1 if ILUPack was found */
+#cmakedefine HAVE_ILUPACK 1
+
 /* end dumux
    Everything below here will be overwritten
 */
