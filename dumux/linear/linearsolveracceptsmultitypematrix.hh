@@ -75,6 +75,15 @@ struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, UMFPackBackend<TypeTag>>
 { static constexpr bool value = false; };
 #endif // HAVE_UMFPACK
 
+#if HAVE_ILUPACK
+template<class TypeTag>
+class ILUPackBackend;
+
+template<typename TypeTag>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUPackBackend<TypeTag>>
+{ static constexpr bool value = false; };
+#endif // HAVE_ILUPACK
+
 } // end namespace Dumux
 
 #endif
