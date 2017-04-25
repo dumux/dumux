@@ -153,7 +153,7 @@ public:
                                                           scvf);
     }
 
-    //! The following interface is here for compatibility reasonsto be overloaded for problems using facet coupling.
+    //! The following interface is here for compatibility reasons to be overloaded for problems using facet coupling.
     //! prepares all the necessary variables of the other domain.
     //! Note that also an implementation of the CompleteFacetData structure has to be provided.
     CompleteCoupledFacetData completeCoupledFacetData(const FVElementGeometry& fvGeometry) const
@@ -162,13 +162,12 @@ public:
 
         // get coupling data for this scvf
         const auto element = problem_().model().globalFvGeometry().element(elementIndex());
-        const auto& scvfCouplingData = couplingMapper.getBulkCouplingData(element).getScvfCouplingData(scvfIndex());
+        const auto lowDimElementIndex = couplingMapper.getBulkCouplingData(element).getCouplingLowDimElementIndex(scvfIndex());
 
         // obtain data necessary to fully instantiate the complete coupled facet data
-        assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
         const auto& lowDimProblem = problem_().couplingManager().lowDimProblem();
+        auto lowDimElement = lowDimProblem.model().globalFvGeometry().element(lowDimElementIndex);
 
-        auto lowDimElement = lowDimProblem.model().globalFvGeometry().element(scvfCouplingData.second);
         auto lowDimFvGeometry = localView(lowDimProblem.model().globalFvGeometry());
         lowDimFvGeometry.bindElement(lowDimElement);
 
@@ -176,10 +175,10 @@ public:
         lowDimVolVars.update(lowDimProblem.model().elementSolution(lowDimElement, lowDimProblem.model().curSol()),
                              lowDimProblem,
                              lowDimElement,
-                             lowDimFvGeometry.scv(scvfCouplingData.second));
+                             lowDimFvGeometry.scv(lowDimElementIndex));
 
         return CompleteCoupledFacetData(lowDimProblem,
-                                        scvfCouplingData.second,
+                                        lowDimElementIndex,
                                         std::move(lowDimElement),
                                         std::move(lowDimFvGeometry),
                                         std::move(lowDimVolVars));
