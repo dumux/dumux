@@ -23,19 +23,24 @@
 # look for header files, only at positions given by the user
 find_path(ILUPACK_INCLUDE_DIR
     NAMES ilupack.h
-    PATHS "${ILUPACK_ROOT}"
-          "${CMAKE_SOURCE_DIR}/../external/ilupack/include/"
+    PATHS "${ILUPACK_ROOT}/include"
+          "${CMAKE_SOURCE_DIR}/../external/ilupack/"
+    PATH_SUFFIXES "include/"
+    NO_DEFAULT_PATH
 )
+
+# get the root dir of ILUPack
+get_filename_component(ILUPACK_DIR ${ILUPACK_INCLUDE_DIR} DIRECTORY)
 
 
 find_library(LIBILUPACK_MC64
     NAMES libilupack_mc64.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 find_library(LIBILUPACK_MUMPS
     NAMES libilupack_mumps.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 find_library(LIBGFORTRAN
@@ -48,27 +53,27 @@ find_library(LIBGOMP
 
 find_library(LIBMETIS
     NAMES libmetis.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 find_library(LIBMUMPS
     NAMES libmumps.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 find_library(LIBMETISOMP
     NAMES libmetisomp.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 find_library(LIBSPARSPAK
     NAMES libsparspak.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 find_library(LIBBLASLIKE
     NAMES libblaslike.a
-    PATHS ${CMAKE_SOURCE_DIR}/../external/ilupack/lib/GNU64
+    PATHS ${ILUPACK_DIR}/lib/GNU64
 )
 
 # check version specific macros
