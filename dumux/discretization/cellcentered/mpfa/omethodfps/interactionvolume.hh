@@ -118,8 +118,6 @@ public:
                                           const FVElementGeometry& fvGeometry,
                                           const ElementVolumeVariables& elemVolVars)
     : ParentType(seed, problem, fvGeometry, elemVolVars),
-      c_(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C)),
-      p_(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, P)),
       divEqIdx_(this->fluxScvfIndexSet_().size())
     {
         if (dim == 3)
@@ -198,6 +196,9 @@ private:
                              LocalMatrixContainer& mc,
                              bool boundary = false)
     {
+        static const Scalar c = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C);
+        static const Scalar p = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, P);
+
         // get diffusion tensor in "positive" sub volume
         auto localScvIdx = localScvf.insideLocalScvIndex();
         auto&& localScv = this->localScv_(localScvIdx);
@@ -215,8 +216,8 @@ private:
         // find normal coordinate direction and integration point for divergence condition
         LocalIndexType divEqNormalDir = 1 - normalDir;
         LocalPosition divEqIpLocal(0.0);
-        divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
-        divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
+        divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c : 1.0 - (1.0-c)*p;
+        divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c + (1.0-c)*p : c;
 
         // does the face has an unknown associated with it?
         bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
@@ -231,7 +232,7 @@ private:
         {
             LocalPosition bcIpLocal(0.0);
             bcIpLocal[normalDir] = 1.0;
-            bcIpLocal[divEqNormalDir] = normalDir == 1 ? 1.0 - (1.0-c_)*p_ : c_ + (1.0-c_)*p_;
+            bcIpLocal[divEqNormalDir] = normalDir == 1 ? 1.0 - (1.0-c)*p : c + (1.0-c)*p;
             addDivEquationCoefficients_(localScv, localBasis, D, bcIpLocal, normalDir, mc, boundary);
         }
     }
@@ -242,6 +243,9 @@ private:
                              LocalIndexType localScvfIdx,
                              LocalMatrixContainer& mc)
     {
+        static const Scalar c = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C);
+        static const Scalar p = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, P);
+
         // get diffusion tensor in "negative" sub volume
         for (auto localScvIdx : localScvf.outsideLocalScvIndices())
         {
@@ -261,8 +265,8 @@ private:
             // find normals and integration points in the two scvs for condition of zero divergence
             LocalIndexType divEqNormalDir = 1 - normalDir;
             LocalPosition divEqIpLocal(0.0);
-            divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c_ : 1.0 - (1.0-c_)*p_;
-            divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c_ + (1.0-c_)*p_ : c_;
+            divEqIpLocal[divEqNormalDir] = divEqNormalDir == 1 ? c : 1.0 - (1.0-c)*p;
+            divEqIpLocal[normalDir] = divEqNormalDir == 1 ? c + (1.0-c)*p : c;
 
             // does the face has an unknown associated with it?
             bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
@@ -346,8 +350,10 @@ private:
                                      LocalMatrixContainer& mc,
                                      bool isBoundary = false)
     {
+        static const Scalar c = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C);
+
         // fluxes on the auxiliary volume have to be scaled
-        static const Scalar auxArea = 1.0 - c_;
+        static const Scalar auxArea = 1.0 - c;
         Scalar factor = isBoundary ? -1.0*auxArea : auxArea;
 
         // evaluate shape functions gradients at the ip
@@ -406,9 +412,6 @@ private:
     }
 
     const FeCache feCache_;
-
-    const Scalar c_;
-    const Scalar p_;
     const LocalIndexType divEqIdx_;
 };
 
