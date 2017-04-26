@@ -173,7 +173,7 @@ public:
     PorousMediumFluxVariablesCacheImplementation()
     : ParentType(),
       isUpdated_(false),
-      interiorBoundaryInfoSelf_(false, -1)
+      isInteriorBoundary_(false)
     {}
 
     //! Returns whether or not this cache has been updated
@@ -203,7 +203,8 @@ public:
             {
                 if (data.scvfIndex() == scvfIdx)
                 {
-                    interiorBoundaryInfoSelf_ = std::make_pair(true, indexInData);
+                    isInteriorBoundary_ = true;
+                    indexInInteriorBoundaryData_ = indexInData;
                     break;
                 }
 
@@ -213,16 +214,15 @@ public:
     }
 
     bool isInteriorBoundary() const
-    { return interiorBoundaryInfoSelf_.first; }
+    { return isInteriorBoundary_; }
 
     const std::vector<InteriorBoundaryData>& interiorBoundaryData() const
     { return interiorBoundaryData_; }
 
     const InteriorBoundaryData& interiorBoundaryDataSelf() const
     {
-        assert(interiorBoundaryInfoSelf_.first && "Trying to obtain interior boundary data on a face that is not marked as such");
-        assert(interiorBoundaryInfoSelf_.second != -1 && "The index to the interior boundary data of this face has not been set");
-        return interiorBoundaryData_[interiorBoundaryInfoSelf_.second];
+        assert(isInteriorBoundary_ && "Trying to obtain interior boundary data on a face that is not marked as such");
+        return interiorBoundaryData_[indexInInteriorBoundaryData_];
     }
 
 private:
@@ -230,7 +230,8 @@ private:
     bool isUpdated_;
 
     // if this face is an interior Dirichlet boundary itself, store additional data
-    std::pair<bool, unsigned int> interiorBoundaryInfoSelf_;
+    bool isInteriorBoundary_;
+    unsigned int indexInInteriorBoundaryData_;
 
     // contains all the interior Dirichlet boundary data within the stencil of this face
     std::vector<InteriorBoundaryData> interiorBoundaryData_;
