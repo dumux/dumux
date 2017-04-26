@@ -87,6 +87,13 @@ public:
     {
         CellCenterPrimaryVariables flux(0.0);
 
+        if(scvf.boundary())
+        {
+            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+            if(bcTypes.isOutflow(energyBalanceIdx) || bcTypes.isNeumann(energyBalanceIdx))
+                return flux;
+        }
+
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
@@ -104,17 +111,9 @@ public:
         const auto lambda = harmonicMean(insideLambda, outsideLambda);
 
         const Scalar insideTemp = insideVolVars.temperature();
-        const Scalar outsideTemp = scvf.boundary() ? problem.dirichletAtPos(scvf.center())[energyBalanceIdx]
-                                                   : outsideVolVars.temperature();
+        const Scalar outsideTemp = outsideVolVars.temperature();
         const Scalar distance = scvf.boundary() ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
                                                 : (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-
-        if(scvf.boundary())
-        {
-            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-            if(bcTypes.isOutflow(energyBalanceIdx) || bcTypes.isNeumann(energyBalanceIdx))
-                return flux;
-        }
 
         flux[energyBalanceIdx] = -1.0 * (insideTemp - outsideTemp);
         flux[energyBalanceIdx] *= lambda / distance;
