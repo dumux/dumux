@@ -127,6 +127,8 @@ public:
     // set parameters to the default settings
     AMGinit(&A, &param);
 
+    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
+
 
     // Here you can (if you like) change some of the default options
 
@@ -157,18 +159,51 @@ public:
     //        perm and permf when calling AMGfactor
     param.ordering=(char *)"amd";
 
+    if(ParameterTree::tree().hasKey("LinearSolver.ILUPack.Ordering"))
+    {
+        const auto ordering = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                std::string,
+                                                LinearSolver.ILUPack,
+                                                Ordering);
+
+        std::vector<std::string> orderingSchemes {"amd", "metisn", "metise", "rcm", "amf", "mmd", "indset", "pq"};
+        if(std::none_of(orderingSchemes.begin(), orderingSchemes.end(), [&ordering](const auto& name) { return name == ordering; }))
+        {
+            std::cout << ordering << " is not a valid ordering scheme. Use one of the following: ";
+            for(const auto& scheme : orderingSchemes)
+                std::cout << scheme << " ";
+            std::cout << std::endl;
+            DUNE_THROW(Dumux::ParameterException, "wrong ordering specified");
+        }
+
+        param.ordering = strdup(ordering.c_str());
+    }
+
+
     //  3. drop tolerance for the LU factors
     // by default, 1e-2 is chosen. Here you can overwrite the default values
     // This sample program is designed to pass your own drop tolerance (called
     // (DROP_TOL) via the command line when being called
-    param.droptol=1e-1;
+    param.droptol = 1e-1;
+    try { param.droptol = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                double,
+                                                LinearSolver.ILUPack,
+                                                DropTol);
+    }
+    catch(Dumux::ParameterException& e) { }
 
     //  4. drop tolerance for the approximate Schur complement
     // by default, 1e-2 is chosen. Here you can overwrite the default values
     // This sample program is designed to pass your own drop tolerance (called
     // (DROP_TOL) via the command line when being called. In this example, we
     // use the drop tolerance as for the LU factors but multiplied by 0.1
-    param.droptolS=1e-1;//0.1*param.droptol;
+    param.droptolS = 1e-1;//0.1*param.droptol;
+    try { param.droptolS = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                double,
+                                                LinearSolver.ILUPack,
+                                                DropTolS);
+    }
+    catch(Dumux::ParameterException& e) { }
 
     //  5. norm of the inverse triangular factors
     // by default, 1e+2 is chosen. Here you can overwrite the default values.
@@ -190,7 +225,13 @@ public:
     // tolerance to terminate whenever the backward error is less than this
     // threshold. By default, sqrt(eps)~1e-8 is chosen for double precision,
     // eps^(3/4)~1e-6 is chosen for single precision.
-    param.restol=1e-8;
+    param.restol = 1e-8;
+    try { param.restol = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                double,
+                                                LinearSolver.ILUPack,
+                                                ResTol);
+    }
+    catch(Dumux::ParameterException& e) { }
 
     //  7. maximum number of iteration steps
     // By default the iterative solver will quit once the number of iteration
@@ -271,6 +312,26 @@ public:
     //               grid systems and increases the amount of memory.
     // param.amg="mg";
 
+    if(ParameterTree::tree().hasKey("LinearSolver.ILUPack.MultiGrid"))
+    {
+        const auto multigrid = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                std::string,
+                                                LinearSolver.ILUPack,
+                                                MultiGrid);
+
+        std::vector<std::string> schemes {"ilu", "amli", "mg"};
+        if(std::none_of(schemes.begin(), schemes.end(), [&multigrid](const auto& name) { return name == multigrid; }))
+        {
+            std::cout << multigrid << " is not a valid option. Use one of the following: ";
+            for(const auto& scheme : schemes)
+                std::cout << scheme << " ";
+            std::cout << std::endl;
+            DUNE_THROW(Dumux::ParameterException, "wrong multigrid");
+        }
+
+        param.amg = strdup(multigrid.c_str());
+    }
+
     // 14. number of pre-smoothing steps
     // If classical multigrid is selected (param.amg="mg";), then here you can
     // set the number of pre-smoothing steps. default: 1
@@ -334,14 +395,14 @@ public:
 
     // 20. type of coarse grid system
     // By default the coarse grid system S is computed from A and the ILU in
-    //                                 /L11   0\ /D11   0\ /U11   U12\
+    //                                 |L11   0| |D11   0| |U11   U12|
     // typical ILU manner, i.e. if A ~ |       |*|       |*|         |, then S
-    //                                 \L21   I/ \ 0    S/ \ 0     I /
+    //                                 |L21   I| | 0    S| | 0     I |
     // is defined via S:= A22-L21*D11*U12.
     // Alternatively one could compute W21 ~ L21*L11^{-1}, Z12 ~ U11^{-1}*U12
-    //                                  /-Z12\
+    //                                  |-Z12|
     // and define S via S:= [-W21  I]*A*|    |. This would refer to an AMG-like
-    //                                  \  I /
+    //                                  |  I |
     // strategy to compute a coarse grid system.
     // available are
     //    (a) "ilu"    (default)  ILU-type coarse grid system
