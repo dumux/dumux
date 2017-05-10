@@ -129,8 +129,7 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
-        scvIndices_ = std::vector<IndexType>({globalFvGeometry().problem_().elementMapper().index(*elementPtr_)});
+        scvIndices_ = std::vector<IndexType>({globalFvGeometry().problem_().elementMapper().index(element)});
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -138,8 +137,6 @@ public:
     { return *globalFvGeometryPtr_; }
 
 private:
-
-    const Element* elementPtr_;
     std::vector<IndexType> scvIndices_;
     const GlobalFVGeometry* globalFvGeometryPtr_;
 };
@@ -298,7 +295,6 @@ public:
     void bindElement(const Element& element)
     {
         clear();
-        elementPtr_ = &element;
         makeElementGeometries(element);
     }
 
@@ -604,9 +600,6 @@ private:
         neighborScvs_.clear();
         neighborScvfs_.clear();
     }
-
-    // the bound element
-    const Element* elementPtr_;
 
     const GlobalFVGeometry* globalFvGeometryPtr_;
 
