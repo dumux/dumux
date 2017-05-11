@@ -43,6 +43,7 @@ namespace FluidSystems
 {
 
 /*!
+ * \ingroup Fluidsystems
  * \brief A compositional fluid with water and heavy oil
  *        components in both, the liquid and the gas phase.
  */
@@ -313,7 +314,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "non-existent diffusion coefficient for phase index " << phaseIdx);
     }
 
-     /* Henry coefficients
+     /*!
+     * \brief Henry coefficients
      */
     template <class FluidState>
     static Scalar henryCoefficient(const FluidState &fluidState,
@@ -337,7 +339,8 @@ public:
                                                      << " and component index " << compIdx);
     }
 
-     /*  partial pressures in the gas phase, taken from saturation vapor pressures
+     /*!
+     * \brief Partial pressures in the gas phase, taken from saturation vapor pressures
      */
     template <class FluidState>
     static Scalar partialPressureGas(const FluidState &fluidState, int phaseIdx,
@@ -354,7 +357,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "non-existent component index " << compIdx);
     }
 
-     /*  inverse vapor pressures, taken from inverse saturation vapor pressures
+     /*!
+     * \brief Inverse vapor pressures, taken from inverse saturation vapor pressures
      */
     template <class FluidState>
     static Scalar inverseVaporPressureCurve(const FluidState &fluidState,
@@ -377,8 +381,7 @@ public:
     /*!
      * \brief Given all mole fractions in a phase, return the specific
      *        phase enthalpy [J/kg].
-     */
-    /*!
+     *
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
      *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
      */
