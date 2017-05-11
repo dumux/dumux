@@ -97,9 +97,7 @@ public:
      * Himmelblau by the temperature.
      *
      * See:
-     *
      * R. Reid et al. (1987, pp. 599) \cite reid1987 <BR>
-     *
      * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
      */
     template <class Scalar>

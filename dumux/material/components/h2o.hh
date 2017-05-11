@@ -50,7 +50,6 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  *
  * See:
- *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation
  * 1997 for the Thermodynamic Properties of Water and Steam",
  * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -123,7 +122,6 @@ public:
      *\param T temperature of component in \f$\mathrm{[K]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
@@ -145,7 +143,6 @@ public:
      *\param pressure pressure in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -167,7 +164,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -212,7 +208,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -248,7 +243,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -278,7 +272,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -305,7 +298,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
@@ -356,7 +348,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
@@ -424,7 +415,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -708,7 +698,6 @@ public:
      * pressure of water.
      *
      * See:
-     *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
      * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
@@ -727,7 +716,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
      * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
