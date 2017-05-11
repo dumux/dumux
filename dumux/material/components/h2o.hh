@@ -124,7 +124,7 @@ public:
      * See:
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar vaporPressure(Scalar T)
     {
@@ -300,7 +300,7 @@ public:
      * See:
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
                                              Scalar pressure)
@@ -350,7 +350,7 @@ public:
      * See:
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
     */
     static Scalar gasInternalEnergy(Scalar temperature, Scalar pressure)
     {
@@ -734,8 +734,10 @@ public:
      * freesteam - IAPWS-IF97 steam tables library
      * copyright (C) 2004-2009  John Pye
      *
-     * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
+     * See:
+     * IAPWS: "Release on the IAPWS Formulation 2011 for the Thermal Conductivity
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/ThCond.pdf
+     * \cite IAPWS_ThCond
      *
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
@@ -765,8 +767,10 @@ public:
      * freesteam - IAPWS-IF97 steam tables library
      * copyright (C) 2004-2009  John Pye
      *
-     * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
+     * See:
+     * IAPWS: "Release on the IAPWS Formulation 2011 for the Thermal Conductivity
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/ThCond.pdf
+     * \cite IAPWS_ThCond
      *
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
