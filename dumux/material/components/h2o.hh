@@ -50,7 +50,6 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  *
  * See:
- *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation
  * 1997 for the Thermodynamic Properties of Water and Steam",
  * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -123,10 +122,9 @@ public:
      *\param T temperature of component in \f$\mathrm{[K]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static Scalar vaporPressure(Scalar T)
     {
@@ -145,7 +143,6 @@ public:
      *\param pressure pressure in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -167,7 +164,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -212,7 +208,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -248,7 +243,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -278,7 +272,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -305,10 +298,9 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
                                              Scalar pressure)
@@ -356,10 +348,9 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
+     * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
     */
     static Scalar gasInternalEnergy(Scalar temperature, Scalar pressure)
     {
@@ -424,7 +415,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
@@ -708,7 +698,6 @@ public:
      * pressure of water.
      *
      * See:
-     *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
      * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
@@ -727,7 +716,6 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
-     *
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
      * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
      */
@@ -746,8 +734,10 @@ public:
      * freesteam - IAPWS-IF97 steam tables library
      * copyright (C) 2004-2009  John Pye
      *
-     * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
+     * See:
+     * IAPWS: "Release on the IAPWS Formulation 2011 for the Thermal Conductivity
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/ThCond.pdf
+     * \cite IAPWS_ThCond
      *
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
@@ -777,8 +767,10 @@ public:
      * freesteam - IAPWS-IF97 steam tables library
      * copyright (C) 2004-2009  John Pye
      *
-     * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
+     * See:
+     * IAPWS: "Release on the IAPWS Formulation 2011 for the Thermal Conductivity
+     * of Ordinary Water Substance", http://www.iapws.org/relguide/ThCond.pdf
+     * \cite IAPWS_ThCond
      *
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$

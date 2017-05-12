@@ -165,7 +165,7 @@ public:
      *
      * The pressure correction is even simpler and developed and tested by
      * Holger Class in 2016 against the results of the Lemmon and Jacobsen (2004)
-     * approach \cite LemmonJacobsen2004
+     * approach \cite Lemmon2004a
      * It shows very reasonable results throughout realistic pressure and
      * temperature ranges up to several hundred Kelvin and up to 500 bar
      *
@@ -207,7 +207,7 @@ public:
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of Air at a given pressure and temperature.
      *
-     * This is a very exact approach by Lemmon and Jacobsen (2004) \cite LemmonJacobsen2004
+     * This is a very exact approach by Lemmon and Jacobsen (2004) \cite Lemmon2004a
      * All the values and parameters used below are explained in their paper
      * Since they use ''eta'' for dyn. viscosity, we do it as well for easier
      * comparison with the paper

@@ -471,7 +471,7 @@ public:
      * Compositional effects in the gas phase are accounted by the Wilke method.
      * See Reid et al. (1987)  \cite reid1987 <BR>
      * 4th edition, McGraw-Hill, 1987, 407-410
-     * 5th edition, McGraw-Hill, 20001, p. 9.21/22
+     * 5th edition, McGraw-Hill, 2001, p. 9.21/22
      * \note Compositional effects for a liquid mixture have to be implemented.
      *
      * \param fluidState An arbitrary fluid state
@@ -672,7 +672,7 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      *
      * See:
-     * Class Class 2000
+     * Class 2001:
      * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in NAPL-kontaminierten porösen Medien
      * Chapter 2.1.13 Innere Energie, Wäremekapazität, Enthalpie \cite A3:class:2001 <BR>
      *

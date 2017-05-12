@@ -41,7 +41,7 @@ public:
 
     /**
       * \brief Estimates dimensionless wall distance \f$ y^+ \f$ based on a formula given in
-      *        \url http://www.cfd-online.com/Wiki/Y_plus_wall_distance_estimation
+      *        http://www.cfd-online.com/Wiki/Y_plus_wall_distance_estimation
       */
     Scalar yPlusEstimation(const Scalar velocity,
                            const Dune::FieldVector<Scalar, dim> position,
