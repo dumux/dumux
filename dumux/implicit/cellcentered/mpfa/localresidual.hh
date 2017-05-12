@@ -77,7 +77,6 @@ protected:
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVolumeVariables& elemVolVars,
                                   const SubControlVolumeFace &scvf,
-                                  const ElementBoundaryTypes& bcTypes,
                                   const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if (!scvf.boundary() || !useTpfaBoundary)
@@ -93,14 +92,8 @@ protected:
                                const SubControlVolumeFace& scvf,
                                const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(this->problem(), element, fvGeometry);
-
-        this->residual_.resize(fvGeometry.numScv());
-        this->residual_ = 0;
-
         if (!scvf.boundary() || !useTpfaBoundary)
-          return this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
+          return this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else
         {
           auto bcTypes = this->problem().boundaryTypes(element, scvf);
