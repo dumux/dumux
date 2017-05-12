@@ -61,12 +61,14 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
+    using DataHandle = typename BoundaryInteractionVolume::Traits::DataHandle;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
+    static constexpr bool facetCoupling = GET_PROP_VALUE(TypeTag, MpfaFacetCoupling);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     //! The cache used in conjunction with the mpfa Fick's Law
@@ -84,34 +86,49 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         // update cached objects for the diffusive fluxes
         template<typename InteractionVolume>
-        void updateDiffusion(const InteractionVolume& iv, const SubControlVolumeFace &scvf,
+        void updateDiffusion(const InteractionVolume& iv,
+                             const DataHandle& dataHandle,
+                             const SubControlVolumeFace &scvf,
                              unsigned int phaseIdx, unsigned int compIdx)
         {
             const auto& localFaceData = iv.getLocalFaceData(scvf);
-            diffusionTij_[phaseIdx][compIdx] = iv.getTransmissibilities(localFaceData);
-            // copy the stencil only for the first call
-            if (phaseIdx == 0 && compIdx == 1)
-                diffusionVolVarsStencil_ = iv.volVarsStencil();
+            diffusionSwitchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside;
+            diffusionVolVarsStencil_[phaseIdx][compIdx] = &dataHandle.volVarsStencil();
+            diffusionVolVarsPositions_[phaseIdx][compIdx] = &dataHandle.volVarsPositions();
+            diffusionTij_[phaseIdx][compIdx] = &iv.getTransmissibilities(localFaceData, dataHandle);
+            diffusionCij_[phaseIdx][compIdx] = &iv.getNeumannFluxTransformationCoefficients(localFaceData, dataHandle);
 
             //! For compositional models, we associate neumann fluxes with the phases (main components)
             //! This is done in the AdvectionCache. However, in single-phasic models we solve the phase AND
             //! the component mass balance equations. Thus, in this case we have diffusive neumann contributions.
             //! we assume compIdx = eqIdx
             if (numPhases == 1 && phaseIdx != compIdx)
-                componentNeumannFluxes_[compIdx] = iv.getNeumannFlux(localFaceData, compIdx);
+                componentNeumannFluxes_[compIdx] = iv.getNeumannFlux(localFaceData, dataHandle, compIdx);
 
         }
 
-        //! Returns the volume variables indices necessary for diffusive flux
-        //! computation. This includes all participating boundary volume variables
-        //! and it can be different for the phases & components.
+        //! Returns the stencil for diffusive scvf flux computation
         const Stencil& diffusionVolVarsStencil(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionVolVarsStencil_; }
+        { return *(diffusionVolVarsStencil_[phaseIdx][compIdx]); }
+
+        //! Returns the vol vars position for diffusive scvf flux computation
+        const PositionVector& diffusionVolVarsPositions(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *(diffusionVolVarsPositions_[phaseIdx][compIdx]); }
 
         //! Returns the transmissibilities associated with the volume variables
         //! This can be different for the phases & components.
         const CoefficientVector& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionTij_[phaseIdx][compIdx]; }
+        { return *(diffusionTij_[phaseIdx][compIdx]); }
+
+        //! Returns the vector of coefficients with which the vector of neumann boundary conditions
+        //! has to be multiplied in order to transform them on the scvf this cache belongs to
+        const CoefficientVector& diffusionCij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *(diffusionCij_[phaseIdx][compIdx]); }
+
+        //! On faces that are "outside" w.r.t. a face in the interaction volume,
+        //! we have to take the negative value of the fluxes, i.e. multiply by -1.0
+        bool diffusionSwitchFluxSign(unsigned int phaseIdx, unsigned int compIdx) const
+        { return diffusionSwitchFluxSign_[phaseIdx][compIdx]; }
 
         //! If the useTpfaBoundary property is set to false, the boundary conditions
         //! are put into the local systems leading to possible contributions on all faces
@@ -122,9 +139,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         }
 
     private:
-        // Quantities associated with molecular diffusion
-        Stencil diffusionVolVarsStencil_;
-        std::array< std::array<CoefficientVector, numComponents>, numPhases> diffusionTij_;
+        std::array< std::array<bool, numComponents>, numPhases> diffusionSwitchFluxSign_;
+        std::array< std::array<const Stencil*, numComponents>, numPhases> diffusionVolVarsStencil_;
+        std::array< std::array<const PositionVector*, numComponents>, numPhases> diffusionVolVarsPositions_;
+        std::array< std::array<const CoefficientVector*, numComponents>, numPhases> diffusionTij_;
+        std::array< std::array<const CoefficientVector*, numComponents>, numPhases> diffusionCij_;
 
         // diffusive neumann flux for single-phasic models
         std::array<Scalar, numComponents> componentNeumannFluxes_;
@@ -148,9 +167,13 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         {
             // get interaction volume from the flux vars cache filler & upate the cache
             if (problem.model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
-                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf, phaseIdx, compIdx);
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.boundaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.dataHandle(),
+                                                  scvf, phaseIdx, compIdx);
             else
-                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.interactionVolume(), scvf, phaseIdx, compIdx);
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.interactionVolume(),
+                                                  fluxVarsCacheFiller.dataHandle(),
+                                                  scvf, phaseIdx, compIdx);
         }
     };
 
@@ -185,6 +208,7 @@ public:
         if (numPhases == 1
             && isInteriorBoundary
             && useTpfaBoundary
+            && !facetCoupling
             && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
             return scvf.area()*
                    elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
@@ -210,20 +234,28 @@ public:
         const auto rho = Implementation::interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
 
         // calculate Tij*xj
-        Scalar flux(0.0);
+        Scalar scvfFlux(0.0);
         unsigned int localIdx = 0;
         for (const auto volVarIdx : volVarsStencil)
-            flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
+            scvfFlux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
 
         // if no interior boundaries are present, return effective mass flux
         if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+        {
+            if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
+                return useTpfaBoundary ? scvfFlux*rho*effFactor : scvfFlux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            else
+                return useTpfaBoundary ? -scvfFlux*rho*effFactor : -scvfFlux*rho*effFactor - fluxVarsCache.componentNeumannFlux(compIdx);
+        }
 
         // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
+        scvfFlux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
 
         // return overall resulting flux
-        return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+        if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
+            return useTpfaBoundary ? scvfFlux*rho*effFactor : scvfFlux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+        else
+            return useTpfaBoundary ? -scvfFlux*rho*effFactor : -scvfFlux*rho*effFactor - fluxVarsCache.componentNeumannFlux(compIdx);
     }
 
     template<typename GetRhoFunction>

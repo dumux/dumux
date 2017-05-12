@@ -70,14 +70,6 @@ class CCMpfaOFacetCouplingInteractionVolume : public CCMpfaOInteractionVolume<Ty
 
 public:
 
-    CCMpfaOFacetCouplingInteractionVolume(const Seed& seed,
-                                          const Problem& problem,
-                                          const FVElementGeometry& fvGeometry,
-                                          const ElementVolumeVariables& elemVolVars)
-    : ParentType(seed, problem, fvGeometry, elemVolVars)
-    {}
-
-public:
     // We include data on the tensorial quantities of the facet elements here
     template<typename GetTensorFunction>
     Scalar interiorNeumannTerm(const GetTensorFunction& getTensor,
@@ -86,7 +78,7 @@ public:
                                const InteriorBoundaryData& data) const
     {
         // obtain the complete data on the facet element
-        const auto completeFacetData = data.completeCoupledFacetData(this->fvGeometry_());
+        const auto completeFacetData = data.completeCoupledFacetData(this->fvGeometry());
 
         // calculate "leakage factor"
         const auto n = localScvf.unitOuterNormal();
@@ -106,31 +98,31 @@ public:
                                            completeFacetData.scv());
 
         return localScvf.area()*
-               this->elemVolVars_()[localScvf.insideGlobalScvIndex()].extrusionFactor()*
+               this->elemVolVars()[localScvf.insideGlobalScvIndex()].extrusionFactor()*
                MpfaHelper::nT_M_v(n, facetTensor, v);
     }
 
     void assembleNeumannFluxVector()
     {
         // initialize the neumann fluxes vector to zero
-        this->neumannFluxes_.resize(this->fluxFaceIndexSet_.size(), PrimaryVariables(0.0));
+        this->neumannFluxes_.resize(this->fluxScvfIndexSet().size(), PrimaryVariables(0.0));
 
         if (!this->onDomainOrInteriorBoundary() || useTpfaBoundary)
             return;
 
         LocalIndexType fluxFaceIdx = 0;
-        for (auto localFluxFaceIdx : this->fluxFaceIndexSet_)
+        for (auto localFluxFaceIdx : this->fluxScvfIndexSet())
         {
-            const auto& localScvf = this->localScvf_(localFluxFaceIdx);
+            const auto& localScvf = this->localScvf(localFluxFaceIdx);
             const auto faceType = localScvf.faceType();
 
             if (faceType == MpfaFaceTypes::neumann)
             {
-                const auto& element = this->localElement_(localScvf.insideLocalScvIndex());
-                const auto& globalScvf = this->fvGeometry_().scvf(localScvf.insideGlobalScvfIndex());
-                auto neumannFlux = this->problem_().neumann(element, this->fvGeometry_(), this->elemVolVars_(), globalScvf);
+                const auto& element = this->localElement(localScvf.insideLocalScvIndex());
+                const auto& globalScvf = this->fvGeometry().scvf(localScvf.insideGlobalScvfIndex());
+                auto neumannFlux = this->problem().neumann(element, this->fvGeometry(), this->elemVolVars(), globalScvf);
                 neumannFlux *= globalScvf.area();
-                neumannFlux *= this->elemVolVars_()[globalScvf.insideScvIdx()].extrusionFactor();
+                neumannFlux *= this->elemVolVars()[globalScvf.insideScvIdx()].extrusionFactor();
 
                 // The flux is assumed to be prescribed in the form of -D*gradU
                 this->neumannFluxes_[fluxFaceIdx] = neumannFlux;

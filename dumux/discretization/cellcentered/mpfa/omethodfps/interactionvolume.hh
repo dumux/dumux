@@ -109,54 +109,82 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>
         // the matrices for the expression of the fluxes
         DynamicMatrix AF; //! coefficients for the unknown face pressures
         DynamicMatrix BF; //! coefficients for the cell/Dirichlet pressures
+
+        void reset()
+        {
+            AL = 0;
+            AR = 0;
+            BL = 0;
+            BR = 0;
+            AF = 0;
+            BF = 0;
+        }
     };
 
 public:
-    using typename ParentType::LocalIndexType;
     using typename ParentType::LocalFaceData;
-    using typename ParentType::Seed;
 
-    CCMpfaInteractionVolumeImplementation(const Seed& seed,
-                                          const Problem& problem,
-                                          const FVElementGeometry& fvGeometry,
-                                          const ElementVolumeVariables& elemVolVars)
-    : ParentType(seed, problem, fvGeometry, elemVolVars),
-      divEqIdx_(this->fluxScvfIndexSet_().size())
+    void bind(const Seed& seed,
+              const Problem& problem,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars,
+              DataHandle& dataHandle)
     {
         if (dim == 3)
             DUNE_THROW(Dune::NotImplemented, "Fps scheme in 3d");
 
+        // forward to parent class
+        ParentType::bind(seed, problem, fvGeometry, elemVolVars, dataHandle);
+
+        // resize the local matrices
+        const auto numUnknowns = this->numFluxFaces_ + 1;
+        const auto numFaces = this->localScvfs_.size();
+        const auto numPotentials = this->numPotentials_;
+
+        matrixContainer_.AL.resize(numUnknowns, numUnknowns);
+        matrixContainer_.AR.resize(numUnknowns, numUnknowns);
+        matrixContainer_.BL.resize(numUnknowns, numPotentials);
+        matrixContainer_.BR.resize(numUnknowns, numPotentials);
+        matrixContainer_.AF.resize(numFaces, numUnknowns);
+        matrixContainer_.BF.resize(numFaces, numPotentials);
+
+        // set the index of the additional local equation
+        divEqIdx_ = this->fluxScvfIndexSet().size();
+
         //! add entry to the vector of neumann fluxes
         addAuxiliaryCellNeumannFlux_();
+
+        // resize the matrices in the data handle (numUnknowns is one more than in o method)
+        dataHandle.resizeCA(numFaces, numUnknowns);
+        dataHandle.resizeAB(numUnknowns, numPotentials);
     }
 
     template<typename GetTensorFunction>
-    void solveLocalSystem(const GetTensorFunction& getTensor)
+    void solveLocalSystem(const GetTensorFunction& getTensor, DataHandle& dataHandle)
     {
-        const std::size_t numFluxFaces = this->fluxScvfIndexSet_().size();
-        const std::size_t numUnknowns = numFluxFaces + 1;
-        const std::size_t numFaces = this->localScvfs_.size();
-        const std::size_t numPotentials = this->volVarsStencil().size();
-
-        // instantiate and resize the local matrices
-        LocalMatrixContainer mc;
-        mc.AL.resize(numUnknowns, numUnknowns, 0.0);
-        mc.AR.resize(numUnknowns, numUnknowns, 0.0);
-        mc.BL.resize(numUnknowns, numPotentials, 0.0);
-        mc.BR.resize(numUnknowns, numPotentials, 0.0);
-        mc.AF.resize(numFaces, numUnknowns, 0.0);
-        mc.BF.resize(numFaces, numPotentials, 0.0);
-
         // assemble the local eq system and matrices
-        assembleLocalMatrices_(getTensor, mc);
+        assembleLocalMatrices_(getTensor);
 
-        // solve local system and store transmissibility matrix
-        mc.AL -= mc.AR;
-        mc.BR -= mc.BL;
-        mc.AL.invert();
-        this->CAinv_ = Dumux::multiplyMatrices(mc.AF, mc.AL);
-        this->T_ = Dumux::multiplyMatrices(mc.AF, Dumux::multiplyMatrices(mc.AL, mc.BR));
-        this->T_ += mc.BF;
+        // solve local system
+        matrixContainer_.AL -= matrixContainer_.AR;
+        matrixContainer_.BR -= matrixContainer_.BL;
+        matrixContainer_.AL.invert();
+
+        // pass data to handle
+        auto& CA = dataHandle.CA();
+        auto& T = dataHandle.T();
+        CA = Dumux::multiplyMatrices(matrixContainer_.AF, matrixContainer_.AL);
+        T = Dumux::multiplyMatrices(matrixContainer_.AF, Dumux::multiplyMatrices(matrixContainer_.AL, matrixContainer_.BR));
+        T += matrixContainer_.BF;
+
+        // set vol vars stencil & positions pointer in handle
+        dataHandle.setVolVarsStencilPointer(this->volVarsStencil());
+        dataHandle.setVolVarsPositionsPointer(this->volVarsPositions());
+
+        // store A-1B only when gradient reconstruction is necessary
+        // static const bool reconstructGradients = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity) || dim < dimWorld;
+        // if (reconstructGradients)
+        //     dataHandle.AB() = B_.leftmultiply(A_);
     }
 
 private:
@@ -168,23 +196,26 @@ private:
 
         // add one entry to the vector of neumann fluxes
         auto& neumannFluxes = this->neumannFluxes_;
-        neumannFluxes.resize(this->fluxScvfIndexSet_().size() + 1);
-        neumannFluxes[neumannFluxes.size()-1] = std::accumulate(neumannFluxes.begin(), neumannFluxes.end()-1, PrimaryVariables(0.0));
+        const auto value = std::accumulate(neumannFluxes.begin(), neumannFluxes.end(), PrimaryVariables(0.0));
+        neumannFluxes.push_back(value);
     }
 
     template<typename GetTensorFunction>
-    void assembleLocalMatrices_(const GetTensorFunction& getTensor, LocalMatrixContainer& mc)
+    void assembleLocalMatrices_(const GetTensorFunction& getTensor)
     {
+        // reset local matrices
+        matrixContainer_.reset();
+
         // loop over the local faces
         LocalIndexType localFaceIdx = 0;
         for (const auto& localScvf : this->localScvfs_)
         {
             if (localScvf.boundary())
-                assemblePositiveScv(getTensor, localScvf, localFaceIdx, mc, true);
+                assemblePositiveScv_(getTensor, localScvf, localFaceIdx, true);
             else
             {
-                assemblePositiveScv(getTensor, localScvf, localFaceIdx, mc);
-                assembleNegativeScv(getTensor, localScvf, localFaceIdx, mc);
+                assemblePositiveScv_(getTensor, localScvf, localFaceIdx);
+                assembleNegativeScv_(getTensor, localScvf, localFaceIdx);
             }
 
             // go to the next face
@@ -193,21 +224,20 @@ private:
     }
 
     template<typename GetTensorFunction>
-    void assemblePositiveScv(const GetTensorFunction& getTensor,
-                             const LocalScvfType& localScvf,
-                             LocalIndexType localScvfIdx,
-                             LocalMatrixContainer& mc,
-                             bool boundary = false)
+    void assemblePositiveScv_(const GetTensorFunction& getTensor,
+                              const LocalScvfType& localScvf,
+                              LocalIndexType localScvfIdx,
+                              bool boundary = false)
     {
         static const Scalar c = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C);
         static const Scalar p = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, P);
 
         // get diffusion tensor in "positive" sub volume
         auto localScvIdx = localScvf.insideLocalScvIndex();
-        auto&& localScv = this->localScv_(localScvIdx);
-        auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
-        auto&& element = this->localElement_(localScvIdx);
-        auto D = makeTensor_(getTensor(this->problem_(), element, this->elemVolVars_()[globalScv], this->fvGeometry_(), globalScv));
+        auto&& localScv = this->localScv(localScvIdx);
+        auto&& globalScv = this->fvGeometry().scv(localScv.globalIndex());
+        auto&& element = this->localElement(localScvIdx);
+        auto D = makeTensor_(getTensor(this->problem(), element, this->elemVolVars()[globalScv], this->fvGeometry(), globalScv));
         // the local finite element basis
         const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
 
@@ -226,9 +256,9 @@ private:
         bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
 
         // assemble coefficients for the face fluxes
-        addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace);
+        addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, isFluxFace);
         // assemble matrix entries for the condition of zero divergence
-        addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir, mc);
+        addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir);
 
         // on dirichlet boundary faces, add coefficients for the boundary fluxes
         if (boundary && !isFluxFace)
@@ -236,15 +266,14 @@ private:
             LocalPosition bcIpLocal(0.0);
             bcIpLocal[normalDir] = 1.0;
             bcIpLocal[divEqNormalDir] = normalDir == 1 ? 1.0 - (1.0-c)*p : c + (1.0-c)*p;
-            addDivEquationCoefficients_(localScv, localBasis, D, bcIpLocal, normalDir, mc, boundary);
+            addDivEquationCoefficients_(localScv, localBasis, D, bcIpLocal, normalDir, boundary);
         }
     }
 
     template<typename GetTensorFunction>
-    void assembleNegativeScv(const GetTensorFunction& getTensor,
-                             const LocalScvfType& localScvf,
-                             LocalIndexType localScvfIdx,
-                             LocalMatrixContainer& mc)
+    void assembleNegativeScv_(const GetTensorFunction& getTensor,
+                              const LocalScvfType& localScvf,
+                              LocalIndexType localScvfIdx)
     {
         static const Scalar c = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C);
         static const Scalar p = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, P);
@@ -252,10 +281,10 @@ private:
         // get diffusion tensor in "negative" sub volume
         for (auto localScvIdx : localScvf.outsideLocalScvIndices())
         {
-            auto&& localScv = this->localScv_(localScvIdx);
-            auto&& globalScv = this->fvGeometry_().scv(localScv.globalIndex());
-            auto&& element = this->localElement_(localScvIdx);;
-            auto D = makeTensor_(getTensor(this->problem_(), element, this->elemVolVars_()[globalScv], this->fvGeometry_(), globalScv));
+            auto&& localScv = this->localScv(localScvIdx);
+            auto&& globalScv = this->fvGeometry().scv(localScv.globalIndex());
+            auto&& element = this->localElement(localScvIdx);;
+            auto D = makeTensor_(getTensor(this->problem(), element, this->elemVolVars()[globalScv], this->fvGeometry(), globalScv));
 
             // the local finite element bases of the scvs
             const auto& localBasis = feCache_.get(localScv.geometry().type()).localBasis();
@@ -275,10 +304,10 @@ private:
             bool isFluxFace = localScvf.faceType() != MpfaFaceTypes::dirichlet;
 
             // assemble coefficients for the face fluxes
-            addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, mc, isFluxFace, true);
+            addFaceFluxCoefficients_(localScv, localBasis, D, localScvfIdx, ipLocal, normalDir, isFluxFace, true);
 
             // assemble matrix entries for the condition of zero divergence
-            addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir, mc);
+            addDivEquationCoefficients_(localScv, localBasis, D, divEqIpLocal, divEqNormalDir);
         }
     }
 
@@ -288,17 +317,16 @@ private:
                                   LocalIndexType rowIdx,
                                   const LocalPosition& ipLocal,
                                   LocalIndexType normalDir,
-                                  LocalMatrixContainer& mc,
                                   bool isFluxEq,
                                   bool isRHS = false)
     {
         // In case we're on a flux continuity face, get local index
-        LocalIndexType eqSystemIdx = isFluxEq ? this->findIndexInVector(this->fluxScvfIndexSet_(), rowIdx) : -1;
+        LocalIndexType eqSystemIdx = isFluxEq ? this->findIndexInVector(this->fluxScvfIndexSet(), rowIdx) : -1;
 
         // Fluxes stemming from the RHS have to have the opposite sign
         Scalar factor = isRHS ? 1.0 : -1.0;
-        DynamicMatrix& A = isRHS ? mc.AR : mc.AL;
-        DynamicMatrix& B = isRHS ? mc.BR : mc.BL;
+        DynamicMatrix& A = isRHS ? matrixContainer_.AR : matrixContainer_.AL;
+        DynamicMatrix& B = isRHS ? matrixContainer_.BR : matrixContainer_.BL;
 
         // evaluate shape functions gradients at the ip
         std::vector<ShapeJacobian> shapeJacobian;
@@ -316,32 +344,32 @@ private:
         // add matrix entries for the pressure in the cell center
         auto cellPressureIdx = this->findIndexInVector(this->volVarsStencil(), localScv.globalIndex());
         Scalar bi0 = factor*(localD[normalDir]*shapeJacobian[0][0]);
-        if (!isRHS) mc.BF[rowIdx][cellPressureIdx] += bi0;
+        if (!isRHS) matrixContainer_.BF[rowIdx][cellPressureIdx] += bi0;
         if (isFluxEq) B[eqSystemIdx][cellPressureIdx] += bi0;
 
         // Add entries from the local scv faces
         for (int localDir = 0; localDir < dim; localDir++)
         {
             auto localScvfIdx = localScv.localScvfIndex(localDir);
-            if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
+            if (this->localScvf(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
                 Scalar aij = factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
-                auto colIdx = this->findIndexInVector(this->fluxScvfIndexSet_(), localScvfIdx);
-                if (!isRHS) mc.AF[rowIdx][colIdx] += aij;
+                auto colIdx = this->findIndexInVector(this->fluxScvfIndexSet(), localScvfIdx);
+                if (!isRHS) matrixContainer_.AF[rowIdx][colIdx] += aij;
                 if (isFluxEq) A[eqSystemIdx][colIdx] += aij;
             }
             else
             {
                 Scalar bij = factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
-                auto colIdx = this->localScvs_.size() + this->findIndexInVector(this->dirichletScvfIndexSet_(), localScvfIdx);
-                if (!isRHS) mc.BF[rowIdx][colIdx] += bij;
+                auto colIdx = this->localScvs_.size() + this->findIndexInVector(this->dirichletScvfIndexSet(), localScvfIdx);
+                if (!isRHS) matrixContainer_.BF[rowIdx][colIdx] += bij;
                 if (isFluxEq) B[eqSystemIdx][colIdx] += bij;
             }
         }
 
         // add entry from the vertex pressure
         Scalar ain = factor*(localD[normalDir]*shapeJacobian[3][0]);
-        if (!isRHS) mc.AF[rowIdx][divEqIdx_] += ain;
+        if (!isRHS) matrixContainer_.AF[rowIdx][divEqIdx_] += ain;
         if (isFluxEq) A[eqSystemIdx][divEqIdx_] += ain;
     }
 
@@ -350,7 +378,6 @@ private:
                                      const Tensor& D,
                                      const LocalPosition& ipLocal,
                                      LocalIndexType normalDir,
-                                     LocalMatrixContainer& mc,
                                      bool isBoundary = false)
     {
         static const Scalar c = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, C);
@@ -374,27 +401,27 @@ private:
 
         // add matrix entries for the pressure in the cell center
         auto cellPressureIdx = this->findIndexInVector(this->volVarsStencil(), localScv.globalIndex());
-        mc.BL[divEqIdx_][cellPressureIdx] += factor*(localD[normalDir]*shapeJacobian[0][0]);
+        matrixContainer_.BL[divEqIdx_][cellPressureIdx] += factor*(localD[normalDir]*shapeJacobian[0][0]);
 
         // Add entries from the local scv faces
         for (int localDir = 0; localDir < dim; localDir++)
         {
             auto localScvfIdx = localScv.localScvfIndex(localDir);
 
-            if (this->localScvf_(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
+            if (this->localScvf(localScvfIdx).faceType() != MpfaFaceTypes::dirichlet)
             {
-                auto colIdx = this->findIndexInVector(this->fluxScvfIndexSet_(), localScvfIdx);
-                mc.AL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
+                auto colIdx = this->findIndexInVector(this->fluxScvfIndexSet(), localScvfIdx);
+                matrixContainer_.AL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
             }
             else
             {
-                auto colIdx = this->localScvs_.size() + this->findIndexInVector(this->dirichletScvfIndexSet_(), localScvfIdx);
-                mc.BL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
+                auto colIdx = this->localScvs_.size() + this->findIndexInVector(this->dirichletScvfIndexSet(), localScvfIdx);
+                matrixContainer_.BL[divEqIdx_][colIdx] += factor*(localD[normalDir]*shapeJacobian[localDir+1][0]);
             }
         }
 
         // add entry from the vertex pressure
-        mc.AL[divEqIdx_][divEqIdx_] += factor*(localD[normalDir]*shapeJacobian[3][0]);
+        matrixContainer_.AL[divEqIdx_][divEqIdx_] += factor*(localD[normalDir]*shapeJacobian[3][0]);
     }
 
     // TODO: how to do the assertion of positive coefficients for tensors?
@@ -415,7 +442,12 @@ private:
     }
 
     const FeCache feCache_;
-    const LocalIndexType divEqIdx_;
+
+    // the index of the additional equation in local system
+    LocalIndexType divEqIdx_;
+
+    // the container with the matrices involved
+    LocalMatrixContainer matrixContainer_;
 };
 
 } // end namespace
