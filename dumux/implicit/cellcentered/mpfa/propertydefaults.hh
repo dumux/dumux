@@ -74,7 +74,7 @@ SET_TYPE_PROP(CCMpfaModel, AssemblyMap, CCMpfaAssemblyMap<TypeTag>);
 SET_TYPE_PROP(CCMpfaModel, InteractionVolume, CCMpfaInteractionVolume<TypeTag>);
 
 //! The boundary interaction volume class (for methods other than the omethod)
-SET_TYPE_PROP(CCMpfaModel, BoundaryInteractionVolume, typename GET_PROP_TYPE(TypeTag, InteractionVolume)::BoundaryInteractionVolume);
+SET_TYPE_PROP(CCMpfaModel, BoundaryInteractionVolume, typename GET_PROP_TYPE(TypeTag, InteractionVolume)::Traits::BoundaryInteractionVolume);
 
 //! The global interaction volume seeds class
 SET_TYPE_PROP(CCMpfaModel, GlobalInteractionVolumeSeeds, CCMpfaGlobalInteractionVolumeSeeds<TypeTag>);
