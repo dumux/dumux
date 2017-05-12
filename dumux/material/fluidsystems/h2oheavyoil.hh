@@ -326,13 +326,12 @@ public:
         assert(0 <= compIdx  && compIdx < numComponents);
 
         const Scalar T = fluidState.temperature(phaseIdx);
-        const Scalar p = fluidState.pressure(phaseIdx);
 
         if (compIdx == NAPLIdx && phaseIdx == wPhaseIdx)
-            return Dumux::BinaryCoeff::H2O_HeavyOil::henryOilInWater(T)/p;
+            return Dumux::BinaryCoeff::H2O_HeavyOil::henryOilInWater(T);
 
         else if (phaseIdx == nPhaseIdx && compIdx == H2OIdx)
-            return Dumux::BinaryCoeff::H2O_HeavyOil::henryWaterInOil(T)/p;
+            return Dumux::BinaryCoeff::H2O_HeavyOil::henryWaterInOil(T);
 
         else
             DUNE_THROW(Dune::InvalidStateException, "non-existent henry coefficient for phase index " << phaseIdx
