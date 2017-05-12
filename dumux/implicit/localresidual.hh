@@ -295,13 +295,7 @@ protected:
                                const SubControlVolumeFace& scvf,
                                const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem(), element, fvGeometry);
-
-        residual_.resize(fvGeometry.numScv());
-        residual_ = 0;
-
-        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
+        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
     }
 
     /*!

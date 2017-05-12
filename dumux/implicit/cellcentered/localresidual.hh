@@ -77,7 +77,7 @@ protected:
         // calculate the mass flux over the scv faces
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            this->residual_[0] += this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, bcTypes, elemFluxVarsCache);
+            this->residual_[0] += this->asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         }
     }
 
@@ -85,7 +85,6 @@ protected:
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVolumeVariables& elemVolVars,
                                   const SubControlVolumeFace &scvf,
-                                  const ElementBoundaryTypes& bcTypes,
                                   const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         if (!scvf.boundary())

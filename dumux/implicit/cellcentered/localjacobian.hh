@@ -239,8 +239,8 @@ protected:
 
         // save a copy of the original privars and vol vars in order
         // to restore the original solution after deflection
-        auto origPriVars = curSol[globalI_];
-        auto origVolVars = curVolVars;
+        const auto origPriVars = curSol[globalI_];
+        const auto origVolVars = curVolVars;
 
         // derivatives in the neighbors with repect to the current elements
         Dune::BlockVector<PrimaryVariables> neighborDeriv(numNeighbors);
