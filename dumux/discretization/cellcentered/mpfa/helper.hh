@@ -46,8 +46,7 @@ class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     // We know that dim = 2 and dimworld = 2, but
     // the dim = 2, dimWorld = 3 specialization forwards to some methods of this class
@@ -185,8 +184,7 @@ class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/3>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     // We know that dim = 2 and dimworld = 3
     static const int dim = GridView::dimension;
@@ -265,8 +263,7 @@ class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     // We know that dim = 3 and dimworld = 3
     static const int dim = GridView::dimension;
@@ -451,7 +448,7 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;

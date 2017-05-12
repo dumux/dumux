@@ -55,7 +55,6 @@ class CCMpfaFacetCouplingDarcysLaw : public DarcysLawImplementation<TypeTag, Dis
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
@@ -120,6 +119,7 @@ class CCMpfaFacetCouplingDarcysLaw : public DarcysLawImplementation<TypeTag, Dis
         CoefficientVector advectionCij_;
         std::array<Scalar, numPhases> phaseNeumannFluxes_;
     };
+    using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
 
 public:
     // state the discretization method this implementation belongs to

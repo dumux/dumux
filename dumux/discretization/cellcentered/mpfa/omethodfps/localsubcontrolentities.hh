@@ -39,10 +39,10 @@ class CCMpfaOFpsLocalScv
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using LocalScvSeed = typename InteractionVolume::Seed::LocalScvSeed;
+    using LocalScvSeed = typename InteractionVolume::Traits::Seed::LocalScvSeed;
 
     using GlobalIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;

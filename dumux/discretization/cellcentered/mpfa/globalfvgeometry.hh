@@ -70,7 +70,6 @@ class CCMpfaGlobalFVGeometry<TypeTag, true>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -461,14 +460,13 @@ class CCMpfaGlobalFVGeometry<TypeTag, false>
     using GlobalInteractionVolumeSeeds = typename GET_PROP_TYPE(TypeTag, GlobalInteractionVolumeSeeds);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using InteractionVolumeSeed = typename InteractionVolume::Seed;
-    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using InteractionVolumeSeed = typename InteractionVolume::Traits::Seed;
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Traits::Seed;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
