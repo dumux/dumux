@@ -57,7 +57,7 @@ public:
                     const Element& element,
                     const FVElementGeometry& fvGeometry,
                     const LocalScvSeed& scvSeed)
-    : seed_(scvSeed)
+    : seedPtr_(&scvSeed)
     {
         // set up local basis
         center_ = element.geometry().center();
@@ -99,9 +99,9 @@ public:
 
 private:
     const LocalScvSeed& scvSeed_() const
-    { return seed_; }
+    { return *seedPtr_; }
 
-    const LocalScvSeed& seed_;
+    const LocalScvSeed* seedPtr_;
     GlobalPosition center_;
     LocalBasis innerNormals_;
     Scalar detX_;

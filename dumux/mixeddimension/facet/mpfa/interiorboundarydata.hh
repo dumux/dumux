@@ -69,28 +69,28 @@ class CCMpfaFacetCouplingInteriorBoundaryData
         { return *lowDimSpatialParamsPtr_; }
 
         const LowDimVolumeVariables& volVars() const
-        { return lowDimVolVars_; }
+        { return *lowDimVolVarsPtr_; }
 
         const LowDimElement& element() const
         { return lowDimElement_;}
 
         const LowDimFVElementGeometry& fvGeometry() const
-        { return lowDimFvGeometry_; }
+        { return *lowDimFvGeometryPtr_; }
 
         const LowDimSubControlVolume& scv() const
         { return lowDimScv_; }
 
         CompleteCoupledFacetData(const LowDimProblem& problem,
                                  const IndexType elementIndex,
-                                 LowDimElement&& element,
-                                 LowDimFVElementGeometry&& fvGeometry,
-                                 LowDimVolumeVariables&& volVars)
+                                 const LowDimElement& element,
+                                 const LowDimFVElementGeometry& fvGeometry,
+                                 const LowDimVolumeVariables& volVars)
         : lowDimProblemPtr_(&problem),
           lowDimSpatialParamsPtr_(&problem.spatialParams()),
           lowDimElement_(std::move(element)),
-          lowDimFvGeometry_(std::move(fvGeometry)),
-          lowDimVolVars_(std::move(volVars)),
-          lowDimScv_(lowDimFvGeometry_.scv(elementIndex))
+          lowDimFvGeometryPtr_(&fvGeometry),
+          lowDimVolVarsPtr_(&volVars),
+          lowDimScv_(fvGeometry.scv(elementIndex))
         {}
 
     private:
@@ -98,8 +98,8 @@ class CCMpfaFacetCouplingInteriorBoundaryData
         const LowDimSpatialParams* lowDimSpatialParamsPtr_;
 
         LowDimElement lowDimElement_;
-        LowDimFVElementGeometry lowDimFvGeometry_;
-        LowDimVolumeVariables lowDimVolVars_;
+        const LowDimFVElementGeometry* lowDimFvGeometryPtr_;
+        const LowDimVolumeVariables* lowDimVolVarsPtr_;
         const LowDimSubControlVolume& lowDimScv_;
     };
 
@@ -137,7 +137,7 @@ public:
     { return faceType_; }
 
     //! returns the volume variables for interior dirichlet boundaries
-    LowDimVolumeVariables facetVolVars(const FVElementGeometry& fvGeometry) const
+    const LowDimVolumeVariables& facetVolVars(const FVElementGeometry& fvGeometry) const
     {
         return problem_().couplingManager().lowDimVolVars(problem_().model().globalFvGeometry().element(elementIndex()),
                                                           fvGeometry,
@@ -145,7 +145,7 @@ public:
     }
 
     //! returns the volume variables for interior dirichlet boundaries
-    LowDimVolumeVariables facetVolVars(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
+    const LowDimVolumeVariables& facetVolVars(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         assert(scvf.index() == scvfIndex() && "calling facet volume variables for an scvf other than the bound one");
         return problem_().couplingManager().lowDimVolVars(problem_().model().globalFvGeometry().element(elementIndex()),
@@ -160,28 +160,22 @@ public:
     {
         const auto& couplingMapper = problem_().couplingManager().couplingMapper();
 
-        // get coupling data for this scvf
-        const auto element = problem_().model().globalFvGeometry().element(elementIndex());
-        const auto lowDimElementIndex = couplingMapper.getBulkCouplingData(element).getCouplingLowDimElementIndex(scvfIndex());
-
         // obtain data necessary to fully instantiate the complete coupled facet data
+        const auto element = problem_().model().globalFvGeometry().element(elementIndex());
+        const auto& scvf = fvGeometry.scvf(scvfIndex());
+
         const auto& lowDimProblem = problem_().couplingManager().lowDimProblem();
-        auto lowDimElement = lowDimProblem.model().globalFvGeometry().element(lowDimElementIndex);
+        const auto lowDimElementIndex = couplingMapper.getBulkCouplingData(element).getCouplingLowDimElementIndex(scvfIndex());
+        const auto lowDimElement = lowDimProblem.model().globalFvGeometry().element(lowDimElementIndex);
 
-        auto lowDimFvGeometry = localView(lowDimProblem.model().globalFvGeometry());
-        lowDimFvGeometry.bindElement(lowDimElement);
-
-        LowDimVolumeVariables lowDimVolVars;
-        lowDimVolVars.update(lowDimProblem.model().elementSolution(lowDimElement, lowDimProblem.model().curSol()),
-                             lowDimProblem,
-                             lowDimElement,
-                             lowDimFvGeometry.scv(lowDimElementIndex));
+        const auto& lowDimFvGeometry = problem_().couplingManager().lowDimFvGeometry(element, fvGeometry, scvf);
+        const auto& lowDimVolVars = problem_().couplingManager().lowDimVolVars(element, fvGeometry, scvf);
 
         return CompleteCoupledFacetData(lowDimProblem,
                                         lowDimElementIndex,
-                                        std::move(lowDimElement),
-                                        std::move(lowDimFvGeometry),
-                                        std::move(lowDimVolVars));
+                                        lowDimElement,
+                                        lowDimFvGeometry,
+                                        lowDimVolVars);
     }
 
 private:

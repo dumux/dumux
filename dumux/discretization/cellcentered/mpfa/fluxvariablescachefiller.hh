@@ -53,6 +53,7 @@ class CCMpfaFluxVariablesCacheFiller
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using DataHandle = typename BoundaryInteractionVolume::Traits::DataHandle;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -98,23 +99,71 @@ public:
         const auto& globalFvGeometry = problem().model().globalFvGeometry();
         if (globalFvGeometry.isInBoundaryInteractionVolume(scvf))
         {
-            bIv_ = std::make_unique<BoundaryInteractionVolume>(globalFvGeometry.boundaryInteractionVolumeSeed(scvf),
-                                                               problem(),
-                                                               fvGeometry,
-                                                               elemVolVars);
+            if (!isUpdate)
+            {
+                // prepare the locally cached boundary interaction volume
+                fluxVarsCacheContainer.boundaryInteractionVolumes_.emplace_back();
+                bIv_ = &fluxVarsCacheContainer.boundaryInteractionVolumes_.back();
 
-            // fill the caches for all the scvfs in the interaction volume
-            fillCachesInInteractionVolume_(fluxVarsCacheContainer, scvfFluxVarsCache, boundaryInteractionVolume(), isUpdate);
+                // prepare the corresponding data handle
+                fluxVarsCacheContainer.boundaryIvDataHandles_.emplace_back();
+                ivDataHandle_ = &fluxVarsCacheContainer.boundaryIvDataHandles_.back();
+
+                // the local index of the actual interaction volume in its container
+                const auto ivIndexInContainer = fluxVarsCacheContainer.boundaryInteractionVolumes_.size()-1;
+
+                bIv_->bind(globalFvGeometry.boundaryInteractionVolumeSeed(scvf),
+                           problem(),
+                           fvGeometry,
+                           elemVolVars,
+                           *ivDataHandle_);
+
+                // fill the caches for all the scvfs in the interaction volume
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, boundaryInteractionVolume(), *ivDataHandle_, ivIndexInContainer);
+            }
+            else
+            {
+                const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
+                bIv_ = &fluxVarsCacheContainer.boundaryInteractionVolumes_[ivIndexInContainer];
+                ivDataHandle_ = &fluxVarsCacheContainer.boundaryIvDataHandles_[ivIndexInContainer];
+
+                // fill the caches for all the scvfs in the interaction volume
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, boundaryInteractionVolume(), *ivDataHandle_, ivIndexInContainer, true);
+            }
         }
         else
         {
-            iv_ = std::make_unique<InteractionVolume>(globalFvGeometry.interactionVolumeSeed(scvf),
-                                                      problem(),
-                                                      fvGeometry,
-                                                      elemVolVars);
+            if (!isUpdate)
+            {
+                // prepare the locally cached boundary interaction volume
+                fluxVarsCacheContainer.interactionVolumes_.emplace_back();
+                iv_ = &fluxVarsCacheContainer.interactionVolumes_.back();
 
-            // fill the caches for all the scvfs in the interaction volume
-            fillCachesInInteractionVolume_(fluxVarsCacheContainer, scvfFluxVarsCache, interactionVolume(), isUpdate);
+                // prepare the corresponding data handle
+                fluxVarsCacheContainer.ivDataHandles_.emplace_back();
+                ivDataHandle_ = &fluxVarsCacheContainer.ivDataHandles_.back();
+
+                // the local index of the actual interaction volume in its container
+                const auto ivIndexInContainer = fluxVarsCacheContainer.interactionVolumes_.size()-1;
+
+                iv_->bind(globalFvGeometry.interactionVolumeSeed(scvf),
+                          problem(),
+                          fvGeometry,
+                          elemVolVars,
+                          *ivDataHandle_);
+
+                // fill the caches for all the scvfs in the interaction volume
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, interactionVolume(), *ivDataHandle_, ivIndexInContainer);
+            }
+            else
+            {
+                const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
+                iv_ = &fluxVarsCacheContainer.interactionVolumes_[ivIndexInContainer];
+                ivDataHandle_ = &fluxVarsCacheContainer.ivDataHandles_[ivIndexInContainer];
+
+                // fill the caches for all the scvfs in the interaction volume
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, interactionVolume(), *ivDataHandle_, ivIndexInContainer, true);
+            }
         }
     }
 
@@ -135,19 +184,22 @@ public:
         fill(fluxVarsCacheContainer, scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf, true);
     }
 
-    static bool isSolutionIndependent()
+    static bool isSolutionDependent()
     {
         static const bool isSolDependent = (doAdvection && soldependentAdvection) ||
                                            (doDiffusion && soldependentDiffusion) ||
                                            (doHeatConduction && soldependentHeatConduction);
-        return !isSolDependent;
+        return isSolDependent;
     }
 
     const InteractionVolume& interactionVolume() const
-    { return *iv_.get(); }
+    { return *iv_; }
 
     const BoundaryInteractionVolume& boundaryInteractionVolume() const
-    { return *bIv_.get(); }
+    { return *bIv_; }
+
+    const DataHandle& dataHandle() const
+    { return *ivDataHandle_; }
 
 private:
 
@@ -167,76 +219,69 @@ private:
     { return *scvfPtr_; }
 
     InteractionVolume& interactionVolume()
-    { return *iv_.get(); }
+    { return *iv_; }
 
     BoundaryInteractionVolume& boundaryInteractionVolume()
-    { return *bIv_.get(); }
+    { return *bIv_; }
 
     //! Method to fill the flux var caches within an interaction volume
     template<class FluxVariablesCacheContainer, class InteractionVolumeType>
     void fillCachesInInteractionVolume_(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                                        FluxVariablesCache& scvfFluxVarsCache,
                                         InteractionVolumeType& iv,
-                                        bool isUpdate)
+                                        DataHandle& handle,
+                                        unsigned int ivIndexInContainer,
+                                        bool isUpdate = false)
     {
-        // First we upate the interior boundary data and set the update status.
-        // We store pointers to the other flux var caches and the elements they are embedded in simultaneously.
-        // This way we have to obtain this data only once and can use it again in the sub-cache fillers.
-        const auto numOtherScvfs = iv.globalLocalScvfPairedData().size()-1;
-        std::vector<FluxVariablesCache*> otherFluxVarCaches(numOtherScvfs);
-        std::vector<Element> otherElements(numOtherScvfs);
-
-        scvfFluxVarsCache.updateInteriorBoundaryData(iv, scvFace());
-        scvfFluxVarsCache.setUpdateStatus(true);
-
-        const auto curScvfIdx = scvFace().index();
-        unsigned int otherScvfIdx = 0;
-        for (const auto& dataPair : iv.globalLocalScvfPairedData())
+        // First we upate data which are not dependent on the physical processes.
+        // We store pointers to the other flux var caches, so that we have to obtain
+        // this data only once and can use it again in the sub-cache fillers.
+        if (!isUpdate)
         {
-            const auto& scvfJ = *dataPair.first;
-            if (curScvfIdx == scvfJ.index())
-                continue;
+            std::vector<FluxVariablesCache*> ivFluxVarCaches(iv.globalLocalScvfPairedData().size());
+            unsigned int i = 0;
+            for (const auto& dataPair : iv.globalLocalScvfPairedData())
+            {
+                // obtain the scvf
+                const auto& scvfJ = *dataPair.first;
+                ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
+                ivFluxVarCaches[i]->updateInteriorBoundaryData(iv, scvfJ);
+                ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
+                ivFluxVarCaches[i]->setUpdateStatus(true);
+                i++;
+            }
 
-            // get the element scvfJ is embedded in
-            const auto scvfJInsideScvIndex = scvfJ.insideScvIdx();
-            otherElements[otherScvfIdx] =  scvfJInsideScvIndex == scvFace().insideScvIdx() ?
-                                           element() :
-                                           problem().model().globalFvGeometry().element(scvfJInsideScvIndex);
-
-            // get the corresponding flux var cache
-            otherFluxVarCaches[otherScvfIdx] = &fluxVarsCacheContainer[scvfJ];
-            otherFluxVarCaches[otherScvfIdx]->updateInteriorBoundaryData(iv, scvfJ);
-            otherFluxVarCaches[otherScvfIdx]->setUpdateStatus(true);
-            otherScvfIdx++;
+            fillAdvection(fluxVarsCacheContainer, iv, handle, ivFluxVarCaches);
+            fillDiffusion(fluxVarsCacheContainer, iv, handle, ivFluxVarCaches);
+            fillHeatConduction(fluxVarsCacheContainer, iv, handle, ivFluxVarCaches);
         }
+        else
+        {
+            std::vector<FluxVariablesCache*> ivFluxVarCaches(iv.globalLocalScvfPairedData().size());
+            unsigned int i = 0;
+            for (const auto& dataPair : iv.globalLocalScvfPairedData())
+            {
+                // the interior boundary data and the iv index have been set already
+                ivFluxVarCaches[i] = &fluxVarsCacheContainer[*dataPair.first];
+                ivFluxVarCaches[i]->setUpdateStatus(true);
+                i++;
+            }
 
-        //! Maybe update the advective quantities
-        if (!isUpdate)
-            fillAdvection(fluxVarsCacheContainer, scvfFluxVarsCache, iv, otherFluxVarCaches, otherElements);
-        else if (doAdvection && soldependentAdvection)
-            fillAdvection(fluxVarsCacheContainer, scvfFluxVarsCache, iv, otherFluxVarCaches, otherElements);
-
-        //! Maybe update the diffusive quantities
-        if (!isUpdate)
-            fillDiffusion(fluxVarsCacheContainer, scvfFluxVarsCache, iv, otherFluxVarCaches, otherElements);
-        else if (doDiffusion && soldependentDiffusion)
-            fillDiffusion(fluxVarsCacheContainer, scvfFluxVarsCache, iv, otherFluxVarCaches, otherElements);
-
-        //! Maybe update quantities related to heat conduction
-        if (!isUpdate)
-            fillHeatConduction(fluxVarsCacheContainer, scvfFluxVarsCache, iv, otherFluxVarCaches, otherElements);
-        else if (doHeatConduction && soldependentHeatConduction)
-            fillHeatConduction(fluxVarsCacheContainer, scvfFluxVarsCache, iv, otherFluxVarCaches, otherElements);
+            if (doAdvection && soldependentAdvection)
+                fillAdvection(fluxVarsCacheContainer, iv, handle, ivFluxVarCaches);
+            if (doDiffusion && soldependentDiffusion)
+                fillDiffusion(fluxVarsCacheContainer, iv, handle, ivFluxVarCaches);
+            if (doHeatConduction && soldependentHeatConduction)
+                fillHeatConduction(fluxVarsCacheContainer, iv, handle, ivFluxVarCaches);
+        }
     }
 
     //! method to fill the advective quantities
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool advectionEnabled = doAdvection>
     typename std::enable_if<advectionEnabled>::type
     fillAdvection(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                  FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
-                  const std::vector<Element> otherElements)
+                  DataHandle& handle,
+                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
         using AdvectionFiller = typename AdvectionType::CacheFiller;
@@ -244,51 +289,41 @@ private:
         static constexpr auto AdvectionMethod = AdvectionType::myDiscretizationMethod;
         using LambdaFactory = TensorLambdaFactory<TypeTag, AdvectionMethod>;
 
+        // set the advection context in the data handle
+        handle.setAdvectionContext();
+
         // maybe solve the local system subject to K (if AdvectionType uses mpfa)
         if (AdvectionMethod == DiscretizationMethods::CCMpfa)
-            iv.solveLocalSystem(LambdaFactory::getAdvectionLambda());
+            iv.solveLocalSystem(LambdaFactory::getAdvectionLambda(), handle);
 
-        // fill the caches of all scvfs within this interaction volume
-        AdvectionFiller::fill(scvfFluxVarsCache, problem(), element(), fvGeometry(), elemVolVars(), scvFace(), *this);
-
-        unsigned int otherScvfIdx = 0;
-        const auto curScvfIdx = scvFace().index();
+        // fill advection caches
+        unsigned int i = 0;
         for (const auto& dataPair : iv.globalLocalScvfPairedData())
-        {
-            const auto& scvfJ = *dataPair.first;
-            if (curScvfIdx == scvfJ.index())
-                continue;
-
-            // fill corresponding cache
-            AdvectionFiller::fill(*otherFluxVarCaches[otherScvfIdx],
+            AdvectionFiller::fill(*ivFluxVarCaches[i++],
                                   problem(),
-                                  otherElements[otherScvfIdx],
+                                  iv.localElement(dataPair.second.localScvIndex),
                                   fvGeometry(),
                                   elemVolVars(),
-                                  scvfJ,
+                                  *dataPair.first,
                                   *this);
-            otherScvfIdx++;
-        }
     }
 
     //! do nothing if advection is not enabled
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool advectionEnabled = doAdvection>
     typename std::enable_if<!advectionEnabled>::type
     fillAdvection(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                  FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
-                  const std::vector<Element> otherElements)
+                  DataHandle& handle,
+                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {}
 
     //! method to fill the diffusive quantities
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool diffusionEnabled = doDiffusion>
     typename std::enable_if<diffusionEnabled>::type
     fillDiffusion(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                  FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
-                  const std::vector<Element> otherElements)
+                  DataHandle& handle,
+                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
         using DiffusionFiller = typename DiffusionType::CacheFiller;
@@ -306,33 +341,25 @@ private:
                 if (phaseIdx == compIdx)
                     continue;
 
+                // set the diffusion context in the data handle
+                handle.setDiffusionContext(phaseIdx, compIdx);
+
                 // solve the local system subject to the diffusion tensor (if uses mpfa)
                 if (DiffusionMethod == DiscretizationMethods::CCMpfa)
-                    iv.solveLocalSystem(LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
+                    iv.solveLocalSystem(LambdaFactory::getDiffusionLambda(phaseIdx, compIdx), handle);
 
-                // fill the caches of all scvfs within this interaction volume
-                DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element(), fvGeometry(), elemVolVars(), scvFace(), *this);
-
-                unsigned int otherScvfIdx = 0;
-                const auto curScvfIdx = scvFace().index();
+                // fill diffusion caches
+                unsigned int i = 0;
                 for (const auto& dataPair : iv.globalLocalScvfPairedData())
-                {
-                    const auto& scvfJ = *dataPair.first;
-                    if (curScvfIdx == scvfJ.index())
-                        continue;
-
-                    // fill corresponding cache
-                    DiffusionFiller::fill(*otherFluxVarCaches[otherScvfIdx],
+                    DiffusionFiller::fill(*ivFluxVarCaches[i++],
                                           phaseIdx,
                                           compIdx,
                                           problem(),
-                                          otherElements[otherScvfIdx],
+                                          iv.localElement(dataPair.second.localScvIndex),
                                           fvGeometry(),
                                           elemVolVars(),
-                                          scvfJ,
+                                          *dataPair.first,
                                           *this);
-                    otherScvfIdx++;
-                }
             }
         }
     }
@@ -341,20 +368,18 @@ private:
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool diffusionEnabled = doDiffusion>
     typename std::enable_if<!diffusionEnabled>::type
     fillDiffusion(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                  FluxVariablesCache& scvfFluxVarsCache,
                   InteractionVolumeType& iv,
-                  const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
-                  const std::vector<Element> otherElements)
+                  DataHandle& handle,
+                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {}
 
     //! method to fill the quantities related to heat conduction
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool heatConductionEnabled = doHeatConduction>
     typename std::enable_if<heatConductionEnabled>::type
     fillHeatConduction(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                       FluxVariablesCache& scvfFluxVarsCache,
                        InteractionVolumeType& iv,
-                       const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
-                       const std::vector<Element> otherElements)
+                       DataHandle& handle,
+                       const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
         using HeatConductionFiller = typename HeatConductionType::CacheFiller;
@@ -362,41 +387,32 @@ private:
         static constexpr auto HeatConductionMethod = HeatConductionType::myDiscretizationMethod;
         using LambdaFactory = TensorLambdaFactory<TypeTag, HeatConductionMethod>;
 
+        // set the advection context in the data handle
+        handle.setHeatConductionContext();
+
         // maybe solve the local system subject to fourier coefficient
         if (HeatConductionMethod == DiscretizationMethods::CCMpfa)
-            iv.solveLocalSystem(LambdaFactory::getHeatConductionLambda());
+            iv.solveLocalSystem(LambdaFactory::getHeatConductionLambda(), handle);
 
-        // fill the caches of all scvfs within this interaction volume
-        HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element(), fvGeometry(), elemVolVars(), scvFace(), *this);
-
-        unsigned int otherScvfIdx = 0;
-        const auto curScvfIdx = scvFace().index();
+        // fill heat conduction caches
+        unsigned int i = 0;
         for (const auto& dataPair : iv.globalLocalScvfPairedData())
-        {
-            const auto& scvfJ = *dataPair.first;
-            if (curScvfIdx == scvfJ.index())
-                continue;
-
-            // fill corresponding cache
-            HeatConductionFiller::fill(*otherFluxVarCaches[otherScvfIdx],
+            HeatConductionFiller::fill(*ivFluxVarCaches[i++],
                                        problem(),
-                                       otherElements[otherScvfIdx],
+                                       iv.localElement(dataPair.second.localScvIndex),
                                        fvGeometry(),
                                        elemVolVars(),
-                                       scvfJ,
+                                       *dataPair.first,
                                        *this);
-            otherScvfIdx++;
-        }
     }
 
     //! do nothing if heat conduction is disabled
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool heatConductionEnabled = doHeatConduction>
     typename std::enable_if<!heatConductionEnabled>::type
     fillHeatConduction(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                       FluxVariablesCache& scvfFluxVarsCache,
                        InteractionVolumeType& iv,
-                       const std::vector<FluxVariablesCache*>& otherFluxVarCaches,
-                       const std::vector<Element> otherElements)
+                       DataHandle& handle,
+                       const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {}
 
     const Problem* problemPtr_;
@@ -408,8 +424,11 @@ private:
     // We store pointers to an inner and boundary interaction volume
     // these are updated during the filling of the caches and the
     // physics-related caches have access to them
-    std::unique_ptr<InteractionVolume> iv_;
-    std::unique_ptr<BoundaryInteractionVolume> bIv_;
+    InteractionVolume* iv_;
+    BoundaryInteractionVolume* bIv_;
+
+    // pointer to the current interaction volume data handle
+    DataHandle* ivDataHandle_;
 };
 
 } // end namespace

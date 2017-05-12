@@ -53,8 +53,9 @@ public:
 
     // in the interaction region there will be dim faces and dim+1 cell pressures
     using PositionVector = std::vector<GlobalPosition>;
-    using Matrix = Dune::FieldMatrix<Scalar, dim, dim+1>;
-    using Vector = Dune::FieldVector<Scalar, dim+1>;
+    using TransmissibilityMatrix = Dune::FieldMatrix<Scalar, dim, dim+1>;
+    using Matrix = Dune::DynamicMatrix<Scalar>;
+    using Vector = Dune::DynamicVector<Scalar>;
 
     using typename BaseTraits::LocalIndexSet;
     using typename BaseTraits::GlobalIndexSet;
@@ -105,31 +106,47 @@ public:
     using typename ParentType::GlobalLocalFaceDataPair;
     using typename ParentType::LocalFaceData;
 
-
-    CCMpfaInteractionVolumeImplementation(const Seed& seed,
-                                          const Problem& problem,
-                                          const FVElementGeometry& fvGeometry,
-                                          const ElementVolumeVariables& elemVolVars)
-    : seedPtr_(&seed),
-      problemPtr_(&problem),
-      fvGeometryPtr_(&fvGeometry),
-      elemVolVarsPtr_(&elemVolVars),
-      regionUnique_(seed.isUnique()),
-      systemSolved_(false)
+    //! Sets up the local scope for a given seed
+    //! This function has to be called before using the IV!
+     void bind(const Seed& seed,
+              const Problem& problem,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars,
+              DataHandle& dataHandle)
     {
+        // set pointers
+        seedPtr_ = &seed;
+        problemPtr_ = &problem;
+        fvGeometryPtr_ = &fvGeometry;
+        elemVolVarsPtr_ = &elemVolVars;
+
+        // set local variables
+        regionUnique_ = seed.isUnique();
+        systemSolved_ = false;
+
         // set up the possible interaction regions
         setupInteractionRegions_(seed, fvGeometry);
+
+        // as an initial guess we set the first interaction region as the one used
+        // this is updated after solution of the local system
+        interactionRegionId_ = 0;
+        updateGlobalLocalFaceData_();
+
+        // resize the matrices in the data handle
+        dataHandle.resizeT(dim, dim+1);
+        dataHandle.resizeCA(dim, dim+1);
+        dataHandle.resizeAB(dim, dim+1);
     }
 
+    //! solves for the transmissibilities subject to a given tensor
     template<typename GetTensorFunction>
-    void solveLocalSystem(const GetTensorFunction& getTensor)
+    void solveLocalSystem(const GetTensorFunction& getTensor, DataHandle& dataHandle)
     {
         if (regionUnique_)
         {
-            const auto& ir = interactionRegions_[0];
-            T_ = assembleMatrix_(getTensor, ir);
             interactionRegionId_ = 0;
-            updateGlobalLocalFaceData();
+            dataHandle.T() = assembleMatrix_(getTensor, interactionRegions_[0]);
+            updateGlobalLocalFaceData_();
             systemSolved_ = true;
         }
         else
@@ -139,10 +156,14 @@ public:
             M[1] = assembleMatrix_(getTensor, interactionRegions_[1]);
 
             interactionRegionId_ = MpfaHelper::selectionCriterion(interactionRegions_[0], interactionRegions_[1], M[0], M[1]);
-            updateGlobalLocalFaceData();
+            dataHandle.T() = M[interactionRegionId_];
+            updateGlobalLocalFaceData_();
             systemSolved_ = true;
-            T_ = M[interactionRegionId_];
         }
+
+        // now that the actual used region is known, set pointers in handle
+        dataHandle.setVolVarsStencilPointer(interactionRegion().scvIndices);
+        dataHandle.setVolVarsPositionsPointer(interactionRegion().scvCenters);
     }
 
     //! returns the local index pair. This holds the scvf's local index and a boolean whether or not the flux has to be inverted
@@ -160,55 +181,39 @@ public:
     }
 
     //! returns the transmissibilities corresponding to the bound scvf
-    CoefficientVector getTransmissibilities(const LocalFaceData& localFaceData) const
-    {
-        assert(systemSolved_ && "Transmissibilities not calculated yet. You have to call solveLocalSystem() beforehand.");
+    const Vector& getTransmissibilities(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
+    { return dataHandle.T()[localFaceData.localScvfIndex]; }
 
-        auto tij = T_[localFaceData.localScvfIndex];
-        if (localFaceData.isOutside)
-            tij *= -1.0;
-        return tij;
-    }
-
-    const GlobalIndexSet& volVarsStencil() const
-    {
-        assert(systemSolved_ && "stencil not set yet. You have to call solveLocalSystem() beforehand.");
-        return interactionRegion().scvIndices;
-    }
-
-    const PositionVector& volVarsPositions() const
-    {
-        assert(systemSolved_ && "stencil not set yet. You have to call solveLocalSystem() beforehand.");
-        return interactionRegion().scvCenters;
-    }
-
+    //! returns the vector of data pairs storing the local face data for each global scvf
     const std::vector<GlobalLocalFaceDataPair>& globalLocalScvfPairedData() const
     { return globalLocalScvfPairedData_; }
 
     //! Boundaries will be treated by a different mpfa method (e.g. o method). Thus, on
     //! faces in l-method interaction volumes there will never be a Neumann flux contribution.
-    Scalar getNeumannFlux(const LocalFaceData& localFaceData, unsigned int eqIdx) const
+    Scalar getNeumannFlux(const LocalFaceData& localFaceData, const DataHandle& dataHandle, unsigned int eqIdx) const
     { return 0.0; }
 
     //! See comment of getNeumannFlux()
-    CoefficientVector getNeumannFluxTransformationCoefficients(const LocalFaceData& localFaceData) const
-    { return CoefficientVector(0.0); }
+    const Vector& getNeumannFluxTransformationCoefficients(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
+    { return dataHandle.CA()[localFaceData.localScvfIndex]; }
 
-    const Matrix& matrix() const
-    { return T_; }
+    //! returns the container storing the data on interior boundaries
+    const std::vector<InteriorBoundaryData>& interiorBoundaryData() const
+    { return interiorBoundaryData_; }
 
+    //! returns the grid element corresponding to a given local (in the iv) scv idx
+    const Element& localElement(const LocalIndexType localScvIdx) const
+    { return interactionRegion().elements[localScvIdx]; }
+
+    //! Returns the actual used interaction region (determined after solving the system)
     const InteractionRegion& interactionRegion() const
     { return interactionRegions_[interactionRegionId_]; }
-
-    // The l-method can't treat interior boundaries
-    const std::vector<InteriorBoundaryData> interiorBoundaryData() const
-    { return std::vector<InteriorBoundaryData>(); }
 
 private:
     //! Assembles and solves the local equation system
     //! Specialization for dim = 2
     template<typename GetTensorFunction, int d = dim>
-    typename std::enable_if<d == 2, Matrix>::type
+    typename std::enable_if<d == 2, TransmissibilityMatrix>::type
     assembleMatrix_(const GetTensorFunction& getTensor, const InteractionRegion& ir)
     {
         // the elements the scvs live in
@@ -298,15 +303,10 @@ private:
             interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed1, outerScvSeed1, OuterScvSeedType(scvSeed2), e1, e3, e2);
             interactionRegions_.emplace_back(problem_(), fvGeometry, scvSeed2, OuterScvSeedType(scvSeed1), outerScvSeed2, e2, e1, e4);
         }
-
-        // as an initial guess we set the first interaction region as the one used
-        // this is updated after solution of the local system
-        interactionRegionId_ = 0;
-        updateGlobalLocalFaceData();
     }
 
     //! set the global&local face data according to the current choice for the interaction region
-    void updateGlobalLocalFaceData()
+    void updateGlobalLocalFaceData_()
     {
         const auto numPairs = globalLocalScvfPairedData_.size();
 
@@ -330,11 +330,15 @@ private:
         }
     }
 
+    // calculates the omega factors entering the local matrix
     Scalar calculateOmega_(const GlobalPosition& normal,
                            const GlobalPosition& nu,
                            const Scalar detX,
                            const Tensor& T) const
     {
+        // make sure we have positive definite diffsion tensors
+        assert(this->tensorIsPositiveDefinite(t) && "only positive definite tensors can be handled by mpfa methods");
+
         GlobalPosition tmp;
         T.mv(nu, tmp);
         return (tmp*normal)/detX;
@@ -382,11 +386,15 @@ private:
     bool regionUnique_;
     bool systemSolved_;
 
+    // data for the local scope of the iv
     LocalIndexType interactionRegionId_;
     std::vector<InteractionRegion> interactionRegions_;
     std::vector<GlobalLocalFaceDataPair> globalLocalScvfPairedData_;
 
-    Matrix T_;
+    // Container with data on interior boundaries. This will always be empty as
+    // interior boundary faces are treated using by the o-method interaction volume.
+    // We need this here though to provide a valid pointer for the data handle
+    std::vector<InteriorBoundaryData> interiorBoundaryData_;
 };
 
 } // end namespace

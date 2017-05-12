@@ -23,7 +23,9 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
+#include <dumux/common/eigenvalues.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 
 namespace Dumux
 {
@@ -45,7 +47,10 @@ public:
     using GlobalIndexType = typename GridView::IndexSet::IndexType;
     using GlobalIndexSet = std::vector<GlobalIndexType>;
 
-    //! for network grids this means that we assume the tensors
+    //! The handle to be passed to interaction volumes i.o.t. store data
+    using DataHandle = InteractionVolumeDataHandle<TypeTag>;
+
+    //! for surface grids this means that we assume the tensors
     //! to be given in world coordinates! If a transformation of
     //! given data has to be performed, it has to be done in the
     //! spatial parameters method where the permeability is returned
@@ -105,29 +110,33 @@ public:
     void solveLocalSystem(const GetTensorFunction& getTensor)
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a solveLocalSystem() method."); }
 
-    //! returns the indices of the volvars in the stencil of the interaction volume
-    const GlobalIndexSet& volVarsStencil() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsStencil() method."); }
-
-    //! returns the positions corresponding to the volvars in the stencil of the interaction volume (cell centers or scvf.ipGlobal() on boundary)
-    const PositionVector& volVarsPositions() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsPositions() method."); }
-
     //! returns the local index of an scvf in the IV and a boolean whether or not it is on the negative side of the local scvf (flux has to be inverted)
     LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getLocalFaceData() method."); }
 
     //! returns the transmissibilities corresponding to a local scvf
-    Vector getTransmissibilities(const LocalFaceData& localFaceData) const
+    Vector getTransmissibilities(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getTransmissibilities() method."); }
 
     //! returns the neumann flux corresponding to a local scvf
-    Scalar getNeumannFlux(const LocalFaceData& localFaceData, unsigned int eqIdx) const
+    Scalar getNeumannFlux(const LocalFaceData& localFaceData, const DataHandle& dataHandle, unsigned int eqIdx) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getNeumannFlux() method."); }
+
+    //! returns the volume variables stencil of this interaction volume
+    const GlobalIndexSet& volVarsStencil() const
+    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsStencil() method."); }
+
+    //! returns positions (cells and dirichlet faces) the volvars in this interaction volume
+    const GlobalIndexSet& volVarsPositions() const
+    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsPositions() method."); }
+
+    //! returns the container storing the data on interior boundaries
+    const std::vector<InteriorBoundaryData> interiorBoundaryData() const
+    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide an interiorBoundaryData() method."); }
 
     //! returns the local index in a vector for a given global index
     template<typename IdxType1, typename IdxType2>
-    LocalIndexType findIndexInVector(const std::vector<IdxType1>& vector, const IdxType2 globalIdx) const
+    unsigned int findIndexInVector(const std::vector<IdxType1>& vector, const IdxType2 globalIdx) const
     {
         auto it = std::find(vector.begin(), vector.end(), globalIdx);
         assert(it != vector.end() && "could not find local index in the vector for the given global index!");
@@ -137,6 +146,24 @@ public:
     //! returns GlobalLocalFaceDataPair objects for the scvfs involved in this interaction volume
     const std::vector<GlobalLocalFaceDataPair>& globalLocalScvfPairedData() const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a globalLocalScvfPairedData() method."); }
+
+    bool tensorIsPositiveDefinite(const Tensor& tensor) const
+    {
+        static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+        using EigenValueVector = Dune::FieldVector<Scalar, dimWorld>;
+
+        EigenValueVector eigVals;
+        bool success = calculateEigenValues<dimWorld, EigenValueVector, Tensor>(eigVals, tensor);
+
+        // If computation failed, tensor is not positive definite
+        if (!success)
+            return false;
+        // If an eigenvalue is negative, tensor is not positive definite
+        for (auto val : eigVals)
+            if (std::signbit(val))
+                return false;
+        return true;
+    }
 };
 
 } // end namespace

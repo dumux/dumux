@@ -39,6 +39,7 @@ namespace Properties
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(InteriorBoundaryData);
 NEW_PROP_TAG(EnableInteriorBoundaries);
+NEW_PROP_TAG(BoundaryInteractionVolume);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -147,24 +148,29 @@ class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public G
                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
-// TODO further specializations
+// TODO remaining specializations
 
 // forward declaration of the base class of the mpfa flux variables cache
 template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
 class CCMpfaPorousMediumFluxVariablesCache;
 
-// specialization of the flux variables cache for the cell centered finite volume mpfa scheme
+//! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
+//! stores data which is commonly used by all the different types of processes
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
       : public CCMpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
                                                              GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                              GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
 {
-    using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ParentType = CCMpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
                                                                      GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                                      GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+    using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+    using DataHandle = typename BoundaryInteractionVolume::Traits::DataHandle;
+    using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
+    using Stencil = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
 
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
@@ -183,23 +189,33 @@ public:
     //! Sets the update status from outside. This is used to only update
     //! the cache once after solving the local system. When visiting an scvf
     //! of the same interaction region again, the update is skipped.
-    void setUpdateStatus(const bool status)
-    {
-        isUpdated_ = status;
-    }
+    void setUpdateStatus(bool status)
+    { isUpdated_ = status; }
 
-    //! maybe update data on interior Dirichlet boundaries
+    //! Sets the local index of the iv (see comment above private ivIndexInContainer_)
+    void setIvIndexInContainer(unsigned int localIndex)
+    { ivIndexInContainer_ = localIndex; }
+
+    //! Returns the local index of the iv (see comment above private ivIndexInContainer_)
+    unsigned int ivIndexInContainer() const
+    { return ivIndexInContainer_; }
+
+    //! Sets if fluxes have to be taken negative (scvf is "outside" face in the iv local scope)
+    void setSwitchFluxSign(bool switchSign)
+    { switchFluxSign_ = switchSign; }
+
+    //! maybe update data from the interaction volume
     template<class InteractionVolume>
     void updateInteriorBoundaryData(const InteractionVolume& iv, const SubControlVolumeFace &scvf)
     {
+        interiorBoundaryData_ = &iv.interiorBoundaryData();
+
         if (enableInteriorBoundaries)
         {
-            interiorBoundaryData_ = iv.interiorBoundaryData();
-
             // check if the actual scvf is on an interior Dirichlet boundary
             const auto scvfIdx = scvf.index();
             unsigned int indexInData = 0;
-            for (auto&& data : interiorBoundaryData_)
+            for (const auto& data : iv.interiorBoundaryData())
             {
                 if (data.scvfIndex() == scvfIdx)
                 {
@@ -213,28 +229,39 @@ public:
         }
     }
 
+    //! Returns the complete interior boundary data of the interaction volume
+    const std::vector<InteriorBoundaryData>& interiorBoundaryData() const
+    { return *interiorBoundaryData_; }
+
+    //! Returns true if the scvf corresponding to this cache is on an interior boundary
     bool isInteriorBoundary() const
     { return isInteriorBoundary_; }
 
-    const std::vector<InteriorBoundaryData>& interiorBoundaryData() const
-    { return interiorBoundaryData_; }
-
+    //! If the corresponding scvf is on an interior boundary, this method
+    //! return the interior boundary data that corresponds to it
     const InteriorBoundaryData& interiorBoundaryDataSelf() const
     {
-        assert(isInteriorBoundary_ && "Trying to obtain interior boundary data on a face that is not marked as such");
-        return interiorBoundaryData_[indexInInteriorBoundaryData_];
+        assert(isInteriorBoundary_ && "Trying to obtain interior boundary data on an scvf that is not marked as such");
+        return (*interiorBoundaryData_)[indexInInteriorBoundaryData_];
     }
 
 private:
-    // indicates whether or not this cache has been fully updated
+    //! indicates if cache has been fully updated
     bool isUpdated_;
 
-    // if this face is an interior Dirichlet boundary itself, store additional data
+    //! indicates if fluxes have to be taken negative
+    bool switchFluxSign_;
+
+    //! if this face is an interior boundary itself, store additional data
     bool isInteriorBoundary_;
     unsigned int indexInInteriorBoundaryData_;
 
-    // contains all the interior Dirichlet boundary data within the stencil of this face
-    std::vector<InteriorBoundaryData> interiorBoundaryData_;
+    //! the local index of the corresponding interaction volume within
+    //! the container in the elem flux vars cache (where it is stored in)
+    unsigned int ivIndexInContainer_;
+
+    //! contains all the interior boundary data of the corresponding interaction volume
+    const std::vector<InteriorBoundaryData>* interiorBoundaryData_;
 };
 
 // specialization for the case of pure advection
@@ -257,7 +284,7 @@ class CCMpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public G
                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
-// TODO further specializations
+// TODO remaining specializations
 
 } // end namespace
 
