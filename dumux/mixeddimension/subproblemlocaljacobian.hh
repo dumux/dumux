@@ -331,6 +331,10 @@ protected:
     {
         const auto& couplingStencil = globalProblem_().couplingManager().couplingStencil(element);
 
+        //! if there are coupling residua to be evaluated, restore the elem flux vars cache
+        if (couplingStencil.size() > 0)
+            elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
+
         for (auto globalJ : couplingStencil)
         {
             const auto otherElement = otherProblem_().model().globalFvGeometry().element(globalJ);
